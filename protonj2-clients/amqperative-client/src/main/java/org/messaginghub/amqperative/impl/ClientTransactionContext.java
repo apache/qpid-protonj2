@@ -33,7 +33,10 @@ import org.apache.qpid.proton4j.types.transactions.TransactionalState;
 import org.apache.qpid.proton4j.types.transactions.TxnCapability;
 import org.apache.qpid.proton4j.types.transport.DeliveryState;
 import org.messaginghub.amqperative.Session;
+import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientIllegalStateException;
+import org.messaginghub.amqperative.exceptions.ClientTransactionInDoubtException;
+import org.messaginghub.amqperative.exceptions.ClientTransactionRolledBackException;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -229,7 +232,8 @@ public class ClientTransactionContext {
     private void handleTransactionDeclareFailed(Transaction<TransactionController> transaction) {
         ClientFuture<Session> future = transaction.getAttachments().get(DECLARE_FUTURE_NAME);
         LOG.trace("Declare of trasaction:{} failed", transaction);
-        // TODO future.failed();
+        ClientException cause = ClientErrorSupport.convertToNonFatalException(transaction.getCondition());
+        future.failed(new ClientTransactionInDoubtException(cause.getMessage(), cause));
     }
 
     private void handleTransactionDischarged(Transaction<TransactionController> transaction) {
@@ -243,9 +247,10 @@ public class ClientTransactionContext {
     }
 
     private void handleTransactionDischargeFailed(Transaction<TransactionController> transaction) {
-        ClientFuture<Session> future = transaction.getAttachments().get(DECLARE_FUTURE_NAME);
+        ClientFuture<Session> future = transaction.getAttachments().get(DISCHARGE_FUTURE_NAME);
         LOG.trace("Discharge of trasaction:{} failed", transaction);
-        // TODO future.failed();
+        ClientException cause = ClientErrorSupport.convertToNonFatalException(transaction.getCondition());
+        future.failed(new ClientTransactionRolledBackException(cause.getMessage(), cause));
     }
 
     private void handleCoordinatorOpen(TransactionController controller) {

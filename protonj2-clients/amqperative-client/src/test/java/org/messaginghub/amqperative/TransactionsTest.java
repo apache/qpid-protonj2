@@ -30,10 +30,15 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.types.Binary;
 import org.apache.qpid.proton4j.types.messaging.Accepted;
 import org.apache.qpid.proton4j.types.messaging.AmqpValue;
+import org.apache.qpid.proton4j.types.messaging.Modified;
+import org.apache.qpid.proton4j.types.messaging.Rejected;
+import org.apache.qpid.proton4j.types.messaging.Released;
 import org.apache.qpid.proton4j.types.transactions.TransactionalState;
 import org.apache.qpid.proton4j.types.transport.Role;
 import org.junit.Test;
 import org.messaginghub.amqperative.exceptions.ClientIllegalStateException;
+import org.messaginghub.amqperative.exceptions.ClientOperationTimedOutException;
+import org.messaginghub.amqperative.exceptions.ClientTransactionRolledBackException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,13 +47,84 @@ public class TransactionsTest extends AMQPerativeTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionsTest.class);
 
+    @Test(timeout = 20_000)
+    public void testCoordinatorLinkSupportedOutcomes() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().withSource().withOutcomes(Accepted.DESCRIPTOR_SYMBOL,
+                                                                     Rejected.DESCRIPTOR_SYMBOL,
+                                                                     Released.DESCRIPTOR_SYMBOL,
+                                                                     Modified.DESCRIPTOR_SYMBOL).and().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept();
+            peer.expectDischarge().accept();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            session.begin();
+            session.commit();
+
+            session.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testTimedOutExceptionOnBeginWithNoResponse() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().requestTimeout(50);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            Session session = connection.openSession().openFuture().get();
+
+            try {
+                session.begin();
+                fail("Begin should have timoued out after no response.");
+            } catch (ClientOperationTimedOutException expected) {
+                // Expect this to time out.
+            }
+
+            session.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
     /**
      * Create a transaction and then close the Session which result in the remote rolling back
      * the transaction by default so the client doesn't manually roll it back itself.
      *
      * @throws Exception
      */
-    @Test(timeout = 20000)
+    @Test(timeout = 20_000)
     public void testBeginTransactionAndClose() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -78,7 +154,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test(timeout = 20_000)
     public void testBeginAndCommitTransaction() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
@@ -112,7 +188,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test(timeout = 20_000)
     public void testBeginAndCommitTransactions() throws Exception {
         final byte[] txnId1 = new byte[] { 0, 1, 2, 3 };
         final byte[] txnId2 = new byte[] { 1, 1, 2, 3 };
@@ -161,7 +237,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test(timeout = 20_000)
     public void testCannotBeginSecondTransactionWhileFirstIsActive() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -301,6 +377,59 @@ public class TransactionsTest extends AMQPerativeTestCase {
             session.commit();
             receiver.close();
             connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testTransactionCommitFailWithEmptyRejectedDisposition() throws Exception {
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept(txnId);
+            peer.expectTransfer().withHandle(0)
+                                 .withPayload(notNullValue(ProtonBuffer.class))
+                                 .withState(new TransactionalState().setTxnId(new Binary(txnId)))
+                                 .respond()
+                                 .withState(new TransactionalState().setTxnId(new Binary(txnId)).setOutcome(Accepted.getInstance()))
+                                 .withSettled(true);
+            peer.expectDischarge().withFail(false).withTxnId(txnId).reject();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+            Sender sender = session.openSender("address").openFuture().get();
+
+            session.begin();
+
+            final Tracker tracker = sender.send(Message.create("test-message"));
+            assertNotNull(tracker.acknowledgeFuture().get());
+            assertEquals(tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL);
+
+            try {
+                session.commit();
+                fail("Commit should fail with Rollback exception");
+            } catch (ClientTransactionRolledBackException cliRbEx) {
+                // Expected roll back due to discharge rejection
+            }
+
+            session.close();
+            connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

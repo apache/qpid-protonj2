@@ -16,8 +16,11 @@
  */
 package org.messaginghub.amqperative.impl;
 
+import java.util.concurrent.TimeoutException;
+
 import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientIOException;
+import org.messaginghub.amqperative.exceptions.ClientOperationTimedOutException;
 
 public class ClientExceptionSupport {
 
@@ -72,6 +75,10 @@ public class ClientExceptionSupport {
             message = cause.toString();
         }
 
-        return new ClientException(message, cause);
+        if (cause instanceof TimeoutException) {
+            return new ClientOperationTimedOutException(message, cause);
+        } else {
+            return new ClientException(message, cause);
+        }
     }
 }
