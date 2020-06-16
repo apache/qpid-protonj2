@@ -18,6 +18,7 @@ package org.messaginghub.amqperative.impl;
 
 import java.util.Arrays;
 
+import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.Transaction;
 import org.apache.qpid.proton4j.engine.TransactionController;
 import org.apache.qpid.proton4j.engine.TransactionState;
@@ -154,6 +155,8 @@ public class ClientTransactionContext {
                          .dischargeFailureHandler(this::handleTransactionDischargeFailed)
                          .openHandler(this::handleCoordinatorOpen)
                          .closeHandler(this::handleCoordinatorClose)
+                         .localCloseHandler(this::handleCoordinatorLocalClose)
+                         .engineShutdownHandler(this::handleEngineShutdown)
                          .open();
 
             this.txnController = txnController;
@@ -190,8 +193,10 @@ public class ClientTransactionContext {
                     throw new ClientIllegalStateException("Commit called before transaction declare completed.");
                 case DISCHARGING:
                     throw new ClientIllegalStateException("Commit called before transaction discharge completed.");
-                case FAILED:
-                    throw new ClientIllegalStateException("Commit called on a transaction that has failed due to an error.");
+                case DECLARE_FAILED:
+                    throw new ClientIllegalStateException("Commit called on a transaction that has failed due to an error during declare.");
+                case DISCHARGE_FAILED:
+                    throw new ClientIllegalStateException("Commit called on a transaction that has failed due to an error during discharge.");
                 case IDLE:
                     throw new ClientIllegalStateException("Commit called on a transaction that has not yet been declared");
                 default:
@@ -211,8 +216,10 @@ public class ClientTransactionContext {
                     throw new ClientIllegalStateException("Rollback called before transaction declare completed.");
                 case DISCHARGING:
                     throw new ClientIllegalStateException("Rollback called before transaction discharge completed.");
-                case FAILED:
-                    throw new ClientIllegalStateException("Rollback called on a transaction that has failed due to an error.");
+                case DECLARE_FAILED:
+                    throw new ClientIllegalStateException("Rollback called on a transaction that has failed due to an error during declare.");
+                case DISCHARGE_FAILED:
+                    throw new ClientIllegalStateException("Rollback called on a transaction that has failed due to an error during discharge.");
                 case IDLE:
                     throw new ClientIllegalStateException("Rollback called on a transaction that has not yet been declared");
                 default:
@@ -261,6 +268,12 @@ public class ClientTransactionContext {
     }
 
     private void handleCoordinatorClose(TransactionController controller) {
+        if (txnController != null) {
+            txnController.close();
+        }
+    }
+
+    private void handleCoordinatorLocalClose(TransactionController controller) {
         if (currentTxn != null) {
             ClientException cause = ClientErrorSupport.convertToNonFatalException(controller.getRemoteCondition());
             ClientFuture<Session> future = null;
@@ -277,9 +290,6 @@ public class ClientTransactionContext {
                     }
                     future = currentTxn.getAttachments().get(DISCHARGE_FUTURE_NAME);
                     break;
-                case DECLARED:
-                case DISCHARGED:
-                case FAILED:
                 default:
                     break;
             }
@@ -294,5 +304,11 @@ public class ClientTransactionContext {
         this.cachedSenderOutcome = null;
         this.txnController = null;
         this.currentTxn = null;
+    }
+
+    private void handleEngineShutdown(Engine engine) {
+        if (txnController != null) {
+            txnController.close();
+        }
     }
 }

@@ -129,7 +129,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectCoordinatorAttach().reject(true, AmqpError.NOT_IMPLEMENTED, errorMessage);
-
+            peer.expectDetach();
             peer.expectEnd().respond();
             peer.expectClose().respond();
             peer.start();
@@ -171,6 +171,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectDeclare();
             peer.remoteDetach().withClosed(true)
                                .withErrorCondition(AmqpError.NOT_IMPLEMENTED, errorMessage).queue();
+            peer.expectDetach();
             peer.expectEnd().respond();
             peer.expectClose().respond();
             peer.start();
@@ -213,6 +214,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectDischarge();
             peer.remoteDetach().withClosed(true)
                                .withErrorCondition(AmqpError.RESOURCE_DELETED, errorMessage).queue();
+            peer.expectDetach();
             peer.expectEnd().respond();
             peer.expectClose().respond();
             peer.start();
@@ -310,6 +312,39 @@ public class TransactionsTest extends AMQPerativeTestCase {
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testTransactionDeclaredDispositionWithoutTxnId() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.expectDeclare().accept(null);
+            peer.expectClose().withError(AmqpError.DECODE_ERROR, "The txn-id field cannot be omitted").respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            try {
+                session.begin();
+                fail("Should not complete transaction begin due to client connection failure on decode issue.");
+            } catch (ClientException ex) {
+                // expected to fail
+            }
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToCompleteIgnoreErrors();
         }
     }
 
@@ -444,6 +479,68 @@ public class TransactionsTest extends AMQPerativeTestCase {
             assertTrue(tracker.settled());
 
             session.commit();
+
+            session.close();
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testSendMessagesInsideOfUniqueTransactions() throws Exception {
+        final byte[] txnId1 = new byte[] { 0, 1, 2, 3 };
+        final byte[] txnId2 = new byte[] { 1, 1, 2, 3 };
+        final byte[] txnId3 = new byte[] { 2, 1, 2, 3 };
+        final byte[] txnId4 = new byte[] { 3, 1, 2, 3 };
+
+        final byte[][] txns = new byte[][] { txnId1, txnId2, txnId3, txnId4 };
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.remoteFlow().withLinkCredit(txns.length).queue();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(txns.length * 2).queue();
+            for (int i = 0; i < txns.length; ++i) {
+                peer.expectDeclare().accept(txns[i]);
+                peer.expectTransfer().withHandle(0)
+                                     .withPayload(notNullValue(ProtonBuffer.class))
+                                     .withState(new TransactionalState().setTxnId(new Binary(txns[i])))
+                                     .respond()
+                                     .withState(new TransactionalState().setTxnId(new Binary(txns[i])).setOutcome(Accepted.getInstance()))
+                                     .withSettled(true);
+                peer.expectDischarge().withFail(false).withTxnId(txns[i]).accept();
+            }
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+            Sender sender = session.openSender("address").openFuture().get();
+
+            for (int i = 0; i < txns.length; ++i) {
+                session.begin();
+
+                final Tracker tracker = sender.send(Message.create("test-message-" + i));
+
+                assertNotNull(tracker);
+                assertNotNull(tracker.acknowledgeFuture().get());
+                assertEquals(tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL);
+                assertNotNull(tracker.state());
+                assertEquals(tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL);
+                assertTrue(tracker.settled());
+
+                session.commit();
+            }
 
             session.close();
             connection.close().get(10, TimeUnit.SECONDS);
