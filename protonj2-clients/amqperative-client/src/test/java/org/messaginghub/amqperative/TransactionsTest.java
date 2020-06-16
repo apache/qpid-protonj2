@@ -128,10 +128,8 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            // TODO - Test driver should make this easier to reject the attach
-            peer.expectCoordinatorAttach().respond().withNullTarget();
-            peer.remoteDetach().withClosed(true)
-                               .withErrorCondition(AmqpError.NOT_IMPLEMENTED, errorMessage).queue();
+            peer.expectCoordinatorAttach().reject(true, AmqpError.NOT_IMPLEMENTED, errorMessage);
+
             peer.expectEnd().respond();
             peer.expectClose().respond();
             peer.start();

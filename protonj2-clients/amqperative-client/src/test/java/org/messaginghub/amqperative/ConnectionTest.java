@@ -183,8 +183,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
     public void testConnectionRemoteClosedAfterOpened() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
-            peer.expectOpen().respond();
-            peer.remoteClose().withErrorCondition(ConnectionError.CONNECTION_FORCED, "Not accepting connections").queue();
+            peer.expectOpen().reject(ConnectionError.CONNECTION_FORCED, "Not accepting connections");
             peer.expectClose();
             peer.start();
 
