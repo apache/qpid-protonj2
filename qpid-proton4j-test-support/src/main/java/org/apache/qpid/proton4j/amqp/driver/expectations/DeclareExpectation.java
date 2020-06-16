@@ -53,7 +53,11 @@ public class DeclareExpectation extends TransferExpectation {
     public DispositionInjectAction accept(byte[] txnId) {
         response = new DispositionInjectAction(driver);
         response.withSettled(true);
-        response.withState(new Declared().setTxnId(new Binary(txnId)));
+        if (txnId != null) {
+            response.withState(new Declared().setTxnId(new Binary(txnId)));
+        } else {
+            response.withState(new Declared());
+        }
 
         driver.addScriptedElement(response);
         return response;
