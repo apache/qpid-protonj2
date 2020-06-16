@@ -56,8 +56,14 @@ public enum TransactionState {
 
     /**
      * A {@link Transaction} is considered failed in the {@link TransactionManager} responds with an error
-     * to either the {@link Declare} action or the {@link Discharge} action.
+     * to the {@link Declare} action.
      */
-    FAILED;
+    DECLARE_FAILED,
+
+    /**
+     * A {@link Transaction} is considered failed in the {@link TransactionManager} responds with an error
+     * to the {@link Discharge} action.
+     */
+    DISCHARGE_FAILED;
 
 }

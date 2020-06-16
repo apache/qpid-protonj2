@@ -61,7 +61,7 @@ public abstract class ProtonTransaction<E extends Endpoint<?>> implements Transa
 
     @Override
     public boolean isFailed() {
-        return state.ordinal() == TransactionState.FAILED.ordinal();
+        return state.ordinal() > TransactionState.DISCHARGED.ordinal();
     }
 
     @Override

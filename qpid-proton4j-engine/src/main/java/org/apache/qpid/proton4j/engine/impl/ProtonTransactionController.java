@@ -45,8 +45,8 @@ import org.apache.qpid.proton4j.types.transactions.Declare;
 import org.apache.qpid.proton4j.types.transactions.Declared;
 import org.apache.qpid.proton4j.types.transactions.Discharge;
 import org.apache.qpid.proton4j.types.transport.DeliveryState;
-import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 import org.apache.qpid.proton4j.types.transport.DeliveryState.DeliveryStateType;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 
 /**
  * {@link TransactionController} implementation that implements the abstraction
@@ -446,17 +446,19 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
                     fireDischargedEvent(transaction);
                     break;
                 default:
-                    transaction.setState(TransactionState.FAILED);
                     if (state.getType() == DeliveryStateType.Rejected) {
                         Rejected rejected = (Rejected) state;
                         transaction.setCondition(rejected.getError());
                     }
 
                     if (transactionState == TransactionState.DECLARING) {
+                        transaction.setState(TransactionState.DECLARE_FAILED);
                         fireDeclareFailureEvent(transaction);
                     } else {
+                        transaction.setState(TransactionState.DISCHARGE_FAILED);
                         fireDischargeFailureEvent(transaction);
                     }
+
                     break;
             }
         } finally {

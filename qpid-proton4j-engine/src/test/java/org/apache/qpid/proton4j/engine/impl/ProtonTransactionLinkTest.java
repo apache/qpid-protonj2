@@ -533,7 +533,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
 
         assertTrue(decalreFailure.get());
         assertSame(txn, failedTxn.get());
-        assertEquals(TransactionState.FAILED, txn.getState());
+        assertEquals(TransactionState.DECLARE_FAILED, txn.getState());
         assertEquals(failureError, txn.getCondition());
 
         txnController.close();
@@ -598,7 +598,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
 
         assertTrue(dischargeFailure.get());
         assertSame(txn, failedTxn.get());
-        assertEquals(TransactionState.FAILED, txn.getState());
+        assertEquals(TransactionState.DISCHARGE_FAILED, txn.getState());
         assertEquals(failureError, txn.getCondition());
 
         txnController.close();
