@@ -30,6 +30,7 @@ import org.apache.qpid.proton4j.amqp.driver.matchers.transport.TransferMatcher;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.Symbol;
 import org.apache.qpid.proton4j.types.UnsignedInteger;
 import org.apache.qpid.proton4j.types.messaging.Accepted;
 import org.apache.qpid.proton4j.types.messaging.Modified;
@@ -82,6 +83,14 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
 
     public DispositionInjectAction reject() {
         return reject(null);
+    }
+
+    public DispositionInjectAction reject(String condition, String description) {
+        return reject(new ErrorCondition(Symbol.valueOf(condition), description));
+    }
+
+    public DispositionInjectAction reject(Symbol condition, String description) {
+        return reject(new ErrorCondition(condition, description));
     }
 
     public DispositionInjectAction reject(ErrorCondition error) {
