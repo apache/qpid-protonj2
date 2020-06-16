@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.actions.CloseInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.OpenInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Open;
@@ -52,6 +53,16 @@ public class OpenExpectation extends AbstractExpectation<Open> {
         response = new OpenInjectAction(driver);
         driver.addScriptedElement(response);
         return response;
+    }
+
+    public CloseInjectAction reject(Symbol condition, String description) {
+        response = new OpenInjectAction(driver);
+        driver.addScriptedElement(response);
+
+        CloseInjectAction closeAction = new CloseInjectAction(driver).withErrorCondition(condition, description);
+        driver.addScriptedElement(closeAction);
+
+        return closeAction;
     }
 
     //----- Handle the performative and configure response is told to respond

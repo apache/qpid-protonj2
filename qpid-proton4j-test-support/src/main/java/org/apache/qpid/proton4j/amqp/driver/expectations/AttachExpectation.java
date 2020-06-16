@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.LinkTracker;
 import org.apache.qpid.proton4j.amqp.driver.actions.AttachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.actions.DetachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
@@ -57,6 +58,7 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     private final AttachMatcher matcher = new AttachMatcher();
 
     private AttachInjectAction response;
+    private boolean rejecting;
 
     public AttachExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -72,6 +74,18 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         response = new AttachInjectAction(driver);
         driver.addScriptedElement(response);
         return response;
+    }
+
+    public DetachInjectAction reject(boolean close, Symbol condition, String description) {
+        rejecting = true;
+        response = new AttachInjectAction(driver);
+        driver.addScriptedElement(response);
+
+        DetachInjectAction action =
+            new DetachInjectAction(driver).withClosed(close).withErrorCondition(condition, description);
+        driver.addScriptedElement(action);
+
+        return action;
     }
 
     //----- Handle the performative and configure response is told to respond
@@ -114,6 +128,17 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
                 attach.getSource().setAddress(UUID.randomUUID().toString());
             }
         }
+
+        if (rejecting) {
+            if (Boolean.FALSE.equals(attach.getRole())) {
+                // Sender attach so response should have null target
+                response.withNullTarget();
+            } else {
+                // Receiver attach so response should have null source
+                response.withNullSource();
+            }
+        }
+
         if (response.getPerformative().getTarget() == null && !response.isNullTargetRequired()) {
             if (attach.getTarget() != null) {
                 if (attach.getTarget() instanceof org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target) {
