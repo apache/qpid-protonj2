@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import java.util.Collection;
+
 import org.apache.qpid.proton4j.types.messaging.Rejected;
 import org.apache.qpid.proton4j.types.messaging.Source;
 import org.apache.qpid.proton4j.types.messaging.Terminus;
@@ -94,6 +96,16 @@ public interface TransactionController extends Endpoint<TransactionController> {
      * @return the remote coordinator {@link Terminus} for the remote end of this link.
      */
     Coordinator getRemoteCoordinator();
+
+    /**
+     * Returns a list of {@link Transaction} objects that are active within this {@link TransactionController} which
+     * have not reached a terminal state meaning they have not been successfully discharged and have not failed in
+     * either the {@link Declare} phase or the {@link Discharge} phase.  If there are no transactions active within
+     * this {@link TransactionController} this method returns an empty {@link Collection}.
+     *
+     * @return a list of Transactions that are allocated to this controller that have not reached a terminal state.
+     */
+    Collection<Transaction<TransactionController>> transactions();
 
     /**
      * Creates a new {@link Transaction} instances that is returned in the {@link TransactionState#IDLE} state

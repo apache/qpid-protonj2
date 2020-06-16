@@ -17,8 +17,12 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -76,6 +80,8 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     private final Encoder commandEncoder = CodecFactory.getEncoder();
     private final ProtonBuffer encoding = ProtonByteBufferAllocator.DEFAULT.allocate();
 
+    private final Set<Transaction<TransactionController>> transactions = new HashSet<>();
+
     private EventHandler<Transaction<TransactionController>> declaredEventHandler;
     private EventHandler<Transaction<TransactionController>> declareFailureEventHandler;
     private EventHandler<Transaction<TransactionController>> dischargedEventHandler;
@@ -122,10 +128,29 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         return this;
     }
 
+    @Override
+    public Collection<Transaction<TransactionController>> transactions() {
+        return Collections.unmodifiableCollection(new ArrayList<>(transactions));
+    }
 
     @Override
-    public Transaction<TransactionController> newTransaction() {
-        return new ProtonControllerTransaction(this);
+    public ProtonControllerTransaction newTransaction() {
+        ProtonControllerTransaction txn = new ProtonControllerTransaction(this);
+        transactions.add(txn);
+
+        return txn;
+    }
+
+    @Override
+    public Transaction<TransactionController> declare() {
+        if (!senderLink.isSendable()) {
+            throw new IllegalStateException("Cannot Declare due to current capicity restrictions.");
+        }
+
+        ProtonControllerTransaction transaction = newTransaction();
+        declare(transaction);
+
+        return transaction;
     }
 
     @Override
@@ -156,18 +181,6 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         }
 
         return this;
-    }
-
-    @Override
-    public Transaction<TransactionController> declare() {
-        if (!senderLink.isSendable()) {
-            throw new IllegalStateException("Cannot Declare due to current capicity restrictions.");
-        }
-
-        ProtonControllerTransaction transaction = new ProtonControllerTransaction(this);
-        declare(transaction);
-
-        return transaction;
     }
 
     @Override
@@ -429,10 +442,6 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         DeliveryState state = delivery.getRemoteState();
         TransactionState transactionState = transaction.getState();
 
-        // TODO: Check error states for disposition outside of expected state boundaries
-        //       and deal with settlement after delivery state sent as unexpected but possible
-        //       case of responding to a requested transaction command..
-
         try {
             switch (state.getType()) {
                 case Declared:
@@ -443,6 +452,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
                     break;
                 case Accepted:
                     transaction.setState(TransactionState.DISCHARGED);
+                    transactions.remove(transaction);
                     fireDischargedEvent(transaction);
                     break;
                 default:
@@ -450,6 +460,8 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
                         Rejected rejected = (Rejected) state;
                         transaction.setCondition(rejected.getError());
                     }
+
+                    transactions.remove(transaction);
 
                     if (transactionState == TransactionState.DECLARING) {
                         transaction.setState(TransactionState.DECLARE_FAILED);

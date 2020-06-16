@@ -535,6 +535,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertSame(txn, failedTxn.get());
         assertEquals(TransactionState.DECLARE_FAILED, txn.getState());
         assertEquals(failureError, txn.getCondition());
+        assertTrue(txnController.transactions().isEmpty());
 
         txnController.close();
         session.close();
@@ -600,6 +601,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertSame(txn, failedTxn.get());
         assertEquals(TransactionState.DISCHARGE_FAILED, txn.getState());
         assertEquals(failureError, txn.getCondition());
+        assertTrue(txnController.transactions().isEmpty());
 
         txnController.close();
         session.close();
@@ -665,6 +667,9 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
             // Expected
         }
 
+        assertEquals(1, txnController1.transactions().size());
+        assertEquals(1, txnController2.transactions().size());
+
         peer.expectDetach().withClosed(true).respond();
         peer.expectDetach().withClosed(true).respond();
         peer.expectEnd().respond();
@@ -675,6 +680,10 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
 
         session.close();
         connection.close();
+
+        // Never discharged so they remain in the controller now
+        assertEquals(1, txnController1.transactions().size());
+        assertEquals(1, txnController2.transactions().size());
 
         peer.waitForScriptToComplete();
         assertNull(failure);
@@ -810,7 +819,11 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         delivery.disposition(new TransactionalState().setTxnId(new Binary(TXN_ID)), false);
         delivery.writeBytes(payload);
 
+        assertTrue(txnController.transactions().contains(txn));
+
         txnController.discharge(txn, false);
+
+        assertFalse(txnController.transactions().contains(txn));
 
         assertNotNull(delivery);
         assertNotNull(delivery.getRemoteState());
