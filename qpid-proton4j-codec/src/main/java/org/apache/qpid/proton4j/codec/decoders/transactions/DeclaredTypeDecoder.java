@@ -90,11 +90,7 @@ public final class DeclaredTypeDecoder extends AbstractDescribedTypeDecoder<Decl
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_DECLARED_LIST_ENTRIES) {
-            throw new DecodeException("Not enough entries in Declared list encoding: " + count);
-        }
-
-        if (count > MAX_DECLARED_LIST_ENTRIES) {
-            throw new DecodeException("To many entries in Declared list encoding: " + count);
+            throw new DecodeException("The txn-id field cannot be omitted");
         }
 
         for (int index = 0; index < count; ++index) {
@@ -103,7 +99,8 @@ public final class DeclaredTypeDecoder extends AbstractDescribedTypeDecoder<Decl
                     declared.setTxnId(state.getDecoder().readBinary(buffer, state));
                     break;
                 default:
-                    throw new DecodeException("To many entries in Declared encoding");
+                    throw new DecodeException(
+                        "To many entries in Declared list encoding: " + count + " max allowed entries = " + MAX_DECLARED_LIST_ENTRIES);
             }
         }
 
