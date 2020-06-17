@@ -33,6 +33,7 @@ import org.apache.qpid.proton4j.types.messaging.AmqpValue;
 import org.apache.qpid.proton4j.types.messaging.Modified;
 import org.apache.qpid.proton4j.types.messaging.Rejected;
 import org.apache.qpid.proton4j.types.messaging.Released;
+import org.apache.qpid.proton4j.types.transactions.TransactionErrors;
 import org.apache.qpid.proton4j.types.transactions.TransactionalState;
 import org.apache.qpid.proton4j.types.transport.AmqpError;
 import org.apache.qpid.proton4j.types.transport.Role;
@@ -51,6 +52,8 @@ public class TransactionsTest extends AMQPerativeTestCase {
 
     @Test(timeout = 20_000)
     public void testCoordinatorLinkSupportedOutcomes() throws Exception {
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -60,8 +63,8 @@ public class TransactionsTest extends AMQPerativeTestCase {
                                                                      Released.DESCRIPTOR_SYMBOL,
                                                                      Modified.DESCRIPTOR_SYMBOL).and().respond();
             peer.remoteFlow().withLinkCredit(2).queue();
-            peer.expectDeclare().accept();
-            peer.expectDischarge().accept();
+            peer.expectDeclare().accept(txnId);
+            peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
             peer.expectEnd().respond();
             peer.expectClose().respond();
             peer.start();
@@ -201,6 +204,56 @@ public class TransactionsTest extends AMQPerativeTestCase {
     }
 
     @Test(timeout = 20_000)
+    public void testExceptionOnBeginWhenCoordinatorLinkClosedAfterDeclareAllowsNewTransactionDeclaration() throws Exception {
+        final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare();
+            peer.remoteDetach().withClosed(true)
+                               .withErrorCondition(AmqpError.NOT_IMPLEMENTED, errorMessage).queue();
+            peer.expectDetach();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept();
+            peer.expectDischarge().accept();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            try {
+                session.begin();
+                fail("Begin should have failed after link closed.");
+            } catch (ClientException expected) {
+                // Expect this to time out.
+                String message = expected.getMessage();
+                assertTrue(message.contains(errorMessage));
+            }
+
+            // Try again and expect to return to normal state now.
+            session.begin();
+            session.commit();
+
+            session.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
     public void testExceptionOnCommitWhenCoordinatorLinkClosedAfterDischargeSent() throws Exception {
         final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
 
@@ -215,6 +268,10 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.remoteDetach().withClosed(true)
                                .withErrorCondition(AmqpError.RESOURCE_DELETED, errorMessage).queue();
             peer.expectDetach();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept();
+            peer.expectDischarge().accept();
             peer.expectEnd().respond();
             peer.expectClose().respond();
             peer.start();
@@ -237,6 +294,111 @@ public class TransactionsTest extends AMQPerativeTestCase {
                 String message = expected.getMessage();
                 assertTrue(message.contains(errorMessage));
             }
+
+            session.begin();
+            session.rollback();
+
+            session.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testExceptionOnCommitWhenCoordinatorRejectsDischarge() throws Exception {
+        final String errorMessage = "Transaction aborted due to timeout";
+        final byte[] txnId1 = new byte[] { 0, 1, 2, 3 };
+        final byte[] txnId2 = new byte[] { 1, 1, 2, 3 };
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(4).queue();
+            peer.expectDeclare().accept(txnId1);
+            peer.expectDischarge().withFail(false)
+                                  .withTxnId(txnId1)
+                                  .reject(TransactionErrors.TRANSACTION_TIMEOUT, "Transaction aborted due to timeout");
+            peer.expectDeclare().accept(txnId2);
+            peer.expectDischarge().withFail(true).withTxnId(txnId2).accept();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            session.begin();
+
+            try {
+                session.commit();
+                fail("Commit should have failed after link closed.");
+            } catch (ClientTransactionRolledBackException expected) {
+                // Expect this to time out.
+                String message = expected.getMessage();
+                assertTrue(message.contains(errorMessage));
+            }
+
+            session.begin();
+            session.rollback();
+
+            session.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testExceptionOnRollbackWhenCoordinatorRejectsDischarge() throws Exception {
+        final String errorMessage = "Transaction aborted due to timeout";
+        final byte[] txnId1 = new byte[] { 0, 1, 2, 3 };
+        final byte[] txnId2 = new byte[] { 1, 1, 2, 3 };
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(4).queue();
+            peer.expectDeclare().accept(txnId1);
+            peer.expectDischarge().withFail(true)
+                                  .withTxnId(txnId1)
+                                  .reject(TransactionErrors.TRANSACTION_TIMEOUT, "Transaction aborted due to timeout");
+            peer.expectDeclare().accept(txnId2);
+            peer.expectDischarge().withFail(false).withTxnId(txnId2).accept();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            session.begin();
+
+            try {
+                session.rollback();
+                fail("Commit should have failed after link closed.");
+            } catch (ClientTransactionRolledBackException expected) {
+                // Expect this to time out.
+                String message = expected.getMessage();
+                assertTrue(message.contains(errorMessage));
+            }
+
+            session.begin();
+            session.commit();
 
             session.close();
             connection.close().get();
@@ -307,6 +469,40 @@ public class TransactionsTest extends AMQPerativeTestCase {
 
             session.begin();
             session.commit();
+
+            session.close();
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testBeginAndRollbackTransaction() throws Exception {
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept(txnId);
+            peer.expectDischarge().withFail(true).withTxnId(txnId).accept();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            session.begin();
+            session.rollback();
 
             session.close();
             connection.close().get(10, TimeUnit.SECONDS);

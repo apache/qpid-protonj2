@@ -331,7 +331,7 @@ public class ClientSession implements Session {
         serializer.execute(() -> {
             try {
                 checkClosed();
-                txnContext.commit(rollbackFuture, startNewTxn);
+                txnContext.rollback(rollbackFuture, startNewTxn);
             } catch (Throwable error) {
                 rollbackFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }

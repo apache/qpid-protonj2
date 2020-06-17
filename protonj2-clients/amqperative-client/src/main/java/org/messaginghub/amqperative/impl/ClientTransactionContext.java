@@ -97,7 +97,7 @@ public class ClientTransactionContext {
         currentTxn.getAttachments().set(START_TRANSACTION_MARKER, startNew);
 
         txnController.registerCapacityAvailableHandler(controller -> {
-            txnController.discharge(currentTxn, false);
+            txnController.discharge(currentTxn, true);
         });
     }
 
@@ -169,6 +169,8 @@ public class ClientTransactionContext {
         if (currentTxn != null) {
             switch (currentTxn.getState()) {
                 case DISCHARGED:
+                case DISCHARGE_FAILED:
+                case DECLARE_FAILED:
                     break;
                 case DECLARING:
                     throw new ClientIllegalStateException("A transaction is already in the process of being started");
@@ -178,7 +180,7 @@ public class ClientTransactionContext {
                     throw new ClientIllegalStateException("A transaction is still being retired and a new one cannot yet be started");
                 default:
                     throw new ClientIllegalStateException("Cannot begin a new transaction until the existing transaction completes");
-                }
+            }
         }
     }
 
