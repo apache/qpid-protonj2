@@ -59,8 +59,19 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-        // TODO
-        return false;
+        if (STATE_FIELD_UPDATER.compareAndSet(this, INCOMPLETE, COMPLETING)) {
+            STATE_FIELD_UPDATER.lazySet(this, CANCELLED);
+
+            synchronized(this) {
+                if (waiting > 0) {
+                    notifyAll();
+                }
+            }
+
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public boolean isFailed() {

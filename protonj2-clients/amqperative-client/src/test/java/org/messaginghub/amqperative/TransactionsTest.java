@@ -139,6 +139,59 @@ public class TransactionsTest extends AMQPerativeTestCase {
     }
 
     @Test(timeout = 20_000)
+    public void testTimedOutExceptionOnBeginWithDelayedResponseDischargesTransaction() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept().afterDelay(50);
+            peer.expectDischarge().accept();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            SessionOptions options = new SessionOptions().requestTimeout(25);
+            Session session = connection.openSession(options).openFuture().get();
+
+            try {
+                session.begin();
+                fail("Begin should have timoued out after no response.");
+            } catch (ClientOperationTimedOutException expected) {
+                LOG.info("Transaction begin timed out as expected");
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            try {
+                session.commit();
+                fail("Commit should have failed due to no active transaction.");
+            } catch (ClientIllegalStateException expected) {
+                // Expect this to time out.
+            }
+
+            try {
+                session.rollback();
+                fail("Rollback should have failed due to no active transaction.");
+            } catch (ClientIllegalStateException expected) {
+                // Expect this to time out.
+            }
+
+            session.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
     public void testExceptionOnBeginWhenCoordinatorLinkRefused() throws Exception {
         final String errorMessage = "CoordinatorLinkRefusal-breadcrumb";
 

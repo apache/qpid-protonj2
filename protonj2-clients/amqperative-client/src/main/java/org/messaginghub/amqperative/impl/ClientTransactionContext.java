@@ -236,7 +236,17 @@ public class ClientTransactionContext {
     private void handleTransactionDeclared(Transaction<TransactionController> transaction) {
         ClientFuture<Session> future = transaction.getAttachments().get(DECLARE_FUTURE_NAME);
         LOG.trace("Declare of trasaction:{} completed", transaction);
-        future.complete(session);
+
+        if (future.isComplete() || future.isCancelled()) {
+            // The original declare operation cancelled the future likely due to timeout
+            // which means this transaction will never be completed at a higher level so we
+            // must discharge it now to ensure the remote can clean up associated resources.
+            try {
+                rollback(session.getFutureFactory().createFuture(), false);
+            } catch (Exception ignore) {}
+        } else {
+            future.complete(session);
+        }
     }
 
     private void handleTransactionDeclareFailed(Transaction<TransactionController> transaction) {
