@@ -77,32 +77,36 @@ public class SessionOptions {
         return closeTimeout;
     }
 
-    public void closeTimeout(long closeTimeout) {
+    public SessionOptions closeTimeout(long closeTimeout) {
         this.closeTimeout = closeTimeout;
+        return this;
     }
 
     public long openTimeout() {
         return openTimeout;
     }
 
-    public void openTimeout(long connectTimeout) {
+    public SessionOptions openTimeout(long connectTimeout) {
         this.openTimeout = connectTimeout;
+        return this;
     }
 
     public long sendTimeout() {
         return sendTimeout;
     }
 
-    public void sendTimeout(long sendTimeout) {
+    public SessionOptions sendTimeout(long sendTimeout) {
         this.sendTimeout = sendTimeout;
+        return this;
     }
 
     public long requestTimeout() {
         return requestTimeout;
     }
 
-    public void requestTimeout(long requestTimeout) {
+    public SessionOptions requestTimeout(long requestTimeout) {
         this.requestTimeout = requestTimeout;
+        return this;
     }
 
     /**
@@ -114,9 +118,12 @@ public class SessionOptions {
 
     /**
      * @param offeredCapabilities the offeredCapabilities to set
+     *
+     * @return this {@link SessionOptions} instance.
      */
-    public void offeredCapabilities(String... offeredCapabilities) {
+    public SessionOptions offeredCapabilities(String... offeredCapabilities) {
         this.offeredCapabilities = offeredCapabilities;
+        return this;
     }
 
     /**
@@ -128,9 +135,12 @@ public class SessionOptions {
 
     /**
      * @param desiredCapabilities the desiredCapabilities to set
+     *
+     * @return this {@link SessionOptions} instance.
      */
-    public void desiredCapabilities(String... desiredCapabilities) {
+    public SessionOptions desiredCapabilities(String... desiredCapabilities) {
         this.desiredCapabilities = desiredCapabilities;
+        return this;
     }
 
     /**
@@ -142,8 +152,11 @@ public class SessionOptions {
 
     /**
      * @param properties the properties to set
+     *
+     * @return this {@link SessionOptions} instance.
      */
-    public void properties(Map<String, Object> properties) {
+    public SessionOptions properties(Map<String, Object> properties) {
         this.properties = properties;
+        return this;
     }
 }
