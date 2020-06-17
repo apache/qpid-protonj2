@@ -17,8 +17,8 @@
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
+import org.apache.qpid.proton4j.amqp.driver.matchers.transactions.DischargeMatcher;
 import org.apache.qpid.proton4j.amqp.driver.matchers.types.EncodedAmqpValueMatcher;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.types.Binary;
@@ -28,11 +28,13 @@ import org.apache.qpid.proton4j.types.Binary;
  */
 public class DischargeExpectation extends TransferExpectation {
 
-    private Discharge discharge;
-    private EncodedAmqpValueMatcher matcher;
+    private DischargeMatcher discharge = new DischargeMatcher();
+    private EncodedAmqpValueMatcher matcher = new EncodedAmqpValueMatcher(discharge);
 
     public DischargeExpectation(AMQPTestDriver driver) {
         super(driver);
+
+        withPayload(matcher);
     }
 
     @Override
@@ -42,50 +44,22 @@ public class DischargeExpectation extends TransferExpectation {
     }
 
     public DischargeExpectation withFail(boolean fail) {
-        if (discharge == null) {
-            discharge = new Discharge();
-            matcher = new EncodedAmqpValueMatcher(discharge);
-        }
-
-        discharge.setFail(fail);
-
-        withPayload(matcher);
+        discharge.withFail(fail);
         return this;
     }
 
     public DischargeExpectation withTxnId(byte[] txnId) {
-        if (discharge == null) {
-            discharge = new Discharge();
-            matcher = new EncodedAmqpValueMatcher(discharge);
-        }
-
-        discharge.setTxnId(new Binary(txnId));
-
-        withPayload(matcher);
+        discharge.withTxnId(new Binary(txnId));
         return this;
     }
 
     public DischargeExpectation withTxnId(ProtonBuffer txnId) {
-        if (discharge == null) {
-            discharge = new Discharge();
-            matcher = new EncodedAmqpValueMatcher(discharge);
-        }
-
-        discharge.setTxnId(new Binary(txnId));
-
-        withPayload(matcher);
+        discharge.withTxnId(new Binary(txnId));
         return this;
     }
 
     public DischargeExpectation withTxnId(Binary txnId) {
-        if (discharge == null) {
-            discharge = new Discharge();
-            matcher = new EncodedAmqpValueMatcher(discharge);
-        }
-
-        discharge.setTxnId(txnId);
-
-        withPayload(matcher);
+        discharge.withTxnId(txnId);
         return this;
     }
 

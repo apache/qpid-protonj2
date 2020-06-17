@@ -16,8 +16,12 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.matchers.transactions;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.driver.matchers.ListDescribedTypeMatcher;
+import org.apache.qpid.proton4j.types.Binary;
+import org.hamcrest.Matcher;
 
 public class DischargeMatcher extends ListDescribedTypeMatcher {
 
@@ -28,5 +32,31 @@ public class DischargeMatcher extends ListDescribedTypeMatcher {
     @Override
     protected Class<?> getDescribedTypeClass() {
         return Discharge.class;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public DischargeMatcher withTxnId(byte[] txnId) {
+        return withTxnId(equalTo(new Binary(txnId)));
+    }
+
+    public DischargeMatcher withTxnId(Binary txnId) {
+        return withTxnId(equalTo(txnId));
+    }
+
+    public DischargeMatcher withFail(boolean fail) {
+        return withFail(equalTo(fail));
+    }
+
+    //----- Matcher based with methods for more complex validation
+
+    public DischargeMatcher withTxnId(Matcher<?> m) {
+        addFieldMatcher(Discharge.Field.TXN_ID, m);
+        return this;
+    }
+
+    public DischargeMatcher withFail(Matcher<?> m) {
+        addFieldMatcher(Discharge.Field.FAIL, m);
+        return this;
     }
 }

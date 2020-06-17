@@ -16,8 +16,13 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.matchers.transactions;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.driver.matchers.ListDescribedTypeMatcher;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
+import org.hamcrest.Matcher;
 
 public class TransactionalStateMatcher extends ListDescribedTypeMatcher {
 
@@ -28,5 +33,31 @@ public class TransactionalStateMatcher extends ListDescribedTypeMatcher {
     @Override
     protected Class<?> getDescribedTypeClass() {
         return TransactionalState.class;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public TransactionalStateMatcher withTxnId(byte[] txnId) {
+        return withTxnId(equalTo(new Binary(txnId)));
+    }
+
+    public TransactionalStateMatcher withTxnId(Binary txnId) {
+        return withTxnId(equalTo(txnId));
+    }
+
+    public TransactionalStateMatcher withFail(DeliveryState outcome) {
+        return withOutcome(equalTo(outcome));
+    }
+
+    //----- Matcher based with methods for more complex validation
+
+    public TransactionalStateMatcher withTxnId(Matcher<?> m) {
+        addFieldMatcher(TransactionalState.Field.TXN_ID, m);
+        return this;
+    }
+
+    public TransactionalStateMatcher withOutcome(Matcher<?> m) {
+        addFieldMatcher(TransactionalState.Field.OUTCOME, m);
+        return this;
     }
 }

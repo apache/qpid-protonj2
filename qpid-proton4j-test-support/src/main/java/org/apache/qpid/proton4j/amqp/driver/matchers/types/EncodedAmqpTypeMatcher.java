@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.types.DescribedType;
 import org.apache.qpid.proton4j.types.Symbol;
 import org.apache.qpid.proton4j.types.UnsignedLong;
 import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
 public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ProtonBuffer> {
@@ -64,8 +65,15 @@ public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ProtonBuffe
 
         if (expectedValue == null && decodedDescribedType.getDescribed() != null) {
             return false;
-        } else if (expectedValue != null && !expectedValue.equals(decodedDescribedType.getDescribed())) {
-            return false;
+        } else if (expectedValue != null) {
+            if (expectedValue instanceof Matcher) {
+                Matcher<?> matcher = (Matcher<?>) expectedValue;
+                if (!matcher.matches(decodedDescribedType.getDescribed())) {
+                    return false;
+                }
+            } else if (!expectedValue.equals(decodedDescribedType.getDescribed())) {
+                return false;
+            }
         }
 
         if (decoded < length && !permitTrailingBytes) {

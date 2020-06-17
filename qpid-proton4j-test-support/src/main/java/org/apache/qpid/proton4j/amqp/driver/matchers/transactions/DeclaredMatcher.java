@@ -16,17 +16,38 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.matchers.transactions;
 
-import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Declare;
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Declared;
 import org.apache.qpid.proton4j.amqp.driver.matchers.ListDescribedTypeMatcher;
+import org.apache.qpid.proton4j.types.Binary;
+import org.hamcrest.Matcher;
 
 public class DeclaredMatcher extends ListDescribedTypeMatcher {
 
     public DeclaredMatcher() {
-        super(Declare.Field.values().length, Declare.DESCRIPTOR_CODE, Declare.DESCRIPTOR_SYMBOL);
+        super(Declared.Field.values().length, Declared.DESCRIPTOR_CODE, Declared.DESCRIPTOR_SYMBOL);
     }
 
     @Override
     protected Class<?> getDescribedTypeClass() {
-        return Declare.class;
+        return Declared.class;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public DeclaredMatcher withTxnId(byte[] txnId) {
+        return withTxnId(equalTo(new Binary(txnId)));
+    }
+
+    public DeclaredMatcher withTxnId(Binary txnId) {
+        return withTxnId(equalTo(txnId));
+    }
+
+    //----- Matcher based with methods for more complex validation
+
+    public DeclaredMatcher withTxnId(Matcher<?> m) {
+        addFieldMatcher(Declared.Field.TXN_ID, m);
+        return this;
     }
 }

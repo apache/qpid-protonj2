@@ -400,6 +400,61 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     }
 
     @Test(timeout = 20_000)
+    public void testTransactionControllerBeginComiitBeginRollback() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+        Source source = new Source();
+        source.setOutcomes(DEFAULT_OUTCOMES);
+
+        final byte[] TXN_ID1 = new byte[] { 1, 2, 3, 4 };
+        final byte[] TXN_ID2 = new byte[] { 2, 2, 3, 4 };
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.remoteFlow().withLinkCredit(4).queue();
+        peer.expectDeclare().accept(TXN_ID1);
+        peer.expectDischarge().withFail(false).withTxnId(TXN_ID1).accept();
+        peer.expectDeclare().accept(TXN_ID2);
+        peer.expectDischarge().withFail(true).withTxnId(TXN_ID2).accept();
+        peer.expectDetach().withClosed(true).respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        TransactionController txnController = session.coordinator("test-coordinator");
+
+        txnController.setSource(source);
+        txnController.setCoordinator(coordinator);
+        txnController.open();
+
+        Transaction<TransactionController> txn1 = txnController.newTransaction();
+        Transaction<TransactionController> txn2 = txnController.newTransaction();
+
+        // Begin / Commit
+        txnController.declare(txn1);
+        txnController.discharge(txn1, false);
+
+        // Begin / Rollback
+        txnController.declare(txn2);
+        txnController.discharge(txn2, true);
+
+        txnController.close();
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
     public void testTransactionControllerDeclareAndDischargeOneTransactionDirect() {
         doTestTransactionControllerDeclareAndDischargeOneTransaction(false);
     }
