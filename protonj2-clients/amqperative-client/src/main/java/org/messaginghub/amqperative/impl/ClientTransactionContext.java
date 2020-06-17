@@ -37,6 +37,7 @@ import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientIllegalStateException;
 import org.messaginghub.amqperative.exceptions.ClientTransactionInDoubtException;
+import org.messaginghub.amqperative.exceptions.ClientTransactionNotActiveException;
 import org.messaginghub.amqperative.exceptions.ClientTransactionRolledBackException;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.slf4j.Logger;
@@ -186,21 +187,21 @@ public class ClientTransactionContext {
 
     private void checkCanCommitTransaction() throws ClientIllegalStateException {
         if (currentTxn == null) {
-            throw new ClientIllegalStateException("Commit called with no active transaction");
+            throw new ClientTransactionNotActiveException("Commit called with no active transaction");
         } else {
             switch (currentTxn.getState()) {
                 case DISCHARGED:
-                    throw new ClientIllegalStateException("Commit called before transaction declare started.");
+                    throw new ClientTransactionNotActiveException("Commit called with no active transaction");
                 case DECLARING:
                     throw new ClientIllegalStateException("Commit called before transaction declare completed.");
                 case DISCHARGING:
                     throw new ClientIllegalStateException("Commit called before transaction discharge completed.");
                 case DECLARE_FAILED:
-                    throw new ClientIllegalStateException("Commit called on a transaction that has failed due to an error during declare.");
+                    throw new ClientTransactionNotActiveException("Commit called on a transaction that has failed due to an error during declare.");
                 case DISCHARGE_FAILED:
-                    throw new ClientIllegalStateException("Commit called on a transaction that has failed due to an error during discharge.");
+                    throw new ClientTransactionNotActiveException("Commit called on a transaction that has failed due to an error during discharge.");
                 case IDLE:
-                    throw new ClientIllegalStateException("Commit called on a transaction that has not yet been declared");
+                    throw new ClientTransactionNotActiveException("Commit called on a transaction that has not yet been declared");
                 default:
                     break;
             }
@@ -209,21 +210,21 @@ public class ClientTransactionContext {
 
     private void checkCanRollbackTransaction() throws ClientIllegalStateException {
         if (currentTxn == null) {
-            throw new ClientIllegalStateException("Rollback called with no active transaction");
+            throw new ClientTransactionNotActiveException("Rollback called with no active transaction");
         } else {
             switch (currentTxn.getState()) {
                 case DISCHARGED:
-                    throw new ClientIllegalStateException("Rollback called before transaction declare started.");
+                    throw new ClientTransactionNotActiveException("Rollback called with no active transaction");
                 case DECLARING:
                     throw new ClientIllegalStateException("Rollback called before transaction declare completed.");
                 case DISCHARGING:
                     throw new ClientIllegalStateException("Rollback called before transaction discharge completed.");
                 case DECLARE_FAILED:
-                    throw new ClientIllegalStateException("Rollback called on a transaction that has failed due to an error during declare.");
+                    throw new ClientTransactionNotActiveException("Rollback called on a transaction that has failed due to an error during declare.");
                 case DISCHARGE_FAILED:
-                    throw new ClientIllegalStateException("Rollback called on a transaction that has failed due to an error during discharge.");
+                    throw new ClientTransactionNotActiveException("Rollback called on a transaction that has failed due to an error during discharge.");
                 case IDLE:
-                    throw new ClientIllegalStateException("Rollback called on a transaction that has not yet been declared");
+                    throw new ClientTransactionNotActiveException("Rollback called on a transaction that has not yet been declared");
                 default:
                     break;
             }

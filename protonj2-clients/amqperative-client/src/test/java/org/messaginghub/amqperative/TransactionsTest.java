@@ -41,6 +41,7 @@ import org.junit.Test;
 import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientIllegalStateException;
 import org.messaginghub.amqperative.exceptions.ClientOperationTimedOutException;
+import org.messaginghub.amqperative.exceptions.ClientTransactionNotActiveException;
 import org.messaginghub.amqperative.exceptions.ClientTransactionRolledBackException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.slf4j.Logger;
@@ -116,6 +117,20 @@ public class TransactionsTest extends AMQPerativeTestCase {
                 // Expect this to time out.
             }
 
+            try {
+                session.commit();
+                fail("Commit should have failed due to no active transaction.");
+            } catch (ClientIllegalStateException expected) {
+                // Expect this to time out.
+            }
+
+            try {
+                session.rollback();
+                fail("Rollback should have failed due to no active transaction.");
+            } catch (ClientIllegalStateException expected) {
+                // Expect this to time out.
+            }
+
             session.close();
             connection.close().get();
 
@@ -152,6 +167,20 @@ public class TransactionsTest extends AMQPerativeTestCase {
                 // Expect this to time out.
                 String message = expected.getMessage();
                 assertTrue(message.contains(errorMessage));
+            }
+
+            try {
+                session.commit();
+                fail("Commit should have failed due to no active transaction.");
+            } catch (ClientTransactionNotActiveException expected) {
+                // Expect this as the begin failed on coordinator rejected
+            }
+
+            try {
+                session.rollback();
+                fail("Rollback should have failed due to no active transaction.");
+            } catch (ClientTransactionNotActiveException expected) {
+                // Expect this as the begin failed on coordinator rejected
             }
 
             session.close();
@@ -194,6 +223,20 @@ public class TransactionsTest extends AMQPerativeTestCase {
                 // Expect this to time out.
                 String message = expected.getMessage();
                 assertTrue(message.contains(errorMessage));
+            }
+
+            try {
+                session.commit();
+                fail("Commit should have failed due to no active transaction.");
+            } catch (ClientTransactionNotActiveException expected) {
+                // Expect this as the begin failed on coordinator close
+            }
+
+            try {
+                session.rollback();
+                fail("Rollback should have failed due to no active transaction.");
+            } catch (ClientTransactionNotActiveException expected) {
+                // Expect this as the begin failed on coordinator close
             }
 
             session.close();
