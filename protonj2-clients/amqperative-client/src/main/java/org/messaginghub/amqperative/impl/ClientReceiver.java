@@ -340,7 +340,7 @@ public class ClientReceiver implements Receiver {
             checkClosed();
 
             if (session.getTransactionContext().isInTransaction()) {
-                delivery.disposition(session.getTransactionContext().enlistAcknowledgeInCurrentTransaction(this, (Outcome) state), settled);
+                delivery.disposition(session.getTransactionContext().enlistAcknowledgeInCurrentTransaction(this, (Outcome) state), true);
             } else {
                 delivery.disposition(state, settled);
             }

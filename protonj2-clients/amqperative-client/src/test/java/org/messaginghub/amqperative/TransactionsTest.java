@@ -18,7 +18,9 @@ package org.messaginghub.amqperative;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -895,6 +897,142 @@ public class TransactionsTest extends AMQPerativeTestCase {
             assertEquals("Hello World", value);
 
             session.commit();
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testReceiveMessageInsideOfTransactionNoAutoSettleSenderSettles() throws Exception {
+        doTestReceiveMessageInsideOfTransactionNoAutoSettle(true);
+    }
+
+    @Test(timeout = 20_000)
+    public void testReceiveMessageInsideOfTransactionNoAutoSettleSenderDoesNotSettle() throws Exception {
+        doTestReceiveMessageInsideOfTransactionNoAutoSettle(false);
+    }
+
+    private void doTestReceiveMessageInsideOfTransactionNoAutoSettle(boolean settle) throws Exception {
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectFlow();
+            peer.start();
+
+            final URI remoteURI = peer.getServerURI();
+            final ProtonBuffer payload = createEncodedMessage(new AmqpValue("Hello World"));
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            ReceiverOptions options = new ReceiverOptions().autoAccept(false).autoSettle(false);
+            Receiver receiver = session.openReceiver("test-queue", options).openFuture().get();
+
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept(txnId);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.expectDisposition().withSettled(true)
+                                    .withState(new TransactionalState().setOutcome(Accepted.getInstance()).setTxnId(new Binary(txnId)));
+            peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            session.begin();
+
+            Delivery delivery = receiver.receive(100);
+            assertNotNull(delivery);
+            assertFalse(delivery.settled());
+            assertNull(delivery.state());
+
+            Message<?> received = delivery.message();
+            assertNotNull(received);
+            assertTrue(received.body() instanceof String);
+            String value = (String) received.body();
+            assertEquals("Hello World", value);
+
+            // Manual Accept within the transaction, settlement is ignored.
+            delivery.disposition(DeliveryState.accepted(), settle);
+
+            session.commit();
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testReceiveMessageInsideOfTransactionButAcceptAndSettleOutside() throws Exception {
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectFlow();
+            peer.start();
+
+            final URI remoteURI = peer.getServerURI();
+            final ProtonBuffer payload = createEncodedMessage(new AmqpValue("Hello World"));
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            ReceiverOptions options = new ReceiverOptions().autoAccept(false).autoSettle(false);
+            Receiver receiver = session.openReceiver("test-queue", options).openFuture().get();
+
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept(txnId);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
+            peer.expectDisposition().withSettled(true).withState(Accepted.getInstance());
+
+            session.begin();
+
+            Delivery delivery = receiver.receive(100);
+            assertNotNull(delivery);
+            assertFalse(delivery.settled());
+            assertNull(delivery.state());
+
+            Message<?> received = delivery.message();
+            assertNotNull(received);
+            assertTrue(received.body() instanceof String);
+            String value = (String) received.body();
+            assertEquals("Hello World", value);
+
+            session.commit();
+
+            // Manual Accept outside the transaction and no auto settle or accept
+            // so no transactional enlistment.
+            delivery.disposition(DeliveryState.accepted(), true);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
             receiver.close();
             connection.close().get();
 
