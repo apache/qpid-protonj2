@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.driver.codec;
+package org.apache.qpid.proton4j.test.driver.codec;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -29,7 +29,6 @@ import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-import org.apache.qpid.proton4j.test.driver.codec.Codec;
 import org.apache.qpid.proton4j.types.UnsignedInteger;
 import org.apache.qpid.proton4j.types.UnsignedShort;
 import org.apache.qpid.proton4j.types.messaging.Source;

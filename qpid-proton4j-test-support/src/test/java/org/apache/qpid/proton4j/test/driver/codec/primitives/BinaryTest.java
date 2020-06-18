@@ -14,14 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.driver.codec.primitives;
+package org.apache.qpid.proton4j.test.driver.codec.primitives;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
-import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
 import org.junit.Test;
 
 public class BinaryTest {

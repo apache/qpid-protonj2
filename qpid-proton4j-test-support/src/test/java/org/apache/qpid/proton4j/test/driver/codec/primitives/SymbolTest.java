@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.driver.codec.primitives;
+package org.apache.qpid.proton4j.test.driver.codec.primitives;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -27,7 +27,6 @@ import static org.junit.Assert.assertTrue;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.junit.Test;
 
 public class SymbolTest {

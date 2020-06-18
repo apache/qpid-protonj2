@@ -14,12 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.driver.netty;
+package org.apache.qpid.proton4j.test.driver.netty;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.qpid.proton4j.test.driver.netty.NettyTestPeer;
 import org.junit.Test;
 
 public class NettyTestPeerTest {

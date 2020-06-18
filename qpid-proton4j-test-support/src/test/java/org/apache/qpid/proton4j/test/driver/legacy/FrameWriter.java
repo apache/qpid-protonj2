@@ -18,7 +18,7 @@
  * under the License.
  *
  */
-package org.apache.qpid.proton4j.driver.legacy;
+package org.apache.qpid.proton4j.test.driver.legacy;
 
 import java.nio.ByteBuffer;
 

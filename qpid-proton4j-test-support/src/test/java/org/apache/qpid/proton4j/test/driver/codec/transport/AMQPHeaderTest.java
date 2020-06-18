@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.driver.codec.transport;
+package org.apache.qpid.proton4j.test.driver.codec.transport;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -28,7 +28,6 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.qpid.proton4j.test.driver.codec.transport.AMQPHeader;
 import org.apache.qpid.proton4j.test.driver.codec.transport.AMQPHeader.HeaderHandler;
 import org.junit.Test;
 
