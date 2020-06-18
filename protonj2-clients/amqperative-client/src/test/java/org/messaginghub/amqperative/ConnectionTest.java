@@ -31,10 +31,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.qpid.proton4j.amqp.driver.matchers.messaging.SourceMatcher;
-import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.test.driver.matchers.messaging.SourceMatcher;
+import org.apache.qpid.proton4j.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 import org.apache.qpid.proton4j.types.transport.AmqpError;
 import org.apache.qpid.proton4j.types.transport.ConnectionError;

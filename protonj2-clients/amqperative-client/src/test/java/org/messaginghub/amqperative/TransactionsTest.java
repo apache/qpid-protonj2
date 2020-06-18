@@ -27,8 +27,8 @@ import static org.junit.Assert.fail;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.types.Binary;
 import org.apache.qpid.proton4j.types.messaging.Accepted;
 import org.apache.qpid.proton4j.types.messaging.AmqpValue;
