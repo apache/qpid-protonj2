@@ -86,7 +86,7 @@ public final class Binary {
             return other.buffer == null;
         }
 
-        return buffer.equals(other.buffer);
+        return Arrays.equals(buffer, other.buffer);
     }
 
     public boolean hasArray() {
