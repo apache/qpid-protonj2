@@ -166,6 +166,12 @@ public class TransactionsTest extends AMQPerativeTestCase {
                 LOG.info("Transaction begin timed out as expected");
             }
 
+            // TODO: Handling of request timeout is disjoint from the operation making
+            //       proper cleanup of current state not possible on the timeouet which
+            //       means we are in an inconsistent state until the declared actually
+            //       does arrive which isn't what we really want.  Need to revisit the
+            //       request handling in connection.
+
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectEnd().respond();
             peer.expectClose().respond();
