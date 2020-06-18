@@ -207,7 +207,7 @@
       </dependency>
       <dependency>
         <groupId>org.apache.qpid</groupId>
-        <artifactId>qpid-proton4j-test-support</artifactId>
+        <artifactId>qpid-proton4j-test-driver</artifactId>
         <version>${proton4j-version}</version>
         <scope>test</scope>
       </dependency>
