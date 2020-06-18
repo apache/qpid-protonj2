@@ -26,13 +26,13 @@ import java.security.Principal;
 
 import javax.security.sasl.SaslException;
 
-import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineTestSupport;
 import org.apache.qpid.proton4j.engine.sasl.client.SaslAuthenticator;
 import org.apache.qpid.proton4j.engine.sasl.client.SaslCredentialsProvider;
+import org.apache.qpid.proton4j.test.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.types.security.SaslCode;
 import org.junit.Test;
 

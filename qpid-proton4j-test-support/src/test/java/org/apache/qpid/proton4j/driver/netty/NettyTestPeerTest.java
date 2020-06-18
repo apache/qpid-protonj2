@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.driver.netty;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
+import org.apache.qpid.proton4j.test.driver.netty.NettyTestPeer;
 import org.junit.Test;
 
 public class NettyTestPeerTest {

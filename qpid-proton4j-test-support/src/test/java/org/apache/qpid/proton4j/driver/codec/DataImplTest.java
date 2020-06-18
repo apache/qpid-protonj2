@@ -22,7 +22,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.driver.codec.Codec;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
@@ -30,6 +29,7 @@ import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.test.driver.codec.Codec;
 import org.apache.qpid.proton4j.types.UnsignedInteger;
 import org.apache.qpid.proton4j.types.UnsignedShort;
 import org.apache.qpid.proton4j.types.messaging.Source;
@@ -67,8 +67,8 @@ public class DataImplTest {
 
         assertEquals(expectedRead, codec.decode(encoded));
 
-        org.apache.qpid.proton4j.amqp.driver.codec.transport.Open described =
-            (org.apache.qpid.proton4j.amqp.driver.codec.transport.Open) codec.getDescribedType();
+        org.apache.qpid.proton4j.test.driver.codec.transport.Open described =
+            (org.apache.qpid.proton4j.test.driver.codec.transport.Open) codec.getDescribedType();
         assertNotNull(described);
         assertEquals(Open.DESCRIPTOR_SYMBOL, described.getDescriptor());
 
@@ -78,8 +78,8 @@ public class DataImplTest {
 
     @Test
     public void testEncodeOpen() throws IOException {
-        org.apache.qpid.proton4j.amqp.driver.codec.transport.Open open =
-            new org.apache.qpid.proton4j.amqp.driver.codec.transport.Open();
+        org.apache.qpid.proton4j.test.driver.codec.transport.Open open =
+            new org.apache.qpid.proton4j.test.driver.codec.transport.Open();
         open.setContainerId("test");
         open.setHostname("localhost");
 
@@ -111,8 +111,8 @@ public class DataImplTest {
 
         assertEquals(expectedRead, codec.decode(encoded));
 
-        org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin described =
-            (org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin) codec.getDescribedType();
+        org.apache.qpid.proton4j.test.driver.codec.transport.Begin described =
+            (org.apache.qpid.proton4j.test.driver.codec.transport.Begin) codec.getDescribedType();
         assertNotNull(described);
         assertEquals(Begin.DESCRIPTOR_SYMBOL, described.getDescriptor());
 
@@ -122,8 +122,8 @@ public class DataImplTest {
 
     @Test
     public void testEncodeBegin() throws IOException {
-        org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin begin =
-            new org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin();
+        org.apache.qpid.proton4j.test.driver.codec.transport.Begin begin =
+            new org.apache.qpid.proton4j.test.driver.codec.transport.Begin();
         begin.setHandleMax(UnsignedInteger.valueOf(512));
         begin.setRemoteChannel(UnsignedShort.valueOf((short) 1));
         begin.setIncomingWindow(UnsignedInteger.valueOf(2));
@@ -163,8 +163,8 @@ public class DataImplTest {
 
         assertEquals(expectedRead, codec.decode(encoded));
 
-        org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach described =
-            (org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach) codec.getDescribedType();
+        org.apache.qpid.proton4j.test.driver.codec.transport.Attach described =
+            (org.apache.qpid.proton4j.test.driver.codec.transport.Attach) codec.getDescribedType();
         assertNotNull(described);
         assertEquals(Attach.DESCRIPTOR_SYMBOL, described.getDescriptor());
 
@@ -174,15 +174,15 @@ public class DataImplTest {
 
     @Test
     public void testEncodeAttach() throws IOException {
-        org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach attach =
-            new org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach();
+        org.apache.qpid.proton4j.test.driver.codec.transport.Attach attach =
+            new org.apache.qpid.proton4j.test.driver.codec.transport.Attach();
         attach.setName("test");
         attach.setHandle(UnsignedInteger.valueOf(1));
         attach.setRole(Role.SENDER.getValue());
         attach.setSndSettleMode(SenderSettleMode.MIXED.getValue());
         attach.setRcvSettleMode(ReceiverSettleMode.FIRST.getValue());
-        attach.setSource(new org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source());
-        attach.setTarget(new org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target());
+        attach.setSource(new org.apache.qpid.proton4j.test.driver.codec.messaging.Source());
+        attach.setTarget(new org.apache.qpid.proton4j.test.driver.codec.messaging.Target());
 
         Codec codec = Codec.Factory.create();
 

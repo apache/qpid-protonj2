@@ -27,7 +27,7 @@ import static org.junit.Assert.assertTrue;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.qpid.proton4j.amqp.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.junit.Test;
 
 public class SymbolTest {
