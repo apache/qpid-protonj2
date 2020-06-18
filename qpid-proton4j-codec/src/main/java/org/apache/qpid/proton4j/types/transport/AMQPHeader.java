@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.types.transport;
 
+import java.nio.ByteBuffer;
+
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
 
@@ -87,6 +89,26 @@ public final class AMQPHeader {
 
     public ProtonBuffer getBuffer() {
         return buffer.copy();
+    }
+
+    public byte[] toArray() {
+        if (buffer != null) {
+            final byte[] copy = new byte[buffer.getReadableBytes()];
+            buffer.getBytes(0, copy);
+            return copy;
+        } else {
+            return null;
+        }
+    }
+
+    public ByteBuffer toByteBuffer() {
+        if (buffer != null) {
+            final byte[] copy = new byte[buffer.getReadableBytes()];
+            buffer.getBytes(0, copy);
+            return ByteBuffer.wrap(copy);
+        } else {
+            return null;
+        }
     }
 
     public byte getByteAt(int i) {

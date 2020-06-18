@@ -24,7 +24,6 @@ import static org.junit.Assert.assertNull;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.types.messaging.ApplicationProperties;
 import org.apache.qpid.proton4j.types.messaging.Section.SectionType;
 import org.junit.Test;
 

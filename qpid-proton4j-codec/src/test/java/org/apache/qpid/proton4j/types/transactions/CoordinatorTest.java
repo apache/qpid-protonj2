@@ -22,8 +22,6 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 
 import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.transactions.Coordinator;
-import org.apache.qpid.proton4j.types.transactions.TxnCapability;
 import org.junit.Test;
 
 public class CoordinatorTest {

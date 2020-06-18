@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.types.transport;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -23,12 +24,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 import org.apache.qpid.proton4j.types.transport.AMQPHeader.HeaderHandler;
 import org.junit.Test;
 
@@ -45,6 +46,24 @@ public class AMQPHeaderTest {
         assertEquals(0, header.getMinor());
         assertEquals(0, header.getRevision());
         assertTrue(header.hasValidPrefix());
+    }
+
+    @Test
+    public void testToArray() {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {'A', 'M', 'Q', 'P', 0, 1, 0, 0});
+        AMQPHeader header = new AMQPHeader(buffer);
+        byte[] array = header.toArray();
+
+        assertArrayEquals(buffer.getArray(), array);
+    }
+
+    @Test
+    public void testToByteBuffer() {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {'A', 'M', 'Q', 'P', 0, 1, 0, 0});
+        AMQPHeader header = new AMQPHeader(buffer);
+        ByteBuffer byteBuffer = header.toByteBuffer();
+
+        assertArrayEquals(buffer.getArray(), byteBuffer.array());
     }
 
     @Test

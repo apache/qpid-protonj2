@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNull;
 
 import java.util.ArrayList;
 
-import org.apache.qpid.proton4j.types.messaging.AmqpSequence;
 import org.apache.qpid.proton4j.types.messaging.Section.SectionType;
 import org.junit.Test;
 

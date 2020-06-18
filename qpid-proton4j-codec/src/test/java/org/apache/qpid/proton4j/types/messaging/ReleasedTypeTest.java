@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
-import org.apache.qpid.proton4j.types.messaging.Released;
 import org.apache.qpid.proton4j.types.transport.DeliveryState.DeliveryStateType;
 import org.junit.Test;
 

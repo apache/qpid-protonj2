@@ -19,7 +19,6 @@ package org.apache.qpid.proton4j.types.messaging;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
-import org.apache.qpid.proton4j.types.messaging.DeleteOnNoLinksOrMessages;
 import org.junit.Test;
 
 public class DeleteOnNoLinksOrMessagesTest {

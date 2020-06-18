@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.types.Binary;
 import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.security.SaslInit;
 import org.apache.qpid.proton4j.types.security.SaslPerformative.SaslPerformativeHandler;
 import org.apache.qpid.proton4j.types.security.SaslPerformative.SaslPerformativeType;
 import org.junit.Test;

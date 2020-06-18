@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 import org.apache.qpid.proton4j.types.UnsignedByte;
-import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
 import org.junit.Test;
 
 public class SenderSettleModeTest {

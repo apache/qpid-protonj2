@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.apache.qpid.proton4j.types.UnsignedByte;
 import org.junit.Test;
 
 public class UnsignedByteTest {

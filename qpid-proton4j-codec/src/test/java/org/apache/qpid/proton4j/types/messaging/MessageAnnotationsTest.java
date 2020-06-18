@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.types.messaging.Section.SectionType;
 import org.apache.qpid.proton4j.types.transport.AmqpError;
 import org.junit.Test;

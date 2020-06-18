@@ -25,7 +25,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.HashMap;
 
 import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.messaging.Modified;
 import org.apache.qpid.proton4j.types.transport.DeliveryState.DeliveryStateType;
 import org.junit.Test;
 

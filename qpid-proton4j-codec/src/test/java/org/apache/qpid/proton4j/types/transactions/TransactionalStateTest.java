@@ -23,7 +23,6 @@ import static org.junit.Assert.fail;
 
 import org.apache.qpid.proton4j.types.Binary;
 import org.apache.qpid.proton4j.types.messaging.Accepted;
-import org.apache.qpid.proton4j.types.transactions.TransactionalState;
 import org.apache.qpid.proton4j.types.transport.DeliveryState.DeliveryStateType;
 import org.junit.Test;
 

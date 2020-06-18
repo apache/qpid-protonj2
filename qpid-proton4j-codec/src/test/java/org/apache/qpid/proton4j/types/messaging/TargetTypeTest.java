@@ -27,9 +27,6 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.types.Symbol;
 import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.messaging.Target;
-import org.apache.qpid.proton4j.types.messaging.TerminusDurability;
-import org.apache.qpid.proton4j.types.messaging.TerminusExpiryPolicy;
 import org.junit.Test;
 
 public class TargetTypeTest {
