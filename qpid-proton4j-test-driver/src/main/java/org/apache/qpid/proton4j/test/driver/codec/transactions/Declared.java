@@ -19,12 +19,14 @@ package org.apache.qpid.proton4j.test.driver.codec.transactions;
 import java.util.List;
 
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Outcome;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
 
-public class Declared extends ListDescribedType {
+public class Declared extends ListDescribedType implements DeliveryState, Outcome {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:declared:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000033L);
@@ -90,5 +92,10 @@ public class Declared extends ListDescribedType {
     @Override
     public int hashCode() {
         return System.identityHashCode(this);
+    }
+
+    @Override
+    public DeliveryStateType getType() {
+        return DeliveryStateType.Declared;
     }
 }

@@ -25,15 +25,16 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.test.driver.actions.ScriptCompleteAction;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslDescribedType;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslOutcome;
+import org.apache.qpid.proton4j.test.driver.codec.transport.AMQPHeader;
 import org.apache.qpid.proton4j.test.driver.codec.transport.HeartBeat;
 import org.apache.qpid.proton4j.test.driver.codec.transport.PerformativeDescribedType;
 import org.apache.qpid.proton4j.test.driver.codec.transport.PerformativeDescribedType.PerformativeType;
 import org.apache.qpid.proton4j.test.driver.exceptions.UnexpectedPerformativeError;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -388,7 +389,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     public void sendHeader(AMQPHeader header) {
         LOG.trace("Sending AMQP Header: {}", header);
         try {
-            frameConsumer.accept(header.getBuffer());
+            frameConsumer.accept(ProtonByteBufferAllocator.DEFAULT.wrap(header.getBuffer()));
         } catch (Throwable t) {
             signalFailure(new AssertionError("Frame was not consumed due to error.", t));
         }

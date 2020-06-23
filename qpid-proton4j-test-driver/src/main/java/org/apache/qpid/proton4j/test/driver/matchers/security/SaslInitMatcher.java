@@ -16,8 +16,13 @@
  */
 package org.apache.qpid.proton4j.test.driver.matchers.security;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslInit;
 import org.apache.qpid.proton4j.test.driver.matchers.ListDescribedTypeMatcher;
+import org.hamcrest.Matcher;
 
 public class SaslInitMatcher extends ListDescribedTypeMatcher {
 
@@ -28,5 +33,44 @@ public class SaslInitMatcher extends ListDescribedTypeMatcher {
     @Override
     protected Class<?> getDescribedTypeClass() {
         return SaslInit.class;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public SaslInitMatcher withMechanism(String mechanism) {
+        return withMechanism(equalTo(Symbol.valueOf(mechanism)));
+    }
+
+    public SaslInitMatcher withMechanism(Symbol mechanism) {
+        return withMechanism(equalTo(mechanism));
+    }
+
+    public SaslInitMatcher withInitialResponse(byte[] initialResponse) {
+        return withInitialResponse(equalTo(new Binary(initialResponse)));
+    }
+
+    public SaslInitMatcher withInitialResponse(Binary initialResponse) {
+        return withInitialResponse(equalTo(initialResponse));
+    }
+
+    public SaslInitMatcher withHostname(String hostname) {
+        return withHostname(equalTo(hostname));
+    }
+
+    //----- Matcher based with methods for more complex validation
+
+    public SaslInitMatcher withMechanism(Matcher<?> m) {
+        addFieldMatcher(SaslInit.Field.MECHANISM, m);
+        return this;
+    }
+
+    public SaslInitMatcher withInitialResponse(Matcher<?> m) {
+        addFieldMatcher(SaslInit.Field.INITIAL_RESPONSE, m);
+        return this;
+    }
+
+    public SaslInitMatcher withHostname(Matcher<?> m) {
+        addFieldMatcher(SaslInit.Field.HOSTNAME, m);
+        return this;
     }
 }

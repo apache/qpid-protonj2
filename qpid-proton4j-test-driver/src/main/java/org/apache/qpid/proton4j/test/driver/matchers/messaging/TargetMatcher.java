@@ -22,11 +22,12 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Target;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.ListDescribedTypeMatcher;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.messaging.TerminusDurability;
-import org.apache.qpid.proton4j.types.messaging.TerminusExpiryPolicy;
 import org.hamcrest.Matcher;
 
 public class TargetMatcher extends ListDescribedTypeMatcher {
@@ -35,7 +36,7 @@ public class TargetMatcher extends ListDescribedTypeMatcher {
         super(Target.Field.values().length, Target.DESCRIPTOR_CODE, Target.DESCRIPTOR_SYMBOL);
     }
 
-    public TargetMatcher(org.apache.qpid.proton4j.types.messaging.Target target) {
+    public TargetMatcher(Target target) {
         super(Target.Field.values().length, Target.DESCRIPTOR_CODE, Target.DESCRIPTOR_SYMBOL);
 
         addTargetMatchers(target);
@@ -76,8 +77,16 @@ public class TargetMatcher extends ListDescribedTypeMatcher {
         return withDynamic(equalTo(dynamic));
     }
 
-    public TargetMatcher withDynamicNodeProperties(Map<Symbol, Object> properties) {
+    public TargetMatcher withDynamicNodeProperties(Map<String, Object> properties) {
+        return withDynamicNodeProperties(equalTo(TypeMapper.toSymbolKeyedMap(properties)));
+    }
+
+    public TargetMatcher withDynamicNodePropertiesMap(Map<Symbol, Object> properties) {
         return withDynamicNodeProperties(equalTo(properties));
+    }
+
+    public TargetMatcher withCapabilities(String... capabilities) {
+        return withCapabilities(equalTo(TypeMapper.toSymbolArray(capabilities)));
     }
 
     public TargetMatcher withCapabilities(Symbol... capabilities) {
@@ -123,7 +132,7 @@ public class TargetMatcher extends ListDescribedTypeMatcher {
 
     //----- Populate the matcher from a given Source object
 
-    private void addTargetMatchers(org.apache.qpid.proton4j.types.messaging.Target target) {
+    private void addTargetMatchers(Target target) {
         if (target.getAddress() != null) {
             addFieldMatcher(Target.Field.ADDRESS, equalTo(target.getAddress()));
         } else {
@@ -131,13 +140,13 @@ public class TargetMatcher extends ListDescribedTypeMatcher {
         }
 
         if (target.getDurable() != null) {
-            addFieldMatcher(Target.Field.DURABLE, equalTo(target.getDurable().getValue()));
+            addFieldMatcher(Target.Field.DURABLE, equalTo(target.getDurable()));
         } else {
             addFieldMatcher(Target.Field.DURABLE, nullValue());
         }
 
         if (target.getExpiryPolicy() != null) {
-            addFieldMatcher(Target.Field.EXPIRY_POLICY, equalTo(target.getExpiryPolicy().getPolicy()));
+            addFieldMatcher(Target.Field.EXPIRY_POLICY, equalTo(target.getExpiryPolicy()));
         } else {
             addFieldMatcher(Target.Field.EXPIRY_POLICY, nullValue());
         }
@@ -148,7 +157,7 @@ public class TargetMatcher extends ListDescribedTypeMatcher {
             addFieldMatcher(Target.Field.TIMEOUT, nullValue());
         }
 
-        addFieldMatcher(Target.Field.DYNAMIC, equalTo(target.isDynamic()));
+        addFieldMatcher(Target.Field.DYNAMIC, equalTo(target.getDynamic()));
 
         if (target.getDynamicNodeProperties() != null) {
             addFieldMatcher(Target.Field.DYNAMIC_NODE_PROPERTIES, equalTo(target.getDynamicNodeProperties()));

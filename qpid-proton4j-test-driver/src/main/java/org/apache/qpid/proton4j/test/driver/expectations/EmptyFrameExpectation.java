@@ -54,16 +54,6 @@ public class EmptyFrameExpectation extends AbstractExpectation<HeartBeat> {
     }
 
     @Override
-    protected Object getFieldValue(HeartBeat received, Enum<?> performativeField) {
-        throw new AssertionError("Should not be matching on any fields, heart beat frame is empty");
-    }
-
-    @Override
-    protected Enum<?> getFieldEnum(int fieldIndex) {
-        throw new AssertionError("Should not be matching on any fields, heart beat frame is empty");
-    }
-
-    @Override
     protected Class<HeartBeat> getExpectedTypeClass() {
         return HeartBeat.class;
     }

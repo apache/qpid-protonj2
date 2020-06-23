@@ -19,12 +19,13 @@ package org.apache.qpid.proton4j.test.driver.codec.transactions;
 import java.util.List;
 
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
 
-public class TransactionalState extends ListDescribedType {
+public class TransactionalState extends ListDescribedType implements DeliveryState {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:transactional-state:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000034L);
@@ -100,5 +101,10 @@ public class TransactionalState extends ListDescribedType {
         } else {
             return described.equals(described2);
         }
+    }
+
+    @Override
+    public DeliveryStateType getType() {
+        return DeliveryStateType.Transactional;
     }
 }

@@ -20,11 +20,10 @@ import java.util.Random;
 
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.actions.DispositionInjectAction;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
 import org.apache.qpid.proton4j.test.driver.codec.transactions.Declare;
-import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
+import org.apache.qpid.proton4j.test.driver.codec.transactions.Declared;
 import org.apache.qpid.proton4j.test.driver.matchers.types.EncodedAmqpValueMatcher;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.transactions.Declared;
 
 /**
  * Expectation used to script incoming transaction declarations.
@@ -69,8 +68,13 @@ public class DeclareExpectation extends TransferExpectation {
         return this;
     }
 
-    public DeclareExpectation withDeclare(org.apache.qpid.proton4j.types.transactions.Declare declare) {
-        withPayload(new EncodedAmqpValueMatcher(TypeMapper.mapFromProtonType(declare)));
+    public DeclareExpectation withDeclare(Declare declare) {
+        withPayload(new EncodedAmqpValueMatcher(declare));
+        return this;
+    }
+
+    public DeclareExpectation withNullDeclare() {
+        withPayload(new EncodedAmqpValueMatcher(null));
         return this;
     }
 }

@@ -22,13 +22,13 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Source;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.ListDescribedTypeMatcher;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.messaging.TerminusDurability;
-import org.apache.qpid.proton4j.types.messaging.TerminusExpiryPolicy;
-import org.apache.qpid.proton4j.types.transport.DeliveryState;
 import org.hamcrest.Matcher;
 
 public class SourceMatcher extends ListDescribedTypeMatcher {
@@ -37,7 +37,7 @@ public class SourceMatcher extends ListDescribedTypeMatcher {
         super(Source.Field.values().length, Source.DESCRIPTOR_CODE, Source.DESCRIPTOR_SYMBOL);
     }
 
-    public SourceMatcher(org.apache.qpid.proton4j.types.messaging.Source source) {
+    public SourceMatcher(Source source) {
         super(Source.Field.values().length, Source.DESCRIPTOR_CODE, Source.DESCRIPTOR_SYMBOL);
 
         addSourceMatchers(source);
@@ -82,20 +82,36 @@ public class SourceMatcher extends ListDescribedTypeMatcher {
         return withDynamicNodeProperties(equalTo(properties));
     }
 
+    public SourceMatcher withDistributionMode(String distributionMode) {
+        return withDistributionMode(equalTo(Symbol.valueOf(distributionMode)));
+    }
+
     public SourceMatcher withDistributionMode(Symbol distributionMode) {
         return withDistributionMode(equalTo(distributionMode));
     }
 
-    public SourceMatcher withFilter(Map<Symbol, Object> filter) {
+    public SourceMatcher withFilter(Map<String, Object> filter) {
+        return withFilter(equalTo(TypeMapper.toSymbolKeyedMap(filter)));
+    }
+
+    public SourceMatcher withFilterMap(Map<Symbol, Object> filter) {
         return withFilter(equalTo(filter));
     }
 
     public SourceMatcher withDefaultOutcome(DeliveryState defaultOutcome) {
-        return withDefaultOutcome(equalTo(TypeMapper.mapFromProtonType(defaultOutcome)));
+        return withDefaultOutcome(equalTo(defaultOutcome));
+    }
+
+    public SourceMatcher withOutcomes(String... outcomes) {
+        return withOutcomes(equalTo(TypeMapper.toSymbolArray(outcomes)));
     }
 
     public SourceMatcher withOutcomes(Symbol... outcomes) {
         return withOutcomes(equalTo(outcomes));
+    }
+
+    public SourceMatcher withCapabilities(String... capabilities) {
+        return withCapabilities(equalTo(TypeMapper.toSymbolArray(capabilities)));
     }
 
     public SourceMatcher withCapabilities(Symbol... capabilities) {
@@ -161,7 +177,7 @@ public class SourceMatcher extends ListDescribedTypeMatcher {
 
     //----- Populate the matcher from a given Source object
 
-    private void addSourceMatchers(org.apache.qpid.proton4j.types.messaging.Source source) {
+    private void addSourceMatchers(Source source) {
         if (source.getAddress() != null) {
             addFieldMatcher(Source.Field.ADDRESS, equalTo(source.getAddress()));
         } else {
@@ -169,13 +185,13 @@ public class SourceMatcher extends ListDescribedTypeMatcher {
         }
 
         if (source.getDurable() != null) {
-            addFieldMatcher(Source.Field.DURABLE, equalTo(source.getDurable().getValue()));
+            addFieldMatcher(Source.Field.DURABLE, equalTo(source.getDurable()));
         } else {
             addFieldMatcher(Source.Field.DURABLE, nullValue());
         }
 
         if (source.getExpiryPolicy() != null) {
-            addFieldMatcher(Source.Field.EXPIRY_POLICY, equalTo(source.getExpiryPolicy().getPolicy()));
+            addFieldMatcher(Source.Field.EXPIRY_POLICY, equalTo(source.getExpiryPolicy()));
         } else {
             addFieldMatcher(Source.Field.EXPIRY_POLICY, nullValue());
         }
@@ -186,7 +202,7 @@ public class SourceMatcher extends ListDescribedTypeMatcher {
             addFieldMatcher(Source.Field.TIMEOUT, nullValue());
         }
 
-        addFieldMatcher(Source.Field.DYNAMIC, equalTo(source.isDynamic()));
+        addFieldMatcher(Source.Field.DYNAMIC, equalTo(source.getDynamic()));
 
         if (source.getDynamicNodeProperties() != null) {
             addFieldMatcher(Source.Field.DYNAMIC_NODE_PROPERTIES, equalTo(source.getDynamicNodeProperties()));
@@ -207,8 +223,7 @@ public class SourceMatcher extends ListDescribedTypeMatcher {
         }
 
         if (source.getDefaultOutcome() != null) {
-            addFieldMatcher(Source.Field.DEFAULT_OUTCOME, equalTo(
-                TypeMapper.mapFromProtonType((DeliveryState) source.getDefaultOutcome())));
+            addFieldMatcher(Source.Field.DEFAULT_OUTCOME, equalTo((DeliveryState) source.getDefaultOutcome()));
         } else {
             addFieldMatcher(Source.Field.DEFAULT_OUTCOME, nullValue());
         }

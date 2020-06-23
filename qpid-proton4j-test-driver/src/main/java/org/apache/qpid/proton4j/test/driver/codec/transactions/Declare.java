@@ -19,10 +19,10 @@ package org.apache.qpid.proton4j.test.driver.codec.transactions;
 import java.util.List;
 
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 
 public class Declare extends ListDescribedType {
 

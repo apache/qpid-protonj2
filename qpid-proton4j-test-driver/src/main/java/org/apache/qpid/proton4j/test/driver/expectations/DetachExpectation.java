@@ -26,12 +26,12 @@ import org.apache.qpid.proton4j.test.driver.LinkTracker;
 import org.apache.qpid.proton4j.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.test.driver.actions.DetachInjectAction;
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Detach;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.transport.DetachMatcher;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 import org.hamcrest.Matcher;
 
 /**
@@ -105,26 +105,23 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
     }
 
     public DetachExpectation withError(ErrorCondition error) {
-        return withError(equalTo(TypeMapper.mapFromProtonType(error)));
+        return withError(equalTo(error));
     }
 
     public DetachExpectation withError(String condition, String description) {
-        return withError(equalTo(
-            TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description))));
+        return withError(equalTo(new ErrorCondition(Symbol.valueOf(condition), description)));
     }
 
     public DetachExpectation withError(String condition, String description, Map<String, Object> info) {
-        return withError(equalTo(
-            TypeMapper.mapFromProtonType(
-                new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info)))));
+        return withError(equalTo(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info))));
     }
 
     public DetachExpectation withError(Symbol condition, String description) {
-        return withError(equalTo(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description))));
+        return withError(equalTo(new ErrorCondition(condition, description)));
     }
 
     public DetachExpectation withError(Symbol condition, String description, Map<Symbol, Object> info) {
-        return withError(equalTo(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description, info))));
+        return withError(equalTo(new ErrorCondition(condition, description, info)));
     }
 
     //----- Matcher based with methods for more complex validation
@@ -147,16 +144,6 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;
-    }
-
-    @Override
-    protected Object getFieldValue(Detach detach, Enum<?> performativeField) {
-        return detach.getFieldValue(performativeField.ordinal());
-    }
-
-    @Override
-    protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Detach.Field.values()[fieldIndex];
     }
 
     @Override

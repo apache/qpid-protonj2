@@ -26,6 +26,10 @@ public enum SaslCode {
         return UnsignedByte.valueOf((byte) ordinal());
     }
 
+    public byte byteValue() {
+        return UnsignedByte.valueOf((byte) ordinal()).byteValue();
+    }
+
     public static SaslCode valueOf(UnsignedByte v) {
         return SaslCode.values()[v.byteValue()];
     }

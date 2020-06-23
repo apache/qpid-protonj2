@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.qpid.proton4j.test.driver.matchers.sections;
+package org.apache.qpid.proton4j.test.driver.matchers.messaging;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -24,9 +24,9 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.Codec;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

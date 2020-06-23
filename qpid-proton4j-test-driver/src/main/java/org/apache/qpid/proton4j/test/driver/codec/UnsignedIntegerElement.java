@@ -17,7 +17,7 @@
 package org.apache.qpid.proton4j.test.driver.codec;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
 
 class UnsignedIntegerElement extends AtomicElement<UnsignedInteger> {
 

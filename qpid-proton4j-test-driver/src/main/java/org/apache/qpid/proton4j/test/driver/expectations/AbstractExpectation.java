@@ -27,6 +27,7 @@ import org.apache.qpid.proton4j.test.driver.codec.security.SaslInit;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslMechanisms;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslOutcome;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslResponse;
+import org.apache.qpid.proton4j.test.driver.codec.transport.AMQPHeader;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Begin;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Close;
@@ -38,7 +39,6 @@ import org.apache.qpid.proton4j.test.driver.codec.transport.HeartBeat;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Open;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Transfer;
 import org.apache.qpid.proton4j.test.driver.exceptions.UnexpectedPerformativeError;
-import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,10 +101,6 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
     }
 
     protected abstract Matcher<ListDescribedType> getExpectationMatcher();
-
-    protected abstract Object getFieldValue(T received, Enum<?> performativeField);
-
-    protected abstract Enum<?> getFieldEnum(int fieldIndex);
 
     protected abstract Class<T> getExpectedTypeClass();
 

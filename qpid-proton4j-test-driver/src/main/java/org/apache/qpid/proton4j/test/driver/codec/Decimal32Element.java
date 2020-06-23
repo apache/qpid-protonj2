@@ -17,7 +17,7 @@
 package org.apache.qpid.proton4j.test.driver.codec;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.types.Decimal32;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Decimal32;
 
 class Decimal32Element extends AtomicElement<Decimal32> {
 

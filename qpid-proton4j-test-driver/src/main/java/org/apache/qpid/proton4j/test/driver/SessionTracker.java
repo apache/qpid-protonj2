@@ -22,14 +22,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
+import org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Begin;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Detach;
 import org.apache.qpid.proton4j.test.driver.codec.transport.End;
+import org.apache.qpid.proton4j.test.driver.codec.transport.Role;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Transfer;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.UnsignedShort;
-import org.apache.qpid.proton4j.types.transport.Role;
 
 /**
  * Tracks information related to an opened Session and its various links
@@ -51,6 +52,7 @@ public class SessionTracker {
     private UnsignedInteger handleMax;
     private End end;
     private LinkTracker lastOpenedLink;
+    private LinkTracker lastOpenedCoordinatorLink;
 
     private final AMQPTestDriver driver;
 
@@ -67,6 +69,10 @@ public class SessionTracker {
 
     public LinkTracker getLastOpenedLink() {
         return lastOpenedLink;
+    }
+
+    public LinkTracker getLastOpenedCoordinatorLink() {
+        return lastOpenedCoordinatorLink;
     }
 
     public LinkTracker getLastOpenedSender() {
@@ -139,17 +145,23 @@ public class SessionTracker {
     }
 
     public LinkTracker handleAttach(Attach attach) {
-        lastOpenedLink = new LinkTracker(this, attach);
+        LinkTracker linkTracker = new LinkTracker(this, attach);
 
         if (attach.getRole().equals(Role.SENDER.getValue())) {
-            senders.add(lastOpenedLink);
+            senders.add(linkTracker);
         } else {
-            receivers.add(lastOpenedLink);
+            receivers.add(linkTracker);
         }
 
-        trackerMap.put(attach.getHandle(), lastOpenedLink);
+        if (attach.getTarget() instanceof Coordinator) {
+            lastOpenedCoordinatorLink = linkTracker;
+        }
 
-        return lastOpenedLink;
+        lastOpenedLink = linkTracker;
+
+        trackerMap.put(attach.getHandle(), linkTracker);
+
+        return linkTracker;
     }
 
     public LinkTracker handleDetach(Detach detach) {

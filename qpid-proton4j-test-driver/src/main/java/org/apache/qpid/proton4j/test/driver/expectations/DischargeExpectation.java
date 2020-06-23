@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.test.driver.expectations;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.transactions.Discharge;
 import org.apache.qpid.proton4j.test.driver.matchers.transactions.DischargeMatcher;
 import org.apache.qpid.proton4j.test.driver.matchers.types.EncodedAmqpValueMatcher;
-import org.apache.qpid.proton4j.types.Binary;
 
 /**
  * Expectation used to script incoming transaction declarations.
@@ -53,18 +52,18 @@ public class DischargeExpectation extends TransferExpectation {
         return this;
     }
 
-    public DischargeExpectation withTxnId(ProtonBuffer txnId) {
-        discharge.withTxnId(new Binary(txnId));
-        return this;
-    }
-
     public DischargeExpectation withTxnId(Binary txnId) {
         discharge.withTxnId(txnId);
         return this;
     }
 
-    public DischargeExpectation withDischarge(org.apache.qpid.proton4j.types.transactions.Discharge discharge) {
-        withPayload(new EncodedAmqpValueMatcher(TypeMapper.mapFromProtonType(discharge)));
+    public DischargeExpectation withDischarge(Discharge discharge) {
+        withPayload(new EncodedAmqpValueMatcher(discharge));
+        return this;
+    }
+
+    public DischargeExpectation withNullDischarge() {
+        withPayload(new EncodedAmqpValueMatcher(null));
         return this;
     }
 }

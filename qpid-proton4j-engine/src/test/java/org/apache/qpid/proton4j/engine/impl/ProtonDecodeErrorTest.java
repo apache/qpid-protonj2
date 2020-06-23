@@ -65,7 +65,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen();
         peer.remoteBytes().withBytes(bytes).queue();
-        peer.expectClose().withError(AmqpError.DECODE_ERROR, errorDescription);
+        peer.expectClose().withError(AmqpError.DECODE_ERROR.toString(), errorDescription);
 
         engine.start().open();
 
@@ -132,7 +132,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.remoteBytes().withBytes(bytes).queue();
-        peer.expectClose().withError(AmqpError.DECODE_ERROR, errorDescription);
+        peer.expectClose().withError(AmqpError.DECODE_ERROR.toString(), errorDescription);
 
         engine.start().open();
 
@@ -200,7 +200,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond();
         peer.expectBegin().respond();
         peer.remoteBytes().withBytes(bytes).queue();  // Queue the frame for write after expected setup
-        peer.expectClose().withError(AmqpError.DECODE_ERROR, errorDescription);
+        peer.expectClose().withError(AmqpError.DECODE_ERROR.toString(), errorDescription);
 
         Connection connection = engine.start().open();
         connection.session().open();
@@ -247,7 +247,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         peer.expectAttach().respond();
         peer.expectFlow().withLinkCredit(1);
         peer.remoteBytes().withBytes(bytes).queue();  // Queue the frame for write after expected setup
-        peer.expectClose().withError(AmqpError.DECODE_ERROR, errorDescription);
+        peer.expectClose().withError(AmqpError.DECODE_ERROR.toString(), errorDescription);
 
         Connection connection = engine.start().open();
         Session session = connection.session().open();
@@ -300,7 +300,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         peer.remoteFlow().withLinkCredit(10).queue();
         peer.expectTransfer();
         peer.remoteBytes().withBytes(bytes).queue();  // Queue the frame for write after expected setup
-        peer.expectClose().withError(AmqpError.DECODE_ERROR, errorDescription);
+        peer.expectClose().withError(AmqpError.DECODE_ERROR.toString(), errorDescription);
 
         Connection connection = engine.start().open();
         Session session = connection.session().open();

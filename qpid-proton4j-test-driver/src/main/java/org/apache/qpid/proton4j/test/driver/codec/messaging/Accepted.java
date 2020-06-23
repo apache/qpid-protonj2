@@ -19,20 +19,27 @@ package org.apache.qpid.proton4j.test.driver.codec.messaging;
 import java.util.List;
 
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
 
 /**
  * Basic Described type that should contain a List as the value.
  */
-public class Accepted extends ListDescribedType {
+public class Accepted extends ListDescribedType implements DeliveryState, Outcome {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:accepted:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000024L);
 
+    private static final Accepted INSTANCE = new Accepted();
+
     public Accepted() {
         super(0);
+    }
+
+    public static Accepted getInstance() {
+        return INSTANCE;
     }
 
     @SuppressWarnings("unchecked")
@@ -76,5 +83,10 @@ public class Accepted extends ListDescribedType {
     @Override
     public int hashCode() {
         return System.identityHashCode(this);
+    }
+
+    @Override
+    public DeliveryStateType getType() {
+        return DeliveryStateType.Accepted;
     }
 }

@@ -17,11 +17,18 @@
 package org.apache.qpid.proton4j.test.driver.actions;
 
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Accepted;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Modified;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Rejected;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Released;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.transactions.TransactionalState;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Disposition;
-import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.transport.DeliveryState;
-import org.apache.qpid.proton4j.types.transport.Role;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
+import org.apache.qpid.proton4j.test.driver.codec.transport.Role;
 
 /**
  * AMQP Disposition injection action which can be added to a driver for write at a specific time or
@@ -30,6 +37,7 @@ import org.apache.qpid.proton4j.types.transport.Role;
 public class DispositionInjectAction extends AbstractPerformativeInjectAction<Disposition> {
 
     private final Disposition disposition = new Disposition();
+    private final DeliveryStateBuilder stateBuilder = new DeliveryStateBuilder();
 
     public DispositionInjectAction(AMQPTestDriver driver) {
         super(driver);
@@ -38,6 +46,16 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
     @Override
     public Disposition getPerformative() {
         return disposition;
+    }
+
+    public DispositionInjectAction withRole(boolean role) {
+        disposition.setRole(role);
+        return this;
+    }
+
+    public DispositionInjectAction withRole(Boolean role) {
+        disposition.setRole(role);
+        return this;
     }
 
     public DispositionInjectAction withRole(Role role) {
@@ -70,8 +88,12 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
         return this;
     }
 
+    public DeliveryStateBuilder withState() {
+        return stateBuilder;
+    }
+
     public DispositionInjectAction withState(DeliveryState state) {
-        disposition.setState(TypeMapper.mapFromProtonType(state));
+        disposition.setState(state);
         return this;
     }
 
@@ -89,5 +111,125 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
         }
 
         // TODO - Process disposition in the local side of the link when needed for added validation
+    }
+
+    public final class DeliveryStateBuilder {
+
+        public DispositionInjectAction accepted() {
+            withState(Accepted.getInstance());
+            return DispositionInjectAction.this;
+        }
+
+        public DispositionInjectAction released() {
+            withState(Released.getInstance());
+            return DispositionInjectAction.this;
+        }
+
+        public DispositionInjectAction rejected() {
+            withState(new Rejected());
+            return DispositionInjectAction.this;
+        }
+
+        public DispositionInjectAction rejected(String condition, String description) {
+            withState(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description)));
+            return DispositionInjectAction.this;
+        }
+
+        public DispositionInjectAction modified() {
+            withState(new Modified());
+            return DispositionInjectAction.this;
+        }
+
+        public DispositionInjectAction modified(boolean failed) {
+            withState(new Modified().setDeliveryFailed(failed));
+            return DispositionInjectAction.this;
+        }
+
+        public DispositionInjectAction modified(boolean failed, boolean undeliverableHere) {
+            withState(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere));
+            return DispositionInjectAction.this;
+        }
+
+        public TransactionalStateBuilder transactional() {
+            TransactionalStateBuilder builder = new TransactionalStateBuilder(DispositionInjectAction.this);
+            withState(builder.getState());
+            return builder;
+        }
+    }
+
+    //----- Provide a complex builder for Transactional DeliveryState
+
+    public static class TransactionalStateBuilder {
+
+        private final DispositionInjectAction action;
+        private final TransactionalState state = new TransactionalState();
+
+        public TransactionalStateBuilder(DispositionInjectAction action) {
+            this.action = action;
+        }
+
+        public TransactionalState getState() {
+            return state;
+        }
+
+        public DispositionInjectAction also() {
+            return action;
+        }
+
+        public DispositionInjectAction and() {
+            return action;
+        }
+
+        public TransactionalStateBuilder withTxnId(byte[] txnId) {
+            state.setTxnId(new Binary(txnId));
+            return this;
+        }
+
+        public TransactionalStateBuilder withTxnId(Binary txnId) {
+            state.setTxnId(txnId);
+            return this;
+        }
+
+        public TransactionalStateBuilder withOutcome(DeliveryState outcome) {
+            state.setOutcome(outcome);
+            return this;
+        }
+
+        // ----- Add a layer to allow configuring the outcome without specific type dependencies
+
+        public TransactionalStateBuilder withAccepted() {
+            withOutcome(Accepted.getInstance());
+            return this;
+        }
+
+        public TransactionalStateBuilder withReleased() {
+            withOutcome(Released.getInstance());
+            return this;
+        }
+
+        public TransactionalStateBuilder withRejected() {
+            withOutcome(new Rejected());
+            return this;
+        }
+
+        public TransactionalStateBuilder withRejected(String condition, String description) {
+            withOutcome(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description)));
+            return this;
+        }
+
+        public TransactionalStateBuilder withModified() {
+            withOutcome(new Modified());
+            return this;
+        }
+
+        public TransactionalStateBuilder withModified(boolean failed) {
+            withOutcome(new Modified().setDeliveryFailed(failed));
+            return this;
+        }
+
+        public TransactionalStateBuilder withModified(boolean failed, boolean undeliverableHere) {
+            withOutcome(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere));
+            return this;
+        }
     }
 }

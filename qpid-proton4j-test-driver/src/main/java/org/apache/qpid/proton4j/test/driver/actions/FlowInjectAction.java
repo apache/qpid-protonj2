@@ -21,9 +21,9 @@ import java.util.Map;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.LinkTracker;
 import org.apache.qpid.proton4j.test.driver.SessionTracker;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Flow;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
 
 /**
  * AMQP Flow injection action which can be added to a driver for write at a specific time or

@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.qpid.proton4j.types.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
 
 public abstract class ListDescribedType implements DescribedType {
 
@@ -115,6 +115,6 @@ public abstract class ListDescribedType implements DescribedType {
 
     @Override
     public String toString() {
-        return "ListDescribedType [descriptor=" + getDescriptor() + " fields=" + Arrays.toString(getFields()) + "]";
+        return getClass().getSimpleName() + " [descriptor=" + getDescriptor() + " fields=" + Arrays.toString(getFields()) + "]";
     }
 }

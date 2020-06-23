@@ -24,22 +24,17 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.codec.CodecFactory;
-import org.apache.qpid.proton4j.codec.Decoder;
-import org.apache.qpid.proton4j.codec.DecoderState;
-import org.apache.qpid.proton4j.codec.Encoder;
-import org.apache.qpid.proton4j.codec.EncoderState;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.UnsignedShort;
-import org.apache.qpid.proton4j.types.messaging.Source;
-import org.apache.qpid.proton4j.types.messaging.Target;
-import org.apache.qpid.proton4j.types.transport.Attach;
-import org.apache.qpid.proton4j.types.transport.Begin;
-import org.apache.qpid.proton4j.types.transport.Open;
-import org.apache.qpid.proton4j.types.transport.Performative;
-import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.types.transport.Role;
-import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Source;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Target;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
+import org.apache.qpid.proton4j.test.driver.codec.transport.Attach;
+import org.apache.qpid.proton4j.test.driver.codec.transport.Begin;
+import org.apache.qpid.proton4j.test.driver.codec.transport.Open;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.test.driver.codec.transport.Role;
+import org.apache.qpid.proton4j.test.driver.codec.transport.SenderSettleMode;
 import org.junit.Test;
 
 /**
@@ -47,11 +42,7 @@ import org.junit.Test;
  */
 public class DataImplTest {
 
-    private final Encoder encoder = CodecFactory.getDefaultEncoder();
-    private final EncoderState encoderState = encoder.newEncoderState();
-
-    private final Decoder decoder = CodecFactory.getDefaultDecoder();
-    private final DecoderState decoderState = decoder.newDecoderState();
+    private final Codec codec = Codec.Factory.create();
 
     @Test
     public void testDecodeOpen() {
@@ -66,8 +57,7 @@ public class DataImplTest {
 
         assertEquals(expectedRead, codec.decode(encoded));
 
-        org.apache.qpid.proton4j.test.driver.codec.transport.Open described =
-            (org.apache.qpid.proton4j.test.driver.codec.transport.Open) codec.getDescribedType();
+        Open described = (Open) codec.getDescribedType();
         assertNotNull(described);
         assertEquals(Open.DESCRIPTOR_SYMBOL, described.getDescriptor());
 
@@ -77,8 +67,7 @@ public class DataImplTest {
 
     @Test
     public void testEncodeOpen() throws IOException {
-        org.apache.qpid.proton4j.test.driver.codec.transport.Open open =
-            new org.apache.qpid.proton4j.test.driver.codec.transport.Open();
+        Open open =new Open();
         open.setContainerId("test");
         open.setHostname("localhost");
 
@@ -88,7 +77,7 @@ public class DataImplTest {
         ProtonBuffer encoded = ProtonByteBufferAllocator.DEFAULT.allocate((int) codec.encodedSize());
         codec.encode(encoded);
 
-        Performative decoded = decodeProtonPerformative(encoded);
+        DescribedType decoded = decodeProtonPerformative(encoded);
         assertNotNull(decoded);
         assertTrue(decoded instanceof Open);
 
@@ -100,8 +89,8 @@ public class DataImplTest {
     @Test
     public void testDecodeBegin() {
         Begin begin = new Begin();
-        begin.setHandleMax(512);
-        begin.setRemoteChannel(1);
+        begin.setHandleMax(UnsignedInteger.valueOf(512));
+        begin.setRemoteChannel(UnsignedShort.valueOf(1));
 
         ProtonBuffer encoded = encodeProtonPerformative(begin);
         int expectedRead = encoded.getReadableBytes();
@@ -110,8 +99,7 @@ public class DataImplTest {
 
         assertEquals(expectedRead, codec.decode(encoded));
 
-        org.apache.qpid.proton4j.test.driver.codec.transport.Begin described =
-            (org.apache.qpid.proton4j.test.driver.codec.transport.Begin) codec.getDescribedType();
+        Begin described = (Begin) codec.getDescribedType();
         assertNotNull(described);
         assertEquals(Begin.DESCRIPTOR_SYMBOL, described.getDescriptor());
 
@@ -121,8 +109,7 @@ public class DataImplTest {
 
     @Test
     public void testEncodeBegin() throws IOException {
-        org.apache.qpid.proton4j.test.driver.codec.transport.Begin begin =
-            new org.apache.qpid.proton4j.test.driver.codec.transport.Begin();
+        Begin begin = new Begin();
         begin.setHandleMax(UnsignedInteger.valueOf(512));
         begin.setRemoteChannel(UnsignedShort.valueOf((short) 1));
         begin.setIncomingWindow(UnsignedInteger.valueOf(2));
@@ -135,20 +122,20 @@ public class DataImplTest {
         ProtonBuffer encoded = ProtonByteBufferAllocator.DEFAULT.allocate((int) codec.encodedSize());
         codec.encode(encoded);
 
-        Performative decoded = decodeProtonPerformative(encoded);
+        DescribedType decoded = decodeProtonPerformative(encoded);
         assertNotNull(decoded);
         assertTrue(decoded instanceof Begin);
 
         Begin performative = (Begin) decoded;
-        assertEquals(performative.getHandleMax(), 512);
-        assertEquals(performative.getRemoteChannel(), 1);
+        assertEquals(performative.getHandleMax(), UnsignedInteger.valueOf(512));
+        assertEquals(performative.getRemoteChannel(), UnsignedShort.valueOf((short) 1));
     }
 
     @Test
     public void testDecodeAttach() {
         Attach attach = new Attach();
         attach.setName("test");
-        attach.setHandle(1);
+        attach.setHandle(UnsignedInteger.valueOf(1));
         attach.setRole(Role.SENDER);
         attach.setSenderSettleMode(SenderSettleMode.MIXED);
         attach.setReceiverSettleMode(ReceiverSettleMode.FIRST);
@@ -162,8 +149,7 @@ public class DataImplTest {
 
         assertEquals(expectedRead, codec.decode(encoded));
 
-        org.apache.qpid.proton4j.test.driver.codec.transport.Attach described =
-            (org.apache.qpid.proton4j.test.driver.codec.transport.Attach) codec.getDescribedType();
+        Attach described = (Attach) codec.getDescribedType();
         assertNotNull(described);
         assertEquals(Attach.DESCRIPTOR_SYMBOL, described.getDescriptor());
 
@@ -173,15 +159,14 @@ public class DataImplTest {
 
     @Test
     public void testEncodeAttach() throws IOException {
-        org.apache.qpid.proton4j.test.driver.codec.transport.Attach attach =
-            new org.apache.qpid.proton4j.test.driver.codec.transport.Attach();
+        Attach attach = new Attach();
         attach.setName("test");
         attach.setHandle(UnsignedInteger.valueOf(1));
         attach.setRole(Role.SENDER.getValue());
-        attach.setSndSettleMode(SenderSettleMode.MIXED.getValue());
-        attach.setRcvSettleMode(ReceiverSettleMode.FIRST.getValue());
-        attach.setSource(new org.apache.qpid.proton4j.test.driver.codec.messaging.Source());
-        attach.setTarget(new org.apache.qpid.proton4j.test.driver.codec.messaging.Target());
+        attach.setSenderSettleMode(SenderSettleMode.MIXED.getValue());
+        attach.setReceiverSettleMode(ReceiverSettleMode.FIRST.getValue());
+        attach.setSource(new Source());
+        attach.setTarget(new Target());
 
         Codec codec = Codec.Factory.create();
 
@@ -189,34 +174,49 @@ public class DataImplTest {
         ProtonBuffer encoded = ProtonByteBufferAllocator.DEFAULT.allocate((int) codec.encodedSize());
         codec.encode(encoded);
 
-        Performative decoded = decodeProtonPerformative(encoded);
+        DescribedType decoded = decodeProtonPerformative(encoded);
         assertNotNull(decoded);
         assertTrue(decoded instanceof Attach);
 
         Attach performative = (Attach) decoded;
-        assertEquals(performative.getHandle(), 1);
+        assertEquals(performative.getHandle(), UnsignedInteger.valueOf(1));
         assertEquals(performative.getName(), "test");
     }
 
-    private Performative decodeProtonPerformative(ProtonBuffer buffer) throws IOException {
-        Performative performative = null;
+    private DescribedType decodeProtonPerformative(ProtonBuffer buffer) throws IOException {
+        DescribedType performative = null;
 
         try {
-            performative = (Performative) decoder.readObject(buffer, decoderState);
+            codec.decode(buffer);
+        } catch (Exception e) {
+            throw new AssertionError("Decoder failed reading remote input:", e);
+        }
+
+        Codec.DataType dataType = codec.type();
+        if (dataType != Codec.DataType.DESCRIBED) {
+            throw new IllegalArgumentException(
+                "Frame body type expected to be " + Codec.DataType.DESCRIBED + " but was: " + dataType);
+        }
+
+        try {
+            performative = codec.getDescribedType();
         } finally {
-            decoderState.reset();
+            codec.clear();
         }
 
         return performative;
     }
 
-    private ProtonBuffer encodeProtonPerformative(Performative performative) {
+    private ProtonBuffer encodeProtonPerformative(DescribedType performative) {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        try {
-            encoder.writeObject(buffer, encoderState, performative);
-        } finally {
-            encoderState.reset();
+        if (performative != null) {
+            try {
+                codec.putDescribedType(performative);
+                codec.encode(buffer);
+            } finally {
+                codec.clear();
+            }
         }
 
         return buffer;

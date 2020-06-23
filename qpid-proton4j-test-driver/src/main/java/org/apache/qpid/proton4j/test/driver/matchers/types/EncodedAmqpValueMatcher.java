@@ -18,9 +18,9 @@
  */
 package org.apache.qpid.proton4j.test.driver.matchers.types;
 
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
-import org.apache.qpid.proton4j.types.messaging.AmqpValue;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.AmqpValue;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Description;
 
 public class EncodedAmqpValueMatcher extends EncodedAmqpTypeMatcher {

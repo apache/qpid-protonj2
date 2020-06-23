@@ -18,12 +18,12 @@ package org.apache.qpid.proton4j.test.driver;
 
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Target;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Attach;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.types.transport.Role;
-import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.test.driver.codec.transport.Role;
+import org.apache.qpid.proton4j.test.driver.codec.transport.SenderSettleMode;
 
 /**
  * Tracks information about links that are opened be the client under test.
@@ -50,12 +50,12 @@ public class LinkTracker {
         return isSender() ? Role.SENDER : Role.RECEIVER;
     }
 
-    public SenderSettleMode getSndSettleMode() {
-        return attach.getSndSettleMode() != null ? SenderSettleMode.valueOf(attach.getSndSettleMode()) : SenderSettleMode.MIXED;
+    public SenderSettleMode getSenderSettleMode() {
+        return attach.getSenderSettleMode() != null ? SenderSettleMode.valueOf(attach.getSenderSettleMode()) : SenderSettleMode.MIXED;
     }
 
-    public ReceiverSettleMode getRcvSettleMode() {
-        return attach.getRcvSettleMode() != null ? ReceiverSettleMode.valueOf(attach.getRcvSettleMode()) : ReceiverSettleMode.FIRST;
+    public ReceiverSettleMode getReceiverSettleMode() {
+        return attach.getReceiverSettleMode() != null ? ReceiverSettleMode.valueOf(attach.getReceiverSettleMode()) : ReceiverSettleMode.FIRST;
     }
 
     public UnsignedInteger getHandle() {

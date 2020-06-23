@@ -16,8 +16,13 @@
  */
 package org.apache.qpid.proton4j.test.driver.matchers.security;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.security.SaslCode;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslOutcome;
 import org.apache.qpid.proton4j.test.driver.matchers.ListDescribedTypeMatcher;
+import org.hamcrest.Matcher;
 
 public class SaslOutcomeMatcher extends ListDescribedTypeMatcher {
 
@@ -28,5 +33,35 @@ public class SaslOutcomeMatcher extends ListDescribedTypeMatcher {
     @Override
     protected Class<?> getDescribedTypeClass() {
         return SaslOutcome.class;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public SaslOutcomeMatcher withCode(byte code) {
+        return withCode(equalTo(SaslCode.valueOf(code)));
+    }
+
+    public SaslOutcomeMatcher withCode(SaslCode code) {
+        return withCode(equalTo(code));
+    }
+
+    public SaslOutcomeMatcher withAdditionalData(byte[] additionalData) {
+        return withAdditionalData(equalTo(new Binary(additionalData)));
+    }
+
+    public SaslOutcomeMatcher withAdditionalData(Binary additionalData) {
+        return withAdditionalData(equalTo(additionalData));
+    }
+
+    //----- Matcher based with methods for more complex validation
+
+    public SaslOutcomeMatcher withCode(Matcher<?> m) {
+        addFieldMatcher(SaslOutcome.Field.CODE, m);
+        return this;
+    }
+
+    public SaslOutcomeMatcher withAdditionalData(Matcher<?> m) {
+        addFieldMatcher(SaslOutcome.Field.ADDITIONAL_DATA, m);
+        return this;
     }
 }

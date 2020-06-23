@@ -17,8 +17,8 @@
 package org.apache.qpid.proton4j.test.driver.codec;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 
 class ArrayElement extends AbstractElement<Object[]> {
 

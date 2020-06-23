@@ -26,11 +26,11 @@ import org.apache.qpid.proton4j.test.driver.SessionTracker;
 import org.apache.qpid.proton4j.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.test.driver.actions.EndInjectAction;
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.transport.End;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.transport.EndMatcher;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 import org.hamcrest.Matcher;
 
 /**
@@ -80,26 +80,23 @@ public class EndExpectation extends AbstractExpectation<End> {
     //----- Type specific with methods that perform simple equals checks
 
     public EndExpectation withError(ErrorCondition error) {
-        return withError(equalTo(TypeMapper.mapFromProtonType(error)));
+        return withError(equalTo(error));
     }
 
     public EndExpectation withError(String condition, String description) {
-        return withError(equalTo(
-            TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description))));
+        return withError(equalTo(new ErrorCondition(Symbol.valueOf(condition), description)));
     }
 
     public EndExpectation withError(String condition, String description, Map<String, Object> info) {
-        return withError(equalTo(
-            TypeMapper.mapFromProtonType(
-                new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info)))));
+        return withError(equalTo(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info))));
     }
 
     public EndExpectation withError(Symbol condition, String description) {
-        return withError(equalTo(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description))));
+        return withError(equalTo(new ErrorCondition(condition, description)));
     }
 
     public EndExpectation withError(Symbol condition, String description, Map<Symbol, Object> info) {
-        return withError(equalTo(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description, info))));
+        return withError(equalTo(new ErrorCondition(condition, description, info)));
     }
 
     //----- Matcher based with methods for more complex validation
@@ -112,16 +109,6 @@ public class EndExpectation extends AbstractExpectation<End> {
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;
-    }
-
-    @Override
-    protected Object getFieldValue(End end, Enum<?> performativeField) {
-        return end.getFieldValue(performativeField.ordinal());
-    }
-
-    @Override
-    protected Enum<?> getFieldEnum(int fieldIndex) {
-        return End.Field.values()[fieldIndex];
     }
 
     @Override

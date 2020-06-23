@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.test.driver.codec;
 import java.nio.charset.Charset;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 
 class SymbolElement extends AtomicElement<Symbol> {
 

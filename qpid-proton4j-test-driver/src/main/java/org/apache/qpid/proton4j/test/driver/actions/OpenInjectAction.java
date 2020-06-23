@@ -19,11 +19,11 @@ package org.apache.qpid.proton4j.test.driver.actions;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Open;
 import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.UnsignedShort;
 
 /**
  * AMQP Open injection action which can be added to a driver for write at a specific time or
@@ -148,12 +148,12 @@ public class OpenInjectAction extends AbstractPerformativeInjectAction<Open> {
         return this;
     }
 
-    public OpenInjectAction withPropertiesMap(Map<String, Object> properties) {
+    public OpenInjectAction withProperties(Map<String, Object> properties) {
         open.setProperties(TypeMapper.toSymbolKeyedMap(properties));
         return this;
     }
 
-    public OpenInjectAction withProperties(Map<Symbol, Object> properties) {
+    public OpenInjectAction withPropertiesMap(Map<Symbol, Object> properties) {
         open.setProperties(properties);
         return this;
     }

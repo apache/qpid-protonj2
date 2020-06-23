@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.test.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -25,20 +26,19 @@ import org.apache.qpid.proton4j.test.driver.LinkTracker;
 import org.apache.qpid.proton4j.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.test.driver.actions.DispositionInjectAction;
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
-import org.apache.qpid.proton4j.test.driver.codec.security.SaslResponse;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Accepted;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Modified;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Rejected;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Released;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Transfer;
-import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
+import org.apache.qpid.proton4j.test.driver.matchers.transactions.TransactionalStateMatcher;
 import org.apache.qpid.proton4j.test.driver.matchers.transport.TransferMatcher;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.messaging.Accepted;
-import org.apache.qpid.proton4j.types.messaging.Modified;
-import org.apache.qpid.proton4j.types.messaging.Rejected;
-import org.apache.qpid.proton4j.types.messaging.Released;
-import org.apache.qpid.proton4j.types.transport.DeliveryState;
-import org.apache.qpid.proton4j.types.transport.ErrorCondition;
-import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
@@ -48,6 +48,7 @@ import org.hamcrest.Matchers;
 public class TransferExpectation extends AbstractExpectation<Transfer> {
 
     private final TransferMatcher matcher = new TransferMatcher();
+    private final DeliveryStateBuilder stateBuilder = new DeliveryStateBuilder();
 
     private Matcher<ProtonBuffer> payloadMatcher = Matchers.any(ProtonBuffer.class);
 
@@ -208,7 +209,15 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     }
 
     public TransferExpectation withState(DeliveryState state) {
-        return withState(equalTo(TypeMapper.mapFromProtonType(state)));
+        return withState(equalTo(state));
+    }
+
+    public DeliveryStateBuilder withState() {
+        return stateBuilder;
+    }
+
+    public TransferExpectation withNullState() {
+        return withState(nullValue());
     }
 
     public TransferExpectation withResume(boolean resume) {
@@ -226,12 +235,6 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     public TransferExpectation withPayload(byte[] buffer) {
         // TODO - Create Matcher which describes the mismatch in detail
         this.payloadMatcher = Matchers.equalTo(ProtonByteBufferAllocator.DEFAULT.wrap(buffer));
-        return this;
-    }
-
-    public TransferExpectation withPayload(ProtonBuffer buffer) {
-        // TODO - Create Matcher which describes the mismatch in detail
-        this.payloadMatcher = Matchers.equalTo(buffer);
         return this;
     }
 
@@ -308,17 +311,139 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     }
 
     @Override
-    protected Object getFieldValue(Transfer transfer, Enum<?> performativeField) {
-        return transfer.getFieldValue(performativeField.ordinal());
-    }
-
-    @Override
-    protected Enum<?> getFieldEnum(int fieldIndex) {
-        return SaslResponse.Field.values()[fieldIndex];
-    }
-
-    @Override
     protected Class<Transfer> getExpectedTypeClass() {
         return Transfer.class;
+    }
+
+    public final class DeliveryStateBuilder {
+
+        public TransferExpectation accepted() {
+            withState(Accepted.getInstance());
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation released() {
+            withState(Released.getInstance());
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation rejected() {
+            withState(new Rejected());
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation rejected(String condition, String description) {
+            withState(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description)));
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation modified() {
+            withState(new Modified());
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation modified(boolean failed) {
+            withState(new Modified());
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation modified(boolean failed, boolean undeliverableHere) {
+            withState(new Modified());
+            return TransferExpectation.this;
+        }
+
+        public TransferTransactionalStateMatcher transactional() {
+            TransferTransactionalStateMatcher matcher = new TransferTransactionalStateMatcher(TransferExpectation.this);
+            withState(matcher);
+            return matcher;
+        }
+    }
+
+    //----- Extend the TransferMatcher type to have an API suitable for Transfer expectation setup
+
+    public static class TransferTransactionalStateMatcher extends TransactionalStateMatcher {
+
+        private final TransferExpectation expectation;
+
+        public TransferTransactionalStateMatcher(TransferExpectation expectation) {
+            this.expectation = expectation;
+        }
+
+        public TransferExpectation also() {
+            return expectation;
+        }
+
+        public TransferExpectation and() {
+            return expectation;
+        }
+
+        @Override
+        public TransferTransactionalStateMatcher withTxnId(byte[] txnId) {
+            super.withTxnId(equalTo(new Binary(txnId)));
+            return this;
+        }
+
+        @Override
+        public TransferTransactionalStateMatcher withTxnId(Binary txnId) {
+            super.withTxnId(equalTo(txnId));
+            return this;
+        }
+
+        @Override
+        public TransferTransactionalStateMatcher withOutcome(DeliveryState outcome) {
+            super.withOutcome(equalTo(outcome));
+            return this;
+        }
+
+        //----- Matcher based with methods for more complex validation
+
+        @Override
+        public TransferTransactionalStateMatcher withTxnId(Matcher<?> m) {
+            super.withOutcome(m);
+            return this;
+        }
+
+        @Override
+        public TransferTransactionalStateMatcher withOutcome(Matcher<?> m) {
+            super.withOutcome(m);
+            return this;
+        }
+
+        // ----- Add a layer to allow configuring the outcome without specific type dependencies
+
+        public TransferTransactionalStateMatcher accepted() {
+            super.withOutcome(Accepted.getInstance());
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher released() {
+            super.withOutcome(Released.getInstance());
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher rejected() {
+            super.withOutcome(new Rejected());
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher rejected(String condition, String description) {
+            super.withOutcome(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description)));
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher modified() {
+            super.withOutcome(new Modified());
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher modified(boolean failed) {
+            super.withOutcome(new Modified());
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher modified(boolean failed, boolean undeliverableHere) {
+            super.withOutcome(new Modified());
+            return this;
+        }
     }
 }

@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.proton4j.test.driver.actions;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedByte;
+import org.apache.qpid.proton4j.test.driver.codec.security.SaslCode;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslOutcome;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.security.SaslCode;
 
 /**
  * AMQP SaslOutcome injection action which can be added to a driver for write at a specific time or
@@ -34,12 +34,17 @@ public class SaslOutcomeInjectAction extends AbstractSaslPerformativeInjectActio
         super(driver);
     }
 
+    public SaslOutcomeInjectAction withCode(byte code) {
+        saslOutcome.setCode(UnsignedByte.valueOf(code));
+        return this;
+    }
+
     public SaslOutcomeInjectAction withCode(SaslCode code) {
         saslOutcome.setCode(code.getValue());
         return this;
     }
 
-    public SaslOutcomeInjectAction withAdditionalData(ProtonBuffer additionalData) {
+    public SaslOutcomeInjectAction withAdditionalData(byte[] additionalData) {
         saslOutcome.setAdditionalData(new Binary(additionalData));
         return this;
     }

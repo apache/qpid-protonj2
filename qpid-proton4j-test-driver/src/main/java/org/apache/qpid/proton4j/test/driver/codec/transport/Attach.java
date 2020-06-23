@@ -22,15 +22,13 @@ import java.util.Map;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Target;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedByte;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 import org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedByte;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.UnsignedLong;
-import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
 
 public class Attach extends PerformativeDescribedType {
 
@@ -98,25 +96,55 @@ public class Attach extends PerformativeDescribedType {
         return this;
     }
 
+    public Attach setRole(boolean o) {
+        getList().set(Field.ROLE.ordinal(), o);
+        return this;
+    }
+
+    public Attach setRole(Role role) {
+        getList().set(Field.ROLE.ordinal(), role.getValue());
+        return this;
+    }
+
     public Boolean getRole() {
         return (Boolean) getList().get(Field.ROLE.ordinal());
     }
 
-    public Attach setSndSettleMode(UnsignedByte o) {
+    public Attach setSenderSettleMode(byte o) {
+        getList().set(Field.SND_SETTLE_MODE.ordinal(), UnsignedByte.valueOf(o));
+        return this;
+    }
+
+    public Attach setSenderSettleMode(UnsignedByte o) {
         getList().set(Field.SND_SETTLE_MODE.ordinal(), o);
         return this;
     }
 
-    public UnsignedByte getSndSettleMode() {
+    public Attach setSenderSettleMode(SenderSettleMode o) {
+        getList().set(Field.SND_SETTLE_MODE.ordinal(), o.getValue());
+        return this;
+    }
+
+    public UnsignedByte getSenderSettleMode() {
         return (UnsignedByte) getList().get(Field.SND_SETTLE_MODE.ordinal());
     }
 
-    public Attach setRcvSettleMode(UnsignedByte o) {
+    public Attach setReceiverSettleMode(byte o) {
+        getList().set(Field.RCV_SETTLE_MODE.ordinal(), UnsignedByte.valueOf(o));
+        return this;
+    }
+
+    public Attach setReceiverSettleMode(UnsignedByte o) {
         getList().set(Field.RCV_SETTLE_MODE.ordinal(), o);
         return this;
     }
 
-    public UnsignedByte getRcvSettleMode() {
+    public Attach setReceiverSettleMode(ReceiverSettleMode o) {
+        getList().set(Field.RCV_SETTLE_MODE.ordinal(), o.getValue());
+        return this;
+    }
+
+    public UnsignedByte getReceiverSettleMode() {
         return (UnsignedByte) getList().get(Field.RCV_SETTLE_MODE.ordinal());
     }
 

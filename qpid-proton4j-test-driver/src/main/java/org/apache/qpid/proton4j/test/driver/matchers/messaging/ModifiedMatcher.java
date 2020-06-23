@@ -16,17 +16,67 @@
  */
 package org.apache.qpid.proton4j.test.driver.matchers.messaging;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import java.util.Map;
+
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Modified;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.ListDescribedTypeMatcher;
+import org.hamcrest.Matcher;
 
 public class ModifiedMatcher extends ListDescribedTypeMatcher {
 
     public ModifiedMatcher() {
-        super(0, Modified.DESCRIPTOR_CODE, Modified.DESCRIPTOR_SYMBOL);
+        super(Modified.Field.values().length, Modified.DESCRIPTOR_CODE, Modified.DESCRIPTOR_SYMBOL);
     }
 
     @Override
     protected Class<?> getDescribedTypeClass() {
         return Modified.class;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public ModifiedMatcher withDeliveryFailed(boolean deliveryFailed) {
+        return withDeliveryFailed(equalTo(deliveryFailed));
+    }
+
+    public ModifiedMatcher withDeliveryFailed(Boolean deliveryFailed) {
+        return withDeliveryFailed(equalTo(deliveryFailed));
+    }
+
+    public ModifiedMatcher withUndeliverableHere(boolean undeliverableHere) {
+        return withUndeliverableHere(equalTo(undeliverableHere));
+    }
+
+    public ModifiedMatcher withUndeliverableHere(Boolean undeliverableHere) {
+        return withUndeliverableHere(equalTo(undeliverableHere));
+    }
+
+    public ModifiedMatcher withMessageAnnotationsMap(Map<Symbol, Object> sectionNo) {
+        return withMessageAnnotations(equalTo(sectionNo));
+    }
+
+    public ModifiedMatcher withMessageAnnotations(Map<String, Object> sectionNo) {
+        return withMessageAnnotations(equalTo(TypeMapper.toSymbolKeyedMap(sectionNo)));
+    }
+
+    //----- Matcher based with methods for more complex validation
+
+    public ModifiedMatcher withDeliveryFailed(Matcher<?> m) {
+        addFieldMatcher(Modified.Field.DELIVERY_FAILED, m);
+        return this;
+    }
+
+    public ModifiedMatcher withUndeliverableHere(Matcher<?> m) {
+        addFieldMatcher(Modified.Field.UNDELIVERABLE_HERE, m);
+        return this;
+    }
+
+    public ModifiedMatcher withMessageAnnotations(Matcher<?> m) {
+        addFieldMatcher(Modified.Field.MESSAGE_ANNOTATIONS, m);
+        return this;
     }
 }

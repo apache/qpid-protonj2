@@ -61,11 +61,6 @@ public class RawBytesInjectAction implements ScriptedAction {
         return this;
     }
 
-    public RawBytesInjectAction withBytes(ProtonBuffer buffer) {
-        this.buffer = buffer;
-        return this;
-    }
-
     public RawBytesInjectAction withBytes(byte[] bytes) {
         this.buffer = ProtonByteBufferAllocator.DEFAULT.wrap(bytes);
         return this;

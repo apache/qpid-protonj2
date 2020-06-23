@@ -17,7 +17,7 @@
 package org.apache.qpid.proton4j.test.driver.codec;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
 
 class BinaryElement extends AtomicElement<Binary> {
 
@@ -26,7 +26,7 @@ class BinaryElement extends AtomicElement<Binary> {
     BinaryElement(Element<?> parent, Element<?> prev, Binary b) {
         super(parent, prev);
         byte[] data = new byte[b.getLength()];
-        System.arraycopy(b.getArray(), b.getArrayOffset(), data, 0, b.getLength());
+        System.arraycopy(b.getArray(), 0, data, 0, b.getLength());
         value = new Binary(data);
     }
 
@@ -72,6 +72,7 @@ class BinaryElement extends AtomicElement<Binary> {
         if (buffer.getMaxWritableBytes() < size) {
             return 0;
         }
+
         if (isElementOfArray()) {
             final ArrayElement parent = (ArrayElement) parent();
 
@@ -87,7 +88,8 @@ class BinaryElement extends AtomicElement<Binary> {
             buffer.writeByte((byte) 0xb0);
             buffer.writeInt(value.getLength());
         }
-        buffer.writeBytes(value.getArray(), value.getArrayOffset(), value.getLength());
+
+        buffer.writeBytes(value.getArray(), 0, value.getLength());
         return size;
     }
 }

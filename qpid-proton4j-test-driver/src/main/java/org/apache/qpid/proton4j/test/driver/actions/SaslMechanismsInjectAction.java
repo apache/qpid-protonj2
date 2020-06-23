@@ -17,8 +17,8 @@
 package org.apache.qpid.proton4j.test.driver.actions;
 
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslMechanisms;
-import org.apache.qpid.proton4j.types.Symbol;
 
 /**
  * AMQP SaslMechanisms injection action which can be added to a driver for write at a specific time or

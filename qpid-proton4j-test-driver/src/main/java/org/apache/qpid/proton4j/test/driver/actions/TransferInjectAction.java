@@ -22,6 +22,7 @@ import java.util.List;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.AmqpSequence;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.AmqpValue;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.ApplicationProperties;
@@ -30,16 +31,19 @@ import org.apache.qpid.proton4j.test.driver.codec.messaging.DeliveryAnnotations;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Footer;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Header;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.MessageAnnotations;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Modified;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Properties;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Rejected;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Released;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedByte;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Transfer;
-import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedByte;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.transport.DeliveryState;
-import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
 
 /**
  * AMQP Close injection action which can be added to a driver for write at a specific time or
@@ -48,6 +52,7 @@ import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
 public final class TransferInjectAction extends AbstractPerformativeInjectAction<Transfer> {
 
     private final Transfer transfer = new Transfer();
+    private final DeliveryStateBuilder stateBuilder = new DeliveryStateBuilder();
 
     private ProtonBuffer payload;
 
@@ -146,8 +151,12 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
     }
 
     public TransferInjectAction withState(DeliveryState state) {
-        transfer.setState(TypeMapper.mapFromProtonType(state));
+        transfer.setState(state);
         return this;
+    }
+
+    public DeliveryStateBuilder withState() {
+        return stateBuilder;
     }
 
     public TransferInjectAction withResume(boolean resume) {
@@ -454,6 +463,49 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
         public FooterBuilder withFooter(Object key, Object value) {
             getOrCreateFooter().setFooterProperty(key, value);
             return this;
+        }
+    }
+
+    public final class DeliveryStateBuilder {
+
+        public TransferInjectAction accepted() {
+            withState(Accepted.getInstance());
+            return TransferInjectAction.this;
+        }
+
+        public TransferInjectAction released() {
+            withState(Released.getInstance());
+            return TransferInjectAction.this;
+        }
+
+        public TransferInjectAction rejected() {
+            withState(new Rejected());
+            return TransferInjectAction.this;
+        }
+
+        public TransferInjectAction rejected(String condition, String description) {
+            withState(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description)));
+            return TransferInjectAction.this;
+        }
+
+        public TransferInjectAction modified() {
+            withState(new Modified());
+            return TransferInjectAction.this;
+        }
+
+        public TransferInjectAction modified(boolean failed) {
+            withState(new Modified());
+            return TransferInjectAction.this;
+        }
+
+        public TransferInjectAction modified(boolean failed, boolean undeliverableHere) {
+            withState(new Modified());
+            return TransferInjectAction.this;
+        }
+
+        public TransferInjectAction transactional(byte[] txnid) {
+            withState(Accepted.getInstance());
+            return TransferInjectAction.this;
         }
     }
 }

@@ -16,8 +16,12 @@
  */
 package org.apache.qpid.proton4j.test.driver.matchers.security;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslChallenge;
 import org.apache.qpid.proton4j.test.driver.matchers.ListDescribedTypeMatcher;
+import org.hamcrest.Matcher;
 
 public class SaslChallengeMatcher extends ListDescribedTypeMatcher {
 
@@ -28,5 +32,22 @@ public class SaslChallengeMatcher extends ListDescribedTypeMatcher {
     @Override
     protected Class<?> getDescribedTypeClass() {
         return SaslChallenge.class;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public SaslChallengeMatcher withChallenge(byte[] challenge) {
+        return withChallenge(equalTo(new Binary(challenge)));
+    }
+
+    public SaslChallengeMatcher withChallenge(Binary challenge) {
+        return withChallenge(equalTo(challenge));
+    }
+
+    //----- Matcher based with methods for more complex validation
+
+    public SaslChallengeMatcher withChallenge(Matcher<?> m) {
+        addFieldMatcher(SaslChallenge.Field.CHALLENGE, m);
+        return this;
     }
 }

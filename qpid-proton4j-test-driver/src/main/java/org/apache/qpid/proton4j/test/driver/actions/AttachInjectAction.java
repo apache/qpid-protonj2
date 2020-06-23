@@ -21,23 +21,24 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Outcome;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Source;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Target;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedByte;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Attach;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.test.driver.codec.transport.Role;
+import org.apache.qpid.proton4j.test.driver.codec.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.UnsignedLong;
-import org.apache.qpid.proton4j.types.messaging.Outcome;
-import org.apache.qpid.proton4j.types.messaging.Source;
-import org.apache.qpid.proton4j.types.messaging.Target;
-import org.apache.qpid.proton4j.types.messaging.TerminusDurability;
-import org.apache.qpid.proton4j.types.messaging.TerminusExpiryPolicy;
-import org.apache.qpid.proton4j.types.transactions.Coordinator;
-import org.apache.qpid.proton4j.types.transport.DeliveryState;
-import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.types.transport.Role;
-import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
 
 /**
  * AMQP Attach injection action which can be added to a driver for write at a specific time or
@@ -74,18 +75,43 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         return this;
     }
 
+    public AttachInjectAction withRole(boolean role) {
+        attach.setRole(role);
+        return this;
+    }
+
     public AttachInjectAction withRole(Role role) {
         attach.setRole(role.getValue());
         return this;
     }
 
+    public AttachInjectAction withSndSettleMode(byte sndSettleMode) {
+        attach.setSenderSettleMode(SenderSettleMode.valueOf(sndSettleMode));
+        return this;
+    }
+
+    public AttachInjectAction withSndSettleMode(Byte sndSettleMode) {
+        attach.setSenderSettleMode(sndSettleMode == null ? null : UnsignedByte.valueOf(sndSettleMode.byteValue()));
+        return this;
+    }
+
     public AttachInjectAction withSndSettleMode(SenderSettleMode sndSettleMode) {
-        attach.setSndSettleMode(sndSettleMode == null ? null : sndSettleMode.getValue());
+        attach.setSenderSettleMode(sndSettleMode == null ? null : sndSettleMode.getValue());
+        return this;
+    }
+
+    public AttachInjectAction withRcvSettleMode(byte rcvSettleMode) {
+        attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(rcvSettleMode));
+        return this;
+    }
+
+    public AttachInjectAction withRcvSettleMode(Byte rcvSettleMode) {
+        attach.setReceiverSettleMode(rcvSettleMode == null ? null : UnsignedByte.valueOf(rcvSettleMode.byteValue()));
         return this;
     }
 
     public AttachInjectAction withRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
-        attach.setRcvSettleMode(rcvSettleMode == null ? null : rcvSettleMode.getValue());
+        attach.setReceiverSettleMode(rcvSettleMode == null ? null : rcvSettleMode.getValue());
         return this;
     }
 
@@ -106,12 +132,6 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     public AttachInjectAction withSource(Source source) {
         nullSourceRequired = source == null;
-        attach.setSource(TypeMapper.mapFromProtonType(source));
-        return this;
-    }
-
-    public AttachInjectAction withSource(org.apache.qpid.proton4j.test.driver.codec.messaging.Source source) {
-        nullSourceRequired = source == null;
         attach.setSource(source);
         return this;
     }
@@ -122,7 +142,7 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     public AttachInjectAction withNullTarget() {
         nullTargetRequired = true;
-        attach.setTarget((org.apache.qpid.proton4j.test.driver.codec.messaging.Target) null);
+        attach.setTarget((Target) null);
         return this;
     }
 
@@ -138,23 +158,11 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     public AttachInjectAction withTarget(Target target) {
         nullTargetRequired = target == null;
-        attach.setTarget(TypeMapper.mapFromProtonType(target));
-        return this;
-    }
-
-    public AttachInjectAction withTarget(Coordinator coordinator) {
-        nullTargetRequired = coordinator == null;
-        attach.setTarget(TypeMapper.mapFromProtonType(coordinator));
-        return this;
-    }
-
-    public AttachInjectAction withTarget(org.apache.qpid.proton4j.test.driver.codec.messaging.Target target) {
-        nullTargetRequired = target == null;
         attach.setTarget(target);
         return this;
     }
 
-    public AttachInjectAction withTarget(org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator coordinator) {
+    public AttachInjectAction withTarget(Coordinator coordinator) {
         nullTargetRequired = coordinator == null;
         attach.setTarget(coordinator);
         return this;
@@ -164,7 +172,7 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         if (unsettled != null) {
             Map<Binary, DescribedType> converted = new LinkedHashMap<>();
             for (Entry<Binary, DeliveryState> entry : unsettled.entrySet()) {
-                converted.put(entry.getKey(), TypeMapper.mapFromProtonType(entry.getValue()));
+                converted.put(entry.getKey(), entry.getValue());
             }
 
             attach.setUnsettled(converted);
@@ -226,25 +234,25 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         }
     }
 
-    private org.apache.qpid.proton4j.test.driver.codec.messaging.Source getOrCreateSouce() {
+    private Source getOrCreateSouce() {
         if (attach.getSource() == null) {
-            attach.setSource(new org.apache.qpid.proton4j.test.driver.codec.messaging.Source());
+            attach.setSource(new Source());
         }
         return attach.getSource();
     }
 
-    private org.apache.qpid.proton4j.test.driver.codec.messaging.Target getOrCreateTarget() {
+    private Target getOrCreateTarget() {
         if (attach.getTarget() == null) {
-            attach.setTarget(new org.apache.qpid.proton4j.test.driver.codec.messaging.Target());
+            attach.setTarget(new Target());
         }
-        return (org.apache.qpid.proton4j.test.driver.codec.messaging.Target) attach.getTarget();
+        return (Target) attach.getTarget();
     }
 
-    private org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator getOrCreateCoordinator() {
+    private Coordinator getOrCreateCoordinator() {
         if (attach.getTarget() == null) {
-            attach.setTarget(new org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator());
+            attach.setTarget(new Coordinator());
         }
-        return (org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator) attach.getTarget();
+        return (Coordinator) attach.getTarget();
     }
 
     //----- Builders for Source and Target to make test writing simpler
@@ -262,9 +270,9 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     public final class SourceBuilder extends TerminusBuilder {
 
-        private final org.apache.qpid.proton4j.test.driver.codec.messaging.Source source;
+        private final Source source;
 
-        public SourceBuilder(org.apache.qpid.proton4j.test.driver.codec.messaging.Source source) {
+        public SourceBuilder(Source source) {
             this.source = source;
         }
 
@@ -329,12 +337,7 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         }
 
         public SourceBuilder withDefaultOutcome(Outcome outcome) {
-            source.setDefaultOutcome(TypeMapper.mapFromProtonType(outcome));
-            return this;
-        }
-
-        public SourceBuilder withCapabilities(String... capabilities) {
-            source.setCapabilities(TypeMapper.toSymbolArray(capabilities));
+            source.setDefaultOutcome((DescribedType) outcome);
             return this;
         }
 
@@ -343,7 +346,17 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
             return this;
         }
 
+        public SourceBuilder withOutcomes(String... outcomes) {
+            source.setOutcomes(outcomes);
+            return this;
+        }
+
         public SourceBuilder withCapabilities(Symbol... capabilities) {
+            source.setCapabilities(capabilities);
+            return this;
+        }
+
+        public SourceBuilder withCapabilities(String... capabilities) {
             source.setCapabilities(capabilities);
             return this;
         }
@@ -351,9 +364,9 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     public final class TargetBuilder extends TerminusBuilder {
 
-        private final org.apache.qpid.proton4j.test.driver.codec.messaging.Target target;
+        private final Target target;
 
-        public TargetBuilder(org.apache.qpid.proton4j.test.driver.codec.messaging.Target target) {
+        public TargetBuilder(Target target) {
             this.target = target;
         }
 
@@ -415,9 +428,9 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     public final class CoordinatorBuilder extends TerminusBuilder {
 
-        private final org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator coordinator;
+        private final Coordinator coordinator;
 
-        public CoordinatorBuilder(org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator coordinator) {
+        public CoordinatorBuilder(Coordinator coordinator) {
             this.coordinator = coordinator;
         }
 

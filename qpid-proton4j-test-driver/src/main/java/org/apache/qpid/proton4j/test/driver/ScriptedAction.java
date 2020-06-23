@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.test.driver.codec.security.SaslInit;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslMechanisms;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslOutcome;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslResponse;
+import org.apache.qpid.proton4j.test.driver.codec.transport.AMQPHeader;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Begin;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Close;
@@ -33,7 +34,6 @@ import org.apache.qpid.proton4j.test.driver.codec.transport.End;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Flow;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Open;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Transfer;
-import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 
 /**
  * Entry in the test script that produces some output to be sent to the AMQP

@@ -22,16 +22,16 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.Decimal128;
-import org.apache.qpid.proton4j.types.Decimal32;
-import org.apache.qpid.proton4j.types.Decimal64;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedByte;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.UnsignedLong;
-import org.apache.qpid.proton4j.types.UnsignedShort;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Decimal128;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Decimal32;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Decimal64;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedByte;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
 
 public interface Codec {
 

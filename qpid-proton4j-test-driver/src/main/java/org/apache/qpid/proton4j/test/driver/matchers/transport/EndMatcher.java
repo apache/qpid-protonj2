@@ -16,8 +16,16 @@
  */
 package org.apache.qpid.proton4j.test.driver.matchers.transport;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import java.util.Map;
+
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.transport.End;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
+import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.ListDescribedTypeMatcher;
+import org.hamcrest.Matcher;
 
 public class EndMatcher extends ListDescribedTypeMatcher {
 
@@ -28,5 +36,34 @@ public class EndMatcher extends ListDescribedTypeMatcher {
     @Override
     protected Class<?> getDescribedTypeClass() {
         return End.class;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public EndMatcher withError(ErrorCondition error) {
+        return withError(equalTo(error));
+    }
+
+    public EndMatcher withError(String condition, String description) {
+        return withError(equalTo(new ErrorCondition(Symbol.valueOf(condition), description)));
+    }
+
+    public EndMatcher withError(String condition, String description, Map<String, Object> info) {
+        return withError(equalTo(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info))));
+    }
+
+    public EndMatcher withError(Symbol condition, String description) {
+        return withError(equalTo(new ErrorCondition(condition, description)));
+    }
+
+    public EndMatcher withError(Symbol condition, String description, Map<Symbol, Object> info) {
+        return withError(equalTo(new ErrorCondition(condition, description, info)));
+    }
+
+    //----- Matcher based with methods for more complex validation
+
+    public EndMatcher withError(Matcher<?> m) {
+        addFieldMatcher(End.Field.ERROR, m);
+        return this;
     }
 }

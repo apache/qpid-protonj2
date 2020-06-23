@@ -18,10 +18,10 @@ package org.apache.qpid.proton4j.test.driver.matchers.transactions;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
 import org.apache.qpid.proton4j.test.driver.codec.transactions.TransactionalState;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.proton4j.test.driver.matchers.ListDescribedTypeMatcher;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.transport.DeliveryState;
 import org.hamcrest.Matcher;
 
 public class TransactionalStateMatcher extends ListDescribedTypeMatcher {
@@ -45,7 +45,7 @@ public class TransactionalStateMatcher extends ListDescribedTypeMatcher {
         return withTxnId(equalTo(txnId));
     }
 
-    public TransactionalStateMatcher withFail(DeliveryState outcome) {
+    public TransactionalStateMatcher withOutcome(DeliveryState outcome) {
         return withOutcome(equalTo(outcome));
     }
 

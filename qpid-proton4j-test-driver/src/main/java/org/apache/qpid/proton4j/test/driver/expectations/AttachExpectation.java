@@ -29,25 +29,26 @@ import org.apache.qpid.proton4j.test.driver.actions.AttachInjectAction;
 import org.apache.qpid.proton4j.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.test.driver.actions.DetachInjectAction;
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Source;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Target;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedByte;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Attach;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.test.driver.codec.transport.Role;
+import org.apache.qpid.proton4j.test.driver.codec.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.proton4j.test.driver.matchers.messaging.TargetMatcher;
 import org.apache.qpid.proton4j.test.driver.matchers.transactions.CoordinatorMatcher;
 import org.apache.qpid.proton4j.test.driver.matchers.transport.AttachMatcher;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.UnsignedLong;
-import org.apache.qpid.proton4j.types.messaging.Source;
-import org.apache.qpid.proton4j.types.messaging.Target;
-import org.apache.qpid.proton4j.types.messaging.TerminusDurability;
-import org.apache.qpid.proton4j.types.messaging.TerminusExpiryPolicy;
-import org.apache.qpid.proton4j.types.transactions.Coordinator;
-import org.apache.qpid.proton4j.types.transport.DeliveryState;
-import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.types.transport.Role;
-import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
 import org.hamcrest.Matcher;
 
 /**
@@ -116,11 +117,11 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         if (response.getPerformative().getRole() == null) {
             response.withRole(Boolean.TRUE.equals(attach.getRole()) ? Role.SENDER : Role.RECEIVER);
         }
-        if (response.getPerformative().getSndSettleMode() == null) {
-            response.withSndSettleMode(SenderSettleMode.valueOf(attach.getSndSettleMode()));
+        if (response.getPerformative().getSenderSettleMode() == null) {
+            response.withSndSettleMode(SenderSettleMode.valueOf(attach.getSenderSettleMode()));
         }
-        if (response.getPerformative().getRcvSettleMode() == null) {
-            response.withRcvSettleMode(ReceiverSettleMode.valueOf(attach.getRcvSettleMode()));
+        if (response.getPerformative().getReceiverSettleMode() == null) {
+            response.withRcvSettleMode(ReceiverSettleMode.valueOf(attach.getReceiverSettleMode()));
         }
         if (response.getPerformative().getSource() == null && !response.isNullSourceRequired()) {
             response.withSource(attach.getSource());
@@ -184,12 +185,36 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         return withHandle(equalTo(handle));
     }
 
+    public AttachExpectation withRole(boolean role) {
+        return withRole(equalTo(role));
+    }
+
+    public AttachExpectation withRole(Boolean role) {
+        return withRole(equalTo(role));
+    }
+
     public AttachExpectation withRole(Role role) {
         return withRole(equalTo(role.getValue()));
     }
 
+    public AttachExpectation withSndSettleMode(byte sndSettleMode) {
+        return withSndSettleMode(equalTo(SenderSettleMode.valueOf(sndSettleMode)));
+    }
+
+    public AttachExpectation withSndSettleMode(Byte sndSettleMode) {
+        return withSndSettleMode(sndSettleMode == null ? nullValue() : equalTo(UnsignedByte.valueOf(sndSettleMode.byteValue())));
+    }
+
     public AttachExpectation withSndSettleMode(SenderSettleMode sndSettleMode) {
         return withSndSettleMode(sndSettleMode == null ? nullValue() : equalTo(sndSettleMode.getValue()));
+    }
+
+    public AttachExpectation withRcvSettleMode(byte rcvSettleMode) {
+        return withRcvSettleMode(equalTo(ReceiverSettleMode.valueOf(rcvSettleMode)));
+    }
+
+    public AttachExpectation withRcvSettleMode(Byte rcvSettleMode) {
+        return withRcvSettleMode(rcvSettleMode == null ? nullValue() : equalTo(UnsignedByte.valueOf(rcvSettleMode.byteValue())));
     }
 
     public AttachExpectation withRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
@@ -205,6 +230,12 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     public AttachTargetMatcher withTarget() {
         AttachTargetMatcher matcher = new AttachTargetMatcher(this);
         withTarget(matcher);
+        return matcher;
+    }
+
+    public AttachCoordinatorMatcher withCoordinator() {
+        AttachCoordinatorMatcher matcher = new AttachCoordinatorMatcher(this);
+        withCoordinator(matcher);
         return matcher;
     }
 
@@ -226,12 +257,12 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         }
     }
 
-    public AttachExpectation withTarget(Coordinator coordinator) {
+    public AttachExpectation withCoordinator(Coordinator coordinator) {
         if (coordinator != null) {
             CoordinatorMatcher coordinatorMatcher = new CoordinatorMatcher();
-            return withTarget(coordinatorMatcher);
+            return withCoordinator(coordinatorMatcher);
         } else {
-            return withTarget(nullValue());
+            return withCoordinator(nullValue());
         }
     }
 
@@ -268,103 +299,106 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         return withOfferedCapabilities(equalTo(offeredCapabilities));
     }
 
+    public AttachExpectation withOfferedCapabilities(String... offeredCapabilities) {
+        return withOfferedCapabilities(equalTo(TypeMapper.toSymbolArray(offeredCapabilities)));
+    }
+
     public AttachExpectation withDesiredCapabilities(Symbol... desiredCapabilities) {
         return withDesiredCapabilities(equalTo(desiredCapabilities));
     }
 
-    public AttachExpectation withProperties(Map<Symbol, Object> properties) {
+    public AttachExpectation withDesiredCapabilities(String... desiredCapabilities) {
+        return withDesiredCapabilities(equalTo(TypeMapper.toSymbolArray(desiredCapabilities)));
+    }
+
+    public AttachExpectation withPropertiesMap(Map<Symbol, Object> properties) {
         return withProperties(equalTo(properties));
     }
 
-    public AttachExpectation withPropertiesMap(Map<String, Object> properties) {
+    public AttachExpectation withProperties(Map<String, Object> properties) {
         return withProperties(equalTo(TypeMapper.toSymbolKeyedMap(properties)));
     }
 
     //----- Matcher based with methods for more complex validation
 
     public AttachExpectation withName(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.NAME, m);
+        matcher.withName(m);
         return this;
     }
 
     public AttachExpectation withHandle(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.HANDLE, m);
+        matcher.withHandle(m);
         return this;
     }
 
     public AttachExpectation withRole(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.ROLE, m);
+        matcher.withRole(m);
         return this;
     }
 
     public AttachExpectation withSndSettleMode(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.SND_SETTLE_MODE, m);
+        matcher.withSndSettleMode(m);
         return this;
     }
 
     public AttachExpectation withRcvSettleMode(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.RCV_SETTLE_MODE, m);
+        matcher.withRcvSettleMode(m);
         return this;
     }
 
     public AttachExpectation withSource(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.SOURCE, m);
+        matcher.withSource(m);
         return this;
     }
 
     public AttachExpectation withTarget(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.TARGET, m);
+        matcher.withTarget(m);
+        return this;
+    }
+
+    public AttachExpectation withCoordinator(Matcher<?> m) {
+        matcher.withCoordinator(m);
         return this;
     }
 
     public AttachExpectation withUnsettled(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.UNSETTLED, m);
+        matcher.withUnsettled(m);
         return this;
     }
 
     public AttachExpectation withIncompleteUnsettled(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.INCOMPLETE_UNSETTLED, m);
+        matcher.withIncompleteUnsettled(m);
         return this;
     }
 
     public AttachExpectation withInitialDeliveryCount(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.INITIAL_DELIVERY_COUNT, m);
+        matcher.withInitialDeliveryCount(m);
         return this;
     }
 
     public AttachExpectation withMaxMessageSize(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.MAX_MESSAGE_SIZE, m);
+        matcher.withMaxMessageSize(m);
         return this;
     }
 
     public AttachExpectation withOfferedCapabilities(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.OFFERED_CAPABILITIES, m);
+        matcher.withOfferedCapabilities(m);
         return this;
     }
 
     public AttachExpectation withDesiredCapabilities(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.DESIRED_CAPABILITIES, m);
+        matcher.withDesiredCapabilities(m);
         return this;
     }
 
     public AttachExpectation withProperties(Matcher<?> m) {
-        matcher.addFieldMatcher(Attach.Field.PROPERTIES, m);
+        matcher.withProperties(m);
         return this;
     }
 
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;
-    }
-
-    @Override
-    protected Object getFieldValue(Attach attach, Enum<?> performativeField) {
-        return attach.getFieldValue(performativeField.ordinal());
-    }
-
-    @Override
-    protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Attach.Field.values()[fieldIndex];
     }
 
     @Override
@@ -439,13 +473,19 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         }
 
         @Override
+        public AttachSourceMatcher withDistributionMode(String distributionMode) {
+            super.withDistributionMode(distributionMode);
+            return this;
+        }
+
+        @Override
         public AttachSourceMatcher withDistributionMode(Symbol distributionMode) {
             super.withDistributionMode(distributionMode);
             return this;
         }
 
         @Override
-        public AttachSourceMatcher withFilter(Map<Symbol, Object> filter) {
+        public AttachSourceMatcher withFilter(Map<String, Object> filter) {
             super.withFilter(filter);
             return this;
         }
@@ -457,8 +497,20 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         }
 
         @Override
+        public AttachSourceMatcher withOutcomes(String... outcomes) {
+            super.withOutcomes(outcomes);
+            return this;
+        }
+
+        @Override
         public AttachSourceMatcher withOutcomes(Symbol... outcomes) {
             super.withOutcomes(outcomes);
+            return this;
+        }
+
+        @Override
+        public AttachSourceMatcher withCapabilities(String... capabilities) {
+            super.withCapabilities(capabilities);
             return this;
         }
 
@@ -594,13 +646,19 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         }
 
         @Override
-        public AttachTargetMatcher withDynamicNodeProperties(Map<Symbol, Object> properties) {
+        public AttachTargetMatcher withDynamicNodeProperties(Map<String, Object> properties) {
             super.withDynamicNodeProperties(properties);
             return this;
         }
 
         @Override
         public AttachTargetMatcher withCapabilities(Symbol... capabilities) {
+            super.withCapabilities(capabilities);
+            return this;
+        }
+
+        @Override
+        public AttachTargetMatcher withCapabilities(String... capabilities) {
             super.withCapabilities(capabilities);
             return this;
         }
@@ -644,6 +702,35 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         @Override
         public AttachTargetMatcher withCapabilities(Matcher<?> m) {
             super.withCapabilities(m);
+            return this;
+        }
+    }
+
+    public static class AttachCoordinatorMatcher extends CoordinatorMatcher {
+
+        private final AttachExpectation expectation;
+
+        public AttachCoordinatorMatcher(AttachExpectation expectation) {
+            this.expectation = expectation;
+        }
+
+        public AttachExpectation also() {
+            return expectation;
+        }
+
+        public AttachExpectation and() {
+            return expectation;
+        }
+
+        @Override
+        public AttachCoordinatorMatcher withCapabilities(Symbol... capabilities) {
+            super.withCapabilities(capabilities);
+            return this;
+        }
+
+        @Override
+        public AttachCoordinatorMatcher withCapabilities(String... capabilities) {
+            super.withCapabilities(capabilities);
             return this;
         }
     }

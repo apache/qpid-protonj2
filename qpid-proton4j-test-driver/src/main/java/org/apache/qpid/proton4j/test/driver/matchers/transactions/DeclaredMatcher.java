@@ -18,9 +18,9 @@ package org.apache.qpid.proton4j.test.driver.matchers.transactions;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
 import org.apache.qpid.proton4j.test.driver.codec.transactions.Declared;
 import org.apache.qpid.proton4j.test.driver.matchers.ListDescribedTypeMatcher;
-import org.apache.qpid.proton4j.types.Binary;
 import org.hamcrest.Matcher;
 
 public class DeclaredMatcher extends ListDescribedTypeMatcher {

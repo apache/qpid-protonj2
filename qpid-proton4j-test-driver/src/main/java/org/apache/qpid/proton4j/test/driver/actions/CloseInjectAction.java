@@ -19,10 +19,10 @@ package org.apache.qpid.proton4j.test.driver.actions;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Close;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 
 /**
  * AMQP Close injection action which can be added to a driver for write at a specific time or
@@ -42,27 +42,27 @@ public class CloseInjectAction extends AbstractPerformativeInjectAction<Close> {
     }
 
     public CloseInjectAction withErrorCondition(ErrorCondition error) {
-        close.setError(TypeMapper.mapFromProtonType(error));
+        close.setError(error);
         return this;
     }
 
     public CloseInjectAction withErrorCondition(String condition, String description) {
-        close.setError(TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description)));
+        close.setError(new ErrorCondition(Symbol.valueOf(condition), description));
         return this;
     }
 
     public CloseInjectAction withErrorCondition(Symbol condition, String description) {
-        close.setError(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description)));
+        close.setError(new ErrorCondition(condition, description));
         return this;
     }
 
     public CloseInjectAction withErrorCondition(String condition, String description, Map<String, Object> info) {
-        close.setError(TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info))));
+        close.setError(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info)));
         return this;
     }
 
     public CloseInjectAction withErrorCondition(Symbol condition, String description, Map<Symbol, Object> info) {
-        close.setError(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description, info)));
+        close.setError(new ErrorCondition(condition, description, info));
         return this;
     }
 

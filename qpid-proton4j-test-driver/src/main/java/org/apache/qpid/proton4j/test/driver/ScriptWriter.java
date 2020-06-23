@@ -40,7 +40,11 @@ import org.apache.qpid.proton4j.test.driver.actions.SaslResponseInjectAction;
 import org.apache.qpid.proton4j.test.driver.actions.TransferInjectAction;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Target;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.security.SaslCode;
 import org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator;
+import org.apache.qpid.proton4j.test.driver.codec.transport.AMQPHeader;
+import org.apache.qpid.proton4j.test.driver.codec.transport.Role;
 import org.apache.qpid.proton4j.test.driver.expectations.AMQPHeaderExpectation;
 import org.apache.qpid.proton4j.test.driver.expectations.AttachExpectation;
 import org.apache.qpid.proton4j.test.driver.expectations.BeginExpectation;
@@ -59,10 +63,6 @@ import org.apache.qpid.proton4j.test.driver.expectations.SaslMechanismsExpectati
 import org.apache.qpid.proton4j.test.driver.expectations.SaslOutcomeExpectation;
 import org.apache.qpid.proton4j.test.driver.expectations.SaslResponseExpectation;
 import org.apache.qpid.proton4j.test.driver.expectations.TransferExpectation;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.security.SaslCode;
-import org.apache.qpid.proton4j.types.transport.AMQPHeader;
-import org.apache.qpid.proton4j.types.transport.Role;
 import org.hamcrest.Matchers;
 
 /**
@@ -152,7 +152,7 @@ public abstract class ScriptWriter {
         AttachExpectation expecting = new AttachExpectation(getDriver());
 
         expecting.withRole(Role.SENDER);
-        expecting.withTarget(Matchers.isA(Coordinator.class));
+        expecting.withCoordinator(Matchers.isA(Coordinator.class));
         expecting.withSource(notNullValue());
 
         getDriver().addScriptedElement(expecting);
@@ -210,6 +210,10 @@ public abstract class ScriptWriter {
     }
 
     //----- Remote operations that happen while running the test script
+
+    public AMQPHeaderInjectAction remoteHeader(byte[] header) {
+        return new AMQPHeaderInjectAction(getDriver(), new AMQPHeader(header));
+    }
 
     public AMQPHeaderInjectAction remoteHeader(AMQPHeader header) {
         return new AMQPHeaderInjectAction(getDriver(), header);
@@ -430,8 +434,8 @@ public abstract class ScriptWriter {
         response.withHandle(link.getHandle());
         response.withName(link.getName());
         response.withRole(link.getRole());
-        response.withSndSettleMode(link.getSndSettleMode());
-        response.withRcvSettleMode(link.getRcvSettleMode());
+        response.withSndSettleMode(link.getSenderSettleMode());
+        response.withRcvSettleMode(link.getReceiverSettleMode());
 
         if (link.getSource() != null) {
             response.withSource(new Source(link.getSource()));

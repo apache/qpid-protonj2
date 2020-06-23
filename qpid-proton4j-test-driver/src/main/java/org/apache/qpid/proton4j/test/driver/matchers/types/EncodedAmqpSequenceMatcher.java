@@ -20,9 +20,9 @@ package org.apache.qpid.proton4j.test.driver.matchers.types;
 
 import java.util.List;
 
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
-import org.apache.qpid.proton4j.types.messaging.AmqpSequence;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.AmqpSequence;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Description;
 
 public class EncodedAmqpSequenceMatcher extends EncodedAmqpTypeMatcher {

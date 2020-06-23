@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertArrayEquals;
@@ -51,8 +50,8 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.logging.ProtonLogger;
 import org.apache.qpid.proton4j.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.test.driver.ProtonTestPeer;
+import org.apache.qpid.proton4j.test.driver.matchers.types.UnsignedIntegerMatcher;
 import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
 import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 import org.apache.qpid.proton4j.types.transport.AmqpError;
 import org.apache.qpid.proton4j.types.transport.ErrorCondition;
@@ -371,7 +370,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.expectOpen().respond();
         peer.expectClose().respond();
-        peer.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+        peer.remoteHeader(AMQPHeader.getAMQPHeader().toArray()).now();
 
         peer.waitForScriptToComplete();
         assertNull(failure);
@@ -515,9 +514,12 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
 
-        Matcher<?> expectedMaxFrameSize = equalTo(UnsignedInteger.valueOf(ProtonConstants.DEFAULT_MAX_AMQP_FRAME_SIZE));
+        final Matcher<?> expectedMaxFrameSize;
+
         if (setMaxFrameSize) {
-            expectedMaxFrameSize = equalTo(UnsignedInteger.valueOf(MAX_FRAME_SIZE));
+            expectedMaxFrameSize = new UnsignedIntegerMatcher(MAX_FRAME_SIZE);
+        } else {
+            expectedMaxFrameSize = new UnsignedIntegerMatcher(ProtonConstants.DEFAULT_MAX_AMQP_FRAME_SIZE);
         }
 
         int expectedIncomingWindow = Integer.MAX_VALUE;
@@ -758,7 +760,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.expectEnd();
         peer.expectClose();
-        peer.remoteEnd().withErrorCondition(new ErrorCondition(AmqpError.INTERNAL_ERROR, "Error")).now();
+        peer.remoteEnd().withErrorCondition(AmqpError.INTERNAL_ERROR.toString(), "Error").now();
 
         assertTrue(session.isLocallyOpen());
         assertFalse(session.isLocallyClosed());
@@ -799,7 +801,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin();
-        peer.remoteClose().withErrorCondition(new ErrorCondition(AmqpError.NOT_ALLOWED, "Error")).queue();
+        peer.remoteClose().withErrorCondition(AmqpError.NOT_ALLOWED.toString(), "Error").queue();
 
         connection.open();
 
@@ -875,11 +877,11 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
-        peer.expectBegin().withOfferedCapabilities(clientOfferedCapabilities)
-                          .withDesiredCapabilities(clientDesiredCapabilities)
+        peer.expectBegin().withOfferedCapabilities(new String[] { clientOfferedSymbol.toString() })
+                          .withDesiredCapabilities(new String[] { clientDesiredSymbol.toString() })
                           .respond()
-                          .withDesiredCapabilities(serverDesiredCapabilities)
-                          .withOfferedCapabilities(serverOfferedCapabilities);
+                          .withDesiredCapabilities(new String[] { serverDesiredSymbol.toString() })
+                          .withOfferedCapabilities(new String[] { serverOfferedSymbol.toString() });
         peer.expectEnd().respond();
 
         Connection connection = engine.start();
@@ -915,9 +917,13 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         final Symbol serverPropertyName = Symbol.valueOf("ServerPropertyName");
         final Integer serverPropertyValue = 5678;
 
+        Map<String, Object> expectedClientProperties = new HashMap<>();
+        expectedClientProperties.put(clientPropertyName.toString(), clientPropertyValue);
         Map<Symbol, Object> clientProperties = new HashMap<>();
         clientProperties.put(clientPropertyName, clientPropertyValue);
 
+        Map<String, Object> expectedServerProperties = new HashMap<>();
+        expectedServerProperties.put(serverPropertyName.toString(), serverPropertyValue);
         Map<Symbol, Object> serverProperties = new HashMap<>();
         serverProperties.put(serverPropertyName, serverPropertyValue);
 
@@ -930,9 +936,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
-        peer.expectBegin().withProperties(clientProperties)
+        peer.expectBegin().withProperties(expectedClientProperties)
                           .respond()
-                          .withProperties(serverProperties);
+                          .withProperties(expectedServerProperties);
         peer.expectEnd().respond();
 
         Connection connection = engine.start();
@@ -978,9 +984,11 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
 
-        Matcher<?> expectedMaxFrameSize = equalTo(UnsignedInteger.valueOf(ProtonConstants.DEFAULT_MAX_AMQP_FRAME_SIZE));
+        final Matcher<?> expectedMaxFrameSize;
         if (setFrameSize) {
-            expectedMaxFrameSize = equalTo(UnsignedInteger.valueOf(TEST_MAX_FRAME_SIZE));
+            expectedMaxFrameSize = new UnsignedIntegerMatcher(TEST_MAX_FRAME_SIZE);
+        } else {
+            expectedMaxFrameSize = new UnsignedIntegerMatcher(ProtonConstants.DEFAULT_MAX_AMQP_FRAME_SIZE);
         }
 
         long expectedWindowSize = 2147483647;
@@ -1098,7 +1106,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
         // This should happen after we inject the held open and attach
-        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
         peer.expectEnd().respond();
         peer.expectClose().respond();
 
@@ -1340,7 +1348,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         assertTrue(session.senders().isEmpty());
 
-        peer.expectAttach().withRole(role).respond();
+        peer.expectAttach().withRole(role.getValue()).respond();
 
         final Link<?> link;
 
@@ -1422,7 +1430,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
-        peer.expectAttach().withRole(role).respond();
+        peer.expectAttach().withRole(role.getValue()).respond();
         peer.expectDetach().respond();
         peer.expectEnd().respond();
 

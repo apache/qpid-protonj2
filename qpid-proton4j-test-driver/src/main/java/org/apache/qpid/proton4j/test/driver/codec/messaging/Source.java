@@ -20,10 +20,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 
 public class Source extends ListDescribedType {
 
@@ -152,8 +153,13 @@ public class Source extends ListDescribedType {
         return (DescribedType) getList().get(Field.DEFAULT_OUTCOME.ordinal());
     }
 
-    public Source setOutcomes(Symbol[] o) {
+    public Source setOutcomes(Symbol... o) {
         getList().set(Field.OUTCOMES.ordinal(), o);
+        return this;
+    }
+
+    public Source setOutcomes(String... o) {
+        getList().set(Field.OUTCOMES.ordinal(), TypeMapper.toSymbolArray(o));
         return this;
     }
 
@@ -161,8 +167,13 @@ public class Source extends ListDescribedType {
         return (Symbol[]) getList().get(Field.OUTCOMES.ordinal());
     }
 
-    public Source setCapabilities(Symbol[] o) {
+    public Source setCapabilities(Symbol... o) {
         getList().set(Field.CAPABILITIES.ordinal(), o);
+        return this;
+    }
+
+    public Source setCapabilities(String... o) {
+        getList().set(Field.CAPABILITIES.ordinal(), TypeMapper.toSymbolArray(o));
         return this;
     }
 

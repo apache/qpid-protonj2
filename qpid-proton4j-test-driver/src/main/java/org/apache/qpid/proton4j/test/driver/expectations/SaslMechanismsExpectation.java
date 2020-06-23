@@ -20,9 +20,10 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslMechanisms;
+import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.security.SaslMechanismsMatcher;
-import org.apache.qpid.proton4j.types.Symbol;
 import org.hamcrest.Matcher;
 
 /**
@@ -39,16 +40,7 @@ public class SaslMechanismsExpectation extends AbstractExpectation<SaslMechanism
     //----- Type specific with methods that perform simple equals checks
 
     public SaslMechanismsExpectation withSaslServerMechanisms(String... mechanisms) {
-        Symbol[] expected = null;
-
-        if (mechanisms != null) {
-            expected = new Symbol[mechanisms.length];
-            for (int i = 0; i < mechanisms.length; ++i) {
-                expected[i] = Symbol.valueOf(mechanisms[i]);
-            }
-        }
-
-        return withSaslServerMechanisms(equalTo(expected));
+        return withSaslServerMechanisms(equalTo(TypeMapper.toSymbolArray(mechanisms)));
     }
 
     public SaslMechanismsExpectation withSaslServerMechanisms(Symbol... mechanisms) {
@@ -65,16 +57,6 @@ public class SaslMechanismsExpectation extends AbstractExpectation<SaslMechanism
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;
-    }
-
-    @Override
-    protected Object getFieldValue(SaslMechanisms saslMechanisms, Enum<?> performativeField) {
-        return saslMechanisms.getFieldValue(performativeField.ordinal());
-    }
-
-    @Override
-    protected Enum<?> getFieldEnum(int fieldIndex) {
-        return SaslMechanisms.Field.values()[fieldIndex];
     }
 
     @Override

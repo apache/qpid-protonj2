@@ -40,6 +40,7 @@ import org.apache.qpid.proton4j.test.driver.codec.messaging.Rejected;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Released;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Target;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslChallenge;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslInit;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslMechanisms;
@@ -60,7 +61,6 @@ import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Flow;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Open;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Transfer;
-import org.apache.qpid.proton4j.types.DescribedType;
 
 /**
  * Registry of described types know to the Data type codec

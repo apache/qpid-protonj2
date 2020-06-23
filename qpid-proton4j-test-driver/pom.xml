@@ -33,10 +33,6 @@
       <artifactId>qpid-proton4j-buffer</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.qpid</groupId>
-      <artifactId>qpid-proton4j-codec</artifactId>
-    </dependency>
-    <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-buffer</artifactId>
     </dependency>

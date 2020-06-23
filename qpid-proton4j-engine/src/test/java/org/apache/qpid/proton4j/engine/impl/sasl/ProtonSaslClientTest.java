@@ -73,7 +73,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         peer.expectSASLHeader().respondWithSASLPHeader();
         peer.remoteSaslMechanisms().withMechanisms("PLAIN", "ANONYMOUS").queue();
         peer.expectSaslInit().withMechanism("ANONYMOUS");
-        peer.remoteSaslOutcome().withCode(SaslCode.OK).queue();
+        peer.remoteSaslOutcome().withCode(SaslCode.OK.byteValue()).queue();
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectClose().respond();
@@ -129,7 +129,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         peer.expectSASLHeader().respondWithSASLPHeader();
         peer.remoteSaslMechanisms().withMechanisms("UNKNOWN", "PLAIN", "ANONYMOUS").queue();
         peer.expectSaslInit().withMechanism("PLAIN").withInitialResponse(peer.saslPlainInitialResponse(user, pass));
-        peer.remoteSaslOutcome().withCode(SaslCode.OK).queue();
+        peer.remoteSaslOutcome().withCode(SaslCode.OK.byteValue()).queue();
         peer.expectAMQPHeader().respondWithAMQPHeader();
 
         peer.expectOpen().respond();
@@ -189,7 +189,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         peer.expectSASLHeader().respondWithSASLPHeader();
         peer.remoteSaslMechanisms().withMechanisms("PLAIN", "ANONYMOUS").queue();
         peer.expectSaslInit().withMechanism("PLAIN");
-        peer.remoteSaslOutcome().withCode(saslFailureCode).queue();
+        peer.remoteSaslOutcome().withCode(saslFailureCode.byteValue()).queue();
 
         engine.saslDriver().client().setListener(createSaslPlainAuthenticator("user", "pass"));
 

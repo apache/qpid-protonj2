@@ -16,8 +16,13 @@
  */
 package org.apache.qpid.proton4j.test.driver.matchers.security;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslMechanisms;
+import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.ListDescribedTypeMatcher;
+import org.hamcrest.Matcher;
 
 public class SaslMechanismsMatcher extends ListDescribedTypeMatcher {
 
@@ -28,5 +33,22 @@ public class SaslMechanismsMatcher extends ListDescribedTypeMatcher {
     @Override
     protected Class<?> getDescribedTypeClass() {
         return SaslMechanisms.class;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public SaslMechanismsMatcher withSaslServerMechanisms(String... mechanisms) {
+        return withSaslServerMechanisms(equalTo(TypeMapper.toSymbolArray(mechanisms)));
+    }
+
+    public SaslMechanismsMatcher withSaslServerMechanisms(Symbol... mechanisms) {
+        return withSaslServerMechanisms(equalTo(mechanisms));
+    }
+
+    //----- Matcher based with methods for more complex validation
+
+    public SaslMechanismsMatcher withSaslServerMechanisms(Matcher<?> m) {
+        addFieldMatcher(SaslMechanisms.Field.SASL_SERVER_MECHANISMS, m);
+        return this;
     }
 }

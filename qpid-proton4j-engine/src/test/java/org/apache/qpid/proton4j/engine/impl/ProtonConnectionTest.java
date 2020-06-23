@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertArrayEquals;
@@ -43,9 +42,9 @@ import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.test.driver.ProtonTestPeer;
+import org.apache.qpid.proton4j.test.driver.matchers.types.UnsignedIntegerMatcher;
+import org.apache.qpid.proton4j.test.driver.matchers.types.UnsignedShortMatcher;
 import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.UnsignedShort;
 import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 import org.apache.qpid.proton4j.types.transport.ConnectionError;
 import org.apache.qpid.proton4j.types.transport.ErrorCondition;
@@ -185,8 +184,11 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
 
-        Symbol[] offeredCapabilities = new Symbol[] { Symbol.valueOf("one"), Symbol.valueOf("two")};
-        Symbol[] desiredCapabilities = new Symbol[] { Symbol.valueOf("one"), Symbol.valueOf("two")};
+        Symbol[] offeredCapabilities = new Symbol[] { Symbol.valueOf("one"), Symbol.valueOf("two") };
+        Symbol[] desiredCapabilities = new Symbol[] { Symbol.valueOf("three"), Symbol.valueOf("four") };
+
+        Map<String, Object> expectedProperties = new HashMap<>();
+        expectedProperties.put("test", "value");
 
         Map<Symbol, Object> properties = new HashMap<>();
         properties.put(Symbol.valueOf("test"), "value");
@@ -195,9 +197,9 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond().withContainerId("test")
                                    .withHostname("localhost")
                                    .withIdleTimeOut(60000)
-                                   .withOfferedCapabilities(offeredCapabilities)
-                                   .withDesiredCapabilities(desiredCapabilities)
-                                   .withProperties(properties);
+                                   .withOfferedCapabilities(new String[] { "one", "two" })
+                                   .withDesiredCapabilities(new String[] { "three", "four" })
+                                   .withProperties(expectedProperties);
         peer.expectClose();
 
         Connection connection = engine.start().open();
@@ -207,7 +209,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertEquals(60000, connection.getRemoteIdleTimeout());
 
         assertArrayEquals(offeredCapabilities, connection.getRemoteOfferedCapabilities());
-        assertArrayEquals(desiredCapabilities, connection.getRemoteOfferedCapabilities());
+        assertArrayEquals(desiredCapabilities, connection.getRemoteDesiredCapabilities());
         assertEquals(properties, connection.getRemoteProperties());
 
         connection.close();
@@ -365,7 +367,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         // Remote Header will prompt local response and then remote open should trigger
         // the connection handler to fire so that user knows remote opened.
-        peer.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+        peer.remoteHeader(AMQPHeader.getAMQPHeader().toArray()).now();
         peer.remoteOpen().now();
 
         peer.waitForScriptToComplete();
@@ -472,27 +474,37 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
     private void doTestConnectionOpenPopulatesOpenCorrectly(boolean setMaxFrameSize, boolean setContainerId, boolean setChannelMax,
                                                             boolean setHostname, boolean setIdleTimeout) {
-        int expectedMaxFrameSize = 32767;
-        Matcher<?> expectedMaxFrameSizeMatcher = equalTo(UnsignedInteger.valueOf(ProtonConstants.DEFAULT_MAX_AMQP_FRAME_SIZE));
+        final int expectedMaxFrameSize = 32767;
+        final Matcher<?> expectedMaxFrameSizeMatcher;
         if (setMaxFrameSize) {
-            expectedMaxFrameSizeMatcher = equalTo(UnsignedInteger.valueOf(expectedMaxFrameSize));
+            expectedMaxFrameSizeMatcher = new UnsignedIntegerMatcher(expectedMaxFrameSize);
+        } else {
+            expectedMaxFrameSizeMatcher = new UnsignedIntegerMatcher(ProtonConstants.DEFAULT_MAX_AMQP_FRAME_SIZE);
         }
+
         String expectedContainerId = "";
         if (setContainerId) {
             expectedContainerId = "test";
         }
-        short expectedChannelMax = 512;
-        Matcher<?> expectedChannelMaxMatcher = nullValue();
+
+        final short expectedChannelMax = 512;
+        final Matcher<?> expectedChannelMaxMatcher;
         if (setChannelMax) {
-            expectedChannelMaxMatcher = equalTo(UnsignedShort.valueOf(expectedChannelMax));
+            expectedChannelMaxMatcher = new UnsignedShortMatcher(expectedChannelMax);
+        } else {
+            expectedChannelMaxMatcher = nullValue();
         }
+
         String expectedHostname = null;
         if (setHostname) {
             expectedHostname = "localhost";
         }
-        UnsignedInteger expectedIdleTimeout = null;
+        final int expectedIdleTimeout = 60000;
+        final Matcher<?> expectedIdleTimeoutMatcher;
         if (setIdleTimeout) {
-            expectedIdleTimeout = UnsignedInteger.valueOf(60000);
+            expectedIdleTimeoutMatcher = new UnsignedIntegerMatcher(expectedIdleTimeout);
+        } else {
+            expectedIdleTimeoutMatcher = nullValue();
         }
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
@@ -505,7 +517,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
                          .withChannelMax(expectedChannelMaxMatcher)
                          .withContainerId(expectedContainerId)
                          .withHostname(expectedHostname)
-                         .withIdleTimeOut(expectedIdleTimeout)
+                         .withIdleTimeOut(expectedIdleTimeoutMatcher)
                          .withIncomingLocales(nullValue())
                          .withOutgoingLocales(nullValue())
                          .withDesiredCapabilities(nullValue())
@@ -529,7 +541,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
             connection.setHostname(expectedHostname);
         }
         if (setIdleTimeout) {
-            connection.setIdleTimeout(expectedIdleTimeout.intValue());
+            connection.setIdleTimeout(expectedIdleTimeout);
         }
 
         connection.open();
@@ -549,9 +561,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         Symbol[] clientOfferedCapabilities = new Symbol[] { clientOfferedSymbol };
         Symbol[] clientDesiredCapabilities = new Symbol[] { clientDesiredSymbol };
-
-        Symbol[] serverOfferedCapabilities = new Symbol[] { serverOfferedSymbol };
-        Symbol[] serverDesiredCapabilities = new Symbol[] { serverDesiredSymbol };
+        Symbol[] clientExpectedOfferedCapabilities = new Symbol[] { serverOfferedSymbol };
+        Symbol[] clientExpectedDesiredCapabilities = new Symbol[] { serverDesiredSymbol };
 
         final AtomicBoolean remotelyOpened = new AtomicBoolean();
 
@@ -561,11 +572,11 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         engine.outputConsumer(peer);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
-        peer.expectOpen().withOfferedCapabilities(clientOfferedCapabilities)
-                         .withDesiredCapabilities(clientDesiredCapabilities)
+        peer.expectOpen().withOfferedCapabilities(new String[] { clientOfferedSymbol.toString() })
+                         .withDesiredCapabilities(new String[] { clientDesiredSymbol.toString() })
                          .respond()
-                         .withDesiredCapabilities(serverDesiredCapabilities)
-                         .withOfferedCapabilities(serverOfferedCapabilities);
+                         .withDesiredCapabilities(new String[] { serverDesiredSymbol.toString() })
+                         .withOfferedCapabilities(new String[] { serverOfferedSymbol.toString() });
         peer.expectClose().respond();
 
         Connection connection = engine.start();
@@ -581,8 +592,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         assertArrayEquals(clientOfferedCapabilities, connection.getOfferedCapabilities());
         assertArrayEquals(clientDesiredCapabilities, connection.getDesiredCapabilities());
-        assertArrayEquals(serverOfferedCapabilities, connection.getRemoteOfferedCapabilities());
-        assertArrayEquals(serverDesiredCapabilities, connection.getRemoteDesiredCapabilities());
+        assertArrayEquals(clientExpectedOfferedCapabilities, connection.getRemoteOfferedCapabilities());
+        assertArrayEquals(clientExpectedDesiredCapabilities, connection.getRemoteDesiredCapabilities());
 
         connection.close();
 
@@ -598,11 +609,11 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         final Symbol serverPropertyName = Symbol.valueOf("ServerPropertyName");
         final Integer serverPropertyValue = 5678;
 
-        Map<Symbol, Object> clientProperties = new HashMap<>();
-        clientProperties.put(clientPropertyName, clientPropertyValue);
+        Map<String, Object> clientPropertiesMap = new HashMap<>();
+        clientPropertiesMap.put(clientPropertyName.toString(), clientPropertyValue);
 
-        Map<Symbol, Object> serverProperties = new HashMap<>();
-        serverProperties.put(serverPropertyName, serverPropertyValue);
+        Map<String, Object> serverPropertiesMap = new HashMap<>();
+        serverPropertiesMap.put(serverPropertyName.toString(), serverPropertyValue);
 
         final AtomicBoolean remotelyOpened = new AtomicBoolean();
 
@@ -612,12 +623,15 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         engine.outputConsumer(peer);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
-        peer.expectOpen().withProperties(clientProperties)
+        peer.expectOpen().withProperties(clientPropertiesMap)
                          .respond()
-                         .withProperties(serverProperties);
+                         .withProperties(serverPropertiesMap);
         peer.expectClose().respond();
 
         Connection connection = engine.start();
+
+        Map<Symbol, Object> clientProperties = new HashMap<>();
+        clientProperties.put(clientPropertyName, clientPropertyValue);
 
         connection.setProperties(clientProperties);
         connection.openHandler(result -> {
@@ -642,10 +656,14 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
     @Test
     public void testOpenedCarriesRemoteErrorCondition() throws Exception {
+        Map<String, Object> errorInfoExpectation = new HashMap<>();
+        errorInfoExpectation.put("error", "value");
+        errorInfoExpectation.put("error-list", Arrays.asList("entry-1", "entry-2", "entry-3"));
+
         Map<Symbol, Object> errorInfo = new HashMap<>();
         errorInfo.put(Symbol.getSymbol("error"), "value");
         errorInfo.put(Symbol.getSymbol("error-list"), Arrays.asList("entry-1", "entry-2", "entry-3"));
-        ErrorCondition remoteCondition = new ErrorCondition(Symbol.getSymbol("myerror"), "mydepeerion", errorInfo);
+        ErrorCondition remoteCondition = new ErrorCondition(Symbol.getSymbol("myerror"), "mydescription", errorInfo);
 
         final AtomicBoolean remotelyOpened = new AtomicBoolean();
         final AtomicBoolean remotelyClosed = new AtomicBoolean();
@@ -657,7 +675,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
-        peer.remoteClose().withErrorCondition(remoteCondition).queue();
+        peer.remoteClose().withErrorCondition("myerror", "mydescription", errorInfoExpectation).queue();
         peer.expectClose();
 
         Connection connection = engine.start();
@@ -928,7 +946,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         // Now respond and Connection should open and close
         peer.expectOpen();
         peer.expectClose();
-        peer.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+        peer.remoteHeader(AMQPHeader.getAMQPHeader().toArray()).now();
 
         peer.waitForScriptToComplete();
 
@@ -954,7 +972,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         // Now respond and Connection should open and close
         peer.expectOpen();
         peer.expectClose().withError(notNullValue());
-        peer.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+        peer.remoteHeader(AMQPHeader.getAMQPHeader().toArray()).now();
 
         connection.setCondition(new ErrorCondition(ConnectionError.CONNECTION_FORCED, "something about errors")).close();
 
@@ -1633,7 +1651,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().withChannelMax(16).respond();
-        peer.expectClose().withError(new ErrorCondition(ConnectionError.FRAMING_ERROR, "Channel Max Exceeded for session Begin")).respond();
+        peer.expectClose().withError(ConnectionError.FRAMING_ERROR.toString(), "Channel Max Exceeded for session Begin").respond();
 
         Connection connection = engine.start();
 

@@ -19,12 +19,13 @@ package org.apache.qpid.proton4j.test.driver.codec.messaging;
 import java.util.List;
 
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
 
-public class Rejected extends ListDescribedType {
+public class Rejected extends ListDescribedType implements DeliveryState, Outcome {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:rejected:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000025L);
@@ -90,5 +91,10 @@ public class Rejected extends ListDescribedType {
     @Override
     public int hashCode() {
         return System.identityHashCode(this);
+    }
+
+    @Override
+    public DeliveryStateType getType() {
+        return DeliveryStateType.Rejected;
     }
 }

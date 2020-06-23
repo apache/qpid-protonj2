@@ -26,11 +26,11 @@ import org.apache.qpid.proton4j.test.driver.SessionTracker;
 import org.apache.qpid.proton4j.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.test.driver.actions.FlowInjectAction;
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Flow;
 import org.apache.qpid.proton4j.test.driver.matchers.transport.FlowMatcher;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.UnsignedShort;
 import org.hamcrest.Matcher;
 
 /**
@@ -271,16 +271,6 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;
-    }
-
-    @Override
-    protected Object getFieldValue(Flow flow, Enum<?> performativeField) {
-        return flow.getFieldValue(performativeField.ordinal());
-    }
-
-    @Override
-    protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Flow.Field.values()[fieldIndex];
     }
 
     @Override

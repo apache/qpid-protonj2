@@ -26,12 +26,12 @@ import org.apache.qpid.proton4j.test.driver.SessionTracker;
 import org.apache.qpid.proton4j.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.test.driver.actions.EndInjectAction;
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Begin;
 import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.transport.BeginMatcher;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.UnsignedShort;
 import org.hamcrest.Matcher;
 
 /**
@@ -175,19 +175,27 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
         return withHandleMax(equalTo(handleMax));
     }
 
+    public BeginExpectation withOfferedCapabilities(String... offeredCapabilities) {
+        return withOfferedCapabilities(equalTo(TypeMapper.toSymbolArray(offeredCapabilities)));
+    }
+
     public BeginExpectation withOfferedCapabilities(Symbol... offeredCapabilities) {
         return withOfferedCapabilities(equalTo(offeredCapabilities));
+    }
+
+    public BeginExpectation withDesiredCapabilities(String... desiredCapabilities) {
+        return withDesiredCapabilities(equalTo(TypeMapper.toSymbolArray(desiredCapabilities)));
     }
 
     public BeginExpectation withDesiredCapabilities(Symbol... desiredCapabilities) {
         return withDesiredCapabilities(equalTo(desiredCapabilities));
     }
 
-    public BeginExpectation withProperties(Map<Symbol, Object> properties) {
+    public BeginExpectation withPropertiesMap(Map<Symbol, Object> properties) {
         return withProperties(equalTo(properties));
     }
 
-    public BeginExpectation withPropertiesMap(Map<String, Object> properties) {
+    public BeginExpectation withProperties(Map<String, Object> properties) {
         return withProperties(equalTo(TypeMapper.toSymbolKeyedMap(properties)));
     }
 
@@ -236,16 +244,6 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;
-    }
-
-    @Override
-    protected Object getFieldValue(Begin begin, Enum<?> performativeField) {
-        return begin.getFieldValue(performativeField.ordinal());
-    }
-
-    @Override
-    protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Begin.Field.values()[fieldIndex];
     }
 
     @Override

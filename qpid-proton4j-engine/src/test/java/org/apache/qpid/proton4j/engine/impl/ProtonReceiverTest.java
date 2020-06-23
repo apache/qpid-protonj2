@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -298,11 +299,11 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
-        peer.expectAttach().withSndSettleMode(senderMode)
-                           .withRcvSettleMode(receiverMode)
+        peer.expectAttach().withSndSettleMode(senderMode == null ? null : senderMode.byteValue())
+                           .withRcvSettleMode(receiverMode == null ? null : receiverMode.byteValue())
                            .respond()
-                           .withSndSettleMode(senderMode)
-                           .withRcvSettleMode(receiverMode);
+                           .withSndSettleMode(senderMode == null ? null : senderMode.byteValue())
+                           .withRcvSettleMode(receiverMode == null ? null : receiverMode.byteValue());
 
         Connection connection = engine.start();
 
@@ -346,7 +347,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
-        peer.expectAttach().withRole(Role.RECEIVER)
+        peer.expectAttach().withRole(Role.RECEIVER.getValue())
                            .withTarget(notNullValue())
                            .withTarget(notNullValue())
                            .respond();
@@ -407,7 +408,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
-        peer.expectAttach().withRole(Role.RECEIVER).respond();
+        peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
         peer.expectDetach().withClosed(close).respond();
         peer.expectClose().respond();
 
@@ -644,7 +645,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
-        peer.expectAttach().withHandle(0).withRole(Role.RECEIVER).respond();
+        peer.expectAttach().withHandle(0).withRole(Role.RECEIVER.getValue()).respond();
         peer.remoteDetach().withClosed(close).queue();
 
         final AtomicBoolean receiverRemotelyOpened = new AtomicBoolean();
@@ -684,7 +685,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         }
 
         peer.waitForScriptToComplete();
-        peer.expectAttach().withHandle(0).withRole(Role.RECEIVER).respond();
+        peer.expectAttach().withHandle(0).withRole(Role.RECEIVER.getValue()).respond();
         peer.expectDetach().withClosed(close).respond();
 
         // Reset trackers
@@ -728,7 +729,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
-        peer.expectAttach().respond().withSource((Source) null);
+        peer.expectAttach().respond().withNullSource();
         peer.expectDetach().respond();
 
         final AtomicBoolean receiverRemotelyOpened = new AtomicBoolean();
@@ -806,7 +807,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectBegin().respond();
         peer.remoteAttach().withName("sender")
                            .withHandle(0)
-                           .withRole(Role.SENDER)
+                           .withRole(Role.SENDER.getValue())
                            .withInitialDeliveryCount(0).queue();
         peer.expectAttach();
         peer.expectDetach().respond();
@@ -928,7 +929,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
-        peer.expectAttach().withHandle(0).withName("receiver").withRole(Role.RECEIVER).respond();
+        peer.expectAttach().withHandle(0).withName("receiver").withRole(Role.RECEIVER.getValue()).respond();
 
         // Now open the connection, expect the Open, Begin, and Attach frames
         connection.open();
@@ -958,7 +959,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.open();
 
         peer.expectBegin().respond();
-        peer.expectAttach().withHandle(0).withName("receiver").withRole(Role.RECEIVER).respond();
+        peer.expectAttach().withHandle(0).withName("receiver").withRole(Role.RECEIVER.getValue()).respond();
 
         // Now open the session, expect the Begin, and Attach frames
         session.open();
@@ -987,7 +988,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
-        peer.expectAttach().withHandle(0).withName("receiver").withRole(Role.RECEIVER).respond();
+        peer.expectAttach().withHandle(0).withName("receiver").withRole(Role.RECEIVER.getValue()).respond();
         peer.expectEnd().respond();
 
         // Create the connection and open it, then create a session and a receiver
@@ -1035,7 +1036,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
-        peer.expectAttach().withHandle(0).withName("receiver").withRole(Role.RECEIVER).respond();
+        peer.expectAttach().withHandle(0).withName("receiver").withRole(Role.RECEIVER.getValue()).respond();
         peer.expectClose().respond();
 
         // Create the connection and open it, then create a session and a receiver
@@ -1382,8 +1383,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0).queue();
         peer.expectDisposition().withFirst(0)
                                 .withSettled(true)
-                                .withRole(Role.RECEIVER)
-                                .withState(Accepted.getInstance());
+                                .withRole(Role.RECEIVER.getValue())
+                                .withState().accepted();
         peer.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -1436,8 +1437,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0).queue();
         peer.expectDisposition().withFirst(0)
                                 .withSettled(true)
-                                .withRole(Role.RECEIVER)
-                                .withState(Accepted.getInstance());
+                                .withRole(Role.RECEIVER.getValue())
+                                .withState().accepted();
         peer.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -1497,12 +1498,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0).queue();
         peer.expectDisposition().withFirst(0)
                                 .withSettled(false)
-                                .withRole(Role.RECEIVER)
-                                .withState(Accepted.getInstance());
+                                .withRole(Role.RECEIVER.getValue())
+                                .withState().accepted();
         peer.expectDisposition().withFirst(0)
                                 .withSettled(true)
-                                .withRole(Role.RECEIVER)
-                                .withState(Released.getInstance());
+                                .withRole(Role.RECEIVER.getValue())
+                                .withState().released();
         peer.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -1619,8 +1620,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMore(false)
                              .withMessageFormat(0).queue();
         peer.remoteDisposition().withSettled(true)
-                                .withRole(Role.SENDER)
-                                .withState(Accepted.getInstance())
+                                .withRole(Role.SENDER.getValue())
+                                .withState().accepted()
                                 .withFirst(0).queue();
         peer.expectDetach().respond();
 
@@ -1687,8 +1688,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMore(false)
                              .withMessageFormat(0).queue();
         peer.remoteDisposition().withSettled(true)
-                                .withRole(Role.SENDER)
-                                .withState(Accepted.getInstance())
+                                .withRole(Role.SENDER.getValue())
+                                .withState().accepted()
                                 .withFirst(0)
                                 .withLast(1).queue();
         peer.expectDetach().respond();
@@ -1747,9 +1748,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         String text = "test-string-for-split-frame-delivery";
         byte[] encoded = text.getBytes(StandardCharsets.UTF_8);
-
-        Binary first = new Binary(encoded, 0, encoded.length / 2);
-        Binary second = new Binary(encoded, encoded.length / 2, encoded.length - (encoded.length / 2));
+        byte[] first = Arrays.copyOfRange(encoded, 0, encoded.length / 2);
+        byte[] second = Arrays.copyOfRange(encoded, encoded.length / 2, encoded.length);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
@@ -1830,9 +1830,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         String text = "test-string-for-split-frame-delivery";
         byte[] encoded = text.getBytes(StandardCharsets.UTF_8);
-
-        Binary first = new Binary(encoded, 0, encoded.length / 2);
-        Binary second = new Binary(encoded, encoded.length / 2, encoded.length - (encoded.length / 2));
+        byte[] first = Arrays.copyOfRange(encoded, 0, encoded.length / 2);
+        byte[] second = Arrays.copyOfRange(encoded, encoded.length / 2, encoded.length);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
@@ -2024,12 +2023,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         peer.expectDisposition().withFirst(1)
                                 .withSettled(true)
-                                .withRole(Role.RECEIVER)
-                                .withState(Accepted.getInstance());
+                                .withRole(Role.RECEIVER.getValue())
+                                .withState().accepted();
         peer.expectDisposition().withFirst(0)
                                 .withSettled(true)
-                                .withRole(Role.RECEIVER)
-                                .withState(Accepted.getInstance());
+                                .withRole(Role.RECEIVER.getValue())
+                                .withState().accepted();
 
         assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag().tagBuffer().getArray());
         assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag().tagBuffer().getArray());
@@ -2616,7 +2615,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen();
         peer.expectBegin();
-        peer.expectAttach().withRole(Role.RECEIVER)
+        peer.expectAttach().withRole(Role.RECEIVER.getValue())
                            .withSource().withDynamic(true)
                            .withAddress((String) null);
 
@@ -2843,7 +2842,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectBegin().respond();
         peer.expectAttach().respond();
         peer.expectDetach().withClosed(close)
-                           .withError(new ErrorCondition(Symbol.valueOf(condition), description))
+                           .withError(condition, description)
                            .respond();
         peer.expectClose();
 
@@ -3291,8 +3290,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
     @Test(timeout = 20_000)
     public void testReceiveComplexEndodedAMQPMessageAndDecode() throws IOException {
-        final Symbol SERIALIZED_JAVA_OBJECT_CONTENT_TYPE = Symbol.valueOf("application/x-java-serialized-object");
-        final Symbol JMS_MSG_TYPE = Symbol.valueOf("x-opt-jms-msg-type");
+        final String SERIALIZED_JAVA_OBJECT_CONTENT_TYPE = "application/x-java-serialized-object";
+        final String JMS_MSG_TYPE = "x-opt-jms-msg-type";
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -3327,12 +3326,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         oos.close();
         byte[] bytes = baos.toByteArray();
 
-        peer.expectDisposition().withState(Accepted.getInstance()).withSettled(true);
+        peer.expectDisposition().withState().accepted().withSettled(true);
         peer.remoteTransfer().withDeliveryTag(new byte[] {0})
                              .withDeliveryId(0)
                              .withProperties().withContentType(SERIALIZED_JAVA_OBJECT_CONTENT_TYPE).also()
                              .withMessageAnnotations().withAnnotation("x-opt-jms-msg-type", (byte) 1).also()
-                             .withBody().withData(new Binary(bytes)).also()
+                             .withBody().withData(bytes).also()
                              .now();
 
         peer.waitForScriptToComplete();
@@ -3348,7 +3347,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         try {
             annotations = (MessageAnnotations) decoder.readObject(buffer, decoderState);
             assertNotNull(annotations);
-            assertTrue(annotations.getValue().containsKey(JMS_MSG_TYPE));
+            assertTrue(annotations.getValue().containsKey(Symbol.valueOf(JMS_MSG_TYPE)));
         } catch (Exception ex) {
             fail("Should not encouter error on decode of MessageAnnotations: " + ex);
         } finally {
@@ -3358,7 +3357,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         try {
             properties = (Properties) decoder.readObject(buffer, decoderState);
             assertNotNull(properties);
-            assertEquals(SERIALIZED_JAVA_OBJECT_CONTENT_TYPE.toString(), properties.getContentType());
+            assertEquals(SERIALIZED_JAVA_OBJECT_CONTENT_TYPE, properties.getContentType());
         } catch (Exception ex) {
             fail("Should not encouter error on decode of Properties: " + ex);
         } finally {

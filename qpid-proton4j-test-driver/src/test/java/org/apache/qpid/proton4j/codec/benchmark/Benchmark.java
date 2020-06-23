@@ -36,15 +36,15 @@ import org.apache.qpid.proton4j.test.driver.codec.messaging.Data;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Header;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Properties;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedByte;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Disposition;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Flow;
+import org.apache.qpid.proton4j.test.driver.codec.transport.Role;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Transfer;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedByte;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.UnsignedShort;
-import org.apache.qpid.proton4j.types.transport.Role;
 
 public class Benchmark implements Runnable {
 

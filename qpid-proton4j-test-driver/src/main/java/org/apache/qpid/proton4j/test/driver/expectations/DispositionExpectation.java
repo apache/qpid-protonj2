@@ -20,12 +20,17 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Accepted;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Modified;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Rejected;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Released;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Disposition;
-import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
+import org.apache.qpid.proton4j.test.driver.codec.transport.Role;
 import org.apache.qpid.proton4j.test.driver.matchers.transport.DispositionMatcher;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.transport.DeliveryState;
-import org.apache.qpid.proton4j.types.transport.Role;
 import org.hamcrest.Matcher;
 
 /**
@@ -34,6 +39,7 @@ import org.hamcrest.Matcher;
 public class DispositionExpectation extends AbstractExpectation<Disposition> {
 
     private final DispositionMatcher matcher = new DispositionMatcher();
+    private final DeliveryStateBuilder stateBuilder = new DeliveryStateBuilder();
 
     public DispositionExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -46,6 +52,16 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
     }
 
     //----- Type specific with methods that perform simple equals checks
+
+    public DispositionExpectation withRole(boolean role) {
+        withRole(equalTo(role));
+        return this;
+    }
+
+    public DispositionExpectation withRole(Boolean role) {
+        withRole(equalTo(role));
+        return this;
+    }
 
     public DispositionExpectation withRole(Role role) {
         withRole(equalTo(role.getValue()));
@@ -81,8 +97,11 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
     }
 
     public DispositionExpectation withState(DeliveryState state) {
-        // TODO - Might want a more generic DescribedTypeMatcher for these.
-        return withState(equalTo(TypeMapper.mapFromProtonType(state)));
+        return withState(equalTo(state));
+    }
+
+    public DeliveryStateBuilder withState() {
+        return stateBuilder;
     }
 
     public DispositionExpectation withBatchable(boolean batchable) {
@@ -127,17 +146,50 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
     }
 
     @Override
-    protected Object getFieldValue(Disposition disposition, Enum<?> performativeField) {
-        return disposition.getFieldValue(performativeField.ordinal());
-    }
-
-    @Override
-    protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Disposition.Field.values()[fieldIndex];
-    }
-
-    @Override
     protected Class<Disposition> getExpectedTypeClass() {
         return Disposition.class;
+    }
+
+    public final class DeliveryStateBuilder {
+
+        public DispositionExpectation accepted() {
+            withState(Accepted.getInstance());
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation released() {
+            withState(Released.getInstance());
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected() {
+            withState(new Rejected());
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected(String condition, String description) {
+            withState(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description)));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation modified() {
+            withState(new Modified());
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation modified(boolean failed) {
+            withState(new Modified());
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation modified(boolean failed, boolean undeliverableHere) {
+            withState(new Modified());
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation transactional(byte[] txnid) {
+            withState(Accepted.getInstance());
+            return DispositionExpectation.this;
+        }
     }
 }

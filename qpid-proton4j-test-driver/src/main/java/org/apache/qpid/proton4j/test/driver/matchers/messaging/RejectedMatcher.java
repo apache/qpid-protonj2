@@ -16,17 +16,58 @@
  */
 package org.apache.qpid.proton4j.test.driver.matchers.messaging;
 
-import org.apache.qpid.proton4j.test.driver.codec.messaging.Received;
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import java.util.Map;
+
+import org.apache.qpid.proton4j.test.driver.codec.messaging.Rejected;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.test.driver.matchers.ListDescribedTypeMatcher;
+import org.apache.qpid.proton4j.test.driver.matchers.transport.ErrorConditionMatcher;
+import org.hamcrest.Matcher;
 
 public class RejectedMatcher extends ListDescribedTypeMatcher {
 
     public RejectedMatcher() {
-        super(Received.Field.values().length, Received.DESCRIPTOR_CODE, Received.DESCRIPTOR_SYMBOL);
+        super(Rejected.Field.values().length, Rejected.DESCRIPTOR_CODE, Rejected.DESCRIPTOR_SYMBOL);
     }
 
     @Override
     protected Class<?> getDescribedTypeClass() {
-        return Received.class;
+        return Rejected.class;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public RejectedMatcher withError(ErrorCondition error) {
+        return withError(equalTo(error));
+    }
+
+    public RejectedMatcher withError(String condition) {
+        return withError(new ErrorConditionMatcher().withCondition(condition));
+    }
+
+    public RejectedMatcher withError(Symbol condition) {
+        return withError(new ErrorConditionMatcher().withCondition(condition));
+    }
+
+    public RejectedMatcher withError(String condition, String description) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description));
+    }
+
+    public RejectedMatcher withError(String condition, String description, Map<String, Object> info) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info));
+    }
+
+    public RejectedMatcher withError(Symbol condition, String description, Map<Symbol, Object> info) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfoMap(info));
+    }
+
+    //----- Matcher based with methods for more complex validation
+
+    public RejectedMatcher withError(Matcher<?> m) {
+        addFieldMatcher(Rejected.Field.ERROR, m);
+        return this;
     }
 }

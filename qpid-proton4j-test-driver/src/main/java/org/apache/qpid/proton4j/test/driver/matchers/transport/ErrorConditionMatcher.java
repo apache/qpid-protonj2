@@ -16,8 +16,15 @@
  */
 package org.apache.qpid.proton4j.test.driver.matchers.transport;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import java.util.Map;
+
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
+import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.ListDescribedTypeMatcher;
+import org.hamcrest.Matcher;
 
 public class ErrorConditionMatcher extends ListDescribedTypeMatcher {
 
@@ -28,5 +35,44 @@ public class ErrorConditionMatcher extends ListDescribedTypeMatcher {
     @Override
     protected Class<?> getDescribedTypeClass() {
         return ErrorCondition.class;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public ErrorConditionMatcher withCondition(String condition) {
+        return withCondition(equalTo(Symbol.valueOf(condition)));
+    }
+
+    public ErrorConditionMatcher withCondition(Symbol condition) {
+        return withCondition(equalTo(condition));
+    }
+
+    public ErrorConditionMatcher withDescription(String description) {
+        return withDescription(equalTo(description));
+    }
+
+    public ErrorConditionMatcher withInfoMap(Map<Symbol, Object> info) {
+        return withInfo(equalTo(info));
+    }
+
+    public ErrorConditionMatcher withInfo(Map<String, Object> info) {
+        return withInfo(equalTo(TypeMapper.toSymbolKeyedMap(info)));
+    }
+
+    //----- Matcher based with methods for more complex validation
+
+    public ErrorConditionMatcher withCondition(Matcher<?> m) {
+        addFieldMatcher(ErrorCondition.Field.CONDITION, m);
+        return this;
+    }
+
+    public ErrorConditionMatcher withDescription(Matcher<?> m) {
+        addFieldMatcher(ErrorCondition.Field.DESCRIPTION, m);
+        return this;
+    }
+
+    public ErrorConditionMatcher withInfo(Matcher<?> m) {
+        addFieldMatcher(ErrorCondition.Field.INFO, m);
+        return this;
     }
 }

@@ -20,9 +20,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 
 public class ErrorCondition extends ListDescribedType {
 
@@ -49,6 +49,28 @@ public class ErrorCondition extends ListDescribedType {
 
     public ErrorCondition(List<Object> described) {
         super(Field.values().length, described);
+    }
+
+    public ErrorCondition(Symbol condition, String description) {
+        super(Field.values().length);
+
+        setCondition(condition);
+        setDescription(description);
+    }
+
+    public ErrorCondition(String condition, String description) {
+        super(Field.values().length);
+
+        setCondition(Symbol.valueOf(condition));
+        setDescription(description);
+    }
+
+    public ErrorCondition(Symbol condition, String description, Map<Symbol, Object> info) {
+        super(Field.values().length);
+
+        setCondition(condition);
+        setDescription(description);
+        setInfo(info);
     }
 
     @Override

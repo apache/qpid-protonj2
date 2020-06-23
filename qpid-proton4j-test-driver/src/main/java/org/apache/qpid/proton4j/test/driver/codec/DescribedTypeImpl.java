@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.test.driver.codec;
 
-import org.apache.qpid.proton4j.types.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
 
 class DescribedTypeImpl implements DescribedType {
 

@@ -20,12 +20,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Begin;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Detach;
 import org.apache.qpid.proton4j.test.driver.codec.transport.End;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Transfer;
-import org.apache.qpid.proton4j.types.UnsignedShort;
 
 /**
  * Tracks all sessions opened by the remote or initiated from the driver.

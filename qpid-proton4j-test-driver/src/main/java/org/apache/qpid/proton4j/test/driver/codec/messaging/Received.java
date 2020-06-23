@@ -19,10 +19,11 @@ package org.apache.qpid.proton4j.test.driver.codec.messaging;
 import java.util.List;
 
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
 
-public class Received extends ListDescribedType {
+public class Received extends ListDescribedType implements DeliveryState, Outcome {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:received:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000023L);
@@ -69,5 +70,10 @@ public class Received extends ListDescribedType {
 
     public Object getSectionOffset() {
         return getList().get(Field.SECTION_OFFSET.ordinal());
+    }
+
+    @Override
+    public DeliveryStateType getType() {
+        return DeliveryStateType.Received;
     }
 }

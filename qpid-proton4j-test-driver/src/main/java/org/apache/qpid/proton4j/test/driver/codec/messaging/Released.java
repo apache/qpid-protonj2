@@ -19,14 +19,17 @@ package org.apache.qpid.proton4j.test.driver.codec.messaging;
 import java.util.List;
 
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
-import org.apache.qpid.proton4j.types.DescribedType;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
 
-public class Released extends ListDescribedType {
+public class Released extends ListDescribedType implements DeliveryState, Outcome {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:released:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000026L);
+
+    private static final Released INSTANCE = new Released();
 
     public Released() {
         super(0);
@@ -39,6 +42,10 @@ public class Released extends ListDescribedType {
 
     public Released(List<Object> described) {
         super(0, described);
+    }
+
+    public static Released getInstance() {
+        return INSTANCE;
     }
 
     @Override
@@ -73,5 +80,10 @@ public class Released extends ListDescribedType {
     @Override
     public int hashCode() {
         return System.identityHashCode(this);
+    }
+
+    @Override
+    public DeliveryStateType getType() {
+        return DeliveryStateType.Released;
     }
 }

@@ -18,12 +18,16 @@
  * under the License.
  *
  */
-package org.apache.qpid.proton4j.test.driver.matchers.sections;
+package org.apache.qpid.proton4j.test.driver.matchers.transport;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.matchers.messaging.ApplicationPropertiesMatcher;
+import org.apache.qpid.proton4j.test.driver.matchers.messaging.MessageAnnotationsMatcher;
+import org.apache.qpid.proton4j.test.driver.matchers.messaging.HeaderMatcher;
+import org.apache.qpid.proton4j.test.driver.matchers.messaging.PropertiesMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
@@ -35,15 +39,15 @@ import org.hamcrest.TypeSafeMatcher;
  */
 public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ProtonBuffer> {
 
-    private MessageHeaderSectionMatcher msgHeadersMatcher;
+    private HeaderMatcher msgHeadersMatcher;
     private String msgHeaderMatcherFailureDescription;
-    private MessageAnnotationsSectionMatcher msgAnnotationsMatcher;
+    private MessageAnnotationsMatcher msgAnnotationsMatcher;
     private String msgAnnotationsMatcherFailureDescription;
-    private MessagePropertiesSectionMatcher propsMatcher;
+    private PropertiesMatcher propsMatcher;
     private String propsMatcherFailureDescription;
     private Matcher<Binary> msgContentMatcher;
     private String msgContentMatcherFailureDescription;
-    private ApplicationPropertiesSectionMatcher appPropsMatcher;
+    private ApplicationPropertiesMatcher appPropsMatcher;
     private String appPropsMatcherFailureDescription;
     private Matcher<Integer> payloadLengthMatcher;
     private String payloadLenthMatcherFailureDescription;
@@ -194,19 +198,19 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ProtonBuffe
         }
     }
 
-    public void setHeadersMatcher(MessageHeaderSectionMatcher msgHeadersMatcher) {
+    public void setHeadersMatcher(HeaderMatcher msgHeadersMatcher) {
         this.msgHeadersMatcher = msgHeadersMatcher;
     }
 
-    public void setMessageAnnotationsMatcher(MessageAnnotationsSectionMatcher msgAnnotationsMatcher) {
+    public void setMessageAnnotationsMatcher(MessageAnnotationsMatcher msgAnnotationsMatcher) {
         this.msgAnnotationsMatcher = msgAnnotationsMatcher;
     }
 
-    public void setPropertiesMatcher(MessagePropertiesSectionMatcher propsMatcher) {
+    public void setPropertiesMatcher(PropertiesMatcher propsMatcher) {
         this.propsMatcher = propsMatcher;
     }
 
-    public void setApplicationPropertiesMatcher(ApplicationPropertiesSectionMatcher appPropsMatcher) {
+    public void setApplicationPropertiesMatcher(ApplicationPropertiesMatcher appPropsMatcher) {
         this.appPropsMatcher = appPropsMatcher;
     }
 

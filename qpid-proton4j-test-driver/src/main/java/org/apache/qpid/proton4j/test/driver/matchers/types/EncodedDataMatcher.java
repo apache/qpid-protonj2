@@ -18,10 +18,10 @@
  */
 package org.apache.qpid.proton4j.test.driver.matchers.types;
 
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
-import org.apache.qpid.proton4j.types.messaging.AmqpValue;
+import org.apache.qpid.proton4j.test.driver.codec.messaging.AmqpValue;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Description;
 
 public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {
@@ -54,5 +54,4 @@ public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {
     public void describeTo(Description description) {
         description.appendText("a Binary encoding of a Data that wraps a Binary containing: ").appendValue(getExpectedValue());
     }
-
 }

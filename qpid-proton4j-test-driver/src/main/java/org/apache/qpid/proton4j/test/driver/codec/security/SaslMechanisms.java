@@ -18,8 +18,8 @@ package org.apache.qpid.proton4j.test.driver.codec.security;
 
 import java.util.List;
 
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 
 public class SaslMechanisms extends SaslDescribedType {
 

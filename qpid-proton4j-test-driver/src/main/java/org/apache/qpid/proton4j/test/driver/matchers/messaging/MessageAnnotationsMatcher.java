@@ -16,29 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.qpid.proton4j.test.driver.matchers.sections;
+package org.apache.qpid.proton4j.test.driver.matchers.messaging;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Matcher;
 
-public class MessageAnnotationsSectionMatcher extends MessageMapSectionMatcher {
+public class MessageAnnotationsMatcher extends AbstractMapSectionMatcher {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:message-annotations:map");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000072L);
 
-    public MessageAnnotationsSectionMatcher(boolean expectTrailingBytes) {
+    public MessageAnnotationsMatcher(boolean expectTrailingBytes) {
         super(DESCRIPTOR_CODE, DESCRIPTOR_SYMBOL, new HashMap<Object, Matcher<?>>(), expectTrailingBytes);
     }
 
     @Override
-    public MessageAnnotationsSectionMatcher withEntry(Object key, Matcher<?> m) {
+    public MessageAnnotationsMatcher withEntry(Object key, Matcher<?> m) {
         validateType(key);
 
-        return (MessageAnnotationsSectionMatcher) super.withEntry(key, m);
+        return (MessageAnnotationsMatcher) super.withEntry(key, m);
     }
 
     private void validateType(Object key) {

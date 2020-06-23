@@ -369,6 +369,7 @@ public class SequenceNumberMapTest {
         assertNull(map.remove(0));
     }
 
+    @SuppressWarnings("unlikely-arg-type")
     @Test
     public void testRemoveWithInvalidType() {
         SequenceNumberMap<String> map = new SequenceNumberMap<>();

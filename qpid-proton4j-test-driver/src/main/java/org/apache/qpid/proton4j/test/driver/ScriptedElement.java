@@ -17,8 +17,8 @@
 package org.apache.qpid.proton4j.test.driver;
 
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslDescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.transport.AMQPHeader;
 import org.apache.qpid.proton4j.test.driver.codec.transport.PerformativeDescribedType;
-import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 
 /**
  * Root of scripted entries in the test driver script.

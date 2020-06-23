@@ -18,13 +18,12 @@ package org.apache.qpid.proton4j.test.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslInit;
 import org.apache.qpid.proton4j.test.driver.matchers.security.SaslInitMatcher;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.Symbol;
 import org.hamcrest.Matcher;
 
 /**
@@ -49,10 +48,6 @@ public class SaslInitExpectation extends AbstractExpectation<SaslInit> {
     }
 
     public SaslInitExpectation withInitialResponse(byte[] initialResponse) {
-        return withInitialResponse(equalTo(new Binary(initialResponse)));
-    }
-
-    public SaslInitExpectation withInitialResponse(ProtonBuffer initialResponse) {
         return withInitialResponse(equalTo(new Binary(initialResponse)));
     }
 
@@ -84,16 +79,6 @@ public class SaslInitExpectation extends AbstractExpectation<SaslInit> {
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;
-    }
-
-    @Override
-    protected Object getFieldValue(SaslInit saslInit, Enum<?> performativeField) {
-        return saslInit.getFieldValue(performativeField.ordinal());
-    }
-
-    @Override
-    protected Enum<?> getFieldEnum(int fieldIndex) {
-        return SaslInit.Field.values()[fieldIndex];
     }
 
     @Override

@@ -16,33 +16,36 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.qpid.proton4j.test.driver.matchers.sections;
+package org.apache.qpid.proton4j.test.driver.matchers.messaging;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Matcher;
 
-public abstract class MessageMapSectionMatcher extends AbstractMessageSectionMatcher {
+public abstract class AbstractListSectionMatcher extends AbstractMessageSectionMatcher {
 
-    public MessageMapSectionMatcher(UnsignedLong numericDescriptor, Symbol symbolicDescriptor, Map<Object, Matcher<?>> fieldMatchers, boolean expectTrailingBytes) {
+    public AbstractListSectionMatcher(UnsignedLong numericDescriptor, Symbol symbolicDescriptor, Map<Object, Matcher<?>> fieldMatchers, boolean expectTrailingBytes) {
         super(numericDescriptor, symbolicDescriptor, fieldMatchers, expectTrailingBytes);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     protected void verifyReceivedDescribedObject(Object described) {
-        if (!(described instanceof Map)) {
+        if (!(described instanceof List)) {
             throw new IllegalArgumentException(
-                "Unexpected section contents. Expected Map, but got: " + (described == null ? "null" : described.getClass()));
+                "Unexpected section contents. Expected List, but got: " + (described == null ? "null" : described.getClass()));
         }
 
-        verifyReceivedFields((Map<Object, Object>) described);
-    }
+        int fieldNumber = 0;
+        Map<Object, Object> valueMap = new HashMap<>();
+        for (Object value : (List<Object>) described) {
+            valueMap.put(getField(fieldNumber++), value);
+        }
 
-    public MessageMapSectionMatcher withEntry(Object key, Matcher<?> m) {
-        getMatchers().put(key, m);
-        return this;
+        verifyReceivedFields(valueMap);
     }
 }

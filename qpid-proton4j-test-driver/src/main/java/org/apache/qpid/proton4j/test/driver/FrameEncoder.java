@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.test.driver;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.test.driver.codec.Codec;
-import org.apache.qpid.proton4j.types.DescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
 
 /**
  * Encodes AMQP performatives into frames for transmission

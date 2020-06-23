@@ -16,10 +16,9 @@
  */
 package org.apache.qpid.proton4j.test.driver.actions;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslResponse;
-import org.apache.qpid.proton4j.types.Binary;
 
 /**
  * AMQP SaslResponse injection action which can be added to a driver for write at a specific time or
@@ -33,7 +32,7 @@ public class SaslResponseInjectAction extends AbstractSaslPerformativeInjectActi
         super(driver);
     }
 
-    public SaslResponseInjectAction withResponse(ProtonBuffer response) {
+    public SaslResponseInjectAction withResponse(byte[] response) {
         saslResponse.setResponse(new Binary(response));
         return this;
     }

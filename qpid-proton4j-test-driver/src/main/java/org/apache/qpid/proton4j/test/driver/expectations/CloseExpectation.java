@@ -25,11 +25,11 @@ import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.test.driver.actions.CloseInjectAction;
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Close;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.transport.CloseMatcher;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 import org.hamcrest.Matcher;
 
 /**
@@ -71,26 +71,23 @@ public class CloseExpectation extends AbstractExpectation<Close> {
     //----- Type specific with methods that perform simple equals checks
 
     public CloseExpectation withError(ErrorCondition error) {
-        return withError(equalTo(TypeMapper.mapFromProtonType(error)));
+        return withError(equalTo(error));
     }
 
     public CloseExpectation withError(String condition, String description) {
-        return withError(equalTo(
-            TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description))));
+        return withError(equalTo(new ErrorCondition(Symbol.valueOf(condition), description)));
     }
 
     public CloseExpectation withError(String condition, String description, Map<String, Object> info) {
-        return withError(equalTo(
-            TypeMapper.mapFromProtonType(
-                new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info)))));
+        return withError(equalTo(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info))));
     }
 
     public CloseExpectation withError(Symbol condition, String description) {
-        return withError(equalTo(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description))));
+        return withError(equalTo(new ErrorCondition(condition, description)));
     }
 
     public CloseExpectation withError(Symbol condition, String description, Map<Symbol, Object> info) {
-        return withError(equalTo(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description, info))));
+        return withError(equalTo(new ErrorCondition(condition, description, info)));
     }
 
     //----- Matcher based with methods for more complex validation
@@ -103,16 +100,6 @@ public class CloseExpectation extends AbstractExpectation<Close> {
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;
-    }
-
-    @Override
-    protected Object getFieldValue(Close close, Enum<?> performativeField) {
-        return close.getFieldValue(performativeField.ordinal());
-    }
-
-    @Override
-    protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Close.Field.values()[fieldIndex];
     }
 
     @Override

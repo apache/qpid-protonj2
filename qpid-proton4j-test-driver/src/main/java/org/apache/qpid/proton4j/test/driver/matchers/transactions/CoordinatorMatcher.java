@@ -19,9 +19,10 @@ package org.apache.qpid.proton4j.test.driver.matchers.transactions;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator;
+import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.ListDescribedTypeMatcher;
-import org.apache.qpid.proton4j.types.Symbol;
 import org.hamcrest.Matcher;
 
 public class CoordinatorMatcher extends ListDescribedTypeMatcher {
@@ -30,7 +31,7 @@ public class CoordinatorMatcher extends ListDescribedTypeMatcher {
         super(Coordinator.Field.values().length, Coordinator.DESCRIPTOR_CODE, Coordinator.DESCRIPTOR_SYMBOL);
     }
 
-    public CoordinatorMatcher(org.apache.qpid.proton4j.types.transactions.Coordinator coordinator) {
+    public CoordinatorMatcher(Coordinator coordinator) {
         super(Coordinator.Field.values().length, Coordinator.DESCRIPTOR_CODE, Coordinator.DESCRIPTOR_SYMBOL);
 
         addCoordinatorMatchers(coordinator);
@@ -47,6 +48,10 @@ public class CoordinatorMatcher extends ListDescribedTypeMatcher {
         return withCapabilities(equalTo(capabilities));
     }
 
+    public CoordinatorMatcher withCapabilities(String... capabilities) {
+        return withCapabilities(equalTo(TypeMapper.toSymbolArray(capabilities)));
+    }
+
     //----- Matcher based with methods for more complex validation
 
     public CoordinatorMatcher withCapabilities(Matcher<?> m) {
@@ -56,7 +61,7 @@ public class CoordinatorMatcher extends ListDescribedTypeMatcher {
 
     //----- Populate the matcher from a given Source object
 
-    private void addCoordinatorMatchers(org.apache.qpid.proton4j.types.transactions.Coordinator coordinator) {
+    private void addCoordinatorMatchers(Coordinator coordinator) {
         if (coordinator.getCapabilities() != null) {
             addFieldMatcher(Coordinator.Field.CAPABILITIES, equalTo(coordinator.getCapabilities()));
         } else {

@@ -19,11 +19,11 @@ package org.apache.qpid.proton4j.test.driver.actions;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Detach;
+import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 
 /**
  * AMQP Detach injection action which can be added to a driver for write at a specific time or
@@ -63,27 +63,27 @@ public class DetachInjectAction extends AbstractPerformativeInjectAction<Detach>
     }
 
     public DetachInjectAction withErrorCondition(ErrorCondition error) {
-        detach.setError(TypeMapper.mapFromProtonType(error));
+        detach.setError(error);
         return this;
     }
 
     public DetachInjectAction withErrorCondition(String condition, String description) {
-        detach.setError(TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description)));
+        detach.setError(new ErrorCondition(Symbol.valueOf(condition), description));
         return this;
     }
 
     public DetachInjectAction withErrorCondition(Symbol condition, String description) {
-        detach.setError(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description)));
+        detach.setError(new ErrorCondition(condition, description));
         return this;
     }
 
     public DetachInjectAction withErrorCondition(String condition, String description, Map<String, Object> info) {
-        detach.setError(TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info))));
+        detach.setError(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info)));
         return this;
     }
 
     public DetachInjectAction withErrorCondition(Symbol condition, String description, Map<Symbol, Object> info) {
-        detach.setError(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description, info)));
+        detach.setError(new ErrorCondition(condition, description, info));
         return this;
     }
 

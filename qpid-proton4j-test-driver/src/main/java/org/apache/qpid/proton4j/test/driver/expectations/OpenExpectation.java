@@ -26,12 +26,12 @@ import org.apache.qpid.proton4j.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.test.driver.actions.CloseInjectAction;
 import org.apache.qpid.proton4j.test.driver.actions.OpenInjectAction;
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Open;
 import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
-import org.apache.qpid.proton4j.test.driver.matchers.messaging.OpenMatcher;
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedInteger;
-import org.apache.qpid.proton4j.types.UnsignedShort;
+import org.apache.qpid.proton4j.test.driver.matchers.transport.OpenMatcher;
 import org.hamcrest.Matcher;
 
 /**
@@ -134,27 +134,43 @@ public class OpenExpectation extends AbstractExpectation<Open> {
         return withIdleTimeOut(equalTo(idleTimeout));
     }
 
+    public OpenExpectation withOutgoingLocales(String... outgoingLocales) {
+        return withOutgoingLocales(equalTo(TypeMapper.toSymbolArray(outgoingLocales)));
+    }
+
     public OpenExpectation withOutgoingLocales(Symbol... outgoingLocales) {
         return withOutgoingLocales(equalTo(outgoingLocales));
+    }
+
+    public OpenExpectation withIncomingLocales(String... incomingLocales) {
+        return withIncomingLocales(equalTo(TypeMapper.toSymbolArray(incomingLocales)));
     }
 
     public OpenExpectation withIncomingLocales(Symbol... incomingLocales) {
         return withIncomingLocales(equalTo(incomingLocales));
     }
 
+    public OpenExpectation withOfferedCapabilities(String... offeredCapabilities) {
+        return withOfferedCapabilities(equalTo(TypeMapper.toSymbolArray(offeredCapabilities)));
+    }
+
     public OpenExpectation withOfferedCapabilities(Symbol... offeredCapabilities) {
         return withOfferedCapabilities(equalTo(offeredCapabilities));
+    }
+
+    public OpenExpectation withDesiredCapabilities(String... desiredCapabilities) {
+        return withDesiredCapabilities(equalTo(TypeMapper.toSymbolArray(desiredCapabilities)));
     }
 
     public OpenExpectation withDesiredCapabilities(Symbol... desiredCapabilities) {
         return withDesiredCapabilities(equalTo(desiredCapabilities));
     }
 
-    public OpenExpectation withProperties(Map<Symbol, Object> properties) {
+    public OpenExpectation withPropertiesMap(Map<Symbol, Object> properties) {
         return withProperties(equalTo(properties));
     }
 
-    public OpenExpectation withPropertiesMap(Map<String, Object> properties) {
+    public OpenExpectation withProperties(Map<String, Object> properties) {
         return withProperties(equalTo(TypeMapper.toSymbolKeyedMap(properties)));
     }
 
@@ -213,16 +229,6 @@ public class OpenExpectation extends AbstractExpectation<Open> {
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;
-    }
-
-    @Override
-    protected Object getFieldValue(Open open, Enum<?> performativeField) {
-        return open.getFieldValue(performativeField.ordinal());
-    }
-
-    @Override
-    protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Open.Field.values()[fieldIndex];
     }
 
     @Override

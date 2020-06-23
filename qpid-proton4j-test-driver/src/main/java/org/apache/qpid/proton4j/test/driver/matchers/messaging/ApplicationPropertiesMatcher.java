@@ -16,29 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.qpid.proton4j.test.driver.matchers.sections;
+package org.apache.qpid.proton4j.test.driver.matchers.messaging;
 
 import java.util.HashMap;
 
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Matcher;
 
-public class ApplicationPropertiesSectionMatcher extends MessageMapSectionMatcher {
+public class ApplicationPropertiesMatcher extends AbstractMapSectionMatcher {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:application-properties:map");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000074L);
 
-    public ApplicationPropertiesSectionMatcher(boolean expectTrailingBytes) {
+    public ApplicationPropertiesMatcher(boolean expectTrailingBytes) {
         super(DESCRIPTOR_CODE, DESCRIPTOR_SYMBOL, new HashMap<Object, Matcher<?>>(), expectTrailingBytes);
     }
 
     @Override
-    public ApplicationPropertiesSectionMatcher withEntry(Object key, Matcher<?> m) {
+    public ApplicationPropertiesMatcher withEntry(Object key, Matcher<?> m) {
         if (!(key instanceof String)) {
             throw new RuntimeException("ApplicationProperties maps must use non-null String keys");
         }
 
-        return (ApplicationPropertiesSectionMatcher) super.withEntry(key, m);
+        return (ApplicationPropertiesMatcher) super.withEntry(key, m);
     }
 }

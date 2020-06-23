@@ -71,6 +71,11 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
                                                        Released.DESCRIPTOR_SYMBOL,
                                                        Modified.DESCRIPTOR_SYMBOL };
 
+    private String[] DEFAULT_OUTCOMES_STRINGS = new String[] { Accepted.DESCRIPTOR_SYMBOL.toString(),
+                                                               Rejected.DESCRIPTOR_SYMBOL.toString(),
+                                                               Released.DESCRIPTOR_SYMBOL.toString(),
+                                                               Modified.DESCRIPTOR_SYMBOL.toString() };
+
     @Test(timeout = 20_000)
     public void testCreateDefaultCoordinatorSender() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
@@ -121,7 +126,8 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
-        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
         peer.expectDetach().respond();
         peer.expectEnd().respond();
         peer.expectClose().respond();
@@ -163,21 +169,15 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
 
-        Coordinator coordinator = new Coordinator();
-        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
-
-        Source source = new Source();
-        source.setOutcomes(DEFAULT_OUTCOMES);
-
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
         peer.remoteAttach().withName("TXN-Link")
                            .withHandle(0)
-                           .withRole(Role.SENDER)
-                           .withSource(source)
+                           .withRole(Role.SENDER.getValue())
+                           .withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
                            .withInitialDeliveryCount(0)
-                           .withTarget(coordinator).queue();
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().queue();
 
         Connection connection = engine.start().open();
         Session session = connection.session();
@@ -190,9 +190,9 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         session.open();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-        peer.expectAttach().withRole(Role.RECEIVER)
-                           .withSource(source)
-                           .withTarget(coordinator);
+        peer.expectAttach().withRole(Role.RECEIVER.getValue())
+                           .withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString());
         peer.expectDetach().respond();
         peer.expectEnd().respond();
         peer.expectClose().respond();
@@ -223,21 +223,15 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
 
-        Coordinator coordinator = new Coordinator();
-        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
-
-        Source source = new Source();
-        source.setOutcomes(DEFAULT_OUTCOMES);
-
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
         peer.remoteAttach().withName("TXN-Link")
                            .withHandle(0)
-                           .withRole(Role.SENDER)
-                           .withSource(source)
+                           .withRole(Role.SENDER.getValue())
+                           .withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
                            .withInitialDeliveryCount(0)
-                           .withTarget(coordinator).queue();
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().queue();
 
         Connection connection = engine.start().open();
         Session session = connection.session();
@@ -250,9 +244,9 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         session.open();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-        peer.expectAttach().withRole(Role.RECEIVER)
-                           .withSource(source)
-                           .withTarget(coordinator);
+        peer.expectAttach().withRole(Role.RECEIVER.getValue())
+                           .withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString());
         peer.expectDetach().respond();
         peer.expectEnd().respond();
         peer.expectClose().respond();
@@ -283,21 +277,15 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
 
-        Coordinator coordinator = new Coordinator();
-        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
-
-        Source source = new Source();
-        source.setOutcomes(DEFAULT_OUTCOMES);
-
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
         peer.remoteAttach().withName("TXN-Link")
                            .withHandle(0)
-                           .withRole(Role.SENDER)
-                           .withSource(source)
+                           .withRole(Role.SENDER.getValue())
+                           .withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
                            .withInitialDeliveryCount(0)
-                           .withTarget(coordinator).queue();
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().queue();
 
         Connection connection = engine.start().open();
         Session session = connection.session();
@@ -310,9 +298,9 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         session.open();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-        peer.expectAttach().withRole(Role.RECEIVER)
-                           .withSource(source)
-                           .withTarget(coordinator);
+        peer.expectAttach().withRole(Role.RECEIVER.getValue())
+                           .withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString());
         peer.expectDetach().respond();
         peer.expectEnd().respond();
         peer.expectClose().respond();
@@ -351,7 +339,8 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
-        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
         peer.remoteFlow().withLinkCredit(1).queue();
 
         Connection connection = engine.start().open();
@@ -417,7 +406,8 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
-        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
         peer.remoteFlow().withLinkCredit(4).queue();
         peer.expectDeclare().accept(TXN_ID1);
         peer.expectDischarge().withFail(false).withTxnId(TXN_ID1).accept();
@@ -478,7 +468,8 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
-        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
         peer.remoteFlow().withLinkCredit(2).queue();
 
         Connection connection = engine.start().open();
@@ -553,7 +544,8 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
-        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
         peer.remoteFlow().withLinkCredit(2).queue();
 
         Connection connection = engine.start().open();
@@ -577,7 +569,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         txnController.open();
 
         peer.waitForScriptToComplete();
-        peer.expectDeclare().reject(failureError);
+        peer.expectDeclare().reject(AmqpError.INTERNAL_ERROR.toString(), "Cannot Declare Transaction at this time");
 
         final Transaction<TransactionController> txn = txnController.declare();
 
@@ -615,7 +607,8 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
-        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
         peer.remoteFlow().withLinkCredit(2).queue();
 
         Connection connection = engine.start().open();
@@ -643,7 +636,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         final Transaction<TransactionController> txn = txnController.declare();
 
         peer.waitForScriptToComplete();
-        peer.expectDischarge().reject(failureError);
+        peer.expectDischarge().reject(TransactionErrors.TRANSACTION_TIMEOUT.toString(), "Transaction timed out");
 
         txnController.discharge(txn, false);
 
@@ -681,9 +674,11 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
-        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
         peer.remoteFlow().withLinkCredit(2).queue();
-        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
         peer.remoteFlow().withLinkCredit(2).queue();
 
         Connection connection = engine.start().open();
@@ -759,9 +754,11 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
-        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
         peer.remoteFlow().withLinkCredit(2).queue();
-        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
         peer.remoteFlow().withLinkCredit(2).queue();
 
         Connection connection = engine.start().open();
@@ -838,7 +835,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin().respond();
-        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
         peer.remoteFlow().withLinkCredit(1).queue();
         peer.expectCoordinatorAttach().respond();
         peer.remoteFlow().withLinkCredit(2).queue();
@@ -859,9 +856,9 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
         peer.expectTransfer().withHandle(0)
                              .withPayload(notNullValue(ProtonBuffer.class))
-                             .withState(new TransactionalState().setTxnId(new Binary(TXN_ID)))
+                             .withState().transactional().withTxnId(TXN_ID).and()
                              .respond()
-                             .withState(new TransactionalState().setTxnId(new Binary(TXN_ID)).setOutcome(Accepted.getInstance()))
+                             .withState().transactional().withTxnId(TXN_ID).withAccepted().and()
                              .withSettled(true);
         peer.expectDischarge().withFail(false).withTxnId(TXN_ID).accept();
         peer.expectEnd().respond();
