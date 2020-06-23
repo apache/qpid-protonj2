@@ -73,7 +73,6 @@
   </ciManagement>
 
   <modules>
-    <module>qpid-proton4j-codec</module>
     <module>qpid-proton4j-buffer</module>
     <module>qpid-proton4j-engine</module>
     <module>qpid-proton4j-performance-tests</module>
@@ -86,11 +85,6 @@
       <dependency>
         <groupId>org.apache.qpid</groupId>
         <artifactId>qpid-proton4j-common</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.qpid</groupId>
-        <artifactId>qpid-proton4j-codec</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

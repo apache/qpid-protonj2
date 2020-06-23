@@ -22,7 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.apache.qpid.proton.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
 import org.apache.qpid.proton4j.types.messaging.Target;
 import org.apache.qpid.proton4j.types.transactions.Coordinator;
 import org.junit.Test;

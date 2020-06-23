@@ -34,13 +34,14 @@
       <artifactId>qpid-proton4j-buffer</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.qpid</groupId>
-      <artifactId>qpid-proton4j-codec</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.qpid</groupId>
+      <artifactId>proton-j</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.qpid</groupId>

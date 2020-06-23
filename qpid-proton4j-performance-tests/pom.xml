@@ -34,10 +34,6 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.qpid</groupId>
-      <artifactId>qpid-proton4j-codec</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.qpid</groupId>
       <artifactId>qpid-proton4j-engine</artifactId>
     </dependency>
     <dependency>
