@@ -215,11 +215,11 @@ public class SslConnectionTest extends AMQPerativeTestCase {
 
         try (NettyTestPeer peer = new NettyTestPeer(serverOpts)) {
 
-            peer.remoteHeader(AMQPHeader.getSASLHeader()).queue();
+            peer.remoteHeader(AMQPHeader.getSASLHeader().toArray()).queue();
             peer.expectSASLHeader();
             peer.remoteSaslMechanisms().withMechanisms("ANONYMOUS").queue();
             peer.expectSaslInit().withMechanism("ANONYMOUS");
-            peer.remoteSaslOutcome().withCode(SaslCode.OK).queue();
+            peer.remoteSaslOutcome().withCode(SaslCode.OK.byteValue()).queue();
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
             peer.expectClose().respond();

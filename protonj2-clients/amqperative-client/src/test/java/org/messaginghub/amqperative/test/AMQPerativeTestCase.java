@@ -104,10 +104,12 @@ public class AMQPerativeTestCase {
         return getClass().getSimpleName() + "." + testName.getMethodName();
     }
 
-    protected ProtonBuffer createEncodedMessage(Section body) {
+    protected byte[] createEncodedMessage(Section body) {
         Encoder encoder = CodecFactory.getEncoder();
         ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
         encoder.writeObject(buffer, encoder.newEncoderState(), body);
-        return buffer;
+        byte[] result = new byte[buffer.getReadableBytes()];
+        buffer.readBytes(result);
+        return result;
     }
 }

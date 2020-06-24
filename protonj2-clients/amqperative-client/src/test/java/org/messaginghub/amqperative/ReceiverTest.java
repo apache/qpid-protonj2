@@ -11,6 +11,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -18,11 +19,8 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.netty.NettyTestPeer;
-import org.apache.qpid.proton4j.types.messaging.Accepted;
 import org.apache.qpid.proton4j.types.messaging.AmqpValue;
-import org.apache.qpid.proton4j.types.messaging.Source;
 import org.apache.qpid.proton4j.types.transport.AmqpError;
 import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.types.transport.Role;
@@ -56,7 +54,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER).respond();  // TODO match other options
+            peer.expectAttach().ofReceiver().respond();  // TODO match other options
             peer.expectFlow().withLinkCredit(10);
             peer.expectDetach().withClosed(close).respond();
             peer.expectClose().respond();
@@ -95,9 +93,9 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().respond().withSource((Source) null);
+            peer.expectAttach().respond().withNullSource();
             peer.expectFlow();
-            peer.remoteDetach().withErrorCondition(AmqpError.UNAUTHORIZED_ACCESS, "Cannot read from this address").queue();
+            peer.remoteDetach().withErrorCondition(AmqpError.UNAUTHORIZED_ACCESS.toString(), "Cannot read from this address").queue();
             peer.expectDetach();
             peer.start();
 
@@ -149,7 +147,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER);
+            peer.expectAttach().withRole(Role.RECEIVER.getValue());
             peer.expectFlow();
             peer.expectDetach();
             peer.expectClose().respond();
@@ -212,7 +210,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
             peer.expectFlow();
             peer.expectDetach();
             peer.expectClose().respond();
@@ -268,7 +266,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -319,7 +317,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -368,7 +366,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
             peer.expectFlow().withLinkCredit(10);
             peer.start();
 
@@ -402,7 +400,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER)
+            peer.expectAttach().withRole(Role.RECEIVER.getValue())
                                .withSource().withDynamic(true).withAddress((String) null)
                                .and().respond()
                                .withSource().withDynamic(true).withAddress("test-dynamic-node");
@@ -451,7 +449,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER)
+            peer.expectAttach().withRole(Role.RECEIVER.getValue())
                                .withSource().withDynamic(true).withAddress((String) null);
             peer.expectFlow();
             peer.start();
@@ -520,18 +518,18 @@ public class ReceiverTest extends AMQPerativeTestCase {
     }
 
     private void doTestCreateReceiverWithConfiguredQoS(DeliveryMode qos) throws Exception {
-        SenderSettleMode sndMode = qos == DeliveryMode.AT_MOST_ONCE ? SenderSettleMode.SETTLED : SenderSettleMode.UNSETTLED;
+        byte sndMode = qos == DeliveryMode.AT_MOST_ONCE ? SenderSettleMode.SETTLED.byteValue() : SenderSettleMode.UNSETTLED.byteValue();
 
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER)
+            peer.expectAttach().withRole(Role.RECEIVER.getValue())
                                .withSndSettleMode(sndMode)
-                               .withRcvSettleMode(ReceiverSettleMode.FIRST)
+                               .withRcvSettleMode(ReceiverSettleMode.FIRST.byteValue())
                                .respond()
                                .withSndSettleMode(sndMode)
-                               .withRcvSettleMode(ReceiverSettleMode.FIRST);
+                               .withRcvSettleMode(ReceiverSettleMode.FIRST.byteValue());
             peer.expectFlow();
             peer.expectDetach().respond();
             peer.expectClose().respond();
@@ -577,7 +575,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER);
+            peer.expectAttach().withRole(Role.RECEIVER.getValue());
             peer.expectFlow();
             peer.start();
 
@@ -649,7 +647,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER);
+            peer.expectAttach().withRole(Role.RECEIVER.getValue());
             peer.expectFlow();
             peer.start();
 
@@ -720,7 +718,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER);
+            peer.expectAttach().withRole(Role.RECEIVER.getValue());
             peer.expectFlow();
             peer.start();
 
@@ -793,7 +791,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER);
+            peer.expectAttach().withRole(Role.RECEIVER.getValue());
             peer.expectFlow();
             peer.start();
 
@@ -866,7 +864,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER);
+            peer.expectAttach().withRole(Role.RECEIVER.getValue());
             peer.expectFlow();
             peer.start();
 
@@ -939,7 +937,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
             peer.expectFlow();
             peer.expectDetach().withClosed(close).respond();
             peer.expectClose().respond();
@@ -998,7 +996,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
             peer.expectFlow();
             peer.expectDetach().withClosed(close).withError(condition, description).respond();
             peer.expectClose().respond();
@@ -1026,13 +1024,13 @@ public class ReceiverTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test//(timeout = 20_000)
     public void testReceiveMessageInSplitTransferFrames() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
             peer.expectFlow();
             peer.start();
 
@@ -1046,11 +1044,11 @@ public class ReceiverTest extends AMQPerativeTestCase {
             final Receiver receiver = session.openReceiver("test-queue");
             receiver.openFuture().get();
 
-            ProtonBuffer payload = createEncodedMessage(new AmqpValue("Hello World"));
+            final byte[] payload = createEncodedMessage(new AmqpValue("Hello World"));
 
-            ProtonBuffer slice1 = payload.slice(0, 2); // Two bytes
-            ProtonBuffer slice2 = payload.slice(2, 2); // Two bytes
-            ProtonBuffer slice3 = payload.slice(4, payload.getReadableBytes() - 4); // Remaining bytes
+            final byte[] slice1 = Arrays.copyOfRange(payload, 0, 2);
+            final byte[] slice2 = Arrays.copyOfRange(payload, 2, 4);
+            final byte[] slice3 = Arrays.copyOfRange(payload, 4, payload.length);
 
             peer.remoteTransfer().withHandle(0)
                                  .withDeliveryId(0)
@@ -1073,7 +1071,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
                                  .withMessageFormat(0)
                                  .withPayload(slice3).now();
 
-            peer.expectDisposition().withSettled(true).withState(Accepted.getInstance());
+            peer.expectDisposition().withSettled(true).withState().accepted();
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
@@ -1099,7 +1097,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
             peer.expectFlow();
             peer.start();
 
@@ -1113,14 +1111,14 @@ public class ReceiverTest extends AMQPerativeTestCase {
             final Receiver receiver = session.openReceiver("test-queue");
             receiver.openFuture().get();
 
-            ProtonBuffer payload = createEncodedMessage(new AmqpValue("Hello World"));
+            final byte[] payload = createEncodedMessage(new AmqpValue("Hello World"));
 
             peer.remoteTransfer().withHandle(0)
                                  .withDeliveryId(0)
                                  .withDeliveryTag(new byte[] { 1 })
                                  .withMore(true)
                                  .withMessageFormat(0)
-                                 .withPayload(payload.duplicate()).now();
+                                 .withPayload(payload).now();
 
             assertNull(receiver.tryReceive());
 
@@ -1128,7 +1126,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
                                  .withMore(false)
                                  .withAborted(true)
                                  .withMessageFormat(0)
-                                 .withPayload(payload.duplicate()).now();
+                                 .withPayload(payload).now();
 
             peer.expectDetach().respond();
             peer.expectClose().respond();
@@ -1148,7 +1146,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
             peer.expectFlow();
             peer.start();
 
@@ -1164,14 +1162,14 @@ public class ReceiverTest extends AMQPerativeTestCase {
             final Receiver receiver = session.openReceiver("test-queue", options);
             receiver.openFuture().get();
 
-            ProtonBuffer payload = createEncodedMessage(new AmqpValue("Hello World"));
+            final byte[] payload = createEncodedMessage(new AmqpValue("Hello World"));
 
             peer.remoteTransfer().withHandle(0)
                                  .withDeliveryId(0)
                                  .withDeliveryTag(new byte[] { 1 })
                                  .withMore(true)
                                  .withMessageFormat(0)
-                                 .withPayload(payload.duplicate()).now();
+                                 .withPayload(payload).now();
 
             assertNull(receiver.tryReceive());
 
@@ -1181,7 +1179,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
                                  .withMessageFormat(0)
                                  .withMore(false)
                                  .withPayload(payload).queue();
-            peer.expectDisposition().withSettled(true).withState(Accepted.getInstance());
+            peer.expectDisposition().withSettled(true).withState().accepted();
             peer.expectFlow();
             peer.expectDetach().respond();
             peer.expectClose().respond();
@@ -1191,7 +1189,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
                                  .withMore(false)
                                  .withAborted(true)
                                  .withMessageFormat(0)
-                                 .withPayload(payload.duplicate()).now();
+                                 .withPayload(payload).now();
 
             Delivery delivery = receiver.receive();
             assertNotNull(delivery);

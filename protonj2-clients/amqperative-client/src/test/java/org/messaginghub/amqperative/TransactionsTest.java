@@ -16,7 +16,6 @@
  */
 package org.messaginghub.amqperative;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -27,18 +26,14 @@ import static org.junit.Assert.fail;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.netty.NettyTestPeer;
-import org.apache.qpid.proton4j.types.Binary;
 import org.apache.qpid.proton4j.types.messaging.Accepted;
 import org.apache.qpid.proton4j.types.messaging.AmqpValue;
 import org.apache.qpid.proton4j.types.messaging.Modified;
 import org.apache.qpid.proton4j.types.messaging.Rejected;
 import org.apache.qpid.proton4j.types.messaging.Released;
 import org.apache.qpid.proton4j.types.transactions.TransactionErrors;
-import org.apache.qpid.proton4j.types.transactions.TransactionalState;
 import org.apache.qpid.proton4j.types.transport.AmqpError;
-import org.apache.qpid.proton4j.types.transport.Role;
 import org.junit.Test;
 import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientIllegalStateException;
@@ -61,10 +56,10 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectCoordinatorAttach().withSource().withOutcomes(Accepted.DESCRIPTOR_SYMBOL,
-                                                                     Rejected.DESCRIPTOR_SYMBOL,
-                                                                     Released.DESCRIPTOR_SYMBOL,
-                                                                     Modified.DESCRIPTOR_SYMBOL).and().respond();
+            peer.expectCoordinatorAttach().withSource().withOutcomes(Accepted.DESCRIPTOR_SYMBOL.toString(),
+                                                                     Rejected.DESCRIPTOR_SYMBOL.toString(),
+                                                                     Released.DESCRIPTOR_SYMBOL.toString(),
+                                                                     Modified.DESCRIPTOR_SYMBOL.toString()).and().respond();
             peer.remoteFlow().withLinkCredit(2).queue();
             peer.expectDeclare().accept(txnId);
             peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
@@ -207,7 +202,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectCoordinatorAttach().reject(true, AmqpError.NOT_IMPLEMENTED, errorMessage);
+            peer.expectCoordinatorAttach().reject(true, AmqpError.NOT_IMPLEMENTED.toString(), errorMessage);
             peer.expectDetach();
             peer.expectEnd().respond();
             peer.expectClose().respond();
@@ -263,7 +258,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.remoteFlow().withLinkCredit(2).queue();
             peer.expectDeclare();
             peer.remoteDetach().withClosed(true)
-                               .withErrorCondition(AmqpError.NOT_IMPLEMENTED, errorMessage).queue();
+                               .withErrorCondition(AmqpError.NOT_IMPLEMENTED.toString(), errorMessage).queue();
             peer.expectDetach();
             peer.expectEnd().respond();
             peer.expectClose().respond();
@@ -319,7 +314,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.remoteFlow().withLinkCredit(2).queue();
             peer.expectDeclare();
             peer.remoteDetach().withClosed(true)
-                               .withErrorCondition(AmqpError.NOT_IMPLEMENTED, errorMessage).queue();
+                               .withErrorCondition(AmqpError.NOT_IMPLEMENTED.toString(), errorMessage).queue();
             peer.expectDetach();
             peer.expectCoordinatorAttach().respond();
             peer.remoteFlow().withLinkCredit(2).queue();
@@ -370,7 +365,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectDeclare().accept();
             peer.expectDischarge();
             peer.remoteDetach().withClosed(true)
-                               .withErrorCondition(AmqpError.RESOURCE_DELETED, errorMessage).queue();
+                               .withErrorCondition(AmqpError.RESOURCE_DELETED.toString(), errorMessage).queue();
             peer.expectDetach();
             peer.expectCoordinatorAttach().respond();
             peer.remoteFlow().withLinkCredit(2).queue();
@@ -424,7 +419,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectDeclare().accept(txnId1);
             peer.expectDischarge().withFail(false)
                                   .withTxnId(txnId1)
-                                  .reject(TransactionErrors.TRANSACTION_TIMEOUT, "Transaction aborted due to timeout");
+                                  .reject(TransactionErrors.TRANSACTION_TIMEOUT.toString(), "Transaction aborted due to timeout");
             peer.expectDeclare().accept(txnId2);
             peer.expectDischarge().withFail(true).withTxnId(txnId2).accept();
             peer.expectEnd().respond();
@@ -475,7 +470,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectDeclare().accept(txnId1);
             peer.expectDischarge().withFail(true)
                                   .withTxnId(txnId1)
-                                  .reject(TransactionErrors.TRANSACTION_TIMEOUT, "Transaction aborted due to timeout");
+                                  .reject(TransactionErrors.TRANSACTION_TIMEOUT.toString(), "Transaction aborted due to timeout");
             peer.expectDeclare().accept(txnId2);
             peer.expectDischarge().withFail(false).withTxnId(txnId2).accept();
             peer.expectEnd().respond();
@@ -624,7 +619,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectCoordinatorAttach().respond();
             peer.remoteFlow().withLinkCredit(1).queue();
             peer.expectDeclare().accept(null);
-            peer.expectClose().withError(AmqpError.DECODE_ERROR, "The txn-id field cannot be omitted").respond();
+            peer.expectClose().withError(AmqpError.DECODE_ERROR.toString(), "The txn-id field cannot be omitted").respond();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -742,16 +737,16 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.expectAttach().ofSender().respond();
             peer.remoteFlow().withLinkCredit(1).queue();
             peer.expectCoordinatorAttach().respond();
             peer.remoteFlow().withLinkCredit(2).queue();
             peer.expectDeclare().accept(txnId);
             peer.expectTransfer().withHandle(0)
-                                 .withPayload(notNullValue(ProtonBuffer.class))
-                                 .withState(new TransactionalState().setTxnId(new Binary(txnId)))
+                                 .withNonNullPayload()
+                                 .withState().transactional().withTxnId(txnId).and()
                                  .respond()
-                                 .withState(new TransactionalState().setTxnId(new Binary(txnId)).setOutcome(Accepted.getInstance()))
+                                 .withState().transactional().withTxnId(txnId).withAccepted().and()
                                  .withSettled(true);
             peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
             peer.expectEnd().respond();
@@ -800,17 +795,17 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.expectAttach().ofSender().respond();
             peer.remoteFlow().withLinkCredit(txns.length).queue();
             peer.expectCoordinatorAttach().respond();
             peer.remoteFlow().withLinkCredit(txns.length * 2).queue();
             for (int i = 0; i < txns.length; ++i) {
                 peer.expectDeclare().accept(txns[i]);
                 peer.expectTransfer().withHandle(0)
-                                     .withPayload(notNullValue(ProtonBuffer.class))
-                                     .withState(new TransactionalState().setTxnId(new Binary(txns[i])))
+                                     .withNonNullPayload()
+                                     .withState().transactional().withTxnId(txns[i]).and()
                                      .respond()
-                                     .withState(new TransactionalState().setTxnId(new Binary(txns[i])).setOutcome(Accepted.getInstance()))
+                                     .withState().transactional().withTxnId(txns[i]).withAccepted().and()
                                      .withSettled(true);
                 peer.expectDischarge().withFail(false).withTxnId(txns[i]).accept();
             }
@@ -857,12 +852,12 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectAttach().ofReceiver().respond();
             peer.expectFlow();
             peer.start();
 
             final URI remoteURI = peer.getServerURI();
-            final ProtonBuffer payload = createEncodedMessage(new AmqpValue("Hello World"));
+            final byte[] payload = createEncodedMessage(new AmqpValue("Hello World"));
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
@@ -881,7 +876,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
                                  .withMessageFormat(0)
                                  .withPayload(payload).queue();
             peer.expectDisposition().withSettled(true)
-                                    .withState(new TransactionalState().setOutcome(Accepted.getInstance()).setTxnId(new Binary(txnId)));
+                                    .withState().transactional().withTxnId(txnId).withAccepted();
             peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
             peer.expectDetach().respond();
             peer.expectClose().respond();
@@ -921,12 +916,12 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectAttach().ofReceiver().respond();
             peer.expectFlow();
             peer.start();
 
             final URI remoteURI = peer.getServerURI();
-            final ProtonBuffer payload = createEncodedMessage(new AmqpValue("Hello World"));
+            final byte[] payload = createEncodedMessage(new AmqpValue("Hello World"));
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
@@ -946,7 +941,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
                                  .withMessageFormat(0)
                                  .withPayload(payload).queue();
             peer.expectDisposition().withSettled(true)
-                                    .withState(new TransactionalState().setOutcome(Accepted.getInstance()).setTxnId(new Binary(txnId)));
+                                    .withState().transactional().withTxnId(txnId).withAccepted();
             peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
             peer.expectDetach().respond();
             peer.expectClose().respond();
@@ -983,12 +978,12 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectAttach().ofReceiver().respond();
             peer.expectFlow();
             peer.start();
 
             final URI remoteURI = peer.getServerURI();
-            final ProtonBuffer payload = createEncodedMessage(new AmqpValue("Hello World"));
+            final byte[] payload = createEncodedMessage(new AmqpValue("Hello World"));
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
@@ -1008,7 +1003,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
                                  .withMessageFormat(0)
                                  .withPayload(payload).queue();
             peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
-            peer.expectDisposition().withSettled(true).withState(Accepted.getInstance());
+            peer.expectDisposition().withSettled(true).withState().accepted();
 
             session.begin();
 
@@ -1048,16 +1043,16 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.expectAttach().ofSender().respond();
             peer.remoteFlow().withLinkCredit(1).queue();
             peer.expectCoordinatorAttach().respond();
             peer.remoteFlow().withLinkCredit(2).queue();
             peer.expectDeclare().accept(txnId);
             peer.expectTransfer().withHandle(0)
-                                 .withPayload(notNullValue(ProtonBuffer.class))
-                                 .withState(new TransactionalState().setTxnId(new Binary(txnId)))
+                                 .withNonNullPayload()
+                                 .withState().transactional().withTxnId(txnId).and()
                                  .respond()
-                                 .withState(new TransactionalState().setTxnId(new Binary(txnId)).setOutcome(Accepted.getInstance()))
+                                 .withState().transactional().withTxnId(txnId).withAccepted().and()
                                  .withSettled(true);
             peer.expectDischarge().withFail(false).withTxnId(txnId).reject();
             peer.expectEnd().respond();

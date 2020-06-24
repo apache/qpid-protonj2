@@ -31,8 +31,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.test.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.proton4j.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.types.transport.AMQPHeader;
@@ -63,16 +61,15 @@ public class ConnectionTest extends AMQPerativeTestCase {
 
     @Test(timeout = 10000)
     public void testCreateConnectionToNonSaslPeer() throws Exception {
-        doConnectionWithUnexpectedHeaderTestImpl(AMQPHeader.getAMQPHeader().getBuffer());;
+        doConnectionWithUnexpectedHeaderTestImpl(AMQPHeader.getAMQPHeader().toArray());
     }
 
     @Test(timeout = 10000)
     public void testCreateConnectionToNonAmqpPeer() throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'N', 'O', 'T', '-', 'A', 'M', 'Q', 'P' });
-        doConnectionWithUnexpectedHeaderTestImpl(buffer);
+        doConnectionWithUnexpectedHeaderTestImpl(new byte[] { 'N', 'O', 'T', '-', 'A', 'M', 'Q', 'P' });
     }
 
-    private void doConnectionWithUnexpectedHeaderTestImpl(ProtonBuffer responseHeader) throws Exception, IOException {
+    private void doConnectionWithUnexpectedHeaderTestImpl(byte[] responseHeader) throws Exception, IOException {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLHeader().respondWithBytes(responseHeader);
             peer.start();
@@ -155,7 +152,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
-            peer.expectClose().respond().withErrorCondition(ConnectionError.CONNECTION_FORCED, "Not accepting connections");
+            peer.expectClose().respond().withErrorCondition(ConnectionError.CONNECTION_FORCED.toString(), "Not accepting connections");
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -183,7 +180,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
     public void testConnectionRemoteClosedAfterOpened() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
-            peer.expectOpen().reject(ConnectionError.CONNECTION_FORCED, "Not accepting connections");
+            peer.expectOpen().reject(ConnectionError.CONNECTION_FORCED.toString(), "Not accepting connections");
             peer.expectClose();
             peer.start();
 
@@ -260,7 +257,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin();
-            peer.remoteClose().withErrorCondition(AmqpError.NOT_ALLOWED, BREAD_CRUMB).queue();
+            peer.remoteClose().withErrorCondition(AmqpError.NOT_ALLOWED.toString(), BREAD_CRUMB).queue();
             peer.expectClose();
             peer.start();
 
@@ -420,11 +417,11 @@ public class ConnectionTest extends AMQPerativeTestCase {
     public void testCreateDefaultSenderOnConnectionWithSupportForAnonymousRelay() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
-            peer.expectOpen().withDesiredCapabilities(ClientConstants.ANONYMOUS_RELAY)
+            peer.expectOpen().withDesiredCapabilities(ClientConstants.ANONYMOUS_RELAY.toString())
                              .respond()
-                             .withOfferedCapabilities(ClientConstants.ANONYMOUS_RELAY);
+                             .withOfferedCapabilities(ClientConstants.ANONYMOUS_RELAY.toString());
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
             peer.expectClose();
             peer.start();
 
@@ -449,11 +446,11 @@ public class ConnectionTest extends AMQPerativeTestCase {
     public void testConnectionRecreatesAnonymousRelaySenderAfterRemoteCloseOfSender() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
-            peer.expectOpen().withDesiredCapabilities(ClientConstants.ANONYMOUS_RELAY)
+            peer.expectOpen().withDesiredCapabilities(ClientConstants.ANONYMOUS_RELAY.toString())
                              .respond()
-                             .withOfferedCapabilities(ClientConstants.ANONYMOUS_RELAY);
+                             .withOfferedCapabilities(ClientConstants.ANONYMOUS_RELAY.toString());
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
             peer.remoteDetach().queue();
             peer.expectDetach();
             peer.start();
@@ -470,7 +467,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
             assertNotNull(defaultSender);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
             peer.expectClose();
 
             defaultSender = connection.defaultSender().openFuture().get(5, TimeUnit.SECONDS);
@@ -488,7 +485,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER)
+            peer.expectAttach().withRole(Role.RECEIVER.getValue())
                                .withSource(new SourceMatcher().withDynamic(true).withAddress(nullValue()))
                                .respond();
             peer.expectFlow();
@@ -537,7 +534,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             // This should happen after we inject the held open and attach
-            peer.expectAttach().withRole(Role.SENDER).withTarget().withAddress(Matchers.nullValue()).and().respond();
+            peer.expectAttach().withRole(Role.SENDER.getValue()).withTarget().withAddress(Matchers.nullValue()).and().respond();
             peer.expectClose().respond();
 
             // Inject held responses to get the ball rolling again
@@ -587,7 +584,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
 
             if (openResponse) {
                 peer.expectClose().respond();
-                peer.remoteOpen().withPropertiesMap(expectedProperties).later(10);
+                peer.remoteOpen().withProperties(expectedProperties).later(10);
             } else {
                 peer.expectClose();
             }

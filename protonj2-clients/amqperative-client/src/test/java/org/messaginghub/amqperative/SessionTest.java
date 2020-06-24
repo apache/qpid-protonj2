@@ -156,7 +156,7 @@ public class SessionTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectEnd().respond().withErrorCondition(AmqpError.INTERNAL_ERROR, "Something odd happened.");
+            peer.expectEnd().respond().withErrorCondition(AmqpError.INTERNAL_ERROR.toString(), "Something odd happened.");
             peer.expectClose().respond();
             peer.start();
 
@@ -218,7 +218,7 @@ public class SessionTest extends AMQPerativeTestCase {
 
             if (beginResponse) {
                 peer.expectEnd().respond();
-                peer.respondToLastBegin().withPropertiesMap(expectedProperties).later(10);
+                peer.respondToLastBegin().withProperties(expectedProperties).later(10);
             } else {
                 peer.expectEnd();
             }
