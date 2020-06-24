@@ -27,12 +27,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.LinkState;
-import org.apache.qpid.proton4j.engine.OutgoingDelivery;
-import org.apache.qpid.proton4j.engine.impl.ProtonDeliveryTagGenerator;
-import org.apache.qpid.proton4j.types.transport.DeliveryState;
-import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.engine.LinkState;
+import org.apache.qpid.protonj2.engine.OutgoingDelivery;
+import org.apache.qpid.protonj2.engine.impl.ProtonDeliveryTagGenerator;
+import org.apache.qpid.protonj2.types.transport.DeliveryState;
+import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.messaginghub.amqperative.ErrorCondition;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
@@ -70,7 +70,7 @@ public class ClientSender implements Sender {
     private final Deque<InFlightSend> blocked = new ArrayDeque<InFlightSend>();
     private final SenderOptions options;
     private final ClientSession session;
-    private final org.apache.qpid.proton4j.engine.Sender protonSender;
+    private final org.apache.qpid.protonj2.engine.Sender protonSender;
     private final ScheduledExecutorService executor;
     private final String senderId;
     private Consumer<ClientSender> senderRemotelyClosedHandler;
@@ -78,7 +78,7 @@ public class ClientSender implements Sender {
     private volatile Source remoteSource;
     private volatile Target remoteTarget;
 
-    public ClientSender(ClientSession session, SenderOptions options, String senderId, org.apache.qpid.proton4j.engine.Sender protonSender) {
+    public ClientSender(ClientSession session, SenderOptions options, String senderId, org.apache.qpid.protonj2.engine.Sender protonSender) {
         this.options = new SenderOptions(options);
         this.session = session;
         this.senderId = senderId;
@@ -100,7 +100,7 @@ public class ClientSender implements Sender {
 
     @Override
     public String address() throws ClientException {
-        final org.apache.qpid.proton4j.types.messaging.Target target;
+        final org.apache.qpid.protonj2.types.messaging.Target target;
         if (isDynamic()) {
             waitForOpenToComplete();
             target = protonSender.getRemoteTarget();
@@ -295,16 +295,16 @@ public class ClientSender implements Sender {
     }
 
     boolean isAnonymous() {
-        return protonSender.<org.apache.qpid.proton4j.types.messaging.Target>getTarget().getAddress() == null;
+        return protonSender.<org.apache.qpid.protonj2.types.messaging.Target>getTarget().getAddress() == null;
     }
 
     boolean isDynamic() {
-        return protonSender.getTarget() != null && protonSender.<org.apache.qpid.proton4j.types.messaging.Target>getTarget().isDynamic();
+        return protonSender.getTarget() != null && protonSender.<org.apache.qpid.protonj2.types.messaging.Target>getTarget().isDynamic();
     }
 
     //----- Handlers for proton receiver events
 
-    private void handleLocalOpen(org.apache.qpid.proton4j.engine.Sender sender) {
+    private void handleLocalOpen(org.apache.qpid.protonj2.engine.Sender sender) {
         if (options.openTimeout() > 0) {
             executor.schedule(() -> {
                 if (!openFuture.isDone()) {
@@ -328,7 +328,7 @@ public class ClientSender implements Sender {
         }
     }
 
-    private void handleLocalCloseOrDetach(org.apache.qpid.proton4j.engine.Sender sender) {
+    private void handleLocalCloseOrDetach(org.apache.qpid.protonj2.engine.Sender sender) {
         if (failureCause == null) {
             failureCause = session.getFailureCause();
         }
@@ -347,7 +347,7 @@ public class ClientSender implements Sender {
         }
     }
 
-    private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Sender sender) {
+    private void handleRemoteOpen(org.apache.qpid.protonj2.engine.Sender sender) {
         // Check for deferred close pending and hold completion if so
         if (sender.getRemoteTarget() != null) {
             remoteSource = new RemoteSource(sender.getRemoteSource());
@@ -364,7 +364,7 @@ public class ClientSender implements Sender {
         }
     }
 
-    private void handleRemoteCloseOrDetach(org.apache.qpid.proton4j.engine.Sender sender) {
+    private void handleRemoteCloseOrDetach(org.apache.qpid.protonj2.engine.Sender sender) {
         if (sender.isLocallyOpen()) {
             final ClientException error;
 
@@ -396,7 +396,7 @@ public class ClientSender implements Sender {
         }
     }
 
-    private void handleCreditStateUpdated(org.apache.qpid.proton4j.engine.Sender sender) {
+    private void handleCreditStateUpdated(org.apache.qpid.protonj2.engine.Sender sender) {
         if (!blocked.isEmpty()) {
             while (sender.isSendable() && !blocked.isEmpty()) {
                 LOG.trace("Dispatching previously held send");

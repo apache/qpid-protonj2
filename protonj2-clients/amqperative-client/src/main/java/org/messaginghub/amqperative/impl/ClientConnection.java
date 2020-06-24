@@ -33,12 +33,12 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Supplier;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.Engine;
-import org.apache.qpid.proton4j.engine.EngineFactory;
-import org.apache.qpid.proton4j.engine.sasl.client.SaslAuthenticator;
-import org.apache.qpid.proton4j.engine.sasl.client.SaslCredentialsProvider;
-import org.apache.qpid.proton4j.engine.sasl.client.SaslMechanismSelector;
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.engine.Engine;
+import org.apache.qpid.protonj2.engine.EngineFactory;
+import org.apache.qpid.protonj2.engine.sasl.client.SaslAuthenticator;
+import org.apache.qpid.protonj2.engine.sasl.client.SaslCredentialsProvider;
+import org.apache.qpid.protonj2.engine.sasl.client.SaslMechanismSelector;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
@@ -88,7 +88,7 @@ public class ClientConnection implements Connection {
 
     private final Map<ClientFuture<?>, ClientFuture<?>> requests = new ConcurrentHashMap<>();
     private final Engine engine;
-    private org.apache.qpid.proton4j.engine.Connection protonConnection;
+    private org.apache.qpid.protonj2.engine.Connection protonConnection;
     private ClientSession connectionSession;
     private ClientSender connectionSender;
     private Transport transport;
@@ -500,7 +500,7 @@ public class ClientConnection implements Connection {
         return capabilities;
     }
 
-    org.apache.qpid.proton4j.engine.Connection getProtonConnection() {
+    org.apache.qpid.protonj2.engine.Connection getProtonConnection() {
         return protonConnection;
     }
 
@@ -543,7 +543,7 @@ public class ClientConnection implements Connection {
 
     //----- Private implementation events handlers and utility methods
 
-    private void handleLocalOpen(org.apache.qpid.proton4j.engine.Connection connection) {
+    private void handleLocalOpen(org.apache.qpid.protonj2.engine.Connection connection) {
         // TODO - Possible issue with tick kicking in and writing idle frames before remote
         //        Open actually received that should be investigated further.
         connection.tickAuto(getScheduler());
@@ -564,7 +564,7 @@ public class ClientConnection implements Connection {
         }
     }
 
-    private void handleLocalClose(org.apache.qpid.proton4j.engine.Connection connection) {
+    private void handleLocalClose(org.apache.qpid.protonj2.engine.Connection connection) {
         if (!connection.isRemotelyClosed() && !engine.isShutdown()) {
             // Ensure engine gets shut down and future completed if remote doesn't respond.
             executor.schedule(() -> {
@@ -582,12 +582,12 @@ public class ClientConnection implements Connection {
         }
     }
 
-    private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Connection connection) {
+    private void handleRemoteOpen(org.apache.qpid.protonj2.engine.Connection connection) {
         capabilities.determineCapabilities(connection);
         openFuture.complete(this);
     }
 
-    private void handleRemotecClose(org.apache.qpid.proton4j.engine.Connection connection) {
+    private void handleRemotecClose(org.apache.qpid.protonj2.engine.Connection connection) {
         if (protonConnection.isLocallyClosed()) {
             try {
                 engine.shutdown();
@@ -683,7 +683,7 @@ public class ClientConnection implements Connection {
         return engine;
     }
 
-    private void configureConnection(org.apache.qpid.proton4j.engine.Connection protonConnection) {
+    private void configureConnection(org.apache.qpid.protonj2.engine.Connection protonConnection) {
         protonConnection.setLinkedResource(this);
         protonConnection.setChannelMax(options.channelMax());
         protonConnection.setMaxFrameSize(options.maxFrameSize());

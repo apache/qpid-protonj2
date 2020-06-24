@@ -16,7 +16,7 @@
  */
 package org.messaginghub.amqperative.exceptions;
 
-import org.apache.qpid.proton4j.types.messaging.Modified;
+import org.apache.qpid.protonj2.types.messaging.Modified;
 
 /**
  * Thrown when a send fails because the remote modified the delivery

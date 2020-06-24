@@ -16,8 +16,8 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import org.apache.qpid.proton4j.engine.IncomingDelivery;
-import org.apache.qpid.proton4j.types.messaging.Accepted;
+import org.apache.qpid.protonj2.engine.IncomingDelivery;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Message;
@@ -72,7 +72,7 @@ public class ClientDelivery implements Delivery {
 
     @Override
     public Delivery disposition(DeliveryState state, boolean settle) {
-        org.apache.qpid.proton4j.types.transport.DeliveryState protonState = null;
+        org.apache.qpid.protonj2.types.transport.DeliveryState protonState = null;
         if (state != null) {
             protonState = ClientDeliveryState.asProtonType(state);
         }

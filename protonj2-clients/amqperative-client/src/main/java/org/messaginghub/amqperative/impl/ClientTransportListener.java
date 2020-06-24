@@ -16,9 +16,9 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.Engine;
-import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.engine.Engine;
+import org.apache.qpid.protonj2.engine.exceptions.EngineStateException;
 import org.messaginghub.amqperative.exceptions.ClientFailedException;
 import org.messaginghub.amqperative.transport.TransportListener;
 import org.slf4j.Logger;

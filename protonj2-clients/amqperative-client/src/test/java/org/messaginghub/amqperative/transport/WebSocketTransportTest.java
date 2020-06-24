@@ -26,9 +26,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.buffer.ProtonNettyByteBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonNettyByteBuffer;
 import org.junit.Test;
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;

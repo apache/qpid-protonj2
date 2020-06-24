@@ -19,9 +19,9 @@ package org.messaginghub.amqperative;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.messaging.AmqpValue;
-import org.apache.qpid.proton4j.types.messaging.Data;
+import org.apache.qpid.protonj2.types.Binary;
+import org.apache.qpid.protonj2.types.messaging.AmqpValue;
+import org.apache.qpid.protonj2.types.messaging.Data;
 import org.messaginghub.amqperative.impl.ClientMessage;
 
 /**

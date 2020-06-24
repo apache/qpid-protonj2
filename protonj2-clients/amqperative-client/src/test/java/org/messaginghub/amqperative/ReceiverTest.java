@@ -19,12 +19,12 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.qpid.proton4j.test.driver.netty.NettyTestPeer;
-import org.apache.qpid.proton4j.types.messaging.AmqpValue;
-import org.apache.qpid.proton4j.types.transport.AmqpError;
-import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.types.transport.Role;
-import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
+import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
+import org.apache.qpid.protonj2.types.messaging.AmqpValue;
+import org.apache.qpid.protonj2.types.transport.AmqpError;
+import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
+import org.apache.qpid.protonj2.types.transport.Role;
+import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.messaginghub.amqperative.exceptions.ClientException;

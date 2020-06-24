@@ -16,7 +16,7 @@
  */
 package org.messaginghub.amqperative.transport;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 
 /**
  * Listener interface that should be implemented by users of the various

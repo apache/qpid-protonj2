@@ -33,7 +33,7 @@ import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.broker.region.policy.PolicyEntry;
 import org.apache.activemq.broker.region.policy.PolicyMap;
 import org.apache.activemq.broker.region.policy.VMPendingQueueMessageStoragePolicy;
-import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;

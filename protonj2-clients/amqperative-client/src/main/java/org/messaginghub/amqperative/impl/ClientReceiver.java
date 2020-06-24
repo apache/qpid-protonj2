@@ -26,10 +26,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.engine.IncomingDelivery;
-import org.apache.qpid.proton4j.types.messaging.Outcome;
-import org.apache.qpid.proton4j.types.messaging.Released;
-import org.apache.qpid.proton4j.types.transport.DeliveryState;
+import org.apache.qpid.protonj2.engine.IncomingDelivery;
+import org.apache.qpid.protonj2.types.messaging.Outcome;
+import org.apache.qpid.protonj2.types.messaging.Released;
+import org.apache.qpid.protonj2.types.transport.DeliveryState;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.ErrorCondition;
@@ -60,7 +60,7 @@ public class ClientReceiver implements Receiver {
 
     private final ReceiverOptions options;
     private final ClientSession session;
-    private final org.apache.qpid.proton4j.engine.Receiver protonReceiver;
+    private final org.apache.qpid.protonj2.engine.Receiver protonReceiver;
     private final ScheduledExecutorService executor;
     private final String receiverId;
     private final FifoDeliveryQueue messageQueue;
@@ -71,7 +71,7 @@ public class ClientReceiver implements Receiver {
     private volatile Source remoteSource;
     private volatile Target remoteTarget;
 
-    public ClientReceiver(ClientSession session, ReceiverOptions options, String receiverId, org.apache.qpid.proton4j.engine.Receiver receiver) {
+    public ClientReceiver(ClientSession session, ReceiverOptions options, String receiverId, org.apache.qpid.protonj2.engine.Receiver receiver) {
         this.options = options;
         this.session = session;
         this.receiverId = receiverId;
@@ -391,7 +391,7 @@ public class ClientReceiver implements Receiver {
 
     //----- Handlers for proton receiver events
 
-    private void handleLocalOpen(org.apache.qpid.proton4j.engine.Receiver receiver) {
+    private void handleLocalOpen(org.apache.qpid.protonj2.engine.Receiver receiver) {
         if (options.openTimeout() > 0) {
             executor.schedule(() -> {
                 if (!openFuture.isDone()) {
@@ -415,7 +415,7 @@ public class ClientReceiver implements Receiver {
         }
     }
 
-    private void handleLocalCloseOrDetach(org.apache.qpid.proton4j.engine.Receiver receiver) {
+    private void handleLocalCloseOrDetach(org.apache.qpid.protonj2.engine.Receiver receiver) {
         if (failureCause == null) {
             failureCause = session.getFailureCause();
         }
@@ -434,7 +434,7 @@ public class ClientReceiver implements Receiver {
         }
     }
 
-    private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Receiver receiver) {
+    private void handleRemoteOpen(org.apache.qpid.protonj2.engine.Receiver receiver) {
         // Check for deferred close pending and hold completion if so
         if (receiver.getRemoteSource() != null) {
             remoteSource = new RemoteSource(receiver.getRemoteSource());
@@ -453,7 +453,7 @@ public class ClientReceiver implements Receiver {
         }
     }
 
-    private void handleRemoteCloseOrDetach(org.apache.qpid.proton4j.engine.Receiver receiver) {
+    private void handleRemoteCloseOrDetach(org.apache.qpid.protonj2.engine.Receiver receiver) {
         if (receiver.isLocallyOpen()) {
             final ClientException error;
 
@@ -502,7 +502,7 @@ public class ClientReceiver implements Receiver {
         // TODO - event or other reaction
     }
 
-    private void handleReceiverCreditUpdated(org.apache.qpid.proton4j.engine.Receiver receiver) {
+    private void handleReceiverCreditUpdated(org.apache.qpid.protonj2.engine.Receiver receiver) {
         LOG.trace("Receiver credit update by remote: {}", receiver);
 
         if (drainingFuture != null) {

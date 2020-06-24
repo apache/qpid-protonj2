@@ -27,8 +27,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.qpid.proton4j.test.driver.netty.NettyTestPeer;
-import org.apache.qpid.proton4j.types.transport.AmqpError;
+import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
+import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.junit.Test;
 import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientOperationTimedOutException;

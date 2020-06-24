@@ -32,8 +32,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonNettyByteBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonNettyByteBuffer;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.messaginghub.amqperative.SslOptions;

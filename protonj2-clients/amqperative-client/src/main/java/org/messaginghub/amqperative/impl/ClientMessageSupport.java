@@ -16,25 +16,25 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.codec.CodecFactory;
-import org.apache.qpid.proton4j.codec.Decoder;
-import org.apache.qpid.proton4j.codec.DecoderState;
-import org.apache.qpid.proton4j.codec.Encoder;
-import org.apache.qpid.proton4j.codec.EncoderState;
-import org.apache.qpid.proton4j.types.Binary;
-import org.apache.qpid.proton4j.types.messaging.AmqpSequence;
-import org.apache.qpid.proton4j.types.messaging.AmqpValue;
-import org.apache.qpid.proton4j.types.messaging.ApplicationProperties;
-import org.apache.qpid.proton4j.types.messaging.Data;
-import org.apache.qpid.proton4j.types.messaging.DeliveryAnnotations;
-import org.apache.qpid.proton4j.types.messaging.Footer;
-import org.apache.qpid.proton4j.types.messaging.Header;
-import org.apache.qpid.proton4j.types.messaging.MessageAnnotations;
-import org.apache.qpid.proton4j.types.messaging.Properties;
-import org.apache.qpid.proton4j.types.messaging.Section;
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.codec.CodecFactory;
+import org.apache.qpid.protonj2.codec.Decoder;
+import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.Encoder;
+import org.apache.qpid.protonj2.codec.EncoderState;
+import org.apache.qpid.protonj2.types.Binary;
+import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
+import org.apache.qpid.protonj2.types.messaging.AmqpValue;
+import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
+import org.apache.qpid.protonj2.types.messaging.Data;
+import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
+import org.apache.qpid.protonj2.types.messaging.Footer;
+import org.apache.qpid.protonj2.types.messaging.Header;
+import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
+import org.apache.qpid.protonj2.types.messaging.Properties;
+import org.apache.qpid.protonj2.types.messaging.Section;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.exceptions.ClientException;
 

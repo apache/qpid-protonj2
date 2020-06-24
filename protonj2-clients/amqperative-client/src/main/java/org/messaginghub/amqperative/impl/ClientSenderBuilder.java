@@ -18,11 +18,11 @@ package org.messaginghub.amqperative.impl;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.qpid.proton4j.engine.Sender;
-import org.apache.qpid.proton4j.types.messaging.Source;
-import org.apache.qpid.proton4j.types.messaging.Target;
-import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
+import org.apache.qpid.protonj2.engine.Sender;
+import org.apache.qpid.protonj2.types.messaging.Source;
+import org.apache.qpid.protonj2.types.messaging.Target;
+import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
+import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.SessionOptions;
 import org.messaginghub.amqperative.SourceOptions;

@@ -25,11 +25,11 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
-import org.apache.qpid.proton4j.buffer.ProtonCompositeBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonNettyByteBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonNettyByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonNettyByteBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonNettyByteBufferAllocator;
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.util.IOExceptionSupport;

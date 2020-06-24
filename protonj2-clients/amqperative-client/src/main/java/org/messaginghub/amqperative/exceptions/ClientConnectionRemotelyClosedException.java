@@ -16,7 +16,7 @@
  */
 package org.messaginghub.amqperative.exceptions;
 
-import org.apache.qpid.proton4j.types.transport.Close;
+import org.apache.qpid.protonj2.types.transport.Close;
 import org.messaginghub.amqperative.Connection;
 
 /**

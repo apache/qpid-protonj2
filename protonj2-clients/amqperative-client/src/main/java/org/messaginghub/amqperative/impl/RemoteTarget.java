@@ -30,12 +30,12 @@ import org.messaginghub.amqperative.Target;
  */
 public class RemoteTarget implements Target {
 
-    private final org.apache.qpid.proton4j.types.messaging.Target remoteTarget;
+    private final org.apache.qpid.protonj2.types.messaging.Target remoteTarget;
 
     private Map<String, Object> cachedDynamicNodeProperties;
     private Set<String> cachedCapabilities;
 
-    RemoteTarget(org.apache.qpid.proton4j.types.messaging.Target remoteTarget) {
+    RemoteTarget(org.apache.qpid.protonj2.types.messaging.Target remoteTarget) {
         this.remoteTarget = remoteTarget;
     }
 

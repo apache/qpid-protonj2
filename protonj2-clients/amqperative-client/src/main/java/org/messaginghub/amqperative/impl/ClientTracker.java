@@ -16,7 +16,7 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import org.apache.qpid.proton4j.engine.OutgoingDelivery;
+import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.Tracker;
@@ -71,7 +71,7 @@ public class ClientTracker implements Tracker {
 
     @Override
     public ClientTracker disposition(DeliveryState state, boolean settle) {
-        org.apache.qpid.proton4j.types.transport.DeliveryState protonState = null;
+        org.apache.qpid.protonj2.types.transport.DeliveryState protonState = null;
         if (state != null) {
             protonState = ClientDeliveryState.asProtonType(state);
         }

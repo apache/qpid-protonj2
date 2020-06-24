@@ -22,7 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.protonj2.types.Symbol;
 import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.DistributionMode;
 import org.messaginghub.amqperative.DurabilityMode;
@@ -35,7 +35,7 @@ import org.messaginghub.amqperative.Source;
  */
 public class RemoteSource implements Source {
 
-    private final org.apache.qpid.proton4j.types.messaging.Source remoteSource;
+    private final org.apache.qpid.protonj2.types.messaging.Source remoteSource;
 
     private DeliveryState cachedDefaultOutcome;
     private DistributionMode cachedDistributionMode;
@@ -44,7 +44,7 @@ public class RemoteSource implements Source {
     private Set<DeliveryState.Type> cachedOutcomes;
     private Set<String> cachedCapabilities;
 
-    RemoteSource(org.apache.qpid.proton4j.types.messaging.Source remoteSource) {
+    RemoteSource(org.apache.qpid.protonj2.types.messaging.Source remoteSource) {
         this.remoteSource = remoteSource;
     }
 

@@ -22,11 +22,11 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.qpid.proton4j.types.Symbol;
-import org.apache.qpid.proton4j.types.messaging.Accepted;
-import org.apache.qpid.proton4j.types.messaging.Modified;
-import org.apache.qpid.proton4j.types.messaging.Rejected;
-import org.apache.qpid.proton4j.types.messaging.Released;
+import org.apache.qpid.protonj2.types.Symbol;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
+import org.apache.qpid.protonj2.types.messaging.Modified;
+import org.apache.qpid.protonj2.types.messaging.Rejected;
+import org.apache.qpid.protonj2.types.messaging.Released;
 import org.messaginghub.amqperative.DeliveryState;
 
 /**

@@ -34,10 +34,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 
-import org.apache.qpid.proton4j.test.driver.netty.NettyTestPeer;
-import org.apache.qpid.proton4j.test.driver.netty.ServerOptions;
-import org.apache.qpid.proton4j.types.security.SaslCode;
-import org.apache.qpid.proton4j.types.transport.AMQPHeader;
+import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
+import org.apache.qpid.protonj2.test.driver.netty.ServerOptions;
+import org.apache.qpid.protonj2.types.security.SaslCode;
+import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;

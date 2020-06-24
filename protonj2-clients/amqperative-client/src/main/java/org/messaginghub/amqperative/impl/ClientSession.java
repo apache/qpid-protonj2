@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.protonj2.engine.Engine;
 import org.messaginghub.amqperative.ErrorCondition;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
@@ -66,7 +66,7 @@ public class ClientSession implements Session {
 
     private final SessionOptions options;
     private final ClientConnection connection;
-    private final org.apache.qpid.proton4j.engine.Session protonSession;
+    private final org.apache.qpid.protonj2.engine.Session protonSession;
     private final ScheduledExecutorService serializer;
     private final String sessionId;
     private final ClientSenderBuilder senderBuilder;
@@ -76,7 +76,7 @@ public class ClientSession implements Session {
     private volatile ThreadPoolExecutor deliveryExecutor;
     private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
 
-    public ClientSession(SessionOptions options, ClientConnection connection, org.apache.qpid.proton4j.engine.Session session) {
+    public ClientSession(SessionOptions options, ClientConnection connection, org.apache.qpid.protonj2.engine.Session session) {
         this.options = new SessionOptions(options);
         this.connection = connection;
         this.protonSession = session;
@@ -434,7 +434,7 @@ public class ClientSession implements Session {
         return options;
     }
 
-    org.apache.qpid.proton4j.engine.Session getProtonSession() {
+    org.apache.qpid.protonj2.engine.Session getProtonSession() {
         return protonSession;
     }
 
@@ -502,7 +502,7 @@ public class ClientSession implements Session {
 
     //----- Handle Events from the Proton Session
 
-    private void handleLocalOpen(org.apache.qpid.proton4j.engine.Session session) {
+    private void handleLocalOpen(org.apache.qpid.protonj2.engine.Session session) {
         if (options.openTimeout() > 0) {
             serializer.schedule(() -> {
                 if (!openFuture.isDone()) {
@@ -526,7 +526,7 @@ public class ClientSession implements Session {
         }
     }
 
-    private void handleLocalClose(org.apache.qpid.proton4j.engine.Session session) {
+    private void handleLocalClose(org.apache.qpid.protonj2.engine.Session session) {
         if (failureCause == null) {
             failureCause = connection.getFailureCause();
         }
@@ -545,7 +545,7 @@ public class ClientSession implements Session {
         }
     }
 
-    private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Session session) {
+    private void handleRemoteOpen(org.apache.qpid.protonj2.engine.Session session) {
         openFuture.complete(this);
         LOG.trace("Session:{} opened successfully.", id());
 
@@ -565,7 +565,7 @@ public class ClientSession implements Session {
         });
     }
 
-    private void handleRemoteClose(org.apache.qpid.proton4j.engine.Session session) {
+    private void handleRemoteClose(org.apache.qpid.protonj2.engine.Session session) {
         if (session.isLocallyOpen()) {
             final ClientException error;
 
