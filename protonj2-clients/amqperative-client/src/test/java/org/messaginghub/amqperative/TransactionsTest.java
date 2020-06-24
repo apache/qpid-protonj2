@@ -38,6 +38,7 @@ import org.junit.Test;
 import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientIllegalStateException;
 import org.messaginghub.amqperative.exceptions.ClientOperationTimedOutException;
+import org.messaginghub.amqperative.exceptions.ClientTransactionDeclarationException;
 import org.messaginghub.amqperative.exceptions.ClientTransactionNotActiveException;
 import org.messaginghub.amqperative.exceptions.ClientTransactionRolledBackException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
@@ -75,8 +76,8 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession().openFuture().get();
 
-            session.begin();
-            session.commit();
+            session.beginTransaction();
+            session.commitTransaction();
 
             session.close();
             connection.close().get();
@@ -108,21 +109,21 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Session session = connection.openSession().openFuture().get();
 
             try {
-                session.begin();
+                session.beginTransaction();
                 fail("Begin should have timoued out after no response.");
             } catch (ClientOperationTimedOutException expected) {
                 // Expect this to time out.
             }
 
             try {
-                session.commit();
+                session.commitTransaction();
                 fail("Commit should have failed due to no active transaction.");
             } catch (ClientIllegalStateException expected) {
                 // Expect this to time out.
             }
 
             try {
-                session.rollback();
+                session.rollbackTransaction();
                 fail("Rollback should have failed due to no active transaction.");
             } catch (ClientIllegalStateException expected) {
                 // Expect this to time out.
@@ -157,7 +158,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Session session = connection.openSession(options).openFuture().get();
 
             try {
-                session.begin();
+                session.beginTransaction();
                 fail("Begin should have timoued out after no response.");
             } catch (ClientOperationTimedOutException expected) {
                 LOG.info("Transaction begin timed out as expected");
@@ -174,14 +175,14 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectClose().respond();
 
             try {
-                session.commit();
+                session.commitTransaction();
                 fail("Commit should have failed due to no active transaction.");
             } catch (ClientIllegalStateException expected) {
                 // Expect this to time out.
             }
 
             try {
-                session.rollback();
+                session.rollbackTransaction();
                 fail("Rollback should have failed due to no active transaction.");
             } catch (ClientIllegalStateException expected) {
                 // Expect this to time out.
@@ -217,23 +218,23 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Session session = connection.openSession().openFuture().get();
 
             try {
-                session.begin();
+                session.beginTransaction();
                 fail("Begin should have failed after link closed.");
-            } catch (ClientException expected) {
+            } catch (ClientTransactionDeclarationException expected) {
                 // Expect this to time out.
                 String message = expected.getMessage();
                 assertTrue(message.contains(errorMessage));
             }
 
             try {
-                session.commit();
+                session.commitTransaction();
                 fail("Commit should have failed due to no active transaction.");
             } catch (ClientTransactionNotActiveException expected) {
                 // Expect this as the begin failed on coordinator rejected
             }
 
             try {
-                session.rollback();
+                session.rollbackTransaction();
                 fail("Rollback should have failed due to no active transaction.");
             } catch (ClientTransactionNotActiveException expected) {
                 // Expect this as the begin failed on coordinator rejected
@@ -273,7 +274,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Session session = connection.openSession().openFuture().get();
 
             try {
-                session.begin();
+                session.beginTransaction();
                 fail("Begin should have failed after link closed.");
             } catch (ClientException expected) {
                 // Expect this to time out.
@@ -282,14 +283,14 @@ public class TransactionsTest extends AMQPerativeTestCase {
             }
 
             try {
-                session.commit();
+                session.commitTransaction();
                 fail("Commit should have failed due to no active transaction.");
             } catch (ClientTransactionNotActiveException expected) {
                 // Expect this as the begin failed on coordinator close
             }
 
             try {
-                session.rollback();
+                session.rollbackTransaction();
                 fail("Rollback should have failed due to no active transaction.");
             } catch (ClientTransactionNotActiveException expected) {
                 // Expect this as the begin failed on coordinator close
@@ -333,7 +334,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Session session = connection.openSession().openFuture().get();
 
             try {
-                session.begin();
+                session.beginTransaction();
                 fail("Begin should have failed after link closed.");
             } catch (ClientException expected) {
                 // Expect this to time out.
@@ -342,8 +343,8 @@ public class TransactionsTest extends AMQPerativeTestCase {
             }
 
             // Try again and expect to return to normal state now.
-            session.begin();
-            session.commit();
+            session.beginTransaction();
+            session.commitTransaction();
 
             session.close();
             connection.close().get();
@@ -383,10 +384,10 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession().openFuture().get();
 
-            session.begin();
+            session.beginTransaction();
 
             try {
-                session.commit();
+                session.commitTransaction();
                 fail("Commit should have failed after link closed.");
             } catch (ClientTransactionRolledBackException expected) {
                 // Expect this to time out.
@@ -394,8 +395,8 @@ public class TransactionsTest extends AMQPerativeTestCase {
                 assertTrue(message.contains(errorMessage));
             }
 
-            session.begin();
-            session.rollback();
+            session.beginTransaction();
+            session.rollbackTransaction();
 
             session.close();
             connection.close().get();
@@ -434,10 +435,10 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession().openFuture().get();
 
-            session.begin();
+            session.beginTransaction();
 
             try {
-                session.commit();
+                session.commitTransaction();
                 fail("Commit should have failed after link closed.");
             } catch (ClientTransactionRolledBackException expected) {
                 // Expect this to time out.
@@ -445,8 +446,8 @@ public class TransactionsTest extends AMQPerativeTestCase {
                 assertTrue(message.contains(errorMessage));
             }
 
-            session.begin();
-            session.rollback();
+            session.beginTransaction();
+            session.rollbackTransaction();
 
             session.close();
             connection.close().get();
@@ -485,10 +486,10 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession().openFuture().get();
 
-            session.begin();
+            session.beginTransaction();
 
             try {
-                session.rollback();
+                session.rollbackTransaction();
                 fail("Commit should have failed after link closed.");
             } catch (ClientTransactionRolledBackException expected) {
                 // Expect this to time out.
@@ -496,8 +497,8 @@ public class TransactionsTest extends AMQPerativeTestCase {
                 assertTrue(message.contains(errorMessage));
             }
 
-            session.begin();
-            session.commit();
+            session.beginTransaction();
+            session.commitTransaction();
 
             session.close();
             connection.close().get();
@@ -533,7 +534,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession().openFuture().get();
 
-            session.begin();
+            session.beginTransaction();
 
             session.close();
             connection.close().get(10, TimeUnit.SECONDS);
@@ -566,8 +567,8 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession().openFuture().get();
 
-            session.begin();
-            session.commit();
+            session.beginTransaction();
+            session.commitTransaction();
 
             session.close();
             connection.close().get(10, TimeUnit.SECONDS);
@@ -600,8 +601,8 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession().openFuture().get();
 
-            session.begin();
-            session.rollback();
+            session.beginTransaction();
+            session.rollbackTransaction();
 
             session.close();
             connection.close().get(10, TimeUnit.SECONDS);
@@ -631,7 +632,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Session session = connection.openSession().openFuture().get();
 
             try {
-                session.begin();
+                session.beginTransaction();
                 fail("Should not complete transaction begin due to client connection failure on decode issue.");
             } catch (ClientException ex) {
                 // expected to fail
@@ -681,8 +682,8 @@ public class TransactionsTest extends AMQPerativeTestCase {
 
             for (int i = 0; i < 5; ++i) {
                 LOG.info("Transaction declare and discharge cycle: {}", i);
-                session.begin();
-                session.commit();
+                session.beginTransaction();
+                session.commitTransaction();
             }
 
             session.close();
@@ -713,10 +714,10 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession().openFuture().get();
 
-            session.begin();
+            session.beginTransaction();
 
             try {
-                session.begin();
+                session.beginTransaction();
                 fail("Should not be allowed to begin another transaction");
             } catch (ClientIllegalStateException cliEx) {
                 // Expected
@@ -762,7 +763,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Session session = connection.openSession().openFuture().get();
             Sender sender = session.openSender("address").openFuture().get();
 
-            session.begin();
+            session.beginTransaction();
 
             final Tracker tracker = sender.send(Message.create("test-message"));
 
@@ -773,7 +774,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             assertEquals(tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL);
             assertTrue(tracker.settled());
 
-            session.commit();
+            session.commitTransaction();
 
             session.close();
             connection.close().get(10, TimeUnit.SECONDS);
@@ -823,7 +824,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Sender sender = session.openSender("address").openFuture().get();
 
             for (int i = 0; i < txns.length; ++i) {
-                session.begin();
+                session.beginTransaction();
 
                 final Tracker tracker = sender.send(Message.create("test-message-" + i));
 
@@ -834,7 +835,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
                 assertEquals(tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL);
                 assertTrue(tracker.settled());
 
-                session.commit();
+                session.commitTransaction();
             }
 
             session.close();
@@ -881,7 +882,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
-            session.begin();
+            session.beginTransaction();
 
             Delivery delivery = receiver.receive(100);
             assertNotNull(delivery);
@@ -891,7 +892,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             String value = (String) received.body();
             assertEquals("Hello World", value);
 
-            session.commit();
+            session.commitTransaction();
             receiver.close();
             connection.close().get();
 
@@ -946,7 +947,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
-            session.begin();
+            session.beginTransaction();
 
             Delivery delivery = receiver.receive(100);
             assertNotNull(delivery);
@@ -962,7 +963,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             // Manual Accept within the transaction, settlement is ignored.
             delivery.disposition(DeliveryState.accepted(), settle);
 
-            session.commit();
+            session.commitTransaction();
             receiver.close();
             connection.close().get();
 
@@ -1005,7 +1006,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
             peer.expectDisposition().withSettled(true).withState().accepted();
 
-            session.begin();
+            session.beginTransaction();
 
             Delivery delivery = receiver.receive(100);
             assertNotNull(delivery);
@@ -1018,7 +1019,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
             String value = (String) received.body();
             assertEquals("Hello World", value);
 
-            session.commit();
+            session.commitTransaction();
 
             // Manual Accept outside the transaction and no auto settle or accept
             // so no transactional enlistment.
@@ -1068,14 +1069,14 @@ public class TransactionsTest extends AMQPerativeTestCase {
             Session session = connection.openSession().openFuture().get();
             Sender sender = session.openSender("address").openFuture().get();
 
-            session.begin();
+            session.beginTransaction();
 
             final Tracker tracker = sender.send(Message.create("test-message"));
             assertNotNull(tracker.acknowledgeFuture().get());
             assertEquals(tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL);
 
             try {
-                session.commit();
+                session.commitTransaction();
                 fail("Commit should fail with Rollback exception");
             } catch (ClientTransactionRolledBackException cliRbEx) {
                 // Expected roll back due to discharge rejection

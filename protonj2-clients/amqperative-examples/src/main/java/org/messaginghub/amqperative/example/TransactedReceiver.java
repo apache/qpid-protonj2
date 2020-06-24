@@ -46,7 +46,7 @@ public class TransactedReceiver {
             Connection connection = client.connect(brokerHost, brokerPort);
             Session session = connection.openSession();
 
-            session.begin();
+            session.beginTransaction();
 
             Receiver receiver = session.openReceiver(address);
             Delivery del = receiver.receive();
@@ -54,7 +54,7 @@ public class TransactedReceiver {
 
             System.out.println("Received: " + message.body());
 
-            session.commit();
+            session.commitTransaction();
 
             connection.close().get();
         } catch (Exception exp) {

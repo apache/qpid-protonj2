@@ -36,7 +36,7 @@ import org.apache.qpid.proton4j.types.transport.DeliveryState;
 import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientIllegalStateException;
-import org.messaginghub.amqperative.exceptions.ClientTransactionInDoubtException;
+import org.messaginghub.amqperative.exceptions.ClientTransactionDeclarationException;
 import org.messaginghub.amqperative.exceptions.ClientTransactionNotActiveException;
 import org.messaginghub.amqperative.exceptions.ClientTransactionRolledBackException;
 import org.messaginghub.amqperative.futures.ClientFuture;
@@ -253,7 +253,7 @@ public class ClientTransactionContext {
         ClientFuture<Session> future = transaction.getAttachments().get(DECLARE_FUTURE_NAME);
         LOG.trace("Declare of trasaction:{} failed", transaction);
         ClientException cause = ClientErrorSupport.convertToNonFatalException(transaction.getCondition());
-        future.failed(new ClientTransactionInDoubtException(cause.getMessage(), cause));
+        future.failed(new ClientTransactionDeclarationException(cause.getMessage(), cause));
     }
 
     private void handleTransactionDischarged(Transaction<TransactionController> transaction) {
@@ -294,7 +294,7 @@ public class ClientTransactionContext {
             switch (currentTxn.getState()) {
                 case IDLE:
                 case DECLARING:
-                    cause = new ClientTransactionInDoubtException(cause.getMessage(), cause);
+                    cause = new ClientTransactionDeclarationException(cause.getMessage(), cause);
                     future = currentTxn.getAttachments().get(DECLARE_FUTURE_NAME);
                     break;
                 case DISCHARGING:

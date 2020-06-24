@@ -278,7 +278,7 @@ public class ClientSession implements Session {
     //----- Transaction state management
 
     @Override
-    public Session begin() throws ClientException {
+    public Session beginTransaction() throws ClientException {
         checkClosed();
         final ClientFuture<Session> beginFuture = getFutureFactory().createFuture();
 
@@ -295,20 +295,14 @@ public class ClientSession implements Session {
     }
 
     @Override
-    public Session commit() throws ClientException {
-        checkClosed();
-        return commit(false);
-    }
-
-    @Override
-    public Session commit(boolean startNewTxn) throws ClientException {
+    public Session commitTransaction() throws ClientException {
         checkClosed();
         final ClientFuture<Session> commitFuture = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
             try {
                 checkClosed();
-                txnContext.commit(commitFuture, startNewTxn);
+                txnContext.commit(commitFuture, false);
             } catch (Throwable error) {
                 commitFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -318,20 +312,14 @@ public class ClientSession implements Session {
     }
 
     @Override
-    public Session rollback() throws ClientException {
-        checkClosed();
-        return rollback(false);
-    }
-
-    @Override
-    public Session rollback(boolean startNewTxn) throws ClientException {
+    public Session rollbackTransaction() throws ClientException {
         checkClosed();
         final ClientFuture<Session> rollbackFuture = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
             try {
                 checkClosed();
-                txnContext.rollback(rollbackFuture, startNewTxn);
+                txnContext.rollback(rollbackFuture, false);
             } catch (Throwable error) {
                 rollbackFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }

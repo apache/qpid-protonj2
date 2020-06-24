@@ -45,12 +45,12 @@ public class TransactedSender {
             Connection connection = client.connect(brokerHost, brokerPort);
             Session session = connection.openSession();
 
-            session.begin();
+            session.beginTransaction();
 
             Sender sender = session.openSender(address);
             sender.send(Message.create("Hello World"));
 
-            session.commit();
+            session.commitTransaction();
 
             connection.close().get();
         } catch (Exception exp) {
