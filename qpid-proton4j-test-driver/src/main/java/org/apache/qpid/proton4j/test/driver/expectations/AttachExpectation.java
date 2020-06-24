@@ -78,6 +78,10 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         return response;
     }
 
+    public DetachInjectAction reject(boolean close, String condition, String description) {
+        return reject(close, Symbol.valueOf(condition), description);
+    }
+
     public DetachInjectAction reject(boolean close, Symbol condition, String description) {
         rejecting = true;
         response = new AttachInjectAction(driver);
@@ -198,8 +202,16 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         return withRole(equalTo(role.getValue()));
     }
 
+    public AttachExpectation ofSender() {
+        return withRole(equalTo(Role.SENDER.getValue()));
+    }
+
+    public AttachExpectation ofReceiver() {
+        return withRole(equalTo(Role.RECEIVER.getValue()));
+    }
+
     public AttachExpectation withSndSettleMode(byte sndSettleMode) {
-        return withSndSettleMode(equalTo(SenderSettleMode.valueOf(sndSettleMode)));
+        return withSndSettleMode(equalTo(UnsignedByte.valueOf(sndSettleMode)));
     }
 
     public AttachExpectation withSndSettleMode(Byte sndSettleMode) {
@@ -210,8 +222,20 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         return withSndSettleMode(sndSettleMode == null ? nullValue() : equalTo(sndSettleMode.getValue()));
     }
 
+    public AttachExpectation withSenderSettleModeMixed() {
+        return withSndSettleMode(equalTo(SenderSettleMode.MIXED.getValue()));
+    }
+
+    public AttachExpectation withSenderSettleModeSettled() {
+        return withSndSettleMode(equalTo(SenderSettleMode.SETTLED.getValue()));
+    }
+
+    public AttachExpectation withSenderSettleModeUnsettled() {
+        return withSndSettleMode(equalTo(SenderSettleMode.UNSETTLED.getValue()));
+    }
+
     public AttachExpectation withRcvSettleMode(byte rcvSettleMode) {
-        return withRcvSettleMode(equalTo(ReceiverSettleMode.valueOf(rcvSettleMode)));
+        return withRcvSettleMode(equalTo(UnsignedByte.valueOf(rcvSettleMode)));
     }
 
     public AttachExpectation withRcvSettleMode(Byte rcvSettleMode) {
@@ -220,6 +244,14 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
 
     public AttachExpectation withRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
         return withRcvSettleMode(rcvSettleMode == null ? nullValue() : equalTo(rcvSettleMode.getValue()));
+    }
+
+    public AttachExpectation withReceivervSettlesFirst() {
+        return withRcvSettleMode(equalTo(ReceiverSettleMode.FIRST.getValue()));
+    }
+
+    public AttachExpectation withReceivervSettlesSecond() {
+        return withRcvSettleMode(equalTo(ReceiverSettleMode.SECOND.getValue()));
     }
 
     public AttachSourceMatcher withSource() {

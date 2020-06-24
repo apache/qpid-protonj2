@@ -85,8 +85,18 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         return this;
     }
 
+    public AttachInjectAction asSender() {
+        attach.setRole(Role.SENDER.getValue());
+        return this;
+    }
+
+    public AttachInjectAction asReceiver() {
+        attach.setRole(Role.RECEIVER.getValue());
+        return this;
+    }
+
     public AttachInjectAction withSndSettleMode(byte sndSettleMode) {
-        attach.setSenderSettleMode(SenderSettleMode.valueOf(sndSettleMode));
+        attach.setSenderSettleMode(UnsignedByte.valueOf(sndSettleMode));
         return this;
     }
 
@@ -100,8 +110,23 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         return this;
     }
 
+    public AttachInjectAction withSenderSettleModeMixed() {
+        attach.setSenderSettleMode(SenderSettleMode.MIXED.getValue());
+        return this;
+    }
+
+    public AttachInjectAction withSenderSettleModeSettled() {
+        attach.setSenderSettleMode(SenderSettleMode.SETTLED.getValue());
+        return this;
+    }
+
+    public AttachInjectAction withSenderSettleModeUnsettled() {
+        attach.setSenderSettleMode(SenderSettleMode.UNSETTLED.getValue());
+        return this;
+    }
+
     public AttachInjectAction withRcvSettleMode(byte rcvSettleMode) {
-        attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(rcvSettleMode));
+        attach.setReceiverSettleMode(UnsignedByte.valueOf(rcvSettleMode));
         return this;
     }
 
@@ -112,6 +137,16 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     public AttachInjectAction withRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
         attach.setReceiverSettleMode(rcvSettleMode == null ? null : rcvSettleMode.getValue());
+        return this;
+    }
+
+    public AttachInjectAction withReceivervSettlesFirst() {
+        attach.setReceiverSettleMode(ReceiverSettleMode.FIRST.getValue());
+        return this;
+    }
+
+    public AttachInjectAction withReceivervSettlesSecond() {
+        attach.setReceiverSettleMode(ReceiverSettleMode.SECOND.getValue());
         return this;
     }
 

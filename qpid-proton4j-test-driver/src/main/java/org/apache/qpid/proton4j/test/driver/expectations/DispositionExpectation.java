@@ -24,12 +24,14 @@ import org.apache.qpid.proton4j.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Modified;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Rejected;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Released;
+import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Disposition;
 import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Role;
+import org.apache.qpid.proton4j.test.driver.matchers.transactions.TransactionalStateMatcher;
 import org.apache.qpid.proton4j.test.driver.matchers.transport.DispositionMatcher;
 import org.hamcrest.Matcher;
 
@@ -187,9 +189,98 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
             return DispositionExpectation.this;
         }
 
-        public DispositionExpectation transactional(byte[] txnid) {
-            withState(Accepted.getInstance());
-            return DispositionExpectation.this;
+        public DispositionTransactionalStateMatcher transactional() {
+            DispositionTransactionalStateMatcher matcher = new DispositionTransactionalStateMatcher(DispositionExpectation.this);
+            withState(matcher);
+            return matcher;
+        }
+    }
+
+    //----- Extend the TransactionalStateMatcher type to have an API suitable for Transfer expectation setup
+
+    public static class DispositionTransactionalStateMatcher extends TransactionalStateMatcher {
+
+        private final DispositionExpectation expectation;
+
+        public DispositionTransactionalStateMatcher(DispositionExpectation expectation) {
+            this.expectation = expectation;
+        }
+
+        public DispositionExpectation also() {
+            return expectation;
+        }
+
+        public DispositionExpectation and() {
+            return expectation;
+        }
+
+        @Override
+        public DispositionTransactionalStateMatcher withTxnId(byte[] txnId) {
+            super.withTxnId(equalTo(new Binary(txnId)));
+            return this;
+        }
+
+        @Override
+        public DispositionTransactionalStateMatcher withTxnId(Binary txnId) {
+            super.withTxnId(equalTo(txnId));
+            return this;
+        }
+
+        @Override
+        public DispositionTransactionalStateMatcher withOutcome(DeliveryState outcome) {
+            super.withOutcome(equalTo(outcome));
+            return this;
+        }
+
+        //----- Matcher based with methods for more complex validation
+
+        @Override
+        public DispositionTransactionalStateMatcher withTxnId(Matcher<?> m) {
+            super.withOutcome(m);
+            return this;
+        }
+
+        @Override
+        public DispositionTransactionalStateMatcher withOutcome(Matcher<?> m) {
+            super.withOutcome(m);
+            return this;
+        }
+
+        // ----- Add a layer to allow configuring the outcome without specific type dependencies
+
+        public DispositionTransactionalStateMatcher withAccepted() {
+            super.withOutcome(Accepted.getInstance());
+            return this;
+        }
+
+        public DispositionTransactionalStateMatcher withReleased() {
+            super.withOutcome(Released.getInstance());
+            return this;
+        }
+
+        public DispositionTransactionalStateMatcher withRejected() {
+            super.withOutcome(new Rejected());
+            return this;
+        }
+
+        public DispositionTransactionalStateMatcher withRejected(String condition, String description) {
+            super.withOutcome(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description)));
+            return this;
+        }
+
+        public DispositionTransactionalStateMatcher withModified() {
+            super.withOutcome(new Modified());
+            return this;
+        }
+
+        public DispositionTransactionalStateMatcher withModified(boolean failed) {
+            super.withOutcome(new Modified().setDeliveryFailed(failed));
+            return this;
+        }
+
+        public DispositionTransactionalStateMatcher withModified(boolean failed, boolean undeliverableHere) {
+            super.withOutcome(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere));
+            return this;
         }
     }
 }

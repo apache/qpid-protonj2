@@ -60,6 +60,10 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
         return response;
     }
 
+    public EndInjectAction reject(String condition, String description) {
+        return reject(Symbol.valueOf(condition), description);
+    }
+
     public EndInjectAction reject(Symbol condition, String description) {
         response = new BeginInjectAction(driver);
         driver.addScriptedElement(response);

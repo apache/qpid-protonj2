@@ -38,6 +38,7 @@ import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedByte;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.proton4j.test.driver.codec.transactions.TransactionalState;
 import org.apache.qpid.proton4j.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.test.driver.codec.transport.ReceiverSettleMode;
@@ -504,9 +505,86 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
             return TransferInjectAction.this;
         }
 
-        public TransferInjectAction transactional(byte[] txnid) {
-            withState(Accepted.getInstance());
-            return TransferInjectAction.this;
+        public TransactionalStateBuilder transactional() {
+            TransactionalStateBuilder builder = new TransactionalStateBuilder(TransferInjectAction.this);
+            withState(builder.getState());
+            return builder;
+        }
+    }
+
+    //----- Provide a complex builder for Transactional DeliveryState
+
+    public static class TransactionalStateBuilder {
+
+        private final TransferInjectAction action;
+        private final TransactionalState state = new TransactionalState();
+
+        public TransactionalStateBuilder(TransferInjectAction action) {
+            this.action = action;
+        }
+
+        public TransactionalState getState() {
+            return state;
+        }
+
+        public TransferInjectAction also() {
+            return action;
+        }
+
+        public TransferInjectAction and() {
+            return action;
+        }
+
+        public TransactionalStateBuilder withTxnId(byte[] txnId) {
+            state.setTxnId(new Binary(txnId));
+            return this;
+        }
+
+        public TransactionalStateBuilder withTxnId(Binary txnId) {
+            state.setTxnId(txnId);
+            return this;
+        }
+
+        public TransactionalStateBuilder withOutcome(DeliveryState outcome) {
+            state.setOutcome(outcome);
+            return this;
+        }
+
+        // ----- Add a layer to allow configuring the outcome without specific type dependencies
+
+        public TransactionalStateBuilder withAccepted() {
+            withOutcome(Accepted.getInstance());
+            return this;
+        }
+
+        public TransactionalStateBuilder withReleased() {
+            withOutcome(Released.getInstance());
+            return this;
+        }
+
+        public TransactionalStateBuilder withRejected() {
+            withOutcome(new Rejected());
+            return this;
+        }
+
+        public TransactionalStateBuilder withRejected(String condition, String description) {
+            withOutcome(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description)));
+            return this;
+        }
+
+        public TransactionalStateBuilder withModified() {
+            withOutcome(new Modified());
+            return this;
+        }
+
+        public TransactionalStateBuilder withModified(boolean failed) {
+            withOutcome(new Modified().setDeliveryFailed(failed));
+            return this;
+        }
+
+        public TransactionalStateBuilder withModified(boolean failed, boolean undeliverableHere) {
+            withOutcome(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere));
+            return this;
         }
     }
 }

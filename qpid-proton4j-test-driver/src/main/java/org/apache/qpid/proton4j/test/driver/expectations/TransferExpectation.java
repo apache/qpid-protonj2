@@ -371,7 +371,7 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
         }
     }
 
-    //----- Extend the TransferMatcher type to have an API suitable for Transfer expectation setup
+    //----- Extend the TransactionalStateMatcher type to have an API suitable for Transfer expectation setup
 
     public static class TransferTransactionalStateMatcher extends TransactionalStateMatcher {
 
@@ -423,38 +423,38 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
 
         // ----- Add a layer to allow configuring the outcome without specific type dependencies
 
-        public TransferTransactionalStateMatcher accepted() {
+        public TransferTransactionalStateMatcher withAccepted() {
             super.withOutcome(Accepted.getInstance());
             return this;
         }
 
-        public TransferTransactionalStateMatcher released() {
+        public TransferTransactionalStateMatcher withReleased() {
             super.withOutcome(Released.getInstance());
             return this;
         }
 
-        public TransferTransactionalStateMatcher rejected() {
+        public TransferTransactionalStateMatcher withRejected() {
             super.withOutcome(new Rejected());
             return this;
         }
 
-        public TransferTransactionalStateMatcher rejected(String condition, String description) {
+        public TransferTransactionalStateMatcher withRejected(String condition, String description) {
             super.withOutcome(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description)));
             return this;
         }
 
-        public TransferTransactionalStateMatcher modified() {
+        public TransferTransactionalStateMatcher withModified() {
             super.withOutcome(new Modified());
             return this;
         }
 
-        public TransferTransactionalStateMatcher modified(boolean failed) {
-            super.withOutcome(new Modified());
+        public TransferTransactionalStateMatcher withModified(boolean failed) {
+            super.withOutcome(new Modified().setDeliveryFailed(failed));
             return this;
         }
 
-        public TransferTransactionalStateMatcher modified(boolean failed, boolean undeliverableHere) {
-            super.withOutcome(new Modified());
+        public TransferTransactionalStateMatcher withModified(boolean failed, boolean undeliverableHere) {
+            super.withOutcome(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere));
             return this;
         }
     }
