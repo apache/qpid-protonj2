@@ -16,43 +16,44 @@
  */
 package org.apache.qpid.proton4j.test.driver.actions;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.ScriptedAction;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * Scripted action that will write the contents of a given buffer out through the driver.
  */
-public class ProtonBufferInjectAction implements ScriptedAction {
+public class ByteBufferInjectAction implements ScriptedAction {
 
-    private final ProtonBuffer buffer;
+    private final ByteBuf buffer;
     private final AMQPTestDriver driver;
 
-    public ProtonBufferInjectAction(AMQPTestDriver driver, ProtonBuffer buffer) {
+    public ByteBufferInjectAction(AMQPTestDriver driver, ByteBuf buffer) {
         this.buffer = buffer;
         this.driver = driver;
     }
 
     @Override
-    public ProtonBufferInjectAction perform(AMQPTestDriver driver) {
+    public ByteBufferInjectAction perform(AMQPTestDriver driver) {
         driver.sendBytes(buffer);
         return this;
     }
 
     @Override
-    public ProtonBufferInjectAction now() {
+    public ByteBufferInjectAction now() {
         perform(driver);
         return this;
     }
 
     @Override
-    public ProtonBufferInjectAction later(int delay) {
+    public ByteBufferInjectAction later(int delay) {
         driver.afterDelay(delay, this);
         return this;
     }
 
     @Override
-    public ProtonBufferInjectAction queue() {
+    public ByteBufferInjectAction queue() {
         driver.addScriptedElement(this);
         return this;
     }

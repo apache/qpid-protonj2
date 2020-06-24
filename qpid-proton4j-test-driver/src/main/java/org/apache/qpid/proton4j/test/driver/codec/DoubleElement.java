@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.test.driver.codec;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import io.netty.buffer.ByteBuf;
 
 class DoubleElement extends AtomicElement<Double> {
 
@@ -43,9 +43,9 @@ class DoubleElement extends AtomicElement<Double> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         int size = size();
-        if (buffer.getMaxWritableBytes() >= size) {
+        if (buffer.maxWritableBytes() >= size) {
             if (size == 9) {
                 buffer.writeByte((byte) 0x82);
             }

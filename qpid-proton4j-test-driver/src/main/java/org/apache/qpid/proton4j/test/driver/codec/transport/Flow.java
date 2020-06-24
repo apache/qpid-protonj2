@@ -19,10 +19,11 @@ package org.apache.qpid.proton4j.test.driver.codec.transport;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
+
+import io.netty.buffer.ByteBuf;
 
 public class Flow extends PerformativeDescribedType {
 
@@ -170,7 +171,7 @@ public class Flow extends PerformativeDescribedType {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
+    public <E> void invoke(PerformativeHandler<E> handler, ByteBuf payload, int channel, E context) {
         handler.handleFlow(this, payload, channel, context);
     }
 

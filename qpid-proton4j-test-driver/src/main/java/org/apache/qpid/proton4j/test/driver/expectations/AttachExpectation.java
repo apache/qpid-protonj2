@@ -22,7 +22,6 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.LinkTracker;
 import org.apache.qpid.proton4j.test.driver.actions.AttachInjectAction;
@@ -50,6 +49,8 @@ import org.apache.qpid.proton4j.test.driver.matchers.messaging.TargetMatcher;
 import org.apache.qpid.proton4j.test.driver.matchers.transactions.CoordinatorMatcher;
 import org.apache.qpid.proton4j.test.driver.matchers.transport.AttachMatcher;
 import org.hamcrest.Matcher;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * Scripted expectation for the AMQP Attach performative
@@ -92,7 +93,7 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleAttach(Attach attach, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    public void handleAttach(Attach attach, ByteBuf payload, int channel, AMQPTestDriver context) {
         super.handleAttach(attach, payload, channel, context);
 
         LinkTracker link = driver.getSessions().handleAttach(attach, channel);

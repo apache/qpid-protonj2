@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.test.driver;
 
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslChallenge;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslInit;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslMechanisms;
@@ -34,6 +33,8 @@ import org.apache.qpid.proton4j.test.driver.codec.transport.End;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Flow;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Open;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Transfer;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * Entry in the test script that produces some output to be sent to the AMQP
@@ -99,47 +100,47 @@ public interface ScriptedAction extends ScriptedElement {
     }
 
     @Override
-    default void handleOpen(Open open, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    default void handleOpen(Open open, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Open arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleBegin(Begin begin, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    default void handleBegin(Begin begin, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Begin arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleAttach(Attach attach, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    default void handleAttach(Attach attach, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Attach arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleFlow(Flow flow, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    default void handleFlow(Flow flow, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Flow arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    default void handleTransfer(Transfer transfer, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Transfer arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    default void handleDisposition(Disposition disposition, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Disposition arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleDetach(Detach detach, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    default void handleDetach(Detach detach, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Detach arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleEnd(End end, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    default void handleEnd(End end, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("End arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleClose(Close close, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    default void handleClose(Close close, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Close arrived when expecting to perform an action");
     }
 

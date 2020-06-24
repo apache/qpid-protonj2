@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.test.driver.codec;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import io.netty.buffer.ByteBuf;
 
 class BooleanElement extends AtomicElement<Boolean> {
 
@@ -46,7 +46,7 @@ class BooleanElement extends AtomicElement<Boolean> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         if (buffer.isWritable()) {
             if (isElementOfArray()) {
                 buffer.writeByte(value ? (byte) 1 : (byte) 0);

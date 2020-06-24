@@ -73,7 +73,6 @@
   </ciManagement>
 
   <modules>
-    <module>qpid-proton4j-buffer</module>
     <module>qpid-proton4j-engine</module>
     <module>qpid-proton4j-performance-tests</module>
     <module>qpid-proton4j-test-driver</module>

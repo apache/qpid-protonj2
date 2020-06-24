@@ -18,11 +18,10 @@ package org.apache.qpid.proton4j.test.driver;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * An in VM single threaded test driver used for testing Engine implementations
@@ -32,14 +31,14 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  * and not for use by client implementations where a socket based test peer would be
  * a more appropriate choice.
  */
-public class ProtonTestPeer extends ScriptWriter implements Consumer<ProtonBuffer>, AutoCloseable {
+public class ProtonTestPeer extends ScriptWriter implements Consumer<ByteBuffer>, AutoCloseable {
 
     private final AMQPTestDriver driver;
-    private final Consumer<ProtonBuffer> inputConsumer;
+    private final Consumer<ByteBuffer> inputConsumer;
     private final AtomicBoolean closed = new AtomicBoolean();
     private final AtomicBoolean rejecting = new AtomicBoolean();
 
-    public ProtonTestPeer(Consumer<ProtonBuffer> frameSink) {
+    public ProtonTestPeer(Consumer<ByteBuffer> frameSink) {
         this.driver = new AMQPTestDriver((frame) -> {
             processDriverOutput(frame);
         }, null);
@@ -71,7 +70,7 @@ public class ProtonTestPeer extends ScriptWriter implements Consumer<ProtonBuffe
     }
 
     @Override
-    public void accept(ProtonBuffer frame) {
+    public void accept(ByteBuffer frame) {
         if (rejecting.get()) {
             throw new UncheckedIOException("Driver is not accepting any new input", new IOException());
         } else {
@@ -135,7 +134,7 @@ public class ProtonTestPeer extends ScriptWriter implements Consumer<ProtonBuffe
         // nothing to do in this peer implementation.
     }
 
-    protected void processDriverOutput(ProtonBuffer frame) {
+    protected void processDriverOutput(ByteBuffer frame) {
         inputConsumer.accept(frame);
     }
 

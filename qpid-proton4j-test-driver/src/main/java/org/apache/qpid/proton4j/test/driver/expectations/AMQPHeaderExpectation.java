@@ -19,12 +19,14 @@ package org.apache.qpid.proton4j.test.driver.expectations;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.ScriptedExpectation;
 import org.apache.qpid.proton4j.test.driver.actions.AMQPHeaderInjectAction;
-import org.apache.qpid.proton4j.test.driver.actions.ProtonBufferInjectAction;
+import org.apache.qpid.proton4j.test.driver.actions.ByteBufferInjectAction;
 import org.apache.qpid.proton4j.test.driver.codec.transport.AMQPHeader;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * Expectation entry for AMQP Headers
@@ -51,8 +53,14 @@ public class AMQPHeaderExpectation implements ScriptedExpectation {
         return response;
     }
 
-    public ProtonBufferInjectAction respondWithBytes(ProtonBuffer buffer) {
-        ProtonBufferInjectAction response = new ProtonBufferInjectAction(driver, buffer);
+    public ByteBufferInjectAction respondWithBytes(byte[] buffer) {
+        ByteBufferInjectAction response = new ByteBufferInjectAction(driver, Unpooled.wrappedBuffer(buffer));
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    public ByteBufferInjectAction respondWithBytes(ByteBuf buffer) {
+        ByteBufferInjectAction response = new ByteBufferInjectAction(driver, buffer);
         driver.addScriptedElement(response);
         return response;
     }

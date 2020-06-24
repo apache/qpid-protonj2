@@ -543,10 +543,6 @@ public interface ReadableBuffer {
                 return false;
             }
 
-            if (other instanceof CompositeReadableBuffer) {
-                return other.equals(this);
-            }
-
             return buffer.equals(readable.byteBuffer());
         }
     }

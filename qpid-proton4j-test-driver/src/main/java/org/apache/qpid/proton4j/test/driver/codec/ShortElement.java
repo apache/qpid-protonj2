@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.test.driver.codec;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import io.netty.buffer.ByteBuf;
 
 class ShortElement extends AtomicElement<Short> {
 
@@ -43,14 +43,14 @@ class ShortElement extends AtomicElement<Short> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         if (isElementOfArray()) {
-            if (buffer.getMaxWritableBytes() >= 2) {
+            if (buffer.maxWritableBytes() >= 2) {
                 buffer.writeShort(value);
                 return 2;
             }
         } else {
-            if (buffer.getMaxWritableBytes() >= 3) {
+            if (buffer.maxWritableBytes() >= 3) {
                 buffer.writeByte((byte) 0x61);
                 buffer.writeShort(value);
                 return 3;

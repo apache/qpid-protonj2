@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.test.driver.codec.transport;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Dummy Performative that is fired whenever an Empty frame is received
@@ -40,7 +40,7 @@ public class HeartBeat extends PerformativeDescribedType {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
+    public <E> void invoke(PerformativeHandler<E> handler, ByteBuf payload, int channel, E context) {
         handler.handleHeartBeat(INSTANCE, payload, channel, context);
     }
 }

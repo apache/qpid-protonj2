@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.test.driver.expectations;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.ScriptedExpectation;
 import org.apache.qpid.proton4j.test.driver.codec.ListDescribedType;
@@ -42,6 +41,8 @@ import org.apache.qpid.proton4j.test.driver.exceptions.UnexpectedPerformativeErr
 import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * Abstract base for expectations that need to handle matchers against fields in the
@@ -86,7 +87,7 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
         assertThat("Performative does not match expectation", performative, getExpectationMatcher());
     }
 
-    protected final void verifyPayload(ProtonBuffer payload) {
+    protected final void verifyPayload(ByteBuf payload) {
         if (getPayloadMatcher() != null) {
             assertThat("Paylod does not match expectation", payload, getPayloadMatcher());
         } else if (payload != null) {
@@ -104,59 +105,59 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
 
     protected abstract Class<T> getExpectedTypeClass();
 
-    protected Matcher<ProtonBuffer> getPayloadMatcher() {
+    protected Matcher<ByteBuf> getPayloadMatcher() {
         return null;
     }
 
     //----- Base implementation of the handle methods to describe when we get wrong type.
 
     @Override
-    public void handleOpen(Open open, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    public void handleOpen(Open open, ByteBuf payload, int channel, AMQPTestDriver context) {
         doVerification(open, payload, channel, context);
     }
 
     @Override
-    public void handleBegin(Begin begin, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    public void handleBegin(Begin begin, ByteBuf payload, int channel, AMQPTestDriver context) {
         doVerification(begin, payload, channel, context);
     }
 
     @Override
-    public void handleAttach(Attach attach, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    public void handleAttach(Attach attach, ByteBuf payload, int channel, AMQPTestDriver context) {
         doVerification(attach, payload, channel, context);
     }
 
     @Override
-    public void handleFlow(Flow flow, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    public void handleFlow(Flow flow, ByteBuf payload, int channel, AMQPTestDriver context) {
         doVerification(flow, payload, channel, context);
     }
 
     @Override
-    public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel,AMQPTestDriver context) {
+    public void handleTransfer(Transfer transfer, ByteBuf payload, int channel,AMQPTestDriver context) {
         doVerification(transfer, payload, channel, context);
     }
 
     @Override
-    public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    public void handleDisposition(Disposition disposition, ByteBuf payload, int channel, AMQPTestDriver context) {
         doVerification(disposition, payload, channel, context);
     }
 
     @Override
-    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    public void handleDetach(Detach detach, ByteBuf payload, int channel, AMQPTestDriver context) {
         doVerification(detach, payload, channel, context);
     }
 
     @Override
-    public void handleEnd(End end, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    public void handleEnd(End end, ByteBuf payload, int channel, AMQPTestDriver context) {
         doVerification(end, payload, channel, context);
     }
 
     @Override
-    public void handleClose(Close close, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    public void handleClose(Close close, ByteBuf payload, int channel, AMQPTestDriver context) {
         doVerification(close, payload, channel, context);
     }
 
     @Override
-    public void handleHeartBeat(HeartBeat thump, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    public void handleHeartBeat(HeartBeat thump, ByteBuf payload, int channel, AMQPTestDriver context) {
         doVerification(thump, payload, channel, context);
     }
 
@@ -197,7 +198,7 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
 
     //----- Internal implementation
 
-    private void doVerification(Object performative, ProtonBuffer payload, int channel, AMQPTestDriver driver) {
+    private void doVerification(Object performative, ByteBuf payload, int channel, AMQPTestDriver driver) {
         if (getExpectedTypeClass().equals(performative.getClass())) {
             verifyPayload(payload);
             verifyChannel(channel);

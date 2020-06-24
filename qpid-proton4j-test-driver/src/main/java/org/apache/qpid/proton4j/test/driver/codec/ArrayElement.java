@@ -16,9 +16,10 @@
  */
 package org.apache.qpid.proton4j.test.driver.codec;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+
+import io.netty.buffer.ByteBuf;
 
 class ArrayElement extends AbstractElement<Object[]> {
 
@@ -27,7 +28,7 @@ class ArrayElement extends AbstractElement<Object[]> {
     private ConstructorType constructorType;
     private Element<?> first;
 
-    static enum ConstructorType {
+    enum ConstructorType {
         TINY, SMALL, LARGE
     }
 
@@ -150,12 +151,12 @@ class ArrayElement extends AbstractElement<Object[]> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         int size = size();
 
         final int count = (int) count();
 
-        if (buffer.getMaxWritableBytes() >= size) {
+        if (buffer.maxWritableBytes() >= size) {
             if (!isElementOfArray()) {
                 if (size > 257 || count > 255) {
                     buffer.writeByte((byte) 0xf0);

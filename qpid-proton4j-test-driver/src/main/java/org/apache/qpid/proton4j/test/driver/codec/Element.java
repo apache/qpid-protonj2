@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.test.driver.codec;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import io.netty.buffer.ByteBuf;
 
 interface Element<T> {
 
@@ -26,7 +26,7 @@ interface Element<T> {
 
     Codec.DataType getDataType();
 
-    int encode(ProtonBuffer buffer);
+    int encode(ByteBuf buffer);
 
     Element<?> next();
 

@@ -18,13 +18,14 @@ package org.apache.qpid.proton4j.test.driver.codec.transport;
 
 import java.util.List;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedByte;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
+
+import io.netty.buffer.ByteBuf;
 
 public class Transfer extends PerformativeDescribedType {
 
@@ -171,7 +172,7 @@ public class Transfer extends PerformativeDescribedType {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
+    public <E> void invoke(PerformativeHandler<E> handler, ByteBuf payload, int channel, E context) {
         handler.handleTransfer(this, payload, channel, context);
     }
 

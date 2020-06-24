@@ -59,8 +59,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
     private void doInvalidOpenProvokesDecodeErrorTestImpl(byte[] bytes, String errorDescription) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen();
@@ -126,8 +125,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
     private void doInvalidBeginProvokesDecodeErrorTestImpl(byte[] bytes, String errorDescription) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -193,8 +191,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
     private void doInvalidFlowProvokesDecodeErrorTestImpl(byte[] bytes, String errorDescription) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -238,8 +235,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
     private void doInvalidTransferProvokesDecodeErrorTestImpl(byte[] bytes, String errorDescription) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -288,8 +284,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
     private void doInvalidDispositionProvokesDecodeErrorTestImpl(byte[] bytes, String errorDescription) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
 

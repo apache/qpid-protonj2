@@ -21,7 +21,6 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.proton4j.test.driver.codec.transactions.Coordinator;
@@ -31,6 +30,8 @@ import org.apache.qpid.proton4j.test.driver.codec.transport.Detach;
 import org.apache.qpid.proton4j.test.driver.codec.transport.End;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Role;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Transfer;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * Tracks information related to an opened Session and its various links
@@ -175,7 +176,7 @@ public class SessionTracker {
         return tracker;
     }
 
-    public LinkTracker handleTransfer(Transfer transfer, ProtonBuffer payload) {
+    public LinkTracker handleTransfer(Transfer transfer, ByteBuf payload) {
         LinkTracker tracker = trackerMap.get(transfer.getHandle());
 
         // TODO - Update session state based on transfer

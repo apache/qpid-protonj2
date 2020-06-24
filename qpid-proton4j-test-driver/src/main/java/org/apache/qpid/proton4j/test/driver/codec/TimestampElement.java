@@ -18,7 +18,7 @@ package org.apache.qpid.proton4j.test.driver.codec;
 
 import java.util.Date;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import io.netty.buffer.ByteBuf;
 
 class TimestampElement extends AtomicElement<Date> {
 
@@ -45,9 +45,9 @@ class TimestampElement extends AtomicElement<Date> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         int size = size();
-        if (size > buffer.getMaxWritableBytes()) {
+        if (size > buffer.maxWritableBytes()) {
             return 0;
         }
         if (size == 9) {

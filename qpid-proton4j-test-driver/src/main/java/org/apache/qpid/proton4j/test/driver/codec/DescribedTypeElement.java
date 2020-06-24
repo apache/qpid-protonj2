@@ -16,8 +16,9 @@
  */
 package org.apache.qpid.proton4j.test.driver.codec;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+
+import io.netty.buffer.ByteBuf;
 
 class DescribedTypeElement extends AbstractElement<DescribedType> {
 
@@ -67,10 +68,10 @@ class DescribedTypeElement extends AbstractElement<DescribedType> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         int encodedSize = size();
 
-        if (encodedSize > buffer.getMaxWritableBytes()) {
+        if (encodedSize > buffer.maxWritableBytes()) {
             return 0;
         } else {
             buffer.writeByte((byte) 0);

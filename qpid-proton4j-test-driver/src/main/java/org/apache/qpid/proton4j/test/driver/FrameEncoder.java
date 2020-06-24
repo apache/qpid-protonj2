@@ -16,10 +16,11 @@
  */
 package org.apache.qpid.proton4j.test.driver;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.test.driver.codec.Codec;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * Encodes AMQP performatives into frames for transmission
@@ -46,22 +47,22 @@ public class FrameEncoder {
         this.driver = driver;
     }
 
-    public ProtonBuffer handleWrite(DescribedType performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
+    public ByteBuf handleWrite(DescribedType performative, int channel, ByteBuf payload, Runnable payloadToLarge) {
         return writeFrame(performative, payload, AMQP_FRAME_TYPE, channel, driver.getOutboundMaxFrameSize(), payloadToLarge);
     }
 
-    public ProtonBuffer handleWrite(DescribedType performative, int channel) {
+    public ByteBuf handleWrite(DescribedType performative, int channel) {
         return writeFrame(performative, null, SASL_FRAME_TYPE, (short) 0, driver.getOutboundMaxFrameSize(), null);
     }
 
-    private ProtonBuffer writeFrame(DescribedType performative, ProtonBuffer payload, byte frameType, int channel, int maxFrameSize, Runnable onPayloadTooLarge) {
-        int outputBufferSize = AMQP_PERFORMATIVE_PAD + (payload != null ? payload.getReadableBytes() : 0);
+    private ByteBuf writeFrame(DescribedType performative, ByteBuf payload, byte frameType, int channel, int maxFrameSize, Runnable onPayloadTooLarge) {
+        int outputBufferSize = AMQP_PERFORMATIVE_PAD + (payload != null ? payload.readableBytes() : 0);
 
-        ProtonBuffer output = ProtonByteBufferAllocator.DEFAULT.outputBuffer(outputBufferSize);
+        ByteBuf output = Unpooled.buffer(outputBufferSize);
 
         final int performativeSize = writePerformative(performative, payload, maxFrameSize, output, onPayloadTooLarge);
         final int capacity = maxFrameSize > 0 ? maxFrameSize - performativeSize : Integer.MAX_VALUE;
-        final int payloadSize = Math.min(payload == null ? 0 : payload.getReadableBytes(), capacity);
+        final int payloadSize = Math.min(payload == null ? 0 : payload.readableBytes(), capacity);
 
         if (payloadSize > 0) {
             output.writeBytes(payload, payloadSize);
@@ -72,11 +73,11 @@ public class FrameEncoder {
         return output;
     }
 
-    private int writePerformative(DescribedType performative, ProtonBuffer payload, int maxFrameSize, ProtonBuffer output, Runnable onPayloadTooLarge) {
-        output.setWriteIndex(FRAME_HEADER_SIZE);
+    private int writePerformative(DescribedType performative, ByteBuf payload, int maxFrameSize, ByteBuf output, Runnable onPayloadTooLarge) {
+        output.writerIndex(FRAME_HEADER_SIZE);
 
         long encodedSize = 0;
-        int startIndex = output.getWriteIndex();
+        int startIndex = output.writerIndex();
 
         if (performative != null) {
             try {
@@ -87,7 +88,7 @@ public class FrameEncoder {
             }
         }
 
-        int performativeSize = output.getWriteIndex() - startIndex;
+        int performativeSize = output.writerIndex() - startIndex;
 
         if (performativeSize != encodedSize) {
             throw new IllegalStateException(String.format(
@@ -95,7 +96,7 @@ public class FrameEncoder {
                 performative, performativeSize, encodedSize));
         }
 
-        if (onPayloadTooLarge != null && maxFrameSize > 0 && payload != null && (payload.getReadableBytes() + performativeSize) > maxFrameSize) {
+        if (onPayloadTooLarge != null && maxFrameSize > 0 && payload != null && (payload.readableBytes() + performativeSize) > maxFrameSize) {
             // Next iteration will re-encode the frame body again with updates from the <payload-to-large>
             // handler and then we can move onto the body portion.
             onPayloadTooLarge.run();
@@ -105,8 +106,8 @@ public class FrameEncoder {
         return performativeSize;
     }
 
-    private static void endFrame(ProtonBuffer output, byte frameType, int channel) {
-        output.setInt(FRAME_START_BYTE, output.getReadableBytes());
+    private static void endFrame(ByteBuf output, byte frameType, int channel) {
+        output.setInt(FRAME_START_BYTE, output.readableBytes());
         output.setByte(FRAME_DOFF_BYTE, FRAME_DOFF_SIZE);
         output.setByte(FRAME_TYPE_BYTE, frameType);
         output.setShort(FRAME_CHANNEL_BYTE, (short) channel);

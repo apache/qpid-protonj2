@@ -16,8 +16,9 @@
  */
 package org.apache.qpid.proton4j.test.driver.codec;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedByte;
+
+import io.netty.buffer.ByteBuf;
 
 class UnsignedByteElement extends AtomicElement<UnsignedByte> {
 
@@ -44,14 +45,14 @@ class UnsignedByteElement extends AtomicElement<UnsignedByte> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         if (isElementOfArray()) {
             if (buffer.isWritable()) {
                 buffer.writeByte(value.byteValue());
                 return 1;
             }
         } else {
-            if (buffer.getMaxWritableBytes() >= 2) {
+            if (buffer.maxWritableBytes() >= 2) {
                 buffer.writeByte((byte) 0x50);
                 buffer.writeByte(value.byteValue());
                 return 2;

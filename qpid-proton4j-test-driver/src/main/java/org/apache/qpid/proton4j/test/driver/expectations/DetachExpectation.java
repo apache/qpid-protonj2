@@ -20,7 +20,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import java.util.Map;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.LinkTracker;
 import org.apache.qpid.proton4j.test.driver.actions.BeginInjectAction;
@@ -33,6 +32,8 @@ import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.transport.DetachMatcher;
 import org.hamcrest.Matcher;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * Scripted expectation for the AMQP Detach performative
@@ -62,7 +63,7 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    public void handleDetach(Detach detach, ByteBuf payload, int channel, AMQPTestDriver context) {
         super.handleDetach(detach, payload, channel, context);
 
         LinkTracker link = driver.getSessions().handleDetach(detach, channel);

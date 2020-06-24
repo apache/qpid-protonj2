@@ -20,7 +20,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import java.util.Map;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.SessionTracker;
 import org.apache.qpid.proton4j.test.driver.actions.BeginInjectAction;
@@ -32,6 +31,8 @@ import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Flow;
 import org.apache.qpid.proton4j.test.driver.matchers.transport.FlowMatcher;
 import org.hamcrest.Matcher;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * Scripted expectation for the AMQP Flow performative
@@ -60,7 +61,7 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleFlow(Flow flow, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    public void handleFlow(Flow flow, ByteBuf payload, int channel, AMQPTestDriver context) {
         super.handleFlow(flow, payload, channel, context);
 
         if (response == null) {

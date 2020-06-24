@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.test.driver.codec;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import io.netty.buffer.ByteBuf;
 
 class NullElement extends AtomicElement<Void> {
 
@@ -40,7 +40,7 @@ class NullElement extends AtomicElement<Void> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         if (buffer.isWritable() && !isElementOfArray()) {
             buffer.writeByte((byte) 0x40);
             return 1;

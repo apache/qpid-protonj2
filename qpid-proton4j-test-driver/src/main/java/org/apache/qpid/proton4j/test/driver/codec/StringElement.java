@@ -18,7 +18,7 @@ package org.apache.qpid.proton4j.test.driver.codec;
 
 import java.nio.charset.Charset;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import io.netty.buffer.ByteBuf;
 
 class StringElement extends AtomicElement<String> {
 
@@ -71,12 +71,12 @@ class StringElement extends AtomicElement<String> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         final byte[] bytes = value.getBytes(UTF_8);
         final int length = bytes.length;
 
         int size = size(length);
-        if (buffer.getMaxWritableBytes() < size) {
+        if (buffer.maxWritableBytes() < size) {
             return 0;
         }
         if (isElementOfArray()) {

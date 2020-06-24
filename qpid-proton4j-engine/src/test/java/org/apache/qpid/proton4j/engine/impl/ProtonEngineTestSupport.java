@@ -27,8 +27,10 @@ import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.logging.ProtonLogger;
 import org.apache.qpid.proton4j.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.test.driver.ProtonTestPeer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -132,6 +134,17 @@ public abstract class ProtonEngineTestSupport {
         }
 
         return ProtonByteBufferAllocator.DEFAULT.wrap(payload).setIndex(0, length);
+    }
+
+    protected ProtonTestPeer createTestPeer(Engine engine) {
+        ProtonTestPeer peer = new ProtonTestPeer(buffer -> {
+            engine.accept(ProtonByteBufferAllocator.DEFAULT.wrap(buffer));
+        });
+        engine.outputConsumer(buffer -> {
+            peer.accept(buffer.toByteBuffer());
+        });
+
+        return peer;
     }
 
     protected String getTestName() {

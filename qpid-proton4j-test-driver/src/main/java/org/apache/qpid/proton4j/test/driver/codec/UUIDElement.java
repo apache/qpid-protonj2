@@ -18,7 +18,7 @@ package org.apache.qpid.proton4j.test.driver.codec;
 
 import java.util.UUID;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import io.netty.buffer.ByteBuf;
 
 class UUIDElement extends AtomicElement<UUID> {
 
@@ -45,9 +45,9 @@ class UUIDElement extends AtomicElement<UUID> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         int size = size();
-        if (buffer.getMaxWritableBytes() >= size) {
+        if (buffer.maxWritableBytes() >= size) {
             if (size == 17) {
                 buffer.writeByte((byte) 0x98);
             }

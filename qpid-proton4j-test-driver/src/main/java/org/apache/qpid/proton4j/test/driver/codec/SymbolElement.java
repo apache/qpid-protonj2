@@ -18,8 +18,9 @@ package org.apache.qpid.proton4j.test.driver.codec;
 
 import java.nio.charset.Charset;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
+
+import io.netty.buffer.ByteBuf;
 
 class SymbolElement extends AtomicElement<Symbol> {
 
@@ -68,9 +69,9 @@ class SymbolElement extends AtomicElement<Symbol> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         int size = size();
-        if (buffer.getMaxWritableBytes() < size) {
+        if (buffer.maxWritableBytes() < size) {
             return 0;
         }
         if (isElementOfArray()) {

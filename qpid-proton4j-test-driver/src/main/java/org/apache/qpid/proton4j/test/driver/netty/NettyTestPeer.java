@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.test.driver.netty;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,8 +26,6 @@ import java.util.function.Supplier;
 
 import javax.net.ssl.SSLEngine;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.ScriptWriter;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
@@ -164,7 +163,7 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
 
                     try {
                         // Create a stable copy to avoid issue with retained buffer slices when input is pooled.
-                        ProtonBuffer copy = ProtonByteBufferAllocator.DEFAULT.allocate(input.readableBytes());
+                        ByteBuf copy = Unpooled.buffer(input.readableBytes());
                         copy.writeBytes(input.nioBuffer());
                         input.skipBytes(input.readableBytes());
 
@@ -190,7 +189,7 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
 
     private final class NettyAwareAMQPTestDriver extends AMQPTestDriver {
 
-        public NettyAwareAMQPTestDriver(Consumer<ProtonBuffer> frameConsumer, Supplier<ScheduledExecutorService> scheduler) {
+        public NettyAwareAMQPTestDriver(Consumer<ByteBuffer> frameConsumer, Supplier<ScheduledExecutorService> scheduler) {
             super(frameConsumer, scheduler);
         }
 
@@ -201,7 +200,7 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
         // other driver resources being used on two different threads.
 
         @Override
-        public void sendAMQPFrame(int channel, DescribedType performative, ProtonBuffer payload) {
+        public void sendAMQPFrame(int channel, DescribedType performative, ByteBuf payload) {
             EventLoop loop = NettyTestPeer.this.channel.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendAMQPFrame(channel, performative, payload);
@@ -270,17 +269,13 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
         }
     }
 
-    protected void processDriverOutput(ProtonBuffer frame) {
+    protected void processDriverOutput(ByteBuffer frame) {
         LOG.trace("AMQP Server Channel writing: {}", frame);
         // TODO - Error handling for failed write
-        // TODO - If we allow test driver to allocate io buffers we might save this copy
-        //        if it can create an netty buffer wrapper.
-        ByteBuf outbound = Unpooled.buffer(frame.getReadableBytes());
-        outbound.writeBytes(frame.toByteBuffer());
-        channel.writeAndFlush(outbound, channel.voidPromise());
+        channel.writeAndFlush(Unpooled.wrappedBuffer(frame), channel.voidPromise());
     }
 
-    protected void processChannelInput(ProtonBuffer input) {
+    protected void processChannelInput(ByteBuf input) {
         LOG.trace("AMQP Server Channel processing: {}", input);
         driver.accept(input);
     }

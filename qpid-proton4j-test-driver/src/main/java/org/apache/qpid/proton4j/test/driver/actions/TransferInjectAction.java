@@ -19,8 +19,6 @@ package org.apache.qpid.proton4j.test.driver.actions;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.AmqpSequence;
@@ -45,6 +43,9 @@ import org.apache.qpid.proton4j.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Transfer;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+
 /**
  * AMQP Close injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
@@ -54,7 +55,7 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
     private final Transfer transfer = new Transfer();
     private final DeliveryStateBuilder stateBuilder = new DeliveryStateBuilder();
 
-    private ProtonBuffer payload;
+    private ByteBuf payload;
 
     private Header header;
     private DeliveryAnnotations deliveryAnnotations;
@@ -74,7 +75,7 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
     }
 
     @Override
-    public ProtonBuffer getPayload() {
+    public ByteBuf getPayload() {
         if (payload == null) {
             payload = encodePayload();
         }
@@ -175,11 +176,11 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
     }
 
     public TransferInjectAction withPayload(byte[] payload) {
-        this.payload = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        this.payload = Unpooled.wrappedBuffer(payload);
         return this;
     }
 
-    public TransferInjectAction withPayload(ProtonBuffer payload) {
+    public TransferInjectAction withPayload(ByteBuf payload) {
         this.payload = payload;
         return this;
     }
@@ -256,10 +257,10 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
         return footer;
     }
 
-    private ProtonBuffer encodePayload() {
+    private ByteBuf encodePayload() {
         org.apache.qpid.proton4j.test.driver.codec.Codec codec =
             org.apache.qpid.proton4j.test.driver.codec.Codec.Factory.create();
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ByteBuf buffer = Unpooled.buffer();
 
         if (header != null) {
             codec.putDescribedType(header);

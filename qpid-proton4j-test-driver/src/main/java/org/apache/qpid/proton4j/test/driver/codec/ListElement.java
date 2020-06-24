@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import io.netty.buffer.ByteBuf;
 
 class ListElement extends AbstractElement<List<Object>> {
 
@@ -99,7 +99,7 @@ class ListElement extends AbstractElement<List<Object>> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         int encodedSize = size();
 
         int count = 0;
@@ -111,7 +111,7 @@ class ListElement extends AbstractElement<List<Object>> {
             elt = elt.next();
         }
 
-        if (encodedSize > buffer.getMaxWritableBytes()) {
+        if (encodedSize > buffer.maxWritableBytes()) {
             return 0;
         } else {
             if (isElementOfArray()) {

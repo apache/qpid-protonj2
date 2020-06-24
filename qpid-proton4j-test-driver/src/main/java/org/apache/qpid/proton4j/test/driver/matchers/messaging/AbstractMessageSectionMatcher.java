@@ -22,7 +22,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.Map;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.Codec;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
@@ -30,6 +29,8 @@ import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.netty.buffer.ByteBuf;
 
 public abstract class AbstractMessageSectionMatcher {
 
@@ -67,8 +68,8 @@ public abstract class AbstractMessageSectionMatcher {
      * @throws RuntimeException
      *         if the provided Binary does not match expectation in some way
      */
-    public int verify(ProtonBuffer receivedBinary) throws RuntimeException {
-        int length = receivedBinary.getReadableBytes();
+    public int verify(ByteBuf receivedBinary) throws RuntimeException {
+        int length = receivedBinary.readableBytes();
         Codec data = Codec.Factory.create();
         long decoded = data.decode(receivedBinary);
         if (decoded > Integer.MAX_VALUE) {

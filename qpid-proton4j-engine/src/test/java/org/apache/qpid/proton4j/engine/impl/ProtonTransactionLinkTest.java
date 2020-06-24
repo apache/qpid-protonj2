@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -80,8 +79,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testCreateDefaultCoordinatorSender() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         Source source = new Source();
@@ -114,8 +112,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testCreateCoordinatorSender() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -166,8 +163,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testRemoteCoordinatorSenderSignalsTransactionManagerFromSessionWhenEnabled() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -220,8 +216,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testRemoteCoordinatorSenderSignalsTransactionManagerFromConnectionWhenEnabled() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -274,8 +269,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testRemoteCoordinatorTriggersSenderCreateWhenManagerHandlerNotSet() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -328,8 +322,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testTransactionControllerDeclaresTransaction() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -392,8 +385,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testTransactionControllerBeginComiitBeginRollback() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -457,8 +449,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     private void doTestTransactionControllerDeclareAndDischargeOneTransaction(boolean useNewTransactionAPI) {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -533,8 +524,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testTransactionDeclareRejected() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -596,8 +586,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testTransactionDischargeRejected() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -663,8 +652,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testCannotDeclareTransactionFromOneControllerInAnother() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -743,8 +731,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testCannotDischargeTransactionFromOneControllerInAnother() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -824,8 +811,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
+        ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -855,7 +841,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
         peer.expectTransfer().withHandle(0)
-                             .withPayload(notNullValue(ProtonBuffer.class))
+                             .withNonNullPayload()
                              .withState().transactional().withTxnId(TXN_ID).and()
                              .respond()
                              .withState().transactional().withTxnId(TXN_ID).withAccepted().and()

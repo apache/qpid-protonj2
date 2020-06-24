@@ -16,10 +16,11 @@
  */
 package org.apache.qpid.proton4j.test.driver.actions;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.ScriptedAction;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * AMQP Empty Frame injection action which can be added to a driver for write at a specific time or
@@ -28,7 +29,7 @@ import org.apache.qpid.proton4j.test.driver.ScriptedAction;
 public class RawBytesInjectAction implements ScriptedAction {
 
     private final AMQPTestDriver driver;
-    private ProtonBuffer buffer;
+    private ByteBuf buffer;
 
     public RawBytesInjectAction(AMQPTestDriver driver) {
         this.driver = driver;
@@ -62,7 +63,7 @@ public class RawBytesInjectAction implements ScriptedAction {
     }
 
     public RawBytesInjectAction withBytes(byte[] bytes) {
-        this.buffer = ProtonByteBufferAllocator.DEFAULT.wrap(bytes);
+        this.buffer = Unpooled.wrappedBuffer(bytes);
         return this;
     }
 }

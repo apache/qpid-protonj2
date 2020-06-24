@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Decimal128;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Decimal32;
@@ -32,6 +31,8 @@ import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedByte;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
+
+import io.netty.buffer.ByteBuf;
 
 public interface Codec {
 
@@ -90,9 +91,9 @@ public interface Codec {
 
     long encodedSize();
 
-    long encode(ProtonBuffer buffer);
+    long encode(ByteBuf buffer);
 
-    long decode(ProtonBuffer buffer);
+    long decode(ByteBuf buffer);
 
     void putList();
 

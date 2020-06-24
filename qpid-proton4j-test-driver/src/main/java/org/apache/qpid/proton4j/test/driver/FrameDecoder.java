@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.test.driver;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.test.driver.codec.Codec;
 import org.apache.qpid.proton4j.test.driver.codec.security.SaslDescribedType;
 import org.apache.qpid.proton4j.test.driver.codec.transport.AMQPHeader;
@@ -25,6 +23,9 @@ import org.apache.qpid.proton4j.test.driver.codec.transport.HeartBeat;
 import org.apache.qpid.proton4j.test.driver.codec.transport.PerformativeDescribedType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 class FrameDecoder {
 
@@ -48,7 +49,7 @@ class FrameDecoder {
         this.driver = driver;
     }
 
-    public void ingest(ProtonBuffer buffer) throws AssertionError {
+    public void ingest(ByteBuf buffer) throws AssertionError {
         try {
             // Parses in-incoming data and emit one complete frame before returning, caller should
             // ensure that the input buffer is drained into the engine or stop if the engine
@@ -102,11 +103,11 @@ class FrameDecoder {
          * based on the contents of that data.
          *
          * @param input
-         *      The ProtonBuffer containing new data to be parsed.
+         *      The ByteBuf containing new data to be parsed.
          *
          * @throws AssertionError if an error occurs while parsing incoming data.
          */
-        void parse(ProtonBuffer input) throws AssertionError;
+        void parse(ByteBuf input) throws AssertionError;
 
         /**
          * Reset the stage to its defaults for a new cycle of parsing.
@@ -129,7 +130,7 @@ class FrameDecoder {
         private int headerByte;
 
         @Override
-        public void parse(ProtonBuffer incoming) throws AssertionError {
+        public void parse(ByteBuf incoming) throws AssertionError {
             while (incoming.isReadable() && headerByte < AMQPHeader.HEADER_SIZE_BYTES) {
                 headerBytes[headerByte++] = incoming.readByte();
             }
@@ -162,7 +163,7 @@ class FrameDecoder {
         private int multiplier = FRAME_SIZE_BYTES;
 
         @Override
-        public void parse(ProtonBuffer input) throws AssertionError {
+        public void parse(ByteBuf input) throws AssertionError {
             while (input.isReadable()) {
                 frameSize |= ((input.readByte() & 0xFF) << --multiplier * Byte.SIZE);
                 if (multiplier == 0) {
@@ -176,7 +177,7 @@ class FrameDecoder {
                 // Normalize the frame size to the reminder portion
                 int length = frameSize - FRAME_SIZE_BYTES;
 
-                if (input.getReadableBytes() < length) {
+                if (input.readableBytes() < length) {
                     transitionToFrameBufferingStage(length);
                 } else {
                     initializeFrameBodyParsingStage(length);
@@ -208,17 +209,17 @@ class FrameDecoder {
 
     private class FrameBufferingStage implements FrameParserStage {
 
-        private ProtonBuffer buffer;
+        private ByteBuf buffer;
 
         @Override
-        public void parse(ProtonBuffer input) throws AssertionError {
-            if (input.getReadableBytes() < buffer.getWritableBytes()) {
+        public void parse(ByteBuf input) throws AssertionError {
+            if (input.readableBytes() < buffer.writableBytes()) {
                 buffer.writeBytes(input);
             } else {
-                buffer.writeBytes(input, buffer.getWritableBytes());
+                buffer.writeBytes(input, buffer.writableBytes());
 
                 // Now we can consume the buffer frame body.
-                initializeFrameBodyParsingStage(buffer.getReadableBytes());
+                initializeFrameBodyParsingStage(buffer.readableBytes());
                 try {
                     stage.parse(buffer);
                 } finally {
@@ -229,7 +230,7 @@ class FrameDecoder {
 
         @Override
         public FrameBufferingStage reset(int frameSize) {
-            buffer = ProtonByteBufferAllocator.DEFAULT.allocate(frameSize, frameSize);
+            buffer = Unpooled.buffer(frameSize, frameSize);
             return this;
         }
     }
@@ -239,7 +240,7 @@ class FrameDecoder {
         private int frameSize;
 
         @Override
-        public void parse(ProtonBuffer input) throws AssertionError {
+        public void parse(ByteBuf input) throws AssertionError {
             int dataOffset = (input.readByte() << 2) & 0x3FF;
             int frameSize = this.frameSize + FRAME_SIZE_BYTES;
 
@@ -250,16 +251,16 @@ class FrameDecoder {
 
             // note that this skips over the extended header if it's present
             if (dataOffset != 8) {
-                input.setReadIndex(input.getReadIndex() + dataOffset - 8);
+                input.readerIndex(input.readerIndex() + dataOffset - 8);
             }
 
             final int frameBodySize = frameSize - dataOffset;
 
-            ProtonBuffer payload = null;
+            ByteBuf payload = null;
             Object val = null;
 
             if (frameBodySize > 0) {
-                int frameBodyStartIndex = input.getReadIndex();
+                int frameBodyStartIndex = input.readerIndex();
 
                 try {
                     codec.decode(input);
@@ -284,9 +285,9 @@ class FrameDecoder {
                 // performative will be held as long as the payload buffer is kept.
                 if (input.isReadable()) {
                     // Check that the remaining bytes aren't part of another frame.
-                    int payloadSize = frameBodySize - (input.getReadIndex() - frameBodyStartIndex);
+                    int payloadSize = frameBodySize - (input.readerIndex() - frameBodyStartIndex);
                     if (payloadSize > 0) {
-                        payload = input.slice(input.getReadIndex(), payloadSize);
+                        payload = input.slice(input.readerIndex(), payloadSize);
                         input.skipBytes(payloadSize);
                     }
                 }
@@ -344,7 +345,7 @@ class FrameDecoder {
         }
 
         @Override
-        public void parse(ProtonBuffer input) throws AssertionError {
+        public void parse(ByteBuf input) throws AssertionError {
             throw parsingError;
         }
 

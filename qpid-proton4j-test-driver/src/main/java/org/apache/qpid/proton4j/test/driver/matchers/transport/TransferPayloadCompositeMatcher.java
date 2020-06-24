@@ -22,22 +22,23 @@ package org.apache.qpid.proton4j.test.driver.matchers.transport;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
 import org.apache.qpid.proton4j.test.driver.matchers.messaging.ApplicationPropertiesMatcher;
-import org.apache.qpid.proton4j.test.driver.matchers.messaging.MessageAnnotationsMatcher;
 import org.apache.qpid.proton4j.test.driver.matchers.messaging.HeaderMatcher;
+import org.apache.qpid.proton4j.test.driver.matchers.messaging.MessageAnnotationsMatcher;
 import org.apache.qpid.proton4j.test.driver.matchers.messaging.PropertiesMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
 import org.hamcrest.TypeSafeMatcher;
 
+import io.netty.buffer.ByteBuf;
+
 /**
  * Used to verify the Transfer frame payload, i.e the sections of the AMQP
  * message such as the header, properties, and body sections.
  */
-public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ProtonBuffer> {
+public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
 
     private HeaderMatcher msgHeadersMatcher;
     private String msgHeaderMatcherFailureDescription;
@@ -56,8 +57,8 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ProtonBuffe
     }
 
     @Override
-    protected boolean matchesSafely(final ProtonBuffer receivedBinary) {
-        int origLength = receivedBinary.getReadableBytes();
+    protected boolean matchesSafely(final ByteBuf receivedBinary) {
+        int origLength = receivedBinary.readableBytes();
         int bytesConsumed = 0;
 
         // Length Matcher
@@ -73,7 +74,7 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ProtonBuffe
 
         // MessageHeader Section
         if (msgHeadersMatcher != null) {
-            ProtonBuffer msgHeaderEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
+            ByteBuf msgHeaderEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
             try {
                 bytesConsumed += msgHeadersMatcher.verify(msgHeaderEtcSubBinary);
             } catch (Throwable t) {
@@ -86,7 +87,7 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ProtonBuffe
 
         // MessageAnnotations Section
         if (msgAnnotationsMatcher != null) {
-            ProtonBuffer msgAnnotationsEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
+            ByteBuf msgAnnotationsEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
             try {
                 bytesConsumed += msgAnnotationsMatcher.verify(msgAnnotationsEtcSubBinary);
             } catch (Throwable t) {
@@ -100,7 +101,7 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ProtonBuffe
 
         // Properties Section
         if (propsMatcher != null) {
-            ProtonBuffer propsEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
+            ByteBuf propsEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
             try {
                 bytesConsumed += propsMatcher.verify(propsEtcSubBinary);
             } catch (Throwable t) {
@@ -113,7 +114,7 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ProtonBuffe
 
         // Application Properties Section
         if (appPropsMatcher != null) {
-            ProtonBuffer appPropsEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
+            ByteBuf appPropsEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
             try {
                 bytesConsumed += appPropsMatcher.verify(appPropsEtcSubBinary);
             } catch (Throwable t) {
@@ -126,7 +127,7 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ProtonBuffe
 
         // Message Content Body Section, already a Matcher<Binary>
         if (msgContentMatcher != null) {
-            ProtonBuffer msgContentBodyEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
+            ByteBuf msgContentBodyEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
             boolean contentMatches = msgContentMatcher.matches(msgContentBodyEtcSubBinary);
             if (!contentMatches) {
                 Description desc = new StringDescription();
@@ -152,7 +153,7 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ProtonBuffe
     }
 
     @Override
-    protected void describeMismatchSafely(ProtonBuffer item, Description mismatchDescription) {
+    protected void describeMismatchSafely(ByteBuf item, Description mismatchDescription) {
         mismatchDescription.appendText("\nActual encoded form of the full Transfer frame payload: ").appendValue(item);
 
         // Payload Length

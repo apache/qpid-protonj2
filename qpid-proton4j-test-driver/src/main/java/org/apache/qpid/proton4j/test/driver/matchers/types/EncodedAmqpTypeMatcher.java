@@ -18,7 +18,6 @@
  */
 package org.apache.qpid.proton4j.test.driver.matchers.types;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.Codec;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
@@ -27,7 +26,9 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ProtonBuffer> {
+import io.netty.buffer.ByteBuf;
+
+public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ByteBuf> {
 
     private final Symbol descriptorSymbol;
     private final UnsignedLong descriptorCode;
@@ -52,8 +53,8 @@ public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ProtonBuffe
     }
 
     @Override
-    protected boolean matchesSafely(ProtonBuffer receivedBinary) {
-        int length = receivedBinary.getReadableBytes();
+    protected boolean matchesSafely(ByteBuf receivedBinary) {
+        int length = receivedBinary.readableBytes();
         Codec data = Codec.Factory.create();
         long decoded = data.decode(receivedBinary);
         decodedDescribedType = data.getDescribedType();
@@ -85,7 +86,7 @@ public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ProtonBuffe
     }
 
     @Override
-    protected void describeMismatchSafely(ProtonBuffer item, Description mismatchDescription) {
+    protected void describeMismatchSafely(ByteBuf item, Description mismatchDescription) {
         mismatchDescription.appendText("\nActual encoded form: ").appendValue(item);
 
         if (decodedDescribedType != null) {

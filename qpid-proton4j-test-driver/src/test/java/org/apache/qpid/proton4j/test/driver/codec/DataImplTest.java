@@ -22,8 +22,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.test.driver.codec.messaging.Target;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.DescribedType;
@@ -36,6 +34,9 @@ import org.apache.qpid.proton4j.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.test.driver.codec.transport.Role;
 import org.apache.qpid.proton4j.test.driver.codec.transport.SenderSettleMode;
 import org.junit.Test;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * Test some basic operations of the Data type codec
@@ -50,8 +51,8 @@ public class DataImplTest {
         open.setContainerId("test");
         open.setHostname("localhost");
 
-        ProtonBuffer encoded = encodeProtonPerformative(open);
-        int expectedRead = encoded.getReadableBytes();
+        ByteBuf encoded = encodeProtonPerformative(open);
+        int expectedRead = encoded.readableBytes();
 
         Codec codec = Codec.Factory.create();
 
@@ -74,7 +75,7 @@ public class DataImplTest {
         Codec codec = Codec.Factory.create();
 
         codec.putDescribedType(open);
-        ProtonBuffer encoded = ProtonByteBufferAllocator.DEFAULT.allocate((int) codec.encodedSize());
+        ByteBuf encoded = Unpooled.buffer((int) codec.encodedSize());
         codec.encode(encoded);
 
         DescribedType decoded = decodeProtonPerformative(encoded);
@@ -92,8 +93,8 @@ public class DataImplTest {
         begin.setHandleMax(UnsignedInteger.valueOf(512));
         begin.setRemoteChannel(UnsignedShort.valueOf(1));
 
-        ProtonBuffer encoded = encodeProtonPerformative(begin);
-        int expectedRead = encoded.getReadableBytes();
+        ByteBuf encoded = encodeProtonPerformative(begin);
+        int expectedRead = encoded.readableBytes();
 
         Codec codec = Codec.Factory.create();
 
@@ -119,7 +120,7 @@ public class DataImplTest {
         Codec codec = Codec.Factory.create();
 
         codec.putDescribedType(begin);
-        ProtonBuffer encoded = ProtonByteBufferAllocator.DEFAULT.allocate((int) codec.encodedSize());
+        ByteBuf encoded = Unpooled.buffer((int) codec.encodedSize());
         codec.encode(encoded);
 
         DescribedType decoded = decodeProtonPerformative(encoded);
@@ -142,8 +143,8 @@ public class DataImplTest {
         attach.setSource(new Source());
         attach.setTarget(new Target());
 
-        ProtonBuffer encoded = encodeProtonPerformative(attach);
-        int expectedRead = encoded.getReadableBytes();
+        ByteBuf encoded = encodeProtonPerformative(attach);
+        int expectedRead = encoded.readableBytes();
 
         Codec codec = Codec.Factory.create();
 
@@ -171,7 +172,7 @@ public class DataImplTest {
         Codec codec = Codec.Factory.create();
 
         codec.putDescribedType(attach);
-        ProtonBuffer encoded = ProtonByteBufferAllocator.DEFAULT.allocate((int) codec.encodedSize());
+        ByteBuf encoded = Unpooled.buffer((int) codec.encodedSize());
         codec.encode(encoded);
 
         DescribedType decoded = decodeProtonPerformative(encoded);
@@ -183,7 +184,7 @@ public class DataImplTest {
         assertEquals(performative.getName(), "test");
     }
 
-    private DescribedType decodeProtonPerformative(ProtonBuffer buffer) throws IOException {
+    private DescribedType decodeProtonPerformative(ByteBuf buffer) throws IOException {
         DescribedType performative = null;
 
         try {
@@ -207,8 +208,8 @@ public class DataImplTest {
         return performative;
     }
 
-    private ProtonBuffer encodeProtonPerformative(DescribedType performative) {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+    private ByteBuf encodeProtonPerformative(DescribedType performative) {
+        ByteBuf buffer = Unpooled.buffer();
 
         if (performative != null) {
             try {

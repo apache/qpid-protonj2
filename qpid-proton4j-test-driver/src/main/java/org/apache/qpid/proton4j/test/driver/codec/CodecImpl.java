@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Decimal128;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Decimal32;
@@ -32,6 +31,8 @@ import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedByte;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
+
+import io.netty.buffer.ByteBuf;
 
 public class CodecImpl implements Codec {
 
@@ -123,12 +124,12 @@ public class CodecImpl implements Codec {
     }
 
     @Override
-    public long encode(ProtonBuffer buffer) {
+    public long encode(ByteBuf buffer) {
         Element<?> elt = first;
         int size = 0;
         while (elt != null) {
             final int eltSize = elt.size();
-            if (eltSize <= buffer.getMaxWritableBytes()) {
+            if (eltSize <= buffer.maxWritableBytes()) {
                 size += elt.encode(buffer);
             } else {
                 size += eltSize;
@@ -139,7 +140,7 @@ public class CodecImpl implements Codec {
     }
 
     @Override
-    public long decode(ProtonBuffer buffer) {
+    public long decode(ByteBuf buffer) {
         return TypeDecoder.decode(buffer, this);
     }
 

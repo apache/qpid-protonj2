@@ -19,11 +19,12 @@ package org.apache.qpid.proton4j.test.driver.codec.transport;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedLong;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.UnsignedShort;
+
+import io.netty.buffer.ByteBuf;
 
 public class Begin extends PerformativeDescribedType {
 
@@ -141,7 +142,7 @@ public class Begin extends PerformativeDescribedType {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
+    public <E> void invoke(PerformativeHandler<E> handler, ByteBuf payload, int channel, E context) {
         handler.handleBegin(this, payload, channel, context);
     }
 

@@ -16,8 +16,9 @@
  */
 package org.apache.qpid.proton4j.test.driver.codec;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.codec.primitives.Binary;
+
+import io.netty.buffer.ByteBuf;
 
 class BinaryElement extends AtomicElement<Binary> {
 
@@ -67,9 +68,9 @@ class BinaryElement extends AtomicElement<Binary> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         int size = size();
-        if (buffer.getMaxWritableBytes() < size) {
+        if (buffer.maxWritableBytes() < size) {
             return 0;
         }
 

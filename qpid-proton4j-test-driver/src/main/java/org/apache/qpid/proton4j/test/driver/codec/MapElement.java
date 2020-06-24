@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import io.netty.buffer.ByteBuf;
 
 class MapElement extends AbstractElement<Map<Object, Object>> {
 
@@ -100,7 +100,7 @@ class MapElement extends AbstractElement<Map<Object, Object>> {
     }
 
     @Override
-    public int encode(ProtonBuffer buffer) {
+    public int encode(ByteBuf buffer) {
         int encodedSize = size();
 
         int count = 0;
@@ -112,7 +112,7 @@ class MapElement extends AbstractElement<Map<Object, Object>> {
             elt = elt.next();
         }
 
-        if (encodedSize > buffer.getMaxWritableBytes()) {
+        if (encodedSize > buffer.maxWritableBytes()) {
             return 0;
         } else {
             if (isElementOfArray()) {

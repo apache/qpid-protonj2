@@ -20,7 +20,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import java.util.Map;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.test.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.test.driver.SessionTracker;
 import org.apache.qpid.proton4j.test.driver.actions.BeginInjectAction;
@@ -33,6 +32,8 @@ import org.apache.qpid.proton4j.test.driver.codec.transport.Begin;
 import org.apache.qpid.proton4j.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.test.driver.matchers.transport.BeginMatcher;
 import org.hamcrest.Matcher;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * Scripted expectation for the AMQP Begin performative
@@ -72,7 +73,7 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleBegin(Begin begin, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+    public void handleBegin(Begin begin, ByteBuf payload, int channel, AMQPTestDriver context) {
         super.handleBegin(begin, payload, channel, context);
 
         SessionTracker session = context.getSessions().handleBegin(begin, channel);
