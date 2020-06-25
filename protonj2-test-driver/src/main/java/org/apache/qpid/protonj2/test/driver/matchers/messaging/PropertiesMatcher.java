@@ -18,9 +18,15 @@
  */
 package org.apache.qpid.protonj2.test.driver.matchers.messaging;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
+
+import java.util.Date;
 import java.util.HashMap;
 
+import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Matcher;
 
@@ -56,6 +62,110 @@ public class PropertiesMatcher extends AbstractListSectionMatcher {
     public PropertiesMatcher(boolean expectTrailingBytes) {
         super(DESCRIPTOR_CODE, DESCRIPTOR_SYMBOL, new HashMap<Object, Matcher<?>>(), expectTrailingBytes);
     }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public PropertiesMatcher withMessageId(Object messageId) {
+        return withMessageId(equalTo(messageId));
+    }
+
+    public PropertiesMatcher withUserId(byte[] userId) {
+        return withUserId(equalTo(new Binary(userId)));
+    }
+
+    public PropertiesMatcher withUserId(Binary userId) {
+        return withUserId(equalTo(userId));
+    }
+
+    public PropertiesMatcher withTo(String to) {
+        return withTo(equalTo(to));
+    }
+
+    public PropertiesMatcher withSubject(String subject) {
+        return withSubject(equalTo(subject));
+    }
+
+    public PropertiesMatcher withReplyTo(String replyTo) {
+        return withReplyTo(equalTo(replyTo));
+    }
+
+    public PropertiesMatcher withCorrelationId(Object correlationId) {
+        return withCorrelationId(equalTo(correlationId));
+    }
+
+    public PropertiesMatcher withContentType(String contentType) {
+        return withContentType(equalTo(Symbol.valueOf(contentType)));
+    }
+
+    public PropertiesMatcher withContentType(Symbol contentType) {
+        return withContentType(equalTo(contentType));
+    }
+
+    public PropertiesMatcher withContentEncoding(String contentEncoding) {
+        return withContentEncoding(equalTo(Symbol.valueOf(contentEncoding)));
+    }
+
+    public PropertiesMatcher withContentEncoding(Symbol contentEncoding) {
+        return withContentEncoding(equalTo(contentEncoding));
+    }
+
+    public PropertiesMatcher withAbsoluteExpiryTime(int absoluteExpiryTime) {
+        return withAbsoluteExpiryTime(equalTo(new Date(absoluteExpiryTime)));
+    }
+
+    public PropertiesMatcher withAbsoluteExpiryTime(long absoluteExpiryTime) {
+        return withAbsoluteExpiryTime(equalTo(new Date(absoluteExpiryTime)));
+    }
+
+    public PropertiesMatcher withAbsoluteExpiryTime(Long absoluteExpiryTime) {
+        if (absoluteExpiryTime == null) {
+            return withAbsoluteExpiryTime(nullValue());
+        } else {
+            return withAbsoluteExpiryTime(equalTo(new Date(absoluteExpiryTime)));
+        }
+    }
+
+    public PropertiesMatcher withCreationTime(int creationTime) {
+        return withCreationTime(equalTo(new Date(creationTime)));
+    }
+
+    public PropertiesMatcher withCreationTime(long creationTime) {
+        return withCreationTime(equalTo(new Date(creationTime)));
+    }
+
+    public PropertiesMatcher withCreationTime(Long creationTime) {
+        if (creationTime == null) {
+            return withCreationTime(nullValue());
+        } else {
+            return withCreationTime(equalTo(new Date(creationTime)));
+        }
+    }
+
+    public PropertiesMatcher withGroupId(String groupId) {
+        return withGroupId(equalTo(groupId));
+    }
+
+    public PropertiesMatcher withGroupSequence(int groupSequence) {
+        return withGroupSequence(equalTo(UnsignedInteger.valueOf(groupSequence)));
+    }
+
+    public PropertiesMatcher withGroupSequence(long groupSequence) {
+        return withGroupSequence(equalTo(UnsignedInteger.valueOf(groupSequence)));
+    }
+
+    public PropertiesMatcher withGroupSequence(Long groupSequence) {
+        if (groupSequence == null) {
+            return withGroupSequence(nullValue());
+        } else {
+            return withGroupSequence(equalTo(UnsignedInteger.valueOf(groupSequence.longValue())));
+        }
+    }
+
+    public PropertiesMatcher withReplyToGroupId(String replyToGroupId) {
+        return withReplyToGroupId(equalTo(replyToGroupId));
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public PropertiesMatcher withMessageId(Matcher<?> m) {
         getMatchers().put(Field.MESSAGE_ID, m);

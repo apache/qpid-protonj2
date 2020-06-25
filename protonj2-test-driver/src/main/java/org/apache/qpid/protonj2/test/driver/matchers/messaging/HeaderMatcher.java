@@ -18,9 +18,13 @@
  */
 package org.apache.qpid.protonj2.test.driver.matchers.messaging;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
 import java.util.HashMap;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedByte;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Matcher;
 
@@ -48,6 +52,58 @@ public class HeaderMatcher extends AbstractListSectionMatcher {
     public HeaderMatcher(boolean expectTrailingBytes) {
         super(DESCRIPTOR_CODE, DESCRIPTOR_SYMBOL, new HashMap<Object, Matcher<?>>(), expectTrailingBytes);
     }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public HeaderMatcher withDurable(boolean durable) {
+        return withDurable(equalTo(durable));
+    }
+
+    public HeaderMatcher withDurable(Boolean durable) {
+        return withDurable(equalTo(durable));
+    }
+
+    public HeaderMatcher withPriority(byte priority) {
+        return withPriority(equalTo(UnsignedByte.valueOf(priority)));
+    }
+
+    public HeaderMatcher withPriority(UnsignedByte priority) {
+        return withPriority(equalTo(priority));
+    }
+
+    public HeaderMatcher withTtl(int timeToLive) {
+        return withTtl(equalTo(UnsignedInteger.valueOf(timeToLive)));
+    }
+
+    public HeaderMatcher withTtl(long timeToLive) {
+        return withTtl(equalTo(UnsignedInteger.valueOf(timeToLive)));
+    }
+
+    public HeaderMatcher withTtl(UnsignedInteger timeToLive) {
+        return withTtl(equalTo(timeToLive));
+    }
+
+    public HeaderMatcher withFirstAcquirer(boolean durable) {
+        return withFirstAcquirer(equalTo(durable));
+    }
+
+    public HeaderMatcher withFirstAcquirer(Boolean durable) {
+        return withFirstAcquirer(equalTo(durable));
+    }
+
+    public HeaderMatcher withDeliveryCount(int deliveryCount) {
+        return withDeliveryCount(equalTo(UnsignedInteger.valueOf(deliveryCount)));
+    }
+
+    public HeaderMatcher withDeliveryCount(long deliveryCount) {
+        return withDeliveryCount(equalTo(UnsignedInteger.valueOf(deliveryCount)));
+    }
+
+    public HeaderMatcher withDeliveryCount(UnsignedInteger deliveryCount) {
+        return withDeliveryCount(equalTo(deliveryCount));
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public HeaderMatcher withDurable(Matcher<?> m) {
         getMatchers().put(Field.DURABLE, m);
