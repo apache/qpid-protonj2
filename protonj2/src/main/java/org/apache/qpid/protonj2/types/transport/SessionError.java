@@ -20,12 +20,24 @@ import org.apache.qpid.protonj2.types.Symbol;
 
 public interface SessionError {
 
-    final static Symbol WINDOW_VIOLATION = Symbol.valueOf("amqp:session:window-violation");
+    /**
+     * The peer violated incoming window for the session.
+     */
+    Symbol WINDOW_VIOLATION = Symbol.valueOf("amqp:session:window-violation");
 
-    final static Symbol ERRANT_LINK = Symbol.valueOf("amqp:session:errant-link");
+    /**
+     * Input was received for a link that was detached with an error.
+     */
+    Symbol ERRANT_LINK = Symbol.valueOf("amqp:session:errant-link");
 
-    final static Symbol HANDLE_IN_USE = Symbol.valueOf("amqp:session:handle-in-use");
+    /**
+     * An attach was received using a handle that is already in use for an attached link.
+     */
+    Symbol HANDLE_IN_USE = Symbol.valueOf("amqp:session:handle-in-use");
 
-    final static Symbol UNATTACHED_HANDLE = Symbol.valueOf("amqp:session:unattached-handle");
+    /**
+     * A frame (other than attach) was received referencing a handle which is not currently in use of an attached link.
+     */
+    Symbol UNATTACHED_HANDLE = Symbol.valueOf("amqp:session:unattached-handle");
 
 }

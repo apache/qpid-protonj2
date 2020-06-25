@@ -20,10 +20,38 @@ import org.apache.qpid.protonj2.types.Symbol;
 
 public interface ConnectionError {
 
-    final static Symbol CONNECTION_FORCED = Symbol.valueOf("amqp:connection:forced");
+    /**
+     * An operator intervened to close the connection for some reason. The client could retry at some later date.
+     */
+    Symbol CONNECTION_FORCED = Symbol.valueOf("amqp:connection:forced");
 
-    final static Symbol FRAMING_ERROR = Symbol.valueOf("amqp:connection:framing-error");
+    /**
+     * A valid frame header cannot be formed from the incoming byte stream.
+     */
+    Symbol FRAMING_ERROR = Symbol.valueOf("amqp:connection:framing-error");
 
-    final static Symbol REDIRECT = Symbol.valueOf("amqp:connection:redirect");
+    /**
+     * The container is no longer available on the current connection. The peer SHOULD
+     * attempt reconnection to the container using the details provided in the info map.
+     * <br>
+     * <ul>
+     *   <li>hostname</li>
+     *     <ul>
+     *       <li>the hostname of the container hosting the terminus. This is the value that SHOULD be
+     *           supplied in the hostname field of the open frame, and during SASL and TLS negotiation
+     *           (if used).
+     *       </li>
+     *     </ul>
+     *   <li>network-host</li>
+     *     <ul>
+     *       <li>the DNS hostname or IP address of the machine hosting the container.</li>
+     *     </ul>
+     *   <li>port</li>
+     *     <ul>
+     *       <li>the port number on the machine hosting the container.</li>
+     *     </ul>
+     * </ul>
+     */
+    Symbol REDIRECT = Symbol.valueOf("amqp:connection:redirect");
 
 }

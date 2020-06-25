@@ -20,14 +20,52 @@ import org.apache.qpid.protonj2.types.Symbol;
 
 public interface LinkError {
 
-    final static Symbol DETACH_FORCED = Symbol.valueOf("amqp:link:detach-forced");
+    /**
+     * An operator intervened to detach for some reason.
+     */
+    Symbol DETACH_FORCED = Symbol.valueOf("amqp:link:detach-forced");
 
-    final static Symbol TRANSFER_LIMIT_EXCEEDED = Symbol.valueOf("amqp:link:transfer-limit-exceeded");
+    /**
+     * The peer sent more message transfers than currently allowed on the link.
+     */
+    Symbol TRANSFER_LIMIT_EXCEEDED = Symbol.valueOf("amqp:link:transfer-limit-exceeded");
 
-    final static Symbol MESSAGE_SIZE_EXCEEDED = Symbol.valueOf("amqp:link:message-size-exceeded");
+    /**
+     * The peer sent a larger message than is supported on the link.
+     */
+    Symbol MESSAGE_SIZE_EXCEEDED = Symbol.valueOf("amqp:link:message-size-exceeded");
 
-    final static Symbol REDIRECT = Symbol.valueOf("amqp:link:redirect");
+    /**
+     * The address provided cannot be resolved to a terminus at the current container. The info map
+     * MAY contain the following information to allow the client to locate the attach to the terminus.
+     * <br>
+     * <ul>
+     *   <li>hostname</li>
+     *     <ul>
+     *       <li>the hostname of the container hosting the terminus. This is the value that SHOULD be
+     *           supplied in the hostname field of the open frame, and during SASL and TLS negotiation
+     *           (if used).
+     *       </li>
+     *     </ul>
+     *   <li>network-host</li>
+     *     <ul>
+     *       <li>the DNS hostname or IP address of the machine hosting the container.</li>
+     *     </ul>
+     *   <li>port</li>
+     *     <ul>
+     *       <li>the port number on the machine hosting the container.</li>
+     *     </ul>
+     *   <li>address</li>
+     *     <ul>
+     *       <li>the address of the terminus at the container.</li>
+     *     </ul>
+     * </ul>
+     */
+    Symbol REDIRECT = Symbol.valueOf("amqp:link:redirect");
 
-    final static Symbol STOLEN = Symbol.valueOf("amqp:link:stolen");
+    /**
+     * The link has been attached elsewhere, causing the existing attachment to be forcibly closed.
+     */
+    Symbol STOLEN = Symbol.valueOf("amqp:link:stolen");
 
 }
