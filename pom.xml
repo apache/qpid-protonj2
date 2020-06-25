@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <description>proton4j is a library for speaking AMQP 1.0.</description>
+
   <parent>
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
@@ -24,11 +24,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.apache.qpid</groupId>
-  <artifactId>qpid-proton4j-parent</artifactId>
+  <artifactId>protonj2-parent</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>Qpid Proton4J Parent</name>
+  <name>Qpid protonj2 Parent</name>
+  <description>Qpid protonj2 is a library for speaking AMQP 1.0.</description>
 
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
@@ -59,9 +60,9 @@
 
   <url>http://qpid.apache.org/proton</url>
   <scm>
-    <connection>scm:git:http://git-wip-us.apache.org/repos/asf/qpid-proton4j.git</connection>
-    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/qpid-proton4j.git</developerConnection>
-    <url>https://git-wip-us.apache.org/repos/asf?p=qpid-proton4j.git</url>
+    <connection>scm:git:http://git-wip-us.apache.org/repos/asf/qpid-protonj2.git</connection>
+    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/qpid-protonj2.git</developerConnection>
+    <url>https://git-wip-us.apache.org/repos/asf?p=qpid-protonj2.git</url>
     <tag>HEAD</tag>
   </scm>
   <issueManagement>
@@ -69,13 +70,14 @@
     <system>JIRA</system>
   </issueManagement>
   <ciManagement>
-    <url>https://builds.apache.org/view/M-R/view/Qpid/job/Qpid-proton4j/</url>
+    <url>https://builds.apache.org/view/M-R/view/Qpid/job/Qpid-protonj2/</url>
   </ciManagement>
 
   <modules>
-    <module>qpid-proton4j-engine</module>
-    <module>qpid-proton4j-performance-tests</module>
-    <module>qpid-proton4j-test-driver</module>
+    <module>protonj2</module>
+    <module>protonj2-performance-tests</module>
+    <module>protonj2-test-driver</module>
+    <module>apache-qpid-protonj2</module>
   </modules>
 
   <dependencyManagement>
@@ -83,22 +85,12 @@
       <!-- Internal module dependencies -->
       <dependency>
         <groupId>org.apache.qpid</groupId>
-        <artifactId>qpid-proton4j-common</artifactId>
+        <artifactId>protonj2</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.qpid</groupId>
-        <artifactId>qpid-proton4j-buffer</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.qpid</groupId>
-        <artifactId>qpid-proton4j-transport</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.qpid</groupId>
-        <artifactId>qpid-proton4j-engine</artifactId>
+        <artifactId>protonj2-test-driver</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -151,7 +143,7 @@
       </dependency>
       <dependency>
         <groupId>org.apache.qpid</groupId>
-        <artifactId>qpid-proton4j-test-driver</artifactId>
+        <artifactId>protonj2-test-driver</artifactId>
         <version>${project.version}</version>
         <scope>test</scope>
       </dependency>
@@ -200,7 +192,7 @@
         <extensions>true</extensions>
         <configuration>
           <instructions>
-            <Export-Package>${project.groupId}.proton4j.*</Export-Package>
+            <Export-Package>${project.groupId}.protonj2.*</Export-Package>
           </instructions>
         </configuration>
       </plugin>
