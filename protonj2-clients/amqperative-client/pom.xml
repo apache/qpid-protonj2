@@ -33,7 +33,7 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.qpid</groupId>
-      <artifactId>qpid-proton4j-engine</artifactId>
+      <artifactId>protonj2</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -71,7 +71,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.qpid</groupId>
-      <artifactId>qpid-proton4j-test-driver</artifactId>
+      <artifactId>protonj2-test-driver</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

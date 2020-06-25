@@ -43,7 +43,7 @@
   </scm>
 
   <properties>
-    <proton4j-version>0.1.0-SNAPSHOT</proton4j-version>
+    <protonj2-version>0.1.0-SNAPSHOT</protonj2-version>
     <slf4j-version>1.7.30</slf4j-version>
     <log4j-slf4j-version>2.13.3</log4j-slf4j-version>
     <netty-version>4.1.50.Final</netty-version>
@@ -114,8 +114,8 @@
       </dependency>
       <dependency>
         <groupId>org.apache.qpid</groupId>
-        <artifactId>qpid-proton4j-engine</artifactId>
-        <version>${proton4j-version}</version>
+        <artifactId>protonj2</artifactId>
+        <version>${protonj2-version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -197,8 +197,8 @@
       </dependency>
       <dependency>
         <groupId>org.apache.qpid</groupId>
-        <artifactId>qpid-proton4j-test-driver</artifactId>
-        <version>${proton4j-version}</version>
+        <artifactId>protonj2-test-driver</artifactId>
+        <version>${protonj2-version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
