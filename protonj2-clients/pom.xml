@@ -17,30 +17,35 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
+  <parent>
+    <groupId>org.apache</groupId>
+    <artifactId>apache</artifactId>
+    <version>23</version>
+  </parent>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.messaginghub</groupId>
-  <artifactId>amqperative-parent</artifactId>
+
+  <groupId>org.apache.qpid</groupId>
+  <artifactId>protonj2-client-parent</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <inceptionYear>2017</inceptionYear>
 
-  <name>AMQPerative</name>
-  <description>AMQP Imperative API Project</description>
-  <url>https://github.com/messaginghub/amqperative</url>
+  <name>Qpid protonj2 Imperative API Client Parent</name>
+  <description>protonj2 AMQP Imperative API Client Project</description>
 
-  <licenses>
-    <license>
-      <name>The Apache License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
-  </licenses>
-
+  <url>http://qpid.apache.org/proton</url>
   <scm>
-    <url>https://github.com/messaginghub/amqperative.git</url>
-    <connection>scm:git:git://github.com/messaginghub/amqperative.git</connection>
-    <developerConnection>scm:git:git@github.com:messaginghub/amqperative.git</developerConnection>
+    <connection>scm:git:http://git-wip-us.apache.org/repos/asf/qpid-protonj2-client.git</connection>
+    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/qpid-protonj2-client.git</developerConnection>
+    <url>https://git-wip-us.apache.org/repos/asf?p=qpid-protonj2-client.git</url>
     <tag>HEAD</tag>
   </scm>
+  <issueManagement>
+    <url>https://issues.apache.org/jira/browse/PROTON</url>
+    <system>JIRA</system>
+  </issueManagement>
+  <ciManagement>
+    <url>https://builds.apache.org/view/M-R/view/Qpid/job/Qpid-protonj2-client/</url>
+  </ciManagement>
 
   <properties>
     <protonj2-version>0.1.0-SNAPSHOT</protonj2-version>
@@ -59,19 +64,11 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+    <!-- See also maven.compiler.release in the java9on profile -->
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
-    <apache-rat-version>0.13</apache-rat-version>
-    <maven-gpg-plugin-version>1.6</maven-gpg-plugin-version>
-    <maven-surefire-plugin-version>2.22.2</maven-surefire-plugin-version>
-    <maven-release-plugin-version>2.5.3</maven-release-plugin-version>
-    <nexus-staging-maven-plugin-version>1.6.8</nexus-staging-maven-plugin-version>
-    <maven-bundle-plugin-version>4.2.1</maven-bundle-plugin-version>
-    <maven-compiler-plugin-version>3.8.1</maven-compiler-plugin-version>
-    <maven-source-plugin-version>3.2.1</maven-source-plugin-version>
-    <maven-javadoc-plugin-version>3.2.0</maven-javadoc-plugin-version>
-    <maven-deploy-plugin-version>2.8.2</maven-deploy-plugin-version>
+    <surefire.version>2.22.2</surefire.version>
     <findbugs-maven-plugin-version>3.0.2</findbugs-maven-plugin-version>
     <jacoco-plugin-version>0.8.5</jacoco-plugin-version>
 
@@ -88,28 +85,17 @@
   </properties>
 
   <modules>
-    <module>amqperative-client</module>
-    <module>amqperative-interop-tests</module>
-    <module>amqperative-examples</module>
-    <module>amqperative-docs</module>
+    <module>protonj2-client</module>
+    <module>protonj2-client-interop-tests</module>
+    <module>protonj2-client-examples</module>
+    <module>protonj2-client-docs</module>
   </modules>
-
-  <distributionManagement>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.messaginghub</groupId>
-        <artifactId>amqperative-client</artifactId>
+        <groupId>org.apache.qpid</groupId>
+        <artifactId>protonj2-client</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -210,26 +196,14 @@
       <plugins>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>${maven-deploy-plugin-version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>maven-bundle-plugin</artifactId>
-          <version>${maven-bundle-plugin-version}</version>
-          <extensions>true</extensions>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>${maven-surefire-plugin-version}</version>
           <configuration>
             <runOrder>${surefire.runOrder}</runOrder>
             <redirectTestOutputToFile>${maven.test.redirectTestOutputToFile}</redirectTestOutputToFile>
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>
             <systemPropertyVariables>
-              <java.awt.headless>true</java.awt.headless>
+                <java.awt.headless>true</java.awt.headless>
             </systemPropertyVariables>
             <failIfNoTests>false</failIfNoTests>
             <environmentVariables>
@@ -254,76 +228,32 @@
     </pluginManagement>
     <plugins>
       <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-        <version>${apache-rat-version}</version>
-        <configuration>
-          <excludes>
-            <exclude>appveyor.yml</exclude>
-            <exclude>.travis.yml</exclude>
-            <exclude>**/*.md</exclude>
-            <exclude>**/*.txt</exclude>
-            <exclude>etc/org.eclipse.*</exclude>
-            <exclude>**/target/</exclude>
-            <exclude>**/data/</exclude>
-            <exclude>**/*.lock</exclude>
-            <exclude>**/META-INF/services/*</exclude>
-            <exclude>**/*.iml</exclude>
-            <exclude>**/*.keystore</exclude>
-            <exclude>**/*.truststore</exclude>
-            <exclude>**/*.crt</exclude>
-            <exclude>**/*.csr</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>${maven-compiler-plugin-version}</version>
         <configuration>
-          <source>${maven.compiler.source}</source>
-          <target>${maven.compiler.source}</target>
+          <optimize>true</optimize>
+          <showDeprecation>true</showDeprecation>
+          <showWarnings>true</showWarnings>
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-        <version>${maven-source-plugin-version}</version>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>${maven-javadoc-plugin-version}</version>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
         <configuration>
-          <source>${maven.compiler.source}</source>
-        </configuration>
-        <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>${maven-release-plugin-version}</version>
-        <configuration>
-          <autoVersionSubmodules>true</autoVersionSubmodules>
-          <useReleaseProfile>false</useReleaseProfile>
-          <releaseProfiles>release</releaseProfiles>
-          <tagNameFormat>@{project.version}</tagNameFormat>
-          <goals>deploy</goals>
+          <excludes combine.children="append">
+            <exclude>appveyor.yml</exclude>
+            <exclude>.travis.yml</exclude>
+            <exclude>.mailmap</exclude>
+            <exclude>**/*.md</exclude>
+            <exclude>**/*.pkcs12</exclude>
+            <exclude>**/*.p12</exclude>
+            <exclude>**/*.pem</exclude>
+            <exclude>**/*.pem.txt</exclude>
+            <exclude>**/*.crt</exclude>
+            <exclude>**/*.csr</exclude>
+            <exclude>**/*.keystore</exclude>
+            <exclude>**/*.truststore</exclude>
+          </excludes>
         </configuration>
       </plugin>
       <plugin>
@@ -354,32 +284,54 @@
   </reporting>
 
   <profiles>
+    <!-- Override the apache-release profile from the parent. Skip creating
+         a source release here, we have a release module that does it.  -->
     <profile>
-      <id>release</id>
-      <activation>
-        <property>
-          <name>release</name>
-          <value>true</value>
-        </property>
-      </activation>
+      <id>apache-release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>source-release-assembly</id>
+                <configuration>
+                  <skipAssembly>true</skipAssembly>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>sources</id>
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>${maven-gpg-plugin-version}</version>
+            <artifactId>maven-source-plugin</artifactId>
             <executions>
               <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
+                <id>attach-sources</id>
                 <goals>
-                  <goal>sign</goal>
+                  <goal>jar</goal>
                 </goals>
               </execution>
             </executions>
           </plugin>
         </plugins>
       </build>
+    </profile>
+    <profile>
+      <id>java9on</id>
+      <activation>
+        <jdk>[9,)</jdk>
+      </activation>
+      <properties>
+        <maven.compiler.release>8</maven.compiler.release>
+      </properties>
     </profile>
   </profiles>
 

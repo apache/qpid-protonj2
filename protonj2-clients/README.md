@@ -1,18 +1,18 @@
-# AMQPerative
+# Qpid protonj2 Imperative API Client
 
 Imperative API for AMQP messaging applications
 
 Below are some quick pointers you might find useful.
 
-## Using the AMQPerative library
+## Using the client library
 
-To use the AMQPerative library in your projects you can include the maven
+To use the imperative API client library in your projects you can include the maven
 dependency in your project pom file:
 
     <dependency>
-      <groupId>org.messaginghub</groupId>
-      <artifactId>amqperative-client</artifactId>
-      <version>${amqperative-version}</version>
+      <groupId>org.apache.qpid</groupId>
+      <artifactId>protonj2-client</artifactId>
+      <version>${protonj2-client-version}</version>
     </dependency>
 
 ## Building the code
@@ -41,10 +41,10 @@ Execute the tests and produce code coverage report:
 
 First build and install all the modules as detailed above (if running against
 a source checkout/release, rather than against released binaries) and then
-consult the README in the AMQPerative-examples module itself.
+consult the README in the protonj2-client-examples module itself.
 
 ## Documentation
 
-There is some basic documentation in the amqperative-docs module.
+There is some basic documentation in the protonj2-client-docs module.
 
 
