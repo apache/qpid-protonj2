@@ -18,11 +18,6 @@ package org.apache.qpid.protonj2.buffer;
 
 import java.nio.ByteBuffer;
 
-import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonNettyByteBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonNioByteBuffer;
-
 import io.netty.buffer.Unpooled;
 
 /**

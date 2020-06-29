@@ -20,10 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 
-import org.apache.qpid.protonj2.types.transport.AmqpError;
-import org.apache.qpid.protonj2.types.transport.Detach;
-import org.apache.qpid.protonj2.types.transport.ErrorCondition;
-import org.apache.qpid.protonj2.types.transport.Performative;
 import org.junit.Test;
 
 public class DetachTest {

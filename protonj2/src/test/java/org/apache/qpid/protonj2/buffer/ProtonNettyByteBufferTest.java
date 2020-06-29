@@ -25,9 +25,6 @@ import static org.junit.Assume.assumeTrue;
 
 import java.nio.ByteBuffer;
 
-import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonNettyByteBuffer;
 import org.junit.Test;
 
 import io.netty.buffer.ByteBuf;

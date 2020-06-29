@@ -28,7 +28,6 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.protonj2.types.Symbol;
 import org.junit.Test;
 
 public class SymbolTest {

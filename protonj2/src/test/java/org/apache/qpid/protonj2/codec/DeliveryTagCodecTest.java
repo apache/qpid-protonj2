@@ -23,8 +23,6 @@ import static org.junit.Assert.fail;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.protonj2.codec.DecodeException;
-import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.junit.Test;
 

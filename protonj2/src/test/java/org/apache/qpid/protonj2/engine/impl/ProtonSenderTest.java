@@ -47,8 +47,6 @@ import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
-import org.apache.qpid.protonj2.engine.impl.ProtonDeliveryTagGenerator;
-import org.apache.qpid.protonj2.engine.impl.ProtonSender;
 import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.AcceptedMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.ModifiedMatcher;
@@ -79,12 +77,12 @@ import org.junit.Test;
  */
 public class ProtonSenderTest extends ProtonEngineTestSupport {
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderEmitsOpenAndCloseEvents() throws Exception {
         doTestSenderEmitsEvents(false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderEmitsOpenAndDetachEvents() throws Exception {
         doTestSenderEmitsEvents(true);
     }
@@ -152,7 +150,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderRoutesDetachEventToCloseHandlerIfNonSset() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -267,17 +265,17 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderOpenWithNoSenderOrReceiverSettleModes() throws Exception {
         doTestOpenSenderWithConfiguredSenderAndReceiverSettlementModes(null, null);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderOpenWithSettledAndFirst() throws Exception {
         doTestOpenSenderWithConfiguredSenderAndReceiverSettlementModes(SenderSettleMode.SETTLED, ReceiverSettleMode.FIRST);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderOpenWithUnsettledAndSecond() throws Exception {
         doTestOpenSenderWithConfiguredSenderAndReceiverSettlementModes(SenderSettleMode.UNSETTLED, ReceiverSettleMode.SECOND);
     }
@@ -328,7 +326,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderOpenAndCloseAreIdempotent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -410,7 +408,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testEngineEmitsAttachAfterLocalSenderOpened() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -466,7 +464,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderFireOpenedEventAfterRemoteAttachArrives() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -503,7 +501,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderFireOpenedEventAfterRemoteAttachArrivesWithNullTarget() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -543,7 +541,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testOpenAndCloseMultipleSenders() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -577,7 +575,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderFireClosedEventAfterRemoteDetachArrives() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -620,12 +618,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderFireClosedEventAfterRemoteDetachArrivesBeforeLocalClose() throws Exception {
         doTestSenderFireEventAfterRemoteDetachArrivesBeforeLocalClose(true);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderFireDetachEventAfterRemoteDetachArrivesBeforeLocalClose() throws Exception {
         doTestSenderFireEventAfterRemoteDetachArrivesBeforeLocalClose(false);
     }
@@ -682,22 +680,22 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testRemotelyCloseSenderAndOpenNewSenderImmediatelyAfterWithNewLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(true, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testRemotelyDetachSenderAndOpenNewSenderImmediatelyAfterWithNewLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(false, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testRemotelyCloseSenderAndOpenNewSenderImmediatelyAfterWithSameLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(true, true);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testRemotelyDetachSenderAndOpenNewSenderImmediatelyAfterWithSameLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(false, true);
     }
@@ -787,7 +785,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testConnectionSignalsRemoteSenderOpen() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -831,7 +829,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCannotOpenSenderAfterSessionClosed() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -867,7 +865,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCannotOpenSenderAfterSessionRemotelyClosed() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -900,7 +898,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testGetCurrentDeliveryFromSender() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -940,7 +938,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderGetsCreditOnIncomingFlow() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -980,7 +978,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSendSmallPayloadWhenCreditAvailable() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1032,12 +1030,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderSignalsDeliveryUpdatedOnSettledThenSettleFromLinkAPI() throws Exception {
         doTestSenderSignalsDeliveryUpdatedOnSettled(true);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderSignalsDeliveryUpdatedOnSettledThenSettleDelivery() throws Exception {
         doTestSenderSignalsDeliveryUpdatedOnSettled(false);
     }
@@ -1121,7 +1119,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testOpenSenderBeforeOpenConnection() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1149,7 +1147,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testOpenSenderBeforeOpenSession() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1178,12 +1176,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderDetachAfterEndSent() {
         doTestSenderClosedOrDetachedAfterEndSent(false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderCloseAfterEndSent() {
         doTestSenderClosedOrDetachedAfterEndSent(true);
     }
@@ -1225,12 +1223,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderDetachAfterCloseSent() {
         doTestSenderClosedOrDetachedAfterCloseSent(false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderCloseAfterCloseSent() {
         doTestSenderClosedOrDetachedAfterCloseSent(true);
     }
@@ -1272,7 +1270,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testNoDispositionSentAfterDeliverySettledForSender() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1339,7 +1337,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderCannotSendAfterConnectionClosed() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1397,7 +1395,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderCannotSendAfterSessionClosed() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1451,12 +1449,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSendMultiFrameDeliveryAndSingleFrameDeliveryOnSingleSessionFromDifferentSenders() {
         doMultiplexMultiFrameDeliveryOnSingleSessionOutgoingTestImpl(false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testMultipleMultiFrameDeliveriesOnSingleSessionFromDifferentSenders() {
         doMultiplexMultiFrameDeliveryOnSingleSessionOutgoingTestImpl(true);
     }
@@ -1570,13 +1568,13 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testMaxFrameSizeOfPeerHasEffect() {
         doMaxFrameSizeTestImpl(0, 0, 5700, 1);
         doMaxFrameSizeTestImpl(1024, 0, 5700, 6);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testMaxFrameSizeOutgoingFrameSizeLimitHasEffect() {
         doMaxFrameSizeTestImpl(0, 512, 5700, 12);
         doMaxFrameSizeTestImpl(1024, 512, 5700, 12);
@@ -1677,7 +1675,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testAbortInProgressDelivery() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1744,7 +1742,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testAbortAlreadyAbortedDelivery() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1817,7 +1815,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testAbortOnDeliveryThatHasNoWritesIsNoOp() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1867,7 +1865,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testAbortOnDeliveryThatHasNoWritesIsNoOpThenSendUsingCurrent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1937,47 +1935,47 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSettleTransferWithNullDisposition() throws Exception {
         doTestSettleTransferWithSpecifiedOutcome(null, nullValue());
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSettleTransferWithAcceptedDisposition() throws Exception {
         DeliveryState state = Accepted.getInstance();
         AcceptedMatcher matcher = new AcceptedMatcher();
         doTestSettleTransferWithSpecifiedOutcome(state, matcher);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSettleTransferWithReleasedDisposition() throws Exception {
         DeliveryState state = Released.getInstance();
         ReleasedMatcher matcher = new ReleasedMatcher();
         doTestSettleTransferWithSpecifiedOutcome(state, matcher);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSettleTransferWithRejectedDisposition() throws Exception {
         DeliveryState state = new Rejected();
         RejectedMatcher matcher = new RejectedMatcher();
         doTestSettleTransferWithSpecifiedOutcome(state, matcher);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSettleTransferWithRejectedWithErrorDisposition() throws Exception {
         DeliveryState state = new Rejected().setError(new ErrorCondition(AmqpError.DECODE_ERROR, "test"));
         RejectedMatcher matcher = new RejectedMatcher().withError(AmqpError.DECODE_ERROR.toString(), "test");
         doTestSettleTransferWithSpecifiedOutcome(state, matcher);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSettleTransferWithModifiedDisposition() throws Exception {
         DeliveryState state = new Modified().setDeliveryFailed(true).setUndeliverableHere(true);
         ModifiedMatcher matcher = new ModifiedMatcher().withDeliveryFailed(true).withUndeliverableHere(true);
         doTestSettleTransferWithSpecifiedOutcome(state, matcher);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSettleTransferWithTransactionalDisposition() throws Exception {
         DeliveryState state = new TransactionalState().setTxnId(new Binary(new byte[] {1})).setOutcome(Accepted.getInstance());
         TransactionalStateMatcher matcher = new TransactionalStateMatcher().withTxnId(new byte[] {1}); // TODO - outcome
@@ -2041,27 +2039,27 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testAttemptedSecondDispostionOnAlreadySettledDeliveryNull() throws Exception {
         doTestAttemptedSecondDispostionOnAlreadySettledDelivery(Accepted.getInstance(), null);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testAttemptedSecondDispostionOnAlreadySettledDeliveryReleased() throws Exception {
         doTestAttemptedSecondDispostionOnAlreadySettledDelivery(Accepted.getInstance(), Released.getInstance());
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testAttemptedSecondDispostionOnAlreadySettledDeliveryModiified() throws Exception {
         doTestAttemptedSecondDispostionOnAlreadySettledDelivery(Released.getInstance(), new Modified().setDeliveryFailed(true));
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testAttemptedSecondDispostionOnAlreadySettledDeliveryRejected() throws Exception {
         doTestAttemptedSecondDispostionOnAlreadySettledDelivery(Released.getInstance(), new Rejected());
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testAttemptedSecondDispostionOnAlreadySettledDeliveryTransactional() throws Exception {
         doTestAttemptedSecondDispostionOnAlreadySettledDelivery(Released.getInstance(), new TransactionalState().setOutcome(Accepted.getInstance()));
     }
@@ -2133,7 +2131,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSettleSentDeliveryAfterRemoteSettles() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -2198,7 +2196,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderHandlesDeferredOpenAndBeginAttachResponses() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -2240,27 +2238,27 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndRsponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, true, true);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndNoRsponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, true, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndNoRsponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, false, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenButNoResponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, false, false, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenNotWritten() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(false, false, false, false);
     }
@@ -2315,27 +2313,27 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndReponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, true);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndNoResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenAndResponseBeginWrittenAndNoResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenButNoResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, false, false, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenNotWritten() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(false, false, false, false);
     }
@@ -2540,7 +2538,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderAppliesDeliveryTagGeneratorToNextDelivery() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -2601,7 +2599,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 
-    @Test(timeout = 20000)
+    @Test(timeout = 20_000)
     public void testSenderAppliedGeneratedDeliveryTagCanBeOverriden() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -2752,7 +2750,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testSenderHandlesDelayedDispositionsForSentTransfers() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);

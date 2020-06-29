@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import org.apache.qpid.protonj2.types.Binary;
-import org.apache.qpid.protonj2.types.transactions.Discharge;
 import org.junit.Test;
 
 public class DischargeTest {

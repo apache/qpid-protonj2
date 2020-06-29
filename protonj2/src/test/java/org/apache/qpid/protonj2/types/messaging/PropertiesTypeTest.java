@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
-import org.apache.qpid.protonj2.types.messaging.Properties;
 import org.apache.qpid.protonj2.types.messaging.Section.SectionType;
 import org.junit.Test;
 

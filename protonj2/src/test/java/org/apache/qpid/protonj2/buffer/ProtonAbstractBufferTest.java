@@ -31,9 +31,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
-import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonNioByteBuffer;
 import org.junit.Before;
 import org.junit.Test;
 

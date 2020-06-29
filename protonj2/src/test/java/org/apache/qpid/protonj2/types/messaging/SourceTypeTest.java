@@ -27,9 +27,6 @@ import java.util.Map;
 
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
-import org.apache.qpid.protonj2.types.messaging.Source;
-import org.apache.qpid.protonj2.types.messaging.TerminusDurability;
-import org.apache.qpid.protonj2.types.messaging.TerminusExpiryPolicy;
 import org.junit.Test;
 
 public class SourceTypeTest {

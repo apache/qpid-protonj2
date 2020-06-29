@@ -19,7 +19,6 @@ package org.apache.qpid.protonj2.types.transport;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import org.apache.qpid.protonj2.types.transport.Role;
 import org.junit.Test;
 
 public class RoleTest {

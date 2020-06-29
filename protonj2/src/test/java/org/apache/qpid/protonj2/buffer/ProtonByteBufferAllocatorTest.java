@@ -22,9 +22,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
-import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
 
 public class ProtonByteBufferAllocatorTest {

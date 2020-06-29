@@ -21,8 +21,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.qpid.protonj2.types.transport.Flow;
-import org.apache.qpid.protonj2.types.transport.Performative;
 import org.junit.Test;
 
 public class FlowTest {

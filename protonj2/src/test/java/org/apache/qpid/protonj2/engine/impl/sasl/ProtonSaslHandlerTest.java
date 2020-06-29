@@ -33,7 +33,6 @@ import org.apache.qpid.protonj2.engine.HeaderFrame;
 import org.apache.qpid.protonj2.engine.SaslFrame;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.impl.ProtonEngine;
-import org.apache.qpid.protonj2.engine.impl.sasl.ProtonSaslHandler;
 import org.apache.qpid.protonj2.engine.sasl.SaslOutcome;
 import org.apache.qpid.protonj2.engine.sasl.SaslServerContext;
 import org.apache.qpid.protonj2.engine.sasl.SaslServerListener;

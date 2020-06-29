@@ -19,12 +19,6 @@ package org.apache.qpid.protonj2.engine.sasl.client;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.apache.qpid.protonj2.engine.sasl.client.AnonymousMechanism;
-import org.apache.qpid.protonj2.engine.sasl.client.CramMD5Mechanism;
-import org.apache.qpid.protonj2.engine.sasl.client.ExternalMechanism;
-import org.apache.qpid.protonj2.engine.sasl.client.Mechanism;
-import org.apache.qpid.protonj2.engine.sasl.client.PlainMechanism;
-import org.apache.qpid.protonj2.engine.sasl.client.SaslMechanismSelector;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.junit.Test;
 

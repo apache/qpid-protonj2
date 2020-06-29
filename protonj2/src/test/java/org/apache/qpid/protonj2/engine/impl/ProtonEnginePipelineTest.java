@@ -22,8 +22,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 import org.apache.qpid.protonj2.engine.EngineHandler;
-import org.apache.qpid.protonj2.engine.impl.ProtonEngine;
-import org.apache.qpid.protonj2.engine.impl.ProtonEnginePipeline;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

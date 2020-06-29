@@ -26,8 +26,6 @@ import static org.junit.Assert.fail;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.protonj2.types.Binary;
-import org.apache.qpid.protonj2.types.security.SaslCode;
-import org.apache.qpid.protonj2.types.security.SaslOutcome;
 import org.apache.qpid.protonj2.types.security.SaslPerformative.SaslPerformativeHandler;
 import org.apache.qpid.protonj2.types.security.SaslPerformative.SaslPerformativeType;
 import org.junit.Test;

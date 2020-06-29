@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import org.apache.qpid.protonj2.types.Symbol;
-import org.apache.qpid.protonj2.types.messaging.TerminusExpiryPolicy;
 import org.junit.Test;
 
 public class TerminusExpiryPolicyTest {

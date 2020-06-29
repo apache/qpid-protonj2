@@ -19,8 +19,6 @@ package org.apache.qpid.protonj2.engine.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.apache.qpid.protonj2.engine.impl.ProtonOutgoingDelivery;
-import org.apache.qpid.protonj2.engine.impl.ProtonSender;
 import org.junit.Test;
 import org.mockito.Mockito;
 

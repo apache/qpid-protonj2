@@ -25,8 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.types.Symbol;
-import org.apache.qpid.protonj2.types.transport.AmqpError;
-import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.junit.Test;
 
 public class ErrorConditionTest {

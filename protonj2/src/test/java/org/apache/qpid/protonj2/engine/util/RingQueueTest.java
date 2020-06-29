@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Random;
 
-import org.apache.qpid.protonj2.engine.util.RingQueue;
 import org.junit.Before;
 import org.junit.Test;
 

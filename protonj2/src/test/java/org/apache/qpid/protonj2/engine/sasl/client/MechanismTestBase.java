@@ -20,7 +20,6 @@ import java.security.Principal;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.protonj2.engine.sasl.client.SaslCredentialsProvider;
 
 /**
  * Base class for SASL Mechanism tests that provides some default utilities

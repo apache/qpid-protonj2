@@ -25,8 +25,6 @@ import static org.junit.Assert.assertTrue;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.protonj2.engine.impl.ProtonIncomingDelivery;
-import org.apache.qpid.protonj2.engine.impl.ProtonReceiver;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.junit.Test;
 import org.mockito.Mockito;

@@ -27,8 +27,6 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
-import org.apache.qpid.protonj2.engine.impl.ProtonDeliveryTagGenerator;
-import org.apache.qpid.protonj2.engine.impl.ProtonPooledTagGenerator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.junit.Test;
 

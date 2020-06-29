@@ -25,8 +25,6 @@ import static org.junit.Assert.assertTrue;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
-import org.apache.qpid.protonj2.engine.impl.ProtonDeliveryTagGenerator;
-import org.apache.qpid.protonj2.engine.impl.ProtonSequentialTagGenerator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.junit.Test;
 

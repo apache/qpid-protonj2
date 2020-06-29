@@ -23,8 +23,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.apache.qpid.protonj2.types.UnsignedInteger;
-import org.apache.qpid.protonj2.types.transport.Disposition;
-import org.apache.qpid.protonj2.types.transport.Performative;
 import org.junit.Test;
 
 public class DispositionTest {

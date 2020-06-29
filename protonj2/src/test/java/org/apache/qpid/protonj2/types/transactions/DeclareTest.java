@@ -19,8 +19,6 @@ package org.apache.qpid.protonj2.types.transactions;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import org.apache.qpid.protonj2.types.transactions.Declare;
-import org.apache.qpid.protonj2.types.transactions.GlobalTxId;
 import org.junit.Test;
 
 public class DeclareTest {

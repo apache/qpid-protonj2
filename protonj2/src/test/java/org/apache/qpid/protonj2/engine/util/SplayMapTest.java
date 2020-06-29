@@ -34,8 +34,6 @@ import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
 
-import org.apache.qpid.protonj2.engine.util.SequenceNumber;
-import org.apache.qpid.protonj2.engine.util.SplayMap;
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
 import org.apache.qpid.protonj2.types.UnsignedInteger;

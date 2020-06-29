@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
-import org.apache.qpid.protonj2.engine.impl.ProtonDeliveryTagGenerator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.junit.Test;
 

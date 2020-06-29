@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import org.apache.qpid.protonj2.types.Binary;
-import org.apache.qpid.protonj2.types.transactions.Declared;
 import org.apache.qpid.protonj2.types.transport.DeliveryState.DeliveryStateType;
 import org.junit.Test;
 

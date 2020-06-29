@@ -26,9 +26,6 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.protonj2.engine.sasl.client.Mechanism;
-import org.apache.qpid.protonj2.engine.sasl.client.SaslCredentialsProvider;
-import org.apache.qpid.protonj2.engine.sasl.client.ScramSHA256Mechanism;
 import org.junit.Test;
 
 /**

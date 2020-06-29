@@ -20,8 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import org.apache.qpid.protonj2.engine.sasl.client.AnonymousMechanism;
-import org.apache.qpid.protonj2.engine.sasl.client.SaslMechanisms;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.junit.Test;
 

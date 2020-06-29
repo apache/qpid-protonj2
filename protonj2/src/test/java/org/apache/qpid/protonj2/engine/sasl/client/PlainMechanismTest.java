@@ -23,8 +23,6 @@ import static org.junit.Assert.assertTrue;
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.engine.sasl.client.PlainMechanism;
-import org.apache.qpid.protonj2.engine.sasl.client.SaslMechanisms;
 import org.junit.Test;
 
 public class PlainMechanismTest extends MechanismTestBase {

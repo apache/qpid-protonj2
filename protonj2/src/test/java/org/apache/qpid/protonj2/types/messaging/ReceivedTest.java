@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNull;
 
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.UnsignedLong;
-import org.apache.qpid.protonj2.types.messaging.Received;
 import org.apache.qpid.protonj2.types.transport.DeliveryState.DeliveryStateType;
 import org.junit.Test;
 

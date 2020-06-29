@@ -21,10 +21,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
-import org.apache.qpid.protonj2.types.messaging.Rejected;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
-import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.apache.qpid.protonj2.types.transport.DeliveryState.DeliveryStateType;
+import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.junit.Test;
 
 public class RejectedTest {

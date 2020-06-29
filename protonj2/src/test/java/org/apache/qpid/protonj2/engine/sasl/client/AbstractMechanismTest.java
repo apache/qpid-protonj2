@@ -18,8 +18,6 @@ package org.apache.qpid.protonj2.engine.sasl.client;
 
 import static org.junit.Assert.assertTrue;
 
-import org.apache.qpid.protonj2.engine.sasl.client.AbstractMechanism;
-import org.apache.qpid.protonj2.engine.sasl.client.SaslCredentialsProvider;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.junit.Test;
 
