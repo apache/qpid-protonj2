@@ -808,8 +808,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
-        peer.remoteBegin().withRemoteChannel(3).queue();
-        peer.expectClose().withError(not(nullValue()));
+
         final AtomicBoolean remoteOpened = new AtomicBoolean();
         final AtomicBoolean remoteSession = new AtomicBoolean();
 
@@ -826,6 +825,12 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         connection.sessionOpenHandler(session -> {
             remoteSession.set(true);
         });
+
+        peer.waitForScriptToComplete();
+
+        // Simulate asynchronous arrival of data as we always operate on one thread in these tests.
+        peer.expectClose().withError(not(nullValue()));
+        peer.remoteBegin().withRemoteChannel(3).now();
 
         peer.waitForScriptToComplete();
 

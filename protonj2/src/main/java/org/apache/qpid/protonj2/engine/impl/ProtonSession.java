@@ -668,15 +668,15 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     }
 
     private void fireSessionBegin() {
-        localBeginSent = true;
         connection.getEngine().fireWrite(localBegin, localChannel, null, null);
+        localBeginSent = true;
         allLinks().forEach(link -> link.trySyncLocalStateWithRemote());
     }
 
     private void fireSessionEnd() {
+        connection.getEngine().fireWrite(new End().setError(getCondition()), localChannel, null, null);
         localEndSent = true;
         connection.freeLocalChannel(localChannel);
-        connection.getEngine().fireWrite(new End().setError(getCondition()), localChannel, null, null);
     }
 
     long findFreeLocalHandle(ProtonLink<?> link) {

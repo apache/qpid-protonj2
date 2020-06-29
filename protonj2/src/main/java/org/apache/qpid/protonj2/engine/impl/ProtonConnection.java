@@ -600,17 +600,17 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
                 boolean resourceSyncNeeded = false;
 
                 if (!localOpenSent && !engine.isShutdown()) {
-                    localOpenSent = true;
-                    resourceSyncNeeded = true;
                     engine.fireWrite(localOpen, 0, null, null);
                     engine.configuration().recomputeEffectiveFrameSizeLimits();
+                    localOpenSent = true;
+                    resourceSyncNeeded = true;
                 }
 
                 if (isLocallyClosed() && !localCloseSent && !engine.isShutdown()) {
-                    localCloseSent = true;
-                    resourceSyncNeeded = false;  // Session resources can't write anything now
                     Close localClose = new Close().setError(getCondition());
                     engine.fireWrite(localClose, 0, null, null);
+                    localCloseSent = true;
+                    resourceSyncNeeded = false;  // Session resources can't write anything now
                 }
 
                 if (resourceSyncNeeded) {

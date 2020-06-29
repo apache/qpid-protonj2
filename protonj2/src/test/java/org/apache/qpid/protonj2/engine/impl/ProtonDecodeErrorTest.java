@@ -56,6 +56,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
 
         doInvalidOpenProvokesDecodeErrorTestImpl(bytes, "The container-id field cannot be omitted");
     }
+
     private void doInvalidOpenProvokesDecodeErrorTestImpl(byte[] bytes, String errorDescription) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -63,10 +64,13 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen();
-        peer.remoteBytes().withBytes(bytes).queue();
-        peer.expectClose().withError(AmqpError.DECODE_ERROR.toString(), errorDescription);
 
         engine.start().open();
+
+        peer.waitForScriptToCompleteIgnoreErrors();
+
+        peer.expectClose().withError(AmqpError.DECODE_ERROR.toString(), errorDescription);
+        peer.remoteBytes().withBytes(bytes).now();
 
         peer.waitForScriptToCompleteIgnoreErrors();
 
@@ -129,10 +133,13 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
-        peer.remoteBytes().withBytes(bytes).queue();
-        peer.expectClose().withError(AmqpError.DECODE_ERROR.toString(), errorDescription);
 
         engine.start().open();
+
+        peer.waitForScriptToCompleteIgnoreErrors();
+
+        peer.expectClose().withError(AmqpError.DECODE_ERROR.toString(), errorDescription);
+        peer.remoteBytes().withBytes(bytes).now();
 
         peer.waitForScriptToCompleteIgnoreErrors();
 

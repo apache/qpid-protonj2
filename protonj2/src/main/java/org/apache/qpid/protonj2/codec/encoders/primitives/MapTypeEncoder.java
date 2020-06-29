@@ -18,14 +18,14 @@ package org.apache.qpid.protonj2.codec.encoders.primitives;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.EncodeException;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.TypeEncoder;
 import org.apache.qpid.protonj2.codec.encoders.AbstractPrimitiveTypeEncoder;
-
-import java.util.Set;
 
 /**
  * Encoder of AMQP Map type values to a byte stream.
@@ -69,14 +69,14 @@ public final class MapTypeEncoder extends AbstractPrimitiveTypeEncoder<Map> {
 
             TypeEncoder keyEncoder = state.getEncoder().getTypeEncoder(entryKey);
             if (keyEncoder == null) {
-                throw new IllegalArgumentException("Cannot find encoder for type " + entryKey);
+                throw new EncodeException("Cannot find encoder for type " + entryKey);
             }
 
             keyEncoder.writeType(buffer, state, entryKey);
 
             TypeEncoder valueEncoder = state.getEncoder().getTypeEncoder(entryValue);
             if (valueEncoder == null) {
-                throw new IllegalArgumentException("Cannot find encoder for type " + entryValue);
+                throw new EncodeException("Cannot find encoder for type " + entryValue);
             }
 
             valueEncoder.writeType(buffer, state, entryValue);

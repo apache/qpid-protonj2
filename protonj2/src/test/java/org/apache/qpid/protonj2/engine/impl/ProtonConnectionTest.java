@@ -35,13 +35,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.qpid.protonj2.codec.EncodeException;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.ConnectionState;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineStateException;
-import org.apache.qpid.protonj2.engine.impl.ProtonConstants;
+import org.apache.qpid.protonj2.engine.exceptions.FrameEncodingException;
 import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
 import org.apache.qpid.protonj2.test.driver.matchers.types.UnsignedIntegerMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.UnsignedShortMatcher;
@@ -1628,5 +1629,36 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
         assertNull(failure);
+    }
+
+    @Test(timeout = 10000)
+    public void testNoOpenWrittenAfterEncodeErrorFromConnectionProperties() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+
+        Map<Symbol, Object> properties = new HashMap<>();
+        properties.put(Symbol.valueOf("test"), engine);
+
+        Connection connection = engine.start().setProperties(properties);
+
+        // Ensures that open is synchronous as header exchange will be complete.
+        connection.negotiate();
+
+        try {
+            connection.open();
+            fail("Should not have been able to open with invalid type in properties");
+        } catch (FrameEncodingException fee) {
+            assertTrue(fee.getCause() instanceof EncodeException);
+            engine.shutdown();
+        }
+
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNotNull(failure);
     }
 }

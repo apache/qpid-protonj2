@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.codec.encoders.primitives;
 import java.util.List;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.EncodeException;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.TypeEncoder;
@@ -74,7 +75,7 @@ public final class ListTypeEncoder extends AbstractPrimitiveTypeEncoder<List> {
             }
 
             if (encoder == null) {
-                throw new IllegalArgumentException("Cannot find encoder for type " + entry);
+                throw new EncodeException("Cannot find encoder for type " + entry);
             }
 
             encoder.writeType(buffer, state, entry);
