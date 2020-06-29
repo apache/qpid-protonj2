@@ -19,7 +19,6 @@ package org.apache.qpid.protonj2.test.driver.netty;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.junit.Test;
 
 public class NettyTestPeerTest {

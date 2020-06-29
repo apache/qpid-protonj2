@@ -24,8 +24,6 @@ import static org.junit.Assert.fail;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 
-import org.apache.qpid.protonj2.test.driver.buffer.ReadableBuffer;
-import org.apache.qpid.protonj2.test.driver.buffer.WritableBuffer;
 import org.junit.Test;
 
 /**

@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.junit.Test;
 
 public class UnsignedIntegerTest {

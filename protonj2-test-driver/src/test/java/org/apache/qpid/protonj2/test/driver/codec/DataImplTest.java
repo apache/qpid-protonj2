@@ -22,7 +22,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.qpid.protonj2.test.driver.codec.Codec;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Source;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Target;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;

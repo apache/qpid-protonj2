@@ -27,9 +27,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.qpid.protonj2.test.driver.buffer.NettyReadableBuffer;
-import org.apache.qpid.protonj2.test.driver.buffer.NettyWritableBuffer;
-import org.apache.qpid.protonj2.test.driver.buffer.ReadableBuffer;
 import org.junit.Test;
 
 import io.netty.buffer.ByteBuf;

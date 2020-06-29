@@ -24,8 +24,6 @@ import static org.junit.Assert.assertTrue;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.qpid.protonj2.test.driver.buffer.NettyWritableBuffer;
-import org.apache.qpid.protonj2.test.driver.buffer.ReadableBuffer;
 import org.junit.Test;
 
 import io.netty.buffer.ByteBuf;

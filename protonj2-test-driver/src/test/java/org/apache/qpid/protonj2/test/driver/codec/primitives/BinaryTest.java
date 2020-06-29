@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
-import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.junit.Test;
 
 public class BinaryTest {
