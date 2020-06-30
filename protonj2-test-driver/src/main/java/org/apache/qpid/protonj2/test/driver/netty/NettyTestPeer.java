@@ -127,6 +127,37 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
         return server.getConnectionSSLEngine();
     }
 
+    //----- Test connection drop scripting API
+
+    /**
+     * Drops the connection to the connected client immediately after the last handler that was
+     * registered before this scripted action is queued.  Adding any additional test scripting to
+     * the test driver will either not be acted on or could cause the wait methods to not return
+     * as they will never be invoked.
+     *
+     * @return this test driver
+     */
+    public NettyTestPeer dropAfterLastHandler() {
+        driver.addScriptedElement(new NettyConnectionDropAction(this));
+        return this;
+    }
+
+    /**
+     * Drops the connection to the connected client immediately after the last handler that was
+     * registered before this scripted action is queued.  Adding any additional test scripting to
+     * the test driver will either not be acted on or could cause the wait methods to not return
+     * as they will never be invoked.
+     *
+     * @param delay
+     *      The time in milliseconds to wait before running the action after the last handler is run.
+     *
+     * @return this test driver
+     */
+    public NettyTestPeer dropAfterLastHandler(int delay) {
+        driver.addScriptedElement(new NettyConnectionDropAction(this).afterDelay(delay));
+        return this;
+    }
+
     //----- Test Completion API
 
     public void waitForScriptToCompleteIgnoreErrors() {
@@ -249,6 +280,10 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
     }
 
     //----- Internal implementation which can be overridden
+
+    Channel getChannel() {
+        return channel;
+    }
 
     private void checkClosed() {
         if (closed.get()) {
