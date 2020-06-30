@@ -45,7 +45,6 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
     public final AbstractPerformativeInjectAction<P> now() {
         // Give actors a chance to prepare.
         beforeActionPerformed(driver);
-
         driver.sendAMQPFrame(onChannel(), getPerformative(), getPayload());
         return this;
     }
@@ -74,7 +73,7 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
 
                 @Override
                 public ScriptedAction perform(AMQPTestDriver driver) {
-                    return now();
+                    return AbstractPerformativeInjectAction.this.now();
                 }
 
                 @Override
@@ -86,9 +85,14 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
                 public ScriptedAction later(int waitTime) {
                     return this;
                 }
+
+                @Override
+                public String toString() {
+                    return AbstractPerformativeInjectAction.this.toString();
+                }
             });
         } else {
-            now();
+            return now();
         }
 
         return this;
