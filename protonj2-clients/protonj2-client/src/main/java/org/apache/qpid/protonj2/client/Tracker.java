@@ -18,6 +18,8 @@ package org.apache.qpid.protonj2.client;
 
 import java.util.concurrent.Future;
 
+import org.apache.qpid.protonj2.client.exceptions.ClientException;
+
 /**
  * Tracker object used to track the state of a sent {@link Message} at the remote
  * and allows for local settlement and disposition management.
@@ -33,8 +35,9 @@ public interface Tracker {
      * Settles the delivery locally, if not {@link SenderOptions#autoSettle() auto-settling}.
      *
      * @return the delivery
+     * @throws ClientException
      */
-    Tracker settle();
+    Tracker settle() throws ClientException;
 
     /**
      * @return true if the sent message has been locally settled.
@@ -71,8 +74,9 @@ public interface Tracker {
      *            whether to {@link #settle()} the delivery at the same time
      *
      * @return itself
+     * @throws ClientException
      */
-    Tracker disposition(DeliveryState state, boolean settle);
+    Tracker disposition(DeliveryState state, boolean settle) throws ClientException;
 
     /**
      * Returns a future that can be used to wait for the remote to acknowledge receipt of

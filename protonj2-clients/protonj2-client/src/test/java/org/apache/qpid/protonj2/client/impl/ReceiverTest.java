@@ -41,6 +41,7 @@ import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.hamcrest.Matcher;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1034,7 +1035,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test//(timeout = 20_000)
+    @Test(timeout = 20_000)
     public void testReceiveMessageInSplitTransferFrames() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -1210,6 +1211,167 @@ public class ReceiverTest extends ImperativeClientTestCase {
             assertEquals("Hello World", value);
 
             receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiveCallFailsWhenReceiverClosed() throws Exception {
+        doTestReceiveCallFailsWhenReceiverDetachedOrClosed(true);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiveCallFailsWhenReceiverDetached() throws Exception {
+        doTestReceiveCallFailsWhenReceiverDetachedOrClosed(false);
+    }
+
+    private void doTestReceiveCallFailsWhenReceiverDetachedOrClosed(boolean close) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectDetach().withClosed(close).respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue").openFuture().get();
+
+            if (close) {
+                receiver.close();
+            } else {
+                receiver.detach();
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            try {
+                receiver.receive();
+                fail("Receive call should fail when link closed or detached.");
+            } catch (ClientIllegalStateException cliEx) {
+                LOG.debug("Receiver threw error on receive call", cliEx);
+            }
+
+            peer.expectClose().respond();
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiveTimedCallFailsWhenReceiverClosed() throws Exception {
+        doTestReceiveTimedCallFailsWhenReceiverDetachedOrClosed(true);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiveTimedCallFailsWhenReceiverDetached() throws Exception {
+        doTestReceiveTimedCallFailsWhenReceiverDetachedOrClosed(false);
+    }
+
+    private void doTestReceiveTimedCallFailsWhenReceiverDetachedOrClosed(boolean close) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectDetach().withClosed(close).respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue").openFuture().get();
+
+            if (close) {
+                receiver.close();
+            } else {
+                receiver.detach();
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            try {
+                receiver.receive(60_000);
+                fail("Receive call should fail when link closed or detached.");
+            } catch (ClientIllegalStateException cliEx) {
+                LOG.debug("Receiver threw error on receive call", cliEx);
+            }
+
+            peer.expectClose().respond();
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    // TODO
+    @Ignore("Not yet working due to requests not getting purged.")
+    @Test(timeout = 30000)
+    public void testDrainFutureSignalsFailureWhenReceiverClosed() throws Exception {
+        doTestDrainFutureSignalsFailureWhenReceiverClosedOrDetached(true);
+    }
+
+    // TODO
+    @Ignore("Not yet working due to requests not getting purged.")
+    @Test(timeout = 30000)
+    public void testDrainFutureSignalsFailureWhenReceiverDetached() throws Exception {
+        doTestDrainFutureSignalsFailureWhenReceiverClosedOrDetached(false);
+    }
+
+    private void doTestDrainFutureSignalsFailureWhenReceiverClosedOrDetached(boolean close) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue").openFuture().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectFlow().withDrain(true).withLinkCredit(10);
+            peer.execute(() -> {
+                if (close) {
+                    receiver.close();
+                } else {
+                    receiver.detach();
+                }
+            }).queue();
+            peer.expectDetach().withClosed(close).respond();
+            peer.expectClose().respond();
+
+            try {
+                receiver.drain().get(10, TimeUnit.SECONDS);
+                fail("Drain call should fail when link closed or detached.");
+            } catch (ClientIllegalStateException cliEx) {
+                LOG.debug("Receiver threw error on drain call", cliEx);
+            }
+
             connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);

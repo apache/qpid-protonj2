@@ -175,16 +175,14 @@ public interface Receiver {
      */
     Receiver addCredit(int credits) throws ClientException;
 
-    // TODO - Receive calls throw ClientException to better describe why it failed
-
     /**
      * Blocking receive method that waits forever for the remote to provide a Message for consumption.
      *
      * @return a new {@link Delivery} received from the remote.
      *
-     * @throws IllegalStateException if the {@link Receiver} is closed when the call to receive is made.
+     * @throws ClientException if the {@link Receiver} is closed when the call to receive is made.
      */
-    Delivery receive() throws IllegalStateException;
+    Delivery receive() throws ClientException;
 
     /**
      * Non-blocking receive method that either returns a message is one is immediately available or
@@ -192,15 +190,22 @@ public interface Receiver {
      *
      * @return a new {@link Delivery} received from the remote or null if no pending message available.
      *
-     * @throws IllegalStateException if the {@link Receiver} is closed when the call to try to receive is made.
+     * @throws ClientException if the {@link Receiver} is closed when the call to try to receive is made.
      */
-    Delivery tryReceive() throws IllegalStateException;
+    Delivery tryReceive() throws ClientException;
 
-    Delivery receive(long timeout) throws IllegalStateException;
+    Delivery receive(long timeout) throws ClientException;
     // TODO: with credit window, above is fine...without, we would need to
     // manage the credit in one of various fashions (or say we dont).
 
-    Future<Receiver> drain();
+    /**
+     * Requests the remote to drain previously granted credit for this {@link Receiver} link.
+     *
+     * @return a {@link Future} that will be completed when the remote drains this {@link Receiver} link.
+     *
+     * @throws ClientException if an error occurs while attempting to drain the link credit.
+     */
+    Future<Receiver> drain() throws ClientException;
 
     // TODO: ideas
 

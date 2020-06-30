@@ -1100,4 +1100,89 @@ public class TransactionsTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test(timeout = 20_000)
+    public void testDeclareTransactionAfterConnectionDrops() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.dropAfterLastHandler();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            peer.waitForScriptToComplete();
+
+            try {
+                session.beginTransaction();
+                fail("Should have failed to discharge transaction");
+            } catch (ClientException cliEx) {
+                // Expected error as connection was dropped
+                LOG.debug("Client threw error on begin after connection drop", cliEx);
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testCommitTransactionAfterConnectionDropsFollowingTxnDeclared() throws Exception {
+        dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(true);
+    }
+
+    @Test(timeout = 20_000)
+    public void testRollbackTransactionAfterConnectionDropsFollowingTxnDeclared() throws Exception {
+        dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(false);
+    }
+
+    public void dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(boolean commit) throws Exception {
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept(txnId);
+            peer.dropAfterLastHandler();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            session.beginTransaction();
+
+            peer.waitForScriptToComplete();
+
+            try {
+                if (commit) {
+                    session.commitTransaction();
+                } else {
+                    session.rollbackTransaction();
+                }
+                fail("Should have failed to discharge transaction");
+            } catch (ClientException cliEx) {
+                // Expected error as connection was dropped
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

@@ -129,12 +129,12 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public Delivery receive() {
+    public Delivery receive() throws ClientException {
         return receive(-1);
     }
 
     @Override
-    public Delivery receive(long timeout) throws IllegalStateException {
+    public Delivery receive(long timeout) throws ClientException {
         checkClosed();
         try {
             ClientDelivery delivery = messageQueue.dequeue(timeout);
@@ -147,12 +147,12 @@ public class ClientReceiver implements Receiver {
             return delivery;
         } catch (InterruptedException e) {
             Thread.interrupted();
-            throw new IllegalStateException(e);
+            throw new ClientException("Receive wait interrupted", e);
         }
     }
 
     @Override
-    public Delivery tryReceive() throws IllegalStateException {
+    public Delivery tryReceive() throws ClientException {
         checkClosed();
 
         Delivery delivery = messageQueue.dequeueNoWait();
@@ -258,12 +258,12 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public Receiver addCredit(int credits) throws IllegalStateException, ClientException {
+    public Receiver addCredit(int credits) throws ClientException {
         checkClosed();
         ClientFuture<Receiver> creditAdded = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
-            checkClosed();
+            checkClosed(creditAdded);
 
             if (options.creditWindow() != 0) {
                 creditAdded.failed(new ClientIllegalStateException("Cannot add credit when a credit window has been configured"));
@@ -283,12 +283,12 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public Future<Receiver> drain() {
+    public Future<Receiver> drain() throws ClientException {
         checkClosed();
-        ClientFuture<Receiver> drainComplete = session.getFutureFactory().createFuture();
+        final ClientFuture<Receiver> drainComplete = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
-            checkClosed();
+            checkClosed(drainComplete);
 
             if (protonReceiver.isDraining()) {
                 drainComplete.failed(new ClientException("Already draining"));
@@ -334,11 +334,9 @@ public class ClientReceiver implements Receiver {
 
     //----- Internal API
 
-    void disposition(IncomingDelivery delivery, DeliveryState state, boolean settled) {
+    void disposition(IncomingDelivery delivery, DeliveryState state, boolean settled) throws ClientException {
         checkClosed();
         executor.execute(() -> {
-            checkClosed();
-
             if (session.getTransactionContext().isInTransaction()) {
                 delivery.disposition(session.getTransactionContext().enlistAcknowledgeInCurrentTransaction(this, (Outcome) state), true);
             } else {
@@ -529,14 +527,29 @@ public class ClientReceiver implements Receiver {
         }
     }
 
-    private void checkClosed() throws IllegalStateException {
+    private void checkClosed(ClientFuture<?> request) {
         if (isClosed()) {
-            IllegalStateException error = null;
+            ClientException error = null;
 
             if (getFailureCause() == null) {
-                error = new IllegalStateException("The Receiver is closed");
+                error = new ClientIllegalStateException("The Receiver is closed");
             } else {
-                error = new IllegalStateException("The Receiver was closed due to an unrecoverable error.");
+                error = new ClientIllegalStateException("The Receiver was closed due to an unrecoverable error.");
+                error.initCause(getFailureCause());
+            }
+
+            request.failed(error);
+        }
+    }
+
+    private void checkClosed() throws ClientException {
+        if (isClosed()) {
+            ClientException error = null;
+
+            if (getFailureCause() == null) {
+                error = new ClientIllegalStateException("The Receiver is closed");
+            } else {
+                error = new ClientIllegalStateException("The Receiver was closed due to an unrecoverable error.");
                 error.initCause(getFailureCause());
             }
 

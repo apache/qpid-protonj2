@@ -38,6 +38,7 @@ import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.SessionOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientResourceClosedException;
 import org.apache.qpid.protonj2.client.futures.AsyncResult;
@@ -451,14 +452,14 @@ public class ClientSession implements Session {
         protonSession.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
     }
 
-    private void checkClosed() throws IllegalStateException {
+    private void checkClosed() throws ClientIllegalStateException {
         if (isClosed()) {
-            IllegalStateException error = null;
+            ClientIllegalStateException error = null;
 
             if (failureCause == null) {
-                error = new IllegalStateException("The Session is closed");
+                error = new ClientIllegalStateException("The Session is closed");
             } else {
-                error = new IllegalStateException("The Session was closed due to an unrecoverable error.");
+                error = new ClientIllegalStateException("The Session was closed due to an unrecoverable error.");
                 error.initCause(failureCause);
             }
 

@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.client.impl;
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Tracker;
+import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 
@@ -70,7 +71,7 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public ClientTracker disposition(DeliveryState state, boolean settle) {
+    public ClientTracker disposition(DeliveryState state, boolean settle) throws ClientException {
         org.apache.qpid.protonj2.types.transport.DeliveryState protonState = null;
         if (state != null) {
             protonState = ClientDeliveryState.asProtonType(state);
@@ -81,7 +82,7 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public ClientTracker settle() {
+    public ClientTracker settle() throws ClientException {
         sender.disposition(delivery, null, true);
         return this;
     }

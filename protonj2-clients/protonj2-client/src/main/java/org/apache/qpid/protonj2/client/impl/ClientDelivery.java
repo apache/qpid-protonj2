@@ -65,13 +65,13 @@ public class ClientDelivery implements Delivery {
     }
 
     @Override
-    public Delivery accept() {
+    public Delivery accept() throws ClientException {
         receiver.disposition(delivery, Accepted.getInstance(), true);
         return this;
     }
 
     @Override
-    public Delivery disposition(DeliveryState state, boolean settle) {
+    public Delivery disposition(DeliveryState state, boolean settle) throws ClientException {
         org.apache.qpid.protonj2.types.transport.DeliveryState protonState = null;
         if (state != null) {
             protonState = ClientDeliveryState.asProtonType(state);
@@ -82,7 +82,7 @@ public class ClientDelivery implements Delivery {
     }
 
     @Override
-    public Delivery settle() {
+    public Delivery settle() throws ClientException {
         receiver.disposition(delivery, null, true);
         return this;
     }

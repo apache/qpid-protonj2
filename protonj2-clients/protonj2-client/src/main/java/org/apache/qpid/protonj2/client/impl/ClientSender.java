@@ -36,6 +36,7 @@ import org.apache.qpid.protonj2.client.Source;
 import org.apache.qpid.protonj2.client.Target;
 import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientResourceClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
@@ -252,7 +253,7 @@ public class ClientSender implements Sender {
 
     //----- Internal API
 
-    void disposition(OutgoingDelivery delivery, DeliveryState state, boolean settled) {
+    void disposition(OutgoingDelivery delivery, DeliveryState state, boolean settled) throws ClientException {
         checkClosed();
         executor.execute(() -> {
             delivery.disposition(state, settled);
@@ -509,14 +510,14 @@ public class ClientSender implements Sender {
         // request.complete(tracker);
     }
 
-    private void checkClosed() throws IllegalStateException {
+    private void checkClosed() throws ClientIllegalStateException {
         if (isClosed()) {
-            IllegalStateException error = null;
+            ClientIllegalStateException error = null;
 
             if (getFailureCause() == null) {
-                error = new IllegalStateException("The Sender is closed");
+                error = new ClientIllegalStateException("The Sender is closed");
             } else {
-                error = new IllegalStateException("The Sender was closed due to an unrecoverable error.");
+                error = new ClientIllegalStateException("The Sender was closed due to an unrecoverable error.");
                 error.initCause(getFailureCause());
             }
 

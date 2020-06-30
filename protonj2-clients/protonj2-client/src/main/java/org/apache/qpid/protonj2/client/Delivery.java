@@ -40,20 +40,14 @@ public interface Delivery {
      */
     <E> Message<E> message() throws ClientException;
 
-    // TODO: Expose means of reading delivery bytes possibly with support for partial reads/
-    //       Need to define how we expose partial messages if at all and how to allow uses to
-    //       read / write those.  The above would likely have to throw a specific error if the
-    //       users is handed an incomplete message.
-    //       If adding such support the read and getMessage objects should be made mutually exclusive.
-    // readAll(OutputStream stream);
-    // readAll(ByteBuffer buffer);
-
     /**
      * Accepts and settles the delivery.
      *
-     * @return itself
+     * @return this {@link Delivery} instance.
+     *
+     * @throws ClientException if an error occurs while sending the disposition
      */
-    Delivery accept();
+    Delivery accept() throws ClientException;
 
     //TODO: other specific disposition helpers, or just direct to the below disposition catch-all?
 
@@ -66,16 +60,21 @@ public interface Delivery {
      *            the delivery state to apply
      * @param settle
      *            whether to {@link #settle()} the delivery at the same time
-     * @return itself
+     *
+     * @return this {@link Delivery} instance.
+     *
+     * @throws ClientException if an error occurs while sending the disposition
      */
-    Delivery disposition(DeliveryState state, boolean settle);
+    Delivery disposition(DeliveryState state, boolean settle) throws ClientException;
 
     /**
      * Settles the delivery locally.
      *
      * @return the delivery
+     *
+     * @throws ClientException if an error occurs while sending the disposition
      */
-    Delivery settle();
+    Delivery settle() throws ClientException;
 
     /**
      * @return true if the delivery has been locally settled.

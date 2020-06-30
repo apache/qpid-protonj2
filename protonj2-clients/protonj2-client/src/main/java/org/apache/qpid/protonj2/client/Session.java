@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientTransactionNotActiveException;
 
 /**
  * Session object used to create {@link Sender} and {@link Receiver} instances.
@@ -262,8 +263,8 @@ public interface Session {
      * under that active transaction.  If the user wishes to send with the same session but outside of a
      * transaction they user must commit the active transaction and not request that a new one be started.
      * A session can only have one active transaction at a time and as such any call to begin while there is
-     * a currently active transaction will throw an {@link IllegalStateException} to indicate that the operation
-     * being requested is not valid at that time.
+     * a currently active transaction will throw an {@link ClientTransactionNotActiveException} to indicate that
+     * the operation being requested is not valid at that time.
      *
      * This is a blocking method that will return successfully only after a new transaction has been started.
      *
@@ -277,7 +278,7 @@ public interface Session {
      * Commit the currently active transaction in this Session.
      *
      * Commit the currently active transaction in this Session but does not start a new transaction
-     * automatically.  If there is no current transaction this method will throw an {@link IllegalStateException}
+     * automatically.  If there is no current transaction this method will throw an {@link ClientTransactionNotActiveException}
      * to indicate this error.  If the active transaction has entered an in doubt state or was remotely rolled
      * back this method will throw an error to indicate that the commit failed and that a new transaction
      * need to be started by the user.  When a transaction rolled back error occurs the user should assume that
@@ -295,7 +296,7 @@ public interface Session {
      * Roll back the currently active transaction in this Session.
      *
      * Roll back the currently active transaction in this Session but does not automatically start a new
-     * transaction.  If there is no current transaction this method will throw an {@link IllegalStateException}
+     * transaction.  If there is no current transaction this method will throw an {@link ClientTransactionNotActiveException}
      * to indicate this error.  If the active transaction has entered an in doubt state or was remotely rolled
      * back this method will throw an error to indicate that the roll back failed and that a new transaction need
      * to be started by the user.
