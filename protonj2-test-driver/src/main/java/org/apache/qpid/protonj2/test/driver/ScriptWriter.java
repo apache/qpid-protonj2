@@ -29,6 +29,7 @@ import org.apache.qpid.protonj2.test.driver.actions.DetachInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.DispositionInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.EmptyFrameInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.EndInjectAction;
+import org.apache.qpid.protonj2.test.driver.actions.ExecuteUserCodeAction;
 import org.apache.qpid.protonj2.test.driver.actions.FlowInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.OpenInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.RawBytesInjectAction;
@@ -460,6 +461,12 @@ public abstract class ScriptWriter {
         }
 
         return response;
+    }
+
+    //----- Out of band script actions for user code
+
+    public ExecuteUserCodeAction execute(Runnable action) {
+        return new ExecuteUserCodeAction(getDriver(), action);
     }
 
     //----- Immediate operations performed outside the test script
