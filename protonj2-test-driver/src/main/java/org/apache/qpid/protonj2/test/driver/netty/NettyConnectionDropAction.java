@@ -67,7 +67,7 @@ public class NettyConnectionDropAction implements ScriptedAction {
 
                 @Override
                 public ScriptedAction perform(AMQPTestDriver driver) {
-                    return now();
+                    return NettyConnectionDropAction.this.now();
                 }
 
                 @Override
