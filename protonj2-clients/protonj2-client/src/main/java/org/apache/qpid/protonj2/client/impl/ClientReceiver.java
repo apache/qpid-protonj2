@@ -585,9 +585,17 @@ public class ClientReceiver implements Receiver {
             } else {
                 closeFuture.failed(failureCause);
             }
+
+            if (drainingFuture != null) {
+                drainingFuture.failed(failureCause);
+            }
         } else {
             openFuture.complete(this);
             closeFuture.complete(this);
+
+            if (drainingFuture != null) {
+                drainingFuture.failed(new ClientResourceClosedException("The Receiver has been closed"));
+            }
         }
     }
 }

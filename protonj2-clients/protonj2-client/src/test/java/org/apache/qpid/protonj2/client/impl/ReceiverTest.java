@@ -41,7 +41,6 @@ import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.hamcrest.Matcher;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1321,15 +1320,11 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    // TODO
-    @Ignore("Not yet working due to requests not getting purged.")
     @Test(timeout = 30000)
     public void testDrainFutureSignalsFailureWhenReceiverClosed() throws Exception {
         doTestDrainFutureSignalsFailureWhenReceiverClosedOrDetached(true);
     }
 
-    // TODO
-    @Ignore("Not yet working due to requests not getting purged.")
     @Test(timeout = 30000)
     public void testDrainFutureSignalsFailureWhenReceiverDetached() throws Exception {
         doTestDrainFutureSignalsFailureWhenReceiverClosedOrDetached(false);
@@ -1368,8 +1363,58 @@ public class ReceiverTest extends ImperativeClientTestCase {
             try {
                 receiver.drain().get(10, TimeUnit.SECONDS);
                 fail("Drain call should fail when link closed or detached.");
-            } catch (ClientIllegalStateException cliEx) {
+            } catch (ExecutionException cliEx) {
                 LOG.debug("Receiver threw error on drain call", cliEx);
+                assertTrue(cliEx.getCause() instanceof ClientException);
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testDrainFutureSignalsFailureWhenReceiverRemotelyClosed() throws Exception {
+        doTestDrainFutureSignalsFailureWhenReceiverRemotelyClosedOrDetached(true);
+    }
+
+    @Test(timeout = 30000)
+    public void testDrainFutureSignalsFailureWhenReceiverRemotelyDetached() throws Exception {
+        doTestDrainFutureSignalsFailureWhenReceiverRemotelyClosedOrDetached(false);
+    }
+
+    private void doTestDrainFutureSignalsFailureWhenReceiverRemotelyClosedOrDetached(boolean close) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue").openFuture().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectFlow().withDrain(true).withLinkCredit(10);
+            peer.remoteDetach().withClosed(close)
+                               .withErrorCondition(AmqpError.RESOURCE_DELETED.toString(), "Address was manually deleted").queue();
+            peer.expectDetach().withClosed(close);
+            peer.expectClose().respond();
+
+            try {
+                receiver.drain().get(10, TimeUnit.SECONDS);
+                fail("Drain call should fail when link closed or detached.");
+            } catch (ExecutionException cliEx) {
+                LOG.debug("Receiver threw error on drain call", cliEx);
+                assertTrue(cliEx.getCause() instanceof ClientException);
             }
 
             connection.close().get();
