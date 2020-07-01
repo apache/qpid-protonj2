@@ -29,6 +29,7 @@ import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSecurityException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
@@ -183,6 +184,53 @@ public class SenderTest extends ImperativeClientTestCase {
             } catch (ExecutionException exe) {
                 Throwable cause = exe.getCause();
                 assertTrue(cause instanceof ClientOperationTimedOutException);
+            }
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testOpenSenderWaitWithTimeoutFailsWhenConnectionDrops() throws Exception {
+        doTestOpenSenderWaitFailsWhenConnectionDrops(true);
+    }
+
+    @Test(timeout = 30000)
+    public void testOpenSenderWaitWithNoTimeoutFailsWhenConnectionDrops() throws Exception {
+        doTestOpenSenderWaitFailsWhenConnectionDrops(false);
+    }
+
+    private void doTestOpenSenderWaitFailsWhenConnectionDrops(boolean timeout) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender();
+            peer.dropAfterLastHandler(10);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Sender sender = session.openSender("test-queue");
+
+            try {
+                if (timeout) {
+                    sender.openFuture().get(10, TimeUnit.SECONDS);
+                } else {
+                    sender.openFuture().get();
+                }
+
+                fail("Should not complete the open future without an error");
+            } catch (ExecutionException exe) {
+                Throwable cause = exe.getCause();
+                assertTrue(cause instanceof ClientIOException);
             }
 
             connection.close().get(10, TimeUnit.SECONDS);

@@ -38,6 +38,7 @@ import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.util.AmqperativeTestRunner;
@@ -339,6 +340,46 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     @Test(timeout = 30000)
+    public void testConnectionOpenWaitWithTimeoutCanceledWhenConnectionDrops() throws Exception {
+        doTestConnectionOpenWaitCanceledWhenConnectionDrops(true);
+    }
+
+    @Test(timeout = 30000)
+    public void testConnectionOpenWaitWithNoTimeoutCanceledWhenConnectionDrops() throws Exception {
+        doTestConnectionOpenWaitCanceledWhenConnectionDrops(false);
+    }
+
+    private void doTestConnectionOpenWaitCanceledWhenConnectionDrops(boolean timeout) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen();
+            peer.dropAfterLastHandler(10);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            try {
+                if (timeout) {
+                    connection.openFuture().get(10, TimeUnit.SECONDS);
+                } else {
+                    connection.openFuture().get();
+                }
+
+                fail("Open should timeout when no open response and complete future with error.");
+            } catch (ExecutionException error) {
+                LOG.info("connection open failed with error: ", error);
+                assertTrue(error.getCause() instanceof ClientIOException);
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
     public void testConnectionCloseTimeoutWhenNoRemoteCloseArrivesTimeout() throws Exception {
         doTestConnectionCloseTimeoutWhenNoRemoteCloseArrives(true);
     }
@@ -377,6 +418,49 @@ public class ConnectionTest extends ImperativeClientTestCase {
             } catch (Throwable error) {
                 LOG.info("connection close failed with error: ", error);
                 fail("Close should ignore lack of close response and complete without error.");
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testConnectionCloseWaitWithTimeoutCompletesAfterRemoteConnectionDrops() throws Exception {
+        doTestConnectionCloseWaitCompletesAfterRemoteConnectionDrops(true);
+    }
+
+    @Test(timeout = 30000)
+    public void testConnectionCloseWaitWithNoTimeoutCompletesAfterRemoteConnectionDrops() throws Exception {
+        doTestConnectionCloseWaitCompletesAfterRemoteConnectionDrops(false);
+    }
+
+    private void doTestConnectionCloseWaitCompletesAfterRemoteConnectionDrops(boolean timeout) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectClose();
+            peer.dropAfterLastHandler(10);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            // Shouldn't throw from close, nothing to be done anyway.
+            try {
+                if (timeout) {
+                    connection.close().get(10, TimeUnit.SECONDS);
+                } else {
+                    connection.close().get();
+                }
+            } catch (Throwable error) {
+                LOG.info("connection close failed with error: ", error);
+                fail("Close should treat Connection drop as success and complete without error.");
             }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);

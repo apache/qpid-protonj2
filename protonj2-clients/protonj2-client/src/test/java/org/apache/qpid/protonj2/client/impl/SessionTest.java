@@ -34,6 +34,7 @@ import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.SessionOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
@@ -97,6 +98,53 @@ public class SessionTest extends ImperativeClientTestCase {
     }
 
     @Test(timeout = 30000)
+    public void testSessionOpenWaitWithTimeoutCanceledWhenConnectionDrops() throws Exception {
+        doTestSessionOpenWaitCanceledWhenConnectionDrops(true);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionOpenWaitWithNoTimeoutCanceledWhenConnectionDrops() throws Exception {
+        doTestSessionOpenWaitCanceledWhenConnectionDrops(false);
+    }
+
+    private void doTestSessionOpenWaitCanceledWhenConnectionDrops(boolean timeout) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin();
+            peer.dropAfterLastHandler(10);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            SessionOptions options = new SessionOptions();
+            options.openTimeout(75);
+            Session session = connection.openSession(options);
+
+            try {
+                if (timeout) {
+                    session.openFuture().get(10, TimeUnit.SECONDS);
+                } else {
+                    session.openFuture().get();
+                }
+
+                fail("Session Open should wait should abort when connection drops.");
+            } catch (ExecutionException error) {
+                LOG.info("Session open failed with error: ", error);
+                assertTrue(error.getCause() instanceof ClientIOException);
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
     public void testSessionCloseTimeoutWhenNoRemoteEndArrivesTimeout() throws Exception {
         doTestSessionCloseTimeoutWhenNoRemoteEndArrives(true);
     }
@@ -135,6 +183,54 @@ public class SessionTest extends ImperativeClientTestCase {
                 fail("Close should throw an error if the Session end doesn't arrive in time");
             } catch (Throwable error) {
                 LOG.info("Session close failed with error: ", error);
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionCloseWaitWithTimeoutCanceledWhenConnectionDrops() throws Exception {
+        doTestSessionCloseWaitCanceledWhenConnectionDrops(true);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionCloseWaitWithNoTimeoutCanceledWhenConnectionDrops() throws Exception {
+        doTestSessionCloseWaitCanceledWhenConnectionDrops(false);
+    }
+
+    private void doTestSessionCloseWaitCanceledWhenConnectionDrops(boolean timeout) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectEnd();
+            peer.dropAfterLastHandler(10);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            SessionOptions options = new SessionOptions();
+            options.closeTimeout(75);
+            Session session = connection.openSession(options).openFuture().get();
+
+            try {
+                if (timeout) {
+                    session.close().get(10, TimeUnit.SECONDS);
+                } else {
+                    session.close().get();
+                }
+
+                fail("Session Close should wait should abort when connection drops.");
+            } catch (ExecutionException error) {
+                LOG.info("Session close failed with error: ", error);
+                assertTrue(error.getCause() instanceof ClientIOException);
             }
 
             connection.close().get();
