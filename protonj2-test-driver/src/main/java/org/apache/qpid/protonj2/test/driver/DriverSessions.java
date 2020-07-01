@@ -41,6 +41,8 @@ public class DriverSessions {
     private short nextChannelId = 0;
     private int lastOpenedSession = -1;
 
+    private LinkTracker lastCoordinator;
+
     public DriverSessions(AMQPTestDriver driver) {
         this.driver = driver;
     }
@@ -51,6 +53,14 @@ public class DriverSessions {
             tracker = localSessions.get(UnsignedShort.valueOf(lastOpenedSession));
         }
         return tracker;
+    }
+
+    public LinkTracker getLastOpenedCoordinator() {
+        return lastCoordinator;
+    }
+
+    void setLastOpenedCoordinator(LinkTracker lastOpenedCoordinatorLink) {
+        this.lastCoordinator = lastOpenedCoordinatorLink;
     }
 
     public AMQPTestDriver getDriver() {

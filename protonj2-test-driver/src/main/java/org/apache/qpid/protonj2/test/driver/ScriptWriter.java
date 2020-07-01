@@ -26,6 +26,7 @@ import org.apache.qpid.protonj2.test.driver.actions.AttachInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.CloseInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.DetachInjectAction;
+import org.apache.qpid.protonj2.test.driver.actions.DetachLastCoordinatorInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.DispositionInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.EmptyFrameInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.EndInjectAction;
@@ -242,6 +243,10 @@ public abstract class ScriptWriter {
 
     public DetachInjectAction remoteDetach() {
         return new DetachInjectAction(getDriver());
+    }
+
+    public DetachInjectAction remoteDetachLastCoordinatorLink() {
+        return new DetachLastCoordinatorInjectAction(getDriver());
     }
 
     public FlowInjectAction remoteFlow() {

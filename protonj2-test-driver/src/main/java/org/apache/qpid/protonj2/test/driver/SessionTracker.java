@@ -156,6 +156,7 @@ public class SessionTracker {
 
         if (attach.getTarget() instanceof Coordinator) {
             lastOpenedCoordinatorLink = linkTracker;
+            driver.getSessions().setLastOpenedCoordinator(lastOpenedCoordinatorLink);
         }
 
         lastOpenedLink = linkTracker;
