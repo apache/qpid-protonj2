@@ -655,6 +655,8 @@ public class SenderTest extends ImperativeClientTestCase {
                                .withSenderSettleModeSettled()
                                .withReceivervSettlesFirst();
             peer.remoteFlow().withLinkCredit(10).queue();
+            peer.expectAttach().respond();  // Open a receiver to ensure sender link has processed
+            peer.expectFlow();              // the inbound flow frame we sent previously before send.
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -667,8 +669,9 @@ public class SenderTest extends ImperativeClientTestCase {
             Session session = connection.openSession().openFuture().get();
 
             SenderOptions options = new SenderOptions().deliveryMode(DeliveryMode.AT_MOST_ONCE);
-            Sender sender = session.openSender("test-qos", options).openFuture().get();
+            Sender sender = session.openSender("test-qos", options);
             assertEquals("test-qos", sender.address());
+            session.openReceiver("dummy").openFuture().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectTransfer().withNonNullPayload();
@@ -678,7 +681,6 @@ public class SenderTest extends ImperativeClientTestCase {
             final Message<String> message = Message.create("Hello World");
             final Tracker tracker;
             if (trySend) {
-                // TODO: This can return null if the flow isn't processed in time
                 tracker = sender.trySend(message);
             } else {
                 tracker = sender.send(message);
