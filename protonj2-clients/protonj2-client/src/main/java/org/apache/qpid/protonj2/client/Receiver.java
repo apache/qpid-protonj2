@@ -17,9 +17,7 @@
 package org.apache.qpid.protonj2.client;
 
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 
@@ -67,8 +65,6 @@ public interface Receiver {
      * @return a {@link Future} that will be completed when the remote detaches this {@link Receiver} link.
      */
     Future<Receiver> detach(ErrorCondition error);
-
-    // TODO - For these remote property reads do we support interruption on waiting for the open ?
 
     /**
      * Returns the address that the {@link Receiver} instance will be subscribed to.
@@ -207,15 +203,9 @@ public interface Receiver {
      */
     Future<Receiver> drain() throws ClientException;
 
-    // TODO: ideas
-
-    // TODO: JMS 2 style 'receiveBody' that gets rid of delivery handling? Auto-acks
-    //       (could extend later to client ack / transacted via session?)
-
-    long getQueueSize();
-
-    Receiver onMessage(Consumer<Delivery> handler);
-
-    Receiver onMessage(Consumer<Delivery> handler, ExecutorService executor);
+    /**
+     * @return the number of message that are currently buffered locally.
+     */
+    long prefetchedCount();
 
 }

@@ -79,7 +79,7 @@ public class ReceiverTest extends ImperativeClientTestSupport {
         Receiver receiver = connection.openReceiver(getTestName());
         assertSame(receiver, receiver.openFuture().get(5, TimeUnit.SECONDS));
 
-        Wait.assertEquals(1, () -> receiver.getQueueSize());
+        Wait.assertEquals(1, () -> receiver.prefetchedCount());
         Delivery delivery = receiver.receive();
         assertNotNull(delivery);
         Message<?> received = delivery.message();
@@ -116,7 +116,7 @@ public class ReceiverTest extends ImperativeClientTestSupport {
         Receiver receiver = connection.openReceiver(getTestName(), new ReceiverOptions().autoAccept(false));
         assertSame(receiver, receiver.openFuture().get(5, TimeUnit.SECONDS));
 
-        Wait.assertEquals(1, () -> receiver.getQueueSize());
+        Wait.assertEquals(1, () -> receiver.prefetchedCount());
         Delivery delivery = receiver.receive();
         assertNotNull(delivery);
         Message<?> received = delivery.message();

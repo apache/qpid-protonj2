@@ -19,12 +19,10 @@ package org.apache.qpid.protonj2.client.impl;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Delivery;
@@ -241,20 +239,8 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public long getQueueSize() {
+    public long prefetchedCount() {
         return messageQueue.size();
-    }
-
-    @Override
-    public Receiver onMessage(Consumer<Delivery> handler) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Receiver onMessage(Consumer<Delivery> handler, ExecutorService executor) {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     @Override

@@ -17,7 +17,6 @@
 package org.apache.qpid.protonj2.client.examples;
 
 import java.util.UUID;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -34,7 +33,6 @@ import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Tracker;
-import org.apache.qpid.protonj2.client.exceptions.ClientException;
 
 public class Samples {
 
@@ -103,22 +101,11 @@ public class Samples {
         Delivery delivery = receiver.receive(); // Waits forever
         Message<String> message1 = delivery.message();
         System.out.println(message1.body());
+        delivery.accept(); // Or configure auto-accept?
 
         Delivery delivery2 = receiver.receive(5_000); // Waits with timeout
 
         Delivery delivery3 = receiver.tryReceive(); // Return delivery if available, null if not.
-
-        receiver.onMessage(delivery4 -> {
-            try {
-                Message<String> message2 = delivery.message();
-                System.out.println(message2.body());
-            } catch (ClientException e) {
-                // TODO Make a RuntimeException
-                e.printStackTrace();
-            }
-        }, ForkJoinPool.commonPool());
-
-        delivery.accept(); // Or configure auto-accept?
 
         // =============== Create a durable ===========
 
