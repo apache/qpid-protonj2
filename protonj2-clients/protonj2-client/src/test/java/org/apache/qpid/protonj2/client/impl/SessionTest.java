@@ -74,8 +74,6 @@ public class SessionTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            connection.openFuture().get(10, TimeUnit.SECONDS);
-
             SessionOptions options = new SessionOptions();
             options.openTimeout(75);
             Session session = connection.openSession(options);
@@ -123,8 +121,6 @@ public class SessionTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            connection.openFuture().get(10, TimeUnit.SECONDS);
-
             SessionOptions options = new SessionOptions();
             options.closeTimeout(75);
             Session session = connection.openSession(options).openFuture().get();
@@ -172,7 +168,6 @@ public class SessionTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            connection.openFuture().get(10, TimeUnit.SECONDS);
             Session session = connection.openSession().openFuture().get();
 
             if (tiemout) {
@@ -213,8 +208,6 @@ public class SessionTest extends ImperativeClientTestCase {
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions().openTimeout(100);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
-            connection.openFuture().get();
-
             Session session = connection.openSession();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -351,8 +344,6 @@ public class SessionTest extends ImperativeClientTestCase {
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions().openTimeout(100);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
-            connection.openFuture().get();
-
             Session session = connection.openSession();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);

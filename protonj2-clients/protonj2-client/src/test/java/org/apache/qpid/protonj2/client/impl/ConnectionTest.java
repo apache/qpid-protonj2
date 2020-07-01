@@ -27,21 +27,15 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
-import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.ErrorCondition;
-import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
-import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Session;
-import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
@@ -55,7 +49,6 @@ import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.ConnectionError;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.hamcrest.Matchers;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -743,59 +736,5 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
-    }
-
-    @Ignore("Skipped for now, needs server, and proton changes")//TODO
-    @Test
-    public void testSendAndReceiveMessage() throws InterruptedException, ExecutionException, TimeoutException, ClientException {
-        Client container = Client.create();
-        System.out.println("Created container");
-
-        Connection conn = container.connect("localhost", 5672);
-        System.out.println("Connection creation started (or already failed), waiting.");
-
-        int timeout = 300;
-        conn.openFuture().get(timeout, TimeUnit.SECONDS);
-        System.out.println("Open completed successfully");
-
-        ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10);
-
-        Receiver receiver = conn.openReceiver("queue", receiverOptions);
-        receiver.openFuture().get(timeout, TimeUnit.SECONDS);
-
-        Sender sender = conn.openSender("queue");
-
-        sender.openFuture().get(timeout, TimeUnit.SECONDS);
-        System.out.println("Sender created successfully");
-
-        Thread.sleep(200);//TODO: remove, hack to allow sender to become sendable first.
-
-        int count = 100;
-        for (int i = 1; i <= count; i++) {
-            //TODO: This fails if a prev message wasn't locally settled yet (which I'm deliberately not doing here,
-            //      instead tweaked proton current() method to use !isPartial() rather than isSettled(..but that causes test failures))
-            Tracker tracker = sender.send(Message.create("myBasicTextMessage" + i));
-            System.out.println("Sent message " + i);
-
-            Delivery delivery = receiver.receive(1000);
-
-            if (delivery == null) {
-                throw new IllegalStateException("Expected delivery but did not get one");
-            }
-
-            System.out.println("Got message body: " + delivery.message().body());
-
-            delivery.accept();
-
-            Thread.sleep(20); //TODO: remove, hack to give time for settlement propagation (when send+receive done end to end via dispatch router)
-            System.out.println("Settled: " + tracker.remoteSettled());
-            //TODO: should locally settle sent delivery..if sender not set to 'auto settle' when peer does.
-        }
-
-        Future<Connection> closing = conn.close();
-        System.out.println("Close started, waiting.");
-
-        closing.get(3, TimeUnit.SECONDS);
-        System.out.println("Close completed");
     }
 }

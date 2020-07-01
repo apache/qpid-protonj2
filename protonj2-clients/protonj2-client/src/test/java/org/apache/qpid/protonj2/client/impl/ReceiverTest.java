@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -948,9 +947,6 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
-            peer.expectFlow();
-            peer.expectDetach().withClosed(close).respond();
-            peer.expectClose().respond();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -960,21 +956,23 @@ public class ReceiverTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession();
-            final Receiver receiver = session.openReceiver("test-queue");
+            ReceiverOptions options = new ReceiverOptions().creditWindow(0);
+            Receiver receiver = session.openReceiver("test-queue", options);
             receiver.openFuture().get();
 
-            ForkJoinPool.commonPool().submit(() -> {
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                }
-
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectFlow().withLinkCredit(10);
+            peer.execute(() -> {
                 if (close) {
                     receiver.close();
                 } else {
                     receiver.detach();
                 }
-            });
+            }).queue();
+            peer.expectDetach().withClosed(close).respond();
+            peer.expectClose().respond();
+
+            receiver.addCredit(10);
 
             try {
                 assertNull(receiver.receive());
@@ -1217,12 +1215,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test(timeout = 30000)
-    public void testReceiveCallFailsWhenReceiverClosed() throws Exception {
+    public void testReceiveCallFailsWhenReceiverPreviouslyClosed() throws Exception {
         doTestReceiveCallFailsWhenReceiverDetachedOrClosed(true);
     }
 
     @Test(timeout = 30000)
-    public void testReceiveCallFailsWhenReceiverDetached() throws Exception {
+    public void testReceiveCallFailsWhenReceiverPreviouslyDetached() throws Exception {
         doTestReceiveCallFailsWhenReceiverDetachedOrClosed(false);
     }
 

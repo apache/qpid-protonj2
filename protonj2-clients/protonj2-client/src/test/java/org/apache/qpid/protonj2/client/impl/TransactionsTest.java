@@ -781,10 +781,12 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             assertNotNull(tracker);
             assertNotNull(tracker.acknowledgeFuture().get());
-            assertEquals(tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL);
+            assertEquals("Delivery inside transaction should have Transactional state",
+                         tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL);
             assertNotNull(tracker.state());
-            assertEquals(tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL);
-            assertTrue(tracker.settled());
+            assertEquals("Delivery inside transaction should have Transactional state",
+                         tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL);
+            assertTrue("Delivery in transaction should be locally settled", tracker.settled());
 
             session.commitTransaction();
 

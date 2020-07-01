@@ -169,11 +169,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            connection.openFuture().get(10, TimeUnit.SECONDS);
-
             Session session = connection.openSession();
-            session.openFuture().get(10, TimeUnit.SECONDS);
-
             Sender sender = session.openSender("test-queue", new SenderOptions().openTimeout(10));
 
             try {
@@ -233,12 +229,7 @@ public class SenderTest extends ImperativeClientTestCase {
             ConnectionOptions options = new ConnectionOptions();
             options.closeTimeout(10);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
-
-            connection.openFuture().get(10, TimeUnit.SECONDS);
-
             Session session = connection.openSession();
-            session.openFuture().get(10, TimeUnit.SECONDS);
-
             Sender sender = session.openSender("test-queue");
             sender.openFuture().get(10, TimeUnit.SECONDS);
 
@@ -288,12 +279,7 @@ public class SenderTest extends ImperativeClientTestCase {
             ConnectionOptions options = new ConnectionOptions();
             options.sendTimeout(1);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
-
-            connection.openFuture().get(10, TimeUnit.SECONDS);
-
             Session session = connection.openSession();
-            session.openFuture().get(10, TimeUnit.SECONDS);
-
             Sender sender = session.openSender("test-queue");
             sender.openFuture().get(10, TimeUnit.SECONDS);
 
@@ -330,12 +316,7 @@ public class SenderTest extends ImperativeClientTestCase {
             ConnectionOptions options = new ConnectionOptions();
             options.sendTimeout(200);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
-
-            connection.openFuture().get(10, TimeUnit.SECONDS);
-
             Session session = connection.openSession();
-            session.openFuture().get(10, TimeUnit.SECONDS);
-
             Sender sender = session.openSender("test-queue");
             sender.openFuture().get(10, TimeUnit.SECONDS);
 
@@ -400,12 +381,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-
-            connection.openFuture().get(10, TimeUnit.SECONDS);
-
             Session session = connection.openSession();
-            session.openFuture().get(10, TimeUnit.SECONDS);
-
             Sender sender = session.openSender("test-queue");
             sender.openFuture().get(10, TimeUnit.SECONDS);
 
@@ -455,12 +431,7 @@ public class SenderTest extends ImperativeClientTestCase {
             ConnectionOptions options = new ConnectionOptions();
             options.sendTimeout(1);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
-
-            connection.openFuture().get(10, TimeUnit.SECONDS);
-
             Session session = connection.openSession();
-            session.openFuture().get(10, TimeUnit.SECONDS);
-
             Sender sender = session.openSender("test-queue");
             sender.openFuture().get(10, TimeUnit.SECONDS);
 
