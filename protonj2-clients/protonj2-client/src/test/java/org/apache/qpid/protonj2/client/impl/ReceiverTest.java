@@ -976,6 +976,52 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             try {
                 assertNull(receiver.receive());
+            } catch (ClientException ise) {
+                // Can happen if receiver closed before the receive call gets executed.
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testBlockingReceiveCancelledWhenReceiverRemotelyClosed() throws Exception {
+        doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(true);
+    }
+
+    @Test(timeout = 30000)
+    public void testBlockingReceiveCancelledWhenReceiverRemotelyDetached() throws Exception {
+        doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(false);
+    }
+
+    public void doTtestBlockingReceiveCancelledWhenReceiverRemotelyClosedOrDetached(boolean close) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteDetach().withClosed(close)
+                               .withErrorCondition(AmqpError.RESOURCE_DELETED.toString(), "Address was manually deleted")
+                               .afterDelay(10).queue();
+            peer.expectDetach().withClosed(close);
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue");
+            receiver.openFuture().get();
+
+            try {
+                assertNull(receiver.receive());
             } catch (IllegalStateException ise) {
                 // Can happen if receiver closed before the receive call gets executed.
             }
@@ -1406,6 +1452,41 @@ public class ReceiverTest extends ImperativeClientTestCase {
                                .withErrorCondition(AmqpError.RESOURCE_DELETED.toString(), "Address was manually deleted").queue();
             peer.expectDetach().withClosed(close);
             peer.expectClose().respond();
+
+            try {
+                receiver.drain().get(10, TimeUnit.SECONDS);
+                fail("Drain call should fail when link closed or detached.");
+            } catch (ExecutionException cliEx) {
+                LOG.debug("Receiver threw error on drain call", cliEx);
+                assertTrue(cliEx.getCause() instanceof ClientException);
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testDrainFutureSignalsFailureWhenConnectionDrops() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.expectFlow().withDrain(true);
+            peer.dropAfterLastHandler();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue").openFuture().get();
 
             try {
                 receiver.drain().get(10, TimeUnit.SECONDS);
