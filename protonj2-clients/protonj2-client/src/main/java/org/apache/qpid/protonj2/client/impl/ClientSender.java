@@ -213,7 +213,7 @@ public class ClientSender implements Sender {
             }
         });
 
-        return session.request(operation, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return session.request(this, operation, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -230,7 +230,7 @@ public class ClientSender implements Sender {
             }
         });
 
-        return session.request(operation, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return session.request(this, operation, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override

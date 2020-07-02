@@ -86,7 +86,7 @@ public class ClientConnection implements Connection {
     private final ClientConnectionCapabilities capabilities = new ClientConnectionCapabilities();
     private final ClientFutureFactory futureFactory;
 
-    private final Map<ClientFuture<?>, ClientFuture<?>> requests = new ConcurrentHashMap<>();
+    private final Map<ClientFuture<?>, Object> requests = new ConcurrentHashMap<>();
     private final Engine engine;
     private org.apache.qpid.protonj2.engine.Connection protonConnection;
     private ClientSession connectionSession;
@@ -207,7 +207,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(defaultSession, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, defaultSession, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -230,7 +230,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(createSession, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, createSession, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -253,7 +253,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -276,7 +276,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -308,7 +308,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -325,7 +325,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(defaultSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, defaultSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -348,7 +348,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -370,7 +370,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -388,7 +388,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(result, options.sendTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, result, options.sendTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -508,8 +508,8 @@ public class ClientConnection implements Connection {
         return getId() + ":" + sessionCounter.incrementAndGet();
     }
 
-    <T> T request(ClientFuture<T> request, long timeout, TimeUnit units) throws ClientException {
-        requests.put(request, request);
+    <T> T request(Object requestor, ClientFuture<T> request, long timeout, TimeUnit units) throws ClientException {
+        requests.put(request, requestor);
 
         try {
             if (timeout > 0) {

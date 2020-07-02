@@ -155,7 +155,7 @@ public class ClientSession implements Session {
             }
         });
 
-        return connection.request(createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return connection.request(this, createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -178,7 +178,7 @@ public class ClientSession implements Session {
             }
         });
 
-        return connection.request(createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return connection.request(this, createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -210,7 +210,7 @@ public class ClientSession implements Session {
             }
         });
 
-        return connection.request(createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return connection.request(this, createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -233,7 +233,7 @@ public class ClientSession implements Session {
             }
         });
 
-        return connection.request(createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return connection.request(this, createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -255,7 +255,7 @@ public class ClientSession implements Session {
             }
         });
 
-        return connection.request(createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return connection.request(this, createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -292,7 +292,7 @@ public class ClientSession implements Session {
             }
         });
 
-        return connection.request(beginFuture, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return connection.request(this, beginFuture, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -309,7 +309,7 @@ public class ClientSession implements Session {
             }
         });
 
-        return connection.request(commitFuture, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return connection.request(this, commitFuture, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -326,7 +326,7 @@ public class ClientSession implements Session {
             }
         });
 
-        return connection.request(rollbackFuture, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return connection.request(this, rollbackFuture, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     //----- Internal resource open APIs expected to be called from the connection event loop
@@ -423,8 +423,8 @@ public class ClientSession implements Session {
         return connection.scheduleRequestTimeout(request, timeout, errorSupplier);
     }
 
-    <T> T request(ClientFuture<T> request, long timeout, TimeUnit units) throws ClientException {
-        return connection.request(request, timeout, units);
+    <T> T request(Object requestor, ClientFuture<T> request, long timeout, TimeUnit units) throws ClientException {
+        return connection.request(requestor, request, timeout, units);
     }
 
     String id() {
