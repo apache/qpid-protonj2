@@ -21,57 +21,99 @@ import java.util.Map;
 
 import org.apache.qpid.protonj2.client.impl.ClientMessage;
 import org.apache.qpid.protonj2.types.Binary;
+import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
+import org.apache.qpid.protonj2.types.messaging.Section;
 
 /**
  * Message object that provides a high level abstraction to raw AMQP types
- * <p>
- * TODO - Should we have an AMQPMessage or some such that exposed more of the raw
- * proton types and make this one a much more abstract mapping ?
- * something like toAdvancedMessage or magic cast into something based on type of
  *
  * @param <E> The type of the message body that this message carries
  */
 public interface Message<E> {
 
-    // TODO: actual Message interface.
-    // Various questions: Have specific body type setters? Allow setting general body section types? Do both? Use a
-    // Message builder/factory?
-    //
-    // public static <E> Message<E> create(Class<E> typeClass);
-    //
-    public static Message<Void> create() {
+    /**
+     * Create and return an {@link Message} that will carry no body {@link Section}.
+     *
+     * @return a new {@link Message} instance with an empty body {@link Section}.
+     */
+    static Message<Void> create() {
         return ClientMessage.create(null, () -> {
             return null;
         });
     }
 
-    public static Message<Object> create(Object body) {
+    /**
+     * Create and return an {@link Message} that will wrap the given {@link Object} in
+     * an {@link AmqpValue} section.
+     *
+     * @param body
+     *      An object that will be wrapped in an {@link AmqpValue} body section.
+     *
+     * @return a new {@link Message} instance with a body containing the given value.
+     */
+    static Message<Object> create(Object body) {
         return ClientMessage.create(body, () -> {
             return new AmqpValue(body);
         });
     }
 
-    public static Message<String> create(String body) {
+    /**
+     * Create and return an {@link Message} that will wrap the given {@link String} in
+     * an {@link AmqpValue} section.
+     *
+     * @param body
+     *      An String value that will be wrapped in an {@link AmqpValue} body section.
+     *
+     * @return a new {@link Message} instance with a body containing the given string value.
+     */
+    static Message<String> create(String body) {
         return ClientMessage.create(body, () -> {
             return new AmqpValue(body);
         });
     }
 
-    public static Message<byte[]> create(byte[] body) {
+    /**
+     * Create and return an {@link Message} that will wrap the given byte array in
+     * an {@link Data} section.
+     *
+     * @param body
+     *      An byte array that will be wrapped in an {@link Data} body section.
+     *
+     * @return a new {@link Message} instance with a body containing the given byte array.
+     */
+    static Message<byte[]> create(byte[] body) {
         return ClientMessage.create(body, () -> {
             return new Data(new Binary(body));
         });
     }
 
-    public static <E> Message<List<E>> create(List<E> body) {
+    /**
+     * Create and return an {@link Message} that will wrap the given {@link List} in
+     * an {@link AmqpSequence} section.
+     *
+     * @param body
+     *      An List that will be wrapped in an {@link AmqpSequence} body section.
+     *
+     * @return a new {@link Message} instance with a body containing the given List.
+     */
+    static <E> Message<List<E>> create(List<E> body) {
         return ClientMessage.create(body, () -> {
-            return new AmqpValue(body);
+            return new AmqpSequence(body);
         });
     }
 
-    public static <K, V> Message<Map<K, V>> create(Map<K, V> body) {
+    /**
+     * Create and return an {@link Message} that will wrap the given {@link Map} in
+     * an {@link AmqpValue} section.
+     *
+     * @param body
+     *      An Map that will be wrapped in an {@link AmqpValue} body section.
+     *
+     * @return a new {@link Message} instance with a body containing the given Map.
+     */
+    static <K, V> Message<Map<K, V>> create(Map<K, V> body) {
         return ClientMessage.create(body, () -> {
             return new AmqpValue(body);
         });
@@ -226,35 +268,35 @@ public interface Message<E> {
 
     //----- Delivery Annotations
 
-    Object getDeliveryAnnotations(String key);
+    Object deliveryAnnotation(String key);
 
-    boolean hasDeliveryAnnotations(String key);
+    boolean hasDeliveryAnnotation(String key);
 
-    Message<E> setDeliveryAnnotation(String key, Object value);
+    Message<E> deliveryAnnotation(String key, Object value);
 
     //----- Message Annotations
 
-    Object getMessageAnnotation(String key);
+    Object messageAnnotation(String key);
 
     boolean hasMessageAnnotation(String key);
 
-    Message<E> setMessageAnnotation(String key, Object value);
+    Message<E> messageAnnotation(String key, Object value);
 
     //----- Application Properties
 
-    Object getApplicationProperty(String key);
+    Object applicationProperty(String key);
 
     boolean hasApplicationProperty(String key);
 
-    Message<E> setApplicationProperty(String key, Object value);
+    Message<E> applicationProperty(String key, Object value);
 
     //----- Footer
 
-    Object getFooter(String key);
+    Object footer(String key);
 
     boolean hasFooter(String key);
 
-    Message<E> setFooter(String key, Object value);
+    Message<E> footer(String key, Object value);
 
     //----- AMQP Body Section
 

@@ -65,7 +65,7 @@ public class SendAndReceiveTest extends ImperativeClientTestSupport {
                 final Message<byte[]> message = Message.create(body);
                 final long stime = System.currentTimeMillis();
 
-                message.setApplicationProperty("SendTime", stime);
+                message.applicationProperty("SendTime", stime);
                 message.messageId(latch.getCount());
 
                 finalSend = sender.send(message);
@@ -102,7 +102,7 @@ public class SendAndReceiveTest extends ImperativeClientTestSupport {
                 latch.countDown();
 
                 final Object id = message.messageId();
-                final long stime = (long) message.getApplicationProperty("SendTime");
+                final long stime = (long) message.applicationProperty("SendTime");
 
                 LOG.trace("Read message:{} which was sent at: {}", id, stime);
             }

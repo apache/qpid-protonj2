@@ -199,7 +199,7 @@ public class ProducerAndConsumerBench extends ImperativeClientTestSupport  {
             final Message<byte[]> message = Message.create(body);
             final long stime = System.currentTimeMillis();
 
-            message.setApplicationProperty("SendTime", stime);
+            message.applicationProperty("SendTime", stime);
             message.messageId(UnsignedLong.valueOf(sent));
 
             lastSentTracker = sender.send(message);
