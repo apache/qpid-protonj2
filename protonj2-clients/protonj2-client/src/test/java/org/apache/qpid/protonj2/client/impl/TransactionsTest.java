@@ -365,7 +365,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test // (timeout = 20_000)
     public void testExceptionOnCommitWhenCoordinatorLinkClosedAfterDischargeSent() throws Exception {
         final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
 
@@ -409,6 +409,72 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             session.beginTransaction();
             session.rollbackTransaction();
+
+            session.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testExceptionOnCommitWhenCoordinatorLinkClosedAfterTxnDeclaration() throws Exception {
+        doTestExceptionOnDischargeWhenCoordinatorLinkClosedAfterTxnDeclaration(true);
+    }
+
+    @Test(timeout = 20_000)
+    public void testExceptionOnRollbackWhenCoordinatorLinkClosedAfterTxnDeclaration() throws Exception {
+        doTestExceptionOnDischargeWhenCoordinatorLinkClosedAfterTxnDeclaration(false);
+    }
+
+    private void doTestExceptionOnDischargeWhenCoordinatorLinkClosedAfterTxnDeclaration(boolean commit) throws Exception {
+        final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept();
+            peer.remoteDetachLastCoordinatorLink().withClosed(true)
+                                                  .withErrorCondition(AmqpError.RESOURCE_DELETED.toString(), errorMessage).queue();
+            peer.expectDetach();
+            peer.expectAttach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            session.beginTransaction();
+
+            // Ensure that TXN coordinator frames are all processed before discharge action requested
+            // so that we can assure that we are dealing with an in-doubt transaction.
+            session.openSender("test").openFuture().get();
+
+            if (commit) {
+                try {
+                    session.commitTransaction();
+                    fail("Commit should have failed after link closed.");
+                } catch (ClientTransactionRolledBackException expected) {
+                    // Expect this to time out.
+                    String message = expected.getMessage();
+                    assertTrue(message.contains(errorMessage));
+                }
+            } else {
+                try {
+                    session.rollbackTransaction();
+                } catch (ClientTransactionNotActiveException expected) {
+                    fail("Rollback should not have failed after link closed.");
+                }
+            }
 
             session.close();
             connection.close().get();

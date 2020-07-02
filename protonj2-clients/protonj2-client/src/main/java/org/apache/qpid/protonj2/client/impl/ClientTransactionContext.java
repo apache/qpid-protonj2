@@ -79,27 +79,41 @@ public class ClientTransactionContext {
     public void commit(ClientFuture<Session> commitFuture, boolean startNew) throws ClientIllegalStateException {
         checkCanCommitTransaction();
 
-        TransactionController txnController = getOrCreateNewTxnController();
+        if (txnController.isLocallyOpen()) {
+            TransactionController txnController = getOrCreateNewTxnController();
 
-        currentTxn.getAttachments().set(DISCHARGE_FUTURE_NAME, commitFuture);
-        currentTxn.getAttachments().set(START_TRANSACTION_MARKER, startNew);
+            currentTxn.getAttachments().set(DISCHARGE_FUTURE_NAME, commitFuture);
+            currentTxn.getAttachments().set(START_TRANSACTION_MARKER, startNew);
 
-        txnController.registerCapacityAvailableHandler(controller -> {
-            txnController.discharge(currentTxn, false);
-        });
+            txnController.registerCapacityAvailableHandler(controller -> {
+                txnController.discharge(currentTxn, false);
+            });
+        } else {
+            currentTxn = null;
+            // The coordinator link closed which amount to a roll back of the declared
+            // transaction so we just complete the request as a failure.
+            commitFuture.failed(createRolledBackErrorFromClosedCoordinator());
+        }
     }
 
     public void rollback(ClientFuture<Session> rollbackFuture, boolean startNew) throws ClientIllegalStateException {
         checkCanRollbackTransaction();
 
-        TransactionController txnController = getOrCreateNewTxnController();
+        if (txnController.isLocallyOpen()) {
+            TransactionController txnController = getOrCreateNewTxnController();
 
-        currentTxn.getAttachments().set(DISCHARGE_FUTURE_NAME, rollbackFuture);
-        currentTxn.getAttachments().set(START_TRANSACTION_MARKER, startNew);
+            currentTxn.getAttachments().set(DISCHARGE_FUTURE_NAME, rollbackFuture);
+            currentTxn.getAttachments().set(START_TRANSACTION_MARKER, startNew);
 
-        txnController.registerCapacityAvailableHandler(controller -> {
-            txnController.discharge(currentTxn, true);
-        });
+            txnController.registerCapacityAvailableHandler(controller -> {
+                txnController.discharge(currentTxn, true);
+            });
+        } else {
+            currentTxn = null;
+            // Coordinator was closed after transaction was declared which amounts
+            // to a roll back of the transaction so we let this complete as normal.
+            rollbackFuture.complete(session);
+        }
     }
 
     public boolean isInTransaction() {
@@ -140,7 +154,7 @@ public class ClientTransactionContext {
     }
 
     private TransactionController getOrCreateNewTxnController() {
-        if (txnController == null) {
+        if (txnController == null || txnController.isLocallyClosed()) {
             Coordinator coordinator = new Coordinator();
             coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
 
@@ -286,6 +300,16 @@ public class ClientTransactionContext {
         }
     }
 
+    private ClientTransactionRolledBackException createRolledBackErrorFromClosedCoordinator() {
+        ClientException cause = ClientErrorSupport.convertToNonFatalException(txnController.getRemoteCondition());
+
+        if (!(cause instanceof ClientTransactionRolledBackException)) {
+            cause = new ClientTransactionRolledBackException(cause.getMessage(), cause);
+        }
+
+        return (ClientTransactionRolledBackException) cause;
+    }
+
     private void handleCoordinatorLocalClose(TransactionController controller) {
         if (currentTxn != null) {
             ClientException cause = ClientErrorSupport.convertToNonFatalException(controller.getRemoteCondition());
@@ -294,14 +318,16 @@ public class ClientTransactionContext {
             switch (currentTxn.getState()) {
                 case IDLE:
                 case DECLARING:
+                    // Remote closed so consider declare failed and clear current txn
                     cause = new ClientTransactionDeclarationException(cause.getMessage(), cause);
                     future = currentTxn.getAttachments().get(DECLARE_FUTURE_NAME);
+                    currentTxn = null;
                     break;
                 case DISCHARGING:
-                    if (!(cause instanceof ClientTransactionRolledBackException)) {
-                        cause = new ClientTransactionRolledBackException(cause.getMessage(), cause);
-                    }
+                    // Remote closed so consider discharge failed and clear current txn
+                    cause = createRolledBackErrorFromClosedCoordinator();
                     future = currentTxn.getAttachments().get(DISCHARGE_FUTURE_NAME);
+                    currentTxn = null;
                     break;
                 default:
                     break;
@@ -312,11 +338,6 @@ public class ClientTransactionContext {
                 future.failed(cause);
             }
         }
-
-        this.cachedReceiverOutcome = null;
-        this.cachedSenderOutcome = null;
-        this.txnController = null;
-        this.currentTxn = null;
     }
 
     private void handleEngineShutdown(Engine engine) {
