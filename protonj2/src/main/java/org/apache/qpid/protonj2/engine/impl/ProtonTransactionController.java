@@ -49,8 +49,8 @@ import org.apache.qpid.protonj2.types.transactions.Declare;
 import org.apache.qpid.protonj2.types.transactions.Declared;
 import org.apache.qpid.protonj2.types.transactions.Discharge;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
-import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.apache.qpid.protonj2.types.transport.DeliveryState.DeliveryStateType;
+import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 
 /**
  * {@link TransactionController} implementation that implements the abstraction
@@ -280,14 +280,12 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
 
     @Override
     public boolean isLocallyOpen() {
-        senderLink.isLocallyOpen();
-        return false;
+        return senderLink.isLocallyOpen();
     }
 
     @Override
     public boolean isLocallyClosed() {
-        senderLink.isLocallyClosed();
-        return false;
+        return senderLink.isLocallyClosed();
     }
 
     @Override

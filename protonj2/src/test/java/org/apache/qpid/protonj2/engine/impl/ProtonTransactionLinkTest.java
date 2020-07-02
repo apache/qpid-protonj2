@@ -417,6 +417,11 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         txnController.setCoordinator(coordinator);
         txnController.open();
 
+        assertTrue(txnController.isLocallyOpen());
+        assertTrue(txnController.isRemotelyOpen());
+        assertFalse(txnController.isLocallyClosed());
+        assertFalse(txnController.isRemotelyClosed());
+
         Transaction<TransactionController> txn1 = txnController.newTransaction();
         Transaction<TransactionController> txn2 = txnController.newTransaction();
 
@@ -429,6 +434,12 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         txnController.discharge(txn2, true);
 
         txnController.close();
+
+        assertFalse(txnController.isLocallyOpen());
+        assertFalse(txnController.isRemotelyOpen());
+        assertTrue(txnController.isLocallyClosed());
+        assertTrue(txnController.isRemotelyClosed());
+
         session.close();
         connection.close();
 
