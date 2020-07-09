@@ -67,9 +67,7 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
      *      The options that control the behavior of the deployed server.
      */
     public NettyTestPeer(ServerOptions options) {
-        this.driver = new NettyAwareAMQPTestDriver((frame) -> {
-            processDriverOutput(frame);
-        }, () -> eventLoop());
+        this.driver = new NettyAwareAMQPTestDriver(this::processDriverOutput, this::processDriverAssertion, this::eventLoop);
         this.server = new TestDriverServer(options);
     }
 
@@ -220,8 +218,8 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
 
     private final class NettyAwareAMQPTestDriver extends AMQPTestDriver {
 
-        public NettyAwareAMQPTestDriver(Consumer<ByteBuffer> frameConsumer, Supplier<ScheduledExecutorService> scheduler) {
-            super(frameConsumer, scheduler);
+        public NettyAwareAMQPTestDriver(Consumer<ByteBuffer> frameConsumer, Consumer<AssertionError> assertionConsumer, Supplier<ScheduledExecutorService> scheduler) {
+            super(frameConsumer, assertionConsumer, scheduler);
         }
 
         // If the send call occurs from a reaction to processing incoming data the
@@ -308,6 +306,11 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
         LOG.trace("AMQP Server Channel writing: {}", frame);
         // TODO - Error handling for failed write
         channel.writeAndFlush(Unpooled.wrappedBuffer(frame), channel.voidPromise());
+    }
+
+    protected void processDriverAssertion(AssertionError error) {
+        LOG.trace("AMQP Server Closing due to error: {}", error.getMessage());
+        close();
     }
 
     protected void processChannelInput(ByteBuf input) {

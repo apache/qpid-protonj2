@@ -53,6 +53,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
     private final DriverSessions sessions = new DriverSessions(this);
 
     private final Consumer<ByteBuffer> frameConsumer;
+    private final Consumer<AssertionError> assertionConsumer;
     private final Supplier<ScheduledExecutorService> schedulerSupplier;
 
     private volatile AssertionError failureCause;
@@ -82,7 +83,22 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
      *      A {@link Supplier} that will provide this driver with a scheduler service for delayed actions
      */
     public AMQPTestDriver(Consumer<ByteBuffer> frameConsumer, Supplier<ScheduledExecutorService> scheduler) {
+        this(frameConsumer, null, scheduler);
+    }
+
+    /**
+     * Create a test driver instance connected to the given Engine instance.
+     *
+     * @param frameConsumer
+     *      A {@link Consumer} that will accept encoded frames in ProtonBuffer instances.
+     * @param assertionConsumer
+     *      A {@link Consumer} that will handle test assertions from the scripted expectations
+     * @param scheduler
+     *      A {@link Supplier} that will provide this driver with a scheduler service for delayed actions
+     */
+    public AMQPTestDriver(Consumer<ByteBuffer> frameConsumer, Consumer<AssertionError> assertionConsumer, Supplier<ScheduledExecutorService> scheduler) {
         this.frameConsumer = frameConsumer;
+        this.assertionConsumer = assertionConsumer;
         this.schedulerSupplier = scheduler;
 
         // Configure test driver resources
@@ -458,11 +474,15 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
     public void signalFailure(Throwable ex) throws AssertionError {
         if (this.failureCause == null) {
             if (ex instanceof AssertionError) {
-                LOG.trace("Test Driver sending failure assertion due to: ", ex.getCause());
+                LOG.trace("Test Driver sending failure assertion due to: ", ex);
                 this.failureCause = (AssertionError) ex;
             } else {
                 LOG.trace("Test Driver sending failure assertion due to: ", ex);
                 this.failureCause = new AssertionError(ex);
+            }
+
+            if (assertionConsumer != null) {
+                assertionConsumer.accept(failureCause);
             }
         }
     }
