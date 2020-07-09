@@ -30,6 +30,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientInvalidContainerIDException;
 import org.apache.qpid.protonj2.client.exceptions.ClientInvalidDestinationException;
 import org.apache.qpid.protonj2.client.exceptions.ClientResourceAllocationException;
+import org.apache.qpid.protonj2.client.exceptions.ClientResourceDeletedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSecurityException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionRolledBackException;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -112,6 +113,8 @@ public abstract class ClientErrorSupport {
                 remoteError = new ClientResourceAllocationException(message);
             } else if (error.equals(AmqpError.NOT_FOUND)) {
                 remoteError = new ClientInvalidDestinationException(message);
+            } else if (error.equals(AmqpError.RESOURCE_DELETED)) {
+                remoteError = new ClientResourceDeletedException(message);
             } else if (error.equals(TransactionErrors.TRANSACTION_ROLLBACK)) {
                 remoteError = new ClientTransactionRolledBackException(message);
             } else {

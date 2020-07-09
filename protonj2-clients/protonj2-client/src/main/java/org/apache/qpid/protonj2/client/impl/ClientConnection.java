@@ -207,7 +207,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(this, defaultSession, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, defaultSession);
     }
 
     @Override
@@ -230,7 +230,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(this, createSession, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, createSession);
     }
 
     @Override
@@ -253,7 +253,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(this, createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, createReceiver);
     }
 
     @Override
@@ -276,7 +276,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(this, createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, createReceiver);
     }
 
     @Override
@@ -308,7 +308,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(this, createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, createReceiver);
     }
 
     @Override
@@ -325,7 +325,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(this, defaultSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, defaultSender);
     }
 
     @Override
@@ -348,7 +348,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(this, createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, createSender);
     }
 
     @Override
@@ -370,7 +370,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(this, createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, createSender);
     }
 
     @Override
@@ -388,7 +388,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(this, result, options.sendTimeout(), TimeUnit.MILLISECONDS);
+        return request(this, result);
     }
 
     @Override
@@ -508,15 +508,11 @@ public class ClientConnection implements Connection {
         return getId() + ":" + sessionCounter.incrementAndGet();
     }
 
-    <T> T request(Object requestor, ClientFuture<T> request, long timeout, TimeUnit units) throws ClientException {
+    <T> T request(Object requestor, ClientFuture<T> request) throws ClientException {
         requests.put(request, requestor);
 
         try {
-            if (timeout > 0) {
-                return request.get(timeout, units);
-            } else {
-                return request.get();
-            }
+            return request.get();
         } catch (Throwable error) {
             request.cancel(false);
             throw ClientExceptionSupport.createNonFatalOrPassthrough(error);

@@ -31,6 +31,7 @@ import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
+import org.apache.qpid.protonj2.client.exceptions.ClientResourceClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSecurityException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
@@ -1238,6 +1239,43 @@ public class SenderTest extends ImperativeClientTestCase {
             assertEquals(CREDIT, sentMessages.size());
 
             sender.close().get();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testSendBlockedForCreditFailsWhenLinkRemotelyClosed() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteDetach().withErrorCondition(AmqpError.RESOURCE_DELETED.toString(), "Link was deleted").afterDelay(25).queue();
+            peer.expectDetach();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Sender sender = session.openSender("test-queue");
+            sender.openFuture().get();
+
+            Message<String> message = Message.create("Hello World");
+
+            try {
+                sender.send(message);
+                fail("Send should have timed out.");
+            } catch (ClientResourceClosedException cliEx) {
+                // Expected send to throw indicating that the remote closed the link
+            }
+
             connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);

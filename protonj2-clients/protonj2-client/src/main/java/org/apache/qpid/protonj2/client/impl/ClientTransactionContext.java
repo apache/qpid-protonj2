@@ -21,6 +21,7 @@ import java.util.Arrays;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
+import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionDeclarationException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionNotActiveException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionRolledBackException;
@@ -85,6 +86,17 @@ public class ClientTransactionContext {
             currentTxn.getAttachments().set(DISCHARGE_FUTURE_NAME, commitFuture);
             currentTxn.getAttachments().set(START_TRANSACTION_MARKER, startNew);
 
+            if (session.options().requestTimeout() > 0) {
+                session.scheduleRequestTimeout(commitFuture, session.options().requestTimeout(), () -> {
+                    try {
+                        txnController.close();
+                    } catch (Exception ignore) {
+                    }
+
+                    return new ClientTransactionRolledBackException("Timed out waiting for Transaction commit to complete");
+                });
+            }
+
             txnController.registerCapacityAvailableHandler(controller -> {
                 txnController.discharge(currentTxn, false);
             });
@@ -104,6 +116,17 @@ public class ClientTransactionContext {
 
             currentTxn.getAttachments().set(DISCHARGE_FUTURE_NAME, rollbackFuture);
             currentTxn.getAttachments().set(START_TRANSACTION_MARKER, startNew);
+
+            if (session.options().requestTimeout() > 0) {
+                session.scheduleRequestTimeout(rollbackFuture, session.options().requestTimeout(), () -> {
+                    try {
+                        txnController.close();
+                    } catch (Exception ignore) {
+                    }
+
+                    return new ClientOperationTimedOutException("Timed out waiting for Transaction rollback to complete");
+                });
+            }
 
             txnController.registerCapacityAvailableHandler(controller -> {
                 txnController.discharge(currentTxn, true);
@@ -147,6 +170,17 @@ public class ClientTransactionContext {
 
         cachedReceiverOutcome = null;
         cachedSenderOutcome = null;
+
+        if (session.options().requestTimeout() > 0) {
+            session.scheduleRequestTimeout(beginFuture, session.options().requestTimeout(), () -> {
+                try {
+                    txnController.close();
+                } catch (Exception ignore) {
+                }
+
+                return new ClientTransactionDeclarationException("Timed out waiting for Transaction declaration to complete");
+            });
+        }
 
         txnController.registerCapacityAvailableHandler(controller -> {
             txnController.declare(currentTxn);

@@ -265,7 +265,7 @@ public class ClientReceiver implements Receiver {
             }
         });
 
-        return session.request(this, creditAdded, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return session.request(this, creditAdded);
     }
 
     @Override

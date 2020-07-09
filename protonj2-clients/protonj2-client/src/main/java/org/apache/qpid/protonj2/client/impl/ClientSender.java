@@ -213,7 +213,7 @@ public class ClientSender implements Sender {
             }
         });
 
-        return session.request(this, operation, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return session.request(this, operation);
     }
 
     @Override
@@ -230,7 +230,7 @@ public class ClientSender implements Sender {
             }
         });
 
-        return session.request(this, operation, options.requestTimeout(), TimeUnit.MILLISECONDS);
+        return session.request(this, operation);
     }
 
     @Override
@@ -543,6 +543,16 @@ public class ClientSender implements Sender {
             }
         } catch (Throwable ignore) {
         }
+
+        // Cancel all blocked sends
+        blocked.removeIf((held) -> {
+            if (failureCause != null) {
+                held.operation.failed(failureCause);
+            } else {
+                held.operation.failed(new ClientResourceClosedException("The sender link has closed"));
+            }
+            return true;
+        });
 
         if (failureCause != null) {
             openFuture.failed(failureCause);

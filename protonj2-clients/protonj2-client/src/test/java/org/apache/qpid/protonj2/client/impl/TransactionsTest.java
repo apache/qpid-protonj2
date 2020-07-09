@@ -36,11 +36,9 @@ import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Session;
-import org.apache.qpid.protonj2.client.SessionOptions;
 import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
-import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionDeclarationException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionNotActiveException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionRolledBackException;
@@ -107,6 +105,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             peer.expectCoordinatorAttach().respond();
             peer.remoteFlow().withLinkCredit(2).queue();
             peer.expectDeclare();
+            peer.expectDetach().respond();
             peer.expectEnd().respond();
             peer.expectClose().respond();
             peer.start();
@@ -123,7 +122,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             try {
                 session.beginTransaction();
                 fail("Begin should have timoued out after no response.");
-            } catch (ClientOperationTimedOutException expected) {
+            } catch (ClientTransactionDeclarationException expected) {
                 // Expect this to time out.
             }
 
@@ -131,14 +130,14 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 session.commitTransaction();
                 fail("Commit should have failed due to no active transaction.");
             } catch (ClientIllegalStateException expected) {
-                // Expect this to time out.
+                // Expect this to fail since transaction not declared
             }
 
             try {
                 session.rollbackTransaction();
                 fail("Rollback should have failed due to no active transaction.");
             } catch (ClientIllegalStateException expected) {
-                // Expect this to time out.
+                // Expect this to fail since transaction not declared
             }
 
             session.close();
@@ -149,15 +148,15 @@ public class TransactionsTest extends ImperativeClientTestCase {
     }
 
     @Test(timeout = 20_000)
-    public void testTimedOutExceptionOnBeginWithDelayedResponseDischargesTransaction() throws Exception {
+    public void testTimedOutExceptionOnBeginWithNoResponseThenRecoverWithNextBegin() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectCoordinatorAttach().respond();
             peer.remoteFlow().withLinkCredit(2).queue();
-            peer.expectDeclare().accept().afterDelay(50);
-            peer.expectDischarge().accept();
+            peer.expectDeclare();
+            peer.expectDetach().respond();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -165,41 +164,41 @@ public class TransactionsTest extends ImperativeClientTestCase {
             LOG.info("Sender test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            SessionOptions options = new SessionOptions().requestTimeout(25);
-            Session session = connection.openSession(options).openFuture().get();
+            ConnectionOptions options = new ConnectionOptions().requestTimeout(50);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            Session session = connection.openSession().openFuture().get();
 
             try {
                 session.beginTransaction();
                 fail("Begin should have timoued out after no response.");
-            } catch (ClientOperationTimedOutException expected) {
-                LOG.info("Transaction begin timed out as expected");
+            } catch (ClientTransactionDeclarationException expected) {
+                // Expect this to time out.
             }
-
-            // TODO: Handling of request timeout is disjoint from the operation making
-            //       proper cleanup of current state not possible on the timeouet which
-            //       means we are in an inconsistent state until the declared actually
-            //       does arrive which isn't what we really want.  Need to revisit the
-            //       request handling in connection.
-
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectEnd().respond();
-            peer.expectClose().respond();
 
             try {
                 session.commitTransaction();
                 fail("Commit should have failed due to no active transaction.");
             } catch (ClientIllegalStateException expected) {
-                // Expect this to time out.
+                // Expect this to fail since transaction not declared
             }
 
             try {
                 session.rollbackTransaction();
                 fail("Rollback should have failed due to no active transaction.");
             } catch (ClientIllegalStateException expected) {
-                // Expect this to time out.
+                // Expect this to fail since transaction not declared
             }
 
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept();
+            peer.expectDischarge().accept();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            session.beginTransaction();
+            session.commitTransaction();
             session.close();
             connection.close().get();
 
@@ -365,7 +364,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test // (timeout = 20_000)
+    @Test(timeout = 20_000)
     public void testExceptionOnCommitWhenCoordinatorLinkClosedAfterDischargeSent() throws Exception {
         final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
 
