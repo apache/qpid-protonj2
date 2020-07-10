@@ -536,7 +536,7 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
         getCreditState().clearCredit();
         if (operability.ordinal() < LinkOperabilityState.SESSION_LOCALLY_CLOSED.ordinal()) {
             operability = LinkOperabilityState.SESSION_LOCALLY_CLOSED;
-            transitionToParentRemotelyClosed();
+            transitionToParentLocallyClosed();
         }
     }
 

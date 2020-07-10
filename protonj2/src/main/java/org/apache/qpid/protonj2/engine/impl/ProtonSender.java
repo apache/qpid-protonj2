@@ -403,11 +403,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     @Override
-    protected void transitionToRemotelyOpenedState() {
-        // Nothing to do yet on remotely opened.
-    }
-
-    @Override
     protected void transitionToRemotelyDetached() {
         sendable = false;
     }

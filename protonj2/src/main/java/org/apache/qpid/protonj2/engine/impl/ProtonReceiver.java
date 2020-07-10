@@ -239,9 +239,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {
-        // TODO - When any resource is closed we could still allow read of inbound data but the user
-        //        can't operate on the delivery so do we want that ?
-
         sessionWindow.deliveryRead(delivery, bytesRead);
     }
 
@@ -254,7 +251,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     Receiver signalDeliveryRead(IncomingDelivery delivery) {
-        //TODO: what if it is null? Limbo? Release? Should we instead error out?
         if (deliveryReadEventHandler != null) {
             deliveryReadEventHandler.handle(delivery);
         }
@@ -418,8 +414,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     private void verifyNewDeliveryIdSequence(Transfer transfer, DeliveryIdTracker currentDeliveryId) {
-        // TODO - Fail engine, session, or link ?
-
         if (!transfer.hasDeliveryId()) {
             getEngine().engineFailed(
                 new ProtocolViolationException("No delivery-id specified on first Transfer of new delivery"));
