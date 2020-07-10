@@ -195,6 +195,74 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
+    @Test(timeout = 20_000)
+    public void testSenderReceivesParentSessionClosedEvent() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        final AtomicBoolean parentClosed = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectEnd().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("test");
+        sender.parentEndpointClosedHandler(result -> parentClosed.set(true));
+
+        sender.open();
+
+        session.close();
+
+        assertTrue("Sender should have reported parent session closed", parentClosed.get());
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testSenderReceivesParentConnectionClosedEvent() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        final AtomicBoolean parentClosed = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("test");
+        sender.parentEndpointClosedHandler(result -> parentClosed.set(true));
+
+        sender.open();
+
+        connection.close();
+
+        assertTrue("Sender should have reported parent connection closed", parentClosed.get());
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
     @Test(timeout = 30000)
     public void testEngineShutdownEventNeitherEndClosed() throws Exception {
         doTestEngineShutdownEvent(false, false);

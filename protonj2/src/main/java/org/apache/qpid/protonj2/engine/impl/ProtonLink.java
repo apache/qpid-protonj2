@@ -86,6 +86,8 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
     private EventHandler<L> localDetachHandler;
     private EventHandler<L> remoteDetachHandler;
 
+    private EventHandler<L> parentEndpointClosedEventHandler;
+
     /**
      * Create a new link instance with the given parent session.
      *
@@ -496,6 +498,24 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
         return self();
     }
 
+    @Override
+    public L parentEndpointClosedHandler(EventHandler<L> handler) {
+        this.parentEndpointClosedEventHandler = handler;
+        return self();
+    }
+
+    EventHandler<L> parentEndpointClosedHandler() {
+        return parentEndpointClosedEventHandler;
+    }
+
+    L fireParentEndpointClosed() {
+        if (parentEndpointClosedEventHandler != null && isLocallyOpen()) {
+            parentEndpointClosedEventHandler.handle(self());
+        }
+
+        return self();
+    }
+
     //----- Link state change handlers that can be overridden by specific link implementations
 
     protected void transitionedToLocallyOpened() {
@@ -537,6 +557,7 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
         if (operability.ordinal() < LinkOperabilityState.SESSION_LOCALLY_CLOSED.ordinal()) {
             operability = LinkOperabilityState.SESSION_LOCALLY_CLOSED;
             transitionToParentLocallyClosed();
+            fireParentEndpointClosed();
         }
     }
 
@@ -553,6 +574,7 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
         if (operability.ordinal() < LinkOperabilityState.CONNECTION_LOCALLY_CLOSED.ordinal()) {
             operability = LinkOperabilityState.CONNECTION_LOCALLY_CLOSED;
             transitionToParentLocallyClosed();
+            fireParentEndpointClosed();
         }
     }
 
