@@ -544,13 +544,14 @@ public class ClientSender implements Sender {
         } catch (Throwable ignore) {
         }
 
-        // Cancel all blocked sends
+        // Cancel all blocked sends passing an appropriate error to the future
         blocked.removeIf((held) -> {
             if (failureCause != null) {
                 held.operation.failed(failureCause);
             } else {
                 held.operation.failed(new ClientResourceClosedException("The sender link has closed"));
             }
+
             return true;
         });
 

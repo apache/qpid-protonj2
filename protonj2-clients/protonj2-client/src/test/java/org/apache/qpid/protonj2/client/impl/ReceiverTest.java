@@ -1517,6 +1517,43 @@ public class ReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test(timeout = 30000)
+    public void testDrainFutureSignalsFailureWhenSessionRemotelyClosed() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.expectFlow().withDrain(true);
+            peer.remoteEnd().withErrorCondition(AmqpError.RESOURCE_DELETED.toString(), "Session was closed").afterDelay(5).queue();
+            peer.expectEnd();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue").openFuture().get();
+
+            try {
+                receiver.drain().get(10, TimeUnit.SECONDS);
+                fail("Drain call should fail when session closed by remote.");
+            } catch (ExecutionException cliEx) {
+                LOG.debug("Receiver threw error on drain call", cliEx);
+                assertTrue(cliEx.getCause() instanceof ClientException);
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
     public void testDrainFutureSignalsFailureWhenConnectionDrops() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -1539,7 +1576,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             try {
                 receiver.drain().get(10, TimeUnit.SECONDS);
-                fail("Drain call should fail when link closed or detached.");
+                fail("Drain call should fail when the connection drops.");
             } catch (ExecutionException cliEx) {
                 LOG.debug("Receiver threw error on drain call", cliEx);
                 assertTrue(cliEx.getCause() instanceof ClientException);

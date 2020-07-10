@@ -521,6 +521,17 @@ public class ClientConnection implements Connection {
         }
     }
 
+    void failAllPendingRequests(Object requestor, ClientException cause) {
+        requests.entrySet().removeIf(entry -> {
+            if (entry.getValue() == requestor) {
+                entry.getKey().failed(cause);
+                return true;
+            }
+
+            return false;
+        });
+    }
+
     ScheduledFuture<?> scheduleRequestTimeout(final AsyncResult<?> request, long timeout, final ClientException error) {
         if (timeout != INFINITE) {
             return executor.schedule(() -> request.failed(error), timeout, TimeUnit.MILLISECONDS);
