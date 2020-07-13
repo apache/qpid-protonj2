@@ -49,9 +49,43 @@ public interface Delivery {
      */
     Delivery accept() throws ClientException;
 
-    //TODO: other specific disposition helpers, or just direct to the below disposition catch-all?
+    /**
+     * Releases and settles the delivery.
+     *
+     * @return this {@link Delivery} instance.
+     *
+     * @throws ClientException if an error occurs while sending the disposition
+     */
+    Delivery release() throws ClientException;
 
-    //TODO: DeliveryState carries settlement so create of it default to settled.
+    /**
+     * Rejects and settles the delivery, sending supplied error information along
+     * with the rejection.
+     *
+     * @param condition
+     *      The error condition value to supply with the rejection.
+     * @param description
+     *      The error description value to supply with the rejection.
+     *
+     * @return this {@link Delivery} instance.
+     *
+     * @throws ClientException if an error occurs while sending the disposition
+     */
+    Delivery reject(String condition, String description) throws ClientException;
+
+    /**
+     * Modifies and settles the delivery.
+     *
+     * @param deliveryFailed
+     *      Indicates if the modified delivery failed.
+     * @param undeliverableHere
+     *      Indicates if the modified delivery should not be returned here again.
+     *
+     * @return this {@link Delivery} instance.
+     *
+     * @throws ClientException if an error occurs while sending the disposition
+     */
+    Delivery modified(boolean deliveryFailed, boolean undeliverableHere) throws ClientException;
 
     /**
      * Updates the DeliveryState, and optionally settle the delivery as well.

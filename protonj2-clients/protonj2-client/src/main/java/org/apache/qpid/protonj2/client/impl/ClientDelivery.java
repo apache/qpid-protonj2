@@ -24,6 +24,10 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientPartialMessageException;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
+import org.apache.qpid.protonj2.types.messaging.Modified;
+import org.apache.qpid.protonj2.types.messaging.Rejected;
+import org.apache.qpid.protonj2.types.messaging.Released;
+import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 
 /**
  * Client inbound delivery object.
@@ -67,6 +71,24 @@ public class ClientDelivery implements Delivery {
     @Override
     public Delivery accept() throws ClientException {
         receiver.disposition(delivery, Accepted.getInstance(), true);
+        return this;
+    }
+
+    @Override
+    public Delivery release() throws ClientException {
+        receiver.disposition(delivery, Released.getInstance(), true);
+        return this;
+    }
+
+    @Override
+    public Delivery reject(String condition, String description) throws ClientException {
+        receiver.disposition(delivery, new Rejected().setError(new ErrorCondition(condition, description)), true);
+        return this;
+    }
+
+    @Override
+    public Delivery modified(boolean deliveryFailed, boolean undeliverableHere) throws ClientException {
+        receiver.disposition(delivery, new Modified().setDeliveryFailed(deliveryFailed).setUndeliverableHere(undeliverableHere), true);
         return this;
     }
 
