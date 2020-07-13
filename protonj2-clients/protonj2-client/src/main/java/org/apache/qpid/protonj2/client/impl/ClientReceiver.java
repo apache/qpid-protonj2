@@ -340,6 +340,7 @@ public class ClientReceiver implements Receiver {
                       .openHandler(receiver -> handleRemoteOpen(receiver))
                       .closeHandler(receiver -> handleRemoteCloseOrDetach(receiver))
                       .detachHandler(receiver -> handleRemoteCloseOrDetach(receiver))
+                      .parentEndpointClosedHandler(receiver -> handleParentEndpointClosed(receiver))
                       .deliveryStateUpdatedHandler(delivery -> handleDeliveryRemotelyUpdated(delivery))
                       .deliveryReadHandler(delivery -> handleDeliveryReceived(delivery))
                       .creditStateUpdateHandler(receiver -> handleReceiverCreditUpdated(receiver))
@@ -463,6 +464,10 @@ public class ClientReceiver implements Receiver {
         } else {
             immediateLinkShutdown();
         }
+    }
+
+    private void handleParentEndpointClosed(org.apache.qpid.protonj2.engine.Receiver receiver) {
+        immediateLinkShutdown();
     }
 
     private void handleDeliveryReceived(IncomingDelivery delivery) {

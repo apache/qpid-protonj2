@@ -267,6 +267,7 @@ public class ClientSender implements Sender {
                     .openHandler(sender -> handleRemoteOpen(sender))
                     .closeHandler(sender -> handleRemoteCloseOrDetach(sender))
                     .detachHandler(sender -> handleRemoteCloseOrDetach(sender))
+                    .parentEndpointClosedHandler(sender -> handleParentEndpointClosed(sender))
                     .deliveryStateUpdatedHandler(delivery -> handleDeliveryUpdated(delivery))
                     .creditStateUpdateHandler(linkState -> handleCreditStateUpdated(linkState))
                     .engineShutdownHandler(engine -> immediateLinkShutdown())
@@ -346,6 +347,10 @@ public class ClientSender implements Sender {
         } else {
             immediateLinkShutdown();
         }
+    }
+
+    private void handleParentEndpointClosed(org.apache.qpid.protonj2.engine.Sender sender) {
+        immediateLinkShutdown();
     }
 
     private void handleRemoteOpen(org.apache.qpid.protonj2.engine.Sender sender) {

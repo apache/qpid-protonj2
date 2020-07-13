@@ -605,12 +605,6 @@ public class ClientSession implements Session {
         } catch (Throwable ignore) {
         }
 
-        // Inform all links that the session is closing in order to give them a chance to
-        // cancel any pending requests.
-        protonSession.links().forEach((link) -> {
-            link.close();
-        });
-
         if (failureCause != null) {
             openFuture.failed(failureCause);
             // Connection failed so throw from session close won't give any tangible
