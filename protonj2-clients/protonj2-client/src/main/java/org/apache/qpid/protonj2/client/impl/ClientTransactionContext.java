@@ -205,6 +205,7 @@ public class ClientTransactionContext {
                          .openHandler(this::handleCoordinatorOpen)
                          .closeHandler(this::handleCoordinatorClose)
                          .localCloseHandler(this::handleCoordinatorLocalClose)
+                         .parentEndpointClosedHandler(this::handleParentEndpointClosed)
                          .engineShutdownHandler(this::handleEngineShutdown)
                          .open();
 
@@ -372,6 +373,10 @@ public class ClientTransactionContext {
                 future.failed(cause);
             }
         }
+    }
+
+    private void handleParentEndpointClosed(TransactionController txnController) {
+        txnController.close();
     }
 
     private void handleEngineShutdown(Engine engine) {
