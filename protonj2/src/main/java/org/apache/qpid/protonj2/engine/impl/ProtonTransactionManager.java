@@ -28,16 +28,20 @@ import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.engine.Receiver;
 import org.apache.qpid.protonj2.engine.Transaction;
 import org.apache.qpid.protonj2.engine.TransactionManager;
+import org.apache.qpid.protonj2.engine.TransactionState;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineStateException;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
+import org.apache.qpid.protonj2.types.messaging.Rejected;
 import org.apache.qpid.protonj2.types.messaging.Source;
 import org.apache.qpid.protonj2.types.transactions.Coordinator;
 import org.apache.qpid.protonj2.types.transactions.Declare;
 import org.apache.qpid.protonj2.types.transactions.Discharge;
+import org.apache.qpid.protonj2.types.transactions.TransactionalState;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 
 /**
@@ -96,25 +100,59 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
 
     @Override
     public TransactionManager declared(Transaction<TransactionManager> transaction, Binary txnId) {
-        // TODO Auto-generated method stub
+        ProtonManagerTransaction txn = (ProtonManagerTransaction) transaction;
+
+        if (txnId == null || txnId.getArray() == null || txnId.getArray().length == 0) {
+            throw new IllegalArgumentException("Cannot declare a transaction without a transaction Id");
+        }
+
+        txn.setState(TransactionState.DECLARED);
+        txn.setTxnId(txnId);
+
+        // Start tracking this transaction as active.
+        transactions.put(txnId.asProtonBuffer(), txn);
+
+        TransactionalState declaration = new TransactionalState();
+        declaration.setOutcome(Accepted.getInstance());
+        declaration.setTxnId(txnId);
+
+        txn.getDeclare().disposition(declaration, true);
+
         return this;
     }
 
     @Override
     public TransactionManager discharged(Transaction<TransactionManager> transaction) {
-        // TODO Auto-generated method stub
+        ProtonManagerTransaction txn = (ProtonManagerTransaction) transaction;
+
+        // Before sending the disposition remove if from tracking in case the write fails.
+        transactions.remove(txn.getTxnId().asProtonBuffer());
+
+        txn.setState(TransactionState.DISCHARGED);
+        txn.getDischarge().disposition(Accepted.getInstance(), true);
+
         return this;
     }
 
     @Override
     public TransactionManager declareFailed(Transaction<TransactionManager> transaction, ErrorCondition condition) {
-        // TODO Auto-generated method stub
+        ProtonManagerTransaction txn = (ProtonManagerTransaction) transaction;
+
+        txn.setState(TransactionState.DECLARE_FAILED);
+        txn.getDeclare().disposition(new Rejected().setError(condition), true);
+
         return this;
     }
 
     @Override
     public TransactionManager dischargeFailed(Transaction<TransactionManager> transaction, ErrorCondition condition) {
-        // TODO Auto-generated method stub
+        ProtonManagerTransaction txn = (ProtonManagerTransaction) transaction;
+
+        transactions.remove(txn.getTxnId().asProtonBuffer());
+
+        txn.setState(TransactionState.DISCHARGE_FAILED);
+        txn.getDischarge().disposition(new Rejected().setError(condition), true);
+
         return this;
     }
 
@@ -329,11 +367,10 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
             } else if (container.getValue() instanceof Discharge) {
                 Discharge discharge = (Discharge) container.getValue();
                 Binary txnId = discharge.getTxnId();
-                boolean rollback = discharge.getFail();
 
                 ProtonManagerTransaction transaction = transactions.get(txnId.asProtonBuffer());
                 if (transaction != null) {
-                    fireDischarge(transaction);
+                    fireDischarge(transaction.setDischarge(delivery));
                 }
             } else {
                 throw new ProtocolViolationException("TXN Coordinator expects Declare and Dishcahrge Delivery payloads only");

@@ -51,7 +51,7 @@ import io.netty.buffer.Unpooled;
  * AMQP Close injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
  */
-public final class TransferInjectAction extends AbstractPerformativeInjectAction<Transfer> {
+public class TransferInjectAction extends AbstractPerformativeInjectAction<Transfer> {
 
     private final Transfer transfer = new Transfer();
     private final DeliveryStateBuilder stateBuilder = new DeliveryStateBuilder();
@@ -456,6 +456,11 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
 
         public BodySectionBuilder withSequence(List<Object> sequence) {
             TransferInjectAction.this.body = new AmqpSequence(sequence);
+            return this;
+        }
+
+        public BodySectionBuilder withDescribed(DescribedType described) {
+            TransferInjectAction.this.body = new AmqpValue(described);
             return this;
         }
     }

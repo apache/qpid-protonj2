@@ -85,12 +85,12 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         return this;
     }
 
-    public AttachInjectAction asSender() {
+    public AttachInjectAction ofSender() {
         attach.setRole(Role.SENDER.getValue());
         return this;
     }
 
-    public AttachInjectAction asReceiver() {
+    public AttachInjectAction ofReceiver() {
         attach.setRole(Role.RECEIVER.getValue());
         return this;
     }

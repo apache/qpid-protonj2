@@ -886,4 +886,73 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
+
+    @Test(timeout = 20_000)
+    public void testTransactionManagerSignalsTxnDeclarationAndDischarge() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        final byte[] TXN_ID = new byte[] {0, 1, 2, 3};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.remoteAttach().withName("TXN-Link")
+                           .withHandle(0)
+                           .ofSender()
+                           .withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withInitialDeliveryCount(0)
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session();
+
+        final AtomicReference<TransactionManager> transactionManager = new AtomicReference<>();
+        session.transactionManagerOpenHandler(manager -> {
+            transactionManager.set(manager);
+        });
+
+        session.open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectAttach().ofReceiver()
+                           .withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString());
+
+        assertNotNull(transactionManager.get());
+        assertNotNull(transactionManager.get().getRemoteCoordinator());
+
+        final TransactionManager manager = transactionManager.get();
+
+        assertEquals(TxnCapability.LOCAL_TXN, manager.getRemoteCoordinator().getCapabilities()[0]);
+
+        manager.setCoordinator(manager.getRemoteCoordinator().copy());
+        manager.setSource(manager.getRemoteSource().copy());
+        manager.open();
+        manager.declareHandler(declared -> {
+            manager.declared(declared, new Binary(TXN_ID));
+        });
+        manager.dischargeHandler(discharged -> {
+            manager.discharged(discharged);
+        });
+
+        peer.waitForScriptToComplete();
+        peer.expectDisposition().withState().transactional().withTxnId(TXN_ID);
+        peer.remoteDischarge().withTxnId(TXN_ID).withFail(false).withDeliveryId(1).withDeliveryTag(new byte[] {1}).queue();
+        peer.expectDisposition().withState().accepted();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        // Starts the flow of Transaction frames
+        peer.remoteDeclare().withDeliveryId(0).withDeliveryTag(new byte[] {0}).now();
+
+        manager.close();
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
 }

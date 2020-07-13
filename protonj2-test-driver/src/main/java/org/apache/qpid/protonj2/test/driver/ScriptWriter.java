@@ -25,8 +25,10 @@ import org.apache.qpid.protonj2.test.driver.actions.AMQPHeaderInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.AttachInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.CloseInjectAction;
+import org.apache.qpid.protonj2.test.driver.actions.DeclareInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.DetachInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.DetachLastCoordinatorInjectAction;
+import org.apache.qpid.protonj2.test.driver.actions.DischargeInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.DispositionInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.EmptyFrameInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.EndInjectAction;
@@ -259,6 +261,14 @@ public abstract class ScriptWriter {
 
     public DispositionInjectAction remoteDisposition() {
         return new DispositionInjectAction(getDriver());
+    }
+
+    public DeclareInjectAction remoteDeclare() {
+        return new DeclareInjectAction(getDriver());
+    }
+
+    public DischargeInjectAction remoteDischarge() {
+        return new DischargeInjectAction(getDriver());
     }
 
     public EmptyFrameInjectAction remoteEmptyFrame() {
