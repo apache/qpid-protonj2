@@ -87,6 +87,8 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     private EventHandler<Transaction<TransactionController>> dischargedEventHandler;
     private EventHandler<Transaction<TransactionController>> dischargeFailureEventHandler;
 
+    private EventHandler<TransactionController> parentEndpointClosedEventHandler;
+
     private List<EventHandler<TransactionController>> capacityObservers = new ArrayList<>();
 
     public ProtonTransactionController(ProtonSender senderLink) {
@@ -97,6 +99,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
                        .creditStateUpdateHandler(this::handleLinkCreditUpdated)
                        .openHandler(this::handleSenderLinkOpened)
                        .closeHandler(this::handleSenderLinkClosed)
+                       .parentEndpointClosedHandler(this::handleParentEndpointClosed)
                        .localOpenHandler(this::handleSenderLinkLocallyOpened)
                        .localCloseHandler(this::handleSenderLinkLocallyClosed)
                        .engineShutdownHandler(this::handleEngineShutdown);
@@ -230,6 +233,18 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     public TransactionController dischargeFailureHandler(EventHandler<Transaction<TransactionController>> dischargeFailureEventHandler) {
         this.dischargeFailureEventHandler = dischargeFailureEventHandler;
         return this;
+    }
+
+    @Override
+    public TransactionController parentEndpointClosedHandler(EventHandler<TransactionController> handler) {
+        this.parentEndpointClosedEventHandler = handler;
+        return self();
+    }
+
+    private void fireParentEndpointClosed() {
+        if (parentEndpointClosedEventHandler != null && isLocallyOpen()) {
+            parentEndpointClosedEventHandler.handle(self());
+        }
     }
 
     private void fireDeclaredEvent(ProtonControllerTransaction transaction) {
@@ -410,6 +425,10 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
 
     private void handleSenderLinkClosed(Sender sender) {
         fireRemoteClose();
+    }
+
+    private void handleParentEndpointClosed(Sender sender) {
+        fireParentEndpointClosed();
     }
 
     private void handleEngineShutdown(Engine engine) {

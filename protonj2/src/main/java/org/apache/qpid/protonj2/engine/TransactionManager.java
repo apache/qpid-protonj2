@@ -184,4 +184,19 @@ public interface TransactionManager extends Endpoint<TransactionManager> {
      */
     TransactionManager dischargeHandler(EventHandler<Transaction<TransactionManager>> dischargeEventHandler);
 
+    /**
+     * Sets a {@link EventHandler} for when the parent {@link Session} or {@link Connection} of this {@link TransactionManager}
+     * is locally closed.
+     *
+     * Typically used by clients for logging or other state update event processing.  Clients should not perform any
+     * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
+     * doing so is undefined.
+     *
+     * @param handler
+     *      The {@link EventHandler} to notify when this transaction manger's parent endpoint is locally closed.
+     *
+     * @return the link for chaining.
+     */
+    TransactionManager parentEndpointClosedHandler(EventHandler<TransactionManager> handler);
+
 }

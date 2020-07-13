@@ -53,6 +53,8 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
     private EventHandler<Transaction<TransactionManager>> declareEventHandler;
     private EventHandler<Transaction<TransactionManager>> dischargeEventHandler;
 
+    private EventHandler<TransactionManager> parentEndpointClosedEventHandler;
+
     private Map<ProtonBuffer, ProtonManagerTransaction> transactions = new HashMap<>();
 
     public ProtonTransactionManager(ProtonReceiver receiverLink) {
@@ -65,6 +67,7 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
                          .closeHandler(this::handleReceiverLinkClosed)
                          .localOpenHandler(this::handleReceiverLinkLocallyOpened)
                          .localCloseHandler(this::handleReceiverLinkLocallyClosed)
+                         .parentEndpointClosedHandler(this::handleParentEndpointClosed)
                          .engineShutdownHandler(this::handleEngineShutdown)
                          .deliveryReadHandler(this::handleDeliveryRead)
                          .deliveryStateUpdatedHandler(this::handleDeliveryStateUpdate);
@@ -123,34 +126,34 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
         return this;
     }
 
-    EventHandler<Transaction<TransactionManager>> declareHandler() {
-        return declareEventHandler;
-    }
-
-    TransactionManager fireDeclare(ProtonManagerTransaction transaction) {
-        if (declareEventHandler != null) {
-            declareEventHandler.handle(transaction);
-        }
-
-        return this;
-    }
-
     @Override
     public TransactionManager dischargeHandler(EventHandler<Transaction<TransactionManager>> dischargeEventHandler) {
         this.dischargeEventHandler = dischargeEventHandler;
         return this;
     }
 
-    EventHandler<Transaction<TransactionManager>> dischargeHandler() {
-        return dischargeEventHandler;
+    @Override
+    public TransactionManager parentEndpointClosedHandler(EventHandler<TransactionManager> handler) {
+        this.parentEndpointClosedEventHandler = handler;
+        return this;
     }
 
-    TransactionManager fireDischarge(ProtonManagerTransaction transaction) {
+    private void fireDeclare(ProtonManagerTransaction transaction) {
+        if (declareEventHandler != null) {
+            declareEventHandler.handle(transaction);
+        }
+    }
+
+    private void fireDischarge(ProtonManagerTransaction transaction) {
         if (dischargeEventHandler != null) {
             dischargeEventHandler.handle(transaction);
         }
+    }
 
-        return this;
+    private void fireParentEndpointClosed() {
+        if (parentEndpointClosedEventHandler != null && isLocallyOpen()) {
+            parentEndpointClosedEventHandler.handle(self());
+        }
     }
 
     //----- Hand off methods for link specific elements.
@@ -303,6 +306,10 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
 
     private void handleEngineShutdown(Engine engine) {
         fireEngineShutdown();
+    }
+
+    private void handleParentEndpointClosed(Receiver receiver) {
+        fireParentEndpointClosed();
     }
 
     // container

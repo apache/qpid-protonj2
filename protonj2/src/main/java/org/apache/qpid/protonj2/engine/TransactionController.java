@@ -224,4 +224,19 @@ public interface TransactionController extends Endpoint<TransactionController> {
      */
     TransactionController registerCapacityAvailableHandler(EventHandler<TransactionController> handler);
 
+    /**
+     * Sets a {@link EventHandler} for when the parent {@link Session} or {@link Connection} of this {@link TransactionController}
+     * is locally closed.
+     *
+     * Typically used by clients for logging or other state update event processing.  Clients should not perform any
+     * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
+     * doing so is undefined.
+     *
+     * @param handler
+     *      The {@link EventHandler} to notify when this transaction controller's parent endpoint is locally closed.
+     *
+     * @return the link for chaining.
+     */
+    TransactionController parentEndpointClosedHandler(EventHandler<TransactionController> handler);
+
 }
