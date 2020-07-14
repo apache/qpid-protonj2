@@ -121,6 +121,22 @@ public interface TransactionManager extends Endpoint<TransactionManager> {
      *
      * @return this {@link TransactionManager}.
      */
+    default TransactionManager declared(Transaction<TransactionManager> transaction, byte[] txnId) {
+        return declared(transaction, new Binary(txnId));
+    }
+
+    /**
+     * Respond to a previous {@link Declare} request from the remote {@link TransactionController}
+     * indicating that the requested transaction has been successfully declared and that deliveries
+     * can now be enlisted in that transaction.
+     *
+     * @param transaction
+     *      The transaction instance that is associated with the declared transaction.
+     * @param txnId
+     *      The binary transaction Id to assign the now declared transaction instance.
+     *
+     * @return this {@link TransactionManager}.
+     */
     TransactionManager declared(Transaction<TransactionManager> transaction, Binary txnId);
 
     /**
