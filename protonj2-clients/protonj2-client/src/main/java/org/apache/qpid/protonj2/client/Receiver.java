@@ -157,7 +157,7 @@ public interface Receiver {
      * Adds credit to the {@link Receiver} link for use when there receiver has not been configured
      * with a credit window.  When credit window is configured credit replenishment is automatic and
      * calling this method will result in an exception indicating that the operation is invalid.
-     *
+     * <p>
      * If the {@link Receiver} is draining and this method is called an exception will be thrown
      * to indicate that credit cannot be replenished until the remote has drained the existing link
      * credit.
@@ -173,12 +173,39 @@ public interface Receiver {
 
     /**
      * Blocking receive method that waits forever for the remote to provide a Message for consumption.
+     * <p>
+     * Receive calls will only grant credit on their own if a credit window is configured in the
+     * {@link ReceiverOptions} which is done by default.  If the client application has configured
+     * no credit window than this method will not grant any credit when it enters the wait for new
+     * incoming messages.
      *
      * @return a new {@link Delivery} received from the remote.
      *
      * @throws ClientException if the {@link Receiver} is closed when the call to receive is made.
      */
     Delivery receive() throws ClientException;
+
+    /**
+     * Blocking receive method that waits the given time interval for the remote to provide a
+     * {@link Delivery} for consumption.  The amount of time this method blocks is based on the
+     * timeout value. If timeout is equal to <code>-1</code> then it blocks until a message is received.
+     * If timeout is equal to zero then it will not block and simply return a {@link Delivery} if one
+     * is available locally.  If timeout value is greater than zero then it blocks up to timeout amount
+     * of time.
+     * <p>
+     * Receive calls will only grant credit on their own if a credit window is configured in the
+     * {@link ReceiverOptions} which is done by default.  If the client application has configured
+     * no credit window than this method will not grant any credit when it enters the wait for new
+     * incoming messages.
+     *
+     * @param timeout
+     *      The time value used to control how long the receive method waits for a new {@link Delivery}.
+     *
+     * @return a new {@link Delivery} received from the remote.
+     *
+     * @throws ClientException if the {@link Receiver} is closed when the call to receive is made.
+     */
+    Delivery receive(long timeout) throws ClientException;
 
     /**
      * Non-blocking receive method that either returns a message is one is immediately available or
@@ -189,10 +216,6 @@ public interface Receiver {
      * @throws ClientException if the {@link Receiver} is closed when the call to try to receive is made.
      */
     Delivery tryReceive() throws ClientException;
-
-    Delivery receive(long timeout) throws ClientException;
-    // TODO: with credit window, above is fine...without, we would need to
-    // manage the credit in one of various fashions (or say we dont).
 
     /**
      * Requests the remote to drain previously granted credit for this {@link Receiver} link.
