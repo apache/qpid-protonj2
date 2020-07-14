@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.client.DeliveryMode;
 import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Sender;
@@ -507,12 +508,18 @@ public class ClientSender implements Sender {
             delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this), false);
         }
 
-        // TODO: How do we provide a send mode equivalent to Qpid JMS asynchronous send on NON_PERSISTENT Message.
-        //       Do we complete before write for presettled senders?
-        request.complete(tracker);
-
-        delivery.writeBytes(buffer);
-        // request.complete(tracker);
+        // For now we only complete the request after the IO operation when the delivery mode is
+        // something other than DeliveryMode.AT_MOST_ONCE.  We should think about other options to
+        // allow this under other modes given the tracker can communicate errors if the eventual
+        // IO operation does indeed fail otherwise most modes suffer a more significant performance
+        // hit waiting on the IO operation to complete.
+        if (options.deliveryMode() == DeliveryMode.AT_MOST_ONCE) {
+            request.complete(tracker);
+            delivery.writeBytes(buffer);
+        } else {
+            delivery.writeBytes(buffer);
+            request.complete(tracker);
+        }
     }
 
     private void checkClosed() throws ClientIllegalStateException {
