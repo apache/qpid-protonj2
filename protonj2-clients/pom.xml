@@ -51,13 +51,13 @@
     <protonj2-version>0.1.0-SNAPSHOT</protonj2-version>
     <slf4j-version>1.7.30</slf4j-version>
     <log4j-slf4j-version>2.13.3</log4j-slf4j-version>
-    <netty-version>4.1.50.Final</netty-version>
+    <netty-version>4.1.51.Final</netty-version>
     <netty-tcnative-version>2.0.30.Final</netty-tcnative-version>
 
     <!--  Test Dependencies -->
     <qpid-jms-version>0.52.0</qpid-jms-version>
-    <activemq-version>5.15.13</activemq-version>
-    <mockito-version>3.3.3</mockito-version>
+    <activemq-version>5.16.0</activemq-version>
+    <mockito-version>3.4.0</mockito-version>
     <junit.jupiter.version>5.6.2</junit.jupiter.version>
     <junit.vintage.version>5.6.2</junit.vintage.version>
 
