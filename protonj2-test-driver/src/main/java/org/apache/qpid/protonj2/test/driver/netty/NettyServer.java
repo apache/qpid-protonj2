@@ -252,11 +252,8 @@ public abstract class NettyServer implements AutoCloseable {
 
     public void stop() throws InterruptedException {
         if (started.compareAndSet(true, false)) {
-            try {
-                LOG.info("Syncing channel close");
-                serverChannel.close().sync();
-            } catch (InterruptedException e) {
-            }
+            LOG.info("Syncing channel close");
+            serverChannel.close().syncUninterruptibly();
 
             // Shut down all event loops to terminate all threads.
             int timeout = 100;
