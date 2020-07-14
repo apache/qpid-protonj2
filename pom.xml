@@ -39,12 +39,12 @@
     <!-- Test dependency versions -->
     <junit.jupiter.version>5.6.2</junit.jupiter.version>
     <junit.vintage.version>5.6.2</junit.vintage.version>
-    <mockito-version>3.3.3</mockito-version>
+    <mockito-version>3.4.0</mockito-version>
     <proton-version>0.33.5</proton-version>
     <slf4j-version>1.7.30</slf4j-version>
     <log4j-slf4j-version>2.13.3</log4j-slf4j-version>
     <hamcrest-version>2.2</hamcrest-version>
-    <netty-version>4.1.50.Final</netty-version>
+    <netty-version>4.1.51.Final</netty-version>
 
     <!-- Plugin versions -->
     <maven-bundle-plugin-version>4.2.1</maven-bundle-plugin-version>
