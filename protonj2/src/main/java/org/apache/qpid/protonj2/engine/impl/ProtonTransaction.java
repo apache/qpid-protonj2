@@ -33,6 +33,7 @@ import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 public abstract class ProtonTransaction<E extends Endpoint<?>> implements Transaction<E> {
 
     private TransactionState state = TransactionState.IDLE;
+    private DischargeState dischargeState = DischargeState.NONE;
     private ErrorCondition condition;
     private Binary txnId;
 
@@ -71,6 +72,16 @@ public abstract class ProtonTransaction<E extends Endpoint<?>> implements Transa
 
     ProtonTransaction<E> setCondition(ErrorCondition condition) {
         this.condition = condition;
+        return this;
+    }
+
+    @Override
+    public DischargeState getDischargeState() {
+        return dischargeState;
+    }
+
+    ProtonTransaction<E> setDischargeState(DischargeState state) {
+        this.dischargeState = state;
         return this;
     }
 

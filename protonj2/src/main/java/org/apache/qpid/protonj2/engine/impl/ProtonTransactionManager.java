@@ -27,6 +27,7 @@ import org.apache.qpid.protonj2.engine.EventHandler;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.engine.Receiver;
 import org.apache.qpid.protonj2.engine.Transaction;
+import org.apache.qpid.protonj2.engine.Transaction.DischargeState;
 import org.apache.qpid.protonj2.engine.TransactionManager;
 import org.apache.qpid.protonj2.engine.TransactionState;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
@@ -363,14 +364,25 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
             AmqpValue container = (AmqpValue) payloadDecoder.readObject(payload, payloadDecoder.getCachedDecoderState());
 
             if (container.getValue() instanceof Declare) {
-                fireDeclare(new ProtonManagerTransaction(this).setDeclare(delivery));
+                ProtonManagerTransaction transaction = new ProtonManagerTransaction(this);
+
+                transaction.setDeclare(delivery);
+                transaction.setState(TransactionState.DECLARING);
+
+                fireDeclare(transaction);
             } else if (container.getValue() instanceof Discharge) {
                 Discharge discharge = (Discharge) container.getValue();
                 Binary txnId = discharge.getTxnId();
 
                 ProtonManagerTransaction transaction = transactions.get(txnId.asProtonBuffer());
+
                 if (transaction != null) {
+                    transaction.setState(TransactionState.DISCHARGING);
+                    transaction.setDischargeState(discharge.getFail() ? DischargeState.ROLLBACK : DischargeState.COMMIT);
+
                     fireDischarge(transaction.setDischarge(delivery));
+                } else {
+                    // TODO: Error handling for bad discharge command.
                 }
             } else {
                 throw new ProtocolViolationException("TXN Coordinator expects Declare and Dishcahrge Delivery payloads only");

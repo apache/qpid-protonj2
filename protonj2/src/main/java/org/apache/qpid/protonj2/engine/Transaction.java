@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.engine;
 
+import org.apache.qpid.protonj2.engine.Transaction.DischargeState;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.transactions.Declare;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
@@ -27,10 +28,26 @@ import org.apache.qpid.protonj2.types.transport.ErrorCondition;
  */
 public interface Transaction<E extends Endpoint<?>> {
 
+    public enum DischargeState {
+        NONE,
+        COMMIT,
+        ROLLBACK
+    }
+
     /**
      * @return the current {@link Transaction} state.
      */
     TransactionState getState();
+
+    /**
+     * For a {@link Transaction} that has either been requested to discharge or has successfully
+     * discharged the {@link DischargeState} reflects whether the transaction was to be committed or
+     * rolled back.   Prior to a discharge being attempted there is no state value and this method
+     * returns {@link DischargeState.NONE}.
+     *
+     * @return the current {@link DischargeState} of the transaction.
+     */
+    DischargeState getDischargeState();
 
     /**
      * @return true if the {@link Transaction} has been marked declared by the {@link TransactionManager}.

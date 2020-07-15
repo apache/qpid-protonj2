@@ -34,6 +34,7 @@ import org.apache.qpid.protonj2.engine.EventHandler;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Transaction;
+import org.apache.qpid.protonj2.engine.Transaction.DischargeState;
 import org.apache.qpid.protonj2.engine.TransactionController;
 import org.apache.qpid.protonj2.engine.TransactionState;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
@@ -196,7 +197,10 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
             throw new IllegalArgumentException("Cannot discharge a transaction that was created by another controller.");
         }
 
-        ((ProtonTransaction<TransactionController>) transaction).setState(TransactionState.DISCHARGING);
+        ProtonTransaction<TransactionController> protonTxn = (ProtonTransaction<TransactionController>) transaction;
+
+        protonTxn.setState(TransactionState.DISCHARGING);
+        protonTxn.setDischargeState(failed ? DischargeState.ROLLBACK : DischargeState.COMMIT);
 
         Discharge discharge = new Discharge();
         discharge.setFail(failed);
