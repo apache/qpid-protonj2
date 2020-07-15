@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.function.Supplier;
 
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -31,7 +33,7 @@ import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
 import org.apache.qpid.protonj2.types.messaging.Properties;
 import org.apache.qpid.protonj2.types.messaging.Section;
 
-public class ClientMessage<E> implements Message<E> {
+public class ClientMessage<E> implements AdvancedMessage<E> {
 
     private Header header;
     private DeliveryAnnotations deliveryAnnotations;
@@ -42,6 +44,7 @@ public class ClientMessage<E> implements Message<E> {
 
     private final Supplier<Section> sectionSupplier;
     private E body;
+    private int messageFormat;
 
     /**
      * Create a new {@link ClientMessage} instance with a {@link Supplier} that will
@@ -54,10 +57,15 @@ public class ClientMessage<E> implements Message<E> {
         this.sectionSupplier = sectionSupplier;
     }
 
+    @Override
+    public AdvancedMessage<E> toAdvancedMessage() {
+        return this;
+    }
+
     //----- Entry point for creating new ClientMessage instances.
 
     public static <V> Message<V> create(V body, Supplier<Section> sectionSupplier) {
-        return new ClientMessage<V>(sectionSupplier).setBody(body);
+        return new ClientMessage<V>(sectionSupplier).body(body);
     }
 
     //----- Message Header API
@@ -382,66 +390,12 @@ public class ClientMessage<E> implements Message<E> {
         return body;
     }
 
-    ClientMessage<E> setBody(E body) {
+    ClientMessage<E> body(E body) {
         this.body = body;
         return this;
     }
 
     //----- Access to proton resources
-
-    Header getHeader() {
-        return header;
-    }
-
-    Message<E> setHeader(Header header) {
-        this.header = header;
-        return this;
-    }
-
-    DeliveryAnnotations getDeliveryAnnotations() {
-        return deliveryAnnotations;
-    }
-
-    Message<E> setDeliveryAnnotations(DeliveryAnnotations annotations) {
-        this.deliveryAnnotations = annotations;
-        return this;
-    }
-
-    MessageAnnotations getMessageAnnotations() {
-        return messageAnnotations;
-    }
-
-    Message<E> setMessageAnnotations(MessageAnnotations annotations) {
-        this.messageAnnotations = annotations;
-        return this;
-    }
-
-    Properties getProperties() {
-        return properties;
-    }
-
-    Message<E> setProperties(Properties properties) {
-        this.properties = properties;
-        return this;
-    }
-
-    ApplicationProperties getApplicationProperties() {
-        return applicationProperties;
-    }
-
-    Message<E> setApplicationProperties(ApplicationProperties applicationProperties) {
-        this.applicationProperties = applicationProperties;
-        return this;
-    }
-
-    Footer getFooter() {
-        return footer;
-    }
-
-    Message<E> setFooter(Footer footer) {
-        this.footer = footer;
-        return this;
-    }
 
     Section getBodySection() {
         return sectionSupplier.get();
@@ -495,5 +449,89 @@ public class ClientMessage<E> implements Message<E> {
         }
 
         return footer;
+    }
+
+    //----- AdvancedMessage interface implementation
+
+    @Override
+    public Header header() {
+        return header;
+    }
+
+    @Override
+    public AdvancedMessage<E> header(Header header) {
+        this.header = header;
+        return this;
+    }
+
+    @Override
+    public DeliveryAnnotations deliveryAnnotations() {
+        return deliveryAnnotations;
+    }
+
+    @Override
+    public AdvancedMessage<E> deliveryAnnotations(DeliveryAnnotations deliveryAnnotations) {
+        this.deliveryAnnotations = deliveryAnnotations;
+        return this;
+    }
+
+    @Override
+    public MessageAnnotations messageAnnotations() {
+        return messageAnnotations;
+    }
+
+    @Override
+    public AdvancedMessage<E> messageAnnotations(MessageAnnotations messageAnnotations) {
+        this.messageAnnotations = messageAnnotations;
+        return this;
+    }
+
+    @Override
+    public Properties properties() {
+        return properties;
+    }
+
+    @Override
+    public AdvancedMessage<E> properties(Properties properties) {
+        this.properties = properties;
+        return this;
+    }
+
+    @Override
+    public ApplicationProperties applicationProperties() {
+        return applicationProperties;
+    }
+
+    @Override
+    public AdvancedMessage<E> applicationProperties(ApplicationProperties applicationProperties) {
+        this.applicationProperties = applicationProperties;
+        return this;
+    }
+
+    @Override
+    public Footer footer() {
+        return footer;
+    }
+
+    @Override
+    public AdvancedMessage<E> footer(Footer footer) {
+        this.footer = footer;
+        return this;
+    }
+
+    @Override
+    public int messageFormat() {
+        return messageFormat;
+    }
+
+    @Override
+    public AdvancedMessage<E> messageFormat(int messageFormat) {
+        this.messageFormat = messageFormat;
+        return this;
+    }
+
+    @Override
+    public ProtonBuffer encode() {
+        return ClientMessageSupport.encodeMessage(this);
     }
 }

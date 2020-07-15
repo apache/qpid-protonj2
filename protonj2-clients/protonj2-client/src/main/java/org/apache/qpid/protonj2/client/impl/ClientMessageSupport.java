@@ -59,13 +59,13 @@ abstract class ClientMessageSupport {
     public static ProtonBuffer encodeMessage(Encoder encoder, EncoderState encoderState, ProtonBufferAllocator allocator, ClientMessage<?> message) {
         ProtonBuffer buffer = allocator.allocate();
 
-        Header header = message.getHeader();
-        DeliveryAnnotations deliveryAnnotations = message.getDeliveryAnnotations();
-        MessageAnnotations messageAnnotations = message.getMessageAnnotations();
-        Properties properties = message.getProperties();
-        ApplicationProperties applicationProperties = message.getApplicationProperties();
+        Header header = message.header();
+        DeliveryAnnotations deliveryAnnotations = message.deliveryAnnotations();
+        MessageAnnotations messageAnnotations = message.messageAnnotations();
+        Properties properties = message.properties();
+        ApplicationProperties applicationProperties = message.applicationProperties();
         Section body = message.getBodySection();
-        Footer footer = message.getFooter();
+        Footer footer = message.footer();
 
         if (header != null) {
             encoder.writeObject(buffer, encoderState, header);
@@ -151,12 +151,12 @@ abstract class ClientMessageSupport {
         ClientMessage<?> result = createMessageFromBodySection(body);
 
         if (result != null) {
-            result.setHeader(header);
-            result.setDeliveryAnnotations(deliveryAnnotations);
-            result.setMessageAnnotations(messageAnnotations);
-            result.setProperties(properties);
-            result.setApplicationProperties(applicationProperties);
-            result.setFooter(footer);
+            result.header(header);
+            result.deliveryAnnotations(deliveryAnnotations);
+            result.messageAnnotations(messageAnnotations);
+            result.properties(properties);
+            result.applicationProperties(applicationProperties);
+            result.footer(footer);
 
             return result;
         }

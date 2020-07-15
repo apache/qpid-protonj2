@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.DeliveryMode;
 import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Message;
@@ -197,8 +198,10 @@ public class ClientSender implements Sender {
     @Override
     public Tracker send(Message<?> message) throws ClientException {
         checkClosed();
-        ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
-        final ProtonBuffer buffer = ClientMessageSupport.encodeMessage((ClientMessage<?>) message);
+
+        final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
+        final AdvancedMessage<?> encodable = message.toAdvancedMessage();
+        final ProtonBuffer buffer = encodable.encode();
 
         executor.execute(() -> {
             if (protonSender.isSendable()) {
@@ -220,8 +223,10 @@ public class ClientSender implements Sender {
     @Override
     public Tracker trySend(Message<?> message) throws ClientException {
         checkClosed();
-        ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
-        ProtonBuffer buffer = ClientMessageSupport.encodeMessage((ClientMessage<?>) message);
+
+        final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
+        final AdvancedMessage<?> encodable = message.toAdvancedMessage();
+        final ProtonBuffer buffer = encodable.encode();
 
         executor.execute(() -> {
             if (protonSender.isSendable()) {

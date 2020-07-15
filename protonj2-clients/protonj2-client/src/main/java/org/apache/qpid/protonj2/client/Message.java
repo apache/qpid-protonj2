@@ -119,6 +119,16 @@ public interface Message<E> {
         });
     }
 
+    //----- Message specific APIs
+
+    /**
+     * Safely convert this {@link Message} instance into an {@link AdvancedMessage}
+     * reference which can offer more low level APIs to an experienced client user.
+     *
+     * @return a {@link AdvancedMessage} that contains this message's current state.
+     */
+    AdvancedMessage<E> toAdvancedMessage();
+
     //----- AMQP Header Section
 
     /**
