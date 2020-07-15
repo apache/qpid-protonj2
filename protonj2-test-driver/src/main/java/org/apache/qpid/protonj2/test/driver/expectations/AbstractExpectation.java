@@ -58,6 +58,7 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
 
     protected int expectedChannel = ANY_CHANNEL;
     protected final AMQPTestDriver driver;
+    private boolean optional;
 
     public AbstractExpectation(AMQPTestDriver driver) {
         this.driver = driver;
@@ -67,6 +68,25 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
 
     public AbstractExpectation<T> onChannel(int channel) {
         this.expectedChannel = channel;
+        return this;
+    }
+
+    /**
+     * @return true if this element represents an optional part of the script.
+     */
+    @Override
+    public boolean isOptional() {
+        return optional;
+    }
+
+    /**
+     * Marks this expectation as optional which can be useful when a frames arrival may or may not
+     * occur based on some other timing in the test.
+     *
+     * @return if the frame expectation is optional and its absence shouldn't fail the test.
+     */
+    public AbstractExpectation<T> optional() {
+        optional = true;
         return this;
     }
 
