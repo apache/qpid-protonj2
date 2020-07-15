@@ -30,11 +30,11 @@ import org.slf4j.LoggerFactory;
 /**
  * A Custom JUnit test runner for customizing JUnit tests run in QPid JMS.
  */
-public class AmqperativeTestRunner extends BlockJUnit4ClassRunner {
+public class ProtonClientTestRunner extends BlockJUnit4ClassRunner {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AmqperativeTestRunner.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProtonClientTestRunner.class);
 
-    public AmqperativeTestRunner(Class<?> klass) throws InitializationError {
+    public ProtonClientTestRunner(Class<?> klass) throws InitializationError {
         super(klass);
     }
 

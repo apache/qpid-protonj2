@@ -43,6 +43,8 @@ import org.apache.qpid.protonj2.client.exceptions.ClientTransactionDeclarationEx
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionNotActiveException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionRolledBackException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
+import org.apache.qpid.protonj2.client.util.ProtonClientTestRunner;
+import org.apache.qpid.protonj2.client.util.Repeat;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
@@ -51,10 +53,13 @@ import org.apache.qpid.protonj2.types.messaging.Rejected;
 import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.transactions.TransactionErrors;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@RunWith(ProtonClientTestRunner.class)
 public class TransactionsTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionsTest.class);
@@ -416,11 +421,13 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
+    @Repeat(repetitions = 1)
     @Test(timeout = 20_000)
     public void testExceptionOnCommitWhenCoordinatorLinkClosedAfterTxnDeclaration() throws Exception {
         doTestExceptionOnDischargeWhenCoordinatorLinkClosedAfterTxnDeclaration(true);
     }
 
+    @Repeat(repetitions = 1)
     @Test(timeout = 20_000)
     public void testExceptionOnRollbackWhenCoordinatorLinkClosedAfterTxnDeclaration() throws Exception {
         doTestExceptionOnDischargeWhenCoordinatorLinkClosedAfterTxnDeclaration(false);
@@ -438,8 +445,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
             peer.expectDeclare().accept();
             peer.remoteDetachLastCoordinatorLink().withClosed(true)
                                                   .withErrorCondition(AmqpError.RESOURCE_DELETED.toString(), errorMessage).queue();
+            peer.expectDischarge().optional();  // No discharge if close processed before commit or rollback triggered
             peer.expectDetach();
-            peer.expectAttach().respond();
             peer.expectEnd().respond();
             peer.expectClose().respond();
             peer.start();
@@ -454,10 +461,6 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             session.beginTransaction();
 
-            // Ensure that TXN coordinator frames are all processed before discharge action requested
-            // so that we can assure that we are dealing with an in-doubt transaction.
-            session.openSender("test").openFuture().get();
-
             if (commit) {
                 try {
                     session.commitTransaction();
@@ -470,7 +473,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
             } else {
                 try {
                     session.rollbackTransaction();
-                } catch (ClientTransactionNotActiveException expected) {
+                } catch (Exception ex) {
+                    LOG.debug("Caught unexpected exception from rollback", ex);
                     fail("Rollback should not have failed after link closed.");
                 }
             }
@@ -1206,6 +1210,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(true);
     }
 
+    @Ignore("Issue in proton currently masks the IO error")
     @Test(timeout = 20_000)
     public void testRollbackTransactionAfterConnectionDropsFollowingTxnDeclared() throws Exception {
         dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(false);
@@ -1235,6 +1240,10 @@ public class TransactionsTest extends ImperativeClientTestCase {
             session.beginTransaction();
 
             peer.waitForScriptToComplete();
+
+            // Either of these should fail as the connection dropped and the write operation
+            // would fail or the session would already be closed depending on how long it takes
+            // for the test to execute the operation.
 
             try {
                 if (commit) {

@@ -28,6 +28,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientTransactionRolledBackExc
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.Transaction;
+import org.apache.qpid.protonj2.engine.Transaction.DischargeState;
 import org.apache.qpid.protonj2.engine.TransactionController;
 import org.apache.qpid.protonj2.engine.TransactionState;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -345,32 +346,38 @@ public class ClientTransactionContext {
         return (ClientTransactionRolledBackException) cause;
     }
 
+    private ClientTransactionDeclarationException createDeclarationErrorFromClosedCoordinator() {
+        ClientException cause = ClientErrorSupport.convertToNonFatalException(txnController.getRemoteCondition());
+
+        if (!(cause instanceof ClientTransactionDeclarationException)) {
+            cause = new ClientTransactionDeclarationException(cause.getMessage(), cause);
+        }
+
+        return (ClientTransactionDeclarationException) cause;
+    }
+
     private void handleCoordinatorLocalClose(TransactionController controller) {
         if (currentTxn != null) {
-            ClientException cause = ClientErrorSupport.convertToNonFatalException(controller.getRemoteCondition());
             ClientFuture<Session> future = null;
 
             switch (currentTxn.getState()) {
                 case IDLE:
                 case DECLARING:
-                    // Remote closed so consider declare failed and clear current txn
-                    cause = new ClientTransactionDeclarationException(cause.getMessage(), cause);
                     future = currentTxn.getAttachments().get(DECLARE_FUTURE_NAME);
+                    future.failed(createDeclarationErrorFromClosedCoordinator());
                     currentTxn = null;
                     break;
                 case DISCHARGING:
-                    // Remote closed so consider discharge failed and clear current txn
-                    cause = createRolledBackErrorFromClosedCoordinator();
                     future = currentTxn.getAttachments().get(DISCHARGE_FUTURE_NAME);
+                    if (currentTxn.getDischargeState() == DischargeState.COMMIT) {
+                        future.failed(createRolledBackErrorFromClosedCoordinator());
+                    } else {
+                        future.complete(session);
+                    }
                     currentTxn = null;
                     break;
                 default:
                     break;
-            }
-
-            // Any pending operation needs to be signaled that it cannot complete due to remote closing us.
-            if (future != null) {
-                future.failed(cause);
             }
         }
     }

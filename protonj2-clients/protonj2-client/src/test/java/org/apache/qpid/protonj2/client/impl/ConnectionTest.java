@@ -41,7 +41,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.apache.qpid.protonj2.client.util.AmqperativeTestRunner;
+import org.apache.qpid.protonj2.client.util.ProtonClientTestRunner;
 import org.apache.qpid.protonj2.client.util.Repeat;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
@@ -58,7 +58,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Test for the Connection class
  */
-@RunWith(AmqperativeTestRunner.class)
+@RunWith(ProtonClientTestRunner.class)
 public class ConnectionTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConnectionTest.class);

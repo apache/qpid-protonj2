@@ -36,7 +36,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientSecurityException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.apache.qpid.protonj2.client.util.AmqperativeTestRunner;
+import org.apache.qpid.protonj2.client.util.ProtonClientTestRunner;
 import org.apache.qpid.protonj2.client.util.Repeat;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
@@ -48,7 +48,7 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@RunWith(AmqperativeTestRunner.class)
+@RunWith(ProtonClientTestRunner.class)
 public class SenderTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(SenderTest.class);
