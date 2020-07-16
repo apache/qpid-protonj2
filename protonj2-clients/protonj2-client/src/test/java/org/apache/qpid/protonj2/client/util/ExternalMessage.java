@@ -14,14 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.protonj2.client.impl;
+package org.apache.qpid.protonj2.client.util;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.types.Binary;
@@ -34,7 +33,7 @@ import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
 import org.apache.qpid.protonj2.types.messaging.Properties;
 import org.apache.qpid.protonj2.types.messaging.Section;
 
-public class ClientMessage<E> implements AdvancedMessage<E> {
+public class ExternalMessage<E> implements Message<E> {
 
     private Header header;
     private DeliveryAnnotations deliveryAnnotations;
@@ -42,31 +41,17 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     private Properties properties;
     private ApplicationProperties applicationProperties;
     private Footer footer;
-
-    private final Supplier<Section> sectionSupplier;
     private E body;
-    private int messageFormat;
-
-    /**
-     * Create a new {@link ClientMessage} instance with a {@link Supplier} that will
-     * provide the AMQP {@link Section} value for any body that is set on the message.
-     *
-     * @param sectionSupplier
-     *      A {@link Supplier} that will generate Section values for the message body.
-     */
-    ClientMessage(Supplier<Section> sectionSupplier) {
-        this.sectionSupplier = sectionSupplier;
-    }
 
     @Override
     public AdvancedMessage<E> toAdvancedMessage() {
-        return this;
+        throw new UnsupportedOperationException("Test ExternalMessage doesn't support AdvancedMessage conversions");
     }
 
     //----- Entry point for creating new ClientMessage instances.
 
     public static <V> Message<V> create(V body, Supplier<Section> sectionSupplier) {
-        return new ClientMessage<V>(sectionSupplier).body(body);
+        return new ExternalMessage<V>().body(body);
     }
 
     //----- Message Header API
@@ -77,7 +62,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public ClientMessage<E> durable(boolean durable) {
+    public ExternalMessage<E> durable(boolean durable) {
         lazyCreateHeader().setDurable(durable);
         return this;
     }
@@ -88,7 +73,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public ClientMessage<E> priority(byte priority) {
+    public ExternalMessage<E> priority(byte priority) {
         lazyCreateHeader().setPriority(priority);
         return this;
     }
@@ -99,7 +84,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public ClientMessage<E> timeToLive(long timeToLive) {
+    public ExternalMessage<E> timeToLive(long timeToLive) {
         lazyCreateHeader().setTimeToLive(timeToLive);
         return this;
     }
@@ -110,7 +95,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public ClientMessage<E> firstAcquirer(boolean firstAcquirer) {
+    public ExternalMessage<E> firstAcquirer(boolean firstAcquirer) {
         lazyCreateHeader().setFirstAcquirer(firstAcquirer);
         return this;
     }
@@ -121,7 +106,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public ClientMessage<E> deliveryCount(long deliveryCount) {
+    public ExternalMessage<E> deliveryCount(long deliveryCount) {
         lazyCreateHeader().setDeliveryCount(deliveryCount);
         return this;
     }
@@ -325,7 +310,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public ClientMessage<E> deliveryAnnotation(String key, Object value) {
+    public ExternalMessage<E> deliveryAnnotation(String key, Object value) {
         lazyCreateDeliveryAnnotations().getValue().put(Symbol.valueOf(key),value);
         return this;
     }
@@ -379,7 +364,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public ClientMessage<E> messageAnnotation(String key, Object value) {
+    public ExternalMessage<E> messageAnnotation(String key, Object value) {
         lazyCreateMessageAnnotations().getValue().put(Symbol.valueOf(key),value);
         return this;
     }
@@ -431,7 +416,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public ClientMessage<E> applicationProperty(String key, Object value) {
+    public ExternalMessage<E> applicationProperty(String key, Object value) {
         lazyCreateApplicationProperties().getValue().put(key,value);
         return this;
     }
@@ -485,7 +470,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public ClientMessage<E> footer(String key, Object value) {
+    public ExternalMessage<E> footer(String key, Object value) {
         lazyCreateFooter().getValue().put(Symbol.valueOf(key),value);
         return this;
     }
@@ -497,15 +482,9 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
         return body;
     }
 
-    ClientMessage<E> body(E body) {
+    public ExternalMessage<E> body(E body) {
         this.body = body;
         return this;
-    }
-
-    //----- Access to proton resources
-
-    Section getBodySection() {
-        return sectionSupplier.get();
     }
 
     //----- Internal API
@@ -556,89 +535,5 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
         }
 
         return footer;
-    }
-
-    //----- AdvancedMessage interface implementation
-
-    @Override
-    public Header header() {
-        return header;
-    }
-
-    @Override
-    public AdvancedMessage<E> header(Header header) {
-        this.header = header;
-        return this;
-    }
-
-    @Override
-    public DeliveryAnnotations deliveryAnnotations() {
-        return deliveryAnnotations;
-    }
-
-    @Override
-    public AdvancedMessage<E> deliveryAnnotations(DeliveryAnnotations deliveryAnnotations) {
-        this.deliveryAnnotations = deliveryAnnotations;
-        return this;
-    }
-
-    @Override
-    public MessageAnnotations messageAnnotations() {
-        return messageAnnotations;
-    }
-
-    @Override
-    public AdvancedMessage<E> messageAnnotations(MessageAnnotations messageAnnotations) {
-        this.messageAnnotations = messageAnnotations;
-        return this;
-    }
-
-    @Override
-    public Properties properties() {
-        return properties;
-    }
-
-    @Override
-    public AdvancedMessage<E> properties(Properties properties) {
-        this.properties = properties;
-        return this;
-    }
-
-    @Override
-    public ApplicationProperties applicationProperties() {
-        return applicationProperties;
-    }
-
-    @Override
-    public AdvancedMessage<E> applicationProperties(ApplicationProperties applicationProperties) {
-        this.applicationProperties = applicationProperties;
-        return this;
-    }
-
-    @Override
-    public Footer footer() {
-        return footer;
-    }
-
-    @Override
-    public AdvancedMessage<E> footer(Footer footer) {
-        this.footer = footer;
-        return this;
-    }
-
-    @Override
-    public int messageFormat() {
-        return messageFormat;
-    }
-
-    @Override
-    public AdvancedMessage<E> messageFormat(int messageFormat) {
-        this.messageFormat = messageFormat;
-        return this;
-    }
-
-    @Override
-    public ProtonBuffer encode() {
-        return ClientMessageSupport.encodeMessage(this);
     }
 }

@@ -16,6 +16,10 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.function.Supplier;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
@@ -27,6 +31,7 @@ import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.types.Binary;
+import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
@@ -41,10 +46,32 @@ import org.apache.qpid.protonj2.types.messaging.Section;
 /**
  * Support methods dealing with Message types and encode or decode operations.
  */
-abstract class ClientMessageSupport {
+public abstract class ClientMessageSupport {
 
     private static final Encoder DEFAULT_ENCODER = CodecFactory.getDefaultEncoder();
     private static final Decoder DEFAULT_DECODER = CodecFactory.getDefaultDecoder();
+
+    //----- Message Conversion
+
+    /**
+     * Converts a {@link Message} instance into a {@link ClientMessage} instance
+     * either by cast or by construction of a new instance with a copy of the
+     * values carried in the given message.
+     *
+     * @param <E> the body type of the given message.
+     *
+     * @param message
+     *      The {@link Message} type to attempt to convert to a {@link ClientMessage} instance.
+     *
+     * @return a {@link ClientMessage} that represents the given {@link Message} instance.
+     */
+    public static <E> ClientMessage<E> convertMessage(Message<E> message) {
+        if (message instanceof ClientMessage) {
+            return (ClientMessage<E>) message;
+        } else {
+            return convertFromOutsideMessage(message);
+        }
+    }
 
     //----- Message Encoding
 
@@ -164,6 +191,8 @@ abstract class ClientMessageSupport {
         throw new ClientException("Failed to create Message from encoded payload");
     }
 
+    //----- Internal Implementation
+
     private static ClientMessage<?> createMessageFromBodySection(Section body) {
         Message<?> result = null;
         if (body == null) {
@@ -171,7 +200,6 @@ abstract class ClientMessageSupport {
         } else if (body instanceof Data) {
             Binary payload = ((Data) body).getValue();
             if (payload != null) {
-                // TODO - Offset ?
                 result = Message.create(payload.getArray());
             }
         } else if (body instanceof AmqpSequence) {
@@ -186,5 +214,97 @@ abstract class ClientMessageSupport {
         }
 
         return (ClientMessage<?>) result;
+    }
+
+    private static <E> ClientMessage<E> convertFromOutsideMessage(Message<E> source) {
+        Header header = new Header();
+        header.setDurable(source.durable());
+        header.setPriority(source.priority());
+        header.setTimeToLive(source.timeToLive());
+        header.setFirstAcquirer(source.firstAcquirer());
+        header.setDeliveryCount(source.deliveryCount());
+
+        Properties properties = new Properties();
+        properties.setMessageId(source.messageId());
+        properties.setUserId(source.userId() != null ? new Binary(source.userId()) : null);
+        properties.setTo(source.to());
+        properties.setSubject(source.subject());
+        properties.setReplyTo(source.replyTo());
+        properties.setCorrelationId(source.correlationId());
+        properties.setContentType(source.contentType());
+        properties.setContentEncoding(source.contentEncoding());
+        properties.setAbsoluteExpiryTime(source.absoluteExpiryTime());
+        properties.setCreationTime(source.creationTime());
+        properties.setGroupId(source.groupId());
+        properties.setGroupSequence(source.groupSequence());
+        properties.setReplyToGroupId(source.replyToGroupId());
+
+        final DeliveryAnnotations deliveryAnnotations;
+        if (source.hasDeliveryAnnotations()) {
+            deliveryAnnotations = new DeliveryAnnotations(new HashMap<>());
+
+            source.forEachDeliveryAnnotation((key, value) -> {
+                deliveryAnnotations.getValue().put(Symbol.valueOf(key), value);
+            });
+        } else {
+            deliveryAnnotations = null;
+        }
+
+        final MessageAnnotations messageAnnotations;
+        if (source.hasDeliveryAnnotations()) {
+            messageAnnotations = new MessageAnnotations(new HashMap<>());
+
+            source.forEachMessageAnnotation((key, value) -> {
+                messageAnnotations.getValue().put(Symbol.valueOf(key), value);
+            });
+        } else {
+            messageAnnotations = null;
+        }
+
+        final ApplicationProperties applicationProperties;
+        if (source.hasDeliveryAnnotations()) {
+            applicationProperties = new ApplicationProperties(new HashMap<>());
+
+            source.forEachMessageAnnotation((key, value) -> {
+                applicationProperties.getValue().put(key, value);
+            });
+        } else {
+            applicationProperties = null;
+        }
+
+        final Footer footer;
+        if (source.hasDeliveryAnnotations()) {
+            footer = new Footer(new HashMap<>());
+
+            source.forEachMessageAnnotation((key, value) -> {
+                footer.getValue().put(Symbol.valueOf(key), value);
+            });
+        } else {
+            footer = null;
+        }
+
+        ClientMessage<E> message = new ClientMessage<>(sectionSupplier(source.body()));
+
+        message.header(header);
+        message.properties(properties);
+        message.deliveryAnnotations(deliveryAnnotations);
+        message.messageAnnotations(messageAnnotations);
+        message.applicationProperties(applicationProperties);
+        message.footer(footer);
+
+        return message;
+    }
+
+    @SuppressWarnings("rawtypes")
+    private static <E> Supplier<Section> sectionSupplier(E body) {
+        if (body == null) {
+            return () -> null;
+        } else if (body instanceof byte[]) {
+            return () -> new Data(new Binary((byte[]) body));
+        } else if (body instanceof List){
+            return () -> new AmqpSequence((List) body);
+        } else {
+            return () -> new AmqpValue(body);
+        }
     }
 }

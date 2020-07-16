@@ -18,8 +18,10 @@ package org.apache.qpid.protonj2.client;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import org.apache.qpid.protonj2.client.impl.ClientMessage;
+import org.apache.qpid.protonj2.client.impl.ClientMessageSupport;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
@@ -122,12 +124,20 @@ public interface Message<E> {
     //----- Message specific APIs
 
     /**
-     * Safely convert this {@link Message} instance into an {@link AdvancedMessage}
-     * reference which can offer more low level APIs to an experienced client user.
+     * Safely convert this {@link Message} instance into an {@link AdvancedMessage} reference
+     * which can offer more low level APIs to an experienced client user.
      *
      * @return a {@link AdvancedMessage} that contains this message's current state.
+     *
+     * @throws UnsupportedOperationException if the {@link Message} implementation cannot be converted
      */
-    AdvancedMessage<E> toAdvancedMessage();
+    default AdvancedMessage<E> toAdvancedMessage() {
+        if (this instanceof AdvancedMessage) {
+            return (AdvancedMessage<E>) this;
+        } else {
+            return ClientMessageSupport.convertMessage(this);
+        }
+    }
 
     //----- AMQP Header Section
 
@@ -282,6 +292,12 @@ public interface Message<E> {
 
     boolean hasDeliveryAnnotation(String key);
 
+    boolean hasDeliveryAnnotations();
+
+    Object removeDeliveryAnnotation(String key);
+
+    Message<E> forEachDeliveryAnnotation(BiConsumer<String, Object> action);
+
     Message<E> deliveryAnnotation(String key, Object value);
 
     //----- Message Annotations
@@ -289,6 +305,12 @@ public interface Message<E> {
     Object messageAnnotation(String key);
 
     boolean hasMessageAnnotation(String key);
+
+    boolean hasMessageAnnotations();
+
+    Object removeMessageAnnotation(String key);
+
+    Message<E> forEachMessageAnnotation(BiConsumer<String, Object> action);
 
     Message<E> messageAnnotation(String key, Object value);
 
@@ -298,6 +320,12 @@ public interface Message<E> {
 
     boolean hasApplicationProperty(String key);
 
+    boolean hasApplicationProperties();
+
+    Object removeApplicationProperty(String key);
+
+    Message<E> forEachApplicationProperty(BiConsumer<String, Object> action);
+
     Message<E> applicationProperty(String key, Object value);
 
     //----- Footer
@@ -305,6 +333,12 @@ public interface Message<E> {
     Object footer(String key);
 
     boolean hasFooter(String key);
+
+    boolean hasFooters();
+
+    Object removeFooter(String key);
+
+    Message<E> forEachFooter(BiConsumer<String, Object> action);
 
     Message<E> footer(String key, Object value);
 
@@ -315,6 +349,8 @@ public interface Message<E> {
      * or sent from the remote if this is an incoming message.
      *
      * @return the message body or null if none present.
+     *
+     * @throws UnsupportedOperationException if the implementation can't provide a body directly.
      */
     E body();
 
