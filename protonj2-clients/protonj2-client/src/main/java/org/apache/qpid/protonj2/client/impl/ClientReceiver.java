@@ -443,7 +443,7 @@ public class ClientReceiver implements Receiver {
             final ClientException error;
 
             if (receiver.getRemoteCondition() != null) {
-                error = ClientErrorSupport.convertToNonFatalException(receiver.getRemoteCondition());
+                error = ClientExceptionSupport.convertToNonFatalException(receiver.getRemoteCondition());
             } else {
                 error = new ClientResourceClosedException("Receiver remotely closed without explanation");
             }

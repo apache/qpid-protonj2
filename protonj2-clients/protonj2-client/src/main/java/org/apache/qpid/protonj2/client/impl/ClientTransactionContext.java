@@ -315,7 +315,7 @@ public class ClientTransactionContext {
     private void handleTransactionDeclareFailed(Transaction<TransactionController> transaction) {
         ClientFuture<Session> future = transaction.getAttachments().get(DECLARE_FUTURE_NAME);
         LOG.trace("Declare of trasaction:{} failed", transaction);
-        ClientException cause = ClientErrorSupport.convertToNonFatalException(transaction.getCondition());
+        ClientException cause = ClientExceptionSupport.convertToNonFatalException(transaction.getCondition());
         future.failed(new ClientTransactionDeclarationException(cause.getMessage(), cause));
     }
 
@@ -332,7 +332,7 @@ public class ClientTransactionContext {
     private void handleTransactionDischargeFailed(Transaction<TransactionController> transaction) {
         ClientFuture<Session> future = transaction.getAttachments().get(DISCHARGE_FUTURE_NAME);
         LOG.trace("Discharge of trasaction:{} failed", transaction);
-        ClientException cause = ClientErrorSupport.convertToNonFatalException(transaction.getCondition());
+        ClientException cause = ClientExceptionSupport.convertToNonFatalException(transaction.getCondition());
         future.failed(new ClientTransactionRolledBackException(cause.getMessage(), cause));
     }
 
@@ -350,7 +350,7 @@ public class ClientTransactionContext {
     }
 
     private ClientTransactionRolledBackException createRolledBackErrorFromClosedCoordinator() {
-        ClientException cause = ClientErrorSupport.convertToNonFatalException(txnController.getRemoteCondition());
+        ClientException cause = ClientExceptionSupport.convertToNonFatalException(txnController.getRemoteCondition());
 
         if (!(cause instanceof ClientTransactionRolledBackException)) {
             cause = new ClientTransactionRolledBackException(cause.getMessage(), cause);
@@ -360,7 +360,7 @@ public class ClientTransactionContext {
     }
 
     private ClientTransactionDeclarationException createDeclarationErrorFromClosedCoordinator() {
-        ClientException cause = ClientErrorSupport.convertToNonFatalException(txnController.getRemoteCondition());
+        ClientException cause = ClientExceptionSupport.convertToNonFatalException(txnController.getRemoteCondition());
 
         if (!(cause instanceof ClientTransactionDeclarationException)) {
             cause = new ClientTransactionDeclarationException(cause.getMessage(), cause);

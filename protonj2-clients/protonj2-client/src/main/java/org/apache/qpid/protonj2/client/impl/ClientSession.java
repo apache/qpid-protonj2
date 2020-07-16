@@ -571,7 +571,7 @@ public class ClientSession implements Session {
             final ClientException error;
 
             if (session.getRemoteCondition() != null) {
-                error = ClientErrorSupport.convertToNonFatalException(session.getRemoteCondition());
+                error = ClientExceptionSupport.convertToNonFatalException(session.getRemoteCondition());
             } else {
                 error = new ClientResourceClosedException("Session remotely closed without explanation");
             }

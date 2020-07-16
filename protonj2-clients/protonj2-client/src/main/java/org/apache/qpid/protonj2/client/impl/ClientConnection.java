@@ -605,7 +605,7 @@ public class ClientConnection implements Connection {
             final ClientException ex;
 
             if (connection.getRemoteCondition() != null) {
-                ex = ClientErrorSupport.convertToConnectionClosedException(this, connection.getRemoteCondition());
+                ex = ClientExceptionSupport.convertToConnectionClosedException(this, connection.getRemoteCondition());
             } else {
                 ex = new ClientConnectionRemotelyClosedException("Remote closed with error");
             }

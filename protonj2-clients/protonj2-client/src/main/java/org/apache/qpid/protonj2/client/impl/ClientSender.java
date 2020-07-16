@@ -381,7 +381,7 @@ public class ClientSender implements Sender {
             final ClientException error;
 
             if (sender.getRemoteCondition() != null) {
-                error = ClientErrorSupport.convertToNonFatalException(sender.getRemoteCondition());
+                error = ClientExceptionSupport.convertToNonFatalException(sender.getRemoteCondition());
             } else {
                 error = new ClientResourceClosedException("Sender remotely closed without explanation");
             }
