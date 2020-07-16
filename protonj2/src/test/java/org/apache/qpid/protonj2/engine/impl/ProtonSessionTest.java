@@ -64,7 +64,7 @@ import org.junit.Test;
  */
 public class ProtonSessionTest extends ProtonEngineTestSupport {
 
-    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonEngineTestSupport.class);
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonSessionTest.class);
 
     @Test(timeout = 30000)
     public void testSessionEmitsOpenAndCloseEvents() throws Exception {
@@ -636,7 +636,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
-        peer.rejectDataAfterLastScriptedElement();
+        peer.rejectIncomingIOAfterLastScriptedElement();
 
         Connection connection = engine.start().open();
 

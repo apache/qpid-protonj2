@@ -122,7 +122,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     }
 
     @Override
-    public ProtonTransactionController registerCapacityAvailableHandler(EventHandler<TransactionController> handler) {
+    public ProtonTransactionController addCapacityAvailableHandler(EventHandler<TransactionController> handler) {
         if (hasCapacity()) {
             handler.handle(this);
         } else {

@@ -102,7 +102,7 @@ public class ProtonTestPeer extends ScriptWriter implements Consumer<ByteBuffer>
      * After all scripted elements of the test are complete this will place the driver into
      * a mode where any new data is rejected with an exception.
      */
-    public void rejectDataAfterLastScriptedElement() {
+    public void rejectIncomingIOAfterLastScriptedElement() {
         driver.addScriptedElement(new ScriptedAction() {
 
             @Override

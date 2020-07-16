@@ -205,7 +205,7 @@ public interface TransactionController extends Endpoint<TransactionController> {
     TransactionController dischargeFailureHandler(EventHandler<Transaction<TransactionController>> dischargeFailureEventHandler);
 
     /**
-     * Allows the caller to register an {@link EventHandler} that will be signaled when the underlying
+     * Allows the caller to add an {@link EventHandler} that will be signaled when the underlying
      * link for this {@link TransactionController} has been granted credit which would then allow for
      * transaction {@link Declared} and {@link Discharge} commands to be sent to the remote Transactional
      * Resource.
@@ -222,7 +222,7 @@ public interface TransactionController extends Endpoint<TransactionController> {
      *
      * @return this {@link TransactionController} instance.
      */
-    TransactionController registerCapacityAvailableHandler(EventHandler<TransactionController> handler);
+    TransactionController addCapacityAvailableHandler(EventHandler<TransactionController> handler);
 
     /**
      * Sets a {@link EventHandler} for when the parent {@link Session} or {@link Connection} of this {@link TransactionController}

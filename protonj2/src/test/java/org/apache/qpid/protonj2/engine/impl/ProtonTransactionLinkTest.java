@@ -42,6 +42,9 @@ import org.apache.qpid.protonj2.engine.Transaction;
 import org.apache.qpid.protonj2.engine.TransactionController;
 import org.apache.qpid.protonj2.engine.TransactionManager;
 import org.apache.qpid.protonj2.engine.TransactionState;
+import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
+import org.apache.qpid.protonj2.logging.ProtonLogger;
+import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
 import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -64,6 +67,8 @@ import org.junit.Test;
  * Tests for AMQP transaction over normal {@link Sender} and {@link Receiver} links.
  */
 public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
+
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonTransactionLinkTest.class);
 
     private Symbol[] DEFAULT_OUTCOMES = new Symbol[] { Accepted.DESCRIPTOR_SYMBOL,
                                                        Rejected.DESCRIPTOR_SYMBOL,
@@ -954,5 +959,69 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
         assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testCommitTransactionAfterConnectionDropsFollowingTxnDeclared() throws Exception {
+        dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(true);
+    }
+
+    @Test(timeout = 20_000)
+    public void testRollbackTransactionAfterConnectionDropsFollowingTxnDeclared() throws Exception {
+        dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(false);
+    }
+
+    public void dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(boolean commit) throws Exception {
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+        Source source = new Source();
+        source.setOutcomes(DEFAULT_OUTCOMES);
+
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectCoordinatorAttach().respond();
+        peer.remoteFlow().withLinkCredit(2).queue();
+        peer.expectDeclare().accept(txnId);
+        peer.rejectIncomingIOAfterLastScriptedElement();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        TransactionController txnController = session.coordinator("test-coordinator");
+
+        txnController.setSource(source);
+        txnController.setCoordinator(coordinator);
+        txnController.open();
+
+        Transaction<TransactionController> txn = txnController.newTransaction();
+
+        txnController.addCapacityAvailableHandler(controller -> {
+            controller.declare(txn);
+        });
+
+        peer.waitForScriptToComplete();
+
+        // The write that are triggered here should fail and throw an exception
+
+        try {
+            if (commit) {
+                txnController.discharge(txn, false);
+            } else {
+                txnController.discharge(txn, true);
+            }
+
+            fail("Should have failed to discharge transaction");
+        } catch (EngineFailedException ex) {
+            // Expected error as a simulated IO disconnect was requested
+            LOG.info("Caught expected EngineFailedException on write of discharge", ex);
+        }
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 }

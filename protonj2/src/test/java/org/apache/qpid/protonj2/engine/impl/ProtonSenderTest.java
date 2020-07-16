@@ -30,6 +30,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +48,8 @@ import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
+import org.apache.qpid.protonj2.logging.ProtonLogger;
+import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
 import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.AcceptedMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.ModifiedMatcher;
@@ -76,6 +79,8 @@ import org.junit.Test;
  * Test the {@link ProtonSender}
  */
 public class ProtonSenderTest extends ProtonEngineTestSupport {
+
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonSenderTest.class);
 
     @Test(timeout = 20_000)
     public void testSenderEmitsOpenAndCloseEvents() throws Exception {
@@ -1515,6 +1520,46 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
 
         assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testSenderWriteBytesThrowsEngineFailedAfterConnectionDropped() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
+        peer.rejectIncomingIOAfterLastScriptedElement();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1").open();
+        OutgoingDelivery delivery = sender.next();
+
+        assertNotNull(delivery);
+        assertTrue(sender.isSendable());
+
+        try {
+            delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1 }));
+            fail("Should not be able to write to delivery afters simulated connection drop.");
+        } catch (EngineFailedException efe) {
+            // Should not allow writes on past delivery instances after connection dropped
+            assertTrue(efe.getCause() instanceof UncheckedIOException);
+            LOG.debug("Caught expected IO exception from write to broken connection", efe);
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNotNull(failure);
     }
 
     @Test(timeout = 20_000)
