@@ -53,7 +53,6 @@ import org.apache.qpid.protonj2.types.messaging.Rejected;
 import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.transactions.TransactionErrors;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -1210,7 +1209,6 @@ public class TransactionsTest extends ImperativeClientTestCase {
         dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(true);
     }
 
-    @Ignore("Issue in proton currently masks the IO error")
     @Test(timeout = 20_000)
     public void testRollbackTransactionAfterConnectionDropsFollowingTxnDeclared() throws Exception {
         dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(false);
@@ -1241,19 +1239,19 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             peer.waitForScriptToComplete();
 
-            // Either of these should fail as the connection dropped and the write operation
-            // would fail or the session would already be closed depending on how long it takes
-            // for the test to execute the operation.
-
-            try {
-                if (commit) {
+            if (commit) {
+                try {
                     session.commitTransaction();
-                } else {
-                    session.rollbackTransaction();
+                    fail("Should have failed to commit transaction");
+                } catch (ClientException cliEx) {
+                    // Expected error as connection was dropped
                 }
-                fail("Should have failed to discharge transaction");
-            } catch (ClientException cliEx) {
-                // Expected error as connection was dropped
+            } else {
+                try {
+                    session.rollbackTransaction();
+                } catch (ClientException cliEx) {
+                    fail("Connection drops will implicitly roll back TXN on remote");
+                }
             }
 
             connection.close().get();

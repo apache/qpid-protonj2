@@ -31,6 +31,7 @@ import org.apache.qpid.protonj2.engine.Transaction;
 import org.apache.qpid.protonj2.engine.Transaction.DischargeState;
 import org.apache.qpid.protonj2.engine.TransactionController;
 import org.apache.qpid.protonj2.engine.TransactionState;
+import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.Modified;
@@ -98,8 +99,12 @@ public class ClientTransactionContext {
                 });
             }
 
-            txnController.registerCapacityAvailableHandler(controller -> {
-                txnController.discharge(currentTxn, false);
+            txnController.addCapacityAvailableHandler(controller -> {
+                try {
+                    txnController.discharge(currentTxn, false);
+                } catch (EngineFailedException efe) {
+                    commitFuture.failed(ClientExceptionSupport.createOrPassthroughFatal(efe));
+                }
             });
         } else {
             currentTxn = null;
@@ -129,8 +134,12 @@ public class ClientTransactionContext {
                 });
             }
 
-            txnController.registerCapacityAvailableHandler(controller -> {
-                txnController.discharge(currentTxn, true);
+            txnController.addCapacityAvailableHandler(controller -> {
+                try {
+                    txnController.discharge(currentTxn, true);
+                } catch (EngineFailedException efe) {
+                    rollbackFuture.failed(ClientExceptionSupport.createOrPassthroughFatal(efe));
+                }
             });
         } else {
             currentTxn = null;
@@ -183,8 +192,12 @@ public class ClientTransactionContext {
             });
         }
 
-        txnController.registerCapacityAvailableHandler(controller -> {
-            txnController.declare(currentTxn);
+        txnController.addCapacityAvailableHandler(controller -> {
+            try {
+                txnController.declare(currentTxn);
+            } catch (EngineFailedException efe) {
+                beginFuture.failed(ClientExceptionSupport.createOrPassthroughFatal(efe));
+            }
         });
     }
 
