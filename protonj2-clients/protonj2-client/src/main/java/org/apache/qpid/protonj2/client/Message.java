@@ -22,6 +22,7 @@ import java.util.function.BiConsumer;
 
 import org.apache.qpid.protonj2.client.impl.ClientMessage;
 import org.apache.qpid.protonj2.client.impl.ClientMessageSupport;
+import org.apache.qpid.protonj2.client.impl.ClientStreamableMessage;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
@@ -121,6 +122,10 @@ public interface Message<E> {
         });
     }
 
+    static StreamableMessage createStreamableMessage() {
+        return new ClientStreamableMessage();
+    }
+
     //----- Message specific APIs
 
     /**
@@ -142,6 +147,11 @@ public interface Message<E> {
     //----- AMQP Header Section
 
     /**
+     * For an message being sent this method returns the current state of the
+     * durable flag on the message.  For a received message this method returns
+     * the durable flag value at the time of sending (or false if not set) unless
+     * the value is updated after being received by the receiver.
+     *
      * @return true if the Message is marked as being durable
      */
     boolean durable();

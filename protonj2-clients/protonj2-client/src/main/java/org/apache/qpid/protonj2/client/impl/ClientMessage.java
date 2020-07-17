@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.client.impl;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -640,5 +641,23 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     @Override
     public ProtonBuffer encode() {
         return ClientMessageSupport.encodeMessage(this);
+    }
+
+    @Override
+    public AdvancedMessage<E> addBodySection(Section bodySection) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public AdvancedMessage<E> bodySections(Collection<Section> sections) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public Collection<Section> bodySections() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

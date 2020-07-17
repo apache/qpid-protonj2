@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.client;
 
+import java.util.Collection;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
@@ -23,6 +25,7 @@ import org.apache.qpid.protonj2.types.messaging.Footer;
 import org.apache.qpid.protonj2.types.messaging.Header;
 import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
 import org.apache.qpid.protonj2.types.messaging.Properties;
+import org.apache.qpid.protonj2.types.messaging.Section;
 
 /**
  * Advanced AMQP Message object that provides a thin abstraction to raw AMQP types
@@ -60,5 +63,11 @@ public interface AdvancedMessage<E> extends Message<E> {
     AdvancedMessage<E> messageFormat(int messageFormat);
 
     ProtonBuffer encode();
+
+    AdvancedMessage<E> addBodySection(Section bodySection);
+
+    AdvancedMessage<E> bodySections(Collection<Section> sections);
+
+    Collection<Section> bodySections();
 
 }
