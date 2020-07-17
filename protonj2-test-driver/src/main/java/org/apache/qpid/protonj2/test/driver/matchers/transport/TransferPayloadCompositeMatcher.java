@@ -22,7 +22,6 @@ package org.apache.qpid.protonj2.test.driver.matchers.transport;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.ApplicationPropertiesMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.DeliveryAnnotationsMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.HeaderMatcher;
@@ -49,7 +48,7 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
     private String messageAnnotationsMatcherFailureDescription;
     private PropertiesMatcher propertiesMatcher;
     private String propertiesMatcherFailureDescription;
-    private Matcher<Binary> msgContentMatcher;
+    private Matcher<ByteBuf> msgContentMatcher;
     private String msgContentMatcherFailureDescription;
     private ApplicationPropertiesMatcher applicationPropertiesMatcher;
     private String applicationPropertiesMatcherFailureDescription;
@@ -239,7 +238,7 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
         this.applicationPropertiesMatcher = appPropsMatcher;
     }
 
-    public void setMessageContentMatcher(Matcher<Binary> msgContentMatcher) {
+    public void setMessageContentMatcher(Matcher<ByteBuf> msgContentMatcher) {
         this.msgContentMatcher = msgContentMatcher;
     }
 
