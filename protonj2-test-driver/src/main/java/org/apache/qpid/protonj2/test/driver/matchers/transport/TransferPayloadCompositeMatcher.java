@@ -24,6 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.ApplicationPropertiesMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.messaging.DeliveryAnnotationsMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.HeaderMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.MessageAnnotationsMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.PropertiesMatcher;
@@ -40,16 +41,18 @@ import io.netty.buffer.ByteBuf;
  */
 public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
 
-    private HeaderMatcher msgHeadersMatcher;
-    private String msgHeaderMatcherFailureDescription;
-    private MessageAnnotationsMatcher msgAnnotationsMatcher;
-    private String msgAnnotationsMatcherFailureDescription;
-    private PropertiesMatcher propsMatcher;
-    private String propsMatcherFailureDescription;
+    private HeaderMatcher headersMatcher;
+    private String headerMatcherFailureDescription;
+    private DeliveryAnnotationsMatcher deliveryAnnotationsMatcher;
+    private String deliveryAnnotationsMatcherFailureDescription;
+    private MessageAnnotationsMatcher messageAnnotationsMatcher;
+    private String messageAnnotationsMatcherFailureDescription;
+    private PropertiesMatcher propertiesMatcher;
+    private String propertiesMatcherFailureDescription;
     private Matcher<Binary> msgContentMatcher;
     private String msgContentMatcherFailureDescription;
-    private ApplicationPropertiesMatcher appPropsMatcher;
-    private String appPropsMatcherFailureDescription;
+    private ApplicationPropertiesMatcher applicationPropertiesMatcher;
+    private String applicationPropertiesMatcherFailureDescription;
     private Matcher<Integer> payloadLengthMatcher;
     private String payloadLenthMatcherFailureDescription;
 
@@ -73,53 +76,67 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
         }
 
         // MessageHeader Section
-        if (msgHeadersMatcher != null) {
+        if (headersMatcher != null) {
             ByteBuf msgHeaderEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
             try {
-                bytesConsumed += msgHeadersMatcher.verify(msgHeaderEtcSubBinary);
+                bytesConsumed += headersMatcher.verify(msgHeaderEtcSubBinary);
             } catch (Throwable t) {
-                msgHeaderMatcherFailureDescription = "\nActual encoded form of remaining bytes passed to MessageHeaderMatcher: " + msgHeaderEtcSubBinary;
-                msgHeaderMatcherFailureDescription += "\nMessageHeaderMatcher generated throwable: " + t;
+                headerMatcherFailureDescription = "\nActual encoded form of remaining bytes passed to MessageHeaderMatcher: " + msgHeaderEtcSubBinary;
+                headerMatcherFailureDescription += "\nMessageHeaderMatcher generated throwable: " + t;
+
+                return false;
+            }
+        }
+
+        // DeliveryAnnotations Section
+        if (deliveryAnnotationsMatcher != null) {
+            ByteBuf daAnnotationsEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
+            try {
+                bytesConsumed += deliveryAnnotationsMatcher.verify(daAnnotationsEtcSubBinary);
+            } catch (Throwable t) {
+                deliveryAnnotationsMatcherFailureDescription = "\nActual encoded form of remaining bytes passed to DeliveryAnnotationsMatcher: "
+                    + daAnnotationsEtcSubBinary;
+                deliveryAnnotationsMatcherFailureDescription += "\nDeliveryAnnotationsMatcher generated throwable: " + t;
 
                 return false;
             }
         }
 
         // MessageAnnotations Section
-        if (msgAnnotationsMatcher != null) {
+        if (messageAnnotationsMatcher != null) {
             ByteBuf msgAnnotationsEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
             try {
-                bytesConsumed += msgAnnotationsMatcher.verify(msgAnnotationsEtcSubBinary);
+                bytesConsumed += messageAnnotationsMatcher.verify(msgAnnotationsEtcSubBinary);
             } catch (Throwable t) {
-                msgAnnotationsMatcherFailureDescription = "\nActual encoded form of remaining bytes passed to MessageAnnotationsMatcher: "
+                messageAnnotationsMatcherFailureDescription = "\nActual encoded form of remaining bytes passed to MessageAnnotationsMatcher: "
                     + msgAnnotationsEtcSubBinary;
-                msgAnnotationsMatcherFailureDescription += "\nMessageAnnotationsMatcher generated throwable: " + t;
+                messageAnnotationsMatcherFailureDescription += "\nMessageAnnotationsMatcher generated throwable: " + t;
 
                 return false;
             }
         }
 
         // Properties Section
-        if (propsMatcher != null) {
+        if (propertiesMatcher != null) {
             ByteBuf propsEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
             try {
-                bytesConsumed += propsMatcher.verify(propsEtcSubBinary);
+                bytesConsumed += propertiesMatcher.verify(propsEtcSubBinary);
             } catch (Throwable t) {
-                propsMatcherFailureDescription = "\nActual encoded form of remaining bytes passed to PropertiesMatcher: " + propsEtcSubBinary;
-                propsMatcherFailureDescription += "\nPropertiesMatcher generated throwable: " + t;
+                propertiesMatcherFailureDescription = "\nActual encoded form of remaining bytes passed to PropertiesMatcher: " + propsEtcSubBinary;
+                propertiesMatcherFailureDescription += "\nPropertiesMatcher generated throwable: " + t;
 
                 return false;
             }
         }
 
         // Application Properties Section
-        if (appPropsMatcher != null) {
+        if (applicationPropertiesMatcher != null) {
             ByteBuf appPropsEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
             try {
-                bytesConsumed += appPropsMatcher.verify(appPropsEtcSubBinary);
+                bytesConsumed += applicationPropertiesMatcher.verify(appPropsEtcSubBinary);
             } catch (Throwable t) {
-                appPropsMatcherFailureDescription = "\nActual encoded form of remaining bytes passed to ApplicationPropertiesMatcher: " + appPropsEtcSubBinary;
-                appPropsMatcherFailureDescription += "\nApplicationPropertiesMatcher generated throwable: " + t;
+                applicationPropertiesMatcherFailureDescription = "\nActual encoded form of remaining bytes passed to ApplicationPropertiesMatcher: " + appPropsEtcSubBinary;
+                applicationPropertiesMatcherFailureDescription += "\nApplicationPropertiesMatcher generated throwable: " + t;
 
                 return false;
             }
@@ -164,30 +181,37 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
         }
 
         // MessageHeaders Section
-        if (msgHeaderMatcherFailureDescription != null) {
+        if (headerMatcherFailureDescription != null) {
             mismatchDescription.appendText("\nMessageHeadersMatcherFailed!");
-            mismatchDescription.appendText(msgHeaderMatcherFailureDescription);
+            mismatchDescription.appendText(headerMatcherFailureDescription);
+            return;
+        }
+
+        // MessageHeaders Section
+        if (deliveryAnnotationsMatcherFailureDescription != null) {
+            mismatchDescription.appendText("\nDeliveryAnnotationsMatcherFailed!");
+            mismatchDescription.appendText(deliveryAnnotationsMatcherFailureDescription);
             return;
         }
 
         // MessageAnnotations Section
-        if (msgAnnotationsMatcherFailureDescription != null) {
+        if (messageAnnotationsMatcherFailureDescription != null) {
             mismatchDescription.appendText("\nMessageAnnotationsMatcherFailed!");
-            mismatchDescription.appendText(msgAnnotationsMatcherFailureDescription);
+            mismatchDescription.appendText(messageAnnotationsMatcherFailureDescription);
             return;
         }
 
         // Properties Section
-        if (propsMatcherFailureDescription != null) {
+        if (propertiesMatcherFailureDescription != null) {
             mismatchDescription.appendText("\nPropertiesMatcherFailed!");
-            mismatchDescription.appendText(propsMatcherFailureDescription);
+            mismatchDescription.appendText(propertiesMatcherFailureDescription);
             return;
         }
 
         // Application Properties Section
-        if (appPropsMatcherFailureDescription != null) {
+        if (applicationPropertiesMatcherFailureDescription != null) {
             mismatchDescription.appendText("\nApplicationPropertiesMatcherFailed!");
-            mismatchDescription.appendText(appPropsMatcherFailureDescription);
+            mismatchDescription.appendText(applicationPropertiesMatcherFailureDescription);
             return;
         }
 
@@ -200,19 +224,19 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
     }
 
     public void setHeadersMatcher(HeaderMatcher msgHeadersMatcher) {
-        this.msgHeadersMatcher = msgHeadersMatcher;
+        this.headersMatcher = msgHeadersMatcher;
     }
 
     public void setMessageAnnotationsMatcher(MessageAnnotationsMatcher msgAnnotationsMatcher) {
-        this.msgAnnotationsMatcher = msgAnnotationsMatcher;
+        this.messageAnnotationsMatcher = msgAnnotationsMatcher;
     }
 
     public void setPropertiesMatcher(PropertiesMatcher propsMatcher) {
-        this.propsMatcher = propsMatcher;
+        this.propertiesMatcher = propsMatcher;
     }
 
     public void setApplicationPropertiesMatcher(ApplicationPropertiesMatcher appPropsMatcher) {
-        this.appPropsMatcher = appPropsMatcher;
+        this.applicationPropertiesMatcher = appPropsMatcher;
     }
 
     public void setMessageContentMatcher(Matcher<Binary> msgContentMatcher) {
