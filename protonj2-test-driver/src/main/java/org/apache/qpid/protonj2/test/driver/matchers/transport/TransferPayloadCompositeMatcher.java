@@ -226,6 +226,10 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
         this.headersMatcher = msgHeadersMatcher;
     }
 
+    public void setDeliveryAnnotationsMatcher(DeliveryAnnotationsMatcher deliveryAnnotationsMatcher) {
+        this.deliveryAnnotationsMatcher = deliveryAnnotationsMatcher;
+    }
+
     public void setMessageAnnotationsMatcher(MessageAnnotationsMatcher msgAnnotationsMatcher) {
         this.messageAnnotationsMatcher = msgAnnotationsMatcher;
     }

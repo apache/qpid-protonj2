@@ -47,6 +47,11 @@ public class DeliveryAnnotationsMatcher extends AbstractMapSectionMatcher {
         }
     }
 
+    public DeliveryAnnotationsMatcher withEntry(String key, Matcher<?> m) {
+        getMatchers().put(Symbol.valueOf(key), m);
+        return this;
+    }
+
     public boolean keyExistsInReceivedAnnotations(Object key) {
         validateType(key);
 

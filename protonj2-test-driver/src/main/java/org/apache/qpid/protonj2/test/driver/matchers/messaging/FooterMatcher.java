@@ -47,6 +47,11 @@ public class FooterMatcher extends AbstractMapSectionMatcher {
         }
     }
 
+    public FooterMatcher withEntry(String key, Matcher<?> m) {
+        getMatchers().put(Symbol.valueOf(key), m);
+        return this;
+    }
+
     public boolean keyExistsInReceivedAnnotations(Object key) {
         validateType(key);
 
