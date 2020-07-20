@@ -31,8 +31,6 @@ import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
-import org.apache.qpid.protonj2.types.Binary;
-import org.apache.qpid.protonj2.types.messaging.Data;
 import org.junit.Test;
 
 public class UUIDTypeCodecTest extends CodecTestSupport {
@@ -82,21 +80,24 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
     private void doTestEncodeDecodeUUIDSeries(int size) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        Data data = new Data(new Binary(new byte[] { 1, 2, 3}));
+        UUID[] source = new UUID[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = UUID.randomUUID();
+        }
 
         for (int i = 0; i < size; ++i) {
-            encoder.writeObject(buffer, encoderState, data);
+            encoder.writeObject(buffer, encoderState, source[i]);
         }
 
         for (int i = 0; i < size; ++i) {
             final Object result = decoder.readObject(buffer, decoderState);
 
             assertNotNull(result);
-            assertTrue(result instanceof Data);
+            assertTrue(result instanceof UUID);
 
-            Data decoded = (Data) result;
+            UUID decoded = (UUID) result;
 
-            assertEquals(data.getValue(), decoded.getValue());
+            assertEquals(source[i], decoded);
         }
     }
 
