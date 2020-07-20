@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.codec.messaging;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -89,7 +90,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
 
             Data decoded = (Data) result;
 
-            assertEquals(data.getValue(), decoded.getValue());
+            assertArrayEquals(data.getValue(), decoded.getValue());
         }
     }
 
@@ -101,7 +102,11 @@ public class DataTypeCodecTest extends CodecTestSupport {
 
         Data data = new Data(new Binary(new byte[SIZE]));
         for (int i = 0; i < SIZE; ++i) {
-            data.getValue().getArray()[i] = (byte) i;
+            data.getValue()[i] = (byte) i;
+        }
+
+        for (int i = 0; i < SIZE; ++i) {
+            data.getBinary().getArray()[i] = (byte) i;
         }
 
         encoder.writeObject(buffer, encoderState, data);
@@ -113,7 +118,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
 
         Data decoded = (Data) result;
 
-        assertEquals(data.getValue(), decoded.getValue());
+        assertEquals(data.getBinary(), decoded.getBinary());
     }
 
     @Test
@@ -138,7 +143,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
         for (int i = 0; i < resultArray.length; ++i) {
             assertNotNull(resultArray[i]);
             assertTrue(resultArray[i] instanceof Data);
-            assertEquals(dataArray[i].getValue(), resultArray[i].getValue());
+            assertEquals(dataArray[i].getBinary(), resultArray[i].getBinary());
         }
     }
 
@@ -282,7 +287,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
         for (int i = 0; i < resultArray.length; ++i) {
             assertNotNull(resultArray[i]);
             assertTrue(resultArray[i] instanceof Data);
-            assertEquals(array[i].getValue(), resultArray[i].getValue());
+            assertArrayEquals(array[i].getValue(), resultArray[i].getValue());
         }
     }
 }

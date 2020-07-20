@@ -34,7 +34,7 @@ import org.apache.qpid.protonj2.types.messaging.Data;
  */
 public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
 
-    private static final Data EMPTY_DATA = new Data(null);
+    private static final Data EMPTY_DATA = new Data((Binary) null);
 
     @Override
     public Class<Data> getTypeClass() {

@@ -29,17 +29,17 @@ public class DataTest {
 
     @Test
     public void testToStringOnEmptyObject() {
-        assertNotNull(new Data(null).toString());
+        assertNotNull(new Data((Binary) null).toString());
     }
 
     @Test
     public void testGetDataFromEmptySection() {
-        assertNull(new Data(null).getValue());
+        assertNull(new Data((byte[]) null).getValue());
     }
 
     @Test
     public void testCopyFromEmpty() {
-        assertNull(new Data(null).copy().getValue());
+        assertNull(new Data((Binary) null).copy().getBinary());
     }
 
     @Test
@@ -55,6 +55,6 @@ public class DataTest {
 
     @Test
     public void testGetType() {
-        assertEquals(SectionType.Data, new Data(null).getType());
+        assertEquals(SectionType.Data, new Data((byte[]) null).getType());
     }
 }

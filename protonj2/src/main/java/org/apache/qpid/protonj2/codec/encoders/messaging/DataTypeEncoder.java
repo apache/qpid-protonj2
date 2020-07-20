@@ -85,7 +85,7 @@ public final class DataTypeEncoder extends AbstractDescribedTypeEncoder<Data> {
 
         buffer.writeByte(EncodingCodes.VBIN32);
         for (Object value : values) {
-            final Binary binary = ((Data) value).getValue();
+            final Binary binary = ((Data) value).getBinary();
             buffer.writeInt(binary.getLength());
             buffer.writeBytes(binary.getArray(), binary.getArrayOffset(), binary.getLength());
         }

@@ -1768,8 +1768,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         Data section1 = decoder.readObject(payload, decoderState, Data.class);
         Data section2 = decoder.readObject(payload, decoderState, Data.class);
 
-        Binary data1 = section1.getValue();
-        Binary data2 = section2.getValue();
+        Binary data1 = section1.getBinary();
+        Binary data2 = section2.getBinary();
 
         ProtonBuffer combined = ProtonByteBufferAllocator.DEFAULT.allocate(encoded.length);
 
@@ -1857,8 +1857,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         Data section1 = decoder.readObject(payload, decoderState, Data.class);
         Data section2 = decoder.readObject(payload, decoderState, Data.class);
 
-        Binary data1 = section1.getValue();
-        Binary data2 = section2.getValue();
+        Binary data1 = section1.getBinary();
+        Binary data2 = section2.getBinary();
 
         ProtonBuffer combined = ProtonByteBufferAllocator.DEFAULT.allocate(encoded.length);
 
@@ -3287,7 +3287,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         MessageAnnotations annotations;
         Properties properties;
-        Section body;
+        Section<?> body;
 
         try {
             annotations = (MessageAnnotations) decoder.readObject(buffer, decoderState);
@@ -3310,11 +3310,11 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         }
 
         try {
-            body = (Section) decoder.readObject(buffer, decoderState);
+            body = (Section<?>) decoder.readObject(buffer, decoderState);
             assertNotNull(body);
             assertTrue(body instanceof Data);
             Data payload = (Data) body;
-            assertEquals(bytes.length, payload.getValue().getLength());
+            assertEquals(bytes.length, payload.getBinary().getLength());
         } catch (Exception ex) {
             fail("Should not encouter error on decode of Body section: " + ex);
         } finally {

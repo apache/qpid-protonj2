@@ -20,7 +20,7 @@ import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 
-public final class Data implements Section<Binary> {
+public final class Data implements Section<byte[]> {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000075L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:data:binary");
@@ -31,13 +31,36 @@ public final class Data implements Section<Binary> {
         this.value = value;
     }
 
+    public Data(byte[] value) {
+        this.value = value != null ? new Binary(value) : null;
+    }
+
+    public Data(byte[] value, int offset, int length) {
+        this.value = value != null ? new Binary(value, offset, length) : null;
+    }
+
     public Data copy() {
         return new Data(value == null ? null : value.copy());
     }
 
-    @Override
-    public Binary getValue() {
+    public Binary getBinary() {
         return value;
+    }
+
+    /**
+     * Returns the backing array for this Data {@link Section} copying the contents into a new array
+     * instance if the backing array in the contained Binary is a subsequence of a larger referenced
+     * array instance.
+     *
+     * @return the byte array view of this Data {@link Section} {@link Binary} payload.
+     */
+    @Override
+    public byte[] getValue() {
+        if (value != null && value.hasArray() && value.getArrayOffset() == 0 && value.getLength() == value.getArray().length) {
+            return value.getArray();
+        } else {
+            return value != null ? value.arrayCopy() : null;
+        }
     }
 
     @Override
