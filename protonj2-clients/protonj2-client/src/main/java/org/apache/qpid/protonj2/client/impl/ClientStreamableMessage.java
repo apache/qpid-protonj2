@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.util.Collection;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
@@ -536,21 +537,26 @@ public class ClientStreamableMessage implements StreamableMessage {
     }
 
     @Override
-    public AdvancedMessage<byte[]> addBodySection(Section bodySection) {
+    public AdvancedMessage<byte[]> addBodySection(Section<?> bodySection) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public Collection<Section> bodySections() {
+    public Collection<Section<?>> bodySections() {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public AdvancedMessage<byte[]> bodySections(Collection<Section> sections) {
+    public AdvancedMessage<byte[]> bodySections(Collection<Section<?>> sections) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
+    public AdvancedMessage<byte[]> forEachBodySection(Consumer<Section<?>> consumer) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

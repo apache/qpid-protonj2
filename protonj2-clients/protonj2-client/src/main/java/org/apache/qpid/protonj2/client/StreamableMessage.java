@@ -16,12 +16,18 @@
  */
 package org.apache.qpid.protonj2.client;
 
+import org.apache.qpid.protonj2.client.impl.ClientStreamableMessage;
+
 /**
  * A {@link Message} type that supports writing the message contents in multiple
  * chunks as the message data becomes available.  The body type for this type of
  * message is always a byte array.
  */
 public interface StreamableMessage extends AdvancedMessage<byte[]> {
+
+    static StreamableMessage createStreamableMessage() {
+        return new ClientStreamableMessage();
+    }
 
     /**
      * Marks the currently streaming message as being aborted.

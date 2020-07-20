@@ -16,10 +16,15 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
@@ -42,21 +47,37 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     private MessageAnnotations messageAnnotations;
     private Properties properties;
     private ApplicationProperties applicationProperties;
+    private final Supplier<Section<?>> sectionSupplier;
+    private final E body;
     private Footer footer;
 
-    private final Supplier<Section> sectionSupplier;
-    private E body;
     private int messageFormat;
+    private List<Supplier<Section<?>>> bodySections;
+
+    /**
+     * Create a new {@link ClientMessage} instance with no default body section or
+     * section supplier
+     *
+     * @param sectionSupplier
+     *      A {@link Supplier} that will generate Section values for the message body.
+     */
+    ClientMessage() {
+        this.sectionSupplier = null;
+        this.body = null;
+    }
 
     /**
      * Create a new {@link ClientMessage} instance with a {@link Supplier} that will
      * provide the AMQP {@link Section} value for any body that is set on the message.
      *
+     * @param body
+     *      The object that comprises the value portion of the body {@link Section}.
      * @param sectionSupplier
      *      A {@link Supplier} that will generate Section values for the message body.
      */
-    ClientMessage(Supplier<Section> sectionSupplier) {
+    ClientMessage(E body, Supplier<Section<?>> sectionSupplier) {
         this.sectionSupplier = sectionSupplier;
+        this.body = body;
     }
 
     @Override
@@ -66,8 +87,16 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     //----- Entry point for creating new ClientMessage instances.
 
-    public static <V> Message<V> create(V body, Supplier<Section> sectionSupplier) {
-        return new ClientMessage<V>(sectionSupplier).body(body);
+    public static <V> Message<V> create() {
+        return new ClientMessage<V>();
+    }
+
+    public static <V> AdvancedMessage<V> createAdvanvedMessage() {
+        return new ClientMessage<V>();
+    }
+
+    public static <V> Message<V> create(V body, Supplier<Section<?>> sectionSupplier) {
+        return new ClientMessage<V>(body, sectionSupplier);
     }
 
     //----- Message Header API
@@ -495,17 +524,16 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public E body() {
-        return body;
-    }
+        if (bodySections != null) {
+            throw new IllegalStateException("Cannot retreive body from Message with multiple body sections");
+        }
 
-    ClientMessage<E> body(E body) {
-        this.body = body;
-        return this;
+        return body;
     }
 
     //----- Access to proton resources
 
-    Section getBodySection() {
+    Section<?> getBodySection() {
         return sectionSupplier.get();
     }
 
@@ -644,20 +672,49 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> addBodySection(Section bodySection) {
-        // TODO Auto-generated method stub
+    public AdvancedMessage<E> addBodySection(Section<?> bodySection) {
+        Objects.requireNonNull(bodySection, "Additional Body Section cannot be null");
+
+        if (bodySections == null) {
+            bodySections = new ArrayList<>();
+
+            // Preserve older section supplier from original message creation.
+            if (sectionSupplier != null) {
+                bodySections.add(sectionSupplier);
+            }
+        }
+
         return this;
     }
 
     @Override
-    public AdvancedMessage<E> bodySections(Collection<Section> sections) {
-        // TODO Auto-generated method stub
+    public AdvancedMessage<E> bodySections(Collection<Section<?>> sections) {
+        Objects.requireNonNull(sections, "Provided body sections cannot be null");
+
+        sections.forEach(section -> bodySections.add(() -> { return section; }));
+
         return this;
     }
 
     @Override
-    public Collection<Section> bodySections() {
-        // TODO Auto-generated method stub
-        return null;
+    public Collection<Section<?>> bodySections() {
+        final Collection<Section<?>> result = new ArrayList<>();
+        forEachBodySection(section -> result.add(section));
+        return Collections.unmodifiableCollection(result);
+    }
+
+    @Override
+    public AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer) {
+        if (bodySections != null) {
+            bodySections.forEach(supplier -> {
+                consumer.accept(supplier.get());
+            });
+        } else {
+            if (sectionSupplier != null) {
+                consumer.accept(sectionSupplier.get());
+            }
+        }
+
+        return this;
     }
 }

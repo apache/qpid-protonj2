@@ -16,11 +16,16 @@
  */
 package org.apache.qpid.protonj2.client.util;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.types.Binary;
@@ -42,16 +47,40 @@ public class ExternalMessage<E> implements Message<E> {
     private ApplicationProperties applicationProperties;
     private Footer footer;
     private E body;
+    private final Supplier<Section<?>> sectionSupplier;
+
+    private final boolean allowAdvancedConversions;
+
+    public ExternalMessage() {
+        this(false);
+    }
+
+    public ExternalMessage(boolean allowAdvancedConversions) {
+        this(null, allowAdvancedConversions);
+    }
+
+    public ExternalMessage(Supplier<Section<?>> sectionSupplier) {
+        this(sectionSupplier, false);
+    }
+
+    public ExternalMessage(Supplier<Section<?>> sectionSupplier, boolean allowAdvancedConversions) {
+        this.sectionSupplier = sectionSupplier;
+        this.allowAdvancedConversions = allowAdvancedConversions;
+    }
 
     @Override
     public AdvancedMessage<E> toAdvancedMessage() {
-        throw new UnsupportedOperationException("Test ExternalMessage doesn't support AdvancedMessage conversions");
+        if (allowAdvancedConversions) {
+            return new AdvancedExternalMessage<E>(this);
+        } else {
+            throw new UnsupportedOperationException("Test ExternalMessage doesn't support AdvancedMessage conversions");
+        }
     }
 
     //----- Entry point for creating new ClientMessage instances.
 
-    public static <V> Message<V> create(V body, Supplier<Section> sectionSupplier) {
-        return new ExternalMessage<V>().body(body);
+    public static <V> Message<V> create(V body, Supplier<Section<?>> sectionSupplier) {
+        return new ExternalMessage<V>(sectionSupplier).body(body);
     }
 
     //----- Message Header API
@@ -535,5 +564,132 @@ public class ExternalMessage<E> implements Message<E> {
         }
 
         return footer;
+    }
+
+    //----- Sealed AdvancedMessage implementation that wraps this type.
+
+    private static class AdvancedExternalMessage<E> extends ExternalMessage<E> implements AdvancedMessage<E> {
+
+        private final ExternalMessage<E> message;
+
+        private final List<Section<?>> sections = new ArrayList<>();
+        private int messageFormat;
+
+        /**
+         * Create a wrapper that exposes {@link ExternalMessage} as an {@link AdvancedMessage}
+         *
+         * @param message
+         *      this message to wrap.
+         */
+        public AdvancedExternalMessage(ExternalMessage<E> message) {
+            this.message = message;
+        }
+
+        @Override
+        public Header header() {
+            return message.header;
+        }
+
+        @Override
+        public AdvancedMessage<E> header(Header header) {
+            message.header = header;
+            return this;
+        }
+
+        @Override
+        public DeliveryAnnotations deliveryAnnotations() {
+            return message.deliveryAnnotations;
+        }
+
+        @Override
+        public AdvancedMessage<E> deliveryAnnotations(DeliveryAnnotations deliveryAnnotations) {
+            message.deliveryAnnotations = deliveryAnnotations;
+            return this;
+        }
+
+        @Override
+        public MessageAnnotations messageAnnotations() {
+            return message.messageAnnotations;
+        }
+
+        @Override
+        public AdvancedMessage<E> messageAnnotations(MessageAnnotations messageAnnotations) {
+            message.messageAnnotations = messageAnnotations;
+            return this;
+        }
+
+        @Override
+        public Properties properties() {
+            return message.properties;
+        }
+
+        @Override
+        public AdvancedMessage<E> properties(Properties properties) {
+            message.properties = properties;
+            return this;
+        }
+
+        @Override
+        public ApplicationProperties applicationProperties() {
+            return message.applicationProperties;
+        }
+
+        @Override
+        public AdvancedMessage<E> applicationProperties(ApplicationProperties applicationProperties) {
+            message.applicationProperties = applicationProperties;
+            return this;
+        }
+
+        @Override
+        public Footer footer() {
+            return message.footer;
+        }
+
+        @Override
+        public AdvancedMessage<E> footer(Footer footer) {
+            message.footer = footer;
+            return this;
+        }
+
+        @Override
+        public int messageFormat() {
+            return messageFormat;
+        }
+
+        @Override
+        public AdvancedMessage<E> messageFormat(int messageFormat) {
+            this.messageFormat = messageFormat;
+            return this;
+        }
+
+        @Override
+        public ProtonBuffer encode() {
+            // TODO return ClientMessageSupport.encode(this);
+            return null;
+        }
+
+        @Override
+        public AdvancedMessage<E> addBodySection(Section<?> bodySection) {
+            // TODO Auto-generated method stub
+            return this;
+        }
+
+        @Override
+        public AdvancedMessage<E> bodySections(Collection<Section<?>> sections) {
+            // TODO Auto-generated method stub
+            return this;
+        }
+
+        @Override
+        public Collection<Section<?>> bodySections() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer) {
+            // TODO Auto-generated method stub
+            return this;
+        }
     }
 }

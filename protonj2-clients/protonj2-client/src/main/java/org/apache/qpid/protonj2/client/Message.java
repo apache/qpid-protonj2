@@ -22,7 +22,6 @@ import java.util.function.BiConsumer;
 
 import org.apache.qpid.protonj2.client.impl.ClientMessage;
 import org.apache.qpid.protonj2.client.impl.ClientMessageSupport;
-import org.apache.qpid.protonj2.client.impl.ClientStreamableMessage;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
@@ -120,10 +119,6 @@ public interface Message<E> {
         return ClientMessage.create(body, () -> {
             return new AmqpValue(body);
         });
-    }
-
-    static StreamableMessage createStreamableMessage() {
-        return new ClientStreamableMessage();
     }
 
     //----- Message specific APIs

@@ -91,7 +91,6 @@ public abstract class ClientMessageSupport {
         MessageAnnotations messageAnnotations = message.messageAnnotations();
         Properties properties = message.properties();
         ApplicationProperties applicationProperties = message.applicationProperties();
-        Section body = message.getBodySection();
         Footer footer = message.footer();
 
         if (header != null) {
@@ -109,9 +108,9 @@ public abstract class ClientMessageSupport {
         if (applicationProperties != null) {
             encoder.writeObject(buffer, encoderState, applicationProperties);
         }
-        if (body != null) {
-            encoder.writeObject(buffer, encoderState, body);
-        }
+
+        message.forEachBodySection(section -> encoder.writeObject(buffer, encoderState, section));
+
         if (footer != null) {
             encoder.writeObject(buffer, encoderState, footer);
         }
@@ -135,13 +134,13 @@ public abstract class ClientMessageSupport {
         MessageAnnotations messageAnnotations = null;
         Properties properties = null;
         ApplicationProperties applicationProperties = null;
-        Section body = null;
+        Section<?> body = null;
         Footer footer = null;
-        Section section = null;
+        Section<?> section = null;
 
         while (buffer.isReadable()) {
             try {
-                section = (Section) decoder.readObject(buffer, decoderState);
+                section = (Section<?>) decoder.readObject(buffer, decoderState);
             } catch (Exception e) {
                 throw ClientExceptionSupport.createNonFatalOrPassthrough(e);
             }
@@ -193,14 +192,14 @@ public abstract class ClientMessageSupport {
 
     //----- Internal Implementation
 
-    private static ClientMessage<?> createMessageFromBodySection(Section body) {
+    private static ClientMessage<?> createMessageFromBodySection(Section<?> body) {
         Message<?> result = null;
         if (body == null) {
             result = Message.create();
         } else if (body instanceof Data) {
-            Binary payload = ((Data) body).getValue();
+            byte[] payload = ((Data) body).getValue();
             if (payload != null) {
-                result = Message.create(payload.getArray());
+                result = Message.create(payload);
             }
         } else if (body instanceof AmqpSequence) {
             result = Message.create(((AmqpSequence) body).getValue());
@@ -283,7 +282,7 @@ public abstract class ClientMessageSupport {
             footer = null;
         }
 
-        ClientMessage<E> message = new ClientMessage<>(sectionSupplier(source.body()));
+        ClientMessage<E> message = new ClientMessage<>(source.body(), sectionSupplier(source.body()));
 
         message.header(header);
         message.properties(properties);
@@ -296,11 +295,11 @@ public abstract class ClientMessageSupport {
     }
 
     @SuppressWarnings("rawtypes")
-    private static <E> Supplier<Section> sectionSupplier(E body) {
+    private static <E> Supplier<Section<?>> sectionSupplier(E body) {
         if (body == null) {
             return () -> null;
         } else if (body instanceof byte[]) {
-            return () -> new Data(new Binary((byte[]) body));
+            return () -> new Data((byte[]) body);
         } else if (body instanceof List){
             return () -> new AmqpSequence((List) body);
         } else {

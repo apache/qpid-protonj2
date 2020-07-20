@@ -17,8 +17,10 @@
 package org.apache.qpid.protonj2.client;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.client.impl.ClientMessage;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.messaging.Footer;
@@ -33,6 +35,10 @@ import org.apache.qpid.protonj2.types.messaging.Section;
  * @param <E> The type of the message body that this message carries
  */
 public interface AdvancedMessage<E> extends Message<E> {
+
+    static <V> AdvancedMessage<V> create() {
+        return ClientMessage.createAdvanvedMessage();
+    }
 
     Header header();
 
@@ -64,10 +70,12 @@ public interface AdvancedMessage<E> extends Message<E> {
 
     ProtonBuffer encode();
 
-    AdvancedMessage<E> addBodySection(Section bodySection);
+    AdvancedMessage<E> addBodySection(Section<?> bodySection);
 
-    AdvancedMessage<E> bodySections(Collection<Section> sections);
+    AdvancedMessage<E> bodySections(Collection<Section<?>> sections);
 
-    Collection<Section> bodySections();
+    Collection<Section<?>> bodySections();
+
+    AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer);
 
 }
