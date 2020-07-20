@@ -21,7 +21,7 @@ import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 
-public final class Properties implements Section {
+public final class Properties implements Section<Properties> {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000073L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:properties:list");
@@ -78,6 +78,11 @@ public final class Properties implements Section {
 
     public Properties copy() {
         return new Properties(this);
+    }
+
+    @Override
+    public Properties getValue() {
+        return this;
     }
 
     //----- Query the state of the Header object -----------------------------//

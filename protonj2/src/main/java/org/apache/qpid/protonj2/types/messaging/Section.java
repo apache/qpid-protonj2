@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.protonj2.types.messaging;
 
-public interface Section {
+public interface Section<E> {
 
     enum SectionType {
         AmqpSequence,
@@ -34,5 +34,10 @@ public interface Section {
      * @return the {@link SectionType} that describes this instance.
      */
     SectionType getType();
+
+    /**
+     * @return the Object value contained within the given message {@link Section}.
+     */
+    E getValue();
 
 }

@@ -22,7 +22,7 @@ import java.util.List;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 
-public final class AmqpSequence implements Section {
+public final class AmqpSequence implements Section<List<Object>> {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000076L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:amqp-sequence:list");
@@ -34,6 +34,7 @@ public final class AmqpSequence implements Section {
         this.value = (List<Object>) value;
     }
 
+    @Override
     public List<Object> getValue() {
         return value;
     }

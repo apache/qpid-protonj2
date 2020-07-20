@@ -22,7 +22,7 @@ import java.util.Map;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 
-public final class ApplicationProperties implements Section {
+public final class ApplicationProperties implements Section<Map<String, Object>> {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000074L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:application-properties:map");
@@ -38,6 +38,7 @@ public final class ApplicationProperties implements Section {
         return new ApplicationProperties(value == null ? null : new LinkedHashMap<>(value));
     }
 
+    @Override
     public Map<String, Object> getValue() {
         return value;
     }

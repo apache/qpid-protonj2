@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.protonj2.engine;
 
-import org.apache.qpid.protonj2.engine.Transaction.DischargeState;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.transactions.Declare;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;

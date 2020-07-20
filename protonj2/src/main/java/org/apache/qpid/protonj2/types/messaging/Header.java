@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.types.messaging;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 
-public final class Header implements Section {
+public final class Header implements Section<Header> {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000070L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:header:list");
@@ -59,6 +59,11 @@ public final class Header implements Section {
 
     public Header copy() {
         return new Header(this);
+    }
+
+    @Override
+    public Header getValue() {
+        return this;
     }
 
     //----- Query the state of the Header object -----------------------------//
