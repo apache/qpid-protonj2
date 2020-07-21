@@ -18,7 +18,6 @@ package org.apache.qpid.protonj2.engine.util;
 
 import java.util.Map;
 
-import org.apache.qpid.protonj2.engine.util.SplayMap;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Setup;

@@ -20,11 +20,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.protonj2.codec.CodecFactory;
-import org.apache.qpid.protonj2.codec.Decoder;
-import org.apache.qpid.protonj2.codec.DecoderState;
-import org.apache.qpid.protonj2.codec.Encoder;
-import org.apache.qpid.protonj2.codec.EncoderState;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
