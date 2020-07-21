@@ -28,6 +28,7 @@ import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 /**
  * Decoder of AMQP Data type values from a byte stream.
  */
+@SuppressWarnings("rawtypes")
 public final class AmqpValueTypeDecoder extends AbstractDescribedTypeDecoder<AmqpValue> {
 
     @Override
@@ -46,9 +47,9 @@ public final class AmqpValueTypeDecoder extends AbstractDescribedTypeDecoder<Amq
     }
 
     @Override
-    public AmqpValue readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
+    public AmqpValue<?> readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-        return new AmqpValue(decoder.readValue(buffer, state));
+        return new AmqpValue<>(decoder.readValue(buffer, state));
     }
 
     @Override
@@ -59,7 +60,7 @@ public final class AmqpValueTypeDecoder extends AbstractDescribedTypeDecoder<Amq
 
         AmqpValue[] array = new AmqpValue[count];
         for (int i = 0; i < count; ++i) {
-            array[i] = new AmqpValue(elements[i]);
+            array[i] = new AmqpValue<>(elements[i]);
         }
 
         return array;

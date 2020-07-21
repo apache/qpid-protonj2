@@ -67,7 +67,7 @@ public class AmqpSequenceTypeCodecTest extends CodecTestSupport {
         list.add(UUID.randomUUID());
         list.add("string");
 
-        AmqpSequence value = new AmqpSequence(list);
+        AmqpSequence<Object> value = new AmqpSequence<>(list);
 
         encoder.writeObject(buffer, encoderState, value);
 
@@ -76,7 +76,8 @@ public class AmqpSequenceTypeCodecTest extends CodecTestSupport {
         assertNotNull(result);
         assertTrue(result instanceof AmqpSequence);
 
-        AmqpSequence decoded = (AmqpSequence) result;
+        @SuppressWarnings("unchecked")
+        AmqpSequence<Object> decoded = (AmqpSequence<Object>) result;
 
         assertEquals(value.getValue(), decoded.getValue());
     }
@@ -90,11 +91,12 @@ public class AmqpSequenceTypeCodecTest extends CodecTestSupport {
         list.add("test-1");
         list.add("test-2");
 
-        AmqpSequence[] array = new AmqpSequence[3];
+        @SuppressWarnings("unchecked")
+        AmqpSequence<Object>[] array = new AmqpSequence[3];
 
-        array[0] = new AmqpSequence(list);
-        array[1] = new AmqpSequence(list);
-        array[2] = new AmqpSequence(list);
+        array[0] = new AmqpSequence<>(list);
+        array[1] = new AmqpSequence<>(list);
+        array[2] = new AmqpSequence<>(list);
 
         encoder.writeObject(buffer, encoderState, array);
 
@@ -103,7 +105,8 @@ public class AmqpSequenceTypeCodecTest extends CodecTestSupport {
         assertTrue(result.getClass().isArray());
         assertEquals(AmqpSequence.class, result.getClass().getComponentType());
 
-        AmqpSequence[] resultArray = (AmqpSequence[]) result;
+        @SuppressWarnings("unchecked")
+        AmqpSequence<Object>[] resultArray = (AmqpSequence[]) result;
 
         for (int i = 0; i < resultArray.length; ++i) {
             assertNotNull(resultArray[i]);
@@ -122,7 +125,7 @@ public class AmqpSequenceTypeCodecTest extends CodecTestSupport {
         list.add("three");
 
         for (int i = 0; i < 10; ++i) {
-            encoder.writeObject(buffer, encoderState, new AmqpSequence(list));
+            encoder.writeObject(buffer, encoderState, new AmqpSequence<>(list));
         }
 
         encoder.writeObject(buffer, encoderState, new Modified());
@@ -209,6 +212,7 @@ public class AmqpSequenceTypeCodecTest extends CodecTestSupport {
         } catch (DecodeException ex) {}
     }
 
+    @SuppressWarnings("rawtypes")
     @Test
     public void testEncodeDecodeArray() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
@@ -219,9 +223,9 @@ public class AmqpSequenceTypeCodecTest extends CodecTestSupport {
         list.add("1");
         list.add("2");
 
-        array[0] = new AmqpSequence(new ArrayList<>());
-        array[1] = new AmqpSequence(list);
-        array[2] = new AmqpSequence(list);
+        array[0] = new AmqpSequence<>(new ArrayList<>());
+        array[1] = new AmqpSequence<>(list);
+        array[2] = new AmqpSequence<>(list);
 
         encoder.writeObject(buffer, encoderState, array);
 

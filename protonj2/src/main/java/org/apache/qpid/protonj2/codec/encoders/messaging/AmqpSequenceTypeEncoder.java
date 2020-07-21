@@ -30,6 +30,7 @@ import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 /**
  * Encoder of AMQP AmqpSequence type values to a byte stream.
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public final class AmqpSequenceTypeEncoder extends AbstractDescribedTypeEncoder<AmqpSequence> {
 
     @Override
@@ -80,7 +81,6 @@ public final class AmqpSequenceTypeEncoder extends AbstractDescribedTypeEncoder<
         buffer.setInt(startIndex, (int) writeSize);
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);

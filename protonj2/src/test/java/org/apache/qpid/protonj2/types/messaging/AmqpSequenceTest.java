@@ -30,17 +30,17 @@ public class AmqpSequenceTest {
 
     @Test
     public void testToStringOnEmptyObject() {
-        assertNotNull(new AmqpSequence(null).toString());
+        assertNotNull(new AmqpSequence<>(null).toString());
     }
 
     @Test
     public void testGetSequenceFromEmptySection() {
-        assertNull(new AmqpSequence(null).getValue());
+        assertNull(new AmqpSequence<>(null).getValue());
     }
 
     @Test
     public void testCopyFromEmpty() {
-        assertNull(new AmqpSequence(null).copy().getValue());
+        assertNull(new AmqpSequence<>(null).copy().getValue());
     }
 
     @Test
@@ -48,8 +48,8 @@ public class AmqpSequenceTest {
         ArrayList<Object> payload = new ArrayList<>();
         payload.add("test");
 
-        AmqpSequence original = new AmqpSequence(payload);
-        AmqpSequence copy = original.copy();
+        AmqpSequence<Object> original = new AmqpSequence<>(payload);
+        AmqpSequence<Object> copy = original.copy();
 
         assertNotSame(original, copy);
         assertNotSame(original.getValue(), copy.getValue());
@@ -58,6 +58,6 @@ public class AmqpSequenceTest {
 
     @Test
     public void testGetType() {
-        assertEquals(SectionType.AmqpSequence, new AmqpSequence(null).getType());
+        assertEquals(SectionType.AmqpSequence, new AmqpSequence<>(null).getType());
     }
 }

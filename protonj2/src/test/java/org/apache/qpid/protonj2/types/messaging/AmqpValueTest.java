@@ -27,21 +27,21 @@ public class AmqpValueTest {
 
     @Test
     public void testToStringOnEmptyObject() {
-        assertNotNull(new AmqpValue(null).toString());
+        assertNotNull(new AmqpValue<>(null).toString());
     }
 
     @Test
     public void testGetValueFromEmptySection() {
-        assertNull(new AmqpValue(null).getValue());
+        assertNull(new AmqpValue<>(null).getValue());
     }
 
     @Test
     public void testCopyFromEmpty() {
-        assertNull(new AmqpValue(null).copy().getValue());
+        assertNull(new AmqpValue<>(null).copy().getValue());
     }
 
     @Test
     public void testGetType() {
-        assertEquals(SectionType.AmqpValue, new AmqpValue(null).getType());
+        assertEquals(SectionType.AmqpValue, new AmqpValue<>(null).getType());
     }
 }

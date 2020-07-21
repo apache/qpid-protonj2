@@ -28,6 +28,7 @@ import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 /**
  * Encoder of AMQP Value type values to a byte stream.
  */
+@SuppressWarnings({ "rawtypes" })
 public final class AmqpValueTypeEncoder extends AbstractDescribedTypeEncoder<AmqpValue> {
 
     @Override

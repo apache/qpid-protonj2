@@ -19,23 +19,23 @@ package org.apache.qpid.protonj2.types.messaging;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 
-public final class AmqpValue implements Section<Object> {
+public final class AmqpValue<E> implements Section<E> {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000077L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:amqp-value:*");
 
-    private final Object value;
+    private final E value;
 
-    public AmqpValue(Object value) {
+    public AmqpValue(E value) {
         this.value = value;
     }
 
-    public AmqpValue copy() {
-        return new AmqpValue(value);
+    public AmqpValue<E> copy() {
+        return new AmqpValue<>(value);
     }
 
     @Override
-    public Object getValue() {
+    public E getValue() {
         return value;
     }
 

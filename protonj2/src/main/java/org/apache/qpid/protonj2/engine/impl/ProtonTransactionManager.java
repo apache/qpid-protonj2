@@ -361,7 +361,8 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
         if (!delivery.isPartial()) {
             ProtonBuffer payload = delivery.readAll();
 
-            AmqpValue container = (AmqpValue) payloadDecoder.readObject(payload, payloadDecoder.getCachedDecoderState());
+            @SuppressWarnings( "rawtypes" )
+            AmqpValue<?> container = (AmqpValue) payloadDecoder.readObject(payload, payloadDecoder.getCachedDecoderState());
 
             if (container.getValue() instanceof Declare) {
                 ProtonManagerTransaction transaction = new ProtonManagerTransaction(this);

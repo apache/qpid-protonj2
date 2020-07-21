@@ -71,7 +71,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         ENCODED_DECLARE = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         try {
-            declareEncoder.writeObject(ENCODED_DECLARE, state, new AmqpValue(new Declare()));
+            declareEncoder.writeObject(ENCODED_DECLARE, state, new AmqpValue<>(new Declare()));
         } finally {
             state.reset();
         }
@@ -206,7 +206,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         discharge.setFail(failed);
         discharge.setTxnId(transaction.getTxnId());
 
-        commandEncoder.writeObject(encoding.clear(), commandEncoder.getCachedEncoderState(), new AmqpValue(discharge));
+        commandEncoder.writeObject(encoding.clear(), commandEncoder.getCachedEncoderState(), new AmqpValue<>(discharge));
 
         OutgoingDelivery command = senderLink.next();
         command.setLinkedResource(transaction);

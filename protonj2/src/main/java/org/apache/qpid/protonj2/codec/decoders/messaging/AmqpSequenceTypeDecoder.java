@@ -31,6 +31,7 @@ import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 /**
  * Decoder of AMQP Data type values from a byte stream.
  */
+@SuppressWarnings("rawtypes")
 public final class AmqpSequenceTypeDecoder extends AbstractDescribedTypeDecoder<AmqpSequence> {
 
     @Override
@@ -50,7 +51,7 @@ public final class AmqpSequenceTypeDecoder extends AbstractDescribedTypeDecoder<
 
     @SuppressWarnings("unchecked")
     @Override
-    public AmqpSequence readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
+    public AmqpSequence<?> readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -58,10 +59,10 @@ public final class AmqpSequenceTypeDecoder extends AbstractDescribedTypeDecoder<
         ListTypeDecoder valueDecoder = (ListTypeDecoder) decoder;
         List<Object> result = valueDecoder.readValue(buffer, state);
 
-        return new AmqpSequence(result);
+        return new AmqpSequence<>(result);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked" })
     @Override
     public AmqpSequence[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
