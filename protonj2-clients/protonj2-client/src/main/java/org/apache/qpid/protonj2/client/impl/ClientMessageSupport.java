@@ -18,11 +18,11 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.function.Supplier;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.codec.CodecFactory;
@@ -75,15 +75,15 @@ public abstract class ClientMessageSupport {
 
     //----- Message Encoding
 
-    public static ProtonBuffer encodeMessage(ClientMessage<?> message) {
+    public static ProtonBuffer encodeMessage(AdvancedMessage<?> message) {
         return encodeMessage(DEFAULT_ENCODER, DEFAULT_ENCODER.newEncoderState(), ProtonByteBufferAllocator.DEFAULT, message);
     }
 
-    public static ProtonBuffer encodeMessage(Encoder encoder, ProtonBufferAllocator allocator, ClientMessage<?> message) {
+    public static ProtonBuffer encodeMessage(Encoder encoder, ProtonBufferAllocator allocator, AdvancedMessage<?> message) {
         return encodeMessage(encoder, encoder.newEncoderState(), ProtonByteBufferAllocator.DEFAULT, message);
     }
 
-    public static ProtonBuffer encodeMessage(Encoder encoder, EncoderState encoderState, ProtonBufferAllocator allocator, ClientMessage<?> message) {
+    public static ProtonBuffer encodeMessage(Encoder encoder, EncoderState encoderState, ProtonBufferAllocator allocator, AdvancedMessage<?> message) {
         ProtonBuffer buffer = allocator.allocate();
 
         Header header = message.header();
@@ -190,8 +190,22 @@ public abstract class ClientMessageSupport {
         throw new ClientException("Failed to create Message from encoded payload");
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static <E> Section<E> createSectionFromValue(E body) {
+        if (body == null) {
+            return null;
+        } else if (body instanceof byte[]) {
+            return (Section<E>) new Data((byte[]) body);
+        } else if (body instanceof List){
+            return new AmqpSequence((List) body);
+        } else {
+            return new AmqpValue(body);
+        }
+    }
+
     //----- Internal Implementation
 
+    @SuppressWarnings("unchecked")
     private static ClientMessage<?> createMessageFromBodySection(Section<?> body) {
         Message<?> result = null;
         if (body == null) {
@@ -202,9 +216,9 @@ public abstract class ClientMessageSupport {
                 result = Message.create(payload);
             }
         } else if (body instanceof AmqpSequence) {
-            result = Message.create(((AmqpSequence) body).getValue());
+            result = Message.create(((AmqpSequence<Object>) body).getValue());
         } else if (body instanceof AmqpValue) {
-            Object value = ((AmqpValue) body).getValue();
+            Object value = ((AmqpValue<Object>) body).getValue();
             if (value instanceof String) {
                 result = Message.create((String) value);
             } else {
@@ -282,7 +296,7 @@ public abstract class ClientMessageSupport {
             footer = null;
         }
 
-        ClientMessage<E> message = new ClientMessage<>(source.body(), sectionSupplier(source.body()));
+        ClientMessage<E> message = new ClientMessage<>(createSectionFromValue(source.body()));
 
         message.header(header);
         message.properties(properties);
@@ -292,18 +306,5 @@ public abstract class ClientMessageSupport {
         message.footer(footer);
 
         return message;
-    }
-
-    @SuppressWarnings("rawtypes")
-    private static <E> Supplier<Section<?>> sectionSupplier(E body) {
-        if (body == null) {
-            return () -> null;
-        } else if (body instanceof byte[]) {
-            return () -> new Data((byte[]) body);
-        } else if (body instanceof List){
-            return () -> new AmqpSequence((List) body);
-        } else {
-            return () -> new AmqpValue(body);
-        }
     }
 }

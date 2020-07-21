@@ -19,15 +19,17 @@ package org.apache.qpid.protonj2.client.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Message;
+import org.apache.qpid.protonj2.client.impl.ClientMessageSupport;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
@@ -46,8 +48,7 @@ public class ExternalMessage<E> implements Message<E> {
     private Properties properties;
     private ApplicationProperties applicationProperties;
     private Footer footer;
-    private E body;
-    private final Supplier<Section<?>> sectionSupplier;
+    private Section<E> body;
 
     private final boolean allowAdvancedConversions;
 
@@ -59,12 +60,12 @@ public class ExternalMessage<E> implements Message<E> {
         this(null, allowAdvancedConversions);
     }
 
-    public ExternalMessage(Supplier<Section<?>> sectionSupplier) {
-        this(sectionSupplier, false);
+    public ExternalMessage(Section<E> section) {
+        this(section, false);
     }
 
-    public ExternalMessage(Supplier<Section<?>> sectionSupplier, boolean allowAdvancedConversions) {
-        this.sectionSupplier = sectionSupplier;
+    public ExternalMessage(Section<E> body, boolean allowAdvancedConversions) {
+        this.body = body;
         this.allowAdvancedConversions = allowAdvancedConversions;
     }
 
@@ -79,8 +80,8 @@ public class ExternalMessage<E> implements Message<E> {
 
     //----- Entry point for creating new ClientMessage instances.
 
-    public static <V> Message<V> create(V body, Supplier<Section<?>> sectionSupplier) {
-        return new ExternalMessage<V>(sectionSupplier).body(body);
+    public static <V> Message<V> create(Section<V> body) {
+        return new ExternalMessage<V>(body);
     }
 
     //----- Message Header API
@@ -508,10 +509,16 @@ public class ExternalMessage<E> implements Message<E> {
 
     @Override
     public E body() {
-        return body;
+        return body.getValue();
     }
 
+    @Override
     public ExternalMessage<E> body(E body) {
+        this.body = ClientMessageSupport.createSectionFromValue(body);
+        return this;
+    }
+
+    public ExternalMessage<E> body(Section<E> body) {
         this.body = body;
         return this;
     }
@@ -572,7 +579,7 @@ public class ExternalMessage<E> implements Message<E> {
 
         private final ExternalMessage<E> message;
 
-        private final List<Section<?>> sections = new ArrayList<>();
+        private final List<Section<E>> bodySections = new ArrayList<>();
         private int messageFormat;
 
         /**
@@ -664,31 +671,47 @@ public class ExternalMessage<E> implements Message<E> {
 
         @Override
         public ProtonBuffer encode() {
-            // TODO return ClientMessageSupport.encode(this);
-            return null;
+            return ClientMessageSupport.encodeMessage(this);
         }
 
         @Override
-        public AdvancedMessage<E> addBodySection(Section<?> bodySection) {
-            // TODO Auto-generated method stub
+        public AdvancedMessage<E> addBodySection(Section<E> bodySection) {
+            Objects.requireNonNull(bodySection, "Additional Body Section cannot be null");
+
+            if (bodySections.isEmpty()) {
+                // Preserve older section from original message creation.
+                if (message.body() != null) {
+                    bodySections.add(message.body);
+                }
+            }
+
             return this;
         }
 
         @Override
-        public AdvancedMessage<E> bodySections(Collection<Section<?>> sections) {
-            // TODO Auto-generated method stub
+        public AdvancedMessage<E> bodySections(Collection<Section<E>> sections) {
+            this.bodySections.clear();
+            this.bodySections.addAll(sections);
             return this;
         }
 
         @Override
-        public Collection<Section<?>> bodySections() {
-            // TODO Auto-generated method stub
-            return null;
+        public Collection<Section<E>> bodySections() {
+            return Collections.unmodifiableCollection(bodySections);
         }
 
         @Override
-        public AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer) {
-            // TODO Auto-generated method stub
+        public AdvancedMessage<E> forEachBodySection(Consumer<Section<E>> consumer) {
+            if (!bodySections.isEmpty()) {
+                bodySections.forEach(section -> {
+                    consumer.accept(section);
+                });
+            } else {
+                if (message.body != null) {
+                    consumer.accept(message.body);
+                }
+            }
+
             return this;
         }
     }

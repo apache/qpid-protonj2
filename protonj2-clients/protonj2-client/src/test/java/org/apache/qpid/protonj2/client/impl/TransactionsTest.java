@@ -940,7 +940,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             peer.start();
 
             final URI remoteURI = peer.getServerURI();
-            final byte[] payload = createEncodedMessage(new AmqpValue("Hello World"));
+            final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
@@ -1004,7 +1004,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             peer.start();
 
             final URI remoteURI = peer.getServerURI();
-            final byte[] payload = createEncodedMessage(new AmqpValue("Hello World"));
+            final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
@@ -1066,7 +1066,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             peer.start();
 
             final URI remoteURI = peer.getServerURI();
-            final byte[] payload = createEncodedMessage(new AmqpValue("Hello World"));
+            final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 

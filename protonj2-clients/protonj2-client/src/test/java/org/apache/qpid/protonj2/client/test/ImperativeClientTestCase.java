@@ -104,7 +104,7 @@ public class ImperativeClientTestCase {
         return getClass().getSimpleName() + "." + testName.getMethodName();
     }
 
-    protected byte[] createEncodedMessage(Section body) {
+    protected byte[] createEncodedMessage(Section<Object> body) {
         Encoder encoder = CodecFactory.getEncoder();
         ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
         encoder.writeObject(buffer, encoder.newEncoderState(), body);

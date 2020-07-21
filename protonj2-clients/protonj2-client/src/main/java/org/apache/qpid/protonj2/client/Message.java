@@ -22,7 +22,6 @@ import java.util.function.BiConsumer;
 
 import org.apache.qpid.protonj2.client.impl.ClientMessage;
 import org.apache.qpid.protonj2.client.impl.ClientMessageSupport;
-import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
@@ -36,14 +35,13 @@ import org.apache.qpid.protonj2.types.messaging.Section;
 public interface Message<E> {
 
     /**
-     * Create and return an {@link Message} that will carry no body {@link Section}.
+     * Create and return an {@link Message} that will carry no body {@link Section}
+     * unless one is assigned by the caller.
      *
      * @return a new {@link Message} instance with an empty body {@link Section}.
      */
-    static Message<Void> create() {
-        return ClientMessage.create(null, () -> {
-            return null;
-        });
+    static Message<Object> create() {
+        return ClientMessage.create();
     }
 
     /**
@@ -56,9 +54,7 @@ public interface Message<E> {
      * @return a new {@link Message} instance with a body containing the given value.
      */
     static Message<Object> create(Object body) {
-        return ClientMessage.create(body, () -> {
-            return new AmqpValue(body);
-        });
+        return ClientMessage.create(new AmqpValue<>(body));
     }
 
     /**
@@ -71,9 +67,7 @@ public interface Message<E> {
      * @return a new {@link Message} instance with a body containing the given string value.
      */
     static Message<String> create(String body) {
-        return ClientMessage.create(body, () -> {
-            return new AmqpValue(body);
-        });
+        return ClientMessage.create(new AmqpValue<>(body));
     }
 
     /**
@@ -86,9 +80,7 @@ public interface Message<E> {
      * @return a new {@link Message} instance with a body containing the given byte array.
      */
     static Message<byte[]> create(byte[] body) {
-        return ClientMessage.create(body, () -> {
-            return new Data(new Binary(body));
-        });
+        return ClientMessage.create(new Data(body));
     }
 
     /**
@@ -101,9 +93,7 @@ public interface Message<E> {
      * @return a new {@link Message} instance with a body containing the given List.
      */
     static <E> Message<List<E>> create(List<E> body) {
-        return ClientMessage.create(body, () -> {
-            return new AmqpSequence(body);
-        });
+        return ClientMessage.create(new AmqpSequence<>(body));
     }
 
     /**
@@ -116,9 +106,7 @@ public interface Message<E> {
      * @return a new {@link Message} instance with a body containing the given Map.
      */
     static <K, V> Message<Map<K, V>> create(Map<K, V> body) {
-        return ClientMessage.create(body, () -> {
-            return new AmqpValue(body);
-        });
+        return ClientMessage.create(new AmqpValue<>(body));
     }
 
     //----- Message specific APIs
@@ -157,7 +145,7 @@ public interface Message<E> {
      * @param durable
      *      value assigned to the durable flag for this message.
      *
-     * @return this message for chaining.
+     * @return this {@link Message} instance.
      */
     Message<E> durable(boolean durable);
 
@@ -173,7 +161,7 @@ public interface Message<E> {
      * @param priority
      * 		The priority value to assign this message.
      *
-     * @return this message instance.
+     * @return this {@link Message} instance.
      */
     Message<E> priority(byte priority);
 
@@ -350,13 +338,26 @@ public interface Message<E> {
     //----- AMQP Body Section
 
     /**
-     * Returns the body that is conveyed in this message or null if no body was set locally
+     * Returns the body value that is conveyed in this message or null if no body was set locally
      * or sent from the remote if this is an incoming message.
      *
-     * @return the message body or null if none present.
+     * @return the message body value or null if none present.
      *
      * @throws UnsupportedOperationException if the implementation can't provide a body directly.
      */
     E body();
+
+    /**
+     * Sets the body value that is to be conveyed to the remote when this message is sent.
+     * <p>
+     * The {@link Message} implementation will choose the AMQP {@link Section} to use to wrap
+     * the given value.
+     *
+     * @param value
+     *      The value to assign to the given message body {@link Section}.
+     *
+     * @return this {@link Message} instance.
+     */
+    Message<E> body(E value);
 
 }

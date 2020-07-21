@@ -47,12 +47,11 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     private MessageAnnotations messageAnnotations;
     private Properties properties;
     private ApplicationProperties applicationProperties;
-    private final Supplier<Section<?>> sectionSupplier;
-    private final E body;
+    private Section<E> body;
     private Footer footer;
 
     private int messageFormat;
-    private List<Supplier<Section<?>>> bodySections;
+    private List<Section<E>> bodySections;
 
     /**
      * Create a new {@link ClientMessage} instance with no default body section or
@@ -62,7 +61,6 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
      *      A {@link Supplier} that will generate Section values for the message body.
      */
     ClientMessage() {
-        this.sectionSupplier = null;
         this.body = null;
     }
 
@@ -72,11 +70,8 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
      *
      * @param body
      *      The object that comprises the value portion of the body {@link Section}.
-     * @param sectionSupplier
-     *      A {@link Supplier} that will generate Section values for the message body.
      */
-    ClientMessage(E body, Supplier<Section<?>> sectionSupplier) {
-        this.sectionSupplier = sectionSupplier;
+    ClientMessage(Section<E> body) {
         this.body = body;
     }
 
@@ -95,8 +90,8 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
         return new ClientMessage<V>();
     }
 
-    public static <V> Message<V> create(V body, Supplier<Section<?>> sectionSupplier) {
-        return new ClientMessage<V>(body, sectionSupplier);
+    public static <V> Message<V> create(Section<V> body) {
+        return new ClientMessage<V>(body);
     }
 
     //----- Message Header API
@@ -528,13 +523,24 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
             throw new IllegalStateException("Cannot retreive body from Message with multiple body sections");
         }
 
-        return body;
+        return body.getValue();
+    }
+
+    @Override
+    public ClientMessage<E> body(E value) {
+        if (bodySections != null) {
+            throw new IllegalStateException("Cannot set a singleton body from Message with multiple body sections assigned");
+        }
+
+        body = ClientMessageSupport.createSectionFromValue(value);
+
+        return this;
     }
 
     //----- Access to proton resources
 
-    Section<?> getBodySection() {
-        return sectionSupplier.get();
+    Section<E> getBodySection() {
+        return body;
     }
 
     //----- Internal API
@@ -672,15 +678,15 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> addBodySection(Section<?> bodySection) {
+    public AdvancedMessage<E> addBodySection(Section<E> bodySection) {
         Objects.requireNonNull(bodySection, "Additional Body Section cannot be null");
 
         if (bodySections == null) {
             bodySections = new ArrayList<>();
 
             // Preserve older section supplier from original message creation.
-            if (sectionSupplier != null) {
-                bodySections.add(sectionSupplier);
+            if (body != null) {
+                bodySections.add(body);
             }
         }
 
@@ -688,30 +694,28 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> bodySections(Collection<Section<?>> sections) {
+    public AdvancedMessage<E> bodySections(Collection<Section<E>> sections) {
         Objects.requireNonNull(sections, "Provided body sections cannot be null");
-
-        sections.forEach(section -> bodySections.add(() -> { return section; }));
-
+        this.bodySections = new ArrayList<>(sections);
         return this;
     }
 
     @Override
-    public Collection<Section<?>> bodySections() {
-        final Collection<Section<?>> result = new ArrayList<>();
+    public Collection<Section<E>> bodySections() {
+        final Collection<Section<E>> result = new ArrayList<>();
         forEachBodySection(section -> result.add(section));
         return Collections.unmodifiableCollection(result);
     }
 
     @Override
-    public AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer) {
+    public AdvancedMessage<E> forEachBodySection(Consumer<Section<E>> consumer) {
         if (bodySections != null) {
-            bodySections.forEach(supplier -> {
-                consumer.accept(supplier.get());
+            bodySections.forEach(section -> {
+                consumer.accept(section);
             });
         } else {
-            if (sectionSupplier != null) {
-                consumer.accept(sectionSupplier.get());
+            if (body != null) {
+                consumer.accept(body);
             }
         }
 

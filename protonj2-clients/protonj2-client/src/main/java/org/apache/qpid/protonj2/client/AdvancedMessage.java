@@ -36,30 +36,81 @@ import org.apache.qpid.protonj2.types.messaging.Section;
  */
 public interface AdvancedMessage<E> extends Message<E> {
 
+    /**
+     * Creates a new {@link AdvancedMessage} instance using the library default implementation.
+     *
+     * @param <V> The type to use when specifying the body section value type.
+     *
+     * @return a new {@link AdvancedMessage} instance.
+     */
     static <V> AdvancedMessage<V> create() {
         return ClientMessage.createAdvanvedMessage();
     }
 
+    /**
+     * Return the current {@link Header} assigned to this message, if none was assigned yet
+     * then this method returns <code>null</code>.
+     *
+     * @return the currently assigned {@link Header} for this message.
+     */
     Header header();
 
+    /**
+     * Assign or replace the {@link Header} instance associated with this message.
+     *
+     * @param header
+     *      The {@link Header} value to assign to this message.
+     *
+     * @return this message instance.
+     */
     AdvancedMessage<E> header(Header header);
 
+    /**
+     * Return the current {@link DeliveryAnnotations} assigned to this message, if none was assigned yet
+     * then this method returns <code>null</code>.
+     *
+     * @return the currently assigned {@link DeliveryAnnotations} for this message.
+     */
     DeliveryAnnotations deliveryAnnotations();
 
     AdvancedMessage<E> deliveryAnnotations(DeliveryAnnotations deliveryAnnotations);
 
+    /**
+     * Return the current {@link MessageAnnotations} assigned to this message, if none was assigned yet
+     * then this method returns <code>null</code>.
+     *
+     * @return the currently assigned {@link MessageAnnotations} for this message.
+     */
     MessageAnnotations messageAnnotations();
 
     AdvancedMessage<E> messageAnnotations(MessageAnnotations messageAnnotations);
 
+    /**
+     * Return the current {@link Properties} assigned to this message, if none was assigned yet
+     * then this method returns <code>null</code>.
+     *
+     * @return the currently assigned {@link Properties} for this message.
+     */
     Properties properties();
 
     AdvancedMessage<E> properties(Properties properties);
 
+    /**
+     * Return the current {@link ApplicationProperties} assigned to this message, if none was assigned yet
+     * then this method returns <code>null</code>.
+     *
+     * @return the currently assigned {@link ApplicationProperties} for this message.
+     */
     ApplicationProperties applicationProperties();
 
     AdvancedMessage<E> applicationProperties(ApplicationProperties applicationProperties);
 
+    /**
+     * Return the current {@link Footer} assigned to this message, if none was assigned yet
+     * then this method returns <code>null</code>.
+     *
+     * @return the currently assigned {@link Footer} for this message.
+     */
     Footer footer();
 
     AdvancedMessage<E> footer(Footer footer);
@@ -70,12 +121,12 @@ public interface AdvancedMessage<E> extends Message<E> {
 
     ProtonBuffer encode();
 
-    AdvancedMessage<E> addBodySection(Section<?> bodySection);
+    AdvancedMessage<E> addBodySection(Section<E> bodySection);
 
-    AdvancedMessage<E> bodySections(Collection<Section<?>> sections);
+    AdvancedMessage<E> bodySections(Collection<Section<E>> sections);
 
-    Collection<Section<?>> bodySections();
+    Collection<Section<E>> bodySections();
 
-    AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer);
+    AdvancedMessage<E> forEachBodySection(Consumer<Section<E>> consumer);
 
 }

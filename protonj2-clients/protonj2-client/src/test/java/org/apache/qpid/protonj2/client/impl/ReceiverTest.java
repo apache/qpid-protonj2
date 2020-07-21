@@ -1147,7 +1147,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             final Receiver receiver = session.openReceiver("test-queue");
             receiver.openFuture().get();
 
-            final byte[] payload = createEncodedMessage(new AmqpValue("Hello World"));
+            final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
             final byte[] slice1 = Arrays.copyOfRange(payload, 0, 2);
             final byte[] slice2 = Arrays.copyOfRange(payload, 2, 4);
@@ -1214,7 +1214,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             final Receiver receiver = session.openReceiver("test-queue");
             receiver.openFuture().get();
 
-            final byte[] payload = createEncodedMessage(new AmqpValue("Hello World"));
+            final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
             peer.remoteTransfer().withHandle(0)
                                  .withDeliveryId(0)
@@ -1265,7 +1265,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             final Receiver receiver = session.openReceiver("test-queue", options);
             receiver.openFuture().get();
 
-            final byte[] payload = createEncodedMessage(new AmqpValue("Hello World"));
+            final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
             peer.remoteTransfer().withHandle(0)
                                  .withDeliveryId(0)
