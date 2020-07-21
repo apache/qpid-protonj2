@@ -1,0 +1,143 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.qpid.protonj2.client;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.function.BiFunction;
+
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
+import org.apache.qpid.protonj2.types.messaging.Data;
+import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
+import org.apache.qpid.protonj2.types.messaging.Footer;
+import org.apache.qpid.protonj2.types.messaging.Header;
+import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
+import org.apache.qpid.protonj2.types.messaging.Properties;
+import org.apache.qpid.protonj2.types.messaging.Section;
+import org.apache.qpid.protonj2.types.transport.Transfer;
+
+/**
+ * Specialized {@link OutputStream} instance that allows the body of a message
+ * to be written in multiple write operations.
+ *
+ * <pre>
+ * Sender sender = session.sender("address");
+ * OutputStream outputStream = sender.outputStream(new MessageOutputStreamOptions());
+ * ...
+ * outputStream.write(payload);
+ * outputStream.flush();
+ * ...
+ * outputStream.write(payload);
+ * outputStream.close;
+ *
+ * </pre>
+ */
+public abstract class MessageOutputStream extends OutputStream {
+
+    public interface MessageOutputStreamOptions {
+
+        Header header();
+        MessageOutputStreamOptions header(Header header);
+
+        DeliveryAnnotations deliveryAnnotations();
+        MessageOutputStreamOptions deliveryAnnotations(DeliveryAnnotations deliveryAnnotations);
+
+        MessageAnnotations messageAnnotations();
+        MessageOutputStreamOptions messageAnnotations(MessageAnnotations messageAnnotations);
+
+        Properties properties();
+        MessageOutputStreamOptions properties(Properties properties);
+
+        ApplicationProperties applicationProperties();
+        MessageOutputStreamOptions applicationProperties(ApplicationProperties applicationProperties);
+
+        Footer footer();
+        MessageOutputStreamOptions header(Footer footer);
+
+        /**
+         * Allow hook to fill in Footer with checksum or other data based on the data written.  The
+         * {@link BiFunction} given is provided with the configured {@link Footer} instance and the
+         * count of bytes written and the returned Footer value will be encoded as part of the final
+         * {@link Transfer} frame for this message.
+         *
+         * @param handler
+         *      Handler that is called prior to final Message write with count of bytes written.
+         *
+         * @return this MessageOptions instance.
+         */
+        MessageOutputStreamOptions footerFinalizationEvent(BiFunction<Footer, Integer, Footer> handler);
+
+    }
+
+    private final MessageOutputStreamOptions options;
+    private final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+    public MessageOutputStream(MessageOutputStreamOptions options) {
+        this.options = options;
+    }
+
+    public MessageOutputStreamOptions options() {
+        return options;
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+        buffer.writeByte(b);
+    }
+
+    @Override
+    public void write(byte b[]) throws IOException {
+        buffer.writeBytes(b);
+    }
+
+    @Override
+    public void write(byte b[], int off, int len) throws IOException {
+        buffer.writeBytes(b, off, len);
+    }
+
+    /**
+     *
+     * Encodes and sends all currently buffered message body data as an AMQP
+     * {@link Data} section, subsequent buffered data will be encoded a follow
+     * on data section on the next flush call.
+     * <p>
+     * If the message has not been previously written then the optional message
+     * {@link Section} values from the {@link MessageOutputStreamOptions} will also be encoded
+     * except for the message {@link Footer} which is not written until the
+     * {@link MessageOutputStream} is closed.
+     *
+     * @throws IOException if an error occurs while attempting to write the buffered contents.
+     */
+    @Override
+    public void flush() throws IOException {
+        // 1: Encode all sections that come before the Data Section if not yet done
+        // 2. Place current contents into data Section for write and replace buffer (or lazy create)
+        // 3. write all current contents marking message as partial unless flush is initiated from close.
+    }
+
+    @Override
+    public void close() throws IOException {
+        // 1: Mark as closed
+        // 2: Trigger final processing to collect a filled in Footer.
+
+    }
+
+    protected abstract Footer beforeFinalTransfer(Footer optionsFooter, int bytesWritten);
+
+}
