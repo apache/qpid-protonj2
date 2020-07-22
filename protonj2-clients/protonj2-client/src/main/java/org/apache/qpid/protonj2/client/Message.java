@@ -40,7 +40,7 @@ public interface Message<E> {
      *
      * @return a new {@link Message} instance with an empty body {@link Section}.
      */
-    static Message<Object> create() {
+    static <E> Message<E> create() {
         return ClientMessage.create();
     }
 
@@ -53,20 +53,7 @@ public interface Message<E> {
      *
      * @return a new {@link Message} instance with a body containing the given value.
      */
-    static Message<Object> create(Object body) {
-        return ClientMessage.create(new AmqpValue<>(body));
-    }
-
-    /**
-     * Create and return an {@link Message} that will wrap the given {@link String} in
-     * an {@link AmqpValue} section.
-     *
-     * @param body
-     *      An String value that will be wrapped in an {@link AmqpValue} body section.
-     *
-     * @return a new {@link Message} instance with a body containing the given string value.
-     */
-    static Message<String> create(String body) {
+    static <E> Message<E> create(E body) {
         return ClientMessage.create(new AmqpValue<>(body));
     }
 
