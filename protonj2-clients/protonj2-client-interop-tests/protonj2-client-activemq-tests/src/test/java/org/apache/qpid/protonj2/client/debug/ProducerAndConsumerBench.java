@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.protonj2.client.debug;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -44,13 +44,14 @@ import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.support.ImperativeClientTestSupport;
 import org.apache.qpid.protonj2.types.UnsignedLong;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Ignore
+@Disabled
 public class ProducerAndConsumerBench extends ImperativeClientTestSupport  {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProducerAndConsumerBench.class);
@@ -67,9 +68,9 @@ public class ProducerAndConsumerBench extends ImperativeClientTestSupport  {
     private final long NUM_SENDS = 600000;
 
     @Override
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
+    @BeforeEach
+    public void setUp(TestInfo testInfo) throws Exception {
+        super.setUp(testInfo);
 
         for (int i = 0; i < PAYLOAD_SIZE; ++i) {
             payload[i] = (byte) (i % 255);
@@ -115,8 +116,8 @@ public class ProducerAndConsumerBench extends ImperativeClientTestSupport  {
 
         executorService.shutdown();
         executorService.awaitTermination(30, TimeUnit.MINUTES);
-        assertTrue("Producers done in time", executorService.isTerminated());
-        assertTrue("No exceptions: " + exceptions, exceptions.isEmpty());
+        assertTrue(executorService.isTerminated(), "Producers done in time");
+        assertTrue(exceptions.isEmpty(), "No exceptions: " + exceptions);
 
         double duration = System.currentTimeMillis() - start;
         LOG.info("Duration:            " + duration + "ms");
@@ -149,7 +150,7 @@ public class ProducerAndConsumerBench extends ImperativeClientTestSupport  {
             if ((count.get() % 10000) == 0) {
                 LOG.info("Received message: {}", NUM_SENDS - count.get());
             }
-            assertNotNull("got message " + v, consumer.receive());
+            assertNotNull(consumer.receive(), "got message " + v);
         }
         consumer.close();
     }

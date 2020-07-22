@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
@@ -43,8 +43,6 @@ import org.apache.qpid.protonj2.client.exceptions.ClientTransactionDeclarationEx
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionNotActiveException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionRolledBackException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.apache.qpid.protonj2.client.util.ProtonClientTestRunner;
-import org.apache.qpid.protonj2.client.util.Repeat;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
@@ -53,17 +51,17 @@ import org.apache.qpid.protonj2.types.messaging.Rejected;
 import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.transactions.TransactionErrors;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@RunWith(ProtonClientTestRunner.class)
+@Timeout(30)
 public class TransactionsTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionsTest.class);
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCoordinatorLinkSupportedOutcomes() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
@@ -100,7 +98,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testTimedOutExceptionOnBeginWithNoResponse() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -151,7 +149,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testTimedOutExceptionOnBeginWithNoResponseThenRecoverWithNextBegin() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -210,7 +208,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testExceptionOnBeginWhenCoordinatorLinkRefused() throws Exception {
         final String errorMessage = "CoordinatorLinkRefusal-breadcrumb";
 
@@ -262,7 +260,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testExceptionOnBeginWhenCoordinatorLinkClosedAfterDeclare() throws Exception {
         final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
 
@@ -318,7 +316,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testExceptionOnBeginWhenCoordinatorLinkClosedAfterDeclareAllowsNewTransactionDeclaration() throws Exception {
         final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
 
@@ -368,7 +366,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testExceptionOnCommitWhenCoordinatorLinkClosedAfterDischargeSent() throws Exception {
         final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
 
@@ -420,14 +418,12 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Repeat(repetitions = 1)
-    @Test(timeout = 20_000)
+    @Test
     public void testExceptionOnCommitWhenCoordinatorLinkClosedAfterTxnDeclaration() throws Exception {
         doTestExceptionOnDischargeWhenCoordinatorLinkClosedAfterTxnDeclaration(true);
     }
 
-    @Repeat(repetitions = 1)
-    @Test(timeout = 20_000)
+    @Test
     public void testExceptionOnRollbackWhenCoordinatorLinkClosedAfterTxnDeclaration() throws Exception {
         doTestExceptionOnDischargeWhenCoordinatorLinkClosedAfterTxnDeclaration(false);
     }
@@ -485,7 +481,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testExceptionOnCommitWhenCoordinatorRejectsDischarge() throws Exception {
         final String errorMessage = "Transaction aborted due to timeout";
         final byte[] txnId1 = new byte[] { 0, 1, 2, 3 };
@@ -536,7 +532,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testExceptionOnRollbackWhenCoordinatorRejectsDischarge() throws Exception {
         final String errorMessage = "Transaction aborted due to timeout";
         final byte[] txnId1 = new byte[] { 0, 1, 2, 3 };
@@ -593,7 +589,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
      *
      * @throws Exception
      */
-    @Test(timeout = 20_000)
+    @Test
     public void testBeginTransactionAndClose() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -623,7 +619,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testBeginAndCommitTransaction() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
@@ -657,7 +653,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testBeginAndRollbackTransaction() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
@@ -691,7 +687,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testTransactionDeclaredDispositionWithoutTxnId() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -724,7 +720,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testBeginAndCommitTransactions() throws Exception {
         final byte[] txnId1 = new byte[] { 0, 1, 2, 3 };
         final byte[] txnId2 = new byte[] { 1, 1, 2, 3 };
@@ -773,7 +769,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCannotBeginSecondTransactionWhileFirstIsActive() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -810,7 +806,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testSendMessageInsideOfTransaction() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
@@ -849,12 +845,12 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             assertNotNull(tracker);
             assertNotNull(tracker.acknowledgeFuture().get());
-            assertEquals("Delivery inside transaction should have Transactional state",
-                         tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL);
+            assertEquals(tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL,
+                         "Delivery inside transaction should have Transactional state");
             assertNotNull(tracker.state());
-            assertEquals("Delivery inside transaction should have Transactional state",
-                         tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL);
-            assertTrue("Delivery in transaction should be locally settled", tracker.settled());
+            assertEquals(tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL,
+                         "Delivery inside transaction should have Transactional state");
+            assertTrue(tracker.settled(), "Delivery in transaction should be locally settled");
 
             session.commitTransaction();
 
@@ -865,7 +861,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testSendMessagesInsideOfUniqueTransactions() throws Exception {
         final byte[] txnId1 = new byte[] { 0, 1, 2, 3 };
         final byte[] txnId2 = new byte[] { 1, 1, 2, 3 };
@@ -927,7 +923,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiveMessageInsideOfTransaction() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
@@ -982,12 +978,12 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiveMessageInsideOfTransactionNoAutoSettleSenderSettles() throws Exception {
         doTestReceiveMessageInsideOfTransactionNoAutoSettle(true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiveMessageInsideOfTransactionNoAutoSettleSenderDoesNotSettle() throws Exception {
         doTestReceiveMessageInsideOfTransactionNoAutoSettle(false);
     }
@@ -1053,7 +1049,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiveMessageInsideOfTransactionButAcceptAndSettleOutside() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
@@ -1118,7 +1114,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testTransactionCommitFailWithEmptyRejectedDisposition() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
@@ -1171,7 +1167,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testDeclareTransactionAfterConnectionDrops() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -1204,12 +1200,12 @@ public class TransactionsTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCommitTransactionAfterConnectionDropsFollowingTxnDeclared() throws Exception {
         dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testRollbackTransactionAfterConnectionDropsFollowingTxnDeclared() throws Exception {
         dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(false);
     }

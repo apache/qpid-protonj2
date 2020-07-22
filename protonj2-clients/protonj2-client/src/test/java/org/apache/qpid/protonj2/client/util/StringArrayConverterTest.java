@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.protonj2.client.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class StringArrayConverterTest extends ImperativeClientTestCase {
 

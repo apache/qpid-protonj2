@@ -16,14 +16,14 @@
  */
 package org.apache.qpid.protonj2.client.transport;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -39,8 +39,9 @@ import org.apache.qpid.protonj2.client.TransportOptions;
 import org.apache.qpid.protonj2.client.impl.ClientThreadFactory;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.test.Wait;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +57,7 @@ import io.netty.util.ResourceLeakDetector.Level;
 /**
  * Test basic functionality of the Netty based TCP transport.
  */
+@Timeout(30)
 public class TcpTransportTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(TcpTransportTest.class);
@@ -70,7 +72,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
     protected final TransportListener testListener = new NettyTransportListener(false);
 
-    @Test(timeout = 60000)
+    @Test
     public void testCloseOnNeverConnectedTransport() throws Exception {
         Transport transport = createTransport(HOSTNAME, 5672, testListener, createTransportOptions(), createServerSSLOptions());
         assertFalse(transport.isConnected());
@@ -82,7 +84,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testCreateWithBadHostOrPortThrowsIAE() throws Exception {
         try {
             createTransport(HOSTNAME, -1, testListener, createTransportOptions(), createSSLOptions());
@@ -103,7 +105,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testCreateWithNullOptionsThrowsIAE() throws Exception {
         try {
             createTransport(HOSTNAME, 5672, testListener, null, null);
@@ -124,7 +126,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectWithCustomThreadFactoryConfigured() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
@@ -160,7 +162,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectWithoutRunningServer() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
@@ -187,7 +189,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectWithoutListenerFails() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
@@ -208,7 +210,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectAfterListenerSetWorks() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
@@ -233,7 +235,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServer() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
@@ -249,8 +251,8 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             }
 
             assertTrue(transport.isConnected());
-            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
-            assertEquals("Server port is incorrect", port, transport.getPort());
+            assertEquals(HOSTNAME, transport.getHost(), "Server host is incorrect");
+            assertEquals(port, transport.getPort(), "Server port is incorrect");
 
             transport.close();
 
@@ -263,7 +265,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testMultipleConnectionsToServer() throws Exception {
         final int CONNECTION_COUNT = 10;
 
@@ -296,7 +298,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testMultipleConnectionsSendReceive() throws Exception {
         final int CONNECTION_COUNT = 10;
         final int FRAME_SIZE = 8;
@@ -340,7 +342,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testDetectServerClose() throws Exception {
         Transport transport = null;
 
@@ -379,7 +381,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testZeroSizedSentNoErrors() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
@@ -406,7 +408,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testDataSentIsReceived() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
@@ -446,12 +448,12 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testMultipleDataPacketsSentAreReceived() throws Exception {
         doMultipleDataPacketsSentAndReceive(SEND_BYTE_COUNT, 1);
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testMultipleDataPacketsSentAreReceivedRepeatedly() throws Exception {
         doMultipleDataPacketsSentAndReceive(SEND_BYTE_COUNT, 10);
     }
@@ -496,7 +498,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testSendToClosedTransportFails() throws Exception {
         Transport transport = null;
 
@@ -526,7 +528,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectRunsInitializationMethod() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
@@ -543,8 +545,8 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             }
 
             assertTrue(transport.isConnected());
-            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
-            assertEquals("Server port is incorrect", port, transport.getPort());
+            assertEquals(HOSTNAME, transport.getHost(), "Server host is incorrect");
+            assertEquals(port, transport.getPort(), "Server port is incorrect");
             assertTrue(initialized.get());
 
             transport.close();
@@ -555,7 +557,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testFailureInInitializationRoutineFailsConnect() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
@@ -570,9 +572,9 @@ public class TcpTransportTest extends ImperativeClientTestCase {
                 LOG.info("Failed to connect to: {}:{} as expected.", HOSTNAME, port);
             }
 
-            assertFalse("Should not be connected", transport.isConnected());
-            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
-            assertEquals("Server port is incorrect", port, transport.getPort());
+            assertFalse(transport.isConnected(), "Should not be connected");
+            assertEquals(HOSTNAME, transport.getHost(), "Server host is incorrect");
+            assertEquals(port, transport.getPort(), "Server port is incorrect");
 
             transport.close();
         }
@@ -582,8 +584,8 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Ignore("Used for checking for transport level leaks, my be unstable on CI.")
-    @Test(timeout = 60000)
+    @Disabled("Used for checking for transport level leaks, my be unstable on CI.")
+    @Test
     public void testSendToClosedTransportFailsButDoesNotLeak() throws Exception {
         Transport transport = null;
 
@@ -621,12 +623,12 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServerWithEpollEnabled() throws Exception {
         doTestEpollSupport(true);
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServerWithEpollDisabled() throws Exception {
         doTestEpollSupport(false);
     }
@@ -650,8 +652,8 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             }
 
             assertTrue(transport.isConnected());
-            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
-            assertEquals("Server port is incorrect", port, transport.getPort());
+            assertEquals(HOSTNAME, transport.getHost(), "Server host is incorrect");
+            assertEquals(port, transport.getPort(), "Server port is incorrect");
             assertEpoll("Transport should be using Epoll", useEpoll, transport);
 
             transport.close();
@@ -680,22 +682,22 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             }
         }
 
-        assertNotNull("Transport implementation unknown", group);
+        assertNotNull(group, "Transport implementation unknown");
 
         group.setAccessible(true);
         if (expected) {
-            assertTrue(message, group.get(transport) instanceof EpollEventLoopGroup);
+            assertTrue(group.get(transport) instanceof EpollEventLoopGroup, message);
         } else {
-            assertFalse(message, group.get(transport) instanceof EpollEventLoopGroup);
+            assertFalse(group.get(transport) instanceof EpollEventLoopGroup, message);
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServerWithKQueueEnabled() throws Exception {
         doTestKQueueSupport(true);
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServerWithKQueueDisabled() throws Exception {
         doTestKQueueSupport(false);
     }
@@ -719,8 +721,8 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             }
 
             assertTrue(transport.isConnected());
-            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
-            assertEquals("Server port is incorrect", port, transport.getPort());
+            assertEquals(HOSTNAME, transport.getHost(), "Server host is incorrect");
+            assertEquals(port, transport.getPort(), "Server port is incorrect");
             assertKQueue("Transport should be using Kqueue", useKQueue, transport);
 
             transport.close();
@@ -749,13 +751,13 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             }
         }
 
-        assertNotNull("Transport implementation unknown", group);
+        assertNotNull(group, "Transport implementation unknown");
 
         group.setAccessible(true);
         if (expected) {
-            assertTrue(message, group.get(transport) instanceof KQueueEventLoopGroup);
+            assertTrue(group.get(transport) instanceof KQueueEventLoopGroup, message);
         } else {
-            assertFalse(message, group.get(transport) instanceof KQueueEventLoopGroup);
+            assertFalse(group.get(transport) instanceof KQueueEventLoopGroup, message);
         }
     }
 

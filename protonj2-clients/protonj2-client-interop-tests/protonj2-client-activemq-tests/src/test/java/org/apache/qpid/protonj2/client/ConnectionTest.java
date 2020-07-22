@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.protonj2.client;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.net.URI;
 import java.util.UUID;
@@ -25,14 +25,16 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.support.ImperativeClientTestSupport;
 import org.apache.qpid.protonj2.client.support.Wait;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Test for basic JmsConnection functionality and error handling.
  */
+@Timeout(30)
 public class ConnectionTest extends ImperativeClientTestSupport {
 
-    @Test(timeout = 60000)
+    @Test
     public void testCreateConnection() throws Exception {
         URI brokerURI = getBrokerAmqpConnectionURI();
 
@@ -52,7 +54,7 @@ public class ConnectionTest extends ImperativeClientTestSupport {
         Wait.assertTrue("Broker did not register a connection close", () -> getProxyToBroker().getCurrentConnectionsCount() == 0);
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testCreateConnectionWithUserAndPassWithPlainOnlyAllowed() throws Exception {
         URI brokerURI = getBrokerAmqpConnectionURI();
 

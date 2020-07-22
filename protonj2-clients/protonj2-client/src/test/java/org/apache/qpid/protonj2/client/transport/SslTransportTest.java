@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.protonj2.client.transport;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -29,13 +29,15 @@ import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.SslOptions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Test basic functionality of the Netty based TCP Transport ruuing in secure mode (SSL).
  */
+@Timeout(30)
 public class SslTransportTest extends TcpTransportTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(SslTransportTest.class);
@@ -56,7 +58,7 @@ public class SslTransportTest extends TcpTransportTest {
 
     public static final String KEYSTORE_TYPE = "jks";
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServerWithoutTrustStoreFails() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
@@ -81,7 +83,7 @@ public class SslTransportTest extends TcpTransportTest {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServerUsingUntrustedKeyFails() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
@@ -107,7 +109,7 @@ public class SslTransportTest extends TcpTransportTest {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServerClientTrustsAll() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
@@ -132,7 +134,7 @@ public class SslTransportTest extends TcpTransportTest {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectWithNeedClientAuth() throws Exception {
         try (NettyEchoServer server = createEchoServer(true)) {
             server.start();
@@ -151,7 +153,7 @@ public class SslTransportTest extends TcpTransportTest {
             assertTrue(transport.isSecure());
 
             // Verify there was a certificate sent to the server
-            assertTrue("Server handshake did not complete in alotted time", server.getSslHandler().handshakeFuture().await(2, TimeUnit.SECONDS));
+            assertTrue(server.getSslHandler().handshakeFuture().await(2, TimeUnit.SECONDS), "Server handshake did not complete in alotted time");
             assertNotNull(server.getSslHandler().engine().getSession().getPeerCertificates());
 
             transport.close();
@@ -161,7 +163,7 @@ public class SslTransportTest extends TcpTransportTest {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectWithSpecificClientAuthKeyAlias() throws Exception {
         doClientAuthAliasTestImpl(CLIENT_KEY_ALIAS, CLIENT_DN);
         doClientAuthAliasTestImpl(CLIENT2_KEY_ALIAS, CLIENT2_DN);
@@ -188,7 +190,7 @@ public class SslTransportTest extends TcpTransportTest {
             assertTrue(transport.isConnected());
             assertTrue(transport.isSecure());
 
-            assertTrue("Server handshake did not complete in alotted time", server.getSslHandler().handshakeFuture().await(2, TimeUnit.SECONDS));
+            assertTrue(server.getSslHandler().handshakeFuture().await(2, TimeUnit.SECONDS), "Server handshake did not complete in alotted time");
 
             Certificate[] peerCertificates = server.getSslHandler().engine().getSession().getPeerCertificates();
             assertNotNull(peerCertificates);
@@ -196,7 +198,7 @@ public class SslTransportTest extends TcpTransportTest {
             Certificate cert = peerCertificates[0];
             assertTrue(cert instanceof X509Certificate);
             String dn = ((X509Certificate)cert).getSubjectX500Principal().getName();
-            assertEquals("Unexpected certificate DN", expectedDN, dn);
+            assertEquals(expectedDN, dn, "Unexpected certificate DN");
 
             transport.close();
         }
@@ -205,12 +207,12 @@ public class SslTransportTest extends TcpTransportTest {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServerVerifyHost() throws Exception {
         doConnectToServerVerifyHostTestImpl(true);
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServerNoVerifyHost() throws Exception {
         doConnectToServerVerifyHostTestImpl(false);
     }
@@ -227,9 +229,9 @@ public class SslTransportTest extends TcpTransportTest {
             SslOptions clientOptions = createSSLOptionsIsVerify(verifyHost);
 
             if (verifyHost) {
-                assertTrue("Expected verifyHost to be true", clientOptions.verifyHost());
+                assertTrue(clientOptions.verifyHost(), "Expected verifyHost to be true");
             } else {
-                assertFalse("Expected verifyHost to be false", clientOptions.verifyHost());
+                assertFalse(clientOptions.verifyHost(), "Expected verifyHost to be false");
             }
 
             Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), clientOptions);

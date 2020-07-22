@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.protonj2.client;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -34,12 +34,15 @@ import org.apache.activemq.broker.TransportConnector;
 import org.apache.qpid.protonj2.client.support.ImperativeClientTestSupport;
 import org.apache.qpid.protonj2.client.support.Wait;
 import org.apache.qpid.protonj2.client.transport.SslSupport;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Test that we can connect to a broker over SSL.
  */
+@Timeout(30)
 public class WSSConnectionTest extends ImperativeClientTestSupport {
 
     private static final String PASSWORD = "password";
@@ -50,7 +53,7 @@ public class WSSConnectionTest extends ImperativeClientTestSupport {
 
     private URI connectionURI;
 
-    @Test(timeout = 60000)
+    @Test
     public void testCreateConnection() throws Exception {
         ClientOptions options = new ClientOptions();
         options.id(UUID.randomUUID().toString());
@@ -76,8 +79,8 @@ public class WSSConnectionTest extends ImperativeClientTestSupport {
     }
 
     @Override
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp(TestInfo testInfo) throws Exception {
         brokerService = new BrokerService();
         brokerService.setPersistent(false);
         brokerService.setAdvisorySupport(false);

@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.protonj2.client.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -27,38 +27,40 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Test for ThreadPoolUtis support class.
  */
+@Timeout(10)
 public class ThreadPoolUtilsTest extends ImperativeClientTestCase {
 
-    @Test(timeout=10000)
+    @Test
     public void testCreate() {
         new ThreadPoolUtils();
     }
 
-    @Test(timeout=10000)
+    @Test
     public void testShutdown() throws Exception {
         ExecutorService service = Executors.newSingleThreadExecutor();
         ThreadPoolUtils.shutdown(service);
         assertTrue(service.isShutdown());
     }
 
-    @Test(timeout=10000)
+    @Test
     public void testShutdownNullService() throws Exception {
         ThreadPoolUtils.shutdown(null);
     }
 
-    @Test(timeout=10000)
+    @Test
     public void testShutdownNowWithNoTasks() throws Exception {
         ExecutorService service = Executors.newSingleThreadExecutor();
         assertNotNull(ThreadPoolUtils.shutdownNow(service));
         assertTrue(service.isShutdown());
     }
 
-    @Test(timeout=10000)
+    @Test
     public void testShutdownNowReturnsUnexecuted() throws Exception {
         final CountDownLatch started = new CountDownLatch(1);
         final CountDownLatch finish = new CountDownLatch(1);
@@ -99,7 +101,7 @@ public class ThreadPoolUtilsTest extends ImperativeClientTestCase {
         assertEquals(2, notRun.size());
     }
 
-    @Test(timeout=10000)
+    @Test
     public void testShutdownNowAlreadyShutdown() throws Exception {
         ExecutorService service = Executors.newSingleThreadExecutor();
         service.shutdown();
@@ -107,26 +109,26 @@ public class ThreadPoolUtilsTest extends ImperativeClientTestCase {
         assertTrue(service.isShutdown());
     }
 
-    @Test(timeout=10000)
+    @Test
     public void testShutdownNowNullService() throws Exception {
         assertNotNull(ThreadPoolUtils.shutdownNow(null));
     }
 
-    @Test(timeout=10000)
+    @Test
     public void testShutdownGraceful() throws Exception {
         ExecutorService service = Executors.newSingleThreadExecutor();
         ThreadPoolUtils.shutdownGraceful(service);
         assertTrue(service.isShutdown());
     }
 
-    @Test(timeout=10000)
+    @Test
     public void testShutdownGracefulWithTimeout() throws Exception {
         ExecutorService service = Executors.newSingleThreadExecutor();
         ThreadPoolUtils.shutdownGraceful(service, 1000);
         assertTrue(service.isShutdown());
     }
 
-    @Test(timeout=10000)
+    @Test
     public void testShutdownGracefulWithStuckTask() throws Exception {
         final CountDownLatch started = new CountDownLatch(1);
         final CountDownLatch finish = new CountDownLatch(1);
@@ -152,7 +154,7 @@ public class ThreadPoolUtilsTest extends ImperativeClientTestCase {
         assertTrue(ThreadPoolUtils.awaitTermination(service, 1000));
     }
 
-    @Test(timeout=10000)
+    @Test
     public void testAwaitTerminationWithNullService() throws Exception {
         assertTrue(ThreadPoolUtils.awaitTermination(null, 1000));
     }

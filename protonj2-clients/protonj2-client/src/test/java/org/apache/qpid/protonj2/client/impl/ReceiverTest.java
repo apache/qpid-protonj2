@@ -3,12 +3,12 @@ package org.apache.qpid.protonj2.client.impl;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -41,20 +41,22 @@ import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.hamcrest.Matcher;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Timeout(20)
 public class ReceiverTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReceiverTest.class);
 
-    @Test(timeout = 30000)
+    @Test
     public void testCreateReceiverAndClose() throws Exception {
         doTestCreateReceiverAndCloseOrDetachLink(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCreateReceiverAndDetach() throws Exception {
         doTestCreateReceiverAndCloseOrDetachLink(false);
     }
@@ -97,7 +99,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiverOpenRejectedByRemote() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -142,12 +144,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testOpenReceiverTimesOutWhenNoAttachResponseReceivedTimeout() throws Exception {
         doTestOpenReceiverTimesOutWhenNoAttachResponseReceived(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testOpenReceiverTimesOutWhenNoAttachResponseReceivedNoTimeout() throws Exception {
         doTestOpenReceiverTimesOutWhenNoAttachResponseReceived(false);
     }
@@ -195,12 +197,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testOpenReceiverWaitWithTimeoutFailsWhenConnectionDrops() throws Exception {
         doTestOpenReceiverWaitFailsWhenConnectionDrops(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testOpenReceiverWaitWithNoTimeoutFailsWhenConnectionDrops() throws Exception {
         doTestOpenReceiverWaitFailsWhenConnectionDrops(false);
     }
@@ -243,22 +245,22 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseReceiverTimesOutWhenNoCloseResponseReceivedTimeout() throws Exception {
         doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(true, true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseReceiverTimesOutWhenNoCloseResponseReceivedNoTimeout() throws Exception {
         doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDetachReceiverTimesOutWhenNoCloseResponseReceivedTimeout() throws Exception {
         doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(false, true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDetachReceiverTimesOutWhenNoCloseResponseReceivedNoTimeout() throws Exception {
         doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(false, false);
     }
@@ -318,7 +320,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testReceiverDrainAllOutstanding() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -369,7 +371,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testAddCreditFailsWhileDrainPending() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -418,7 +420,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testAddCreditFailsWhenCreditWindowEnabled() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -452,7 +454,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
         }
     }
-    @Test(timeout = 30000)
+    @Test
     public void testCreateDynamicReceiver() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -492,12 +494,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDynamicReceiverAddressWaitsForRemoteAttach() throws Exception {
         tryReadDynamicReceiverAddress(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDynamicReceiverAddressFailsAfterOpenTimeout() throws Exception {
         tryReadDynamicReceiverAddress(false);
     }
@@ -618,12 +620,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiverGetSourceWaitsForRemoteAttach() throws Exception {
         tryReadReceiverSource(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiverGetSourceFailsAfterOpenTimeout() throws Exception {
         tryReadReceiverSource(false);
     }
@@ -661,7 +663,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             }
 
             if (attachResponse) {
-                assertNotNull("Remote should have responded with a Source value", receiver.source());
+                assertNotNull(receiver.source(), "Remote should have responded with a Source value");
                 assertEquals("test-receiver", receiver.source().address());
             } else {
                 try {
@@ -690,12 +692,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiverGetTargetWaitsForRemoteAttach() throws Exception {
         tryReadReceiverTarget(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiverGetTargetFailsAfterOpenTimeout() throws Exception {
         tryReadReceiverTarget(false);
     }
@@ -733,7 +735,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             }
 
             if (attachResponse) {
-                assertNotNull("Remote should have responded with a Target value", receiver.target());
+                assertNotNull(receiver.target(), "Remote should have responded with a Target value");
             } else {
                 try {
                     receiver.target();
@@ -761,12 +763,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiverGetRemotePropertiesWaitsForRemoteAttach() throws Exception {
         tryReadReceiverRemoteProperties(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiverGetRemotePropertiesFailsAfterOpenTimeout() throws Exception {
         tryReadReceiverRemoteProperties(false);
     }
@@ -805,7 +807,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             }
 
             if (attachResponse) {
-                assertNotNull("Remote should have responded with a remote properties value", receiver.properties());
+                assertNotNull(receiver.properties(), "Remote should have responded with a remote properties value");
                 assertEquals(expectedProperties, receiver.properties());
             } else {
                 try {
@@ -834,12 +836,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiverGetRemoteOfferedCapabilitiesWaitsForRemoteAttach() throws Exception {
         tryReadReceiverRemoteOfferedCapabilities(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiverGetRemoteOfferedCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadReceiverRemoteOfferedCapabilities(false);
     }
@@ -877,7 +879,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             }
 
             if (attachResponse) {
-                assertNotNull("Remote should have responded with a remote offered Capabilities value", receiver.offeredCapabilities());
+                assertNotNull(receiver.offeredCapabilities(), "Remote should have responded with a remote offered Capabilities value");
                 assertEquals(1, receiver.offeredCapabilities().length);
                 assertEquals("QUEUE", receiver.offeredCapabilities()[0]);
             } else {
@@ -907,12 +909,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiverGetRemoteDesiredCapabilitiesWaitsForRemoteAttach() throws Exception {
         tryReadReceiverRemoteDesiredCapabilities(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiverGetRemoteDesiredCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadReceiverRemoteDesiredCapabilities(false);
     }
@@ -950,7 +952,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             }
 
             if (attachResponse) {
-                assertNotNull("Remote should have responded with a remote desired Capabilities value", receiver.desiredCapabilities());
+                assertNotNull(receiver.desiredCapabilities(), "Remote should have responded with a remote desired Capabilities value");
                 assertEquals(1, receiver.desiredCapabilities().length);
                 assertEquals("Error-Free", receiver.desiredCapabilities()[0]);
             } else {
@@ -980,12 +982,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testBlockingReceiveCancelledWhenReceiverClosed() throws Exception {
         doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testBlockingReceiveCancelledWhenReceiverDetached() throws Exception {
         doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(false);
     }
@@ -1035,12 +1037,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testBlockingReceiveCancelledWhenReceiverRemotelyClosed() throws Exception {
         doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testBlockingReceiveCancelledWhenReceiverRemotelyDetached() throws Exception {
         doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(false);
     }
@@ -1081,12 +1083,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseReceiverWithErrorCondition() throws Exception {
         doTestCloseOrDetachWithErrorCondition(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDetachReceiverWithErrorCondition() throws Exception {
         doTestCloseOrDetachWithErrorCondition(false);
     }
@@ -1127,7 +1129,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiveMessageInSplitTransferFrames() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -1194,7 +1196,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverHandlesAbortedSplitFrameTransfer() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -1243,7 +1245,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAddCreditOnAbortedTransferWhenNeeded() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -1309,12 +1311,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiveCallFailsWhenReceiverPreviouslyClosed() throws Exception {
         doTestReceiveCallFailsWhenReceiverDetachedOrClosed(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiveCallFailsWhenReceiverPreviouslyDetached() throws Exception {
         doTestReceiveCallFailsWhenReceiverDetachedOrClosed(false);
     }
@@ -1361,12 +1363,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiveTimedCallFailsWhenReceiverClosed() throws Exception {
         doTestReceiveTimedCallFailsWhenReceiverDetachedOrClosed(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiveTimedCallFailsWhenReceiverDetached() throws Exception {
         doTestReceiveTimedCallFailsWhenReceiverDetachedOrClosed(false);
     }
@@ -1413,12 +1415,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDrainFutureSignalsFailureWhenReceiverClosed() throws Exception {
         doTestDrainFutureSignalsFailureWhenReceiverClosedOrDetached(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDrainFutureSignalsFailureWhenReceiverDetached() throws Exception {
         doTestDrainFutureSignalsFailureWhenReceiverClosedOrDetached(false);
     }
@@ -1467,12 +1469,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDrainFutureSignalsFailureWhenReceiverRemotelyClosed() throws Exception {
         doTestDrainFutureSignalsFailureWhenReceiverRemotelyClosedOrDetached(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDrainFutureSignalsFailureWhenReceiverRemotelyDetached() throws Exception {
         doTestDrainFutureSignalsFailureWhenReceiverRemotelyClosedOrDetached(false);
     }
@@ -1516,7 +1518,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDrainFutureSignalsFailureWhenSessionRemotelyClosed() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -1553,7 +1555,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDrainFutureSignalsFailureWhenConnectionDrops() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();

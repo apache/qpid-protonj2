@@ -26,23 +26,19 @@ import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecFactory;
 import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.types.messaging.Section;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ImperativeClientTestCase {
+public abstract class ImperativeClientTestCase {
 
     public static final boolean IS_WINDOWS = System.getProperty("os.name", "unknown").toLowerCase().contains("windows");
 
     private final Logger LOG = LoggerFactory.getLogger(getClass());
 
     private final Map<String, String> propertiesSetForTest = new HashMap<String, String>();
-
-    @Rule
-    public TestName testName = new TestName();
 
     /**
      * Set a System property for duration of this test only. The tearDown will guarantee to reset the property to its
@@ -66,7 +62,6 @@ public class ImperativeClientTestCase {
             System.setProperty(property, value);
             LOG.info("Set system property '" + property + "' to: '" + value + "'");
         }
-
     }
 
     /**
@@ -89,19 +84,15 @@ public class ImperativeClientTestCase {
         }
     }
 
-    @After
-    public void tearDown() throws java.lang.Exception {
-        LOG.info("========== tearDown " + getTestName() + " ==========");
+    @AfterEach
+    public void tearDown(TestInfo testInfo) throws Exception {
+        LOG.info("========== tearDown " + testInfo.getDisplayName() + " ==========");
         revertTestSystemProperties();
     }
 
-    @Before
-    public void setUp() throws Exception {
-        LOG.info("========== start " + getTestName() + " ==========");
-    }
-
-    protected String getTestName() {
-        return getClass().getSimpleName() + "." + testName.getMethodName();
+    @BeforeEach
+    public void setUp(TestInfo testInfo) throws Exception {
+        LOG.info("========== start " + testInfo.getDisplayName() + " ==========");
     }
 
     protected byte[] createEncodedMessage(Section<Object> body) {

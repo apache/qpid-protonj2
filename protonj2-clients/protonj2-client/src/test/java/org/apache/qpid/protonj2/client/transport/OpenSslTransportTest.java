@@ -16,20 +16,21 @@
  */
 package org.apache.qpid.protonj2.client.transport;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.lang.reflect.Field;
 
 import javax.net.ssl.SSLContext;
 
 import org.apache.qpid.protonj2.client.SslOptions;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,16 +43,17 @@ import io.netty.handler.ssl.SslHandler;
 /**
  * Test basic functionality of the Netty based TCP Transport ruuing in secure mode (SSL).
  */
+@Timeout(30)
 public class OpenSslTransportTest extends SslTransportTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenSslTransportTest.class);
 
-    @Test(timeout = 240000)
+    @Test
     public void testConnectToServerWithOpenSSLEnabled() throws Exception {
         doTestOpenSSLSupport(true);
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServerWithOpenSSLDisabled() throws Exception {
         doTestOpenSSLSupport(false);
     }
@@ -92,7 +94,7 @@ public class OpenSslTransportTest extends SslTransportTest {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServerWithUserSuppliedSSLContextWorksWhenOpenSSLRequested() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
@@ -128,8 +130,8 @@ public class OpenSslTransportTest extends SslTransportTest {
             }
 
             assertTrue(transport.isConnected());
-            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
-            assertEquals("Server port is incorrect", port, transport.getPort());
+            assertEquals(HOSTNAME, transport.getHost(), "Server host is incorrect");
+            assertEquals(port, transport.getPort(), "Server port is incorrect");
             assertOpenSSL("Transport should not be using OpenSSL", false, transport);
 
             transport.close();
@@ -158,26 +160,26 @@ public class OpenSslTransportTest extends SslTransportTest {
             }
         }
 
-        assertNotNull("Transport implementation unknown", channel);
+        assertNotNull(channel, "Transport implementation unknown");
 
         channel.setAccessible(true);
 
         Channel activeChannel = (Channel) channel.get(transport) ;
         ChannelHandler handler = activeChannel.pipeline().get("ssl");
-        assertNotNull("Channel should have an SSL Handler registered");
+        assertNotNull(handler, "Channel should have an SSL Handler registered");
         assertTrue(handler instanceof SslHandler);
         SslHandler sslHandler = (SslHandler) handler;
 
         if (expected) {
-            assertTrue(message, sslHandler.engine() instanceof OpenSslEngine);
+            assertTrue(sslHandler.engine() instanceof OpenSslEngine, message);
         } else {
-            assertFalse(message, sslHandler.engine() instanceof OpenSslEngine);
+            assertFalse(sslHandler.engine() instanceof OpenSslEngine, message);
         }
     }
 
     @Override
-    @Ignore("Can't apply keyAlias in Netty OpenSSL impl")
-    @Test(timeout = 60000)
+    @Disabled("Can't apply keyAlias in Netty OpenSSL impl")
+    @Test
     public void testConnectWithSpecificClientAuthKeyAlias() throws Exception {
         // TODO - Revert to superclass version if keyAlias becomes supported for Netty.
     }

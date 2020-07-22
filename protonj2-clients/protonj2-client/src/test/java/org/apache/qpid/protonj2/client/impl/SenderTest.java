@@ -1,11 +1,11 @@
 package org.apache.qpid.protonj2.client.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -36,29 +36,28 @@ import org.apache.qpid.protonj2.client.exceptions.ClientSecurityException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.apache.qpid.protonj2.client.util.ProtonClientTestRunner;
-import org.apache.qpid.protonj2.client.util.Repeat;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.hamcrest.Matchers;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@RunWith(ProtonClientTestRunner.class)
+@Timeout(20)
 public class SenderTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(SenderTest.class);
 
-    @Test(timeout = 20000)
+    @Test
     public void testCreateSenderAndClose() throws Exception {
         doTestCreateSenderAndCloseOrDeatch(true);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCreateSenderAndDetach() throws Exception {
         doTestCreateSenderAndCloseOrDeatch(false);
     }
@@ -100,8 +99,7 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Repeat(repetitions = 1)
-    @Test(timeout = 30000)
+    @RepeatedTest(1)
     public void testSenderOpenRejectedByRemote() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -145,12 +143,12 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testOpenSenderTimesOutWhenNoAttachResponseReceivedTimeout() throws Exception {
         doTestOpenSenderTimesOutWhenNoAttachResponseReceived(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testOpenSenderTimesOutWhenNoAttachResponseReceivedNoTimeout() throws Exception {
         doTestOpenSenderTimesOutWhenNoAttachResponseReceived(false);
     }
@@ -193,12 +191,12 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testOpenSenderWaitWithTimeoutFailsWhenConnectionDrops() throws Exception {
         doTestOpenSenderWaitFailsWhenConnectionDrops(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testOpenSenderWaitWithNoTimeoutFailsWhenConnectionDrops() throws Exception {
         doTestOpenSenderWaitFailsWhenConnectionDrops(false);
     }
@@ -240,22 +238,22 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseSenderTimesOutWhenNoCloseResponseReceivedTimeout() throws Exception {
         doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(true, true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseSenderTimesOutWhenNoCloseResponseReceivedNoTimeout() throws Exception {
         doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDetachSenderTimesOutWhenNoCloseResponseReceivedTimeout() throws Exception {
         doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(false, true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDetachSenderTimesOutWhenNoCloseResponseReceivedNoTimeout() throws Exception {
         doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(false, false);
     }
@@ -309,7 +307,7 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSendTimesOutWhenNoCreditIssued() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -348,7 +346,7 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSendCompletesWhenCreditEventuallyOffered() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -399,12 +397,12 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSendWhenCreditIsAvailable() throws Exception {
         doTestSendWhenCreditIsAvailable(false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testTrySendWhenCreditIsAvailable() throws Exception {
         doTestSendWhenCreditIsAvailable(true);
     }
@@ -461,7 +459,7 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testTrySendWhenNoCreditAvailable() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -494,12 +492,12 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCreateSenderWithQoSOfAtMostOnce() throws Exception {
         doTestCreateSenderWithConfiguredQoS(DeliveryMode.AT_MOST_ONCE);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCreateSenderWithQoSOfAtLeastOnce() throws Exception {
         doTestCreateSenderWithConfiguredQoS(DeliveryMode.AT_LEAST_ONCE);
     }
@@ -543,12 +541,12 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSendAutoSettlesOnceRemoteSettles() throws Exception {
         doTestSentMessageGetsAutoSettledAfterRemtoeSettles(false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testTrySendAutoSettlesOnceRemoteSettles() throws Exception {
         doTestSentMessageGetsAutoSettledAfterRemtoeSettles(true);
     }
@@ -613,12 +611,12 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSendDoesNotAutoSettlesOnceRemoteSettlesIfAutoSettleOff() throws Exception {
         doTestSentMessageNotAutoSettledAfterRemtoeSettles(false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testTrySendDoesNotAutoSettlesOnceRemoteSettlesIfAutoSettleOff() throws Exception {
         doTestSentMessageNotAutoSettledAfterRemtoeSettles(true);
     }
@@ -682,12 +680,12 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSenderSendingSettledCompletesTrackerAcknowledgeFuture() throws Exception {
         doTestSenderSendingSettledCompletesTrackerAcknowledgeFuture(false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSenderTrySendingSettledCompletesTrackerAcknowledgeFuture() throws Exception {
         doTestSenderSendingSettledCompletesTrackerAcknowledgeFuture(true);
     }
@@ -747,7 +745,7 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSenderIncrementsTransferTagOnEachSend() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -798,7 +796,7 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSenderSendsSettledInAtLeastOnceMode() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -849,8 +847,7 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Repeat(repetitions = 1)
-    @Test(timeout = 30000)
+    @Test
     public void testCreateAnonymousSenderFromWhenRemoteDoesNotOfferSupportForIt() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -880,8 +877,7 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Repeat(repetitions = 1)
-    @Test(timeout = 30000)
+    @Test
     public void testAnonymousSenderOpenHeldUntilConnectionOpenedAndSupportConfirmed() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -920,14 +916,12 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Repeat(repetitions = 1)
-    @Test(timeout = 30000)
+    @Test
     public void testSenderGetRemotePropertiesWaitsForRemoteAttach() throws Exception {
         tryReadSenderRemoteProperties(true);
     }
 
-    @Repeat(repetitions = 1)
-    @Test(timeout = 30000)
+    @Test
     public void testSenderGetRemotePropertiesFailsAfterOpenTimeout() throws Exception {
         tryReadSenderRemoteProperties(false);
     }
@@ -967,7 +961,7 @@ public class SenderTest extends ImperativeClientTestCase {
             }
 
             if (attachResponse) {
-                assertNotNull("Remote should have responded with a remote properties value", sender.properties());
+                assertNotNull(sender.properties(), "Remote should have responded with a remote properties value");
                 assertEquals(expectedProperties, sender.properties());
             } else {
                 try {
@@ -998,12 +992,12 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testGetRemoteOfferedCapabilitiesWaitsForRemoteAttach() throws Exception {
         tryReadRemoteOfferedCapabilities(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testGetRemoteOfferedCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadRemoteOfferedCapabilities(false);
     }
@@ -1040,7 +1034,7 @@ public class SenderTest extends ImperativeClientTestCase {
             }
 
             if (attachResponse) {
-                assertNotNull("Remote should have responded with a remote offered Capabilities value", sender.offeredCapabilities());
+                assertNotNull(sender.offeredCapabilities(), "Remote should have responded with a remote offered Capabilities value");
                 assertEquals(1, sender.offeredCapabilities().length);
                 assertEquals("QUEUE", sender.offeredCapabilities()[0]);
             } else {
@@ -1070,12 +1064,12 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testGetRemoteDesiredCapabilitiesWaitsForRemoteAttach() throws Exception {
         tryReadRemoteDesiredCapabilities(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testGetRemoteDesiredCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadRemoteDesiredCapabilities(false);
     }
@@ -1112,7 +1106,7 @@ public class SenderTest extends ImperativeClientTestCase {
             }
 
             if (attachResponse) {
-                assertNotNull("Remote should have responded with a remote desired Capabilities value", sender.desiredCapabilities());
+                assertNotNull(sender.desiredCapabilities(), "Remote should have responded with a remote desired Capabilities value");
                 assertEquals(1, sender.desiredCapabilities().length);
                 assertEquals("Error-Free", sender.desiredCapabilities()[0]);
             } else {
@@ -1142,12 +1136,12 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseSenderWithErrorCondition() throws Exception {
         doTestCloseOrDetachWithErrorCondition(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testDetachSenderWithErrorCondition() throws Exception {
         doTestCloseOrDetachWithErrorCondition(false);
     }
@@ -1187,7 +1181,7 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSendMultipleMessages() throws Exception {
         final int CREDIT = 20;
 
@@ -1245,7 +1239,7 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSendBlockedForCreditFailsWhenLinkRemotelyClosed() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -1282,7 +1276,7 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSendBlockedForCreditFailsWhenSessionRemotelyClosed() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -1319,7 +1313,7 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSendBlockedForCreditFailsWhenConnectionRemotelyClosed() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -1355,7 +1349,7 @@ public class SenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSendBlockedForCreditFailsWhenConnectionDrops() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();

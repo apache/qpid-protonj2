@@ -17,10 +17,10 @@
 package org.apache.qpid.protonj2.client.impl;
 
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.net.URI;
@@ -41,8 +41,6 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.apache.qpid.protonj2.client.util.ProtonClientTestRunner;
-import org.apache.qpid.protonj2.client.util.Repeat;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
@@ -50,25 +48,25 @@ import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.ConnectionError;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.hamcrest.Matchers;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Test for the Connection class
  */
-@RunWith(ProtonClientTestRunner.class)
+@Timeout(20)
 public class ConnectionTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConnectionTest.class);
 
-    @Test(timeout = 10000)
+    @Test
     public void testCreateConnectionToNonSaslPeer() throws Exception {
         doConnectionWithUnexpectedHeaderTestImpl(AMQPHeader.getAMQPHeader().toArray());
     }
 
-    @Test(timeout = 10000)
+    @Test
     public void testCreateConnectionToNonAmqpPeer() throws Exception {
         doConnectionWithUnexpectedHeaderTestImpl(new byte[] { 'N', 'O', 'T', '-', 'A', 'M', 'Q', 'P' });
     }
@@ -96,7 +94,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCreateConnectionString() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -118,7 +116,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCreateConnectionStringWithDefaultTcpPort() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -142,12 +140,12 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionCloseGetsResponseWithErrorDoesNotThrowTimedGet() throws Exception {
         doTestConnectionCloseGetsResponseWithErrorDoesNotThrow(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionCloseGetsResponseWithErrorDoesNotThrowUntimedGet() throws Exception {
         doTestConnectionCloseGetsResponseWithErrorDoesNotThrow(false);
     }
@@ -180,7 +178,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionRemoteClosedAfterOpened() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -203,12 +201,12 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionOpenFutureWaitCancelledOnConnectionDropWithTimeout() throws Exception {
         doTestConnectionOpenFutureWaitCancelledOnConnectionDrop(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionOpenFutureWaitCancelledOnConnectionDropNoTimeout() throws Exception {
         doTestConnectionOpenFutureWaitCancelledOnConnectionDrop(false);
     }
@@ -253,7 +251,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testRemotelyCloseConnectionDuringSessionCreation() throws Exception {
         final String BREAD_CRUMB = "ErrorMessageBreadCrumb";
 
@@ -280,9 +278,9 @@ public class ConnectionTest extends ImperativeClientTestCase {
                 fail("Open should throw error when waiting for remote open and connection remotely closed.");
             } catch (ExecutionException error) {
                 LOG.info("Session open failed with error: ", error);
-                assertNotNull("Expected exception to have a message", error.getMessage());
-                assertTrue("Expected breadcrumb to be present in message", error.getMessage().contains(BREAD_CRUMB));
-                assertNotNull("Execution error should convery the cause", error.getCause());
+                assertNotNull(error.getMessage(), "Expected exception to have a message");
+                assertTrue(error.getMessage().contains(BREAD_CRUMB), "Expected breadcrumb to be present in message");
+                assertNotNull(error.getCause(), "Execution error should convery the cause");
                 assertTrue(error.getCause() instanceof ClientConnectionRemotelyClosedException);
             }
 
@@ -296,12 +294,12 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionOpenTimeoutWhenNoRemoteOpenArrivesTimeout() throws Exception {
         doTestConnectionOpenTimeoutWhenNoRemoteOpenArrives(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionOpenTimeoutWhenNoRemoteOpenArrivesNoTimeout() throws Exception {
         doTestConnectionOpenTimeoutWhenNoRemoteOpenArrives(false);
     }
@@ -339,12 +337,12 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionOpenWaitWithTimeoutCanceledWhenConnectionDrops() throws Exception {
         doTestConnectionOpenWaitCanceledWhenConnectionDrops(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionOpenWaitWithNoTimeoutCanceledWhenConnectionDrops() throws Exception {
         doTestConnectionOpenWaitCanceledWhenConnectionDrops(false);
     }
@@ -379,12 +377,12 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionCloseTimeoutWhenNoRemoteCloseArrivesTimeout() throws Exception {
         doTestConnectionCloseTimeoutWhenNoRemoteCloseArrives(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionCloseTimeoutWhenNoRemoteCloseArrivesNoTimeout() throws Exception {
         doTestConnectionCloseTimeoutWhenNoRemoteCloseArrives(false);
     }
@@ -424,12 +422,12 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionCloseWaitWithTimeoutCompletesAfterRemoteConnectionDrops() throws Exception {
         doTestConnectionCloseWaitCompletesAfterRemoteConnectionDrops(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionCloseWaitWithNoTimeoutCompletesAfterRemoteConnectionDrops() throws Exception {
         doTestConnectionCloseWaitCompletesAfterRemoteConnectionDrops(false);
     }
@@ -467,8 +465,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Repeat(repetitions = 1)
-    @Test(timeout = 30000)
+    @Test
     public void testCreateDefaultSenderFailsOnConnectionWithoutSupportForAnonymousRelay() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -500,7 +497,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCreateDefaultSenderOnConnectionWithSupportForAnonymousRelay() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -529,7 +526,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionRecreatesAnonymousRelaySenderAfterRemoteCloseOfSender() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -566,7 +563,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCreateDynamicReceiver() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -601,8 +598,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Repeat(repetitions = 1)
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionSenderOpenHeldUntilConnectionOpenedAndRelaySupportConfirmed() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -640,12 +636,12 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionGetRemotePropertiesWaitsForRemoteBegin() throws Exception {
         tryReadConnectionRemoteProperties(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionGetRemotePropertiesFailsAfterOpenTimeout() throws Exception {
         tryReadConnectionRemoteProperties(false);
     }
@@ -677,7 +673,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             }
 
             if (openResponse) {
-                assertNotNull("Remote should have responded with a remote properties value", connection.properties());
+                assertNotNull(connection.properties(), "Remote should have responded with a remote properties value");
                 assertEquals(expectedProperties, connection.properties());
             } else {
                 try {
@@ -694,12 +690,12 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionGetRemoteOfferedCapabilitiesWaitsForRemoteBegin() throws Exception {
         tryReadConnectionRemoteOfferedCapabilities(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionGetRemoteOfferedCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadConnectionRemoteOfferedCapabilities(false);
     }
@@ -728,7 +724,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             }
 
             if (openResponse) {
-                assertNotNull("Remote should have responded with a remote offered Capabilities value", connection.offeredCapabilities());
+                assertNotNull(connection.offeredCapabilities(), "Remote should have responded with a remote offered Capabilities value");
                 assertEquals(1, connection.offeredCapabilities().length);
                 assertEquals("transactions", connection.offeredCapabilities()[0]);
             } else {
@@ -746,12 +742,12 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionGetRemoteDesiredCapabilitiesWaitsForRemoteBegin() throws Exception {
         tryReadConnectionRemoteDesiredCapabilities(true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testConnectionGetRemoteDesiredCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadConnectionRemoteDesiredCapabilities(false);
     }
@@ -780,7 +776,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             }
 
             if (openResponse) {
-                assertNotNull("Remote should have responded with a remote desired Capabilities value", connection.desiredCapabilities());
+                assertNotNull(connection.desiredCapabilities(), "Remote should have responded with a remote desired Capabilities value");
                 assertEquals(1, connection.desiredCapabilities().length);
                 assertEquals("Error-Free", connection.desiredCapabilities()[0]);
             } else {
@@ -798,7 +794,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseWithErrorCondition() throws Exception {
         final String condition = "amqp:precondition-failed";
         final String description = "something bad happened.";

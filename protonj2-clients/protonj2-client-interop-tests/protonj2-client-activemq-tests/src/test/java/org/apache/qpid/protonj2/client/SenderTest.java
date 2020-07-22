@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.protonj2.client;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.net.URI;
 import java.util.UUID;
@@ -26,11 +26,13 @@ import java.util.concurrent.TimeUnit;
 import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.apache.qpid.protonj2.client.support.ImperativeClientTestSupport;
 import org.apache.qpid.protonj2.client.support.Wait;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
+@Timeout(30)
 public class SenderTest extends ImperativeClientTestSupport {
 
-    @Test(timeout = 60000)
+    @Test
     public void testCreateReceiver() throws Exception {
         URI brokerURI = getBrokerAmqpConnectionURI();
 
@@ -56,12 +58,12 @@ public class SenderTest extends ImperativeClientTestSupport {
         assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testSendMessageToRemoteQueueDurable() throws Exception {
         doTestSendMessageToRemoteQueueDurable(true);
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testSendMessageToRemoteQueueNotDurable() throws Exception {
         doTestSendMessageToRemoteQueueDurable(false);
     }
@@ -91,7 +93,7 @@ public class SenderTest extends ImperativeClientTestSupport {
         assertNotNull(connection.close().get(5, TimeUnit.SECONDS));
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testSendMessagesToRemoteQueue() throws Exception {
         final URI brokerURI = getBrokerAmqpConnectionURI();
         final int MESSAGE_COUNT = 100;

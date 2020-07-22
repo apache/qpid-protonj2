@@ -56,10 +56,9 @@ import org.apache.activemq.security.SimpleAuthenticationPlugin;
 import org.apache.activemq.security.TempDestinationAuthorizationEntry;
 import org.apache.activemq.store.kahadb.KahaDBStore;
 import org.apache.activemq.util.JMXSupport;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,26 +71,26 @@ public class ImperativeClientTestSupport {
 
     public static final String KAHADB_DIRECTORY = "target/activemq-data";
 
-    @Rule public TestName name = new TestName();
-
     protected static final Logger LOG = LoggerFactory.getLogger(ImperativeClientTestSupport.class);
     protected BrokerService brokerService;
     protected final List<BrokerService> brokers = new ArrayList<BrokerService>();
     protected final Vector<Throwable> exceptions = new Vector<Throwable>();
     protected int numberOfMessages;
     protected Connection connection;
+    protected String testName;
 
-    @Before
-    public void setUp() throws Exception {
-        LOG.info("========== setUp " + getTestName() + " ==========");
+    @BeforeEach
+    public void setUp(TestInfo testInfo) throws Exception {
+        LOG.info("========== setUp " + testInfo.getDisplayName() + " ==========");
         exceptions.clear();
         startPrimaryBroker();
-        this.numberOfMessages = 2000;
+        numberOfMessages = 2000;
+        testName = testInfo.getTestMethod().get().getName();
     }
 
-    @After
-    public void tearDown() throws Exception {
-        LOG.info("========== tearDown " + getTestName() + " ==========");
+    @AfterEach
+    public void tearDown(TestInfo testInfo) throws Exception {
+        LOG.info("========== tearDown " + testInfo.getDisplayName() + " ==========");
         Exception firstError = null;
 
         if (connection != null) {
@@ -125,7 +124,7 @@ public class ImperativeClientTestSupport {
     }
 
     public String getDestinationName() {
-        return name.getMethodName();
+        return testName;
     }
 
     private static final int PORT = Integer.getInteger("activemq.test.amqp.port", 0);
@@ -504,7 +503,7 @@ public class ImperativeClientTestSupport {
     protected void sendToAmqQueue(int count) throws Exception {
         Connection activemqConnection = createActiveMQConnection();
         Session amqSession = activemqConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        Queue amqTestQueue = amqSession.createQueue(name.getMethodName());
+        Queue amqTestQueue = amqSession.createQueue(testName);
         sendMessages(activemqConnection, amqTestQueue, count);
         activemqConnection.close();
     }
@@ -512,7 +511,7 @@ public class ImperativeClientTestSupport {
     protected void sendToAmqTopic(int count) throws Exception {
         Connection activemqConnection = createActiveMQConnection();
         Session amqSession = activemqConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        Topic amqTestTopic = amqSession.createTopic(name.getMethodName());
+        Topic amqTestTopic = amqSession.createTopic(testName);
         sendMessages(activemqConnection, amqTestTopic, count);
         activemqConnection.close();
     }
@@ -600,6 +599,6 @@ public class ImperativeClientTestSupport {
     }
 
     protected String getTestName() {
-        return getClass().getSimpleName() + "." + name.getMethodName();
+        return getClass().getSimpleName() + "." + testName;
     }
 }

@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.protonj2.client.transport;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,7 +32,8 @@ import org.apache.qpid.protonj2.buffer.ProtonNettyByteBuffer;
 import org.apache.qpid.protonj2.client.SslOptions;
 import org.apache.qpid.protonj2.client.TransportOptions;
 import org.apache.qpid.protonj2.client.test.Wait;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +45,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler.Han
 /**
  * Test the Netty based WebSocket Transport
  */
+@Timeout(30)
 public class WebSocketTransportTest extends TcpTransportTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(WebSocketTransportTest.class);
@@ -65,7 +67,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
         return new TransportOptions().useWebSockets(true);
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServerUsingCorrectPath() throws Exception {
         final String WEBSOCKET_PATH = "/testpath";
 
@@ -86,8 +88,8 @@ public class WebSocketTransportTest extends TcpTransportTest {
             }
 
             assertTrue(transport.isConnected());
-            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
-            assertEquals("Server port is incorrect", port, transport.getPort());
+            assertEquals(HOSTNAME, transport.getHost(), "Server host is incorrect");
+            assertEquals(port, transport.getPort(), "Server port is incorrect");
 
             transport.close();
 
@@ -100,7 +102,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectToServerUsingIncorrectPath() throws Exception {
         final String WEBSOCKET_PATH = "/testpath";
 
@@ -132,7 +134,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectionsSendReceiveLargeDataWhenFrameSizeAllowsIt() throws Exception {
         final int FRAME_SIZE = 8192;
 
@@ -170,7 +172,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
                 }
             }, 10000, 50));
 
-            assertTrue("Connection failed while receiving.", transport.isConnected());
+            assertTrue(transport.isConnected(), "Connection failed while receiving.");
 
             transport.close();
         }
@@ -178,7 +180,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectionReceivesFragmentedData() throws Exception {
         final int FRAME_SIZE = 5317;
 
@@ -220,19 +222,19 @@ public class WebSocketTransportTest extends TcpTransportTest {
                 }
             }, 10000, 50));
 
-            assertTrue("Connection failed while receiving.", transport.isConnected());
+            assertTrue(transport.isConnected(), "Connection failed while receiving.");
 
             transport.close();
 
-            assertEquals("Expected 2 data packets due to seperate websocket frames", 2, data.size());
+            assertEquals(2, data.size(), "Expected 2 data packets due to seperate websocket frames");
 
             ProtonBuffer receivedBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(FRAME_SIZE);
             for (ProtonBuffer buf : data) {
                buf.readBytes(receivedBuffer, buf.getReadableBytes());
             }
 
-            assertEquals("Unexpected data length", FRAME_SIZE, receivedBuffer.getReadableBytes());
-            assertEquals("Unexpected data", sendBuffer, receivedBuffer);
+            assertEquals(FRAME_SIZE, receivedBuffer.getReadableBytes(), "Unexpected data length");
+            assertEquals(sendBuffer, receivedBuffer, "Unexpected data");
         } finally {
             for (ProtonBuffer buf : data) {
                 ((ByteBuf) buf.unwrap()).release();
@@ -242,7 +244,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConnectionsSendReceiveLargeDataFailsDueToMaxFrameSize() throws Exception {
         final int FRAME_SIZE = 1024;
 
@@ -272,13 +274,13 @@ public class WebSocketTransportTest extends TcpTransportTest {
                 fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
-            assertTrue("Transport should have lost connection", Wait.waitFor(() -> !transport.isConnected()));
+            assertTrue(Wait.waitFor(() -> !transport.isConnected()), "Transport should have lost connection");
         }
 
         assertFalse(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testTransportDetectsConnectionDropWhenServerEnforcesMaxFrameSize() throws Exception {
         final int FRAME_SIZE = 1024;
 
@@ -308,7 +310,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
                 fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
-            assertTrue("Transport should have lost connection", Wait.waitFor(new Wait.Condition() {
+            assertTrue(Wait.waitFor(new Wait.Condition() {
                 @Override
                 public boolean isSatisfied() throws Exception {
                     try {
@@ -320,13 +322,13 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
                     return false;
                 }
-            }, 10000, 10));
+            }, 10000, 10), "Transport should have lost connection");
 
             transport.close();
         }
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testConfiguredHttpHeadersArriveAtServer() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
@@ -346,12 +348,12 @@ public class WebSocketTransportTest extends TcpTransportTest {
             }
 
             assertTrue(transport.isConnected());
-            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
-            assertEquals("Server port is incorrect", port, transport.getPort());
+            assertEquals(HOSTNAME, transport.getHost(), "Server host is incorrect");
+            assertEquals(port, transport.getPort(), "Server port is incorrect");
 
-            assertTrue("HandshakeCompletion not set within given time", server.awaitHandshakeCompletion(2000));
+            assertTrue(server.awaitHandshakeCompletion(2000), "HandshakeCompletion not set within given time");
             HandshakeComplete handshake = server.getHandshakeComplete();
-            assertNotNull("completion should not be null", handshake);
+            assertNotNull(handshake, "completion should not be null");
             HttpHeaders requestHeaders = handshake.requestHeaders();
 
             assertTrue(requestHeaders.contains("test-header1"));
@@ -371,7 +373,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
     private static final String BROKER_JKS_KEYSTORE = "src/test/resources/broker-jks.keystore";
     private static final String PASSWORD = "password";
 
-    @Test(timeout = 30000)
+    @Test
     public void testNonSslWebSocketConnectionFailsToSslServer() throws Exception {
         SslOptions serverSslOptions = new SslOptions();
         serverSslOptions.keyStoreLocation(BROKER_JKS_KEYSTORE);
@@ -396,7 +398,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testWebsocketConnectionToBlackHoleServerTimesOut() throws Exception {
         try (NettyBlackHoleServer server = new NettyBlackHoleServer(new TransportOptions(), new SslOptions().sslEnabled(false))) {
             server.start();
@@ -413,7 +415,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
             } catch (Exception e) {
                 String message = e.getMessage();
                 assertNotNull(message);
-                assertTrue("Unexpected message: " + message, message.contains("WebSocket handshake timed out"));
+                assertTrue(message.contains("WebSocket handshake timed out"), "Unexpected message: " + message);
             }
         }
     }

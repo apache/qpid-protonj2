@@ -16,13 +16,13 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.net.URI;
@@ -44,8 +44,9 @@ import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.test.driver.netty.ServerOptions;
 import org.apache.qpid.protonj2.types.security.SaslCode;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +55,7 @@ import io.netty.handler.ssl.OpenSsl;
 /**
  * Test for the Connection class
  */
+@Timeout(30)
 public class SslConnectionTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(SslConnectionTest.class);
@@ -88,12 +90,12 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     private static final String JAVAX_NET_SSL_TRUST_STORE_TYPE = "javax.net.ssl.trustStoreType";
     private static final String JAVAX_NET_SSL_TRUST_STORE_PASSWORD = "javax.net.ssl.trustStorePassword";
 
-    @Test(timeout = 20000)
+    @Test
     public void testCreateAndCloseSslConnectionJDK() throws Exception {
         testCreateAndCloseSslConnection(false);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCreateAndCloseSslConnectionOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
@@ -141,12 +143,12 @@ public class SslConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCreateAndCloseSslConnectionWithDefaultPortJDK() throws Exception {
         testCreateAndCloseSslConnectionWithDefaultPort(false);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCreateAndCloseSslConnectionWithDefaultPortOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
@@ -195,14 +197,14 @@ public class SslConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Ignore("Test driver not handling the preemptive header currently")
-    @Test(timeout = 20000)
+    @Disabled("Test driver not handling the preemptive header currently")
+    @Test
     public void testCreateSslConnectionWithServerSendingPreemptiveDataJDK() throws Exception {
         doTestCreateSslConnectionWithServerSendingPreemptiveData(false);
     }
 
-    @Ignore("Test driver not handling the preemptive header currently")
-    @Test(timeout = 20000)
+    @Disabled("Test driver not handling the preemptive header currently")
+    @Test
     public void testCreateSslConnectionWithServerSendingPreemptiveDataOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
@@ -250,12 +252,12 @@ public class SslConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCreateAndCloseSslConnectionWithClientAuthJDK() throws Exception {
         doTestCreateAndCloseSslConnectionWithClientAuth(false);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCreateAndCloseSslConnectionWithClientAuthOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
@@ -303,13 +305,13 @@ public class SslConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCreateAndCloseSslConnectionWithAliasJDK() throws Exception {
         doConnectionWithAliasTestImpl(CLIENT_KEY_ALIAS, CLIENT_DN, false);
         doConnectionWithAliasTestImpl(CLIENT2_KEY_ALIAS, CLIENT2_DN, false);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCreateAndCloseSslConnectionWithAliasOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
@@ -361,7 +363,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             Certificate cert = peerCertificates[0];
             assertTrue(cert instanceof X509Certificate);
             String dn = ((X509Certificate) cert).getSubjectX500Principal().getName();
-            assertEquals("Unexpected certificate DN", expectedDN, dn);
+            assertEquals(expectedDN, dn, "Unexpected certificate DN");
 
             connection.close().get(10, TimeUnit.SECONDS);
 
@@ -369,12 +371,12 @@ public class SslConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCreateConnectionWithAliasThatDoesNotExist() throws Exception {
         doCreateConnectionWithInvalidAliasTestImpl(ALIAS_DOES_NOT_EXIST);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCreateConnectionWithAliasThatDoesNotRepresentKeyEntry() throws Exception {
         doCreateConnectionWithInvalidAliasTestImpl(ALIAS_CA_CERT);
     }
@@ -413,7 +415,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
-            assertTrue("Attempt should have failed locally, peer should not have accepted any TCP connection", peer.isAcceptingConnections());
+            assertTrue(peer.isAcceptingConnections(), "Attempt should have failed locally, peer should not have accepted any TCP connection");
         }
     }
 
@@ -424,7 +426,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
      *
      * @throws Exception if an unexpected error is encountered
      */
-    @Test(timeout = 20000)
+    @Test
     public void testCreateConnectionWithSslContextOverride() throws Exception {
         assertNotEquals(CLIENT_JKS_KEYSTORE, CLIENT2_JKS_KEYSTORE);
         assertNotEquals(CLIENT_DN, CLIENT2_DN);
@@ -483,7 +485,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             Certificate cert = peerCertificates[0];
             assertTrue(cert instanceof X509Certificate);
             String dn = ((X509Certificate) cert).getSubjectX500Principal().getName();
-            assertEquals("Unexpected certificate DN", expectedDN, dn);
+            assertEquals(expectedDN, dn, "Unexpected certificate DN");
 
             connection.close().get(10, TimeUnit.SECONDS);
 
@@ -491,7 +493,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testConfigureStoresWithSslSystemProperties() throws Exception {
         // Set properties and expect connection as Client1
         setSslSystemPropertiesForCurrentTest(CLIENT_JKS_KEYSTORE, PASSWORD, CLIENT_JKS_TRUSTSTORE, PASSWORD);
@@ -529,7 +531,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
         doConfigureStoresWithSslSystemPropertiesTestImpl(CLIENT2_DN);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testConfigurePkcs12StoresWithSslSystemProperties() throws Exception {
         // Set properties and expect connection as Client1
         setSslSystemPropertiesForCurrentTest(CLIENT_PKCS12_KEYSTORE, CUSTOM_STORE_TYPE_PKCS12, PASSWORD, CLIENT_PKCS12_TRUSTSTORE, CUSTOM_STORE_TYPE_PKCS12, PASSWORD);
@@ -603,7 +605,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             Certificate cert = peerCertificates[0];
             assertTrue(cert instanceof X509Certificate);
             String dn = ((X509Certificate)cert).getSubjectX500Principal().getName();
-            assertEquals("Unexpected certificate DN", expectedDN, dn);
+            assertEquals(expectedDN, dn, "Unexpected certificate DN");
 
             connection.close().get(10, TimeUnit.SECONDS);
 

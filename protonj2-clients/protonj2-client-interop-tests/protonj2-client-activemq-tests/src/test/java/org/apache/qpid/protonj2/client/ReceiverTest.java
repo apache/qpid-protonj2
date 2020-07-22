@@ -16,10 +16,10 @@
  */
 package org.apache.qpid.protonj2.client;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URI;
 import java.util.UUID;
@@ -33,11 +33,13 @@ import javax.jms.TextMessage;
 import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.apache.qpid.protonj2.client.support.ImperativeClientTestSupport;
 import org.apache.qpid.protonj2.client.support.Wait;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
+@Timeout(30)
 public class ReceiverTest extends ImperativeClientTestSupport {
 
-    @Test(timeout = 60000)
+    @Test
     public void testCreateReceiver() throws Exception {
         URI brokerURI = getBrokerAmqpConnectionURI();
 
@@ -63,7 +65,7 @@ public class ReceiverTest extends ImperativeClientTestSupport {
         assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testReceiveJMSTextMessageFromQueue() throws Exception {
         URI brokerURI = getBrokerAmqpConnectionURI();
 
@@ -94,7 +96,7 @@ public class ReceiverTest extends ImperativeClientTestSupport {
         assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
     }
 
-    @Test(timeout = 60000)
+    @Test
     public void testReceiveJMSTextMessageFromQueueAndSettleWithDeliveryState() throws Exception {
         doTestReceiveJMSTextMessageFromQueueAndApplyDeliveryState(DeliveryState.accepted());
     }

@@ -27,11 +27,13 @@ import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.support.ImperativeClientTestSupport;
 import org.apache.qpid.protonj2.client.support.Wait;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
+@Timeout(30)
 public class SendAndReceiveTest extends ImperativeClientTestSupport {
 
-    @Test(timeout = 60000)
+    @Test
     public void testConcurrentSendAndReceive() throws Exception {
         final int NUM_MESSAGES = 1;
         final URI brokerURI = getBrokerAmqpConnectionURI();

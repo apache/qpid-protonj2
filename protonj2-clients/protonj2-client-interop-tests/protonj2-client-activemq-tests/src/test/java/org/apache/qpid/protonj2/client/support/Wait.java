@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.protonj2.client.support;
 
-import java.util.concurrent.TimeUnit;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import org.junit.Assert;
+import java.util.concurrent.TimeUnit;
 
 public class Wait {
 
@@ -65,7 +65,7 @@ public class Wait {
         boolean result = waitFor(condition, duration, sleep);
 
         if (!result) {
-            Assert.fail(failureMessage);
+            fail(failureMessage);
         }
     }
 
@@ -91,7 +91,7 @@ public class Wait {
         boolean result = waitFor(() -> condition.getCount() == size, timeout, sleepMillis);
 
         if (!result) {
-            Assert.fail(size + " != " + condition.getCount());
+            fail(size + " != " + condition.getCount());
         }
     }
 
@@ -107,7 +107,7 @@ public class Wait {
         boolean result = waitFor(() -> condition.getCount() == size, timeout, sleepMillis);
 
         if (!result) {
-            Assert.fail(size + " != " + condition.getCount());
+            fail(size + " != " + condition.getCount());
         }
     }
 }

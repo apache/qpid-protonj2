@@ -16,14 +16,15 @@
  */
 package org.apache.qpid.protonj2.client.transport;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.security.UnrecoverableKeyException;
@@ -36,7 +37,7 @@ import javax.net.ssl.SSLEngine;
 
 import org.apache.qpid.protonj2.client.SslOptions;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.handler.ssl.OpenSsl;
@@ -92,8 +93,8 @@ public class SslSupportTest extends ImperativeClientTestCase {
         assertNotNull(engine);
 
         List<String> engineProtocols = Arrays.asList(engine.getEnabledProtocols());
-        assertFalse("SSLv3 should not be enabled by default", engineProtocols.contains("SSLv3"));
-        assertFalse("SSLv2Hello should not be enabled by default", engineProtocols.contains("SSLv2Hello"));
+        assertFalse(engineProtocols.contains("SSLv3"), "SSLv3 should not be enabled by default");
+        assertFalse(engineProtocols.contains("SSLv2Hello"), "SSLv2Hello should not be enabled by default");
     }
 
     @Test
@@ -110,7 +111,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         assertNotNull(engine);
 
         List<String> engineProtocols = Arrays.asList(engine.getEnabledProtocols());
-        assertFalse("SSLv3 should not be enabled by default", engineProtocols.contains("SSLv3"));
+        assertFalse(engineProtocols.contains("SSLv3"), "SSLv3 should not be enabled by default");
 
         // TODO - Netty is currently unable to disable OpenSSL SSLv2Hello so we are stuck with it for now.
         // assertFalse("SSLv2Hello should not be enabled by default", engineProtocols.contains("SSLv2Hello"));
@@ -168,89 +169,119 @@ public class SslSupportTest extends ImperativeClientTestCase {
         // assertEquals(contextProtocol, context.getProtocol());
     }
 
-    @Test(expected = UnrecoverableKeyException.class)
+    @Test
     public void testCreateSslContextNoKeyStorePasswordJDK() throws Exception {
         SslOptions options = createJksSslOptions();
         options.keyStorePassword(null);
-        SslSupport.createJdkSslContext(options);
+
+        assertThrows(UnrecoverableKeyException.class, () -> {
+            SslSupport.createJdkSslContext(options);
+        });
     }
 
-    @Test(expected = UnrecoverableKeyException.class)
+    @Test
     public void testCreateSslContextNoKeyStorePasswordOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = createJksSslOptions();
         options.keyStorePassword(null);
-        SslSupport.createOpenSslContext(options);
+
+        assertThrows(UnrecoverableKeyException.class, () -> {
+            SslSupport.createOpenSslContext(options);
+        });
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void testCreateSslContextWrongKeyStorePasswordJDK() throws Exception {
         SslOptions options = createJksSslOptions();
         options.keyStorePassword("wrong");
-        SslSupport.createJdkSslContext(options);
+
+        assertThrows(IOException.class, () -> {
+            SslSupport.createJdkSslContext(options);
+        });
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void testCreateSslContextWrongKeyStorePasswordOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = createJksSslOptions();
         options.keyStorePassword("wrong");
-        SslSupport.createOpenSslContext(options);
+
+        assertThrows(IOException.class, () -> {
+            SslSupport.createOpenSslContext(options);
+        });
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void testCreateSslContextBadPathToKeyStoreJDK() throws Exception {
         SslOptions options = createJksSslOptions();
         options.keyStoreLocation(CLIENT_JKS_KEYSTORE + ".bad");
-        SslSupport.createJdkSslContext(options);
+
+        assertThrows(IOException.class, () -> {
+            SslSupport.createJdkSslContext(options);
+        });
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void testCreateSslContextBadPathToKeyStoreOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = createJksSslOptions();
         options.keyStoreLocation(CLIENT_JKS_KEYSTORE + ".bad");
-        SslSupport.createOpenSslContext(options);
+
+        assertThrows(IOException.class, () -> {
+            SslSupport.createOpenSslContext(options);
+        });
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void testCreateSslContextWrongTrustStorePasswordJDK() throws Exception {
         SslOptions options = createJksSslOptions();
         options.trustStorePassword("wrong");
-        SslSupport.createJdkSslContext(options);
+
+        assertThrows(IOException.class, () -> {
+            SslSupport.createJdkSslContext(options);
+        });
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void testCreateSslContextWrongTrustStorePasswordOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = createJksSslOptions();
         options.trustStorePassword("wrong");
-        SslSupport.createOpenSslContext(options);
+
+        assertThrows(IOException.class, () -> {
+            SslSupport.createOpenSslContext(options);
+        });
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void testCreateSslContextBadPathToTrustStoreJDK() throws Exception {
         SslOptions options = createJksSslOptions();
         options.trustStoreLocation(CLIENT_JKS_TRUSTSTORE + ".bad");
-        SslSupport.createJdkSslContext(options);
+
+        assertThrows(IOException.class, () -> {
+            SslSupport.createJdkSslContext(options);
+        });
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void testCreateSslContextBadPathToTrustStoreOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = createJksSslOptions();
         options.trustStoreLocation(CLIENT_JKS_TRUSTSTORE + ".bad");
-        SslSupport.createOpenSslContext(options);
+
+        assertThrows(IOException.class, () -> {
+            SslSupport.createOpenSslContext(options);
+        });
     }
 
     @Test
@@ -297,21 +328,27 @@ public class SslSupportTest extends ImperativeClientTestCase {
         assertTrue(context.isClient());
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void testCreateSslContextIncorrectStoreTypeJDK() throws Exception {
         SslOptions options = createPkcs12SslOptions();
         options.storeType(KEYSTORE_JCEKS_TYPE);
-        SslSupport.createJdkSslContext(options);
+
+        assertThrows(IOException.class, () -> {
+            SslSupport.createJdkSslContext(options);
+        });
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void testCreateSslContextIncorrectStoreTypeOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = createPkcs12SslOptions();
         options.storeType(KEYSTORE_JCEKS_TYPE);
-        SslSupport.createOpenSslContext(options);
+
+        assertThrows(IOException.class, () -> {
+            SslSupport.createOpenSslContext(options);
+        });
     }
 
     @Test
@@ -355,7 +392,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
         assertNotNull(engine);
 
-        assertArrayEquals("Enabled protocols not as expected", ENABLED_PROTOCOLS, engine.getEnabledProtocols());
+        assertArrayEquals(ENABLED_PROTOCOLS, engine.getEnabledProtocols(), "Enabled protocols not as expected");
     }
 
     @Test
@@ -371,7 +408,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
         assertNotNull(engine);
 
-        assertArrayEquals("Enabled protocols not as expected", ENABLED_OPENSSL_PROTOCOLS, engine.getEnabledProtocols());
+        assertArrayEquals(ENABLED_OPENSSL_PROTOCOLS, engine.getEnabledProtocols(), "Enabled protocols not as expected");
     }
 
     @Test
@@ -415,7 +452,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
         assertNotNull(engine);
 
-        assertArrayEquals("Enabled protocols not as expected", ENABLED_PROTOCOLS, engine.getEnabledProtocols());
+        assertArrayEquals(ENABLED_PROTOCOLS, engine.getEnabledProtocols(), "Enabled protocols not as expected");
     }
 
     @Test
@@ -431,7 +468,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
         assertNotNull(engine);
 
-        assertArrayEquals("Enabled protocols not as expected", ENABLED_OPENSSL_PROTOCOLS, engine.getEnabledProtocols());
+        assertArrayEquals(ENABLED_OPENSSL_PROTOCOLS, engine.getEnabledProtocols(), "Enabled protocols not as expected");
     }
 
     @Test
@@ -440,7 +477,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SslOptions options = createJksSslOptions();
         SSLEngine directEngine = createSSLEngineDirectly(options);
         String[] protocols = directEngine.getEnabledProtocols();
-        assertTrue("There were no initial protocols to choose from!", protocols.length > 0);
+        assertTrue(protocols.length > 0, "There were no initial protocols to choose from!");
 
         // Pull out one to disable specifically
         String[] disabledProtocol = new String[] { protocols[protocols.length - 1] };
@@ -451,7 +488,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
 
         // verify the option took effect
         assertNotNull(engine);
-        assertArrayEquals("Enabled protocols not as expected", trimmedProtocols, engine.getEnabledProtocols());
+        assertArrayEquals(trimmedProtocols, engine.getEnabledProtocols(), "Enabled protocols not as expected");
     }
 
     @Test
@@ -463,7 +500,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SslOptions options = createJksSslOptions();
         SSLEngine directEngine = createOpenSSLEngineDirectly(options);
         String[] protocols = directEngine.getEnabledProtocols();
-        assertTrue("There were no initial protocols to choose from!", protocols.length > 0);
+        assertTrue(protocols.length > 0, "There were no initial protocols to choose from!");
 
         // Pull out one to disable specifically
         String[] disabledProtocol = new String[] { protocols[protocols.length - 1] };
@@ -474,7 +511,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
 
         // verify the option took effect
         assertNotNull(engine);
-        assertArrayEquals("Enabled protocols not as expected", trimmedProtocols, engine.getEnabledProtocols());
+        assertArrayEquals(trimmedProtocols, engine.getEnabledProtocols(), "Enabled protocols not as expected");
     }
 
     @Test
@@ -483,7 +520,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SslOptions options = createJksSslOptions();
         SSLEngine directEngine = createSSLEngineDirectly(options);
         String[] protocols = directEngine.getEnabledProtocols();
-        assertTrue("There were no initial protocols to choose from!", protocols.length > 1);
+        assertTrue(protocols.length > 1, "There were no initial protocols to choose from!");
 
         // Pull out two to enable, and one to disable specifically
         String protocol1 = protocols[0];
@@ -498,7 +535,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
 
         // verify the option took effect, that the disabled protocols were removed from the enabled list.
         assertNotNull(engine);
-        assertArrayEquals("Enabled protocols not as expected", remainingProtocols, engine.getEnabledProtocols());
+        assertArrayEquals(remainingProtocols, engine.getEnabledProtocols(), "Enabled protocols not as expected");
     }
 
     @Test
@@ -510,7 +547,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SslOptions options = createJksSslOptions();
         SSLEngine directEngine = createOpenSSLEngineDirectly(options);
         String[] protocols = directEngine.getEnabledProtocols();
-        assertTrue("There were no initial protocols to choose from!", protocols.length > 1);
+        assertTrue(protocols.length > 1, "There were no initial protocols to choose from!");
 
         // Pull out two to enable, and one to disable specifically
         String protocol1 = protocols[0];
@@ -533,8 +570,8 @@ public class SslSupportTest extends ImperativeClientTestCase {
 
         // verify the option took effect, that the disabled protocols were removed from the enabled list.
         assertNotNull(engine);
-        assertEquals("Enabled protocols not as expected", remainingProtocolsList.size(), engine.getEnabledProtocols().length);
-        assertTrue("Enabled protocols not as expected", remainingProtocolsList.containsAll(Arrays.asList(engine.getEnabledProtocols())));
+        assertEquals(remainingProtocolsList.size(), engine.getEnabledProtocols().length, "Enabled protocols not as expected");
+        assertTrue(remainingProtocolsList.containsAll(Arrays.asList(engine.getEnabledProtocols())), "Enabled protocols not as expected");
     }
 
     @Test
@@ -543,7 +580,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SslOptions options = createJksSslOptions();
         SSLEngine directEngine = createSSLEngineDirectly(options);
         String[] ciphers = directEngine.getEnabledCipherSuites();
-        assertTrue("There were no initial ciphers to choose from!", ciphers.length > 0);
+        assertTrue(ciphers.length > 0, "There were no initial ciphers to choose from!");
 
         // Pull out one to enable specifically
         String cipher = ciphers[0];
@@ -554,7 +591,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
 
         // verify the option took effect
         assertNotNull(engine);
-        assertArrayEquals("Enabled ciphers not as expected", enabledCipher, engine.getEnabledCipherSuites());
+        assertArrayEquals(enabledCipher, engine.getEnabledCipherSuites(), "Enabled ciphers not as expected");
     }
 
     @Test
@@ -566,7 +603,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SslOptions options = createJksSslOptions();
         SSLEngine directEngine = createOpenSSLEngineDirectly(options);
         String[] ciphers = directEngine.getEnabledCipherSuites();
-        assertTrue("There were no initial ciphers to choose from!", ciphers.length > 0);
+        assertTrue(ciphers.length > 0, "There were no initial ciphers to choose from!");
 
         // Pull out one to enable specifically
         String cipher = ciphers[0];
@@ -577,7 +614,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
 
         // verify the option took effect
         assertNotNull(engine);
-        assertArrayEquals("Enabled ciphers not as expected", enabledCipher, engine.getEnabledCipherSuites());
+        assertArrayEquals(enabledCipher, engine.getEnabledCipherSuites(), "Enabled ciphers not as expected");
     }
 
     @Test
@@ -586,7 +623,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SslOptions options = createJksSslOptions();
         SSLEngine directEngine = createSSLEngineDirectly(options);
         String[] ciphers = directEngine.getEnabledCipherSuites();
-        assertTrue("There were no initial ciphers to choose from!", ciphers.length > 0);
+        assertTrue(ciphers.length > 0, "There were no initial ciphers to choose from!");
 
         // Pull out one to disable specifically
         String[] disabledCipher = new String[] { ciphers[ciphers.length - 1] };
@@ -597,7 +634,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
 
         // verify the option took effect
         assertNotNull(engine);
-        assertArrayEquals("Enabled ciphers not as expected", trimmedCiphers, engine.getEnabledCipherSuites());
+        assertArrayEquals(trimmedCiphers, engine.getEnabledCipherSuites(), "Enabled ciphers not as expected");
     }
 
     @Test
@@ -609,7 +646,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SslOptions options = createJksSslOptions();
         SSLEngine directEngine = createOpenSSLEngineDirectly(options);
         String[] ciphers = directEngine.getEnabledCipherSuites();
-        assertTrue("There were no initial ciphers to choose from!", ciphers.length > 0);
+        assertTrue(ciphers.length > 0, "There were no initial ciphers to choose from!");
 
         // Pull out one to disable specifically
         String[] disabledCipher = new String[] { ciphers[ciphers.length - 1] };
@@ -620,7 +657,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
 
         // verify the option took effect
         assertNotNull(engine);
-        assertArrayEquals("Enabled ciphers not as expected", trimmedCiphers, engine.getEnabledCipherSuites());
+        assertArrayEquals(trimmedCiphers, engine.getEnabledCipherSuites(), "Enabled ciphers not as expected");
     }
 
     @Test
@@ -629,7 +666,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SslOptions options = createJksSslOptions();
         SSLEngine directEngine = createSSLEngineDirectly(options);
         String[] ciphers = directEngine.getEnabledCipherSuites();
-        assertTrue("There werent enough initial ciphers to choose from!", ciphers.length > 1);
+        assertTrue(ciphers.length > 1, "There werent enough initial ciphers to choose from!");
 
         // Pull out two to enable, and one to disable specifically
         String cipher1 = ciphers[0];
@@ -644,7 +681,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
 
         // verify the option took effect, that the disabled ciphers were removed from the enabled list.
         assertNotNull(engine);
-        assertArrayEquals("Enabled ciphers not as expected", remainingCipher, engine.getEnabledCipherSuites());
+        assertArrayEquals(remainingCipher, engine.getEnabledCipherSuites(), "Enabled ciphers not as expected");
     }
 
     @Test
@@ -656,7 +693,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SslOptions options = createJksSslOptions();
         SSLEngine directEngine = createOpenSSLEngineDirectly(options);
         String[] ciphers = directEngine.getEnabledCipherSuites();
-        assertTrue("There werent enough initial ciphers to choose from!", ciphers.length > 1);
+        assertTrue(ciphers.length > 1, "There werent enough initial ciphers to choose from!");
 
         // Pull out two to enable, and one to disable specifically
         String cipher1 = ciphers[0];
@@ -671,7 +708,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
 
         // verify the option took effect, that the disabled ciphers were removed from the enabled list.
         assertNotNull(engine);
-        assertArrayEquals("Enabled ciphers not as expected", remainingCipher, engine.getEnabledCipherSuites());
+        assertArrayEquals(remainingCipher, engine.getEnabledCipherSuites(), "Enabled ciphers not as expected");
     }
 
     @Test
@@ -715,7 +752,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
         assertNotNull(engine);
 
-        assertArrayEquals("Enabled protocols not as expected", ENABLED_PROTOCOLS, engine.getEnabledProtocols());
+        assertArrayEquals(ENABLED_PROTOCOLS, engine.getEnabledProtocols(), "Enabled protocols not as expected");
     }
 
     @Test
@@ -733,7 +770,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
         assertNotNull(engine);
 
-        assertArrayEquals("Enabled protocols not as expected", ENABLED_OPENSSL_PROTOCOLS, engine.getEnabledProtocols());
+        assertArrayEquals(ENABLED_OPENSSL_PROTOCOLS, engine.getEnabledProtocols(), "Enabled protocols not as expected");
     }
 
     @Test
@@ -826,7 +863,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 100000)
+    @Test
     public void testIsOpenSSLPossible() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
@@ -839,7 +876,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         assertTrue(SslSupport.isOpenSSLPossible(options));
     }
 
-    @Test(timeout = 100000)
+    @Test
     public void testIsOpenSSLPossibleWhenHostNameVerificationConfigured() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
@@ -855,7 +892,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         assertTrue(SslSupport.isOpenSSLPossible(options));
     }
 
-    @Test(timeout = 100000)
+    @Test
     public void testIsOpenSSLPossibleWhenKeyAliasIsSpecified() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
@@ -868,7 +905,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         assertFalse(SslSupport.isOpenSSLPossible(options));
     }
 
-    @Test(timeout = 100000)
+    @Test
     public void testCreateSslHandlerJDK() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
@@ -882,7 +919,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         assertFalse(handler.engine() instanceof OpenSslEngine);
     }
 
-    @Test(timeout = 100000)
+    @Test
     public void testCreateSslHandlerOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
@@ -895,7 +932,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         assertTrue(handler.engine() instanceof OpenSslEngine);
     }
 
-    @Test(timeout = 100000)
+    @Test
     public void testCreateOpenSSLEngineFailsWhenAllocatorMissing() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());

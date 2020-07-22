@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
@@ -28,11 +28,13 @@ import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Test the Client API implementation
  */
+@Timeout(20)
 public class ClientTest extends ImperativeClientTestCase {
 
     /**
@@ -40,7 +42,7 @@ public class ClientTest extends ImperativeClientTestCase {
      * container id as that is mandatory and the only reason one would
      * be supplying ClientOptions instances.
      */
-    @Test(timeout = 20000)
+    @Test
     public void testCreateWithNoContainerIdFails() {
         ClientOptions options = new ClientOptions();
         assertNull(options.id());
@@ -53,7 +55,7 @@ public class ClientTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCreateWithContainerId() {
         final String id = "test-id";
 
@@ -66,7 +68,7 @@ public class ClientTest extends ImperativeClientTestCase {
         assertEquals(id, client.containerId());
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCoseClientAndConnectShouldFail() throws ClientException {
         Client client = Client.create();
         assertTrue(client.close().isDone());
