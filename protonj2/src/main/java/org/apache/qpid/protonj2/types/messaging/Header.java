@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.types.messaging;
 
 import org.apache.qpid.protonj2.types.Symbol;
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 
 public final class Header implements Section<Header> {
@@ -26,7 +27,7 @@ public final class Header implements Section<Header> {
 
     public static final boolean DEFAULT_DURABILITY = false;
     public static final byte DEFAULT_PRIORITY = 4;
-    public static final long DEFAULT_TIME_TO_LIVE = -1;
+    public static final long DEFAULT_TIME_TO_LIVE = UnsignedInteger.MAX_VALUE.longValue();
     public static final boolean DEFAULT_FIRST_ACQUIRER = false;
     public static final long DEFAULT_DELIVERY_COUNT = 0;
 

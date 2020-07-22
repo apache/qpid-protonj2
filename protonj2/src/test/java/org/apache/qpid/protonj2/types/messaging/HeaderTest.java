@@ -75,7 +75,7 @@ public class HeaderTest {
 
         header.setDurable(!Header.DEFAULT_DURABILITY);
         header.setPriority((byte) (Header.DEFAULT_PRIORITY + 1));
-        header.setTimeToLive(Header.DEFAULT_TIME_TO_LIVE + 10);
+        header.setTimeToLive(Header.DEFAULT_TIME_TO_LIVE - 10);
         header.setFirstAcquirer(!Header.DEFAULT_FIRST_ACQUIRER);
         header.setDeliveryCount(Header.DEFAULT_DELIVERY_COUNT + 5);
 
@@ -83,7 +83,7 @@ public class HeaderTest {
 
         assertEquals(!Header.DEFAULT_DURABILITY, copy.isDurable());
         assertEquals(Header.DEFAULT_PRIORITY + 1, copy.getPriority());
-        assertEquals(Header.DEFAULT_TIME_TO_LIVE + 10, copy.getTimeToLive());
+        assertEquals(Header.DEFAULT_TIME_TO_LIVE - 10, copy.getTimeToLive());
         assertEquals(!Header.DEFAULT_FIRST_ACQUIRER, copy.isFirstAcquirer());
         assertEquals(Header.DEFAULT_DELIVERY_COUNT + 5, copy.getDeliveryCount());
     }
@@ -131,7 +131,7 @@ public class HeaderTest {
         assertFalse(header.hasTimeToLive());
         assertEquals(Header.DEFAULT_TIME_TO_LIVE, header.getTimeToLive());
 
-        header.setTimeToLive(Header.DEFAULT_TIME_TO_LIVE + 10);
+        header.setTimeToLive(Header.DEFAULT_TIME_TO_LIVE - 10);
         assertTrue(header.hasTimeToLive());
         assertNotEquals(Header.DEFAULT_TIME_TO_LIVE, header.getTimeToLive());
 
