@@ -34,8 +34,29 @@ public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {
      *        the value that is expected to be IN the received
      *        {@link org.apache.qpid.proton.amqp.messaging.Data}
      */
+    public EncodedDataMatcher(byte[] expectedValue) {
+        this(new Binary(expectedValue), false);
+    }
+
+    /**
+     * @param expectedValue
+     *        the value that is expected to be IN the received
+     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     */
     public EncodedDataMatcher(Binary expectedValue) {
         this(expectedValue, false);
+    }
+
+    /**
+     * @param expectedValue
+     *        the value that is expected to be IN the received
+     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     * @param permitTrailingBytes
+     *        if it is permitted for bytes to be left in the Binary after
+     *        consuming the {@link AmqpValue}
+     */
+    public EncodedDataMatcher(byte[] expectedValue, boolean permitTrailingBytes) {
+        this(new Binary(expectedValue), permitTrailingBytes);
     }
 
     /**

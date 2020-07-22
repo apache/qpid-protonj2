@@ -35,7 +35,7 @@ public class EncodedAmqpSequenceMatcher extends EncodedAmqpTypeMatcher {
      *        the value that is expected to be IN the received
      *        {@link AmqpSequence}
      */
-    public EncodedAmqpSequenceMatcher(List<Object> expectedValue) {
+    public EncodedAmqpSequenceMatcher(List<?> expectedValue) {
         this(expectedValue, false);
     }
 
