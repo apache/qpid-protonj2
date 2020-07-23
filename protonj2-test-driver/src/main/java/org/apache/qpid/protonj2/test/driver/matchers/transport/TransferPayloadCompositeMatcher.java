@@ -22,8 +22,12 @@ package org.apache.qpid.protonj2.test.driver.matchers.transport;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.ApplicationPropertiesMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.DeliveryAnnotationsMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.messaging.FooterMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.HeaderMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.MessageAnnotationsMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.PropertiesMatcher;
@@ -48,10 +52,12 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
     private String messageAnnotationsMatcherFailureDescription;
     private PropertiesMatcher propertiesMatcher;
     private String propertiesMatcherFailureDescription;
-    private Matcher<ByteBuf> msgContentMatcher;
-    private String msgContentMatcherFailureDescription;
     private ApplicationPropertiesMatcher applicationPropertiesMatcher;
     private String applicationPropertiesMatcherFailureDescription;
+    private List<Matcher<ByteBuf>> msgContentMatchers = new ArrayList<>();
+    private String msgContentMatcherFailureDescription;
+    private FooterMatcher footersMatcher;
+    private String footerMatcherFailureDescription;
     private Matcher<Integer> payloadLengthMatcher;
     private String payloadLenthMatcherFailureDescription;
 
@@ -142,24 +148,40 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
         }
 
         // Message Content Body Section, already a Matcher<Binary>
-        if (msgContentMatcher != null) {
-            ByteBuf msgContentBodyEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
-            boolean contentMatches = msgContentMatcher.matches(msgContentBodyEtcSubBinary);
-            if (!contentMatches) {
-                Description desc = new StringDescription();
-                msgContentMatcher.describeTo(desc);
-                msgContentMatcher.describeMismatch(msgContentBodyEtcSubBinary, desc);
+        if (!msgContentMatchers.isEmpty()) {
+            for (Matcher<ByteBuf> msgContentMatcher : msgContentMatchers) {
+                final ByteBuf msgContentBodyEtcSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
+                final int originalReadableBytes = msgContentBodyEtcSubBinary.readableBytes();
+                final boolean contentMatches = msgContentMatcher.matches(msgContentBodyEtcSubBinary);
+                if (!contentMatches) {
+                    Description desc = new StringDescription();
+                    msgContentMatcher.describeTo(desc);
+                    msgContentMatcher.describeMismatch(msgContentBodyEtcSubBinary, desc);
 
-                msgContentMatcherFailureDescription = "\nMessageContentMatcher mismatch Description:";
-                msgContentMatcherFailureDescription += desc.toString();
+                    msgContentMatcherFailureDescription = "\nMessageContentMatcher mismatch Description:";
+                    msgContentMatcherFailureDescription += desc.toString();
+
+                    return false;
+                }
+
+                bytesConsumed += originalReadableBytes - msgContentBodyEtcSubBinary.readableBytes();
+            }
+        }
+
+        // MessageAnnotations Section
+        if (footersMatcher != null) {
+            ByteBuf footersSubBinary = receivedBinary.slice(bytesConsumed, origLength - bytesConsumed);
+            try {
+                bytesConsumed += footersMatcher.verify(footersSubBinary);
+            } catch (Throwable t) {
+                footerMatcherFailureDescription = "\nActual encoded form of remaining bytes passed to FooterMatcher: "
+                    + footersSubBinary;
+                footerMatcherFailureDescription += "\nFooterMatcher generated throwable: " + t;
 
                 return false;
             }
         }
 
-        // TODO: we will need figure out a way to determine how many bytes the
-        // MessageContentMatcher did/should consume when it comes time to handle
-        // footers
         return true;
     }
 
@@ -220,10 +242,16 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
             mismatchDescription.appendText(msgContentMatcherFailureDescription);
             return;
         }
+
+        // Footer Section
+        if (footerMatcherFailureDescription != null) {
+            mismatchDescription.appendText("\nContentMatcherFailed!");
+            mismatchDescription.appendText(footerMatcherFailureDescription);
+        }
     }
 
-    public void setHeadersMatcher(HeaderMatcher msgHeadersMatcher) {
-        this.headersMatcher = msgHeadersMatcher;
+    public void setHeadersMatcher(HeaderMatcher headersMatcher) {
+        this.headersMatcher = headersMatcher;
     }
 
     public void setDeliveryAnnotationsMatcher(DeliveryAnnotationsMatcher deliveryAnnotationsMatcher) {
@@ -243,7 +271,19 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
     }
 
     public void setMessageContentMatcher(Matcher<ByteBuf> msgContentMatcher) {
-        this.msgContentMatcher = msgContentMatcher;
+        if (msgContentMatchers.isEmpty()) {
+            msgContentMatchers.add(msgContentMatcher);
+        } else {
+            msgContentMatchers.set(0, msgContentMatcher);
+        }
+    }
+
+    public void addMessageContentMatcher(Matcher<ByteBuf> msgContentMatcher) {
+        msgContentMatchers.add(msgContentMatcher);
+    }
+
+    public void setFootersMatcher(FooterMatcher footersMatcher) {
+        this.footersMatcher = footersMatcher;
     }
 
     public void setPayloadLengthMatcher(Matcher<Integer> payloadLengthMatcher) {
