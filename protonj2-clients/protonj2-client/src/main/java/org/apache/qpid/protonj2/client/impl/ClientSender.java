@@ -200,7 +200,7 @@ public class ClientSender implements Sender {
         checkClosed();
 
         final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
-        final AdvancedMessage<?> encodable = message.toAdvancedMessage();
+        final AdvancedMessage<?> encodable = ClientMessageSupport.convertMessage(message);
         final ProtonBuffer buffer = encodable.encode();
 
         executor.execute(() -> {
@@ -225,7 +225,7 @@ public class ClientSender implements Sender {
         checkClosed();
 
         final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
-        final AdvancedMessage<?> encodable = message.toAdvancedMessage();
+        final AdvancedMessage<?> encodable = ClientMessageSupport.convertMessage(message);
         final ProtonBuffer buffer = encodable.encode();
 
         executor.execute(() -> {

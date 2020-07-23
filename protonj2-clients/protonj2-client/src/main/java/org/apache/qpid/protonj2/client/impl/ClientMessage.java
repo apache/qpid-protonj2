@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -324,8 +324,8 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public boolean hasDeliveryAnnotations() {
-        return deliveryAnnotations == null ||
-               deliveryAnnotations.getValue() == null ||
+        return deliveryAnnotations != null &&
+               deliveryAnnotations.getValue() != null &&
                deliveryAnnotations.getValue().size() > 0;
     }
 
@@ -378,8 +378,8 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public boolean hasMessageAnnotations() {
-        return messageAnnotations == null ||
-               messageAnnotations.getValue() == null ||
+        return messageAnnotations != null &&
+               messageAnnotations.getValue() != null &&
                messageAnnotations.getValue().size() > 0;
     }
 
@@ -432,8 +432,8 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public boolean hasApplicationProperties() {
-        return applicationProperties == null ||
-               applicationProperties.getValue() == null ||
+        return applicationProperties != null &&
+               applicationProperties.getValue() != null &&
                applicationProperties.getValue().size() > 0;
     }
 
@@ -484,8 +484,8 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public boolean hasFooters() {
-        return footer == null ||
-               footer.getValue() == null ||
+        return footer != null &&
+               footer.getValue() != null &&
                footer.getValue().size() > 0;
     }
 
@@ -563,7 +563,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     private ApplicationProperties lazyCreateApplicationProperties() {
         if (applicationProperties == null) {
-            applicationProperties = new ApplicationProperties(new HashMap<>());
+            applicationProperties = new ApplicationProperties(new LinkedHashMap<>());
         }
 
         return applicationProperties;
@@ -571,7 +571,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     private MessageAnnotations lazyCreateMessageAnnotations() {
         if (messageAnnotations == null) {
-            messageAnnotations = new MessageAnnotations(new HashMap<>());
+            messageAnnotations = new MessageAnnotations(new LinkedHashMap<>());
         }
 
         return messageAnnotations;
@@ -579,7 +579,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     private DeliveryAnnotations lazyCreateDeliveryAnnotations() {
         if (deliveryAnnotations == null) {
-            deliveryAnnotations = new DeliveryAnnotations(new HashMap<>());
+            deliveryAnnotations = new DeliveryAnnotations(new LinkedHashMap<>());
         }
 
         return deliveryAnnotations;
@@ -587,7 +587,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     private Footer lazyCreateFooter() {
         if (footer == null) {
-            footer = new Footer(new HashMap<>());
+            footer = new Footer(new LinkedHashMap<>());
         }
 
         return footer;

@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
@@ -65,11 +65,15 @@ public abstract class ClientMessageSupport {
      *
      * @return a {@link ClientMessage} that represents the given {@link Message} instance.
      */
-    public static <E> ClientMessage<E> convertMessage(Message<E> message) {
-        if (message instanceof ClientMessage) {
-            return (ClientMessage<E>) message;
+    public static <E> AdvancedMessage<E> convertMessage(Message<E> message) {
+        if (message instanceof AdvancedMessage) {
+            return (AdvancedMessage<E>) message;
         } else {
-            return convertFromOutsideMessage(message);
+            try {
+                return message.toAdvancedMessage();
+            } catch (UnsupportedOperationException uoe) {
+                return convertFromOutsideMessage(message);
+            }
         }
     }
 
@@ -254,7 +258,7 @@ public abstract class ClientMessageSupport {
 
         final DeliveryAnnotations deliveryAnnotations;
         if (source.hasDeliveryAnnotations()) {
-            deliveryAnnotations = new DeliveryAnnotations(new HashMap<>());
+            deliveryAnnotations = new DeliveryAnnotations(new LinkedHashMap<>());
 
             source.forEachDeliveryAnnotation((key, value) -> {
                 deliveryAnnotations.getValue().put(Symbol.valueOf(key), value);
@@ -265,7 +269,7 @@ public abstract class ClientMessageSupport {
 
         final MessageAnnotations messageAnnotations;
         if (source.hasDeliveryAnnotations()) {
-            messageAnnotations = new MessageAnnotations(new HashMap<>());
+            messageAnnotations = new MessageAnnotations(new LinkedHashMap<>());
 
             source.forEachMessageAnnotation((key, value) -> {
                 messageAnnotations.getValue().put(Symbol.valueOf(key), value);
@@ -276,7 +280,7 @@ public abstract class ClientMessageSupport {
 
         final ApplicationProperties applicationProperties;
         if (source.hasDeliveryAnnotations()) {
-            applicationProperties = new ApplicationProperties(new HashMap<>());
+            applicationProperties = new ApplicationProperties(new LinkedHashMap<>());
 
             source.forEachMessageAnnotation((key, value) -> {
                 applicationProperties.getValue().put(key, value);
@@ -286,10 +290,10 @@ public abstract class ClientMessageSupport {
         }
 
         final Footer footer;
-        if (source.hasDeliveryAnnotations()) {
-            footer = new Footer(new HashMap<>());
+        if (source.hasFooters()) {
+            footer = new Footer(new LinkedHashMap<>());
 
-            source.forEachMessageAnnotation((key, value) -> {
+            source.forEachFooter((key, value) -> {
                 footer.getValue().put(Symbol.valueOf(key), value);
             });
         } else {
