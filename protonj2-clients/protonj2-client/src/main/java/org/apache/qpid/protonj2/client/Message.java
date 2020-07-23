@@ -101,6 +101,12 @@ public interface Message<E> {
     /**
      * Safely convert this {@link Message} instance into an {@link AdvancedMessage} reference
      * which can offer more low level APIs to an experienced client user.
+     * <p>
+     * The default implementation first checks if the current instance is already of the correct
+     * type before performing a brute force conversion of the current message to the client's
+     * own internal {@link AdvancedMessage} implementation.  Users should override this method
+     * if the internal conversion implementation is insufficient to obtain the proper message
+     * structure to encode a meaningful 'on the wire' encoding of their custom implementation.
      *
      * @return a {@link AdvancedMessage} that contains this message's current state.
      *
@@ -157,6 +163,23 @@ public interface Message<E> {
      */
     long timeToLive();
 
+    /**
+     * Sets the message time to live value.
+     * <p>
+     * The time to live duration in milliseconds for which the message is to be considered "live".
+     * If this is set then a message expiration time will be computed based on the time of arrival
+     * at an intermediary. Messages that live longer than their expiration time will be discarded
+     * (or dead lettered). When a message is transmitted by an intermediary that was received with a
+     * time to live, the transmitted message's header SHOULD contain a time to live that is computed
+     * as the difference between the current time and the formerly computed message expiration time,
+     * i.e., the reduced time to live, so that messages will eventually die if they end up in a
+     * delivery loop.
+     *
+     * @param timeToLive
+     *      The time span in milliseconds that this message should remain live before being discarded.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> timeToLive(long timeToLive);
 
     /**
@@ -164,6 +187,17 @@ public interface Message<E> {
      */
     boolean firstAcquirer();
 
+    /**
+     * Sets the value to assign to the first acquirer field of this {@link Message}.
+     * <p>
+     * If this value is true, then this message has not been acquired by any other link.  If this
+     * value is false, then this message MAY have previously been acquired by another link or links.
+     *
+     * @param firstAcquirer
+     *      The boolean value to assign to the first acquirer field of the message.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> firstAcquirer(boolean firstAcquirer);
 
     /**
@@ -171,6 +205,19 @@ public interface Message<E> {
      */
     long deliveryCount();
 
+    /**
+     * Sets the value to assign to the delivery count field of this {@link Message}.
+     * <p>
+     * Delivery count is the number of unsuccessful previous attempts to deliver this message.
+     * If this value is non-zero it can be taken as an indication that the delivery might be a
+     * duplicate. On first delivery, the value is zero. It is incremented upon an outcome being
+     * settled at the sender, according to rules defined for each outcome.
+     *
+     * @param deliveryCount
+     *      The new delivery count value to assign to this message.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> deliveryCount(long deliveryCount);
 
     //----- AMQP Properties Section

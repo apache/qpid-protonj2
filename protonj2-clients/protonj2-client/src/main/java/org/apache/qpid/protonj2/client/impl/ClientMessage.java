@@ -82,16 +82,40 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     //----- Entry point for creating new ClientMessage instances.
 
-    public static <V> Message<V> create() {
+    /**
+     * Creates an empty {@link ClientMessage} instance.
+     *
+     * @param <V> The type of the body value carried in this message.
+     *
+     * @return a new empty {@link ClientMessage} instance.
+     */
+    public static <V> ClientMessage<V> create() {
         return new ClientMessage<V>();
     }
 
-    public static <V> AdvancedMessage<V> createAdvanvedMessage() {
-        return new ClientMessage<V>();
-    }
-
-    public static <V> Message<V> create(Section<V> body) {
+    /**
+     * Creates an {@link ClientMessage} instance with the given body {@link Section} value.
+     *
+     * @param <V> The type of the body value carried in this message body section.
+     *
+     * @param body
+     *      The body {@link Section} to assign to the created message isntance.
+     *
+     * @return a new {@link ClientMessage} instance with the given body.
+     */
+    public static <V> ClientMessage<V> create(Section<V> body) {
         return new ClientMessage<V>(body);
+    }
+
+    /**
+     * Creates an empty {@link ClientMessage} instance.
+     *
+     * @param <V> The type of the body value carried in this message.
+     *
+     * @return a new empty {@link ClientMessage} instance.
+     */
+    public static <V> ClientMessage<V> createAdvanvedMessage() {
+        return new ClientMessage<V>();
     }
 
     //----- Message Header API
