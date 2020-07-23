@@ -41,6 +41,7 @@ import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.util.ExternalMessage;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.ApplicationPropertiesMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.DeliveryAnnotationsMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.messaging.FooterMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.HeaderMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.MessageAnnotationsMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.PropertiesMatcher;
@@ -395,6 +396,67 @@ class MessageSendTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testSendMessageWithFootersPopulated() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.expectAttach().respond();  // Open a receiver to ensure sender link has processed
+            peer.expectFlow();              // the inbound flow frame we sent previously before send.
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            Session session = connection.openSession().openFuture().get();
+            SenderOptions options = new SenderOptions().deliveryMode(DeliveryMode.AT_MOST_ONCE);
+            Sender sender = session.openSender("test-qos", options);
+
+            // Gates send on remote flow having been sent and received
+            session.openReceiver("dummy").openFuture().get();
+
+            FooterMatcher footerMatcher = new FooterMatcher(false);
+            footerMatcher.withEntry("f1", Matchers.equalTo(1));
+            footerMatcher.withEntry("f2", Matchers.equalTo(2));
+            footerMatcher.withEntry("f3", Matchers.equalTo(3));
+            EncodedAmqpValueMatcher bodyMatcher = new EncodedAmqpValueMatcher("Hello World", true);
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.setMessageContentMatcher(bodyMatcher);
+            payloadMatcher.setFootersMatcher(footerMatcher);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(payloadMatcher).accept();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            final Message<String> message = Message.create("Hello World");
+
+            // Populate message footers
+            message.footer("f1", 1);
+            message.footer("f2", 2);
+            message.footer("f3", 3);
+
+            final Tracker tracker = sender.send(message);
+
+            assertNotNull(tracker);
+            assertNotNull(tracker.acknowledgeFuture().isDone());
+            assertNotNull(tracker.acknowledgeFuture().get().settled());
+
+            sender.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testSendMessageWithMultipleSectionsPopulated() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -441,18 +503,22 @@ class MessageSendTest extends ImperativeClientTestCase {
             propertiesMatcher.withGroupSequence(8192);
             propertiesMatcher.withReplyToGroupId("/dev/null");
             DeliveryAnnotationsMatcher daMatcher = new DeliveryAnnotationsMatcher(true);
-            daMatcher.withEntry("one", Matchers.equalTo(1));
-            daMatcher.withEntry("two", Matchers.equalTo(2));
-            daMatcher.withEntry("three", Matchers.equalTo(3));
+            daMatcher.withEntry("da1", Matchers.equalTo(1));
+            daMatcher.withEntry("da2", Matchers.equalTo(2));
+            daMatcher.withEntry("da3", Matchers.equalTo(3));
             MessageAnnotationsMatcher maMatcher = new MessageAnnotationsMatcher(true);
-            maMatcher.withEntry("one", Matchers.equalTo(1));
-            maMatcher.withEntry("two", Matchers.equalTo(2));
-            maMatcher.withEntry("three", Matchers.equalTo(3));
+            maMatcher.withEntry("ma1", Matchers.equalTo(1));
+            maMatcher.withEntry("ma2", Matchers.equalTo(2));
+            maMatcher.withEntry("ma3", Matchers.equalTo(3));
             ApplicationPropertiesMatcher apMatcher = new ApplicationPropertiesMatcher(true);
-            apMatcher.withEntry("one", Matchers.equalTo(1));
-            apMatcher.withEntry("two", Matchers.equalTo(2));
-            apMatcher.withEntry("three", Matchers.equalTo(3));
-            EncodedAmqpValueMatcher bodyMatcher = new EncodedAmqpValueMatcher("Hello World");
+            apMatcher.withEntry("ap1", Matchers.equalTo(1));
+            apMatcher.withEntry("ap2", Matchers.equalTo(2));
+            apMatcher.withEntry("ap3", Matchers.equalTo(3));
+            EncodedAmqpValueMatcher bodyMatcher = new EncodedAmqpValueMatcher("Hello World", true);
+            FooterMatcher footerMatcher = new FooterMatcher(false);
+            footerMatcher.withEntry("f1", Matchers.equalTo(1));
+            footerMatcher.withEntry("f2", Matchers.equalTo(2));
+            footerMatcher.withEntry("f3", Matchers.equalTo(3));
             TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
             payloadMatcher.setHeadersMatcher(headerMatcher);
             payloadMatcher.setDeliveryAnnotationsMatcher(daMatcher);
@@ -460,6 +526,7 @@ class MessageSendTest extends ImperativeClientTestCase {
             payloadMatcher.setPropertiesMatcher(propertiesMatcher);
             payloadMatcher.setApplicationPropertiesMatcher(apMatcher);
             payloadMatcher.setMessageContentMatcher(bodyMatcher);
+            payloadMatcher.setFootersMatcher(footerMatcher);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectTransfer().withPayload(payloadMatcher).accept();
@@ -475,13 +542,13 @@ class MessageSendTest extends ImperativeClientTestCase {
             message.firstAcquirer(true);
             message.deliveryCount(2);
             // Populate delivery annotations
-            message.deliveryAnnotation("one", 1);
-            message.deliveryAnnotation("two", 2);
-            message.deliveryAnnotation("three", 3);
+            message.deliveryAnnotation("da1", 1);
+            message.deliveryAnnotation("da2", 2);
+            message.deliveryAnnotation("da3", 3);
             // Populate message annotations
-            message.messageAnnotation("one", 1);
-            message.messageAnnotation("two", 2);
-            message.messageAnnotation("three", 3);
+            message.messageAnnotation("ma1", 1);
+            message.messageAnnotation("ma2", 2);
+            message.messageAnnotation("ma3", 3);
             // Populate all Properties values
             message.messageId("ID:12345");
             message.userId("user".getBytes(StandardCharsets.UTF_8));
@@ -497,9 +564,13 @@ class MessageSendTest extends ImperativeClientTestCase {
             message.groupSequence(8192);
             message.replyToGroupId("/dev/null");
             // Populate message application properties
-            message.applicationProperty("one", 1);
-            message.applicationProperty("two", 2);
-            message.applicationProperty("three", 3);
+            message.applicationProperty("ap1", 1);
+            message.applicationProperty("ap2", 2);
+            message.applicationProperty("ap3", 3);
+            // Populate message footers
+            message.footer("f1", 1);
+            message.footer("f2", 2);
+            message.footer("f3", 3);
 
             final Tracker tracker = sender.send(message);
 
@@ -922,18 +993,22 @@ class MessageSendTest extends ImperativeClientTestCase {
             propertiesMatcher.withGroupSequence(8192);
             propertiesMatcher.withReplyToGroupId("/dev/null");
             DeliveryAnnotationsMatcher daMatcher = new DeliveryAnnotationsMatcher(true);
-            daMatcher.withEntry("one", Matchers.equalTo(1));
-            daMatcher.withEntry("two", Matchers.equalTo(2));
-            daMatcher.withEntry("three", Matchers.equalTo(3));
+            daMatcher.withEntry("da1", Matchers.equalTo(1));
+            daMatcher.withEntry("da2", Matchers.equalTo(2));
+            daMatcher.withEntry("da3", Matchers.equalTo(3));
             MessageAnnotationsMatcher maMatcher = new MessageAnnotationsMatcher(true);
-            maMatcher.withEntry("one", Matchers.equalTo(1));
-            maMatcher.withEntry("two", Matchers.equalTo(2));
-            maMatcher.withEntry("three", Matchers.equalTo(3));
+            maMatcher.withEntry("ma1", Matchers.equalTo(1));
+            maMatcher.withEntry("ma2", Matchers.equalTo(2));
+            maMatcher.withEntry("ma3", Matchers.equalTo(3));
             ApplicationPropertiesMatcher apMatcher = new ApplicationPropertiesMatcher(true);
-            apMatcher.withEntry("one", Matchers.equalTo(1));
-            apMatcher.withEntry("two", Matchers.equalTo(2));
-            apMatcher.withEntry("three", Matchers.equalTo(3));
-            EncodedAmqpValueMatcher bodyMatcher = new EncodedAmqpValueMatcher("Hello World");
+            apMatcher.withEntry("ap1", Matchers.equalTo(1));
+            apMatcher.withEntry("ap2", Matchers.equalTo(2));
+            apMatcher.withEntry("ap3", Matchers.equalTo(3));
+            FooterMatcher footerMatcher = new FooterMatcher(false);
+            footerMatcher.withEntry("f1", Matchers.equalTo(1));
+            footerMatcher.withEntry("f2", Matchers.equalTo(2));
+            footerMatcher.withEntry("f3", Matchers.equalTo(3));
+            EncodedAmqpValueMatcher bodyMatcher = new EncodedAmqpValueMatcher("Hello World", true);
             TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
             payloadMatcher.setHeadersMatcher(headerMatcher);
             payloadMatcher.setDeliveryAnnotationsMatcher(daMatcher);
@@ -941,6 +1016,7 @@ class MessageSendTest extends ImperativeClientTestCase {
             payloadMatcher.setPropertiesMatcher(propertiesMatcher);
             payloadMatcher.setApplicationPropertiesMatcher(apMatcher);
             payloadMatcher.setMessageContentMatcher(bodyMatcher);
+            payloadMatcher.setFootersMatcher(footerMatcher);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectTransfer().withPayload(payloadMatcher).accept();
@@ -957,13 +1033,13 @@ class MessageSendTest extends ImperativeClientTestCase {
             message.firstAcquirer(true);
             message.deliveryCount(2);
             // Populate delivery annotations
-            message.deliveryAnnotation("one", 1);
-            message.deliveryAnnotation("two", 2);
-            message.deliveryAnnotation("three", 3);
+            message.deliveryAnnotation("da1", 1);
+            message.deliveryAnnotation("da2", 2);
+            message.deliveryAnnotation("da3", 3);
             // Populate message annotations
-            message.messageAnnotation("one", 1);
-            message.messageAnnotation("two", 2);
-            message.messageAnnotation("three", 3);
+            message.messageAnnotation("ma1", 1);
+            message.messageAnnotation("ma2", 2);
+            message.messageAnnotation("ma3", 3);
             // Populate all Properties values
             message.messageId("ID:12345");
             message.userId("user".getBytes(StandardCharsets.UTF_8));
@@ -979,9 +1055,13 @@ class MessageSendTest extends ImperativeClientTestCase {
             message.groupSequence(8192);
             message.replyToGroupId("/dev/null");
             // Populate message application properties
-            message.applicationProperty("one", 1);
-            message.applicationProperty("two", 2);
-            message.applicationProperty("three", 3);
+            message.applicationProperty("ap1", 1);
+            message.applicationProperty("ap2", 2);
+            message.applicationProperty("ap3", 3);
+            // Populate message footers
+            message.footer("f1", 1);
+            message.footer("f2", 2);
+            message.footer("f3", 3);
 
             // Check preconditions that should affect the send operation
             if (allowAdvancedConversion) {

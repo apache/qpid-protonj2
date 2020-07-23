@@ -279,10 +279,10 @@ public abstract class ClientMessageSupport {
         }
 
         final ApplicationProperties applicationProperties;
-        if (source.hasDeliveryAnnotations()) {
+        if (source.hasApplicationProperties()) {
             applicationProperties = new ApplicationProperties(new LinkedHashMap<>());
 
-            source.forEachMessageAnnotation((key, value) -> {
+            source.forEachApplicationProperty((key, value) -> {
                 applicationProperties.getValue().put(key, value);
             });
         } else {
