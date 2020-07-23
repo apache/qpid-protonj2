@@ -543,25 +543,37 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public E body() {
+        Section<E> section = body;
+
         if (bodySections != null) {
-            throw new IllegalStateException("Cannot retreive body from Message with multiple body sections");
+            if (bodySections.size() > 1) {
+                throw new IllegalStateException("Cannot get a singleton body from Message with multiple body sections assigned");
+            } else {
+                section = bodySections.get(0);
+            }
         }
 
-        return body.getValue();
+        return section != null ? section.getValue() : null;
     }
 
     @Override
     public ClientMessage<E> body(E value) {
         if (bodySections != null) {
-            throw new IllegalStateException("Cannot set a singleton body from Message with multiple body sections assigned");
+            if (bodySections.size() > 1) {
+                throw new IllegalStateException("Cannot set a singleton body to a Message with multiple body sections assigned");
+            } else {
+                if (value != null) {
+                    bodySections.set(0, ClientMessageSupport.createSectionFromValue(value));
+                } else {
+                    bodySections = null;
+                }
+            }
+        } else {
+            body = ClientMessageSupport.createSectionFromValue(value);
         }
-
-        body = ClientMessageSupport.createSectionFromValue(value);
 
         return this;
     }
-
-    //----- Access to proton resources
 
     Section<E> getBodySection() {
         return body;
@@ -708,9 +720,10 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
         if (bodySections == null) {
             bodySections = new ArrayList<>();
 
-            // Preserve older section supplier from original message creation.
+            // Preserve older section from original message creation.
             if (body != null) {
                 bodySections.add(body);
+                body = null;
             }
         }
 
@@ -719,8 +732,12 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public AdvancedMessage<E> bodySections(Collection<Section<E>> sections) {
-        Objects.requireNonNull(sections, "Provided body sections cannot be null");
-        this.bodySections = new ArrayList<>(sections);
+        if (sections == null || sections.isEmpty()) {
+            this.bodySections = null;
+        } else {
+            this.bodySections = new ArrayList<>(sections);
+        }
+
         return this;
     }
 
