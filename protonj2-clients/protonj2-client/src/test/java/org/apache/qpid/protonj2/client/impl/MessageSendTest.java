@@ -1129,12 +1129,13 @@ class MessageSendTest extends ImperativeClientTestCase {
             payloadMatcher.addMessageContentMatcher(bodyMatcher3);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectTransfer().withPayload(payloadMatcher).accept();
+            peer.expectTransfer().withMessageFormat(17).withPayload(payloadMatcher).accept();
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
             final AdvancedMessage<String> message = AdvancedMessage.create();
 
+            message.messageFormat(17);
             message.addBodySection(new AmqpValue<>("one"));
             message.addBodySection(new AmqpValue<>("two"));
             message.addBodySection(new AmqpValue<>("three"));

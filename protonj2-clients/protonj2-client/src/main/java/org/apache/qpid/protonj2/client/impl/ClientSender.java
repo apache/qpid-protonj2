@@ -202,12 +202,13 @@ public class ClientSender implements Sender {
         final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
         final AdvancedMessage<?> encodable = ClientMessageSupport.convertMessage(message);
         final ProtonBuffer buffer = encodable.encode();
+        final int messageFormat = encodable.messageFormat();
 
         executor.execute(() -> {
             if (protonSender.isSendable()) {
-                assumeSendableAndSend(buffer, operation);
+                assumeSendableAndSend(buffer, messageFormat, operation);
             } else {
-                final InFlightSend send = new InFlightSend(buffer, operation);
+                final InFlightSend send = new InFlightSend(buffer, messageFormat, operation);
                 if (options.sendTimeout() > 0) {
                     send.timeout = session.scheduleRequestTimeout(
                         operation, options.sendTimeout(), () -> send.createSendTimedOutException());
@@ -227,10 +228,11 @@ public class ClientSender implements Sender {
         final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
         final AdvancedMessage<?> encodable = ClientMessageSupport.convertMessage(message);
         final ProtonBuffer buffer = encodable.encode();
+        final int messageFormat = encodable.messageFormat();
 
         executor.execute(() -> {
             if (protonSender.isSendable()) {
-                assumeSendableAndSend(buffer, operation);
+                assumeSendableAndSend(buffer, messageFormat, operation);
             } else {
                 operation.complete(null);
             }
@@ -413,7 +415,7 @@ public class ClientSender implements Sender {
             while (sender.isSendable() && !blocked.isEmpty()) {
                 LOG.trace("Dispatching previously held send");
                 final InFlightSend held = blocked.poll();
-                assumeSendableAndSend(held.message, held);
+                assumeSendableAndSend(held.message, held.messageFormat, held);
             }
         }
 
@@ -446,12 +448,14 @@ public class ClientSender implements Sender {
     private class InFlightSend implements AsyncResult<Tracker> {
 
         private final ProtonBuffer message;
+        private final int messageFormat;
         private final ClientFuture<Tracker> operation;
 
         private ScheduledFuture<?> timeout;
 
-        public InFlightSend(ProtonBuffer message, ClientFuture<Tracker> operation) {
+        public InFlightSend(ProtonBuffer message, int messageFormat, ClientFuture<Tracker> operation) {
             this.message = message;
+            this.messageFormat = messageFormat;
             this.operation = operation;
         }
 
@@ -498,11 +502,12 @@ public class ClientSender implements Sender {
         }
     }
 
-    private void assumeSendableAndSend(ProtonBuffer buffer, AsyncResult<Tracker> request) {
+    private void assumeSendableAndSend(ProtonBuffer buffer, int messageFormat, AsyncResult<Tracker> request) {
         final OutgoingDelivery delivery = protonSender.next();
         final ClientTracker tracker = new ClientTracker(this, delivery);
 
         delivery.setLinkedResource(tracker);
+        delivery.setMessageFormat(messageFormat);
 
         if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
             delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this), true);
