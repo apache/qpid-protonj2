@@ -133,7 +133,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public byte priority() {
-        return header != null ? Header.DEFAULT_PRIORITY : header.getPriority();
+        return header == null ? Header.DEFAULT_PRIORITY : header.getPriority();
     }
 
     @Override
@@ -144,7 +144,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public long timeToLive() {
-        return header != null ? Header.DEFAULT_TIME_TO_LIVE : header.getPriority();
+        return header == null ? Header.DEFAULT_TIME_TO_LIVE : header.getTimeToLive();
     }
 
     @Override
@@ -155,7 +155,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public boolean firstAcquirer() {
-        return header != null ? Header.DEFAULT_FIRST_ACQUIRER : header.isFirstAcquirer();
+        return header == null ? Header.DEFAULT_FIRST_ACQUIRER : header.isFirstAcquirer();
     }
 
     @Override
@@ -166,7 +166,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public long deliveryCount() {
-        return header != null ? Header.DEFAULT_DELIVERY_COUNT : header.getDeliveryCount();
+        return header == null ? Header.DEFAULT_DELIVERY_COUNT : header.getDeliveryCount();
     }
 
     @Override
@@ -272,7 +272,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public long absoluteExpiryTime() {
-        return properties != null ? properties.getAbsoluteExpiryTime() : null;
+        return properties != null ? properties.getAbsoluteExpiryTime() : 0;
     }
 
     @Override
@@ -283,7 +283,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public long creationTime() {
-        return properties != null ? properties.getCreationTime() : null;
+        return properties != null ? properties.getCreationTime() : 0;
     }
 
     @Override
@@ -305,7 +305,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public int groupSequence() {
-        return properties != null ? (int) properties.getGroupSequence() : null;
+        return properties != null ? (int) properties.getGroupSequence() : 0;
     }
 
     @Override
@@ -546,11 +546,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
         Section<E> section = body;
 
         if (bodySections != null) {
-            if (bodySections.size() > 1) {
-                throw new IllegalStateException("Cannot get a singleton body from Message with multiple body sections assigned");
-            } else {
-                section = bodySections.get(0);
-            }
+            section = bodySections.get(0);
         }
 
         return section != null ? section.getValue() : null;
@@ -559,24 +555,16 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     @Override
     public ClientMessage<E> body(E value) {
         if (bodySections != null) {
-            if (bodySections.size() > 1) {
-                throw new IllegalStateException("Cannot set a singleton body to a Message with multiple body sections assigned");
+            if (value != null) {
+                bodySections.set(0, ClientMessageSupport.createSectionFromValue(value));
             } else {
-                if (value != null) {
-                    bodySections.set(0, ClientMessageSupport.createSectionFromValue(value));
-                } else {
-                    bodySections = null;
-                }
+                bodySections = null;
             }
         } else {
             body = ClientMessageSupport.createSectionFromValue(value);
         }
 
         return this;
-    }
-
-    Section<E> getBodySection() {
-        return body;
     }
 
     //----- Internal API
@@ -727,6 +715,8 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
             }
         }
 
+        bodySections.add(bodySection);
+
         return this;
     }
 
@@ -741,11 +731,16 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Collection<Section<E>> bodySections() {
-        final Collection<Section<E>> result = new ArrayList<>();
-        forEachBodySection(section -> result.add(section));
-        return Collections.unmodifiableCollection(result);
+        if (bodySections == null && body == null) {
+            return Collections.EMPTY_LIST;
+        } else {
+            final Collection<Section<E>> result = new ArrayList<>();
+            forEachBodySection(section -> result.add(section));
+            return Collections.unmodifiableCollection(result);
+        }
     }
 
     @Override
