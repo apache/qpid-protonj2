@@ -1104,6 +1104,53 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test(timeout = 20_000)
+    public void testSendTramsferWithNonDefaultMessageFormat() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        final byte [] payloadBuffer = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
+        peer.expectTransfer().withMessageFormat(17).withPayload(payloadBuffer);
+        peer.expectDetach().withHandle(0).respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(payloadBuffer);
+
+        Sender sender = session.sender("sender-1");
+
+        assertFalse(sender.isSendable());
+
+        sender.creditStateUpdateHandler(handler -> {
+            if (handler.isSendable()) {
+                handler.next().setTag(new byte[] {0}).setMessageFormat(17).writeBytes(payload);
+            }
+        });
+
+        sender.open();
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
     public void testSenderSignalsDeliveryUpdatedOnSettledThenSettleFromLinkAPI() throws Exception {
         doTestSenderSignalsDeliveryUpdatedOnSettled(true);
     }

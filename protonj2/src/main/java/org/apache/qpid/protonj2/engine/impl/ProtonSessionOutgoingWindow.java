@@ -193,6 +193,11 @@ public class ProtonSessionOutgoingWindow {
         try {
             cachedTransfer.setDeliveryId(delivery.getDeliveryId());
             cachedTransfer.setMore(wasThereMore);
+            if (delivery.getMessageFormat() != 0) {
+                cachedTransfer.setMessageFormat(delivery.getMessageFormat());
+            } else {
+                cachedTransfer.clearMessageFormat();
+            }
             cachedTransfer.setHandle(sender.getHandle());
             cachedTransfer.setSettled(delivery.isSettled());
             cachedTransfer.setState(delivery.getState());
