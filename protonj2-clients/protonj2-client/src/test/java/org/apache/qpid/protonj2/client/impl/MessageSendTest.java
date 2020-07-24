@@ -50,6 +50,9 @@ import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAmqpSequenceMa
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAmqpValueMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedDataMatcher;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
+import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
+import org.apache.qpid.protonj2.types.messaging.AmqpValue;
+import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Header;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -1076,6 +1079,199 @@ class MessageSendTest extends ImperativeClientTestCase {
             } else {
                 tracker = sender.send(message);
             }
+
+            assertNotNull(tracker);
+            assertNotNull(tracker.acknowledgeFuture().isDone());
+            assertNotNull(tracker.acknowledgeFuture().get().settled());
+
+            sender.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSendMessageWithMultipleAmqpValueSections() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.expectAttach().respond();  // Open a receiver to ensure sender link has processed
+            peer.expectFlow();              // the inbound flow frame we sent previously before send.
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            Session session = connection.openSession().openFuture().get();
+            SenderOptions options = new SenderOptions().deliveryMode(DeliveryMode.AT_MOST_ONCE);
+            Sender sender = session.openSender("test-qos", options);
+
+            // Gates send on remote flow having been sent and received
+            session.openReceiver("dummy").openFuture().get();
+
+            // Note: This is a specification violation but could be used by other message formats
+            //       and we don't attempt to enforce at the AdvancedMessage API level what users do.
+            EncodedAmqpValueMatcher bodyMatcher1 = new EncodedAmqpValueMatcher("one", true);
+            EncodedAmqpValueMatcher bodyMatcher2 = new EncodedAmqpValueMatcher("two", true);
+            EncodedAmqpValueMatcher bodyMatcher3 = new EncodedAmqpValueMatcher("three", false);
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.addMessageContentMatcher(bodyMatcher1);
+            payloadMatcher.addMessageContentMatcher(bodyMatcher2);
+            payloadMatcher.addMessageContentMatcher(bodyMatcher3);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(payloadMatcher).accept();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            final AdvancedMessage<String> message = AdvancedMessage.create();
+
+            message.addBodySection(new AmqpValue<>("one"));
+            message.addBodySection(new AmqpValue<>("two"));
+            message.addBodySection(new AmqpValue<>("three"));
+
+            final Tracker tracker = sender.send(message);
+
+            assertNotNull(tracker);
+            assertNotNull(tracker.acknowledgeFuture().isDone());
+            assertNotNull(tracker.acknowledgeFuture().get().settled());
+
+            sender.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSendMessageWithMultipleAmqpSequenceSections() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.expectAttach().respond();  // Open a receiver to ensure sender link has processed
+            peer.expectFlow();              // the inbound flow frame we sent previously before send.
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            Session session = connection.openSession().openFuture().get();
+            SenderOptions options = new SenderOptions().deliveryMode(DeliveryMode.AT_MOST_ONCE);
+            Sender sender = session.openSender("test-qos", options);
+
+            // Gates send on remote flow having been sent and received
+            session.openReceiver("dummy").openFuture().get();
+
+            List<String> list1 = new ArrayList<>();
+            list1.add("1");
+            List<String> list2 = new ArrayList<>();
+            list2.add("21");
+            list2.add("22");
+            List<String> list3 = new ArrayList<>();
+            list3.add("31");
+            list3.add("32");
+            list3.add("33");
+
+            EncodedAmqpSequenceMatcher bodyMatcher1 = new EncodedAmqpSequenceMatcher(list1, true);
+            EncodedAmqpSequenceMatcher bodyMatcher2 = new EncodedAmqpSequenceMatcher(list2, true);
+            EncodedAmqpSequenceMatcher bodyMatcher3 = new EncodedAmqpSequenceMatcher(list3, false);
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.addMessageContentMatcher(bodyMatcher1);
+            payloadMatcher.addMessageContentMatcher(bodyMatcher2);
+            payloadMatcher.addMessageContentMatcher(bodyMatcher3);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(payloadMatcher).accept();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            final AdvancedMessage<List<String>> message = AdvancedMessage.create();
+
+            message.addBodySection(new AmqpSequence<>(list1));
+            message.addBodySection(new AmqpSequence<>(list2));
+            message.addBodySection(new AmqpSequence<>(list3));
+
+            final Tracker tracker = sender.send(message);
+
+            assertNotNull(tracker);
+            assertNotNull(tracker.acknowledgeFuture().isDone());
+            assertNotNull(tracker.acknowledgeFuture().get().settled());
+
+            sender.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSendMessageWithMultipleDataSections() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.expectAttach().respond();  // Open a receiver to ensure sender link has processed
+            peer.expectFlow();              // the inbound flow frame we sent previously before send.
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            Session session = connection.openSession().openFuture().get();
+            SenderOptions options = new SenderOptions().deliveryMode(DeliveryMode.AT_MOST_ONCE);
+            Sender sender = session.openSender("test-qos", options);
+
+            // Gates send on remote flow having been sent and received
+            session.openReceiver("dummy").openFuture().get();
+
+            byte[] buffer1 = new byte[] { 1 };
+            byte[] buffer2 = new byte[] { 1, 2 };
+            byte[] buffer3 = new byte[] { 1, 2, 3 };
+
+            EncodedDataMatcher bodyMatcher1 = new EncodedDataMatcher(buffer1, true);
+            EncodedDataMatcher bodyMatcher2 = new EncodedDataMatcher(buffer2, true);
+            EncodedDataMatcher bodyMatcher3 = new EncodedDataMatcher(buffer3, false);
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.addMessageContentMatcher(bodyMatcher1);
+            payloadMatcher.addMessageContentMatcher(bodyMatcher2);
+            payloadMatcher.addMessageContentMatcher(bodyMatcher3);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(payloadMatcher).accept();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            final AdvancedMessage<byte[]> message = AdvancedMessage.create();
+
+            message.addBodySection(new Data(buffer1));
+            message.addBodySection(new Data(buffer2));
+            message.addBodySection(new Data(buffer3));
+
+            final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
             assertNotNull(tracker.acknowledgeFuture().isDone());
