@@ -37,10 +37,6 @@ import java.io.OutputStream;
  */
 public abstract class MessageInputStream extends InputStream {
 
-    public class MessageInputStreamOptions {
-
-    }
-
     private final MessageInputStreamOptions options;
 
     public MessageInputStream(MessageInputStreamOptions options) {

@@ -18,19 +18,12 @@ package org.apache.qpid.protonj2.client;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.function.BiFunction;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
 import org.apache.qpid.protonj2.types.messaging.Data;
-import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.messaging.Footer;
-import org.apache.qpid.protonj2.types.messaging.Header;
-import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
-import org.apache.qpid.protonj2.types.messaging.Properties;
 import org.apache.qpid.protonj2.types.messaging.Section;
-import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
  * Specialized {@link OutputStream} instance that allows the body of a message
@@ -50,46 +43,17 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
  */
 public abstract class MessageOutputStream extends OutputStream {
 
-    public interface MessageOutputStreamOptions {
-
-        Header header();
-        MessageOutputStreamOptions header(Header header);
-
-        DeliveryAnnotations deliveryAnnotations();
-        MessageOutputStreamOptions deliveryAnnotations(DeliveryAnnotations deliveryAnnotations);
-
-        MessageAnnotations messageAnnotations();
-        MessageOutputStreamOptions messageAnnotations(MessageAnnotations messageAnnotations);
-
-        Properties properties();
-        MessageOutputStreamOptions properties(Properties properties);
-
-        ApplicationProperties applicationProperties();
-        MessageOutputStreamOptions applicationProperties(ApplicationProperties applicationProperties);
-
-        Footer footer();
-        MessageOutputStreamOptions header(Footer footer);
-
-        /**
-         * Allow hook to fill in Footer with checksum or other data based on the data written.  The
-         * {@link BiFunction} given is provided with the configured {@link Footer} instance and the
-         * count of bytes written and the returned Footer value will be encoded as part of the final
-         * {@link Transfer} frame for this message.
-         *
-         * @param handler
-         *      Handler that is called prior to final Message write with count of bytes written.
-         *
-         * @return this MessageOptions instance.
-         */
-        MessageOutputStreamOptions footerFinalizationEvent(BiFunction<Footer, Integer, Footer> handler);
-
-    }
-
     private final MessageOutputStreamOptions options;
     private final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
+    /**
+     * Creates a new {@link MessageOutputStream} which copies the options instance given.
+     *
+     * @param options
+     *      the {@link MessageOutputStreamOptions} to use with this instance.
+     */
     public MessageOutputStream(MessageOutputStreamOptions options) {
-        this.options = options;
+        this.options = new MessageOutputStreamOptions(options);
     }
 
     public MessageOutputStreamOptions options() {
