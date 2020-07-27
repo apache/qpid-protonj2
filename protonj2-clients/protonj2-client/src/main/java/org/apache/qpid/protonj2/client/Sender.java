@@ -182,4 +182,18 @@ public interface Sender {
      */
     Tracker trySend(Message<?> message) throws ClientException;
 
+    /**
+     * Creates an {@link MessageOutputStream} instance configured with the given options.
+     * <p>
+     * The {@link MessageOutputStream} can be used to write the payload of an AMQP Message in
+     * chunks when the source is not readily available in memory or as part of a larger streams
+     * based component.
+     *
+     * @param options
+     *      The stream options to use to configure the returned {@link MessageOutputStream}
+     *
+     * @return a {@link MessageOutputStream} instance configured using the given options.
+     */
+    MessageOutputStream outputStream(MessageOutputStreamOptions options);
+
 }

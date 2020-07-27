@@ -32,6 +32,8 @@ import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.DeliveryMode;
 import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Message;
+import org.apache.qpid.protonj2.client.MessageOutputStream;
+import org.apache.qpid.protonj2.client.MessageOutputStreamOptions;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Source;
@@ -198,47 +200,18 @@ public class ClientSender implements Sender {
     @Override
     public Tracker send(Message<?> message) throws ClientException {
         checkClosed();
-
-        final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
-        final AdvancedMessage<?> encodable = ClientMessageSupport.convertMessage(message);
-        final ProtonBuffer buffer = encodable.encode();
-        final int messageFormat = encodable.messageFormat();
-
-        executor.execute(() -> {
-            if (protonSender.isSendable()) {
-                assumeSendableAndSend(buffer, messageFormat, operation);
-            } else {
-                final InFlightSend send = new InFlightSend(buffer, messageFormat, operation);
-                if (options.sendTimeout() > 0) {
-                    send.timeout = session.scheduleRequestTimeout(
-                        operation, options.sendTimeout(), () -> send.createSendTimedOutException());
-                }
-
-                blocked.offer(send);
-            }
-        });
-
-        return session.request(this, operation);
+        return sendMessage(ClientMessageSupport.convertMessage(message), true);
     }
 
     @Override
     public Tracker trySend(Message<?> message) throws ClientException {
         checkClosed();
+        return sendMessage(ClientMessageSupport.convertMessage(message), false);
+    }
 
-        final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
-        final AdvancedMessage<?> encodable = ClientMessageSupport.convertMessage(message);
-        final ProtonBuffer buffer = encodable.encode();
-        final int messageFormat = encodable.messageFormat();
-
-        executor.execute(() -> {
-            if (protonSender.isSendable()) {
-                assumeSendableAndSend(buffer, messageFormat, operation);
-            } else {
-                operation.complete(null);
-            }
-        });
-
-        return session.request(this, operation);
+    @Override
+    public MessageOutputStream outputStream(MessageOutputStreamOptions options) {
+        return new ClientMessageOutputStream(this, options);
     }
 
     @Override
@@ -415,7 +388,7 @@ public class ClientSender implements Sender {
             while (sender.isSendable() && !blocked.isEmpty()) {
                 LOG.trace("Dispatching previously held send");
                 final InFlightSend held = blocked.poll();
-                assumeSendableAndSend(held.message, held.messageFormat, held);
+                assumeSendableAndSend(held.encodedMessage, held.message, held);
             }
         }
 
@@ -447,15 +420,15 @@ public class ClientSender implements Sender {
 
     private class InFlightSend implements AsyncResult<Tracker> {
 
-        private final ProtonBuffer message;
-        private final int messageFormat;
+        private final ProtonBuffer encodedMessage;
+        private final AdvancedMessage<?> message;
         private final ClientFuture<Tracker> operation;
 
         private ScheduledFuture<?> timeout;
 
-        public InFlightSend(ProtonBuffer message, int messageFormat, ClientFuture<Tracker> operation) {
+        public InFlightSend(ProtonBuffer encodedMessage, AdvancedMessage<?> message, ClientFuture<Tracker> operation) {
+            this.encodedMessage = encodedMessage;
             this.message = message;
-            this.messageFormat = messageFormat;
             this.operation = operation;
         }
 
@@ -502,12 +475,49 @@ public class ClientSender implements Sender {
         }
     }
 
-    private void assumeSendableAndSend(ProtonBuffer buffer, int messageFormat, AsyncResult<Tracker> request) {
-        final OutgoingDelivery delivery = protonSender.next();
-        final ClientTracker tracker = new ClientTracker(this, delivery);
+    private Tracker sendMessage(AdvancedMessage<?> message, boolean waitForCredit) throws ClientException {
+        final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
+        final ProtonBuffer buffer = message.encode();
+
+        executor.execute(() -> {
+            if (protonSender.isSendable()) {
+                assumeSendableAndSend(buffer, message, operation);
+            } else {
+                if (waitForCredit) {
+                    final InFlightSend send = new InFlightSend(buffer, message, operation);
+                    if (options.sendTimeout() > 0) {
+                        send.timeout = session.scheduleRequestTimeout(
+                            operation, options.sendTimeout(), () -> send.createSendTimedOutException());
+                    }
+
+                    blocked.offer(send);
+                } else {
+                    operation.complete(null);
+                }
+            }
+        });
+
+        return session.request(this, operation);
+    }
+
+    private void assumeSendableAndSend(ProtonBuffer buffer, AdvancedMessage<?> message, AsyncResult<Tracker> request) {
+        final OutgoingDelivery delivery;
+        final ClientTracker tracker;
+
+        if (protonSender.current() == null) {
+            delivery = protonSender.next();
+            tracker = new ClientTracker(this, delivery);
+        } else {
+            // TODO: We may need to eventually track the message assigned to a delivery if
+            // we want to sanity check that streaming messages aren't interleaved which
+            // would corrupt both as one completes the other etc.  Want to avoid keeping
+            // the message referenced for now to avoid retention.
+            delivery = protonSender.current();
+            tracker = delivery.getLinkedResource();
+        }
 
         delivery.setLinkedResource(tracker);
-        delivery.setMessageFormat(messageFormat);
+        delivery.setMessageFormat(message.messageFormat());
 
         if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
             delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this), true);
@@ -518,17 +528,21 @@ public class ClientSender implements Sender {
             delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this), false);
         }
 
-        // For now we only complete the request after the IO operation when the delivery mode is
-        // something other than DeliveryMode.AT_MOST_ONCE.  We should think about other options to
-        // allow this under other modes given the tracker can communicate errors if the eventual
-        // IO operation does indeed fail otherwise most modes suffer a more significant performance
-        // hit waiting on the IO operation to complete.
-        if (options.deliveryMode() == DeliveryMode.AT_MOST_ONCE) {
-            request.complete(tracker);
-            delivery.writeBytes(buffer);
+        if (message.aborted()) {
+            delivery.abort();
         } else {
-            delivery.writeBytes(buffer);
-            request.complete(tracker);
+            // For now we only complete the request after the IO operation when the delivery mode is
+            // something other than DeliveryMode.AT_MOST_ONCE.  We should think about other options to
+            // allow this under other modes given the tracker can communicate errors if the eventual
+            // IO operation does indeed fail otherwise most modes suffer a more significant performance
+            // hit waiting on the IO operation to complete.
+            if (options.deliveryMode() == DeliveryMode.AT_MOST_ONCE) {
+                request.complete(tracker);
+                delivery.streamBytes(buffer, message.complete());
+            } else {
+                delivery.streamBytes(buffer, message.complete());
+                request.complete(tracker);
+            }
         }
     }
 

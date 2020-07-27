@@ -79,6 +79,12 @@ public abstract class ClientMessageSupport {
 
     //----- Message Encoding
 
+    public static void encodeSection(Section<?> section, ProtonBuffer buffer) {
+        DEFAULT_ENCODER.writeObject(buffer, DEFAULT_ENCODER.newEncoderState(), section);
+    }
+
+    //----- Message Encoding
+
     public static ProtonBuffer encodeMessage(AdvancedMessage<?> message) {
         return encodeMessage(DEFAULT_ENCODER, DEFAULT_ENCODER.newEncoderState(), ProtonByteBufferAllocator.DEFAULT, message);
     }

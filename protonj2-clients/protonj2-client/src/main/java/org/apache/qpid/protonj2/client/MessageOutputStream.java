@@ -19,8 +19,6 @@ package org.apache.qpid.protonj2.client;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Footer;
 import org.apache.qpid.protonj2.types.messaging.Section;
@@ -43,8 +41,7 @@ import org.apache.qpid.protonj2.types.messaging.Section;
  */
 public abstract class MessageOutputStream extends OutputStream {
 
-    private final MessageOutputStreamOptions options;
-    private final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+    protected final MessageOutputStreamOptions options;
 
     /**
      * Creates a new {@link MessageOutputStream} which copies the options instance given.
@@ -56,52 +53,30 @@ public abstract class MessageOutputStream extends OutputStream {
         this.options = new MessageOutputStreamOptions(options);
     }
 
-    public MessageOutputStreamOptions options() {
-        return options;
-    }
-
-    @Override
-    public void write(int b) throws IOException {
-        buffer.writeByte(b);
-    }
-
-    @Override
-    public void write(byte b[]) throws IOException {
-        buffer.writeBytes(b);
-    }
-
-    @Override
-    public void write(byte b[], int off, int len) throws IOException {
-        buffer.writeBytes(b, off, len);
-    }
-
     /**
-     *
-     * Encodes and sends all currently buffered message body data as an AMQP
-     * {@link Data} section, subsequent buffered data will be encoded a follow
-     * on data section on the next flush call.
+     * Encodes and sends all currently buffered message body data as an AMQP {@link Data}
+     * section, subsequent buffered data will be encoded a follow-on data section on the
+     * next {@link #flush()} call unless the stream was configured with an output limit in
+     * which cases message body data is streamed as a single AMQP {@link Data} section.
      * <p>
-     * If the message has not been previously written then the optional message
-     * {@link Section} values from the {@link MessageOutputStreamOptions} will also be encoded
-     * except for the message {@link Footer} which is not written until the
-     * {@link MessageOutputStream} is closed.
+     * If the message has not been previously written then the optional message {@link Section}
+     * values from the {@link MessageOutputStreamOptions} will also be encoded except for the
+     * message {@link Footer} which is not written until the {@link MessageOutputStream} is
+     * closed.
      *
      * @throws IOException if an error occurs while attempting to write the buffered contents.
      */
     @Override
-    public void flush() throws IOException {
-        // 1: Encode all sections that come before the Data Section if not yet done
-        // 2. Place current contents into data Section for write and replace buffer (or lazy create)
-        // 3. write all current contents marking message as partial unless flush is initiated from close.
-    }
+    public abstract void flush() throws IOException;
 
+    /**
+     * Closes the {@link MessageOutputStream} performing a final flush of buffered data and
+     * writes the AMQP {@link Footer} section if one is provided.  If an output limit was
+     * configured in the {@link MessageOutputStreamOptions} and the limit value has not yet
+     * been written the ongoing AMQP {@link Tracker} that comprises this message stream is
+     * aborted as a partially written message would be invalid on the remote peer.
+     */
     @Override
-    public void close() throws IOException {
-        // 1: Mark as closed
-        // 2: Trigger final processing to collect a filled in Footer.
-
-    }
-
-    protected abstract Footer beforeFinalTransfer(Footer optionsFooter, int bytesWritten);
+    public abstract void close() throws IOException;
 
 }

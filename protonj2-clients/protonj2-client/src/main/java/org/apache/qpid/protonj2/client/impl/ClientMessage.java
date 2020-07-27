@@ -48,10 +48,12 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     private Properties properties;
     private ApplicationProperties applicationProperties;
     private Section<E> body;
+    private List<Section<E>> bodySections;
     private Footer footer;
 
+    private boolean complete = true;
+    private boolean aborted;
     private int messageFormat;
-    private List<Section<E>> bodySections;
 
     /**
      * Create a new {@link ClientMessage} instance with no default body section or
@@ -694,6 +696,28 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     public AdvancedMessage<E> messageFormat(int messageFormat) {
         this.messageFormat = messageFormat;
         return this;
+    }
+
+    @Override
+    public AdvancedMessage<E> abort() {
+        this.aborted = true;
+        return this;
+    }
+
+    @Override
+    public boolean aborted() {
+        return aborted;
+    }
+
+    @Override
+    public AdvancedMessage<E> complete(boolean complete) {
+        this.complete = complete;
+        return this;
+    }
+
+    @Override
+    public boolean complete() {
+        return complete;
     }
 
     @Override

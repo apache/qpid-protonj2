@@ -35,12 +35,14 @@ public interface StreamableMessage<E> extends AdvancedMessage<E> {
      *
      * @return this {@link StreamableMessage} instance.
      */
+    @Override
     StreamableMessage<E> abort();
 
     /**
      * @return true if this message has been marked as aborted previously.
      */
-    boolean isAborted();
+    @Override
+    boolean aborted();
 
     /**
      * Marks the currently streaming message as being complete.
@@ -53,11 +55,12 @@ public interface StreamableMessage<E> extends AdvancedMessage<E> {
      *
      * @return this {@link StreamableMessage} instance.
      */
-    StreamableMessage<E> complete();
+    //StreamableMessage<E> complete();
 
     /**
      * @return true if this message has been marked as completed previously.
      */
-    boolean isComplete();
+    @Override
+    boolean complete();
 
 }
