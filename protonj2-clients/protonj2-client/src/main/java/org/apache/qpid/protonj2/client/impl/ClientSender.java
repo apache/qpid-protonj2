@@ -519,17 +519,22 @@ public class ClientSender implements Sender {
         delivery.setLinkedResource(tracker);
         delivery.setMessageFormat(message.messageFormat());
 
-        if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
-            delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this), true);
+        // Multiple Transfer Deliveries should be updated on first send and then that
+        // state should be left in place until completion or abort.
+        if (!delivery.isSettled() && delivery.getState() == null) {
+            boolean settle = protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED;
 
-            // Remote will not update this delivery so mark as acknowledged now.
-            tracker.acknowledgeFuture().complete(tracker);
-        } else {
-            delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this), false);
+            delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this), settle);
+
+            if (settle) {
+                // Remote will not update this delivery so mark as acknowledged now.
+                tracker.acknowledgeFuture().complete(tracker);
+            }
         }
 
         if (message.aborted()) {
             delivery.abort();
+            request.complete(tracker);
         } else {
             // For now we only complete the request after the IO operation when the delivery mode is
             // something other than DeliveryMode.AT_MOST_ONCE.  We should think about other options to

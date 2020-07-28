@@ -61,6 +61,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
         message.deliveryAnnotations(options.deliveryAnnotations());
         message.messageAnnotations(options.messageAnnotations());
         message.properties(options.properties());
+        message.complete(false);
     }
 
     @Override
@@ -68,6 +69,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
         checkClosed();
         checkOutputLimitReached(1);
         buffer.writeByte(value);
+        bytesWritten++;
     }
 
     @Override
@@ -75,6 +77,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
         checkClosed();
         checkOutputLimitReached(bytes.length);
         buffer.writeBytes(bytes);
+        bytesWritten += bytes.length;
     }
 
     @Override
@@ -82,6 +85,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
         checkClosed();
         checkOutputLimitReached(length);
         buffer.writeBytes(bytes, offset, length);
+        bytesWritten += length;
     }
 
     /**
@@ -107,8 +111,8 @@ public class ClientMessageOutputStream extends MessageOutputStream {
 
     @Override
     public void close() throws IOException {
-        if (closed.compareAndSet(false, true)) {
-            if (options.outputLimit() > 0 && options.outputLimit() == bytesWritten) {
+        if (closed.compareAndSet(false, true) && sendCount > 0) {
+            if (options.outputLimit() > 0 && options.outputLimit() != bytesWritten) {
                 // Limit was set but user did not write all of it so we must abort
                 doFlushPending(false, true);
             } else {
@@ -172,19 +176,19 @@ public class ClientMessageOutputStream extends MessageOutputStream {
                 ApplicationProperties applicationProperties = message.applicationProperties();
 
                 if (header != null) {
-                    ClientMessageSupport.encodeSection(header, encodedMessage);
+                    ClientMessageSupport.encodeSection(header, preamble);
                 }
                 if (deliveryAnnotations != null) {
-                    ClientMessageSupport.encodeSection(deliveryAnnotations, encodedMessage);
+                    ClientMessageSupport.encodeSection(deliveryAnnotations, preamble);
                 }
                 if (messageAnnotations != null) {
-                    ClientMessageSupport.encodeSection(messageAnnotations, encodedMessage);
+                    ClientMessageSupport.encodeSection(messageAnnotations, preamble);
                 }
                 if (properties != null) {
-                    ClientMessageSupport.encodeSection(properties, encodedMessage);
+                    ClientMessageSupport.encodeSection(properties, preamble);
                 }
                 if (applicationProperties != null) {
-                    ClientMessageSupport.encodeSection(applicationProperties, encodedMessage);
+                    ClientMessageSupport.encodeSection(applicationProperties, preamble);
                 }
 
                 encodedMessage.append(preamble);
@@ -206,15 +210,13 @@ public class ClientMessageOutputStream extends MessageOutputStream {
                     body.writeByte(EncodingCodes.VBIN32);
                     body.writeInt(buffer.getReadableBytes());
 
-                    ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
-                    composite.append(body);
-                    composite.append(buffer.duplicate());
-
                     encodedMessage.append(body);
+                    encodedMessage.append(buffer.duplicate());
                 }
             } else {
                 ProtonBuffer dataBuffer = ProtonByteBufferAllocator.DEFAULT.allocate();
                 ClientMessageSupport.encodeSection(new Data(new Binary(buffer.duplicate())), dataBuffer);
+                encodedMessage.append(dataBuffer);
             }
 
             if (message.complete()) {

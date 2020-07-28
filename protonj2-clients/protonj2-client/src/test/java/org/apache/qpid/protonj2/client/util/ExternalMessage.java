@@ -579,7 +579,7 @@ public class ExternalMessage<E> implements Message<E> {
 
         private final ExternalMessage<E> message;
 
-        private final List<Section<E>> bodySections = new ArrayList<>();
+        private final List<Section<?>> bodySections = new ArrayList<>();
         private int messageFormat;
         private boolean complete = true;
         private boolean aborted;
@@ -677,7 +677,7 @@ public class ExternalMessage<E> implements Message<E> {
         }
 
         @Override
-        public AdvancedMessage<E> addBodySection(Section<E> bodySection) {
+        public AdvancedMessage<E> addBodySection(Section<?> bodySection) {
             Objects.requireNonNull(bodySection, "Additional Body Section cannot be null");
 
             if (bodySections.isEmpty()) {
@@ -685,25 +685,27 @@ public class ExternalMessage<E> implements Message<E> {
                 if (message.body() != null) {
                     bodySections.add(message.body);
                 }
+
+                message.body = null;
             }
 
             return this;
         }
 
         @Override
-        public AdvancedMessage<E> bodySections(Collection<Section<E>> sections) {
+        public AdvancedMessage<E> bodySections(Collection<Section<?>> sections) {
             this.bodySections.clear();
             this.bodySections.addAll(sections);
             return this;
         }
 
         @Override
-        public Collection<Section<E>> bodySections() {
+        public Collection<Section<?>> bodySections() {
             return Collections.unmodifiableCollection(bodySections);
         }
 
         @Override
-        public AdvancedMessage<E> forEachBodySection(Consumer<Section<E>> consumer) {
+        public AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer) {
             if (!bodySections.isEmpty()) {
                 bodySections.forEach(section -> {
                     consumer.accept(section);

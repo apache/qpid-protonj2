@@ -269,7 +269,7 @@ class ClientMessageTest {
     public void testSetMultipleBodySections() {
         ClientMessage<String> message = ClientMessage.create();
 
-        List<Section<String>> expected = new ArrayList<>();
+        List<Section<?>> expected = new ArrayList<>();
         expected.add(new AmqpValue<>("1"));
         expected.add(new AmqpValue<>("2"));
         expected.add(new AmqpValue<>("3"));

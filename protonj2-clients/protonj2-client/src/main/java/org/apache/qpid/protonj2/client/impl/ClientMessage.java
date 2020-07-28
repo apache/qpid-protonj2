@@ -48,7 +48,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     private Properties properties;
     private ApplicationProperties applicationProperties;
     private Section<E> body;
-    private List<Section<E>> bodySections;
+    private List<Section<?>> bodySections;
     private Footer footer;
 
     private boolean complete = true;
@@ -543,12 +543,13 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     //----- Message body access
 
+    @SuppressWarnings("unchecked")
     @Override
     public E body() {
         Section<E> section = body;
 
         if (bodySections != null) {
-            section = bodySections.get(0);
+            section = (Section<E>) bodySections.get(0);
         }
 
         return section != null ? section.getValue() : null;
@@ -726,7 +727,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> addBodySection(Section<E> bodySection) {
+    public AdvancedMessage<E> addBodySection(Section<?> bodySection) {
         Objects.requireNonNull(bodySection, "Additional Body Section cannot be null");
 
         if (bodySections == null) {
@@ -745,7 +746,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> bodySections(Collection<Section<E>> sections) {
+    public AdvancedMessage<E> bodySections(Collection<Section<?>> sections) {
         if (sections == null || sections.isEmpty()) {
             this.bodySections = null;
         } else {
@@ -757,18 +758,18 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Collection<Section<E>> bodySections() {
+    public Collection<Section<?>> bodySections() {
         if (bodySections == null && body == null) {
             return Collections.EMPTY_LIST;
         } else {
-            final Collection<Section<E>> result = new ArrayList<>();
+            final Collection<Section<?>> result = new ArrayList<>();
             forEachBodySection(section -> result.add(section));
             return Collections.unmodifiableCollection(result);
         }
     }
 
     @Override
-    public AdvancedMessage<E> forEachBodySection(Consumer<Section<E>> consumer) {
+    public AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer) {
         if (bodySections != null) {
             bodySections.forEach(section -> {
                 consumer.accept(section);

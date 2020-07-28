@@ -161,13 +161,13 @@ public interface AdvancedMessage<E> extends Message<E> {
 
     ProtonBuffer encode();
 
-    AdvancedMessage<E> addBodySection(Section<E> bodySection);
+    AdvancedMessage<E> addBodySection(Section<?> bodySection);
 
-    AdvancedMessage<E> bodySections(Collection<Section<E>> sections);
+    AdvancedMessage<E> bodySections(Collection<Section<?>> sections);
 
-    Collection<Section<E>> bodySections();
+    Collection<Section<?>> bodySections();
 
-    AdvancedMessage<E> forEachBodySection(Consumer<Section<E>> consumer);
+    AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer);
 
     /**
      * Marks the currently streaming message as being aborted.
