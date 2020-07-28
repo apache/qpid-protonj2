@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.types.messaging;
 
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -29,6 +30,10 @@ public final class Data implements Section<byte[]> {
 
     public Data(Binary value) {
         this.value = value;
+    }
+
+    public Data(ProtonBuffer value) {
+        this.value = value != null ? new Binary(value) : null;
     }
 
     public Data(byte[] value) {
