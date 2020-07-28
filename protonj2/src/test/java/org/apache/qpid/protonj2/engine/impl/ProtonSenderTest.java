@@ -3000,4 +3000,64 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
+
+    @Test(timeout = 20_000)
+    public void testNoDispsotionSentWhenNoStateOrSettlementRequested() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender").open();
+
+        final AtomicBoolean sender1MarkedSendable = new AtomicBoolean();
+        sender.creditStateUpdateHandler(handler -> {
+            sender1MarkedSendable.set(handler.isSendable());
+        });
+
+        peer.remoteFlow().withHandle(0)
+                         .withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).now();
+
+        assertTrue("Sender 1 should now be sendable", sender1MarkedSendable.get());
+
+        // Frames are not multiplexed for large deliveries as we write the full
+        // writable portion out when a write is called.
+
+        peer.expectTransfer().withHandle(0)
+                             .withSettled(false)
+                             .withNullState()
+                             .withDeliveryId(0)
+                             .withMore(false)
+                             .withDeliveryTag(new byte[] {1});
+
+        ProtonBuffer messageContent1 = createContentBuffer(32);
+        OutgoingDelivery delivery1 = sender.next();
+        delivery1.setTag(new byte[] { 1 });
+        delivery1.writeBytes(messageContent1);
+
+        // No action requested so no frame should be emitted.
+        delivery1.disposition(null, false);
+
+        peer.waitForScriptToComplete();
+        peer.expectDisposition().withState().accepted();
+
+        delivery1.disposition(Accepted.getInstance(), true);
+
+        peer.expectClose().respond();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
 }

@@ -166,7 +166,8 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         this.localState = state;
 
         // If no transfers initiated yet we just store the state and transmit in the first transfer
-        if (deliveryId > DELIVERY_INACTIVE) {
+        // and if no work actually requested we don't emit a useless frame.
+        if (deliveryId > DELIVERY_INACTIVE && (state != localState || settle)) {
             link.disposition(this);
         }
 
