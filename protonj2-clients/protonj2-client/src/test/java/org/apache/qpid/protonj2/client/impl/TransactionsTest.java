@@ -1255,4 +1255,60 @@ public class TransactionsTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    public void testSendMessageNoOpWhenTransactionInDoubt() throws Exception {
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.expectDeclare().accept(txnId);
+            peer.remoteDetach().withClosed(true)
+                               .withErrorCondition(AmqpError.RESOURCE_DELETED.toString(), "Coordinator").queue();
+            peer.expectDetach();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            session.beginTransaction();
+
+            // After the wait TXN should be in doubt and send should no-op
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            final Sender sender = session.openSender("address").openFuture().get();
+            final Tracker tracker = sender.send(Message.create("test-message-"));
+
+            assertNotNull(tracker);
+            assertNotNull(tracker.acknowledgeFuture().get());
+            assertNull(tracker.remoteState());
+            assertNull(tracker.state());
+            assertFalse(tracker.settled());
+
+            try {
+                session.commitTransaction();
+                fail("Should not be able to commit as remote closed coordinator");
+            } catch (ClientTransactionRolledBackException cliTxRbEx) {
+                // Expected
+            }
+
+            session.close();
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

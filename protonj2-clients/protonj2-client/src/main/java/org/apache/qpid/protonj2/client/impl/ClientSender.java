@@ -519,17 +519,22 @@ public class ClientSender implements Sender {
         delivery.setLinkedResource(tracker);
         delivery.setMessageFormat(message.messageFormat());
 
-        // Multiple Transfer Deliveries should be updated on first send and then that
-        // state should be left in place until completion or abort.
-        if (!delivery.isSettled() && delivery.getState() == null) {
-            boolean settle = protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED;
-
-            delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this), settle);
-
-            if (settle) {
-                // Remote will not update this delivery so mark as acknowledged now.
+        if (session.getTransactionContext().isInTransaction()) {
+            if (session.getTransactionContext().isTransactionInDoubt()) {
                 tracker.acknowledgeFuture().complete(tracker);
+                request.complete(tracker);
+                return;
+            } else {
+                delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this, delivery),
+                    protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED || delivery.isSettled());
             }
+        } else {
+            delivery.disposition(delivery.getState(), protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED || delivery.isSettled());
+        }
+
+        if (delivery.isSettled()) {
+            // Remote will not update this delivery so mark as acknowledged now.
+            tracker.acknowledgeFuture().complete(tracker);
         }
 
         if (message.aborted()) {

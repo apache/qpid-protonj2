@@ -27,6 +27,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientTransactionNotActiveExce
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionRolledBackException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.Engine;
+import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.engine.Transaction;
 import org.apache.qpid.protonj2.engine.Transaction.DischargeState;
 import org.apache.qpid.protonj2.engine.TransactionController;
@@ -153,7 +154,15 @@ public class ClientTransactionContext {
         return currentTxn != null && currentTxn.getState() == TransactionState.DECLARED;
     }
 
-    public DeliveryState enlistSendInCurrentTransaction(ClientSender seder) {
+    public boolean isTransactionInDoubt() {
+        if (isInTransaction()) {
+            return txnController.isLocallyClosed();
+        } else {
+            return false;
+        }
+    }
+
+    public DeliveryState enlistSendInCurrentTransaction(ClientSender seder, OutgoingDelivery delivery) {
         if (isInTransaction()) {
             return cachedSenderOutcome != null ?
                 cachedSenderOutcome : (cachedSenderOutcome = new TransactionalState().setTxnId(currentTxn.getTxnId()));
