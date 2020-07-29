@@ -208,7 +208,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
                     body.writeByte(EncodingCodes.SMALLULONG);
                     body.writeByte(Data.DESCRIPTOR_CODE.byteValue());
                     body.writeByte(EncodingCodes.VBIN32);
-                    body.writeInt(buffer.getReadableBytes());
+                    body.writeInt(options.outputLimit());
 
                     encodedMessage.append(body);
                     encodedMessage.append(buffer.duplicate());

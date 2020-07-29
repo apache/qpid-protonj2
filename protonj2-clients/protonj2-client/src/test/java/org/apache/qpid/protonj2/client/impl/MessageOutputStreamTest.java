@@ -213,10 +213,8 @@ class MessageOutputStreamTest {
             headerMatcher.withDurable(true);
             headerMatcher.withPriority((byte) 1);
             headerMatcher.withDeliveryCount(1);
-            EncodedDataMatcher dataMatcher = new EncodedDataMatcher(new byte[] { 0, 1, 2, 3 });
             TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
             payloadMatcher.setHeadersMatcher(headerMatcher);
-            payloadMatcher.setMessageContentMatcher(dataMatcher);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectTransfer().withPayload(payloadMatcher);
