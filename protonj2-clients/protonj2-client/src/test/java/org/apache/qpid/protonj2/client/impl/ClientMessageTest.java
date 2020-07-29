@@ -229,6 +229,18 @@ class ClientMessageTest {
         message.forEachBodySection(value -> {
             assertEquals(new AmqpValue<>("test"), value);
         });
+
+        message.clearBodySections();
+
+        assertEquals(0, message.bodySections().size());
+        assertNull(message.body());
+
+        final AtomicInteger count = new AtomicInteger();
+        message.bodySections().forEach(value -> {
+            count.incrementAndGet();
+        });
+
+        assertEquals(0, count.get());
     }
 
     @Test
@@ -349,6 +361,17 @@ class ClientMessageTest {
         });
 
         assertEquals(expected.size(), count.get());
+
+        message.clearBodySections();
+
+        assertEquals(0, message.bodySections().size());
+
+        count.set(0);
+        message.bodySections().forEach(value -> {
+            count.incrementAndGet();
+        });
+
+        assertEquals(0, count.get());
     }
 
     @Test

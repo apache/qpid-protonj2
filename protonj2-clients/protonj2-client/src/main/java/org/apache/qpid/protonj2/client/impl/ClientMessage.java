@@ -628,7 +628,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> header(Header header) {
+    public ClientMessage<E> header(Header header) {
         this.header = header;
         return this;
     }
@@ -639,7 +639,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> deliveryAnnotations(DeliveryAnnotations deliveryAnnotations) {
+    public ClientMessage<E> deliveryAnnotations(DeliveryAnnotations deliveryAnnotations) {
         this.deliveryAnnotations = deliveryAnnotations;
         return this;
     }
@@ -650,7 +650,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> messageAnnotations(MessageAnnotations messageAnnotations) {
+    public ClientMessage<E> messageAnnotations(MessageAnnotations messageAnnotations) {
         this.messageAnnotations = messageAnnotations;
         return this;
     }
@@ -661,7 +661,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> properties(Properties properties) {
+    public ClientMessage<E> properties(Properties properties) {
         this.properties = properties;
         return this;
     }
@@ -672,7 +672,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> applicationProperties(ApplicationProperties applicationProperties) {
+    public ClientMessage<E> applicationProperties(ApplicationProperties applicationProperties) {
         this.applicationProperties = applicationProperties;
         return this;
     }
@@ -683,7 +683,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> footer(Footer footer) {
+    public ClientMessage<E> footer(Footer footer) {
         this.footer = footer;
         return this;
     }
@@ -694,13 +694,13 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> messageFormat(int messageFormat) {
+    public ClientMessage<E> messageFormat(int messageFormat) {
         this.messageFormat = messageFormat;
         return this;
     }
 
     @Override
-    public AdvancedMessage<E> abort() {
+    public ClientMessage<E> abort() {
         this.aborted = true;
         return this;
     }
@@ -711,7 +711,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> complete(boolean complete) {
+    public ClientMessage<E> complete(boolean complete) {
         this.complete = complete;
         return this;
     }
@@ -727,7 +727,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> addBodySection(Section<?> bodySection) {
+    public ClientMessage<E> addBodySection(Section<?> bodySection) {
         Objects.requireNonNull(bodySection, "Additional Body Section cannot be null");
 
         if (bodySections == null) {
@@ -740,13 +740,15 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
             }
         }
 
+        // TODO - Validate body sections adhere to message format zero
+
         bodySections.add(bodySection);
 
         return this;
     }
 
     @Override
-    public AdvancedMessage<E> bodySections(Collection<Section<?>> sections) {
+    public ClientMessage<E> bodySections(Collection<Section<?>> sections) {
         if (sections == null || sections.isEmpty()) {
             this.bodySections = null;
         } else {
@@ -769,7 +771,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer) {
+    public ClientMessage<E> forEachBodySection(Consumer<Section<?>> consumer) {
         if (bodySections != null) {
             bodySections.forEach(section -> {
                 consumer.accept(section);
@@ -779,6 +781,15 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
                 consumer.accept(body);
             }
         }
+
+        return this;
+    }
+
+
+    @Override
+    public ClientMessage<E> clearBodySections() {
+        bodySections = null;
+        body = null;
 
         return this;
     }

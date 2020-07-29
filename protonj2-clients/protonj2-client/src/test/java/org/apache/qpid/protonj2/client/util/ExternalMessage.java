@@ -720,6 +720,14 @@ public class ExternalMessage<E> implements Message<E> {
         }
 
         @Override
+        public AdvancedMessage<E> clearBodySections() {
+            bodySections.clear();
+            message.body = null;
+
+            return this;
+        }
+
+        @Override
         public AdvancedMessage<E> abort() {
             this.aborted = true;
             return this;

@@ -61,7 +61,7 @@ public interface AdvancedMessage<E> extends Message<E> {
      * @param header
      *      The {@link Header} value to assign to this message.
      *
-     * @return this message instance.
+     * @return this {@link AdvancedMessage} instance.
      */
     AdvancedMessage<E> header(Header header);
 
@@ -79,7 +79,7 @@ public interface AdvancedMessage<E> extends Message<E> {
      * @param deliveryAnnotations
      *      The {@link DeliveryAnnotations} value to assign to this message.
      *
-     * @return this message instance.
+     * @return this {@link AdvancedMessage} instance.
      */
     AdvancedMessage<E> deliveryAnnotations(DeliveryAnnotations deliveryAnnotations);
 
@@ -97,7 +97,7 @@ public interface AdvancedMessage<E> extends Message<E> {
      * @param messageAnnotations
      *      The {@link MessageAnnotations} value to assign to this message.
      *
-     * @return this message instance.
+     * @return this {@link AdvancedMessage} instance.
      */
     AdvancedMessage<E> messageAnnotations(MessageAnnotations messageAnnotations);
 
@@ -115,7 +115,7 @@ public interface AdvancedMessage<E> extends Message<E> {
      * @param properties
      *      The {@link Properties} value to assign to this message.
      *
-     * @return this message instance.
+     * @return this {@link AdvancedMessage} instance.
      */
     AdvancedMessage<E> properties(Properties properties);
 
@@ -133,7 +133,7 @@ public interface AdvancedMessage<E> extends Message<E> {
      * @param applicationProperties
      *      The {@link ApplicationProperties} value to assign to this message.
      *
-     * @return this message instance.
+     * @return this {@link AdvancedMessage} instance.
      */
     AdvancedMessage<E> applicationProperties(ApplicationProperties applicationProperties);
 
@@ -151,15 +151,44 @@ public interface AdvancedMessage<E> extends Message<E> {
      * @param footer
      *      The {@link Footer} value to assign to this message.
      *
-     * @return this message instance.
+     * @return this {@link AdvancedMessage} instance.
      */
     AdvancedMessage<E> footer(Footer footer);
 
+    /**
+     * @return the currently assigned message format for this message.
+     */
     int messageFormat();
 
+    /**
+     * Sets the message format to use when the message is sent.  The exact structure of a
+     * message, together with its encoding, is defined by the message format (default is
+     * the AMQP defined message format zero.
+     * <p>
+     * This field MUST be specified for the first transfer of a multi-transfer message, if
+     * it is not set at the time of send of the first transfer the sender uses the AMQP
+     * default value of zero for this field.
+     * <p>
+     * The upper three octets of a message format code identify a particular message format.
+     * The lowest octet indicates the version of said message format. Any given version of
+     * a format is forwards compatible with all higher versions.
+     * <pre>
+     *
+     *       3 octets      1 octet
+     *    +----------------+---------+
+     *    | message format | version |
+     *    +----------------+---------+
+     *    |                          |
+     *   msb                        lsb
+     *
+     * </pre>
+     *
+     * @param messageFormat
+     *      The message format to encode into the transfer frame that carries the message.
+     *
+     * @return this {@link AdvancedMessage} instance.
+     */
     AdvancedMessage<E> messageFormat(int messageFormat);
-
-    ProtonBuffer encode();
 
     AdvancedMessage<E> addBodySection(Section<?> bodySection);
 
@@ -168,6 +197,8 @@ public interface AdvancedMessage<E> extends Message<E> {
     Collection<Section<?>> bodySections();
 
     AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer);
+
+    AdvancedMessage<E> clearBodySections();
 
     /**
      * Marks the currently streaming message as being aborted.
@@ -213,5 +244,12 @@ public interface AdvancedMessage<E> extends Message<E> {
      * @return true if this message has been marked as being the complete.
      */
     boolean complete();
+
+    /**
+     * Encodes the Message
+     *
+     * @return the encoded form of this message in a {@link ProtonBuffer} instance.
+     */
+    ProtonBuffer encode();
 
 }
