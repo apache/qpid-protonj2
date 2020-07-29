@@ -62,7 +62,7 @@ public abstract class MessageOutputStream extends OutputStream {
      * If the message has not been previously written then the optional message {@link Section}
      * values from the {@link MessageOutputStreamOptions} will also be encoded except for the
      * message {@link Footer} which is not written until the {@link MessageOutputStream} is
-     * closed.
+     * closed or the configured output limit is reached at the time of the call to {@link #flush()}.
      *
      * @throws IOException if an error occurs while attempting to write the buffered contents.
      */
@@ -73,7 +73,7 @@ public abstract class MessageOutputStream extends OutputStream {
      * Closes the {@link MessageOutputStream} performing a final flush of buffered data and
      * writes the AMQP {@link Footer} section if one is provided.  If an output limit was
      * configured in the {@link MessageOutputStreamOptions} and the limit value has not yet
-     * been written the ongoing AMQP {@link Tracker} that comprises this message stream is
+     * been written the ongoing AMQP {@link Delivery} that comprises this message stream is
      * aborted as a partially written message would be invalid on the remote peer.
      */
     @Override

@@ -239,6 +239,12 @@ public class MessageOutputStreamOptions {
         return this;
     }
 
+    // TODO: Better name for this
+    //   writeLimit
+    //   expectedSize
+    //   streamMaximum
+    //   maximumWriteSize
+
     /**
      * @return the configured output size limit for associated {@link MessageOutputStream}
      */
