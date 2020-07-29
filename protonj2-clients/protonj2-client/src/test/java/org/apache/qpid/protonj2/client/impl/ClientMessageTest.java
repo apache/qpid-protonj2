@@ -16,11 +16,13 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -35,8 +37,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Message;
+import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
+import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.messaging.Footer;
 import org.apache.qpid.protonj2.types.messaging.Header;
@@ -282,9 +286,9 @@ class ClientMessageTest {
         ClientMessage<String> message = ClientMessage.create();
 
         List<Section<?>> expected = new ArrayList<>();
-        expected.add(new AmqpValue<>("1"));
-        expected.add(new AmqpValue<>("2"));
-        expected.add(new AmqpValue<>("3"));
+        expected.add(new Data(new byte[] { 0 }));
+        expected.add(new Data(new byte[] { 1 }));
+        expected.add(new Data(new byte[] { 2 }));
 
         assertNull(message.body());
         assertNotNull(message.bodySections());
@@ -329,18 +333,18 @@ class ClientMessageTest {
 
     @Test
     public void testAddMultipleBodySections() {
-        ClientMessage<String> message = ClientMessage.create();
+        ClientMessage<byte[]> message = ClientMessage.create();
 
-        List<AmqpValue<String>> expected = new ArrayList<>();
-        expected.add(new AmqpValue<>("1"));
-        expected.add(new AmqpValue<>("2"));
-        expected.add(new AmqpValue<>("3"));
+        List<Data> expected = new ArrayList<>();
+        expected.add(new Data(new byte[] { 0 }));
+        expected.add(new Data(new byte[] { 1 }));
+        expected.add(new Data(new byte[] { 2 }));
 
         assertNull(message.body());
         assertNotNull(message.bodySections());
         assertTrue(message.bodySections().isEmpty());
 
-        for (AmqpValue<String> value : expected) {
+        for (Data value : expected) {
             message.addBodySection(value);
         }
 
@@ -376,12 +380,12 @@ class ClientMessageTest {
 
     @Test
     public void testMixSingleAndMultipleSectionAccess() {
-        ClientMessage<String> message = ClientMessage.create();
+        ClientMessage<byte[]> message = ClientMessage.create();
 
-        List<AmqpValue<String>> expected = new ArrayList<>();
-        expected.add(new AmqpValue<>("1"));
-        expected.add(new AmqpValue<>("2"));
-        expected.add(new AmqpValue<>("3"));
+        List<Data> expected = new ArrayList<>();
+        expected.add(new Data(new byte[] { 0 }));
+        expected.add(new Data(new byte[] { 1 }));
+        expected.add(new Data(new byte[] { 2 }));
 
         assertNull(message.body());
         assertNotNull(message.bodySections());
@@ -407,6 +411,105 @@ class ClientMessageTest {
         assertNotNull(message.bodySections());
         assertFalse(message.bodySections().isEmpty());
         assertEquals(3, message.bodySections().size());
+
+        final AtomicInteger count = new AtomicInteger();
+        message.bodySections().forEach(value -> {
+            assertEquals(expected.get(count.get()), value);
+            count.incrementAndGet();
+        });
+
+        assertEquals(expected.size(), count.get());
+    }
+
+    @Test
+    public void testSetMultipleBodySectionsValidatesDefaultFormat() {
+        ClientMessage<Object> message = ClientMessage.create();
+
+        List<Section<?>> expected = new ArrayList<>();
+        expected.add(new Data(new byte[] { 0 }));
+        expected.add(new AmqpValue<String>("test"));
+        expected.add(new AmqpSequence<>(new ArrayList<>()));
+
+        assertThrows(IllegalArgumentException.class, () -> message.bodySections(expected));
+    }
+
+    @Test
+    public void testAddMultipleBodySectionsValidatesDefaultFormat() {
+        ClientMessage<Object> message = ClientMessage.create();
+
+        List<Section<?>> expected = new ArrayList<>();
+        expected.add(new Data(new byte[] { 0 }));
+        expected.add(new AmqpValue<String>("test"));
+        expected.add(new AmqpSequence<>(new ArrayList<>()));
+
+        assertThrows(IllegalArgumentException.class, () -> expected.forEach(section -> message.addBodySection(section)));
+    }
+
+    @Test
+    public void testReplaceOriginalWithSetBodySectionDoesNotThrowValidationErrorIfValid() {
+        ClientMessage<Object> message = ClientMessage.create();
+
+        message.body("string");  // AmqpValue
+
+        List<Section<?>> expected = new ArrayList<>();
+        expected.add(new Data(new byte[] { 0 }));
+
+        assertDoesNotThrow(() -> message.bodySections(expected));
+    }
+
+    @Test
+    public void testReplaceOriginalWithSetBodySectionDoesThrowValidationErrorIfInValid() {
+        ClientMessage<Object> message = ClientMessage.create();
+
+        message.body("string");  // AmqpValue
+
+        List<Section<?>> expected = new ArrayList<>();
+        expected.add(new Data(new byte[] { 0 }));
+        expected.add(new AmqpValue<String>("test"));
+        expected.add(new AmqpSequence<>(new ArrayList<>()));
+
+        assertThrows(IllegalArgumentException.class, () -> message.bodySections(expected));
+    }
+
+    @Test
+    public void testAddAdditionalBodySectionsValidatesDefaultFormat() {
+        ClientMessage<Object> message = ClientMessage.create();
+
+        message.body("string");  // AmqpValue
+
+        assertThrows(IllegalArgumentException.class, () -> message.addBodySection(new Data(new byte[] { 0 })));
+    }
+
+    @Test
+    public void testSetMultipleBodySectionsWithNonDefaultMessageFormat() {
+        ClientMessage<Object> message = ClientMessage.create().messageFormat(1);
+
+        List<Section<?>> expected = new ArrayList<>();
+        expected.add(new Data(new byte[] { 0 }));
+        expected.add(new AmqpValue<String>("test"));
+        expected.add(new AmqpSequence<>(new ArrayList<>()));
+
+        assertDoesNotThrow(() -> message.bodySections(expected));
+
+        final AtomicInteger count = new AtomicInteger();
+        message.bodySections().forEach(value -> {
+            assertEquals(expected.get(count.get()), value);
+            count.incrementAndGet();
+        });
+
+        assertEquals(expected.size(), count.get());
+    }
+
+    @Test
+    public void testAddMultipleBodySectionsWithNonDefaultMessageFormat() {
+        ClientMessage<Object> message = ClientMessage.create().messageFormat(1);
+
+        List<Section<?>> expected = new ArrayList<>();
+        expected.add(new Data(new byte[] { 0 }));
+        expected.add(new AmqpValue<String>("test"));
+        expected.add(new AmqpSequence<>(new ArrayList<>()));
+
+        assertDoesNotThrow(() -> message.bodySections(expected));
 
         final AtomicInteger count = new AtomicInteger();
         message.bodySections().forEach(value -> {

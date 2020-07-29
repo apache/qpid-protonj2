@@ -39,6 +39,7 @@ import org.apache.qpid.protonj2.types.messaging.Header;
 import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
 import org.apache.qpid.protonj2.types.messaging.Properties;
 import org.apache.qpid.protonj2.types.messaging.Section;
+import org.apache.qpid.protonj2.types.messaging.Section.SectionType;
 
 public class ClientMessage<E> implements AdvancedMessage<E> {
 
@@ -740,9 +741,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
             }
         }
 
-        // TODO - Validate body sections adhere to message format zero
-
-        bodySections.add(bodySection);
+        bodySections.add(validateBodySections(messageFormat, bodySections, bodySection));
 
         return this;
     }
@@ -750,9 +749,11 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     @Override
     public ClientMessage<E> bodySections(Collection<Section<?>> sections) {
         if (sections == null || sections.isEmpty()) {
-            this.bodySections = null;
+            bodySections = null;
         } else {
-            this.bodySections = new ArrayList<>(sections);
+            List<Section<?>> result = new ArrayList<>(sections.size());
+            sections.forEach(section -> result.add(validateBodySections(messageFormat, result, section)));
+            bodySections = result;
         }
 
         return this;
@@ -792,5 +793,31 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
         body = null;
 
         return this;
+    }
+
+    private static Section<?> validateBodySections(int messageFormat, List<Section<?>> target, Section<?> section) {
+        if (messageFormat == 0 && target != null && !target.isEmpty()) {
+            switch (section.getType()) {
+                case AmqpSequence:
+                    if (target.get(0).getType() != SectionType.AmqpSequence) {
+                        throw new IllegalArgumentException(
+                            "Message Format violation: AmqpSequence expected but got type: " + section.getType());
+                    }
+                    break;
+                case AmqpValue:
+                    throw new IllegalArgumentException(
+                        "Message Format violation: Only one AmqpValue section allowed");
+                case Data:
+                    if (target.get(0).getType() != SectionType.Data) {
+                        throw new IllegalArgumentException(
+                            "Message Format violation: Data Section expected but got type: " + section.getType());
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return section;
     }
 }
