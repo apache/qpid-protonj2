@@ -227,6 +227,19 @@ public interface Message<E> {
      */
     Object messageId();
 
+    /**
+     * Sets the message Id value to assign to this {@link Message}.
+     * <p>
+     * The message Id, if set, uniquely identifies a message within the message system. The message
+     * producer is usually responsible for setting the message-id in such a way that it is assured to
+     * be globally unique. A remote peer MAY discard a message as a duplicate if the value of the
+     * message-id matches that of a previously received message sent to the same node.
+     *
+     * @param messageId
+     *      The message Id value to assign to this {@link Message} instance.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> messageId(Object messageId);
 
     /**
@@ -234,6 +247,17 @@ public interface Message<E> {
      */
     byte[] userId();
 
+    /**
+     * Sets the user Id value to assign to this {@link Message}.
+     * <p>
+     * The identity of the user responsible for producing the message. The client sets this value,
+     * and it MAY be authenticated by intermediaries.
+     *
+     * @param userId
+     *      The user Id value to assign to this {@link Message} instance.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> userId(byte[] userId);
 
     /**
@@ -241,6 +265,17 @@ public interface Message<E> {
      */
     String to();
 
+    /**
+     * Sets the 'to' value to assign to this {@link Message}.
+     * <p>
+     * The to field identifies the node that is the intended destination of the message. On any given
+     * transfer this might not be the node at the receiving end of the link.
+     *
+     * @param to
+     *      The 'to' node value to assign to this {@link Message} instance.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> to(String to);
 
     /**
@@ -248,6 +283,16 @@ public interface Message<E> {
      */
     String subject();
 
+    /**
+     * Sets the subject value to assign to this {@link Message}.
+     * <p>
+     * A common field for summary information about the message content and purpose.
+     *
+     * @param subject
+     *      The subject node value to assign to this {@link Message} instance.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> subject(String subject);
 
     /**
@@ -255,6 +300,16 @@ public interface Message<E> {
      */
     String replyTo();
 
+    /**
+     * Sets the replyTo value to assign to this {@link Message}.
+     * <p>
+     * The address of the node to send replies to.
+     *
+     * @param replyTo
+     *      The replyTo node value to assign to this {@link Message} instance.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> replyTo(String replyTo);
 
     /**
@@ -262,6 +317,16 @@ public interface Message<E> {
      */
     Object correlationId();
 
+    /**
+     * Sets the correlationId value to assign to this {@link Message}.
+     * <p>
+     * This is a client-specific id that can be used to mark or identify messages between clients.
+     *
+     * @param correlationId
+     *      The correlationId value to assign to this {@link Message} instance.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> correlationId(Object correlationId);
 
     /**
@@ -269,6 +334,23 @@ public interface Message<E> {
      */
     String contentType();
 
+    /**
+     * Sets the contentType value to assign to this {@link Message}.
+     * <p>
+     * The RFC-2046 MIME type for the message's application-data section (body). As per RFC-2046 this can
+     * contain a charset parameter defining the character encoding used: e.g., 'text/plain; charset="utf-8"'.
+     * <p>
+     * For clarity, as per section 7.2.1 of RFC-2616, where the content type is unknown the content-type
+     * SHOULD NOT be set. This allows the recipient the opportunity to determine the actual type. Where the
+     * section is known to be truly opaque binary data, the content-type SHOULD be set to application/octet-stream.
+     * <p>
+     * When using an application-data section with a section code other than data, content-type SHOULD NOT be set.
+     *
+     * @param contentType
+     *      The contentType value to assign to this {@link Message} instance.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> contentType(String contentType);
 
     /**
@@ -276,6 +358,37 @@ public interface Message<E> {
      */
     String contentEncoding();
 
+    /**
+     * Sets the contentEncoding value to assign to this {@link Message}.
+     * <p>
+     * The content-encoding property is used as a modifier to the content-type. When present, its value
+     * indicates what additional content encodings have been applied to the application-data, and thus what
+     * decoding mechanisms need to be applied in order to obtain the media-type referenced by the content-type
+     * header field.
+     * <p>
+     * Content-encoding is primarily used to allow a document to be compressed without losing the identity of
+     * its underlying content type.
+     * <p>
+     * Content-encodings are to be interpreted as per section 3.5 of RFC 2616 [RFC2616]. Valid content-encodings
+     * are registered at IANA [IANAHTTPPARAMS].
+     * <p>
+     * The content-encoding MUST NOT be set when the application-data section is other than data. The binary
+     * representation of all other application-data section types is defined completely in terms of the AMQP
+     * type system.
+     * <p>
+     * Implementations MUST NOT use the identity encoding. Instead, implementations SHOULD NOT set this property.
+     * Implementations SHOULD NOT use the compress encoding, except as to remain compatible with messages originally
+     * sent with other protocols, e.g. HTTP or SMTP.
+     * <p>
+     * Implementations SHOULD NOT specify multiple content-encoding values except as to be compatible with messages
+     * originally sent with other protocols, e.g. HTTP or SMTP.
+     * <p>
+     *
+     * @param contentEncoding
+     *      The contentEncoding value to assign to this {@link Message} instance.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<?> contentEncoding(String contentEncoding);
 
     /**
@@ -283,6 +396,16 @@ public interface Message<E> {
      */
     long absoluteExpiryTime();
 
+    /**
+     * Sets the absolute expiration time value to assign to this {@link Message}.
+     * <p>
+     * An absolute time when this message is considered to be expired.
+     *
+     * @param expiryTime
+     *      The absolute expiration time value to assign to this {@link Message} instance.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> absoluteExpiryTime(long expiryTime);
 
     /**
@@ -290,6 +413,16 @@ public interface Message<E> {
      */
     long creationTime();
 
+    /**
+     * Sets the creation time value to assign to this {@link Message}.
+     * <p>
+     * An absolute time when this message was created.
+     *
+     * @param createTime
+     *      The creation time value to assign to this {@link Message} instance.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> creationTime(long createTime);
 
     /**
@@ -297,6 +430,16 @@ public interface Message<E> {
      */
     String groupId();
 
+    /**
+     * Sets the groupId value to assign to this {@link Message}.
+     * <p>
+     * Identifies the group the message belongs to.
+     *
+     * @param groupId
+     *      The groupId value to assign to this {@link Message} instance.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> groupId(String groupId);
 
     /**
@@ -304,13 +447,34 @@ public interface Message<E> {
      */
     int groupSequence();
 
+    /**
+     * Sets the group sequence value to assign to this {@link Message}.
+     * <p>
+     * The relative position of this message within its group.
+     *
+     * @param groupSequence
+     *      The group sequence to assign to this {@link Message} instance.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> groupSequence(int groupSequence);
 
     /**
-     * @return the client-specific id that is used so that client can send replies to this message to a specific group.
+     * @return the client-specific id used so that client can send replies to this message to a specific group.
      */
     String replyToGroupId();
 
+    /**
+     * Sets the replyTo group Id value to assign to this {@link Message}.
+     * <p>
+     * This is a client-specific id that is used so that client can send replies to this message
+     * to a specific group.
+     *
+     * @param replyToGroupId
+     *      The replyTo group Id to assign to this {@link Message} instance.
+     *
+     * @return this {@link Message} instance.
+     */
     Message<E> replyToGroupId(String replyToGroupId);
 
     //----- Delivery Annotations
