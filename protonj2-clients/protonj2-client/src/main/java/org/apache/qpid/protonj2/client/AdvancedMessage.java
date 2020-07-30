@@ -190,14 +190,59 @@ public interface AdvancedMessage<E> extends Message<E> {
      */
     AdvancedMessage<E> messageFormat(int messageFormat);
 
+    /**
+     * Adds the given {@link Section} to the internal collection of sections that will be sent
+     * to the remote peer when this message is encoded.  If a previous section was add by a call
+     * to the {@link Message#body(Object)} method it should be retained as the first element of
+     * the running list of body sections contained in this message.
+     * <p>
+     * The implementation should make an attempt to validate that sections added are valid for
+     * the message format that is assigned when they are added.
+     *
+     * @param bodySection
+     *      The {@link Section} instance to append to the internal collection.
+     *
+     * @return this {@link AdvancedMessage} instance.
+     */
     AdvancedMessage<E> addBodySection(Section<?> bodySection);
 
+    /**
+     * Sets the body {@link Section} instances to use when encoding this message.  The value
+     * given replaces any existing sections assigned to this message through the {@link Message#body(Object)}
+     * or {@link AdvancedMessage#addBodySection(Section)} methods.  Calling this method with a null
+     * or empty collection is equivalent to calling the {@link #clearBodySections()} method.
+     *
+     * @param sections
+     *      The {@link Collection} of {@link Section} instance to assign this message.
+     *
+     * @return this {@link AdvancedMessage} instance.
+     */
     AdvancedMessage<E> bodySections(Collection<Section<?>> sections);
 
+    /**
+     * Create and return a {@link Collection} that contains the {@link Section} instances currently
+     * assigned to this message.  Changes to the returned Collection are not reflected in the Message.
+     *
+     * @return a {@link Collection} that is a copy of the current sections assigned to this message.
+     */
     Collection<Section<?>> bodySections();
 
+    /**
+     * Performs the given action for each body {@link Section} of the {@link AdvancedMessage} until all
+     * sections have been presented to the given {@link Consumer} or the consumer throws an exception.
+     *
+     * @param consumer
+     *      the {@link Consumer} that will operate on each of the body sections in this message.
+     *
+     * @return this {@link AdvancedMessage} instance.
+     */
     AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer);
 
+    /**
+     * Clears all current body {@link Section} elements from the {@link AdvancedMessage}.
+     *
+     * @return this {@link AdvancedMessage} instance.
+     */
     AdvancedMessage<E> clearBodySections();
 
     /**
