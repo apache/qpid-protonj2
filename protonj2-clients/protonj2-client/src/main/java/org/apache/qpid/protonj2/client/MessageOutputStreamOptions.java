@@ -38,7 +38,8 @@ public class MessageOutputStreamOptions {
     private ApplicationProperties applicationProperties;
     private Footer footer;
     private int messageFormat;
-    private int outputLimit;
+    private int streamSize;
+    private int streamBufferLimit;
 
     private BiFunction<Footer, Integer, Footer> footerFinalizationHandler;
 
@@ -78,7 +79,8 @@ public class MessageOutputStreamOptions {
         other.applicationProperties(applicationProperties != null ? applicationProperties.copy() : null);
         other.footer(footer != null ? footer.copy() : null);
         other.messageFormat(messageFormat);
-        other.outputLimit(outputLimit);
+        other.streamSize(streamSize);
+        other.streamBufferLimit(streamBufferLimit);
 
         return this;
     }
@@ -239,31 +241,48 @@ public class MessageOutputStreamOptions {
         return this;
     }
 
-    // TODO: Better name for this
-    //   writeLimit
-    //   expectedSize
-    //   streamMaximum
-    //   maximumWriteSize
-
     /**
-     * @return the configured output size limit for associated {@link MessageOutputStream}
+     * @return the configured stream size limit for associated {@link MessageOutputStream}
      */
-    public int outputLimit() {
-        return outputLimit;
+    public int streamSize() {
+        return streamSize;
     }
 
     /**
-     * Sets the overall output limit for this associated {@link MessageOutputStream} that
-     * the options are applied to.
+     * Sets the overall stream size for this associated {@link MessageOutputStream} that the
+     * options are applied to.
      *
-     * @param outputLimit
+     * @param streamSize
      *
      * @return this {@link MessageOutputStreamOptions} instance.
      */
-    public MessageOutputStreamOptions outputLimit(int outputLimit) {
-        this.outputLimit = outputLimit;
+    public MessageOutputStreamOptions streamSize(int streamSize) {
+        this.streamSize = streamSize;
         return this;
     }
+
+   /**
+    * @return the configured stream write buffering limit for the associated {@link MessageOutputStream}
+    */
+   public int streamBufferLimit() {
+       return streamBufferLimit;
+   }
+
+   /**
+    * Sets the overall number of bytes the stream will buffer before automatically flushing the
+    * currently buffered bytes.  By default the stream implementation chooses a value for this
+    * buffer limited based on the negotiated max AMQP frame size from the remote
+    *
+    * @param streamBufferLimit
+    *       The number of bytes that can be written before the stream performs a flush operation.
+    *
+    * @return this {@link MessageOutputStreamOptions} instance.
+    */
+   public MessageOutputStreamOptions streamBufferLimit(int streamBufferLimit) {
+       this.streamBufferLimit = streamBufferLimit;
+       return this;
+   }
+
 
     /**
      * @return the configured footer finalization handler to call when all streamed bytes have been written.

@@ -47,16 +47,18 @@ public class OutputStreamSender {
             Connection connection = client.connect(brokerHost, brokerPort);
             Sender sender = connection.openSender(address);
 
+            final byte[] buffer = new byte[] { 0, 1, 2, 3, 4 };
+
             // Create an OutputStream that will send an AMQP Header tagged as being durable
             // once the first write is flushed, the remote will retain the completed message
-            // once all bytes are written and the stream is closed.
+            // once all bytes are written and the stream is closed.  Because the stream size
+            // is given up front the encoded Message body will consist of one Data section.
             Header header = new Header().setDurable(true);
-            MessageOutputStreamOptions streamOptions = new MessageOutputStreamOptions().header(header);
+            MessageOutputStreamOptions streamOptions = new MessageOutputStreamOptions().header(header).streamSize(buffer.length);
             MessageOutputStream output = sender.outputStream(streamOptions);
 
             // Simple example flushes on every byte, a real world usage would likely
             // be pulling in data in batches and flushing on some fixed boundary.
-            byte[] buffer = new byte[] { 0, 1, 2, 3, 4 };
             for(byte value : buffer) {
                 output.write(value);
                 output.flush();

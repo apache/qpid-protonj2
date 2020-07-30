@@ -206,7 +206,7 @@ class MessageOutputStreamTest {
             header.setPriority((byte) 1);
             header.setDeliveryCount(1);
 
-            MessageOutputStreamOptions options = new MessageOutputStreamOptions().header(header).outputLimit(8192);
+            MessageOutputStreamOptions options = new MessageOutputStreamOptions().header(header).streamSize(8192);
             MessageOutputStream stream = sender.outputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);

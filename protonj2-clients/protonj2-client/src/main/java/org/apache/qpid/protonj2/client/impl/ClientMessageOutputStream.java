@@ -42,7 +42,9 @@ import org.apache.qpid.protonj2.types.messaging.Section;
  */
 public class ClientMessageOutputStream extends MessageOutputStream {
 
-    private final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+    private final int MIN_BUFFER_SIZE_LIMIT = 256;
+
+    private final ProtonBuffer buffer;
     private final ClientSender sender;
     private final AtomicBoolean closed = new AtomicBoolean();
     private final MessageOutputStreamMessage message;
@@ -54,6 +56,15 @@ public class ClientMessageOutputStream extends MessageOutputStream {
         super(options);
 
         this.sender = sender;
+
+        final int bufferCapacity;
+        if (options.streamBufferLimit() > 0) {
+            bufferCapacity = Math.max(MIN_BUFFER_SIZE_LIMIT, options.streamBufferLimit());
+        } else {
+            bufferCapacity = Math.max(MIN_BUFFER_SIZE_LIMIT, (int) sender.session().connection().getProtonConnection().getMaxFrameSize());
+        }
+
+        this.buffer = ProtonByteBufferAllocator.DEFAULT.allocate(bufferCapacity, bufferCapacity);
 
         // Populate the message with configured sections
         message = new MessageOutputStreamMessage();
@@ -69,23 +80,40 @@ public class ClientMessageOutputStream extends MessageOutputStream {
         checkClosed();
         checkOutputLimitReached(1);
         buffer.writeByte(value);
+        if (!buffer.isWritable()) {
+            flush();
+        }
         bytesWritten++;
     }
 
     @Override
     public void write(byte bytes[]) throws IOException {
-        checkClosed();
-        checkOutputLimitReached(bytes.length);
-        buffer.writeBytes(bytes);
-        bytesWritten += bytes.length;
+        write(bytes, 0, bytes.length);
     }
 
     @Override
     public void write(byte bytes[], int offset, int length) throws IOException {
         checkClosed();
         checkOutputLimitReached(length);
-        buffer.writeBytes(bytes, offset, length);
-        bytesWritten += length;
+        if (buffer.getWritableBytes() >= length) {
+            buffer.writeBytes(bytes, offset, length);
+            bytesWritten += length;
+            if (!buffer.isWritable()) {
+                flush();
+            }
+        } else {
+            int written = 0;
+
+            while (length > 0) {
+                int toWrite = Math.min(length, buffer.getWritableBytes());
+                bytesWritten += toWrite;
+                buffer.writeBytes(bytes, offset + written, toWrite);
+                if (!buffer.isWritable()) {
+                    flush();
+                }
+                length -= toWrite;
+            }
+        }
     }
 
     /**
@@ -105,14 +133,14 @@ public class ClientMessageOutputStream extends MessageOutputStream {
         checkClosed();
 
         if (buffer.getReadableBytes() > 0) {
-            doFlushPending(bytesWritten == options.outputLimit(), false);
+            doFlushPending(bytesWritten == options.streamSize(), false);
         }
     }
 
     @Override
     public void close() throws IOException {
         if (closed.compareAndSet(false, true) && sendCount > 0) {
-            if (options.outputLimit() > 0 && options.outputLimit() != bytesWritten) {
+            if (options.streamSize() > 0 && options.streamSize() != bytesWritten) {
                 // Limit was set but user did not write all of it so we must abort
                 doFlushPending(false, true);
             } else {
@@ -125,7 +153,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
     //----- Internal implementation
 
     private void checkOutputLimitReached(int writeSize) throws IOException {
-        final int outputLimit = options.outputLimit();
+        final int outputLimit = options.streamSize();
 
         if (message.complete()) {
             throw new IOException("Cannot write to an already completed message output stream");
@@ -198,7 +226,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
             // write the follow on bytes as a raw buffer to complete the encoding of the
             // initial constraints we encoded into the Binary value contained within the
             // Data section.
-            if (options.outputLimit() > 0) {
+            if (options.streamSize() > 0) {
                 if (sendCount > 0) {
                     encodedMessage.append(buffer.duplicate());
                 } else {
@@ -208,7 +236,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
                     body.writeByte(EncodingCodes.SMALLULONG);
                     body.writeByte(Data.DESCRIPTOR_CODE.byteValue());
                     body.writeByte(EncodingCodes.VBIN32);
-                    body.writeInt(options.outputLimit());
+                    body.writeInt(options.streamSize());
 
                     encodedMessage.append(body);
                     encodedMessage.append(buffer.duplicate());
