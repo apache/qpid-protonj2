@@ -31,6 +31,7 @@ import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.HeaderMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferPayloadCompositeMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedDataMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedPartialDataSectionMatcher;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.Header;
 import org.junit.jupiter.api.Test;
@@ -485,6 +486,8 @@ class MessageOutputStreamTest {
             Session session = connection.openSession();
             Sender sender = session.openSender("test-queue").openFuture().get();
 
+            final byte[] payload = new byte[] { 0, 1, 2, 3 };
+
             // Populate all Header values
             Header header = new Header();
             header.setDurable(true);
@@ -498,8 +501,10 @@ class MessageOutputStreamTest {
             headerMatcher.withDurable(true);
             headerMatcher.withPriority((byte) 1);
             headerMatcher.withDeliveryCount(1);
+            EncodedPartialDataSectionMatcher partialDataMatcher = new EncodedPartialDataSectionMatcher(8192, payload);
             TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
             payloadMatcher.setHeadersMatcher(headerMatcher);
+            payloadMatcher.setMessageContentMatcher(partialDataMatcher);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectTransfer().withPayload(payloadMatcher);
@@ -507,7 +512,7 @@ class MessageOutputStreamTest {
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
-            stream.write(new byte[] { 0, 1, 2, 3 });
+            stream.write(payload);
             stream.flush();
 
             // Stream should abort the send now since the configured size wasn't sent.
