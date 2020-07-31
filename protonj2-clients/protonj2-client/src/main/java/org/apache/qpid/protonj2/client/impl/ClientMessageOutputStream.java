@@ -42,7 +42,11 @@ import org.apache.qpid.protonj2.types.messaging.Section;
  */
 public class ClientMessageOutputStream extends MessageOutputStream {
 
-    private final int MIN_BUFFER_SIZE_LIMIT = 256;
+    /**
+     * Defines the default minimum size that the {@link ClientMessageOutputStream} will allocate
+     * which drives the interval of stream auto flushing of written data.
+     */
+    public static final int MIN_BUFFER_SIZE_LIMIT = 256;
 
     private final ProtonBuffer buffer;
     private final ClientSender sender;
@@ -102,16 +106,16 @@ public class ClientMessageOutputStream extends MessageOutputStream {
                 flush();
             }
         } else {
-            int written = 0;
+            int remaining = length;
 
-            while (length > 0) {
+            while (remaining > 0) {
                 int toWrite = Math.min(length, buffer.getWritableBytes());
                 bytesWritten += toWrite;
-                buffer.writeBytes(bytes, offset + written, toWrite);
+                buffer.writeBytes(bytes, offset + (length - remaining), toWrite);
                 if (!buffer.isWritable()) {
                     flush();
                 }
-                length -= toWrite;
+                remaining -= toWrite;
             }
         }
     }
@@ -139,10 +143,14 @@ public class ClientMessageOutputStream extends MessageOutputStream {
 
     @Override
     public void close() throws IOException {
-        if (closed.compareAndSet(false, true) && sendCount > 0) {
+        if (closed.compareAndSet(false, true) && bytesWritten > 0) {
             if (options.streamSize() > 0 && options.streamSize() != bytesWritten) {
-                // Limit was set but user did not write all of it so we must abort
-                doFlushPending(false, true);
+                // Limit was set but user did not write all of it so we must abort unless
+                // we never actually flushed anything in which case we just ignore the
+                // previously written data and close normally.
+                if (sendCount > 0) {
+                    doFlushPending(false, true);
+                }
             } else {
                 // Limit not set or was set and user wrote that many bytes so we can complete.
                 doFlushPending(true, false);
@@ -226,25 +234,27 @@ public class ClientMessageOutputStream extends MessageOutputStream {
             // write the follow on bytes as a raw buffer to complete the encoding of the
             // initial constraints we encoded into the Binary value contained within the
             // Data section.
-            if (options.streamSize() > 0) {
-                if (sendCount > 0) {
-                    encodedMessage.append(buffer.duplicate());
+            if (buffer.isReadable()) {
+                if (options.streamSize() > 0) {
+                    if (sendCount > 0) {
+                        encodedMessage.append(buffer);
+                    } else {
+                        ProtonBuffer body = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+                        body.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+                        body.writeByte(EncodingCodes.SMALLULONG);
+                        body.writeByte(Data.DESCRIPTOR_CODE.byteValue());
+                        body.writeByte(EncodingCodes.VBIN32);
+                        body.writeInt(options.streamSize());
+
+                        encodedMessage.append(body);
+                        encodedMessage.append(buffer);
+                    }
                 } else {
-                    ProtonBuffer body = ProtonByteBufferAllocator.DEFAULT.allocate();
-
-                    body.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-                    body.writeByte(EncodingCodes.SMALLULONG);
-                    body.writeByte(Data.DESCRIPTOR_CODE.byteValue());
-                    body.writeByte(EncodingCodes.VBIN32);
-                    body.writeInt(options.streamSize());
-
-                    encodedMessage.append(body);
-                    encodedMessage.append(buffer.duplicate());
+                    ProtonBuffer dataBuffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+                    ClientMessageSupport.encodeSection(new Data(new Binary(buffer)), dataBuffer);
+                    encodedMessage.append(dataBuffer);
                 }
-            } else {
-                ProtonBuffer dataBuffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-                ClientMessageSupport.encodeSection(new Data(new Binary(buffer.duplicate())), dataBuffer);
-                encodedMessage.append(dataBuffer);
             }
 
             if (message.complete()) {
@@ -262,7 +272,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
             }
 
             // Reset internal write buffer for next rounds of writes.
-            buffer.setWriteIndex(0);
+            buffer.setIndex(0, 0);
 
             sendCount++;
 
