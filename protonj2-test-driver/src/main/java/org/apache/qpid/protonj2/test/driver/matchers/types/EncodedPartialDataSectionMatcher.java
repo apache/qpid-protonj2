@@ -33,8 +33,10 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
     private static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:data:binary");
     private static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000075L);
 
+    private final boolean expectDataSectionPreamble;
     private final ByteBuf expectedValue;
     private final int expectedEncodedSize;
+    private boolean expectTrailingBytes;
     private String decodingErrorDescription;
     private boolean unexpectedTrailingBytes;
 
@@ -47,7 +49,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
      *        {@link org.apache.qpid.proton.amqp.messaging.Data}
      */
     public EncodedPartialDataSectionMatcher(int expectedEncodedSize, byte[] expectedValue) {
-        this(expectedEncodedSize, Unpooled.wrappedBuffer(expectedValue));
+        this(expectedEncodedSize, Unpooled.wrappedBuffer(expectedValue), true);
     }
 
     /**
@@ -59,7 +61,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
      *        {@link org.apache.qpid.proton.amqp.messaging.Data}
      */
     public EncodedPartialDataSectionMatcher(int expectedEncodedSize, Binary expectedValue) {
-        this(expectedEncodedSize, Unpooled.wrappedBuffer(expectedValue.asByteBuffer()));
+        this(expectedEncodedSize, Unpooled.wrappedBuffer(expectedValue.asByteBuffer()), true);
     }
 
     /**
@@ -71,8 +73,60 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
      *        {@link org.apache.qpid.proton.amqp.messaging.Data}
      */
     public EncodedPartialDataSectionMatcher(int expectedEncodedSize, ByteBuf expectedValue) {
+        this(expectedEncodedSize, expectedValue, true);
+    }
+
+    /**
+     * @param expectedValue
+     *        the value that is expected to be IN the received
+     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     */
+    public EncodedPartialDataSectionMatcher(byte[] expectedValue) {
+        this(-1, Unpooled.wrappedBuffer(expectedValue), false);
+    }
+
+    /**
+     * @param expectedValue
+     *        the value that is expected to be IN the received
+     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     */
+    public EncodedPartialDataSectionMatcher(Binary expectedValue) {
+        this(-1, Unpooled.wrappedBuffer(expectedValue.asByteBuffer()), false);
+    }
+
+    /**
+     * @param expectedValue
+     *        the value that is expected to be IN the received
+     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     */
+    public EncodedPartialDataSectionMatcher(ByteBuf expectedValue) {
+        this(-1, expectedValue, false);
+    }
+
+    /**
+     * @param expectedEncodedSize
+     *        the actual encoded size the Data section binary should eventually
+     *        receive once all split frame transfers have arrived.
+     * @param expectedValue
+     *        the value that is expected to be IN the received
+     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     * @param expectDataSectionPreamble
+     *        should the matcher check for the Data and Binary section encoding
+     *        meta-data or only match the payload to the given expected value.
+     */
+    protected EncodedPartialDataSectionMatcher(int expectedEncodedSize, ByteBuf expectedValue, boolean expectDataSectionPreamble) {
         this.expectedValue = expectedValue;
         this.expectedEncodedSize = expectedEncodedSize;
+        this.expectDataSectionPreamble = expectDataSectionPreamble;
+    }
+
+    public boolean isTrailingBytesExpected() {
+        return expectTrailingBytes;
+    }
+
+    public EncodedPartialDataSectionMatcher setExpectTrailingBytes(boolean expectTrailingBytes) {
+        this.expectTrailingBytes = expectTrailingBytes;
+        return this;
     }
 
     protected Object getExpectedValue() {
@@ -81,29 +135,31 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
 
     @Override
     protected boolean matchesSafely(ByteBuf receivedBinary) {
-        Object descriptor = readDescribedTypeEncoding(receivedBinary);
+        if (expectDataSectionPreamble) {
+            Object descriptor = readDescribedTypeEncoding(receivedBinary);
 
-        if (!(DESCRIPTOR_CODE.equals(descriptor) || DESCRIPTOR_SYMBOL.equals(descriptor))) {
-            return false;
-        }
+            if (!(DESCRIPTOR_CODE.equals(descriptor) || DESCRIPTOR_SYMBOL.equals(descriptor))) {
+                return false;
+            }
 
-        // Should be a Binary AMQP type with a length value and possibly some bytes
-        byte encodingCode = receivedBinary.readByte();
-        int binaryEncodedSize = -1;
+            // Should be a Binary AMQP type with a length value and possibly some bytes
+            byte encodingCode = receivedBinary.readByte();
+            int binaryEncodedSize = -1;
 
-        if (encodingCode == EncodingCodes.VBIN8) {
-            binaryEncodedSize = receivedBinary.readByte() & 0xFF;
-        } else if (encodingCode == EncodingCodes.VBIN32) {
-            binaryEncodedSize = receivedBinary.readInt();
-        } else {
-            decodingErrorDescription = "Expceted to read a Binary Type but read encoding code: " + encodingCode;
-            return false;
-        }
+            if (encodingCode == EncodingCodes.VBIN8) {
+                binaryEncodedSize = receivedBinary.readByte() & 0xFF;
+            } else if (encodingCode == EncodingCodes.VBIN32) {
+                binaryEncodedSize = receivedBinary.readInt();
+            } else {
+                decodingErrorDescription = "Expceted to read a Binary Type but read encoding code: " + encodingCode;
+                return false;
+            }
 
-        if (binaryEncodedSize != expectedEncodedSize) {
-            decodingErrorDescription = "Expceted encoded Binary to indicate size of: " + expectedEncodedSize + ", " +
-                                       "but read an encoded size of: " + binaryEncodedSize;
-            return false;
+            if (binaryEncodedSize != expectedEncodedSize) {
+                decodingErrorDescription = "Expceted encoded Binary to indicate size of: " + expectedEncodedSize + ", " +
+                                           "but read an encoded size of: " + binaryEncodedSize;
+                return false;
+            }
         }
 
         if (expectedValue != null) {
@@ -114,7 +170,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
             }
         }
 
-        if (receivedBinary.isReadable()) {
+        if (receivedBinary.isReadable() && !isTrailingBytesExpected()) {
             unexpectedTrailingBytes = true;
             return false;
         } else {
