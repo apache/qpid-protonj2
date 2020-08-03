@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.client.impl;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
@@ -24,6 +25,7 @@ import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.protonj2.client.MessageOutputStream;
 import org.apache.qpid.protonj2.client.MessageOutputStreamOptions;
+import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.types.Binary;
@@ -143,7 +145,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
 
     @Override
     public void close() throws IOException {
-        if (closed.compareAndSet(false, true) && bytesWritten > 0) {
+        if (closed.compareAndSet(false, true) && bytesWritten > 0 && !message.complete()) {
             if (options.streamSize() > 0 && options.streamSize() != bytesWritten) {
                 // Limit was set but user did not write all of it so we must abort unless
                 // we never actually flushed anything in which case we just ignore the
@@ -190,8 +192,12 @@ public class ClientMessageOutputStream extends MessageOutputStream {
         }
 
         try {
-            sender.send(message);
-        } catch (ClientException e) {
+            Tracker tracker = sender.send(message);
+            if (message.complete()) {
+                tracker.acknowledgeFuture().get();
+                tracker.settle();
+            }
+        } catch (ClientException | InterruptedException | ExecutionException e) {
             new IOException(e);
         }
     }

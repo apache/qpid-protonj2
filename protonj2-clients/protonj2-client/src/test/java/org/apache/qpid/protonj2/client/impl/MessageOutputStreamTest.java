@@ -524,4 +524,83 @@ class MessageOutputStreamTest {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    void testCompleteStreamClosureCausesTransferCompleted() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(3).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Sender sender = session.openSender("test-queue").openFuture().get();
+
+            final byte[] payload1 = new byte[] { 0, 1, 2, 3, 4, 5 };
+            final byte[] payload2 = new byte[] { 6, 7, 8, 9, 10, 11, 12, 13, 14 };
+            final byte[] payload3 = new byte[] { 15 };
+
+            final int payloadSize = payload1.length + payload2.length + payload3.length;
+
+            // Populate all Header values
+            Header header = new Header();
+            header.setDurable(true);
+            header.setPriority((byte) 1);
+            header.setDeliveryCount(1);
+
+            MessageOutputStreamOptions options = new MessageOutputStreamOptions().header(header).streamSize(payloadSize);
+            MessageOutputStream stream = sender.outputStream(options);
+
+            HeaderMatcher headerMatcher = new HeaderMatcher(true);
+            headerMatcher.withDurable(true);
+            headerMatcher.withPriority((byte) 1);
+            headerMatcher.withDeliveryCount(1);
+            EncodedPartialDataSectionMatcher partialDataMatcher = new EncodedPartialDataSectionMatcher(payloadSize, payload1);
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.setHeadersMatcher(headerMatcher);
+            payloadMatcher.setMessageContentMatcher(partialDataMatcher);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(payloadMatcher);
+
+            stream.write(payload1);
+            stream.flush();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            partialDataMatcher = new EncodedPartialDataSectionMatcher(payload2);
+            payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.setMessageContentMatcher(partialDataMatcher);
+            peer.expectTransfer().withMore(true).withPayload(partialDataMatcher);
+
+            stream.write(payload2);
+            stream.flush();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            partialDataMatcher = new EncodedPartialDataSectionMatcher(payload3);
+            payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.setMessageContentMatcher(partialDataMatcher);
+            peer.expectTransfer().withMore(false).withPayload(partialDataMatcher).accept();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            stream.write(payload3);
+            stream.flush();
+
+            // Stream should already be completed so no additional frames should be written.
+            stream.close();
+
+            sender.close().get();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }
