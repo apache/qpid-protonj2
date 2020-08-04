@@ -26,7 +26,7 @@ import java.io.OutputStream;
  *
  * <pre>
  * Receiver receiver = session.receiver("address");
- * InputStream inputStream = receiver.inputStream(new MessageOutputStreamOptions());
+ * InputStream inputStream = receiver.inputStream(new RawInputStreamOptions());
  * ...
  * inputStream.read(buffer);
  * ...
@@ -35,15 +35,15 @@ import java.io.OutputStream;
  *
  * </pre>
  */
-public abstract class MessageInputStream extends InputStream {
+public abstract class RawInputStream extends InputStream {
 
-    private final MessageInputStreamOptions options;
+    private final RawInputStreamOptions options;
 
-    public MessageInputStream(MessageInputStreamOptions options) {
+    public RawInputStream(RawInputStreamOptions options) {
         this.options = options;
     }
 
-    public MessageInputStreamOptions options() {
+    public RawInputStreamOptions options() {
         return options;
     }
 

@@ -581,8 +581,6 @@ public class ExternalMessage<E> implements Message<E> {
 
         private final List<Section<?>> bodySections = new ArrayList<>();
         private int messageFormat;
-        private boolean complete = true;
-        private boolean aborted;
 
         /**
          * Create a wrapper that exposes {@link ExternalMessage} as an {@link AdvancedMessage}
@@ -725,28 +723,6 @@ public class ExternalMessage<E> implements Message<E> {
             message.body = null;
 
             return this;
-        }
-
-        @Override
-        public AdvancedMessage<E> abort() {
-            this.aborted = true;
-            return this;
-        }
-
-        @Override
-        public boolean aborted() {
-            return aborted;
-        }
-
-        @Override
-        public AdvancedMessage<E> complete(boolean complete) {
-            this.complete = complete;
-            return this;
-        }
-
-        @Override
-        public boolean complete() {
-            return complete;
         }
     }
 }

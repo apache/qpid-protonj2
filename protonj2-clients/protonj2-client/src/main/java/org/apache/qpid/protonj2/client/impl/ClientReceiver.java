@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.ErrorCondition;
+import org.apache.qpid.protonj2.client.ReceiveContext;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Session;
@@ -161,6 +162,11 @@ public class ClientReceiver implements Receiver {
         }
 
         return delivery;
+    }
+
+    @Override
+    public ReceiveContext newReceiveContext() {
+        return new ClientReceiveContext(this);
     }
 
     private void asyncReplenishCreditIfNeeded() {

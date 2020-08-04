@@ -169,7 +169,7 @@ class MessageOutputStreamTest {
             payloadMatcher.setMessageContentMatcher(dataMatcher);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectTransfer().withPayload(payloadMatcher).accept();
+            peer.expectTransfer().withPayload(payloadMatcher);
             peer.expectDetach().respond();
             peer.expectClose().respond();
 

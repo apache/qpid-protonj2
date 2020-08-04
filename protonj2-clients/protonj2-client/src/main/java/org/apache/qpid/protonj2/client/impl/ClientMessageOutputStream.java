@@ -25,7 +25,7 @@ import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.protonj2.client.MessageOutputStream;
 import org.apache.qpid.protonj2.client.MessageOutputStreamOptions;
-import org.apache.qpid.protonj2.client.Tracker;
+import org.apache.qpid.protonj2.client.SendContext;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.types.Binary;
@@ -52,6 +52,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
 
     private final ProtonBuffer buffer;
     private final ClientSender sender;
+    private final SendContext sendContext;
     private final AtomicBoolean closed = new AtomicBoolean();
     private final MessageOutputStreamMessage message;
 
@@ -62,6 +63,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
         super(options);
 
         this.sender = sender;
+        this.sendContext = sender.newSendContext();
 
         final int bufferCapacity;
         if (options.streamBufferLimit() > 0) {
@@ -78,7 +80,6 @@ public class ClientMessageOutputStream extends MessageOutputStream {
         message.deliveryAnnotations(options.deliveryAnnotations());
         message.messageAnnotations(options.messageAnnotations());
         message.properties(options.properties());
-        message.complete(false);
     }
 
     @Override
@@ -145,7 +146,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
 
     @Override
     public void close() throws IOException {
-        if (closed.compareAndSet(false, true) && bytesWritten > 0 && !message.complete()) {
+        if (closed.compareAndSet(false, true) && bytesWritten > 0 && !sendContext.completed()) {
             if (options.streamSize() > 0 && options.streamSize() != bytesWritten) {
                 // Limit was set but user did not write all of it so we must abort unless
                 // we never actually flushed anything in which case we just ignore the
@@ -165,7 +166,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
     private void checkOutputLimitReached(int writeSize) throws IOException {
         final int outputLimit = options.streamSize();
 
-        if (message.complete()) {
+        if (sendContext.completed()) {
             throw new IOException("Cannot write to an already completed message output stream");
         }
 
@@ -185,17 +186,17 @@ public class ClientMessageOutputStream extends MessageOutputStream {
     }
 
     private void doFlushPending(boolean complete, boolean abort) throws IOException {
-        if (!abort) {
-            message.complete(complete);
-        } else {
-            message.abort();
-        }
-
         try {
-            Tracker tracker = sender.send(message);
-            if (message.complete()) {
-                tracker.acknowledgeFuture().get();
-                tracker.settle();
+            if (abort) {
+                sendContext.abort();
+            } else {
+                if (complete) {
+                    sendContext.complete(message);
+                    sendContext.tracker().acknowledgeFuture().get();
+                    sendContext.tracker().settle();
+                } else {
+                    sendContext.send(message);
+                }
             }
         } catch (ClientException | InterruptedException | ExecutionException e) {
             new IOException(e);
@@ -263,7 +264,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
                 }
             }
 
-            if (message.complete()) {
+            if (sendContext.completed()) {
                 Footer footer = message.footer();
 
                 if (options.footerFinalizationEvent() != null) {

@@ -50,6 +50,10 @@ public class ClientTracker implements Tracker {
         this.acknowledged = sender.session().getFutureFactory().createFuture();
     }
 
+    OutgoingDelivery delivery() {
+        return delivery;
+    }
+
     @Override
     public Sender sender() {
         return sender;

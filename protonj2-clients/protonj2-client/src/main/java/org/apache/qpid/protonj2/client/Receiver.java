@@ -218,6 +218,15 @@ public interface Receiver {
     Delivery tryReceive() throws ClientException;
 
     /**
+     * Creates and returns a new {@link ReceiveContext} that can be used to read incoming {@link Delivery}
+     * data as it arrives regardless of the complete delivery date having been transmitted from the remote
+     * peer.
+     *
+     * @return a new {@link ReceiveContext} that can be used to read incoming {@link Delivery} data.
+     */
+    ReceiveContext newReceiveContext();
+
+    /**
      * Requests the remote to drain previously granted credit for this {@link Receiver} link.
      *
      * @return a {@link Future} that will be completed when the remote drains this {@link Receiver} link.

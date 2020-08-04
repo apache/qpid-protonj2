@@ -19,37 +19,37 @@ package org.apache.qpid.protonj2.client;
 /**
  * Options class that controls various aspects of a {@link MessageOutputStream} instance.
  */
-public class MessageInputStreamOptions {
+public class RawInputStreamOptions {
 
     /**
-     * Creates a {@link MessageInputStreamOptions} instance with default values for all options
+     * Creates a {@link RawInputStreamOptions} instance with default values for all options
      */
-    public MessageInputStreamOptions() {
+    public RawInputStreamOptions() {
     }
 
     /**
-     * Create a {@link MessageInputStreamOptions} instance that copies all configuration from the given
-     * {@link MessageInputStreamOptions} instance.
+     * Create a {@link RawInputStreamOptions} instance that copies all configuration from the given
+     * {@link RawInputStreamOptions} instance.
      *
      * @param options
      *      The options instance to copy all configuration values from.
      */
-    public MessageInputStreamOptions(MessageInputStreamOptions options) {
+    public RawInputStreamOptions(RawInputStreamOptions options) {
         if (options != null) {
             options.copyInto(this);
         }
     }
 
     /**
-     * Copy all options from this {@link MessageInputStreamOptions} instance into the instance
+     * Copy all options from this {@link RawInputStreamOptions} instance into the instance
      * provided.
      *
      * @param other
      *      the target of this copy operation.
      *
-     * @return this {@link MessageInputStreamOptions} class for chaining.
+     * @return this {@link RawInputStreamOptions} class for chaining.
      */
-    protected MessageInputStreamOptions copyInto(MessageInputStreamOptions other) {
+    protected RawInputStreamOptions copyInto(RawInputStreamOptions other) {
         return this;
     }
 }

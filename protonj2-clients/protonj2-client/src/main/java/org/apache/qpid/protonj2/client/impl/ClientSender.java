@@ -34,6 +34,9 @@ import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.MessageOutputStream;
 import org.apache.qpid.protonj2.client.MessageOutputStreamOptions;
+import org.apache.qpid.protonj2.client.RawOutputStream;
+import org.apache.qpid.protonj2.client.RawOutputStreamOptions;
+import org.apache.qpid.protonj2.client.SendContext;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Source;
@@ -210,8 +213,18 @@ public class ClientSender implements Sender {
     }
 
     @Override
+    public SendContext newSendContext() {
+        return new ClientSendContext(this);
+    }
+
+    @Override
     public MessageOutputStream outputStream(MessageOutputStreamOptions options) {
         return new ClientMessageOutputStream(this, options);
+    }
+
+    @Override
+    public RawOutputStream outputStream(RawOutputStreamOptions options) {
+        return new ClientRawOutputStream(this, options);
     }
 
     @Override
@@ -238,6 +251,20 @@ public class ClientSender implements Sender {
         checkClosed();
         executor.execute(() -> {
             delivery.disposition(state, settled);
+        });
+    }
+
+    void abort(OutgoingDelivery delivery) throws ClientException {
+        checkClosed();
+        executor.execute(() -> {
+            delivery.abort();
+        });
+    }
+
+    void complete(OutgoingDelivery delivery) throws ClientException {
+        checkClosed();
+        executor.execute(() -> {
+            delivery.streamBytes(null, true);
         });
     }
 
@@ -388,7 +415,7 @@ public class ClientSender implements Sender {
             while (sender.isSendable() && !blocked.isEmpty()) {
                 LOG.trace("Dispatching previously held send");
                 final InFlightSend held = blocked.poll();
-                assumeSendableAndSend(held.encodedMessage, held.message, held);
+                assumeSendableAndSend(held.context, held.encodedMessage, held);
             }
         }
 
@@ -399,7 +426,7 @@ public class ClientSender implements Sender {
 
     private void handleDeliveryUpdated(OutgoingDelivery delivery) {
         try {
-            delivery.getLinkedResource(ClientTracker.class).processDeliveryUpdated(delivery);
+            delivery.getLinkedResource(ClientSendContext.class).tracker().processDeliveryUpdated(delivery);
         } catch (ClassCastException ccex) {
             LOG.debug("Sender received update on Delivery not linked to a Tracker: {}", delivery);
         }
@@ -418,17 +445,17 @@ public class ClientSender implements Sender {
 
     //----- Send Result Tracker used for send blocked on credit
 
-    private class InFlightSend implements AsyncResult<Tracker> {
+    private class InFlightSend implements AsyncResult<ClientTracker> {
 
+        private final ClientSendContext context;
         private final ProtonBuffer encodedMessage;
-        private final AdvancedMessage<?> message;
-        private final ClientFuture<Tracker> operation;
+        private final ClientFuture<ClientTracker> operation;
 
         private ScheduledFuture<?> timeout;
 
-        public InFlightSend(ProtonBuffer encodedMessage, AdvancedMessage<?> message, ClientFuture<Tracker> operation) {
+        public InFlightSend(ClientSendContext context, ProtonBuffer encodedMessage, ClientFuture<ClientTracker> operation) {
             this.encodedMessage = encodedMessage;
-            this.message = message;
+            this.context = context;
             this.operation = operation;
         }
 
@@ -441,7 +468,7 @@ public class ClientSender implements Sender {
         }
 
         @Override
-        public void complete(Tracker result) {
+        public void complete(ClientTracker result) {
             if (timeout != null) {
                 timeout.cancel(true);
             }
@@ -475,16 +502,17 @@ public class ClientSender implements Sender {
         }
     }
 
-    private Tracker sendMessage(AdvancedMessage<?> message, boolean waitForCredit) throws ClientException {
-        final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
+    Tracker sendMessage(AdvancedMessage<?> message, boolean waitForCredit) throws ClientException {
+        final ClientFuture<ClientTracker> operation = session.getFutureFactory().createFuture();
         final ProtonBuffer buffer = message.encode();
+        final CompletedClientSendContext context = new CompletedClientSendContext(this, message.messageFormat());
 
         executor.execute(() -> {
             if (protonSender.isSendable()) {
-                assumeSendableAndSend(buffer, message, operation);
+                assumeSendableAndSend(context, buffer, operation);
             } else {
                 if (waitForCredit) {
-                    final InFlightSend send = new InFlightSend(buffer, message, operation);
+                    final InFlightSend send = new InFlightSend(context, buffer, operation);
                     if (options.sendTimeout() > 0) {
                         send.timeout = session.scheduleRequestTimeout(
                             operation, options.sendTimeout(), () -> send.createSendTimedOutException());
@@ -500,24 +528,45 @@ public class ClientSender implements Sender {
         return session.request(this, operation);
     }
 
-    private void assumeSendableAndSend(ProtonBuffer buffer, AdvancedMessage<?> message, AsyncResult<Tracker> request) {
+   ClientTracker sendMessage(ClientSendContext context, AdvancedMessage<?> message) throws ClientException {
+        final ClientFuture<ClientTracker> operation = session.getFutureFactory().createFuture();
+        final ProtonBuffer buffer = message.encode();
+
+        executor.execute(() -> {
+            if (protonSender.isSendable()) {
+                assumeSendableAndSend(context, buffer, operation);
+            } else {
+                final InFlightSend send = new InFlightSend(context, buffer, operation);
+                if (options.sendTimeout() > 0) {
+                    send.timeout = session.scheduleRequestTimeout(
+                        operation, options.sendTimeout(), () -> send.createSendTimedOutException());
+                }
+
+                blocked.offer(send);
+            }
+        });
+
+        return session.request(this, operation);
+    }
+
+    private void assumeSendableAndSend(ClientSendContext context, ProtonBuffer buffer, AsyncResult<ClientTracker> request) {
         final OutgoingDelivery delivery;
-        final ClientTracker tracker;
 
         if (protonSender.current() == null) {
             delivery = protonSender.next();
-            tracker = new ClientTracker(this, delivery);
+            delivery.setLinkedResource(context);
+            delivery.setMessageFormat(context.messageFormat());
+
+            context.tracker(new ClientTracker(this, delivery));
         } else {
             // TODO: We may need to eventually track the message assigned to a delivery if
             // we want to sanity check that streaming messages aren't interleaved which
             // would corrupt both as one completes the other etc.  Want to avoid keeping
             // the message referenced for now to avoid retention.
             delivery = protonSender.current();
-            tracker = delivery.getLinkedResource();
         }
 
-        delivery.setLinkedResource(tracker);
-        delivery.setMessageFormat(message.messageFormat());
+        final ClientTracker tracker = context.tracker();
 
         if (session.getTransactionContext().isInTransaction()) {
             if (session.getTransactionContext().isTransactionInDoubt()) {
@@ -537,7 +586,7 @@ public class ClientSender implements Sender {
             tracker.acknowledgeFuture().complete(tracker);
         }
 
-        if (message.aborted()) {
+        if (context.aborted()) {
             delivery.abort();
             request.complete(tracker);
         } else {
@@ -548,9 +597,9 @@ public class ClientSender implements Sender {
             // hit waiting on the IO operation to complete.
             if (options.deliveryMode() == DeliveryMode.AT_MOST_ONCE) {
                 request.complete(tracker);
-                delivery.streamBytes(buffer, message.complete());
+                delivery.streamBytes(buffer, context.completed());
             } else {
-                delivery.streamBytes(buffer, message.complete());
+                delivery.streamBytes(buffer, context.completed());
                 request.complete(tracker);
             }
         }
@@ -613,6 +662,34 @@ public class ClientSender implements Sender {
         } else {
             openFuture.complete(this);
             closeFuture.complete(this);
+        }
+    }
+
+    //----- Immutable ClientSenderContext for standard send calls
+
+    private static final class CompletedClientSendContext extends ClientSendContext {
+
+        private final int messageFormat;
+
+        CompletedClientSendContext(ClientSender sender, int messageFormat) {
+            super(sender);
+
+            this.messageFormat = messageFormat;
+        }
+
+        @Override
+        int messageFormat() {
+            return messageFormat;
+        }
+
+        @Override
+        public boolean completed() {
+            return true;
+        }
+
+        @Override
+        public boolean aborted() {
+            return false;
         }
     }
 }

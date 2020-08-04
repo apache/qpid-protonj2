@@ -52,8 +52,6 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     private List<Section<?>> bodySections;
     private Footer footer;
 
-    private boolean complete = true;
-    private boolean aborted;
     private int messageFormat;
 
     /**
@@ -698,28 +696,6 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     public ClientMessage<E> messageFormat(int messageFormat) {
         this.messageFormat = messageFormat;
         return this;
-    }
-
-    @Override
-    public ClientMessage<E> abort() {
-        this.aborted = true;
-        return this;
-    }
-
-    @Override
-    public boolean aborted() {
-        return aborted;
-    }
-
-    @Override
-    public ClientMessage<E> complete(boolean complete) {
-        this.complete = complete;
-        return this;
-    }
-
-    @Override
-    public boolean complete() {
-        return complete;
     }
 
     @Override

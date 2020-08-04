@@ -246,51 +246,6 @@ public interface AdvancedMessage<E> extends Message<E> {
     AdvancedMessage<E> clearBodySections();
 
     /**
-     * Marks the currently streaming message as being aborted.
-     * <p>
-     * Simply marking a {@link AdvancedMessage} as being aborted does not signal
-     * the remote peer that the message was aborted, the message must be sent a final
-     * time using the {@link Sender} that was used to stream it originally.  A
-     * {@link AdvancedMessage} cannot be aborted following a send where the complete
-     * flag was set to true (default value).
-     *
-     * @param aborted
-     *      Should the message be marked as having been aborted.
-     *
-     * @return this {@link AdvancedMessage} instance.
-     */
-    AdvancedMessage<E> abort();
-
-    /**
-     * @return true if this message has been marked as aborted previously.
-     */
-    boolean aborted();
-
-    /**
-     * Marks the currently streaming message as being complete (default is <code>true</code>).
-     * Any message that is sent with the complete value as <code>false</code> will not be
-     * delivered by the remote until it has been sent a final time with the complete flag
-     * set to true.
-     * <p>
-     * Simply marking a {@link AdvancedMessage} as being complete does not signal the
-     * remote peer that the message was completed, the message must be sent a final time
-     * using the {@link Sender} that was used to send it originally.  A {@link AdvancedMessage}
-     * cannot be completed following a message send that was marked as being aborted using the
-     * {@link #aborted(boolean)} method.
-     *
-     * @param complete
-     *      Should the next send of this message mark it as being complete.
-     *
-     * @return this {@link AdvancedMessage} instance.
-     */
-    AdvancedMessage<E> complete(boolean complete);
-
-    /**
-     * @return true if this message has been marked as being the complete.
-     */
-    boolean complete();
-
-    /**
      * Encodes the Message
      *
      * @return the encoded form of this message in a {@link ProtonBuffer} instance.
