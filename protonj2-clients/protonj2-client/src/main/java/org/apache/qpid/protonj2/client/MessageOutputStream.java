@@ -75,6 +75,8 @@ public abstract class MessageOutputStream extends OutputStream {
      * configured in the {@link MessageOutputStreamOptions} and the limit value has not yet
      * been written the ongoing AMQP {@link Delivery} that comprises this message stream is
      * aborted as a partially written message would be invalid on the remote peer.
+     *
+     * @throws IOException if an error occurs while attempting to close the streaming send.
      */
     @Override
     public abstract void close() throws IOException;
