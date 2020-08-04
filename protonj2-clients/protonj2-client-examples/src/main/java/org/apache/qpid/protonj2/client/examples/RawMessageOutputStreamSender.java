@@ -25,13 +25,13 @@ import java.util.UUID;
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
-import org.apache.qpid.protonj2.client.MessageOutputStream;
-import org.apache.qpid.protonj2.client.MessageOutputStreamOptions;
+import org.apache.qpid.protonj2.client.RawOutputStream;
+import org.apache.qpid.protonj2.client.RawOutputStreamOptions;
+import org.apache.qpid.protonj2.client.SendContext;
 import org.apache.qpid.protonj2.client.Sender;
-import org.apache.qpid.protonj2.types.messaging.Header;
 
 // TODO: Possibly make an advanced folder for the more complex AMQP messaging topics
-public class OutputStreamSender {
+public class RawMessageOutputStreamSender {
 
     public static void main(String[] args) throws Exception {
 
@@ -46,16 +46,14 @@ public class OutputStreamSender {
 
             Connection connection = client.connect(brokerHost, brokerPort);
             Sender sender = connection.openSender(address);
+            SendContext context = sender.newSendContext();
 
-            final byte[] buffer = new byte[] { 0, 1, 2, 3, 4 };
+            final byte[] buffer = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
-            // Create an OutputStream that will send an AMQP Header tagged as being durable
-            // once the first write is flushed, the remote will retain the completed message
-            // once all bytes are written and the stream is closed.  Because the stream size
-            // is given up front the encoded Message body will consist of one Data section.
-            Header header = new Header().setDurable(true);
-            MessageOutputStreamOptions streamOptions = new MessageOutputStreamOptions().header(header).streamSize(buffer.length);
-            MessageOutputStream output = sender.outputStream(streamOptions);
+            // Create an OutputStream that will send what could be AMQP encoded data
+            // or some other custom message formatted payload.
+            RawOutputStreamOptions streamOptions = new RawOutputStreamOptions().messageFormat(42);
+            RawOutputStream output = context.outputStream(streamOptions);
 
             // Simple example flushes on every byte, a real world usage would likely
             // be pulling in data in batches and flushing on some fixed boundary.
