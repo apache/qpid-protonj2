@@ -44,7 +44,7 @@ public interface AdvancedMessage<E> extends Message<E> {
      * @return a new {@link AdvancedMessage} instance.
      */
     static <V> AdvancedMessage<V> create() {
-        return ClientMessage.createAdvanvedMessage();
+        return ClientMessage.createAdvancedMessage();
     }
 
     /**

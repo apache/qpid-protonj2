@@ -115,7 +115,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
      *
      * @return a new empty {@link ClientMessage} instance.
      */
-    public static <V> ClientMessage<V> createAdvanvedMessage() {
+    public static <V> ClientMessage<V> createAdvancedMessage() {
         return new ClientMessage<V>();
     }
 

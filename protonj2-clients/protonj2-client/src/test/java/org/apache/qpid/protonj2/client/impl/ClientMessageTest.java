@@ -70,7 +70,7 @@ class ClientMessageTest {
 
     @Test
     public void testCreateEmptyAdvanced() {
-        AdvancedMessage<String> message = ClientMessage.createAdvanvedMessage();
+        AdvancedMessage<String> message = ClientMessage.createAdvancedMessage();
 
         assertNull(message.body());
         assertNotNull(message.bodySections());
