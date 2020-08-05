@@ -224,7 +224,7 @@ public interface Receiver {
      *
      * @return a new {@link ReceiveContext} that can be used to read incoming {@link Delivery} data.
      */
-    ReceiveContext newReceiveContext();
+    ReceiveContext createReceiveContext();
 
     /**
      * Requests the remote to drain previously granted credit for this {@link Receiver} link.

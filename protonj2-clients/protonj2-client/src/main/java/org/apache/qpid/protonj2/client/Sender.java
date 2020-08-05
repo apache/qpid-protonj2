@@ -191,7 +191,7 @@ public interface Sender {
      *
      * @return a new {@link SendContext} that can be used to stream message data to the remote.
      */
-    SendContext newSendContext();
+    SendContext createSendContext();
 
     /**
      * Creates an {@link MessageOutputStream} instance configured with the given options.

@@ -63,7 +63,7 @@ public class ClientMessageOutputStream extends MessageOutputStream {
         super(options);
 
         this.sender = sender;
-        this.sendContext = sender.newSendContext();
+        this.sendContext = sender.createSendContext();
 
         final int bufferCapacity;
         if (options.streamBufferLimit() > 0) {

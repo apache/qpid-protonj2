@@ -46,7 +46,7 @@ public class RawMessageOutputStreamSender {
 
             Connection connection = client.connect(brokerHost, brokerPort);
             Sender sender = connection.openSender(address);
-            SendContext context = sender.newSendContext();
+            SendContext context = sender.createSendContext();
 
             final byte[] buffer = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 

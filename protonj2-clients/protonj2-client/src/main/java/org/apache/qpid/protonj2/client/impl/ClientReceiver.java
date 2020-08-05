@@ -165,7 +165,7 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public ReceiveContext newReceiveContext() {
+    public ReceiveContext createReceiveContext() {
         return new ClientReceiveContext(this);
     }
 

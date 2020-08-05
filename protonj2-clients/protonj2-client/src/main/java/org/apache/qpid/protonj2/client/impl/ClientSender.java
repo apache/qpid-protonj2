@@ -213,7 +213,7 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public SendContext newSendContext() {
+    public SendContext createSendContext() {
         return new ClientSendContext(this);
     }
 

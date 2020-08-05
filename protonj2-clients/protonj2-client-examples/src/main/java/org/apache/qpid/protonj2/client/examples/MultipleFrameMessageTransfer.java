@@ -39,7 +39,7 @@ public class MultipleFrameMessageTransfer {
 
             Connection connection = client.connect(brokerHost, brokerPort);
             Sender sender = connection.openSender(address);
-            SendContext context = sender.newSendContext();
+            SendContext context = sender.createSendContext();
 
             // Use an message object to encapsulate the data to be sent, which in this
             // case results in a message with multiple Data Sections.  Using your own
