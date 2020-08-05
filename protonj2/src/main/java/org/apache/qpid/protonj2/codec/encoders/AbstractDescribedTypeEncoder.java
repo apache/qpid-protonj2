@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.codec.encoders;
 
+import org.apache.qpid.protonj2.codec.DescribedTypeEncoder;
+
 /**
  * Abstract DescribedType encoder implementation
  *

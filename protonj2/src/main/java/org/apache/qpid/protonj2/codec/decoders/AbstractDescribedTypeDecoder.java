@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.decoders;
 
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.DescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 
 /**

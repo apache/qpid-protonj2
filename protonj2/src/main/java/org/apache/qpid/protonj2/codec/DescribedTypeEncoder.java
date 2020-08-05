@@ -14,9 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.protonj2.codec.encoders;
+package org.apache.qpid.protonj2.codec;
 
-import org.apache.qpid.protonj2.codec.TypeEncoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 

@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.codec.encoders.DescribedTypeEncoder;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Decimal128;
 import org.apache.qpid.protonj2.types.Decimal32;
