@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.types.messaging;
 
+import java.util.UUID;
+
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
@@ -154,6 +156,8 @@ public final class Properties implements Section<Properties> {
     }
 
     public Properties setMessageId(Object messageId) {
+        validateIsMessageIdType(messageId);
+
         if (messageId == null) {
             modified &= ~MESSAGE_ID;
         } else {
@@ -161,7 +165,23 @@ public final class Properties implements Section<Properties> {
         }
 
         this.messageId = messageId;
+
         return this;
+    }
+
+    private static void validateIsMessageIdType(Object messageId) {
+        if (messageId == null ||
+            messageId instanceof String ||
+            messageId instanceof UUID ||
+            messageId instanceof UnsignedLong ||
+            messageId instanceof Binary) {
+
+            // Allowed types of message.
+            return;
+        }
+
+        throw new IllegalArgumentException(
+            "AMQP Message ID type restiction violated, cannot assign type: " + messageId.getClass().getName());
     }
 
     public Binary getUserId() {
@@ -229,6 +249,8 @@ public final class Properties implements Section<Properties> {
     }
 
     public Properties setCorrelationId(Object correlationId) {
+        validateIsMessageIdType(messageId);
+
         if (correlationId == null) {
             modified &= ~CORRELATION_ID;
         } else {
