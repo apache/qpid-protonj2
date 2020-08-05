@@ -161,11 +161,11 @@ public class ClientRawOutputStream extends RawOutputStream {
     private void doFlushPending(boolean complete) throws IOException {
         try {
             if (complete) {
-                sendContext.complete(message);
+                sendContext.write(message, true);
                 sendContext.tracker().acknowledgeFuture().get();
                 sendContext.tracker().settle();
             } else {
-                sendContext.send(message);
+                sendContext.write(message);
             }
         } catch (ClientException | InterruptedException | ExecutionException e) {
             new IOException(e);

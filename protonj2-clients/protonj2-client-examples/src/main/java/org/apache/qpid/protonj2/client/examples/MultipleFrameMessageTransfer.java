@@ -49,13 +49,13 @@ public class MultipleFrameMessageTransfer {
             message.messageFormat(42);
 
             message.body(new byte[] { 0, 1, 2, 3, 4 });
-            context.send(message);
+            context.write(message);
 
             message.body(new byte[] { 5, 6, 7, 8, 9 });
-            context.send(message);
+            context.write(message);
 
             message.body(new byte[] { 10, 11, 12, 13, 14 });
-            context.complete(message);
+            context.write(message, true);
 
             connection.close().get();
         } catch (Exception exp) {
@@ -65,5 +65,4 @@ public class MultipleFrameMessageTransfer {
         } finally {
         }
     }
-
 }

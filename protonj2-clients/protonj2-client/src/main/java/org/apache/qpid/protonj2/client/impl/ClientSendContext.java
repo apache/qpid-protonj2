@@ -79,7 +79,7 @@ public class ClientSendContext implements SendContext {
     }
 
     @Override
-    public Tracker complete() throws ClientException {
+    public SendContext complete() throws ClientException {
         if (aborted()) {
             throw new IllegalStateException("Cannot complete an already aborted send context");
         }
@@ -92,30 +92,16 @@ public class ClientSendContext implements SendContext {
             }
         }
 
-        return tracker();
-    }
-
-    @Override
-    public <E> SendContext send(AdvancedMessage<E> message) throws ClientException {
-        if (aborted()) {
-            throw new IllegalStateException("Cannot send from an already aborted send context");
-        }
-
-        if (completed()) {
-            throw new IllegalStateException("Cannot send from an already completed send context");
-        }
-
-        if (tracker == null) {
-            messageFormat = message.messageFormat();
-        }
-
-        tracker = sender.sendMessage(this, message);
-
         return this;
     }
 
     @Override
-    public <E> Tracker complete(AdvancedMessage<E> message) throws ClientException {
+    public <E> SendContext write(AdvancedMessage<E> message) throws ClientException {
+        return write(message, false);
+    }
+
+    @Override
+    public <E> SendContext write(AdvancedMessage<E> message, boolean complete) throws ClientException {
         if (aborted()) {
             throw new IllegalStateException("Cannot send from an already aborted send context");
         }
@@ -128,11 +114,11 @@ public class ClientSendContext implements SendContext {
             messageFormat = message.messageFormat();
         }
 
-        completed = true;
+        completed = complete;
 
         tracker = sender.sendMessage(this, message);
 
-        return tracker();
+        return this;
     }
 
     @Override

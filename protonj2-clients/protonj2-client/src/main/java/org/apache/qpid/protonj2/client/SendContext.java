@@ -50,7 +50,46 @@ public interface SendContext {
      *
      * @throws ClientException if an error occurs while initiating the send operation.
      */
-    <E> SendContext send(AdvancedMessage<E> message) throws ClientException;
+    <E> SendContext write(AdvancedMessage<E> message) throws ClientException;
+
+    /**
+     * Encodes and sends the contents of the given message as a portion of the total
+     * payload of this {@link SendContext}.
+     * <p>
+     * The complete argument controls if the {@link SendContext} is and causes a
+     * final {@link Transfer} frame to be sent to the remote indicating that the ongoing
+     * streaming delivery is done and no more message data will arrive.
+     *
+     * @param <E>
+     *
+     * @param message
+     *      The final Message payload to transit along with the complete indicator.
+     * @param complete
+     *      Controls if this write is the final write for this message context.
+     *
+     * @return the Tracker that is associated with this {@link SendContext} instance.
+     *
+     * @throws ClientException if an error occurs while initiating the completion operation.
+     */
+    <E> SendContext write(AdvancedMessage<E> message, boolean complete) throws ClientException;
+
+    /**
+     * Marks the currently streaming message as being complete.
+     * <p>
+     * Marking a message as complete finalizes the {@link SendContext} and causes a
+     * final {@link Transfer} frame to be sent to the remote indicating that the ongoing
+     * streaming delivery is done and no more message data will arrive.
+     *
+     * @return the Tracker that is associated with this {@link SendContext} instance.
+     *
+     * @throws ClientException if an error occurs while initiating the completion operation.
+     */
+    SendContext complete() throws ClientException;
+
+    /**
+     * @return true if this message has been marked as being complete.
+     */
+    boolean completed();
 
     /**
      * Marks the currently streaming message as being aborted.
@@ -74,42 +113,6 @@ public interface SendContext {
      * @return true if this {@link SendContext} has been marked as aborted previously.
      */
     boolean aborted();
-
-    /**
-     * Marks the currently streaming message as being complete.
-     * <p>
-     * Marking a message as complete finalizes the {@link SendContext} and causes a
-     * final {@link Transfer} frame to be sent to the remote indicating that the ongoing
-     * streaming delivery is done and no more message data will arrive.
-     *
-     * @return the Tracker that is associated with this {@link SendContext} instance.
-     *
-     * @throws ClientException if an error occurs while initiating the completion operation.
-     */
-    Tracker complete() throws ClientException;
-
-    /**
-     * Marks the currently streaming message as being complete the encoded form of the
-     * provided message will be sent along with the final {@link Transfer} marked as being
-     * completed.
-     * <p>
-     * Marking a message as complete finalizes the {@link SendContext} and causes a
-     * final {@link Transfer} frame to be sent to the remote indicating that the ongoing
-     * streaming delivery is done and no more message data will arrive.
-     *
-     * @param message
-     *      The final Message payload to transit along with the complete indicator.
-     *
-     * @return the Tracker that is associated with this {@link SendContext} instance.
-     *
-     * @throws ClientException if an error occurs while initiating the completion operation.
-     */
-    <E> Tracker complete(AdvancedMessage<E> message) throws ClientException;
-
-    /**
-     * @return true if this message has been marked as being complete.
-     */
-    boolean completed();
 
     /**
      * Creates an {@link MessageOutputStream} instance configured with the given options.
