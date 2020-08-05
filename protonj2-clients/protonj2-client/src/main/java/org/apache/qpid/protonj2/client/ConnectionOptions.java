@@ -60,9 +60,19 @@ public class ConnectionOptions {
     private boolean allowInsecureRedirects = DEFAULT_ALLOW_INSECURE_REDIRECTS;
     private boolean traceFrames;
 
+    /**
+     * Create a new {@link ConnectionOptions} instance configured with default configuration settings.
+     */
     public ConnectionOptions() {
+        // Defaults
     }
 
+    /**
+     * Creates a {@link ConnectionOptions} instance that is a copy of the given instance.
+     *
+     * @param options
+     *      The {@link ConnectionOptions} instance whose configuration should be copied to this one.
+     */
     public ConnectionOptions(ConnectionOptions options) {
         if (options != null) {
             options.copyInto(this);
@@ -76,7 +86,7 @@ public class ConnectionOptions {
      * @param other
      *      the target of this copy operation.
      *
-     * @return this options class for chaining.
+     * @return this {@link ConnectionOptions} instance.
      */
     protected ConnectionOptions copyInto(ConnectionOptions other) {
         other.closeTimeout(closeTimeout);
@@ -111,10 +121,22 @@ public class ConnectionOptions {
 
     // TODO - Proper Javadocs for the various configuration options
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a resource is closed.
+     */
     public long closeTimeout() {
         return closeTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to close
+     * a resource such as a {@link Sender} or {@link Receiver} has been honored.
+     *
+     * @param closeTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link ConnectionOptions} instance.
+     */
     public ConnectionOptions closeTimeout(long closeTimeout) {
         this.closeTimeout = closeTimeout;
         return this;
@@ -388,6 +410,11 @@ public class ConnectionOptions {
     }
 
     /**
+     * Controls if the connection will attempt to connect using a secure IO layer or not.
+     * <p>
+     * This option enables or disables SSL encryption when connecting to a remote peer.  To
+     * control specifics of the SSL configuration for the {@link Connection} the values must
+     * be updated in the {@link SslOptions} configuration prior to creating the connection.
      *
      * @param sslEnabled
      * 		Is SSL encryption enabled for the {@link Connection}.
