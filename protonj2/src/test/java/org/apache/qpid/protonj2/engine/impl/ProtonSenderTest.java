@@ -1836,6 +1836,72 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test(timeout = 20_000)
+    public void testCompleteInProgressDeliveryWithFinalEmptyTransfer() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
+        peer.expectTransfer().withHandle(0)
+                             .withMore(true)
+                             .withSettled(false)
+                             .withState(nullValue())
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withPayload(payload);
+        peer.expectTransfer().withHandle(0)
+                             .withState(nullValue())
+                             .withDeliveryId(0)
+                             .withAborted(anyOf(nullValue(), is(false)))
+                             .withSettled(false)
+                             .withMore(anyOf(nullValue(), is(false)))
+                             .withNullPayload();
+        peer.expectDetach().withHandle(0).respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("sender-1");
+        sender.open();
+
+        final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
+        sender.creditStateUpdateHandler(handler -> {
+            senderMarkedSendable.set(sender.isSendable());
+        });
+
+        OutgoingDelivery delivery = sender.next();
+        assertNotNull(delivery);
+
+        delivery.setTag(new byte[] {0});
+        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
+        delivery.streamBytes(null, true);
+
+        assertFalse(delivery.isAborted());
+        assertFalse(delivery.isPartial());
+        assertFalse(delivery.isSettled());
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
     public void testAbortInProgressDelivery() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);

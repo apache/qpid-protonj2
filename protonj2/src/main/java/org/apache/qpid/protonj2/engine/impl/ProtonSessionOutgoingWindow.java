@@ -221,7 +221,7 @@ public class ProtonSessionOutgoingWindow {
                 // Update session window tracking
                 nextOutgoingId++;
                 remoteIncomingWindow--;
-            } while (payload.isReadable());
+            } while (payload != null && payload.isReadable());
         } finally {
             cachedTransfer.reset();
         }
