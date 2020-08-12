@@ -623,11 +623,11 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     }
 
     void handleEngineShutdown(ProtonEngine protonEngine) {
-        allSessions().forEach(session -> session.handleEngineShutdown(protonEngine));
-
         try {
             fireEngineShutdown();
         } catch (Exception ignore) {}
+
+        allSessions().forEach(session -> session.handleEngineShutdown(protonEngine));
     }
 
     void handleEngineFailed(ProtonEngine protonEngine, Throwable cause) {

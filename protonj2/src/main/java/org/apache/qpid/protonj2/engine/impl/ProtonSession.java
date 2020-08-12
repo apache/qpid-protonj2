@@ -410,11 +410,11 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     }
 
     void handleEngineShutdown(ProtonEngine protonEngine) {
-        allLinks().forEach(link -> link.handleEngineShutdown(protonEngine));
-
         try {
             fireEngineShutdown();
         } catch (Throwable ingore) {}
+
+        allLinks().forEach(link -> link.handleEngineShutdown(protonEngine));
     }
 
     //----- Handle incoming performatives
