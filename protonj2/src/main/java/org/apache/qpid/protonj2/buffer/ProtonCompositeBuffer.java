@@ -194,6 +194,36 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
         return this;
     }
 
+    /**
+     * For any buffer that preceeds the buffer pointed to by the current read index
+     * remove that buffer from to composite and discard.
+     *
+     * @return this {@link ProtonCompositeBuffer} instance.
+     */
+    @SuppressWarnings("unused")
+    private ProtonCompositeBuffer reclaimRead() {
+        final int readIndex = this.readIndex;
+        if (readIndex == 0) {
+            return this;
+        }
+
+        final int writeIndex = this.writeIndex;
+        if (readIndex == writeIndex && writeIndex == capacity()) {
+            capacity = 0;
+            totalChunks = 0;
+            lastAccessedChunk = null;
+            head.next = tail;
+            tail.prev = head;
+            markedReadIndex = 0;
+            markedWriteIndex = 0;
+            // TODO: Markers need to be reset
+        } else {
+            // TODO: remove some and adjust chunks with new buffer data
+        }
+
+        return this;
+    }
+
     //----- ProtonAbstractBuffer API implementation
 
     @Override
