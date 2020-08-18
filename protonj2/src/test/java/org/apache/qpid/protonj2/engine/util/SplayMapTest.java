@@ -698,6 +698,28 @@ public class SplayMapTest {
     }
 
     @Test
+    public void tesEntrySetContains() {
+        SplayMap<String> map = new SplayMap<>();
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(2, "two");
+        map.put(3, "three");
+
+        Set<Entry<UnsignedInteger, String>> entries = map.entrySet();
+        assertNotNull(entries);
+        assertEquals(4, entries.size());
+        assertFalse(entries.isEmpty());
+        assertSame(entries, map.entrySet());
+
+        OutsideEntry<UnsignedInteger, String> entry1 = new OutsideEntry<>(UnsignedInteger.valueOf(0), "zero");
+        OutsideEntry<UnsignedInteger, String> entry2 = new OutsideEntry<>(UnsignedInteger.valueOf(0), "hero");
+
+        assertTrue(entries.contains(entry1));
+        assertFalse(entries.contains(entry2));
+    }
+
+    @Test
     public void testEntryIteration() {
         SplayMap<String> map = new SplayMap<>();
 
@@ -1103,5 +1125,33 @@ public class SplayMapTest {
 
         LOG.info("Random seed was: {}" , seed);
         LOG.info("Entries in data set: {}", dataSet);
+    }
+
+    private static class OutsideEntry<K, V> implements Map.Entry<K, V> {
+
+        private final K key;
+        private V value;
+
+        public OutsideEntry(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public V setValue(V value) {
+            V oldValue = this.value;
+            this.value = value;
+            return oldValue;
+        }
+
+        @Override
+        public V getValue() {
+            return value;
+        }
+
+        @Override
+        public K getKey() {
+            return key;
+        }
     }
 }

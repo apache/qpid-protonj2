@@ -30,6 +30,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.types.UnsignedInteger;
@@ -50,13 +51,25 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     private static final UnsignedComparator COMPARATOR = new UnsignedComparator();
 
-    private int size;
+    /**
+     * Cache of reusable entries filled when values are removed from the Map
+     */
+    private final RingQueue<SplayedEntry<E>> entryPool = new RingQueue<>(64);
 
-    private RingQueue<SplayedEntry<E>> entryPool = new RingQueue<>(64);
-
+    /**
+     * Root node which can be null if the tree has no elements (size == 0)
+     */
     private SplayedEntry<E> root;
 
-    public int modCount;
+    /**
+     * Current size of the splayed map tree.
+     */
+    private int size;
+
+    /**
+     * Modification tracker for use in detecting concurrent modifications
+     */
+    private int modCount;
 
     @Override
     public int size() {
@@ -126,7 +139,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return oldValue;
     }
 
-    private final void shiftRootRightOf(SplayedEntry<E> newRoot) {
+    private void shiftRootRightOf(SplayedEntry<E> newRoot) {
         newRoot.right = root;
         newRoot.left = root.left;
         if (newRoot.left != null) {
@@ -137,7 +150,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         root = newRoot;
     }
 
-    private final void shiftRootLeftOf(SplayedEntry<E> newRoot) {
+    private void shiftRootLeftOf(SplayedEntry<E> newRoot) {
         newRoot.left = root;
         newRoot.right = root.right;
         if (newRoot.right != null) {
@@ -238,7 +251,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     private Set<UnsignedInteger> keySet;
     private Collection<E> values;
-    private Set<Entry<UnsignedInteger, E>> entries;
+    private Set<Entry<UnsignedInteger, E>> entrySet;
 
     @Override
     public Set<UnsignedInteger> keySet() {
@@ -258,30 +271,18 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     @Override
     public Set<Entry<UnsignedInteger, E>> entrySet() {
-        if (entries == null) {
-            entries = new SplayMapEntrySet();
+        if (entrySet == null) {
+            entrySet = new SplayMapEntrySet();
         }
-        return entries;
+        return entrySet;
     }
 
     @Override
     public void forEach(BiConsumer<? super UnsignedInteger, ? super E> action) {
         Objects.requireNonNull(action);
-        firstEntry(this.root);
 
         for (SplayedEntry<E> entry = firstEntry(root); entry != null; entry = successor(entry)) {
-            final UnsignedInteger key;
-            final E value;
-
-            try {
-                key = entry.getKey();
-                value = entry.getValue();
-            } catch (IllegalStateException ise) {
-                // this usually means the entry is no longer in the map.
-                throw new ConcurrentModificationException(ise);
-            }
-
-            action.accept(key, value);
+            action.accept(entry.getKey(), entry.getValue());
         }
     }
 
@@ -289,25 +290,32 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      * A specialized forEach implementation that accepts a {@link Consumer} function that will
      * be called for each value in the {@link SplayMap}.  This method can save overhead as it does not
      * need to box the primitive key values into an object for the call to the provided function.
+     * Unless otherwise specified by the implementing class, actions are performed in the order of entry
+     * set iteration (if an iteration order is specified.)
      *
      * @param action
      *      The action to be performed for each of the values in the {@link SplayMap}.
      */
     public void forEach(Consumer<? super E> action) {
         Objects.requireNonNull(action);
-        firstEntry(this.root);
 
         for (SplayedEntry<E> entry = firstEntry(root); entry != null; entry = successor(entry)) {
-            final E value;
+            action.accept(entry.getValue());
+        }
+    }
 
-            try {
-                value = entry.getValue();
-            } catch (IllegalStateException ise) {
-                // this usually means the entry is no longer in the map.
-                throw new ConcurrentModificationException(ise);
-            }
+    @Override
+    public void replaceAll(BiFunction<? super UnsignedInteger, ? super E, ? extends E> function) {
+        Objects.requireNonNull(function, "The replacement function parameter cannot be null");
 
-            action.accept(value);
+        final int initialModCount = modCount;
+
+        for (SplayedEntry<E> entry = firstEntry(root); entry != null; entry = successor(entry)) {
+            entry.value = function.apply(entry.getKey(), entry.value);
+        }
+
+        if (modCount != initialModCount) {
+            throw new ConcurrentModificationException();
         }
     }
 
@@ -325,7 +333,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      *
      */
 
-    private final SplayedEntry<E> rightRotate(SplayedEntry<E> node) {
+    private SplayedEntry<E> rightRotate(SplayedEntry<E> node) {
         SplayedEntry<E> rotated = node.left;
         node.left = rotated.right;
         rotated.right = node;
@@ -340,7 +348,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return rotated;
     }
 
-    private final SplayedEntry<E> leftRotate(SplayedEntry<E> node) {
+    private SplayedEntry<E> leftRotate(SplayedEntry<E> node) {
         SplayedEntry<E> rotated = node.right;
         node.right = rotated.left;
         rotated.left = node;
@@ -361,7 +369,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      * as it is likely it will be the next accessed or one of the neighboring nodes which
      * reduces the search time for that cluster.
      */
-    private final SplayedEntry<E> splay(SplayedEntry<E> root, int key) {
+    private SplayedEntry<E> splay(SplayedEntry<E> root, int key) {
         if (root == null || root.key == key) {
             return root;
         }
@@ -757,7 +765,17 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
         @Override
         public boolean contains(Object o) {
-            return SplayMap.this.containsKey(o);
+            if (!(o instanceof Map.Entry) || SplayMap.this.root == null) {
+                return false;
+            }
+
+            for (SplayedEntry<E> e = firstEntry(root); e != null; e = successor(e)) {
+                if (e.equals(o)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         @Override
@@ -793,6 +811,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         E value;
 
         public SplayedEntry() {
+            initialize(key, value);
         }
 
         public SplayedEntry(int key, E value) {
@@ -802,6 +821,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         public SplayedEntry<E> initialize(int key, E value) {
             this.key = key;
             this.value = value;
+
             return this;
         }
 
