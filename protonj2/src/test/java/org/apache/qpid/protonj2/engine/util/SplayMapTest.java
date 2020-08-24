@@ -1110,6 +1110,44 @@ public class SplayMapTest {
         }
     }
 
+    @Test
+    public void testLowerEntry() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+
+        for (int entry : inputValues) {
+            map.put(UnsignedInteger.valueOf(entry), "" + entry);
+        }
+
+        assertEquals(UnsignedInteger.valueOf(-2), map.lowerEntry(UnsignedInteger.valueOf(-1)).getKey());
+        assertEquals(UnsignedInteger.valueOf(3), map.lowerEntry(UnsignedInteger.valueOf(-2)).getKey());
+        assertEquals(UnsignedInteger.valueOf(3), map.lowerEntry(UnsignedInteger.valueOf(4)).getKey());
+        assertEquals(UnsignedInteger.valueOf(2), map.lowerEntry(UnsignedInteger.valueOf(3)).getKey());
+        assertEquals(UnsignedInteger.valueOf(1), map.lowerEntry(UnsignedInteger.valueOf(2)).getKey());
+        assertEquals(UnsignedInteger.valueOf(0), map.lowerEntry(UnsignedInteger.valueOf(1)).getKey());
+        assertNull(map.lowerEntry(UnsignedInteger.valueOf(0)));
+    }
+
+    @Test
+    public void testLowerKey() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+
+        for (int entry : inputValues) {
+            map.put(UnsignedInteger.valueOf(entry), "" + entry);
+        }
+
+        assertEquals(UnsignedInteger.valueOf(-2), map.lowerKey(UnsignedInteger.valueOf(-1)));
+        assertEquals(UnsignedInteger.valueOf(3), map.lowerKey(UnsignedInteger.valueOf(-2)));
+        assertEquals(UnsignedInteger.valueOf(3), map.lowerKey(UnsignedInteger.valueOf(4)));
+        assertEquals(UnsignedInteger.valueOf(2), map.lowerKey(UnsignedInteger.valueOf(3)));
+        assertEquals(UnsignedInteger.valueOf(1), map.lowerKey(UnsignedInteger.valueOf(2)));
+        assertEquals(UnsignedInteger.valueOf(0), map.lowerKey(UnsignedInteger.valueOf(1)));
+        assertNull(map.lowerEntry(UnsignedInteger.valueOf(0)));
+    }
+
     private void dumpRandomDataSet(int iterations, boolean bounded) {
         final int[] dataSet = new int[iterations];
 

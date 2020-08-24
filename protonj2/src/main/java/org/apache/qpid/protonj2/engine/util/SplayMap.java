@@ -969,14 +969,28 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     @Override
     public ImmutableSplayMapEntry lowerEntry(UnsignedInteger key) {
-        // TODO Auto-generated method stub
-        return null;
+        return export(lowerEntry(key.intValue()));
     }
 
     @Override
     public UnsignedInteger lowerKey(UnsignedInteger key) {
-        // TODO Auto-generated method stub
-        return null;
+        final SplayedEntry<E> result = lowerEntry(key.intValue());
+
+        return result == null ? null : result.getKey();
+    }
+
+    private SplayedEntry<E> lowerEntry(int key) {
+        root = splay(root, key);
+
+        while (root != null) {
+            if (compare(root.getIntKey(), key) >= 0) {
+                root = predecessor(root);
+            } else {
+                break;
+            }
+        }
+
+        return root;
     }
 
     @Override
