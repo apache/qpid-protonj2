@@ -994,39 +994,81 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     @Override
-    public ImmutableSplayMapEntry floorEntry(UnsignedInteger key) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public UnsignedInteger floorKey(UnsignedInteger key) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public ImmutableSplayMapEntry ceilingEntry(UnsignedInteger key) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public UnsignedInteger ceilingKey(UnsignedInteger key) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public ImmutableSplayMapEntry higherEntry(UnsignedInteger key) {
-        // TODO Auto-generated method stub
-        return null;
+        return export(higherEntry(key.intValue()));
     }
 
     @Override
     public UnsignedInteger higherKey(UnsignedInteger key) {
-        // TODO Auto-generated method stub
-        return null;
+        final SplayedEntry<E> result = higherEntry(key.intValue());
+
+        return result == null ? null : result.getKey();
+    }
+
+    private SplayedEntry<E> higherEntry(int key) {
+        root = splay(root, key);
+
+        while (root != null) {
+            if (compare(root.getIntKey(), key) <= 0) {
+                root = successor(root);
+            } else {
+                break;
+            }
+        }
+
+        return root;
+    }
+
+    @Override
+    public ImmutableSplayMapEntry floorEntry(UnsignedInteger key) {
+        return export(floorEntry(key.intValue()));
+    }
+
+    @Override
+    public UnsignedInteger floorKey(UnsignedInteger key) {
+        final SplayedEntry<E> result = floorEntry(key.intValue());
+
+        return result == null ? null : result.getKey();
+    }
+
+    private SplayedEntry<E> floorEntry(int key) {
+        root = splay(root, key);
+
+        while (root != null) {
+            if (compare(root.getIntKey(), key) > 0) {
+                root = predecessor(root);
+            } else {
+                break;
+            }
+        }
+
+        return root;
+    }
+
+    @Override
+    public ImmutableSplayMapEntry ceilingEntry(UnsignedInteger key) {
+        return export(ceilingEntry(key.intValue()));
+    }
+
+    @Override
+    public UnsignedInteger ceilingKey(UnsignedInteger key) {
+        final SplayedEntry<E> result = ceilingEntry(key.intValue());
+
+        return result == null ? null : result.getKey();
+    }
+
+    private SplayedEntry<E> ceilingEntry(int key) {
+        root = splay(root, key);
+
+        while (root != null) {
+            if (compare(root.getIntKey(), key) < 0) {
+                root = successor(root);
+            } else {
+                break;
+            }
+        }
+
+        return root;
     }
 
     @Override

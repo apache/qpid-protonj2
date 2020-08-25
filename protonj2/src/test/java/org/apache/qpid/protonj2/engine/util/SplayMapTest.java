@@ -1148,6 +1148,130 @@ public class SplayMapTest {
         assertNull(map.lowerEntry(UnsignedInteger.valueOf(0)));
     }
 
+    @Test
+    public void testHigherEntry() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+
+        for (int entry : inputValues) {
+            map.put(UnsignedInteger.valueOf(entry), "" + entry);
+        }
+
+        assertEquals(UnsignedInteger.valueOf(1), map.higherEntry(UnsignedInteger.valueOf(0)).getKey());
+        assertEquals(UnsignedInteger.valueOf(2), map.higherEntry(UnsignedInteger.valueOf(1)).getKey());
+        assertEquals(UnsignedInteger.valueOf(3), map.higherEntry(UnsignedInteger.valueOf(2)).getKey());
+        assertEquals(UnsignedInteger.valueOf(-2), map.higherEntry(UnsignedInteger.valueOf(3)).getKey());
+        assertEquals(UnsignedInteger.valueOf(-2), map.higherEntry(UnsignedInteger.valueOf(4)).getKey());
+        assertEquals(UnsignedInteger.valueOf(-2), map.higherEntry(UnsignedInteger.valueOf(-3)).getKey());
+        assertEquals(UnsignedInteger.valueOf(-1), map.higherEntry(UnsignedInteger.valueOf(-2)).getKey());
+        assertNull(map.higherEntry(UnsignedInteger.valueOf(-1)));
+    }
+
+    @Test
+    public void testHigherKey() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+
+        for (int entry : inputValues) {
+            map.put(UnsignedInteger.valueOf(entry), "" + entry);
+        }
+
+        assertEquals(UnsignedInteger.valueOf(1), map.higherKey(UnsignedInteger.valueOf(0)));
+        assertEquals(UnsignedInteger.valueOf(2), map.higherKey(UnsignedInteger.valueOf(1)));
+        assertEquals(UnsignedInteger.valueOf(3), map.higherKey(UnsignedInteger.valueOf(2)));
+        assertEquals(UnsignedInteger.valueOf(-2), map.higherKey(UnsignedInteger.valueOf(3)));
+        assertEquals(UnsignedInteger.valueOf(-2), map.higherKey(UnsignedInteger.valueOf(4)));
+        assertEquals(UnsignedInteger.valueOf(-2), map.higherKey(UnsignedInteger.valueOf(-3)));
+        assertEquals(UnsignedInteger.valueOf(-1), map.higherKey(UnsignedInteger.valueOf(-2)));
+        assertNull(map.higherKey(UnsignedInteger.valueOf(-1)));
+    }
+
+    @Test
+    public void testFloorEntry() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+
+        for (int entry : inputValues) {
+            map.put(UnsignedInteger.valueOf(entry), "" + entry);
+        }
+
+        assertEquals(UnsignedInteger.valueOf(-1), map.floorEntry(UnsignedInteger.valueOf(-1)).getKey());
+        assertEquals(UnsignedInteger.valueOf(-2), map.floorEntry(UnsignedInteger.valueOf(-2)).getKey());
+        assertEquals(UnsignedInteger.valueOf(3), map.floorEntry(UnsignedInteger.valueOf(4)).getKey());
+        assertEquals(UnsignedInteger.valueOf(3), map.floorEntry(UnsignedInteger.valueOf(-3)).getKey());
+        assertEquals(UnsignedInteger.valueOf(3), map.floorEntry(UnsignedInteger.valueOf(Integer.MAX_VALUE)).getKey());
+        assertEquals(UnsignedInteger.valueOf(3), map.floorEntry(UnsignedInteger.valueOf(3)).getKey());
+        assertEquals(UnsignedInteger.valueOf(2), map.floorEntry(UnsignedInteger.valueOf(2)).getKey());
+        assertEquals(UnsignedInteger.valueOf(1), map.floorEntry(UnsignedInteger.valueOf(1)).getKey());
+        assertEquals(UnsignedInteger.valueOf(0), map.floorEntry(UnsignedInteger.valueOf(0)).getKey());
+    }
+
+    @Test
+    public void testFloorKey() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+
+        for (int entry : inputValues) {
+            map.put(UnsignedInteger.valueOf(entry), "" + entry);
+        }
+
+        assertEquals(UnsignedInteger.valueOf(-1), map.floorKey(UnsignedInteger.valueOf(-1)));
+        assertEquals(UnsignedInteger.valueOf(-2), map.floorKey(UnsignedInteger.valueOf(-2)));
+        assertEquals(UnsignedInteger.valueOf(3), map.floorKey(UnsignedInteger.valueOf(4)));
+        assertEquals(UnsignedInteger.valueOf(3), map.floorKey(UnsignedInteger.valueOf(-3)));
+        assertEquals(UnsignedInteger.valueOf(3), map.floorKey(UnsignedInteger.valueOf(Integer.MAX_VALUE)));
+        assertEquals(UnsignedInteger.valueOf(3), map.floorKey(UnsignedInteger.valueOf(3)));
+        assertEquals(UnsignedInteger.valueOf(2), map.floorKey(UnsignedInteger.valueOf(2)));
+        assertEquals(UnsignedInteger.valueOf(1), map.floorKey(UnsignedInteger.valueOf(1)));
+        assertEquals(UnsignedInteger.valueOf(0), map.floorKey(UnsignedInteger.valueOf(0)));
+    }
+
+    @Test
+    public void testCeilingEntry() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+
+        for (int entry : inputValues) {
+            map.put(UnsignedInteger.valueOf(entry), "" + entry);
+        }
+
+        assertEquals(UnsignedInteger.valueOf(0), map.ceilingEntry(UnsignedInteger.valueOf(0)).getKey());
+        assertEquals(UnsignedInteger.valueOf(1), map.ceilingEntry(UnsignedInteger.valueOf(1)).getKey());
+        assertEquals(UnsignedInteger.valueOf(2), map.ceilingEntry(UnsignedInteger.valueOf(2)).getKey());
+        assertEquals(UnsignedInteger.valueOf(3), map.ceilingEntry(UnsignedInteger.valueOf(3)).getKey());
+        assertEquals(UnsignedInteger.valueOf(-2), map.ceilingEntry(UnsignedInteger.valueOf(4)).getKey());
+        assertEquals(UnsignedInteger.valueOf(-2), map.ceilingEntry(UnsignedInteger.valueOf(Integer.MAX_VALUE)).getKey());
+        assertEquals(UnsignedInteger.valueOf(-2), map.ceilingEntry(UnsignedInteger.valueOf(-3)).getKey());
+        assertEquals(UnsignedInteger.valueOf(-2), map.ceilingEntry(UnsignedInteger.valueOf(-2)).getKey());
+        assertEquals(UnsignedInteger.valueOf(-1), map.ceilingEntry(UnsignedInteger.valueOf(-1)).getKey());
+    }
+
+    @Test
+    public void testCeilingKey() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+
+        for (int entry : inputValues) {
+            map.put(UnsignedInteger.valueOf(entry), "" + entry);
+        }
+
+        assertEquals(UnsignedInteger.valueOf(0), map.ceilingKey(UnsignedInteger.valueOf(0)));
+        assertEquals(UnsignedInteger.valueOf(1), map.ceilingKey(UnsignedInteger.valueOf(1)));
+        assertEquals(UnsignedInteger.valueOf(2), map.ceilingKey(UnsignedInteger.valueOf(2)));
+        assertEquals(UnsignedInteger.valueOf(3), map.ceilingKey(UnsignedInteger.valueOf(3)));
+        assertEquals(UnsignedInteger.valueOf(-2), map.ceilingKey(UnsignedInteger.valueOf(4)));
+        assertEquals(UnsignedInteger.valueOf(-2), map.ceilingKey(UnsignedInteger.valueOf(Integer.MAX_VALUE)));
+        assertEquals(UnsignedInteger.valueOf(-2), map.ceilingKey(UnsignedInteger.valueOf(-3)));
+        assertEquals(UnsignedInteger.valueOf(-2), map.ceilingKey(UnsignedInteger.valueOf(-2)));
+        assertEquals(UnsignedInteger.valueOf(-1), map.ceilingKey(UnsignedInteger.valueOf(-1)));
+    }
+
     private void dumpRandomDataSet(int iterations, boolean bounded) {
         final int[] dataSet = new int[iterations];
 
