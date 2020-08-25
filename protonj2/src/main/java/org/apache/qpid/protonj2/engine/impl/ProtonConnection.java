@@ -38,6 +38,8 @@ import org.apache.qpid.protonj2.engine.TransactionManager;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineStateException;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
+import org.apache.qpid.protonj2.logging.ProtonLogger;
+import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
@@ -60,6 +62,8 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
  */
 public class ProtonConnection extends ProtonEndpoint<Connection> implements Connection, AMQPHeader.HeaderHandler<ProtonEngine>, Performative.PerformativeHandler<ProtonEngine> {
 
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonConnection.class);
+
     private final Open localOpen = new Open();
     private Open remoteOpen;
     private AMQPHeader remoteHeader;
@@ -71,7 +75,6 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     private ConnectionState remoteState = ConnectionState.IDLE;
 
     private boolean headerSent;
-    private boolean headerReceived;
     private boolean localOpenSent;
     private boolean localCloseSent;
 
@@ -142,11 +145,9 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public Connection negotiate() {
-        checkConnectionClosed("Cannot start header negotiation on a closed connection");
-        if (!headerSent) {
-            fireAMQPHeader();
-        }
-        return this;
+        return negotiate((header) -> {
+            LOG.trace("Negotiation completed with remote returning AMQP Header: {}", header);
+        });
     }
 
     @Override
@@ -154,15 +155,13 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         Objects.requireNonNull(remoteAMQPHeaderHandler, "Provided AMQP Header received handler cannot be null");
         checkConnectionClosed("Cannot start header negotiation on a closed connection");
 
-        if (!headerSent) {
-            fireAMQPHeader();
-        }
-
-        if (headerReceived) {
+        if (remoteHeader != null) {
             remoteAMQPHeaderHandler.handle(remoteHeader);
         } else {
             remoteHeaderHandler = remoteAMQPHeaderHandler;
         }
+
+        syncLocalStateWithRemote();
 
         return this;
     }
@@ -401,7 +400,6 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public void handleAMQPHeader(AMQPHeader header, ProtonEngine context) {
-        headerReceived = true;
         remoteHeader = header;
 
         if (remoteHeaderHandler != null) {
@@ -589,37 +587,44 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     }
 
     private void syncLocalStateWithRemote() {
-        // When the engine state changes or we have read an incoming AMQP header etc we need to check
-        // if we have pending work to send and do so
-        if (headerSent) {
-            final ConnectionState state = getState();
+        if (engine.isWritable()) {
+            // When the engine state changes or we have read an incoming AMQP header etc we need to check
+            // if we have pending work to send and do so
+            if (headerSent) {
+                final ConnectionState state = getState();
 
-            // Once an incoming header arrives we can emit our open if locally opened and also send close if
-            // that is what our state is already.
-            if (state != ConnectionState.IDLE && headerReceived) {
-                boolean resourceSyncNeeded = false;
+                // Once an incoming header arrives we can emit our open if locally opened and also send close if
+                // that is what our state is already.
+                if (state != ConnectionState.IDLE && remoteHeader != null) {
+                    boolean resourceSyncNeeded = false;
 
-                if (!localOpenSent && !engine.isShutdown()) {
-                    engine.fireWrite(localOpen, 0, null, null);
-                    engine.configuration().recomputeEffectiveFrameSizeLimits();
-                    localOpenSent = true;
-                    resourceSyncNeeded = true;
+                    if (!localOpenSent && !engine.isShutdown()) {
+                        engine.fireWrite(localOpen, 0, null, null);
+                        engine.configuration().recomputeEffectiveFrameSizeLimits();
+                        localOpenSent = true;
+                        resourceSyncNeeded = true;
+                    }
+
+                    if (isLocallyClosed() && !localCloseSent && !engine.isShutdown()) {
+                        Close localClose = new Close().setError(getCondition());
+                        engine.fireWrite(localClose, 0, null, null);
+                        localCloseSent = true;
+                        resourceSyncNeeded = false;  // Session resources can't write anything now
+                    }
+
+                    if (resourceSyncNeeded) {
+                        allSessions().forEach(session -> session.trySyncLocalStateWithRemote());
+                    }
                 }
-
-                if (isLocallyClosed() && !localCloseSent && !engine.isShutdown()) {
-                    Close localClose = new Close().setError(getCondition());
-                    engine.fireWrite(localClose, 0, null, null);
-                    localCloseSent = true;
-                    resourceSyncNeeded = false;  // Session resources can't write anything now
-                }
-
-                if (resourceSyncNeeded) {
-                    allSessions().forEach(session -> session.trySyncLocalStateWithRemote());
-                }
+            } else if (remoteHeader != null || getState() == ConnectionState.ACTIVE || remoteHeaderHandler != null) {
+                headerSent = true;
+                engine.fireWrite(AMQPHeader.getAMQPHeader());
             }
-        } else if (!engine.isShutdown()) {
-            fireAMQPHeader();
         }
+    }
+
+    void handleEngineStarted(ProtonEngine protonEngine) {
+        syncLocalStateWithRemote();
     }
 
     void handleEngineShutdown(ProtonEngine protonEngine) {
@@ -689,11 +694,6 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         }
 
         localSessions.remove(localChannel);
-    }
-
-    void fireAMQPHeader() {
-        headerSent = true;
-        engine.fireWrite(AMQPHeader.getAMQPHeader());
     }
 
     boolean wasHeaderSent() {

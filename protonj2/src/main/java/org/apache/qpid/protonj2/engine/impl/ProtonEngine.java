@@ -122,6 +122,7 @@ public class ProtonEngine implements Engine {
                 pipeline.fireEngineStarting();
                 state = EngineState.STARTED;
                 writable = true;
+                connection.handleEngineStarted(this);
             } catch (Throwable error) {
                 throw engineFailed(error);
             }

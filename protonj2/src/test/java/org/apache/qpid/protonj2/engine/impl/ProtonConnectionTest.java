@@ -40,6 +40,8 @@ import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.ConnectionState;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
+import org.apache.qpid.protonj2.engine.Sender;
+import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineStateException;
 import org.apache.qpid.protonj2.engine.exceptions.FrameEncodingException;
@@ -57,6 +59,37 @@ import org.junit.Test;
  * Tests for behaviors of the ProtonConnection class
  */
 public class ProtonConnectionTest extends ProtonEngineTestSupport {
+
+    @Test(timeout = 10000)
+    public void testConnectionSyncStateAfterEngineStarted() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        Connection connection = engine.connection();
+        Session session = connection.session().open();
+        Sender sender = session.sender("test").open();
+
+        connection.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().ofSender().respond();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        engine.start();
+
+        sender.close();
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
 
     @Test(timeout = 10000)
     public void testNegotiateSendsAMQPHeader() throws Exception {

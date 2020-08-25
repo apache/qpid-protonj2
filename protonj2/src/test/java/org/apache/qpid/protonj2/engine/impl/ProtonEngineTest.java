@@ -233,6 +233,40 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     }
 
     @Test(timeout = 10_000)
+    public void testEngineStartAfterConnectionOpen() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        // Engine cannot accept input bytes until started.
+        assertFalse(engine.isWritable());
+
+        Connection connection = engine.connection();
+        assertNotNull(connection);
+
+        assertFalse(engine.isShutdown());
+        assertFalse(engine.isFailed());
+        assertNull(engine.failureCause());
+
+        connection.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen();
+
+        // Should be idempotent and return same Connection
+        Connection another = engine.start();
+        assertSame(connection, another);
+
+        // Default engine should start and return a connection immediately
+        assertTrue(engine.isWritable());
+        assertNotNull(connection);
+        assertNull(failure);
+
+        peer.waitForScriptToComplete();
+    }
+
+    @Test(timeout = 10_000)
     public void testEngineEmitsAMQPHeaderOnConnectionOpen() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
