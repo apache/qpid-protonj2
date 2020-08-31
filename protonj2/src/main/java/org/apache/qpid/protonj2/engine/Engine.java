@@ -255,7 +255,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @return this {@link Engine}
      */
-    Engine errorHandler(EventHandler<Throwable> engineFailure);
+    Engine errorHandler(EventHandler<Engine> engineFailure);
 
     /**
      * Sets a handler instance that will be notified when the engine is shut down via a call to the

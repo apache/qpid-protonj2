@@ -83,7 +83,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     @Test(timeout = 20_000)
     public void testCreateDefaultCoordinatorSender() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
@@ -116,7 +116,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     @Test(timeout = 20_000)
     public void testCreateCoordinatorSender() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
@@ -167,7 +167,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     @Test(timeout = 20_000)
     public void testRemoteCoordinatorSenderSignalsTransactionManagerFromSessionWhenEnabled() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
@@ -220,7 +220,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     @Test(timeout = 20_000)
     public void testRemoteCoordinatorSenderSignalsTransactionManagerFromConnectionWhenEnabled() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
@@ -273,7 +273,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     @Test(timeout = 20_000)
     public void testRemoteCoordinatorTriggersSenderCreateWhenManagerHandlerNotSet() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
@@ -326,7 +326,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     @Test(timeout = 20_000)
     public void testTransactionControllerDeclaresTransaction() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
@@ -389,7 +389,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     @Test(timeout = 20_000)
     public void testTransactionControllerBeginComiitBeginRollback() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
@@ -464,7 +464,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
 
     private void doTestTransactionControllerDeclareAndDischargeOneTransaction(boolean useNewTransactionAPI) {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
@@ -539,7 +539,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     @Test(timeout = 20_000)
     public void testTransactionDeclareRejected() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
@@ -601,7 +601,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     @Test(timeout = 20_000)
     public void testTransactionDischargeRejected() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
@@ -667,7 +667,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     @Test(timeout = 20_000)
     public void testCannotDeclareTransactionFromOneControllerInAnother() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
@@ -746,7 +746,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     @Test(timeout = 20_000)
     public void testCannotDischargeTransactionFromOneControllerInAnother() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
@@ -826,7 +826,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         final ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(payloadBuffer);
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
@@ -895,7 +895,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     @Test(timeout = 20_000)
     public void testTransactionManagerSignalsTxnDeclarationAndDischarge() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         final byte[] TXN_ID = new byte[] {0, 1, 2, 3};
@@ -980,7 +980,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         source.setOutcomes(DEFAULT_OUTCOMES);
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();

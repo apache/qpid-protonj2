@@ -61,7 +61,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     @Test(timeout = 10_000)
     public void testEnginePipelineWriteFailsBeforeStart() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
 
         // Engine cannot accept input bytes until started.
         assertFalse(engine.isWritable());
@@ -100,7 +100,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     @Test(timeout = 10_000)
     public void testEnginePipelineReadFailsBeforeStart() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
 
         // Engine cannot accept input bytes until started.
         assertFalse(engine.isWritable());
@@ -139,7 +139,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     @Test(timeout = 10_000)
     public void testEngineStart() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
 
         // Engine cannot accept input bytes until started.
         assertFalse(engine.isWritable());
@@ -164,7 +164,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     @Test(timeout = 10_000)
     public void testEngineShutdown() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
 
         // Engine cannot accept input bytes until started.
         assertFalse(engine.isWritable());
@@ -197,7 +197,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     @Test(timeout = 10_000)
     public void testEngineFailure() {
         ProtonEngine engine = (ProtonEngine) EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
 
         // Engine cannot accept input bytes until started.
         assertFalse(engine.isWritable());
@@ -235,7 +235,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     @Test(timeout = 10_000)
     public void testEngineStartAfterConnectionOpen() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         // Engine cannot accept input bytes until started.
@@ -269,7 +269,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     @Test(timeout = 10_000)
     public void testEngineEmitsAMQPHeaderOnConnectionOpen() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -324,7 +324,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
     private void doTestTickFailsBasedOnState(boolean setLocalTimeout, boolean open, boolean close, boolean shutdown) throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -381,7 +381,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
     private void doTestAutoTickFailsBasedOnState(boolean setLocalTimeout, boolean open, boolean close, boolean shutdown) throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -419,7 +419,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     @Test(timeout = 10_000)
     public void testTickAutoPreventsDoubleInvocation() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -448,7 +448,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     @Test(timeout = 10_000)
     public void testCannotCallTickAfterTickAutoCalled() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -477,7 +477,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     @Test(timeout = 10_000)
     public void testTickRemoteTimeout() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -525,7 +525,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     @Test(timeout = 10_000)
     public void testTickLocalTimeout() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -576,7 +576,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
     private void doTickWithNoIdleTimeoutGivesZeroDeadlineTestImpl(boolean useZero) throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -624,7 +624,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     private void doTickWithLocalTimeoutTestImpl(int localTimeout, long tick1, long expectedDeadline1, long expectedDeadline2, long expectedDeadline3) throws EngineStateException {
         this.failure = null;
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -692,7 +692,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
     private void doTickWithRemoteTimeoutTestImpl(int remoteTimeoutHalf, long tick1, long expectedDeadline1, long expectedDeadline2, long expectedDeadline3) throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -773,7 +773,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
         this.failure = null;
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -853,7 +853,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertTrue(offset > remoteTimeoutHalf);
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -931,7 +931,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertTrue(offset < remoteTimeoutHalf);
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -1010,7 +1010,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertTrue(offset < localTimeout);
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -1089,7 +1089,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertTrue(offset < remoteTimeoutHalf);
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         Connection connection = engine.start();
@@ -1191,7 +1191,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     private final void doTestEngineFailsWithMalformedHeaderException(byte[] headerBytes) {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithBytes(headerBytes);
@@ -1209,7 +1209,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     @Test(timeout = 10_000)
     public void testEngineConfiguresDefaultMaxFrameSizeLimits() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         Connection connection = engine.start();
         assertNotNull(connection);
         ProtonEngineConfiguration configuration = (ProtonEngineConfiguration) engine.configuration();
@@ -1256,7 +1256,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
     private void doTestEngineConfiguresSpecifiedFrameSizeLimits(int localValue, int remoteResponse) {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
+        engine.errorHandler(result -> failure = result.failureCause());
         Connection connection = engine.start();
         assertNotNull(connection);
         ProtonEngineConfiguration configuration = (ProtonEngineConfiguration) engine.configuration();

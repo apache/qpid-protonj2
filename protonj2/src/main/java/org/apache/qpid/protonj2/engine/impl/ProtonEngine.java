@@ -78,8 +78,8 @@ public class ProtonEngine implements Engine {
     // Engine event points
     private EventHandler<ProtonBuffer> outputHandler;
     private EventHandler<Engine> engineShutdownHandler;
-    private EventHandler<Throwable> engineErrorHandler = (error) -> {
-        LOG.warn("Engine encounted error and will become inoperable: ", error);
+    private EventHandler<Engine> engineFailureHandler = (engine) -> {
+        LOG.warn("Engine encounted error and will become inoperable: ", engine.failureCause());
     };
 
     @Override
@@ -252,7 +252,7 @@ public class ProtonEngine implements Engine {
             } catch (Exception ignored) {
             }
 
-            engineErrorHandler.handle(cause);
+            engineFailureHandler.handle(this);
         } else {
             if (isFailed()) {
                 failure = ProtonExceptionSupport.createFailedException(cause);
@@ -277,13 +277,13 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public ProtonEngine errorHandler(EventHandler<Throwable> handler) {
-        this.engineErrorHandler = handler;
+    public ProtonEngine errorHandler(EventHandler<Engine> handler) {
+        this.engineFailureHandler = handler;
         return this;
     }
 
-    EventHandler<Throwable> errorHandler() {
-        return engineErrorHandler;
+    EventHandler<Engine> errorHandler() {
+        return engineFailureHandler;
     }
 
     @Override
