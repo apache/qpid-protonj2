@@ -39,8 +39,8 @@ import org.apache.qpid.protonj2.types.security.SaslChallenge;
 import org.apache.qpid.protonj2.types.security.SaslInit;
 import org.apache.qpid.protonj2.types.security.SaslMechanisms;
 import org.apache.qpid.protonj2.types.security.SaslOutcome;
-import org.apache.qpid.protonj2.types.security.SaslResponse;
 import org.apache.qpid.protonj2.types.security.SaslPerformative.SaslPerformativeHandler;
+import org.apache.qpid.protonj2.types.security.SaslResponse;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader.HeaderHandler;
 
@@ -238,11 +238,13 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
                 case OK:
                     break;
                 case SYS:
+                    saslFailure = new SaslSystemException(true, "SASL handshake failed due to a system error");
+                    break;
                 case SYS_TEMP:
-                    saslFailure = new SaslSystemException(false, "SASL handshake failed due to a transient error");
+                    saslFailure = new SaslSystemException(false, "SASL handshake failed due to a transient system error");
                     break;
                 case SYS_PERM:
-                    saslFailure = new SaslSystemException(true, "SASL handshake failed due to a transient error");
+                    saslFailure = new SaslSystemException(true, "SASL handshake failed due to a permanent system error");
                     break;
                 default:
                     saslFailure = new SaslException("SASL handshake failed due to an unknown error");
