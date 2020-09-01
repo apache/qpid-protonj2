@@ -370,6 +370,31 @@ public abstract class ScriptWriter {
         expectAMQPHeader().respondWithAMQPHeader();
     }
 
+    /**
+     * Creates all the scripted elements needed for a failed SASL Plain
+     * connection.
+     * <p>
+     * For this exchange the SASL header is expected which is responded to with the
+     * corresponding SASL header and an immediate SASL mechanisms frame that only
+     * advertises plain as the mechanism.  It is expected that the remote will
+     * send a SASL init with the plain mechanism selected and the outcome is
+     * predefined failing the exchange.
+     *
+     * @param saslCode
+     *      The SASL code that indicates which failure the remote will be sent.
+     */
+    public void expectFailingSASLPlainConnect(byte saslCode) {
+        expectSASLHeader().respondWithSASLPHeader();
+        remoteSaslMechanisms().withMechanisms("PLAIN").queue();
+        expectSaslInit().withMechanism("PLAIN");
+
+        if (saslCode <= 0 || saslCode > SaslCode.SYS_TEMP.ordinal()) {
+            throw new IllegalArgumentException("SASL Code should indicate a failure");
+        }
+
+        remoteSaslOutcome().withCode(SaslCode.valueOf(saslCode)).queue();
+    }
+
     //----- Utility methods for tests writing raw scripted SASL tests
 
     public byte[] saslPlainInitialResponse(String username, String password) {
