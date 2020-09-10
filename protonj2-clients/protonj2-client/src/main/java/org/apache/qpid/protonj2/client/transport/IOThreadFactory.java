@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.protonj2.client.impl;
+package org.apache.qpid.protonj2.client.transport;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ThreadFactory;
@@ -26,9 +26,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Simple ThreadFactory object
  */
-public class ClientThreadFactory implements ThreadFactory {
+public class IOThreadFactory implements ThreadFactory {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClientThreadFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(IOThreadFactory.class);
 
     private final String threadName;
     private final boolean daemon;
@@ -43,7 +43,7 @@ public class ClientThreadFactory implements ThreadFactory {
      * @param daemon
      *      should the created thread be a daemon thread.
      */
-    public ClientThreadFactory(String threadName, boolean daemon) {
+    public IOThreadFactory(String threadName, boolean daemon) {
         this.threadName = threadName;
         this.daemon = daemon;
         this.threadTracker = null;
@@ -65,7 +65,7 @@ public class ClientThreadFactory implements ThreadFactory {
      * @param threadTracker
      *      AtomicReference that will be updated any time a new Thread is created.
      */
-    public ClientThreadFactory(String threadName, boolean daemon, AtomicReference<Thread> threadTracker) {
+    public IOThreadFactory(String threadName, boolean daemon, AtomicReference<Thread> threadTracker) {
         this.threadName = threadName;
         this.daemon = daemon;
         this.threadTracker = threadTracker;

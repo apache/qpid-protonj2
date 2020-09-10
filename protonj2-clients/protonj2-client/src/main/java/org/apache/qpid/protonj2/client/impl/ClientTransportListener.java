@@ -17,7 +17,7 @@
 package org.apache.qpid.protonj2.client.impl;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.client.exceptions.ClientFailedException;
+import org.apache.qpid.protonj2.client.transport.Transport;
 import org.apache.qpid.protonj2.client.transport.TransportListener;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.exceptions.EngineStateException;
@@ -25,23 +25,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Listens for events from a connection linked Transport and informs the connection
- * of the events.
+ * Transport events listener that is bound to a single proton {@link Engine} instance
+ * for its lifetime which prevent duplication of error or connection closed events from
+ * influencing a {@link ClientConnection} that will attempt reconnection.
  */
-public class ClientTransportListener implements TransportListener {
+public final class ClientTransportListener implements TransportListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientTransportListener.class);
 
-    private final ClientConnection connection;
     private final Engine engine;
 
-    public ClientTransportListener(ClientConnection connection) {
-        this.connection = connection;
-        this.engine = connection.getEngine();
+    public ClientTransportListener(Engine engine) {
+        this.engine = engine;
     }
 
     @Override
-    public void onData(ProtonBuffer incoming) {
+    public void transportInitialized(Transport transport) {
+        engine.configuration().setBufferAllocator(transport.getBufferAllocator());
+    }
+
+    @Override
+    public void transportConnected(Transport transport) {
+        engine.start().open();
+    }
+
+    @Override
+    public void transportRead(ProtonBuffer incoming) {
         try {
             do {
                 engine.ingest(incoming);
@@ -54,22 +63,10 @@ public class ClientTransportListener implements TransportListener {
     }
 
     @Override
-    public void onTransportClosed() {
-        if (!connection.getScheduler().isShutdown()) {
-            connection.getScheduler().execute(() -> {
-                LOG.debug("Transport connection remotely closed");
-                engine.engineFailed(new ClientFailedException("Transport connection remotely closed."));
-            });
-        }
-    }
-
-    @Override
-    public void onTransportError(Throwable error) {
-        if (!connection.getScheduler().isShutdown()) {
-            connection.getScheduler().execute(() -> {
-                LOG.info("Transport failed: {}", error.getMessage());
-                engine.engineFailed(ClientExceptionSupport.createOrPassthroughFatal(error));
-            });
+    public void transportError(Throwable error) {
+        if (!engine.isShutdown()) {
+            LOG.debug("Transport failed: {}", error.getMessage());
+            engine.engineFailed(ClientExceptionSupport.convertToConnectionClosedException(error));
         }
     }
 }

@@ -19,32 +19,33 @@ package org.apache.qpid.protonj2.client.transport;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonNettyByteBuffer;
 import org.apache.qpid.protonj2.client.SslOptions;
 import org.apache.qpid.protonj2.client.TransportOptions;
-import org.apache.qpid.protonj2.client.impl.ClientThreadFactory;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.test.Wait;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.epoll.Epoll;
@@ -65,41 +66,60 @@ public class TcpTransportTest extends ImperativeClientTestCase {
     protected static final int SEND_BYTE_COUNT = 1024;
     protected static final String HOSTNAME = "localhost";
 
-    protected boolean transportClosed;
+    protected volatile boolean transportInitialized;
+    protected volatile boolean transportConnected;
+    protected volatile boolean transportErrored;
     protected final List<Throwable> exceptions = new ArrayList<>();
     protected final List<ProtonBuffer> data = new ArrayList<>();
     protected final AtomicInteger bytesRead = new AtomicInteger();
 
     protected final TransportListener testListener = new NettyTransportListener(false);
 
+    protected NettyIOContext context;
+
+    @Override
+    @AfterEach
+    public void tearDown(TestInfo testInfo) throws Exception {
+        super.tearDown(testInfo);
+
+        if (context != null) {
+            context.shutdown();
+            context = null;
+        }
+    }
+
     @Test
     public void testCloseOnNeverConnectedTransport() throws Exception {
-        Transport transport = createTransport(HOSTNAME, 5672, testListener, createTransportOptions(), createServerSSLOptions());
+        Transport transport = createTransport(createTransportOptions(), createSSLOptions());
         assertFalse(transport.isConnected());
 
         transport.close();
 
-        assertTrue(!transportClosed);
+        assertFalse(transportInitialized);
+        assertFalse(transportConnected);
+        assertFalse(transportErrored);
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
 
     @Test
     public void testCreateWithBadHostOrPortThrowsIAE() throws Exception {
+        Transport transport = createTransport(createTransportOptions().defaultTcpPort(-1), createSSLOptions().defaultSslPort(-1));
+
         try {
-            createTransport(HOSTNAME, -1, testListener, createTransportOptions(), createSSLOptions());
+            transport.connect(HOSTNAME, -1, testListener);
             fail("Should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException iae) {
         }
 
         try {
-            createTransport(null, 5672, testListener, createTransportOptions(), createSSLOptions());
+            transport.connect(null, 5672, testListener);
             fail("Should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException iae) {
         }
 
         try {
-            createTransport("", 5672, testListener, createTransportOptions(), createSSLOptions());
+            transport.connect("", 5672, testListener);
             fail("Should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException iae) {
         }
@@ -108,58 +128,22 @@ public class TcpTransportTest extends ImperativeClientTestCase {
     @Test
     public void testCreateWithNullOptionsThrowsIAE() throws Exception {
         try {
-            createTransport(HOSTNAME, 5672, testListener, null, null);
-            fail("Should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {
+            new NettyIOContext(null, null, getTestName());
+            fail("Should have thrown NullPointerException");
+        } catch (NullPointerException npe) {
         }
 
         try {
-            createTransport(HOSTNAME, 5672, testListener, createTransportOptions(), null);
-            fail("Should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {
+            new NettyIOContext(createTransportOptions(), null, getTestName());
+            fail("Should have thrown NullPointerException");
+        } catch (NullPointerException npe) {
         }
 
         try {
-            createTransport(HOSTNAME, 5672, testListener, null, createSSLOptions());
-            fail("Should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {
+            new NettyIOContext(null, createSSLOptions(), getTestName());
+            fail("Should have thrown NullPointerException");
+        } catch (NullPointerException npe) {
         }
-    }
-
-    @Test
-    public void testConnectWithCustomThreadFactoryConfigured() throws Exception {
-        try (NettyEchoServer server = createEchoServer()) {
-            server.start();
-
-            final int port = server.getServerPort();
-
-            ClientThreadFactory factory = new ClientThreadFactory("NettyTransportTest", true);
-
-            TcpTransport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
-            transport.setThreadFactory(factory);
-
-            try {
-                transport.connect(null);
-            } catch (Exception e) {
-                LOG.info("Failed to connect to: {}:{} as expected.", HOSTNAME, port);
-                fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
-            }
-
-            assertTrue(transport.isConnected());
-            assertSame(factory, transport.getThreadFactory());
-
-            try {
-                transport.setThreadFactory(factory);
-            } catch (IllegalStateException expected) {
-                LOG.trace("Caught expected state exception");
-            }
-
-            transport.close();
-        }
-
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
-        assertTrue(exceptions.isEmpty());
-        assertTrue(data.isEmpty());
     }
 
     @Test
@@ -171,9 +155,10 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             server.close();
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(createTransportOptions(), createSSLOptions());
+
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
             } catch (Exception e) {
                 LOG.info("Failed to connect to: {}:{} as expected.", HOSTNAME, port);
@@ -184,8 +169,10 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             transport.close();
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
-        assertTrue(exceptions.isEmpty());
+        assertTrue(transportInitialized);
+        assertFalse(transportConnected);
+        assertTrue(transportErrored);
+        assertFalse(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
 
@@ -196,40 +183,16 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             final int port = server.getServerPort();
 
-            Transport transport = createTransport(HOSTNAME, port, null, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(createTransportOptions(), createSSLOptions());
+
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, null);
                 fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
-            } catch (Exception e) {
+            } catch (IllegalArgumentException e) {
                 LOG.info("Failed to connect to: {}:{} as expected.", HOSTNAME, port);
             }
 
             assertFalse(transport.isConnected());
-
-            transport.close();
-        }
-    }
-
-    @Test
-    public void testConnectAfterListenerSetWorks() throws Exception {
-        try (NettyEchoServer server = createEchoServer()) {
-            server.start();
-
-            final int port = server.getServerPort();
-
-            TcpTransport transport = createTransport(HOSTNAME, port, null, createTransportOptions(), createSSLOptions());
-            assertNull(transport.getTransportListener());
-            transport.setTransportListener(testListener);
-            assertNotNull(transport.getTransportListener());
-
-            try {
-                transport.connect(null);
-                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
-            } catch (Exception e) {
-                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
-            }
-
-            assertTrue(transport.isConnected());
 
             transport.close();
         }
@@ -242,9 +205,9 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             final int port = server.getServerPort();
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -254,13 +217,31 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             assertEquals(HOSTNAME, transport.getHost(), "Server host is incorrect");
             assertEquals(port, transport.getPort(), "Server port is incorrect");
 
+            final URI remoteURI = transport.getRemoteURI();
+
+            if (transport.isSecure()) {
+                if (transport.getTransportOptions().useWebSockets()) {
+                    assertEquals(remoteURI.getScheme(), "wss");
+                } else {
+                    assertEquals(remoteURI.getScheme(), "ssl");
+                }
+            } else {
+                if (transport.getTransportOptions().useWebSockets()) {
+                    assertEquals(remoteURI.getScheme(), "ws");
+                } else {
+                    assertEquals(remoteURI.getScheme(), "tcp");
+                }
+            }
+
             transport.close();
 
             // Additional close should not fail or cause other problems.
             transport.close();
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
+        assertTrue(transportInitialized);
+        assertTrue(transportConnected);
+        assertFalse(transportErrored);  // Normal shutdown does not trigger the event.
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
@@ -276,10 +257,12 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             List<Transport> transports = new ArrayList<Transport>();
 
+            NettyIOContext context = createContext(createTransportOptions(), createSSLOptions());
+
             for (int i = 0; i < CONNECTION_COUNT; ++i) {
-                Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+                Transport transport = context.newTransport();
                 try {
-                    transport.connect(null);
+                    transport.connect(HOSTNAME, port, testListener).awaitConnect();
                     assertTrue(transport.isConnected());
                     LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
                     transports.add(transport);
@@ -293,7 +276,8 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             }
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
+        assertTrue(transportInitialized);
+        assertFalse(transportErrored);  // Normal shutdown does not trigger the event.
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
@@ -315,10 +299,12 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             List<Transport> transports = new ArrayList<Transport>();
 
+            NettyIOContext context = createContext(createTransportOptions(), createSSLOptions());
+
             for (int i = 0; i < CONNECTION_COUNT; ++i) {
-                Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+                Transport transport = context.newTransport();
                 try {
-                    transport.connect(null);
+                    transport.connect(HOSTNAME, port, testListener).awaitConnect();
                     transport.writeAndFlush(sendBuffer.copy());
                     transports.add(transport);
                 } catch (Exception e) {
@@ -351,9 +337,9 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             int port = server.getServerPort();
 
-            transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            transport = createTransport(createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -388,9 +374,9 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             int port = server.getServerPort();
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -403,7 +389,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             transport.close();
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
+        assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
@@ -415,9 +401,9 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             int port = server.getServerPort();
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -444,7 +430,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             transport.close();
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
+        assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
         assertTrue(exceptions.isEmpty());
     }
 
@@ -459,15 +445,14 @@ public class TcpTransportTest extends ImperativeClientTestCase {
     }
 
     public void doMultipleDataPacketsSentAndReceive(final int byteCount, final int iterations) throws Exception {
-
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -494,7 +479,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             transport.close();
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
+        assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
         assertTrue(exceptions.isEmpty());
     }
 
@@ -507,9 +492,9 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             int port = server.getServerPort();
 
-            transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            transport = createTransport(createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -534,25 +519,35 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             server.start();
 
             int port = server.getServerPort();
-            final AtomicBoolean initialized = new AtomicBoolean();
+            final CountDownLatch initialized = new CountDownLatch(1);
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(() -> initialized.set(true));
+                transport.connect(HOSTNAME, port, new NettyTransportListener(false) {
+
+                    @Override
+                    public void transportInitialized(Transport transport) {
+                        initialized.countDown();
+                        assertFalse(transport.isConnected());
+                    }
+                });
                 LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
+            initialized.await();
+            transport.awaitConnect();
+
             assertTrue(transport.isConnected());
             assertEquals(HOSTNAME, transport.getHost(), "Server host is incorrect");
             assertEquals(port, transport.getPort(), "Server port is incorrect");
-            assertTrue(initialized.get());
+            assertEquals(0, initialized.getCount());
 
             transport.close();
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
+        assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
@@ -564,9 +559,15 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             int port = server.getServerPort();
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(() -> { throw new RuntimeException(); });
+                transport.connect(HOSTNAME, port, new NettyTransportListener(false) {
+
+                    @Override
+                    public void transportInitialized(Transport transport) {
+                        throw new RuntimeException();
+                    }
+                }).awaitConnect();
                 fail("Should not have connected to the server at " + HOSTNAME + ":" + port);
             } catch (Exception e) {
                 LOG.info("Failed to connect to: {}:{} as expected.", HOSTNAME, port);
@@ -579,8 +580,8 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             transport.close();
         }
 
-        assertFalse(transportClosed);  // Normal shutdown does not trigger the event.
-        assertTrue(exceptions.isEmpty());
+        assertTrue(transportErrored);
+        assertFalse(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
 
@@ -597,9 +598,9 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             int port = server.getServerPort();
 
             for (int i = 0; i < 256; ++i) {
-                transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+                transport = createTransport(createTransportOptions(), createSSLOptions());
                 try {
-                    transport.connect(null);
+                    transport.connect(HOSTNAME, port, testListener).awaitConnect();
                     LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
                 } catch (Exception e) {
                     fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -643,9 +644,9 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             TransportOptions options = createTransportOptions();
             options.allowNativeIO(useEpoll);
-            Transport transport = createTransport(HOSTNAME, port, testListener, options, createSSLOptions());
+            Transport transport = createTransport(options, createSSLOptions());
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -662,18 +663,19 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             transport.close();
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
+        assertFalse(transportErrored);
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
 
+    @SuppressWarnings("deprecation")
     private void assertEpoll(String message, boolean expected, Transport transport) throws Exception {
-        Field group = null;
+        Field bootstrap = null;
         Class<?> transportType = transport.getClass();
 
-        while (transportType != null && group == null) {
+        while (transportType != null && bootstrap == null) {
             try {
-                group = transportType.getDeclaredField("group");
+                bootstrap = transportType.getDeclaredField("bootstrap");
             } catch (NoSuchFieldException error) {
                 transportType = transportType.getSuperclass();
                 if (Object.class.equals(transportType)) {
@@ -682,13 +684,16 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             }
         }
 
-        assertNotNull(group, "Transport implementation unknown");
+        assertNotNull(bootstrap, "Transport implementation unknown");
 
-        group.setAccessible(true);
+        bootstrap.setAccessible(true);
+
+        Bootstrap transportBootstrap = (Bootstrap) bootstrap.get(transport);
+
         if (expected) {
-            assertTrue(group.get(transport) instanceof EpollEventLoopGroup, message);
+            assertTrue(transportBootstrap.group() instanceof EpollEventLoopGroup, message);
         } else {
-            assertFalse(group.get(transport) instanceof EpollEventLoopGroup, message);
+            assertFalse(transportBootstrap.group() instanceof EpollEventLoopGroup, message);
         }
     }
 
@@ -712,9 +717,9 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             TransportOptions options = createTransportOptions();
             options.allowNativeIO(true);
-            Transport transport = createTransport(HOSTNAME, port, testListener, options, createSSLOptions());
+            Transport transport = createTransport(options, createSSLOptions());
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -731,7 +736,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             transport.close();
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
+        assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
@@ -761,10 +766,22 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         }
     }
 
-    protected TcpTransport createTransport(String host, int port, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
-        TcpTransport transport = new TcpTransport(host, port, options, sslOptions);
-        transport.setTransportListener(listener);
-        return transport;
+    protected NettyIOContext createContext(TransportOptions options, SslOptions sslOptions) {
+        if (context != null) {
+            throw new IllegalStateException("Test already has a defined Netty IO Context");
+        }
+
+        return this.context = new NettyIOContext(options, sslOptions, getTestName());
+    }
+
+    protected TcpTransport createTransport(TransportOptions options, SslOptions sslOptions) {
+        if (context != null) {
+            throw new IllegalStateException("Test already has a defined Netty IO Context");
+        } else {
+            this.context = new NettyIOContext(options, sslOptions, getTestName());
+        }
+
+        return context.newTransport();
     }
 
     protected TransportOptions createTransportOptions() {
@@ -819,7 +836,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         }
 
         @Override
-        public void onData(ProtonBuffer incoming) {
+        public void transportRead(ProtonBuffer incoming) {
             LOG.debug("Client has new incoming data of size: {}", incoming.getReadableBytes());
             data.add(incoming);
             bytesRead.addAndGet(incoming.getReadableBytes());
@@ -830,15 +847,20 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         }
 
         @Override
-        public void onTransportClosed() {
-            LOG.debug("Transport reports that it has closed.");
-            transportClosed = true;
+        public void transportError(Throwable cause) {
+            LOG.info("Transport error caught: {}", cause.getMessage(), cause);
+            transportErrored = true;
+            exceptions.add(cause);
         }
 
         @Override
-        public void onTransportError(Throwable cause) {
-            LOG.info("Transport error caught: {}", cause.getMessage(), cause);
-            exceptions.add(cause);
+        public void transportConnected(Transport transport) {
+            transportConnected = true;
+        }
+
+        @Override
+        public void transportInitialized(Transport transport) {
+            transportInitialized = true;
         }
     }
 }

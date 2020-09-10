@@ -139,6 +139,12 @@ public class ClientTransactionContext {
                 try {
                     txnController.discharge(currentTxn, true);
                 } catch (EngineFailedException efe) {
+                    // The engine has failed and the connection will be closed so the transaction
+                    // is implicitly rolled back on the remote.
+                    rollbackFuture.complete(session);
+                } catch (Throwable efe) {
+                    // Some internal error has occurred and should be communicated as this is not
+                    // expected under normal circumstances.
                     rollbackFuture.failed(ClientExceptionSupport.createOrPassthroughFatal(efe));
                 }
             });

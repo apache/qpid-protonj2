@@ -103,7 +103,7 @@ public class Samples {
         System.out.println(message1.body());
         delivery.accept(); // Or configure auto-accept?
 
-        Delivery delivery2 = receiver.receive(5_000); // Waits with timeout
+        Delivery delivery2 = receiver.receive(5, TimeUnit.SECONDS); // Waits with timeout
 
         Delivery delivery3 = receiver.tryReceive(); // Return delivery if available, null if not.
 
@@ -122,7 +122,7 @@ public class Samples {
         Message<String> request = Message.create("Hello World").durable(true).replyTo(dynamicAddress);
         Tracker requestTracker = requestor.send(request);
 
-        Delivery response = dynamicReceiver.receive(30_000);
+        Delivery response = dynamicReceiver.receive(30, TimeUnit.SECONDS);
 
         // =============== Close / Detach ===========
 

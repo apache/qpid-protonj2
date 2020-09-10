@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.client;
 
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 
@@ -172,7 +173,7 @@ public interface Receiver {
     Receiver addCredit(int credits) throws ClientException;
 
     /**
-     * Blocking receive method that waits forever for the remote to provide a Message for consumption.
+     * Blocking receive method that waits forever for the remote to provide a {@link Delivery} for consumption.
      * <p>
      * Receive calls will only grant credit on their own if a credit window is configured in the
      * {@link ReceiverOptions} which is done by default.  If the client application has configured
@@ -181,39 +182,41 @@ public interface Receiver {
      *
      * @return a new {@link Delivery} received from the remote.
      *
-     * @throws ClientException if the {@link Receiver} is closed when the call to receive is made.
+     * @throws ClientException if the {@link Receiver} or its parent is closed when the call to receive is made.
      */
     Delivery receive() throws ClientException;
 
     /**
      * Blocking receive method that waits the given time interval for the remote to provide a
      * {@link Delivery} for consumption.  The amount of time this method blocks is based on the
-     * timeout value. If timeout is equal to <code>-1</code> then it blocks until a message is received.
-     * If timeout is equal to zero then it will not block and simply return a {@link Delivery} if one
-     * is available locally.  If timeout value is greater than zero then it blocks up to timeout amount
-     * of time.
+     * timeout value. If timeout is equal to <code>-1</code> then it blocks until a Delivery is
+     * received. If timeout is equal to zero then it will not block and simply return a
+     * {@link Delivery} if one is available locally.  If timeout value is greater than zero then it
+     * blocks up to timeout amount of time.
      * <p>
      * Receive calls will only grant credit on their own if a credit window is configured in the
-     * {@link ReceiverOptions} which is done by default.  If the client application has configured
-     * no credit window than this method will not grant any credit when it enters the wait for new
-     * incoming messages.
+     * {@link ReceiverOptions} which is done by default.  If the client application has not configured
+     * a credit window or granted credit manually this method will not automatically grant any credit
+     * when it enters the wait for a new incoming {@link Delivery}.
      *
      * @param timeout
-     *      The time value used to control how long the receive method waits for a new {@link Delivery}.
+     *      The timeout value used to control how long the receive method waits for a new {@link Delivery}.
+     * @param unit
+     *      The unit of time that the given timeout represents.
      *
      * @return a new {@link Delivery} received from the remote.
      *
-     * @throws ClientException if the {@link Receiver} is closed when the call to receive is made.
+     * @throws ClientException if the {@link Receiver} or its parent is closed when the call to receive is made.
      */
-    Delivery receive(long timeout) throws ClientException;
+    Delivery receive(long timeout, TimeUnit unit) throws ClientException;
 
     /**
      * Non-blocking receive method that either returns a message is one is immediately available or
      * returns null if none is currently at hand.
      *
-     * @return a new {@link Delivery} received from the remote or null if no pending message available.
+     * @return a new {@link Delivery} received from the remote or null if no pending deliveries are available.
      *
-     * @throws ClientException if the {@link Receiver} is closed when the call to try to receive is made.
+     * @throws ClientException if the {@link Receiver} or its parent is closed when the call to try to receive is made.
      */
     Delivery tryReceive() throws ClientException;
 
@@ -222,9 +225,12 @@ public interface Receiver {
      * data as it arrives regardless of the complete delivery date having been transmitted from the remote
      * peer.
      *
+     * @param options
+     *      The options to use when creating and configuring the new {@link ReceiveContext}.
+     *
      * @return a new {@link ReceiveContext} that can be used to read incoming {@link Delivery} data.
      */
-    ReceiveContext createReceiveContext();
+    ReceiveContext openReceiveContext(ReceiveContextOptions options);
 
     /**
      * Requests the remote to drain previously granted credit for this {@link Receiver} link.
@@ -236,7 +242,11 @@ public interface Receiver {
     Future<Receiver> drain() throws ClientException;
 
     /**
-     * @return the number of message that are currently buffered locally.
+     * Returns the number of Deliveries that are currently held in the {@link Receiver} prefetched
+     * queue.  This number is likely to change immediately following the call as more deliveries
+     * arrive but can be used to determine if any pending {@link Delivery} work is ready.
+     *
+     * @return the number of deliveries that are currently buffered locally.
      */
     long prefetchedCount();
 

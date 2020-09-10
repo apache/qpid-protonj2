@@ -22,25 +22,28 @@ package org.apache.qpid.protonj2.client.exceptions;
 public class ClientConnectionSecuritySaslException extends ClientConnectionSecurityException {
 
     private static final long serialVersionUID = 313318720407251822L;
-    private static final int SASL_SYS_TEMP = 4;
 
-    private int outcome = -1;
+    private boolean temporary;
 
     public ClientConnectionSecuritySaslException(String message) {
-        this(message, -1, null);
+        this(message,false, null);
     }
 
-    public ClientConnectionSecuritySaslException(String message, int outcome) {
-        this(message, outcome, null);
+    public ClientConnectionSecuritySaslException(String message, Throwable cause) {
+        this(message,false, cause);
     }
 
-    public ClientConnectionSecuritySaslException(String message, int outcome, Throwable cause) {
+    public ClientConnectionSecuritySaslException(String message, boolean temporary) {
+        this(message, temporary, null);
+    }
+
+    public ClientConnectionSecuritySaslException(String message, boolean temporary, Throwable cause) {
         super(message, cause);
 
-        this.outcome = outcome;
+        this.temporary = temporary;
     }
 
     public boolean isSysTempFailure() {
-        return outcome == SASL_SYS_TEMP;
+        return temporary;
     }
 }

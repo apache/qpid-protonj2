@@ -37,14 +37,16 @@ import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.SessionOptions;
+import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
-import org.apache.qpid.protonj2.client.exceptions.ClientResourceClosedException;
 import org.apache.qpid.protonj2.client.futures.AsyncResult;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.client.futures.ClientFutureFactory;
+import org.apache.qpid.protonj2.client.transport.IOThreadFactory;
 import org.apache.qpid.protonj2.client.util.NoOpExecutor;
+import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +57,8 @@ import org.slf4j.LoggerFactory;
 public class ClientSession implements Session {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientSession.class);
+
+    private static final long INFINITE = -1;
 
     private static final AtomicIntegerFieldUpdater<ClientSession> CLOSED_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(ClientSession.class, "closed");
@@ -142,13 +146,13 @@ public class ClientSession implements Session {
 
     @Override
     public Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         Objects.requireNonNull(address, "Cannot create a receiver with a null address");
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 createReceiver.complete(internalOpenReceiver(address, receiverOptions));
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -165,13 +169,13 @@ public class ClientSession implements Session {
 
     @Override
     public Receiver openDurableReceiver(String address, String subscriptionName, ReceiverOptions receiverOptions) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         Objects.requireNonNull(address, "Cannot create a receiver with a null address");
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 createReceiver.complete(internalOpenDurableReceiver(address, subscriptionName, receiverOptions));
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -198,12 +202,12 @@ public class ClientSession implements Session {
 
     @Override
     public Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 createReceiver.complete(internalOpenDynamicReceiver(dynamicNodeProperties, receiverOptions));
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -220,13 +224,13 @@ public class ClientSession implements Session {
 
     @Override
     public Sender openSender(String address, SenderOptions senderOptions) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         Objects.requireNonNull(address, "Cannot create a sender with a null address");
         final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 createSender.complete(internalOpenSender(address, senderOptions));
             } catch (Throwable error) {
                 createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -243,12 +247,12 @@ public class ClientSession implements Session {
 
     @Override
     public Sender openAnonymousSender(SenderOptions senderOptions) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 createSender.complete(internalOpenAnonymousSender(senderOptions));
             } catch (Throwable error) {
                 createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -280,12 +284,12 @@ public class ClientSession implements Session {
 
     @Override
     public Session beginTransaction() throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         final ClientFuture<Session> beginFuture = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 txnContext.begin(beginFuture);
             } catch (Throwable error) {
                 beginFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -297,12 +301,12 @@ public class ClientSession implements Session {
 
     @Override
     public Session commitTransaction() throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         final ClientFuture<Session> commitFuture = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 txnContext.commit(commitFuture, false);
             } catch (Throwable error) {
                 commitFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -314,12 +318,12 @@ public class ClientSession implements Session {
 
     @Override
     public Session rollbackTransaction() throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         final ClientFuture<Session> rollbackFuture = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 txnContext.rollback(rollbackFuture, false);
             } catch (Throwable error) {
                 rollbackFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -361,11 +365,11 @@ public class ClientSession implements Session {
     //----- Internal API accessible for use within the package
 
     ClientSession open() {
-        protonSession.localOpenHandler(session -> handleLocalOpen(session))
-                     .localCloseHandler(session -> handleLocalClose(session))
-                     .openHandler(session -> handleRemoteOpen(session))
-                     .closeHandler(session -> handleRemoteClose(session))
-                     .engineShutdownHandler(engine -> immediateSessionShutdown());
+        protonSession.localOpenHandler(this::handleLocalOpen)
+                     .localCloseHandler(this::handleLocalClose)
+                     .openHandler(this::handleRemoteOpen)
+                     .closeHandler(this::handleRemoteClose)
+                     .engineShutdownHandler(this::handleEngineShutdown);
 
         try {
             protonSession.open();
@@ -378,10 +382,6 @@ public class ClientSession implements Session {
 
     ScheduledExecutorService getScheduler() {
         return serializer;
-    }
-
-    Engine getEngine() {
-        return connection.getEngine();
     }
 
     ClientFutureFactory getFutureFactory() {
@@ -415,12 +415,12 @@ public class ClientSession implements Session {
         return closed > 0;
     }
 
-    ScheduledFuture<?> scheduleRequestTimeout(final AsyncResult<?> request, long timeout, final ClientException error) {
-        return connection.scheduleRequestTimeout(request, timeout, error);
-    }
-
     ScheduledFuture<?> scheduleRequestTimeout(final AsyncResult<?> request, long timeout, Supplier<ClientException> errorSupplier) {
-        return connection.scheduleRequestTimeout(request, timeout, errorSupplier);
+        if (timeout != INFINITE) {
+            return serializer.schedule(() -> request.failed(errorSupplier.get()), timeout, TimeUnit.MILLISECONDS);
+        } else {
+            return null;
+        }
     }
 
     <T> T request(Object requestor, ClientFuture<T> request) throws ClientException {
@@ -452,18 +452,11 @@ public class ClientSession implements Session {
         protonSession.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
     }
 
-    private void checkClosed() throws ClientIllegalStateException {
+    protected void checkClosedOrFailed() throws ClientException {
         if (isClosed()) {
-            ClientIllegalStateException error = null;
-
-            if (failureCause == null) {
-                error = new ClientIllegalStateException("The Session is closed");
-            } else {
-                error = new ClientIllegalStateException("The Session was closed due to an unrecoverable error.");
-                error.initCause(failureCause);
-            }
-
-            throw error;
+            throw new ClientIllegalStateException("The Session was explicity closed", failureCause);
+        } else if (failureCause != null) {
+            throw failureCause;
         }
     }
 
@@ -484,7 +477,7 @@ public class ClientSession implements Session {
 
     private ThreadPoolExecutor createExecutor(final String threadNameSuffix, AtomicReference<Thread> threadTracker) {
         ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
-            new ClientThreadFactory("ClientSession ["+ sessionId + "] " + threadNameSuffix, true, threadTracker));
+            new IOThreadFactory("ClientSession ["+ sessionId + "] " + threadNameSuffix, true, threadTracker));
 
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy() {
 
@@ -507,42 +500,24 @@ public class ClientSession implements Session {
         if (options.openTimeout() > 0) {
             serializer.schedule(() -> {
                 if (!openFuture.isDone()) {
-                    if (failureCause == null) {
-                        failureCause = new ClientOperationTimedOutException("Session open timed out waiting for remote to respond");
-                    }
-
-                    if (protonSession.isLocallyClosed()) {
-                        // We didn't hear back from open and session was since closed so just fail
-                        // the close as we don't want to doubly wait for something that can't come.
-                        immediateSessionShutdown();
-                    } else {
-                        try {
-                            protonSession.close();
-                        } catch (Throwable error) {
-                            // Connection is responding to all engine failed errors
-                        }
-                    }
+                    immediateSessionShutdown(new ClientOperationTimedOutException("Session open timed out waiting for remote to respond"));
                 }
             }, options.openTimeout(), TimeUnit.MILLISECONDS);
         }
     }
 
     private void handleLocalClose(org.apache.qpid.protonj2.engine.Session session) {
-        if (failureCause == null) {
-            failureCause = connection.getFailureCause();
-        }
-
-        // If not yet remotely closed we only wait for a remote close if the connection isn't
+        // If not yet remotely closed we only wait for a remote close if the engine isn't
         // already failed and we have successfully opened the session without a timeout.
-        if (!connection.isClosed() && failureCause == null && !session.isRemotelyClosed()) {
+        if (session.isRemotelyOpen() && failureCause == null && !session.getEngine().isShutdown()) {
             final long timeout = options.closeTimeout();
 
             if (timeout > 0) {
-                connection.scheduleRequestTimeout(closeFuture, timeout, () ->
+                scheduleRequestTimeout(closeFuture, timeout, () ->
                     new ClientOperationTimedOutException("Session close timed out waiting for remote to respond"));
             }
         } else {
-            immediateSessionShutdown();
+            immediateSessionShutdown(failureCause);
         }
     }
 
@@ -552,15 +527,11 @@ public class ClientSession implements Session {
 
         session.senders().forEach(sender -> {
             if (!sender.isLocallyOpen()) {
-                try {
-                    ClientSender clientSender = sender.getLinkedResource(ClientSender.class);
-                    if (connection.getCapabilities().anonymousRelaySupported()) {
-                        clientSender.open();
-                    } else {
-                        clientSender.handleAnonymousRelayNotSupported();
-                    }
-                } catch (ClassCastException ignore) {
-                    LOG.debug("Found Sender without linked client resource on session open: {}", sender);
+                ClientSender clientSender = sender.getLinkedResource();
+                if (connection.getCapabilities().anonymousRelaySupported()) {
+                    clientSender.open();
+                } else {
+                    clientSender.handleAnonymousRelayNotSupported();
                 }
             }
         });
@@ -568,54 +539,46 @@ public class ClientSession implements Session {
 
     private void handleRemoteClose(org.apache.qpid.protonj2.engine.Session session) {
         if (session.isLocallyOpen()) {
-            final ClientException error;
-
-            if (session.getRemoteCondition() != null) {
-                error = ClientExceptionSupport.convertToNonFatalException(session.getRemoteCondition());
-            } else {
-                error = new ClientResourceClosedException("Session remotely closed without explanation");
-            }
-
-            if (failureCause == null) {
-                failureCause = error;
-            }
-
-            try {
-                session.close();
-            } catch (Throwable ignore) {
-                LOG.trace("Error ignored from call to close session after remote close.", ignore);
-            }
+            immediateSessionShutdown(ClientExceptionSupport.convertToSessionClosedException(session.getRemoteCondition()));
         } else {
-            immediateSessionShutdown();
+            immediateSessionShutdown(failureCause);
         }
     }
 
-    private void immediateSessionShutdown() {
-        CLOSED_UPDATER.lazySet(this, 1);
-        if (failureCause == null) {
-            if (connection.getFailureCause() != null) {
-                failureCause = connection.getFailureCause();
-            } else if (getEngine().failureCause() != null) {
-                failureCause = ClientExceptionSupport.createOrPassthroughFatal(getEngine().failureCause());
-            }
+    private void handleEngineShutdown(Engine engine) {
+        final Connection connection = engine.connection();
+
+        final ClientException failureCause;
+
+        if (connection.getRemoteCondition() != null) {
+            failureCause = ClientExceptionSupport.convertToConnectionClosedException(connection.getRemoteCondition());
+        } else if (engine.failureCause() != null) {
+            failureCause = ClientExceptionSupport.convertToConnectionClosedException(engine.failureCause());
+        } else if (!isClosed()) {
+            failureCause = new ClientConnectionRemotelyClosedException("Remote closed without a specific error condition");
+        } else {
+            failureCause = null;
+        }
+
+        immediateSessionShutdown(failureCause);
+    }
+
+    private void immediateSessionShutdown(ClientException failureCause) {
+        if (this.failureCause == null) {
+            this.failureCause = failureCause;
         }
 
         try {
             protonSession.close();
-        } catch (Throwable ignore) {
+        } catch (Exception ignore) {
         }
 
         if (failureCause != null) {
             openFuture.failed(failureCause);
-            // Connection failed so throw from session close won't give any tangible
-            if (connection.getFailureCause() != null) {
-                closeFuture.complete(this);
-            } else {
-                closeFuture.failed(failureCause);
-            }
         } else {
             openFuture.complete(this);
-            closeFuture.complete(this);
         }
+
+        closeFuture.complete(this);
     }
 }

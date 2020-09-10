@@ -123,8 +123,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -204,8 +204,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -265,8 +265,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -326,8 +326,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -387,8 +387,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -448,8 +448,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -578,8 +578,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -645,8 +645,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -712,8 +712,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -782,8 +782,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -852,8 +852,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -919,8 +919,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(advanced);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -1081,8 +1081,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             }
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -1143,8 +1143,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -1212,8 +1212,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -1275,8 +1275,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(message);
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().isDone());
-            assertNotNull(tracker.acknowledgeFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 

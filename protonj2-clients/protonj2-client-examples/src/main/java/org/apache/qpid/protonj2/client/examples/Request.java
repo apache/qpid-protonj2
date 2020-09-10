@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.client.examples;
 
+import java.util.concurrent.TimeUnit;
+
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
@@ -57,7 +59,7 @@ public class Request {
             Message<String> request = Message.create("Hello World").durable(true).replyTo(dynamicAddress);
             requestor.send(request);
 
-            Delivery response = dynamicReceiver.receive(30_000);
+            Delivery response = dynamicReceiver.receive(30, TimeUnit.SECONDS);
             Message<String> received = response.message();
             LOG.info("Response to request message was: {}", received.body());
         } catch (Exception exp) {

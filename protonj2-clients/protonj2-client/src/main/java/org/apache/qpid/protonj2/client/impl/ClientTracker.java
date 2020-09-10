@@ -16,10 +16,15 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 
@@ -97,8 +102,34 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public ClientFuture<Tracker> acknowledgeFuture() {
+    public ClientFuture<Tracker> settlementFuture() {
         return acknowledged;
+    }
+
+    @Override
+    public Tracker awaitSettlement() throws ClientException {
+        try {
+            return settlementFuture().get();
+        } catch (ExecutionException exe) {
+            throw ClientExceptionSupport.createNonFatalOrPassthrough(exe.getCause());
+        } catch (InterruptedException e) {
+            Thread.interrupted();
+            throw new ClientException("Wait for settlement was interrupted", e);
+        }
+    }
+
+    @Override
+    public Tracker awaitSettlement(long timeout, TimeUnit unit) throws ClientException {
+        try {
+            return settlementFuture().get(timeout, unit);
+        } catch (InterruptedException ie) {
+            Thread.interrupted();
+            throw new ClientException("Wait for settlement was interrupted", ie);
+        } catch (ExecutionException exe) {
+            throw ClientExceptionSupport.createNonFatalOrPassthrough(exe.getCause());
+        } catch (TimeoutException te) {
+            throw new ClientOperationTimedOutException("Timed out waiting for remote settlement", te);
+        }
     }
 
     //----- Internal Event hooks for delivery updates

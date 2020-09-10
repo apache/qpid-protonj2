@@ -51,13 +51,6 @@ public class WebSocketTransportTest extends TcpTransportTest {
     private static final Logger LOG = LoggerFactory.getLogger(WebSocketTransportTest.class);
 
     @Override
-    protected WebSocketTransport createTransport(String host, int port, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
-        WebSocketTransport transport = new WebSocketTransport(host, port, options, sslOptions);
-        transport.setTransportListener(listener);
-        return transport;
-    }
-
-    @Override
     protected TransportOptions createTransportOptions() {
         return new TransportOptions().useWebSockets(true);
     }
@@ -77,16 +70,16 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             final int port = server.getServerPort();
 
-            Transport transport = createTransport(
-                HOSTNAME, port, testListener, createTransportOptions().webSocketPath(WEBSOCKET_PATH), createSSLOptions());
+            Transport transport = createTransport(createTransportOptions().webSocketPath(WEBSOCKET_PATH), createSSLOptions());
 
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
+            assertTrue(transport instanceof WebSocketTransport);
             assertTrue(transport.isConnected());
             assertEquals(HOSTNAME, transport.getHost(), "Server host is incorrect");
             assertEquals(port, transport.getPort(), "Server port is incorrect");
@@ -97,7 +90,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
             transport.close();
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
+        assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
@@ -114,23 +107,23 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             server.close();
 
-            Transport transport = createTransport(
-                HOSTNAME, port, testListener, createTransportOptions().webSocketPath(WEBSOCKET_PATH), createSSLOptions());
+            Transport transport = createTransport(createTransportOptions().webSocketPath(WEBSOCKET_PATH), createSSLOptions());
 
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
             } catch (Exception e) {
                 LOG.info("Failed to connect to: {}:{} as expected.", HOSTNAME, port);
             }
 
+            assertTrue(transport instanceof WebSocketTransport);
             assertFalse(transport.isConnected());
 
             transport.close();
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
-        assertTrue(exceptions.isEmpty());
+        assertTrue(transportErrored);
+        assertFalse(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
 
@@ -152,18 +145,18 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             List<Transport> transports = new ArrayList<Transport>();
 
-            Transport transport = createTransport(
-                HOSTNAME, port, testListener, createTransportOptions().webSocketMaxFrameSize(FRAME_SIZE), createSSLOptions());
+            Transport transport = createTransport(createTransportOptions().webSocketMaxFrameSize(FRAME_SIZE), createSSLOptions());
 
             try {
                 // The transport should allow for the size of data we sent.
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 transports.add(transport);
                 transport.writeAndFlush(sendBuffer.copy());
             } catch (Exception e) {
                 fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
+            assertTrue(transport instanceof WebSocketTransport);
             assertTrue(Wait.waitFor(new Wait.Condition() {
                 @Override
                 public boolean isSatisfied() throws Exception {
@@ -205,15 +198,16 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             NettyTransportListener wsListener = new NettyTransportListener(true);
 
-            Transport transport = createTransport(HOSTNAME, port, wsListener, clientOptions, createSSLOptions());
+            Transport transport = createTransport(clientOptions, createSSLOptions());
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, wsListener).awaitConnect();
                 transports.add(transport);
                 transport.writeAndFlush(sendBuffer.copy());
             } catch (Exception e) {
                 fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
+            assertTrue(transport instanceof WebSocketTransport);
             assertTrue(Wait.waitFor(new Wait.Condition() {
                 @Override
                 public boolean isSatisfied() throws Exception {
@@ -262,18 +256,19 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             List<Transport> transports = new ArrayList<Transport>();
 
-            Transport transport = createTransport(
-                HOSTNAME, port, testListener, createTransportOptions().webSocketMaxFrameSize(FRAME_SIZE / 2), createSSLOptions());
+            final Transport transport = createTransport(createTransportOptions().webSocketMaxFrameSize(FRAME_SIZE / 2), createSSLOptions());
+
             try {
                 // Transport can't receive anything bigger so it should fail the connection
                 // when data arrives that is larger than this value.
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 transports.add(transport);
                 transport.writeAndFlush(sendBuffer.copy());
             } catch (Exception e) {
                 fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
+            assertTrue(transport instanceof WebSocketTransport);
             assertTrue(Wait.waitFor(() -> !transport.isConnected()), "Transport should have lost connection");
         }
 
@@ -298,12 +293,13 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             List<Transport> transports = new ArrayList<Transport>();
 
-            final Transport transport = createTransport(
-                HOSTNAME, port, testListener, createTransportOptions().webSocketMaxFrameSize(FRAME_SIZE), createSSLOptions());
+            final Transport transport = createTransport(createTransportOptions().webSocketMaxFrameSize(FRAME_SIZE), createSSLOptions());
+
+            assertTrue(transport instanceof WebSocketTransport);
 
             try {
                 // Transport allows bigger frames in so that server is the one causing the failure.
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 transports.add(transport);
                 transport.writeAndFlush(sendBuffer.copy());
             } catch (Exception e) {
@@ -339,9 +335,12 @@ public class WebSocketTransportTest extends TcpTransportTest {
             clientOptions.addWebSocketHeader("test-header1", "FOO");
             clientOptions.webSocketHeaders().put("test-header2", "BAR");
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, clientOptions, createSSLOptions());
+            final Transport transport = createTransport(clientOptions, createSSLOptions());
+
+            assertTrue(transport instanceof WebSocketTransport);
+
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -365,7 +364,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
             transport.close();
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
+        assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
@@ -388,9 +387,12 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             TransportOptions clientOptions = createTransportOptions();
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, clientOptions, createSSLOptions());
+            final Transport transport = createTransport(clientOptions, createSSLOptions());
+
+            assertTrue(transport instanceof WebSocketTransport);
+
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 fail("should not have connected");
             } catch (Exception e) {
                 LOG.trace("Failed to connect with message: {}", e.getMessage());
@@ -408,9 +410,12 @@ public class WebSocketTransportTest extends TcpTransportTest {
             TransportOptions clientOptions = createTransportOptions();
             clientOptions.connectTimeout(25);
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, clientOptions, createSSLOptions());
+            final Transport transport = createTransport(clientOptions, createSSLOptions());
+
+            assertTrue(transport instanceof WebSocketTransport);
+
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 fail("should not have connected");
             } catch (Exception e) {
                 String message = e.getMessage();

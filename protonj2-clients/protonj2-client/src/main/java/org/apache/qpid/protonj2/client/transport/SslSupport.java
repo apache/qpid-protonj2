@@ -74,8 +74,6 @@ public class SslSupport {
                 LOG.debug("OpenSSL could not be enabled due to user SSLContext being supplied.");
             } else if (!OpenSsl.supportsKeyManagerFactory()) {
                 LOG.debug("OpenSSL could not be enabled because the version provided does not allow a KeyManagerFactory to be used.");
-            } else if (options.verifyHost() && !OpenSsl.supportsHostnameValidation()) {
-                LOG.debug("OpenSSL could not be enabled due to verifyHost being enabled but not supported by the provided OpenSSL version.");
             } else if (options.keyAlias() != null) {
                 LOG.debug("OpenSSL could not be enabled because a keyAlias is set and that feature is not supported for OpenSSL.");
             } else {

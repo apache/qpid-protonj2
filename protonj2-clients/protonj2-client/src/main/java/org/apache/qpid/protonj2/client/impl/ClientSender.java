@@ -32,24 +32,24 @@ import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.DeliveryMode;
 import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Message;
-import org.apache.qpid.protonj2.client.MessageOutputStream;
-import org.apache.qpid.protonj2.client.MessageOutputStreamOptions;
-import org.apache.qpid.protonj2.client.RawOutputStream;
-import org.apache.qpid.protonj2.client.RawOutputStreamOptions;
 import org.apache.qpid.protonj2.client.SendContext;
+import org.apache.qpid.protonj2.client.SendContextOptions;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Source;
 import org.apache.qpid.protonj2.client.Target;
 import org.apache.qpid.protonj2.client.Tracker;
+import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
-import org.apache.qpid.protonj2.client.exceptions.ClientResourceClosedException;
+import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.futures.AsyncResult;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
+import org.apache.qpid.protonj2.engine.Connection;
+import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.LinkState;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.engine.impl.ProtonDeliveryTagGenerator;
@@ -73,7 +73,6 @@ public class ClientSender implements Sender {
 
     private volatile int closed;
     private ClientException failureCause;
-    private boolean remoteRejectedOpen;
 
     private final Deque<InFlightSend> blocked = new ArrayDeque<InFlightSend>();
     private final SenderOptions options;
@@ -202,29 +201,19 @@ public class ClientSender implements Sender {
 
     @Override
     public Tracker send(Message<?> message) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         return sendMessage(ClientMessageSupport.convertMessage(message), true);
     }
 
     @Override
     public Tracker trySend(Message<?> message) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         return sendMessage(ClientMessageSupport.convertMessage(message), false);
     }
 
     @Override
-    public SendContext createSendContext() {
-        return new ClientSendContext(this);
-    }
-
-    @Override
-    public MessageOutputStream outputStream(MessageOutputStreamOptions options) {
-        return new ClientMessageOutputStream(this, options);
-    }
-
-    @Override
-    public RawOutputStream outputStream(RawOutputStreamOptions options) {
-        return new ClientRawOutputStream(this, options);
+    public SendContext openSendContext(SendContextOptions options) {
+        return new ClientSendContext(this, options);
     }
 
     @Override
@@ -248,37 +237,37 @@ public class ClientSender implements Sender {
     //----- Internal API
 
     void disposition(OutgoingDelivery delivery, DeliveryState state, boolean settled) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         executor.execute(() -> {
             delivery.disposition(state, settled);
         });
     }
 
     void abort(OutgoingDelivery delivery) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         executor.execute(() -> {
             delivery.abort();
         });
     }
 
     void complete(OutgoingDelivery delivery) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         executor.execute(() -> {
             delivery.streamBytes(null, true);
         });
     }
 
     ClientSender open() {
-        protonSender.localOpenHandler(sender -> handleLocalOpen(sender))
-                    .localCloseHandler(sender -> handleLocalCloseOrDetach(sender))
-                    .localDetachHandler(sender -> handleLocalCloseOrDetach(sender))
-                    .openHandler(sender -> handleRemoteOpen(sender))
-                    .closeHandler(sender -> handleRemoteCloseOrDetach(sender))
-                    .detachHandler(sender -> handleRemoteCloseOrDetach(sender))
-                    .parentEndpointClosedHandler(sender -> handleParentEndpointClosed(sender))
-                    .deliveryStateUpdatedHandler(delivery -> handleDeliveryUpdated(delivery))
-                    .creditStateUpdateHandler(linkState -> handleCreditStateUpdated(linkState))
-                    .engineShutdownHandler(engine -> immediateLinkShutdown())
+        protonSender.localOpenHandler(this::handleLocalOpen)
+                    .localCloseHandler(this::handleLocalCloseOrDetach)
+                    .localDetachHandler(this::handleLocalCloseOrDetach)
+                    .openHandler(this::handleRemoteOpen)
+                    .closeHandler(this::handleRemoteCloseOrDetach)
+                    .detachHandler(this::handleRemoteCloseOrDetach)
+                    .parentEndpointClosedHandler(this::handleParentEndpointClosed)
+                    .deliveryStateUpdatedHandler(this::handleDeliveryUpdated)
+                    .creditStateUpdateHandler(this::handleCreditStateUpdated)
+                    .engineShutdownHandler(this::handleEngineShutdown)
                     .open();
 
         return this;
@@ -286,6 +275,10 @@ public class ClientSender implements Sender {
 
     void setFailureCause(ClientException failureCause) {
         this.failureCause = failureCause;
+    }
+
+    org.apache.qpid.protonj2.engine.Sender getProtonSender() {
+        return protonSender;
     }
 
     ClientException getFailureCause() {
@@ -318,34 +311,16 @@ public class ClientSender implements Sender {
         if (options.openTimeout() > 0) {
             executor.schedule(() -> {
                 if (!openFuture.isDone()) {
-                    if (failureCause == null) {
-                        failureCause = new ClientOperationTimedOutException("Sender open timed out waiting for remote to respond");
-                    }
-
-                    if (protonSender.isLocallyClosed()) {
-                        // We didn't hear back from open and link was since closed so just fail
-                        // the close as we don't want to doubly wait for something that can't come.
-                        immediateLinkShutdown();
-                    } else {
-                        try {
-                            sender.close();
-                        } catch (Throwable error) {
-                            // Connection is responding to all engine failed errors
-                        }
-                    }
+                    immediateLinkShutdown(new ClientOperationTimedOutException("Sender open timed out waiting for remote to respond"));
                 }
             }, options.openTimeout(), TimeUnit.MILLISECONDS);
         }
     }
 
     private void handleLocalCloseOrDetach(org.apache.qpid.protonj2.engine.Sender sender) {
-        if (failureCause == null) {
-            failureCause = session.getFailureCause();
-        }
-
-        // If not yet remotely closed we only wait for a remote close if the session isn't
+        // If not yet remotely closed we only wait for a remote close if the engine isn't
         // already failed and we have successfully opened the sender without a timeout.
-        if (!session.isClosed() && failureCause == null && sender.isRemotelyOpen()) {
+        if (!sender.getEngine().isShutdown() && failureCause == null && sender.isRemotelyOpen()) {
             final long timeout = options.closeTimeout();
 
             if (timeout > 0) {
@@ -353,12 +328,26 @@ public class ClientSender implements Sender {
                     new ClientOperationTimedOutException("Sender close timed out waiting for remote to respond"));
             }
         } else {
-            immediateLinkShutdown();
+            immediateLinkShutdown(failureCause);
         }
     }
 
     private void handleParentEndpointClosed(org.apache.qpid.protonj2.engine.Sender sender) {
-        immediateLinkShutdown();
+        final ClientException failureCause;
+
+        if (sender.getConnection().getRemoteCondition() != null) {
+            failureCause = ClientExceptionSupport.convertToConnectionClosedException(sender.getConnection().getRemoteCondition());
+        } else if (sender.getSession().getRemoteCondition() != null) {
+            failureCause = ClientExceptionSupport.convertToSessionClosedException(sender.getSession().getRemoteCondition());
+        } else if (sender.getEngine().failureCause() != null) {
+            failureCause = ClientExceptionSupport.convertToConnectionClosedException(sender.getEngine().failureCause());
+        } else if (!isClosed()) {
+            failureCause = new ClientResourceRemotelyClosedException("Remote closed without a specific error condition");
+        } else {
+            failureCause = null;
+        }
+
+        immediateLinkShutdown(failureCause);
     }
 
     private void handleRemoteOpen(org.apache.qpid.protonj2.engine.Sender sender) {
@@ -374,39 +363,19 @@ public class ClientSender implements Sender {
             LOG.trace("Sender opened successfully");
         } else {
             LOG.debug("Sender opened but remote signalled close is pending: ", sender);
-            remoteRejectedOpen = true;
         }
     }
 
     private void handleRemoteCloseOrDetach(org.apache.qpid.protonj2.engine.Sender sender) {
         if (sender.isLocallyOpen()) {
-            final ClientException error;
-
-            if (sender.getRemoteCondition() != null) {
-                error = ClientExceptionSupport.convertToNonFatalException(sender.getRemoteCondition());
-            } else {
-                error = new ClientResourceClosedException("Sender remotely closed without explanation");
-            }
-
-            if (failureCause == null) {
-                failureCause = error;
-            }
-
             try {
                 senderRemotelyClosedHandler.accept(this);
             } catch (Throwable ignore) {}
 
-            try {
-                if (sender.isRemotelyDetached()) {
-                    sender.detach();
-                } else {
-                    sender.close();
-                }
-            } catch (Throwable ignore) {
-                LOG.trace("Error ignored from call to close sender after remote close.", ignore);
-            }
+            immediateLinkShutdown(ClientExceptionSupport.convertToLinkClosedException(
+                sender.getRemoteCondition(), "Sender remotely closed without explanation from the remote"));
         } else {
-            immediateLinkShutdown();
+            immediateLinkShutdown(failureCause);
         }
     }
 
@@ -436,10 +405,27 @@ public class ClientSender implements Sender {
         }
     }
 
+    private void handleEngineShutdown(Engine engine) {
+        final Connection connection = engine.connection();
+
+        final ClientException failureCause;
+
+        if (connection.getRemoteCondition() != null) {
+            failureCause = ClientExceptionSupport.convertToConnectionClosedException(connection.getRemoteCondition());
+        } else if (engine.failureCause() != null) {
+            failureCause = ClientExceptionSupport.convertToConnectionClosedException(engine.failureCause());
+        } else if (!isClosed()) {
+            failureCause = new ClientConnectionRemotelyClosedException("Remote closed without a specific error condition");
+        } else {
+            failureCause = null;
+        }
+
+        immediateLinkShutdown(failureCause);
+    }
+
     void handleAnonymousRelayNotSupported() {
         if (isAnonymous() && protonSender.getState() == LinkState.IDLE) {
-            failureCause = new ClientUnsupportedOperationException("Anonymous relay support not available from this connection");
-            immediateLinkShutdown();
+            immediateLinkShutdown(new ClientUnsupportedOperationException("Anonymous relay support not available from this connection"));
         }
     }
 
@@ -505,11 +491,17 @@ public class ClientSender implements Sender {
     Tracker sendMessage(AdvancedMessage<?> message, boolean waitForCredit) throws ClientException {
         final ClientFuture<ClientTracker> operation = session.getFutureFactory().createFuture();
         final ProtonBuffer buffer = message.encode();
-        final CompletedClientSendContext context = new CompletedClientSendContext(this, message.messageFormat());
+        final ClientSendContext context = new ClientSendContext(this, message.messageFormat(), true);
 
         executor.execute(() -> {
+            checkClosedOrFailed(operation);
+
             if (protonSender.isSendable()) {
-                assumeSendableAndSend(context, buffer, operation);
+                try {
+                    assumeSendableAndSend(context, buffer, operation);
+                } catch (Exception ex) {
+                    operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+                }
             } else {
                 if (waitForCredit) {
                     final InFlightSend send = new InFlightSend(context, buffer, operation);
@@ -528,13 +520,19 @@ public class ClientSender implements Sender {
         return session.request(this, operation);
     }
 
-   ClientTracker sendMessage(ClientSendContext context, AdvancedMessage<?> message) throws ClientException {
+    ClientTracker sendMessage(ClientSendContext context, AdvancedMessage<?> message) throws ClientException {
         final ClientFuture<ClientTracker> operation = session.getFutureFactory().createFuture();
         final ProtonBuffer buffer = message.encode();
 
         executor.execute(() -> {
+            checkClosedOrFailed(operation);
+
             if (protonSender.isSendable()) {
-                assumeSendableAndSend(context, buffer, operation);
+                try {
+                    assumeSendableAndSend(context, buffer, operation);
+                } catch (Exception ex) {
+                    operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+                }
             } else {
                 final InFlightSend send = new InFlightSend(context, buffer, operation);
                 if (options.sendTimeout() > 0) {
@@ -570,7 +568,7 @@ public class ClientSender implements Sender {
 
         if (session.getTransactionContext().isInTransaction()) {
             if (session.getTransactionContext().isTransactionInDoubt()) {
-                tracker.acknowledgeFuture().complete(tracker);
+                tracker.settlementFuture().complete(tracker);
                 request.complete(tracker);
                 return;
             } else {
@@ -583,7 +581,7 @@ public class ClientSender implements Sender {
 
         if (delivery.isSettled()) {
             // Remote will not update this delivery so mark as acknowledged now.
-            tracker.acknowledgeFuture().complete(tracker);
+            tracker.settlementFuture().complete(tracker);
         }
 
         if (context.aborted()) {
@@ -605,29 +603,25 @@ public class ClientSender implements Sender {
         }
     }
 
-    private void checkClosed() throws ClientIllegalStateException {
+    protected void checkClosedOrFailed(ClientFuture<?> request) {
         if (isClosed()) {
-            ClientIllegalStateException error = null;
-
-            if (getFailureCause() == null) {
-                error = new ClientIllegalStateException("The Sender is closed");
-            } else {
-                error = new ClientIllegalStateException("The Sender was closed due to an unrecoverable error.");
-                error.initCause(getFailureCause());
-            }
-
-            throw error;
+            request.failed(new ClientIllegalStateException("The Sender was explicity closed", failureCause));
+        } else if (failureCause != null) {
+            request.failed(failureCause);
         }
     }
 
-    private void immediateLinkShutdown() {
-        CLOSED_UPDATER.lazySet(this, 1);
-        if (failureCause == null) {
-            if (session.getFailureCause() != null) {
-                failureCause = session.getFailureCause();
-            } else if (session.getEngine().failureCause() != null) {
-                failureCause = ClientExceptionSupport.createOrPassthroughFatal(session.getEngine().failureCause());
-            }
+    protected void checkClosedOrFailed() throws ClientException {
+        if (isClosed()) {
+            throw new ClientIllegalStateException("The Sender was explicity closed", failureCause);
+        } else if (failureCause != null) {
+            throw failureCause;
+        }
+    }
+
+    private void immediateLinkShutdown(ClientException failureCause) {
+        if (this.failureCause == null) {
+            this.failureCause = failureCause;
         }
 
         try {
@@ -644,52 +638,30 @@ public class ClientSender implements Sender {
             if (failureCause != null) {
                 held.operation.failed(failureCause);
             } else {
-                held.operation.failed(new ClientResourceClosedException("The sender link has closed"));
+                held.operation.failed(new ClientResourceRemotelyClosedException("The sender link has closed"));
             }
 
             return true;
         });
 
+        protonSender.unsettled().forEach((delivery) -> {
+            try {
+                ClientSendContext context = delivery.getLinkedResource();
+                if (failureCause != null) {
+                    context.tracker().settlementFuture().failed(failureCause);
+                } else {
+                    context.tracker().settlementFuture().failed(new ClientResourceRemotelyClosedException("The sender link has closed"));
+                }
+            } catch (Exception e) {
+            }
+        });
+
         if (failureCause != null) {
             openFuture.failed(failureCause);
-            // Session is in failed state so an error from sender close won't help user or the
-            // remote closed the sender with an error by omitting the inbound source
-            if (remoteRejectedOpen || session.getFailureCause() != null) {
-                closeFuture.complete(this);
-            } else {
-                closeFuture.failed(failureCause);
-            }
         } else {
             openFuture.complete(this);
-            closeFuture.complete(this);
-        }
-    }
-
-    //----- Immutable ClientSenderContext for standard send calls
-
-    private static final class CompletedClientSendContext extends ClientSendContext {
-
-        private final int messageFormat;
-
-        CompletedClientSendContext(ClientSender sender, int messageFormat) {
-            super(sender);
-
-            this.messageFormat = messageFormat;
         }
 
-        @Override
-        int messageFormat() {
-            return messageFormat;
-        }
-
-        @Override
-        public boolean completed() {
-            return true;
-        }
-
-        @Override
-        public boolean aborted() {
-            return false;
-        }
+        closeFuture.complete(this);
     }
 }

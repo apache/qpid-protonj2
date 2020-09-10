@@ -49,7 +49,7 @@ public class Spout {
 
                 System.out.println(String.format("Sent message to %s: %s", sender.address(), message.body()));
 
-                tracker.acknowledgeFuture().get();
+                tracker.settlementFuture().get();
             }
         } catch (Exception exp) {
             System.out.println("Caught exception, exiting.");

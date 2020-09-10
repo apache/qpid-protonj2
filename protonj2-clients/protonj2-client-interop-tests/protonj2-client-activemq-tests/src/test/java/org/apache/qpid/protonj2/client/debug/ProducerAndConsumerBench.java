@@ -167,7 +167,7 @@ public class ProducerAndConsumerBench extends ImperativeClientTestSupport  {
 
         while (count.getAndDecrement() > 0) {
             Message<String> message = Message.create("Hello World").durable(false);
-            sender.send(message).acknowledgeFuture().get();
+            sender.send(message).settlementFuture().get();
             if ((count.get() % 10000) == 0) {
                 LOG.info("Sent message: {}", NUM_SENDS - count.get());
             }
@@ -212,7 +212,7 @@ public class ProducerAndConsumerBench extends ImperativeClientTestSupport  {
         }
 
         try {
-            lastSentTracker.acknowledgeFuture().get();
+            lastSentTracker.settlementFuture().get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
             throw new IOException(e);

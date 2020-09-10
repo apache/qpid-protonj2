@@ -25,24 +25,43 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 public interface TransportListener {
 
     /**
-     * Called when new incoming data has become available.
+     * Called immediately before the transport attempts to connect to the remote peer
+     * but following all {@link Transport} initialization.  The Transport configuration
+     * is now static and the event handler can update any internal state or configure
+     * additional resources based on the configured and prepared {@link Transport}.
+     *
+     * @param transport
+     *      The transport that is now fully connected and ready to perform IO operations.
+     */
+    void transportInitialized(Transport transport);
+
+    /**
+     * Called after the transport has successfully connected to the remote and performed any
+     * required handshakes such as SSL or Web Sockets handshaking and the connection is now
+     * considered open.
+     *
+     * @param transport
+     *      The transport that is now fully connected and ready to perform IO operations.
+     */
+    void transportConnected(Transport transport);
+
+    /**
+     * Called when new incoming data has become available for processing by the {@link Transport}
+     * user.
      *
      * @param incoming
      *        the next incoming packet of data.
      */
-    void onData(ProtonBuffer incoming);
+    void transportRead(ProtonBuffer incoming);
 
     /**
-     * Called if the connection state becomes closed.
-     */
-    void onTransportClosed();
-
-    /**
-     * Called when an error occurs during normal Transport operations.
+     * Called when an error occurs during normal Transport operations such as SSL handshake
+     * or remote connection dropped.  Once this error callback is triggered the {@link Transport}
+     * is considered to be failed and should be closed.
      *
      * @param cause
      *        the error that triggered this event.
      */
-    void onTransportError(Throwable cause);
+    void transportError(Throwable cause);
 
 }

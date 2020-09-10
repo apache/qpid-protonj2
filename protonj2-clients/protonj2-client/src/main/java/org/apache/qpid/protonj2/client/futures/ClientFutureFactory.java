@@ -26,8 +26,6 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
  */
 public abstract class ClientFutureFactory {
 
-    public static final String PROVIDER_FUTURE_TYPE_KEY = "futureType";
-
     private static final String OS_NAME = System.getProperty("os.name");
     private static final String WINDOWS_OS_PREFIX = "Windows";
     private static final boolean IS_WINDOWS = isOsNameMatch(OS_NAME, WINDOWS_OS_PREFIX);

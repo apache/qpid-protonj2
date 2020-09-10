@@ -37,6 +37,7 @@ import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.Tracker;
+import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionDeclarationException;
@@ -844,7 +845,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(Message.create("test-message"));
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().get());
+            assertNotNull(tracker.settlementFuture().get());
             assertEquals(tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL,
                          "Delivery inside transaction should have Transactional state");
             assertNotNull(tracker.state());
@@ -907,7 +908,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 final Tracker tracker = sender.send(Message.create("test-message-" + i));
 
                 assertNotNull(tracker);
-                assertNotNull(tracker.acknowledgeFuture().get());
+                assertNotNull(tracker.settlementFuture().get());
                 assertEquals(tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL);
                 assertNotNull(tracker.state());
                 assertEquals(tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL);
@@ -962,7 +963,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             session.beginTransaction();
 
-            Delivery delivery = receiver.receive(100);
+            Delivery delivery = receiver.receive(100, TimeUnit.MILLISECONDS);
             assertNotNull(delivery);
             Message<?> received = delivery.message();
             assertNotNull(received);
@@ -1027,7 +1028,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             session.beginTransaction();
 
-            Delivery delivery = receiver.receive(100);
+            Delivery delivery = receiver.receive(100, TimeUnit.MILLISECONDS);
             assertNotNull(delivery);
             assertFalse(delivery.settled());
             assertNull(delivery.state());
@@ -1086,7 +1087,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             session.beginTransaction();
 
-            Delivery delivery = receiver.receive(100);
+            Delivery delivery = receiver.receive(100, TimeUnit.MILLISECONDS);
             assertNotNull(delivery);
             assertFalse(delivery.settled());
             assertNull(delivery.state());
@@ -1150,7 +1151,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             session.beginTransaction();
 
             final Tracker tracker = sender.send(Message.create("test-message"));
-            assertNotNull(tracker.acknowledgeFuture().get());
+            assertNotNull(tracker.settlementFuture().get());
             assertEquals(tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL);
 
             try {
@@ -1245,7 +1246,13 @@ public class TransactionsTest extends ImperativeClientTestCase {
             } else {
                 try {
                     session.rollbackTransaction();
-                } catch (ClientException cliEx) {
+                } catch (ClientConnectionRemotelyClosedException cliEx) {
+                    // Can get an error if the session processes the close before the
+                    // roll back is called.  Mitigating that is tricky and still leaves
+                    // the user needing to handle error when session is actually closed
+                    // via Session.close()
+                } catch (Exception ex) {
+                    LOG.info("Caught unexpected error: {}", ex);
                     fail("Connection drops will implicitly roll back TXN on remote");
                 }
             }
@@ -1293,7 +1300,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(Message.create("test-message-"));
 
             assertNotNull(tracker);
-            assertNotNull(tracker.acknowledgeFuture().get());
+            assertNotNull(tracker.settlementFuture().get());
             assertNull(tracker.remoteState());
             assertNull(tracker.state());
             assertFalse(tracker.settled());

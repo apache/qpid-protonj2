@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.client.exceptions;
 
+import org.apache.qpid.protonj2.client.ErrorCondition;
+
 /**
  * Connection level Security Exception used to indicate a security violation has occurred.
  */
@@ -29,5 +31,13 @@ public class ClientConnectionSecurityException extends ClientConnectionRemotelyC
 
     public ClientConnectionSecurityException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public ClientConnectionSecurityException(String message, ErrorCondition errorCondition) {
+        super(message, errorCondition);
+    }
+
+    public ClientConnectionSecurityException(String message, Throwable cause, ErrorCondition errorCondition) {
+        super(message, cause, errorCondition);
     }
 }

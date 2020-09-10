@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.client;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
@@ -30,6 +32,11 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
 public interface ReceiveContext {
 
     /**
+     * @return the {@link Receiver} that this context was create under.
+     */
+    Receiver receiver();
+
+    /**
      * @return the associated Delivery object once a read has completed.
      */
     Delivery delivery();
@@ -41,7 +48,8 @@ public interface ReceiveContext {
      *
      * @return a {@link Message} instance that wraps the decoded payload.
      *
-     * @throws ClientException if an error occurs while decoding the payload.
+     * @throws ClientException if an error occurs while decoding the payload or the delivery
+     *                         is not yet complete (received all remote transfers).
      *
      * @param <E> The type of message body that should be contained in the returned {@link Message}.
      */
@@ -58,18 +66,21 @@ public interface ReceiveContext {
     boolean complete();
 
     /**
-     * Creates an {@link RawInputStream} instance configured with the given options.
+     * Creates an {@link InputStream} instance configured with the given options that will
+     * read the bytes delivered without additional decoding or transformation.
      * <p>
-     * The {@link RawInputStream} can be used to read the payload of an AMQP Message in
-     * chunks as it arrives from the remote peer.  The bytes read are the raw encoded
+     * The returned {@link InputStream} can be used to read the payload of an AMQP Message
+     * in chunks as it arrives from the remote peer.  The bytes read are the raw encoded
      * bytes of the AMQP {@link Transfer} frames and the caller is responsible for
      * the decoding and processing of those bytes.
      *
      * @param options
-     *      The stream options to use to configure the returned {@link RawInputStream}
+     *      The stream options to use to configure the returned {@link InputStream}
      *
-     * @return a {@link RawInputStream} instance configured using the given options.
+     * @return a {@link InputStream} instance configured using the given options.
+     *
+     * @throws ClientException if an error occurs while creating the input stream.
      */
-    RawInputStream inputStream(RawInputStreamOptions options);
+    InputStream rawInputStream(InputStreamOptions options) throws ClientException;
 
 }

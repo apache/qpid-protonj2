@@ -22,6 +22,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -68,7 +69,7 @@ public class SendAndReceiveTest extends ImperativeClientTestSupport {
                 final long stime = System.currentTimeMillis();
 
                 message.applicationProperty("SendTime", stime);
-                message.messageId(latch.getCount());
+                message.messageId("ID:" + latch.getCount());
 
                 finalSend = sender.send(message);
 
@@ -77,7 +78,7 @@ public class SendAndReceiveTest extends ImperativeClientTestSupport {
                 latch.countDown();
             }
 
-            finalSend.acknowledgeFuture().get();
+            finalSend.settlementFuture().get();
 
             LOG.info("Finished sending all messages to address: {}", address);
             connection.close();
@@ -93,7 +94,7 @@ public class SendAndReceiveTest extends ImperativeClientTestSupport {
             final Receiver receiver = connection.openReceiver(address, new ReceiverOptions().creditWindow(10));
 
             while (latch.getCount() > 0) {
-                final Delivery delivery = receiver.receive(100);
+                final Delivery delivery = receiver.receive(100, TimeUnit.MILLISECONDS);
 
                 if (delivery == null) {
                     continue;

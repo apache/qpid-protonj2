@@ -45,6 +45,12 @@ public final class ClientErrorCondition implements ErrorCondition {
             Symbol.valueOf(condition), description, ClientConversionSupport.toSymbolKeyedMap(info));
     }
 
+    ClientErrorCondition(org.apache.qpid.protonj2.types.transport.ErrorCondition condition) {
+        Objects.requireNonNull(condition, "The error condition value cannot be null");
+
+        error = condition;
+    }
+
     @Override
     public String condition() {
         return error.getCondition().toString();

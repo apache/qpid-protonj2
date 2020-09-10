@@ -17,9 +17,8 @@
 package org.apache.qpid.protonj2.client.transport;
 
 import java.io.IOException;
+import java.net.URI;
 import java.security.Principal;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
@@ -32,19 +31,37 @@ import org.apache.qpid.protonj2.client.TransportOptions;
 public interface Transport {
 
     /**
-     * Performs the connect operation for the implemented Transport type
-     * such as a TCP socket connection, SSL/TLS handshake etc.
+     * Performs the connect operation for the implemented Transport type such as
+     * a TCP socket connection, SSL/TLS handshake etc.  The connection operation
+     * itself will be performed as an asynchronous operation with the success or
+     * failure being communicated to the event point
+     * {@link TransportListener#transportError(Throwable)}.  If the users wishes
+     * to perform a block on connect outcome the {@link #awaitConnect()} method
+     * will wait for and or throw an error based on the connect outcome.
      *
-     * @param initRoutine
-     * 			a runnable initialization method that is executed in the context
-     *          of the transport's IO thread to allow thread safe setup of resources
-     *          that will be run from the transport executor service.
+     * @param host
+     *      The remote host that this {@link Transport} should attempt to connect to.
+     * @param port
+     *      The port on the remote host that this {@link Transport} should attempt to bind to.
+     * @param listener
+     *      The {@link TransportListener} that will handle {@link Transport} events.
      *
-     * @return A ScheduledThreadPoolExecutor that can run work on the Transport IO thread.
+     * @return this {@link Transport} instance.
      *
      * @throws IOException if an error occurs while attempting the connect.
      */
-    ScheduledExecutorService connect(Runnable initRoutine) throws IOException;
+    Transport connect(String host, int port, TransportListener listener) throws IOException;
+
+    /**
+     * Waits interruptibly for the {@link Transport} to connect to the remote that was
+     * indicated in the {@link #connect(String, int, TransportListener)} call.
+     *
+     * @throws InterruptedException
+     *      If the wait mechanism was interrupted while waiting for a successful connect.
+     * @throws IOException
+     *      If the {@link Transport} failed to connect or was closed before connected.
+     */
+    void awaitConnect() throws InterruptedException, IOException;
 
     /**
      * @return true if transport is connected or false if the connection is down.
@@ -78,7 +95,7 @@ public interface Transport {
      * @param output
      *        The buffer of data that is to be transmitted.
      *
-     * @return this Transport instance.
+     * @return this {@link Transport} instance.
      *
      * @throws IOException if an error occurs during the write operation.
      */
@@ -91,7 +108,7 @@ public interface Transport {
      * @param output
      *        The buffer of data that is to be transmitted.
      *
-     * @return this Transport instance.
+     * @return this {@link Transport} instance.
      *
      * @throws IOException if an error occurs during the write operation.
      */
@@ -100,7 +117,7 @@ public interface Transport {
     /**
      * Request a flush of all pending writes to the underlying connection.
      *
-     * @return this Transport instance.
+     * @return this {@link Transport} instance.
      *
      * @throws IOException if an error occurs during the flush operation.
      */
@@ -112,11 +129,6 @@ public interface Transport {
      * @return the current TransportListener or null if none set.
      */
     TransportListener getTransportListener();
-
-    /**
-     * @return the {@link ThreadFactory} used to create the IO thread for this Transport
-     */
-    ThreadFactory getThreadFactory();
 
     /**
      * @return a {@link TransportOptions} instance copied from the immutable options given at create time..
@@ -137,6 +149,16 @@ public interface Transport {
      * @return the port that the transport connects to.
      */
     int getPort();
+
+    /**
+     * Returns a URI that contains some meaningful information about the remote connection such as a
+     * scheme that reflects the transport type and the remote host and port that the connection was
+     * instructed to connect to.  If called before the {@link #connect(String, int, TransportListener)}
+     * method this method returns <code>null</code>.
+     *
+     * @return a URI that reflects a meaningful view of the {@link Transport} remote connection details.
+     */
+    URI getRemoteURI();
 
     /**
      * @return the local principal for a Transport that is using a secure connection.

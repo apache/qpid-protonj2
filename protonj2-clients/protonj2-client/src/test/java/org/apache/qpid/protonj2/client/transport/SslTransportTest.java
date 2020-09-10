@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.SslOptions;
@@ -65,9 +66,9 @@ public class SslTransportTest extends TcpTransportTest {
 
             final int port = server.getServerPort();
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptionsWithoutTrustStore(false));
+            Transport transport = createTransport(createTransportOptions(), createSSLOptionsWithoutTrustStore(false));
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
             } catch (Exception e) {
                 LOG.info("Connection failed to untrusted test server: {}:{}", HOSTNAME, port);
@@ -80,7 +81,7 @@ public class SslTransportTest extends TcpTransportTest {
 
         logTransportErrors();
 
-        assertTrue(exceptions.isEmpty());
+        assertFalse(exceptions.isEmpty());
     }
 
     @Test
@@ -95,12 +96,86 @@ public class SslTransportTest extends TcpTransportTest {
             sslOptions.trustStoreLocation(OTHER_CA_TRUSTSTORE);
             sslOptions.trustStorePassword(PASSWORD);
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), sslOptions);
+            Transport transport = createTransport(createTransportOptions(), sslOptions);
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
             } catch (Exception e) {
                 LOG.info("Connection failed to untrusted test server: {}:{}", HOSTNAME, port);
+            }
+
+            assertFalse(transport.isConnected());
+
+            transport.close();
+        }
+    }
+
+    @Test
+    public void testConnectToServerWithWrongKeyStorePasswordFails() throws Exception {
+        try (NettyEchoServer server = createEchoServer()) {
+            server.start();
+
+            final int port = server.getServerPort();
+            final CountDownLatch errored = new CountDownLatch(1);
+            final SslOptions sslOptions = createSSLOptions();
+
+            sslOptions.keyStoreLocation(CLIENT_KEYSTORE);
+            sslOptions.keyStorePassword("wrong");
+
+            Transport transport = createTransport(createTransportOptions(), sslOptions);
+            transport.connect(HOSTNAME, port, new NettyTransportListener(false) {
+
+                @Override
+                public void transportError(Throwable cause) {
+                    LOG.info("Transport error caught: {}", cause.getMessage(), cause);
+                    errored.countDown();
+                }
+            });
+
+            assertTrue(errored.await(5, TimeUnit.SECONDS));
+
+            try {
+                transport.awaitConnect();
+                fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
+            } catch (Exception e) {
+                LOG.info("Connection failed when key store password was incorrect: {}:{}", HOSTNAME, port);
+            }
+
+            assertFalse(transport.isConnected());
+
+            transport.close();
+        }
+    }
+
+    @Test
+    public void testConnectToServerWithWrongTrustStorePasswordFails() throws Exception {
+        try (NettyEchoServer server = createEchoServer()) {
+            server.start();
+
+            final int port = server.getServerPort();
+            final CountDownLatch errored = new CountDownLatch(1);
+            final SslOptions sslOptions = createSSLOptions();
+
+            sslOptions.trustStoreLocation(CLIENT_TRUSTSTORE);
+            sslOptions.trustStorePassword("wrong");
+
+            Transport transport = createTransport(createTransportOptions(), sslOptions);
+            transport.connect(HOSTNAME, port, new NettyTransportListener(false) {
+
+                @Override
+                public void transportError(Throwable cause) {
+                    LOG.info("Transport error caught: {}", cause.getMessage(), cause);
+                    errored.countDown();
+                }
+            });
+
+            assertTrue(errored.await(5, TimeUnit.SECONDS));
+
+            try {
+                transport.awaitConnect();
+                fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
+            } catch (Exception e) {
+                LOG.info("Connection failed when trust store password was incorrect: {}:{}", HOSTNAME, port);
             }
 
             assertFalse(transport.isConnected());
@@ -116,9 +191,9 @@ public class SslTransportTest extends TcpTransportTest {
 
             final int port = server.getServerPort();
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptionsWithoutTrustStore(true));
+            Transport transport = createTransport(createTransportOptions(), createSSLOptionsWithoutTrustStore(true));
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connection established to test server: {}:{}", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -141,9 +216,9 @@ public class SslTransportTest extends TcpTransportTest {
 
             final int port = server.getServerPort();
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connection established to test server: {}:{}", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -164,8 +239,12 @@ public class SslTransportTest extends TcpTransportTest {
     }
 
     @Test
-    public void testConnectWithSpecificClientAuthKeyAlias() throws Exception {
+    public void testConnectWithSpecificClientAuthKeyAlias1() throws Exception {
         doClientAuthAliasTestImpl(CLIENT_KEY_ALIAS, CLIENT_DN);
+    }
+
+    @Test
+    public void testConnectWithSpecificClientAuthKeyAlias2() throws Exception {
         doClientAuthAliasTestImpl(CLIENT2_KEY_ALIAS, CLIENT2_DN);
     }
 
@@ -179,9 +258,9 @@ public class SslTransportTest extends TcpTransportTest {
             sslOptions.keyStoreLocation(CLIENT_MULTI_KEYSTORE);
             sslOptions.keyAlias(alias);
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), sslOptions);
+            Transport transport = createTransport(createTransportOptions(), sslOptions);
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connection established to test server: {}:{}", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -234,9 +313,9 @@ public class SslTransportTest extends TcpTransportTest {
                 assertFalse(clientOptions.verifyHost(), "Expected verifyHost to be false");
             }
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), clientOptions);
+            Transport transport = createTransport(createTransportOptions(), clientOptions);
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 if (verifyHost) {
                     fail("Should not have connected to the server: " + HOSTNAME + ":" + port);
                 }

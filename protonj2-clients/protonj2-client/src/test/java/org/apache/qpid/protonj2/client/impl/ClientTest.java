@@ -25,8 +25,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
-import org.apache.qpid.protonj2.client.exceptions.ClientClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -76,28 +76,28 @@ public class ClientTest extends ImperativeClientTestCase {
         try {
             client.connect("localhost");
             fail("Should enforce no new connections on Client close");
-        } catch (ClientClosedException closed) {
+        } catch (ClientIllegalStateException closed) {
             // Expected
         }
 
         try {
             client.connect("localhost", new ConnectionOptions());
             fail("Should enforce no new connections on Client close");
-        } catch (ClientClosedException closed) {
+        } catch (ClientIllegalStateException closed) {
             // Expected
         }
 
         try {
             client.connect("localhost", 5672);
             fail("Should enforce no new connections on Client close");
-        } catch (ClientClosedException closed) {
+        } catch (ClientIllegalStateException closed) {
             // Expected
         }
 
         try {
             client.connect("localhost", 5672, new ConnectionOptions());
             fail("Should enforce no new connections on Client close");
-        } catch (ClientClosedException closed) {
+        } catch (ClientIllegalStateException closed) {
             // Expected
         }
     }

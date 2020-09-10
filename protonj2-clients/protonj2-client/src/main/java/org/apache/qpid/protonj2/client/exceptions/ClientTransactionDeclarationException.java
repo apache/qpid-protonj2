@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.client.exceptions;
 /**
  * Thrown when a transaction declaration fails or is rejected by the remote.
  */
-public class ClientTransactionDeclarationException extends ClientException {
+public class ClientTransactionDeclarationException extends ClientIllegalStateException {
 
     private static final long serialVersionUID = -5532644122754198664L;
 

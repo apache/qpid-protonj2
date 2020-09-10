@@ -16,15 +16,31 @@
  */
 package org.apache.qpid.protonj2.client.exceptions;
 
-public class ClientResourceClosedException extends ClientException {
+import org.apache.qpid.protonj2.client.ErrorCondition;
+import org.apache.qpid.protonj2.client.Receiver;
+import org.apache.qpid.protonj2.client.Sender;
+
+/**
+ * Root exception type for cases of remote closure or client created {@link Sender} or
+ * {@link Receiver}.
+ */
+public class ClientLinkRemotelyClosedException extends ClientResourceRemotelyClosedException {
 
     private static final long serialVersionUID = 5601827103553513599L;
 
-    public ClientResourceClosedException(String message) {
-        super(message);
+    public ClientLinkRemotelyClosedException(String message) {
+        this(message, (ErrorCondition) null);
     }
 
-    public ClientResourceClosedException(String message, Throwable cause) {
-        super(message, cause);
+    public ClientLinkRemotelyClosedException(String message, Throwable cause) {
+        this(message, cause, null);
+    }
+
+    public ClientLinkRemotelyClosedException(String message, ErrorCondition condition) {
+        super(message, condition);
+    }
+
+    public ClientLinkRemotelyClosedException(String message, Throwable cause, ErrorCondition condition) {
+        super(message, cause, condition);
     }
 }

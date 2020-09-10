@@ -18,33 +18,33 @@ package org.apache.qpid.protonj2.client.exceptions;
 
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ErrorCondition;
-import org.apache.qpid.protonj2.types.transport.Close;
 
 /**
- * Exception thrown when the remote peer actively closes the {@link Connection} by sending
- * and AMQP {@link Close} frame or when the IO layer is disconnected due to some other
- * reason such as a security error or transient network error.
+ * Root exception type for cases of remote closure or client created resources other
+ * than the Client {@link Connection} which will throw exceptions rooted from the
+ * {@link ClientConnectionRemotelyClosedException} to indicate a fatal connection
+ * level error that requires a new connection to be created.
  */
-public class ClientConnectionRemotelyClosedException extends ClientIOException {
+public class ClientResourceRemotelyClosedException extends ClientIllegalStateException {
 
-    private static final long serialVersionUID = 5728349272688210550L;
+    private static final long serialVersionUID = 5601827103553513599L;
 
     private final ErrorCondition condition;
 
-    public ClientConnectionRemotelyClosedException(String message) {
+    public ClientResourceRemotelyClosedException(String message) {
         this(message, (ErrorCondition) null);
     }
 
-    public ClientConnectionRemotelyClosedException(String message, Throwable cause) {
+    public ClientResourceRemotelyClosedException(String message, Throwable cause) {
         this(message, cause, null);
     }
 
-    public ClientConnectionRemotelyClosedException(String message, ErrorCondition condition) {
+    public ClientResourceRemotelyClosedException(String message, ErrorCondition condition) {
         super(message);
         this.condition = condition;
     }
 
-    public ClientConnectionRemotelyClosedException(String message, Throwable cause, ErrorCondition condition) {
+    public ClientResourceRemotelyClosedException(String message, Throwable cause, ErrorCondition condition) {
         super(message, cause);
         this.condition = condition;
     }

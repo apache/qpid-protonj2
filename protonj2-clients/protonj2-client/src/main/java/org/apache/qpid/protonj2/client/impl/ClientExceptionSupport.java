@@ -16,31 +16,29 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
-import static org.apache.qpid.protonj2.client.impl.ClientConstants.CONTAINER_ID;
-import static org.apache.qpid.protonj2.client.impl.ClientConstants.INVALID_FIELD;
-
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import javax.security.sasl.SaslException;
+
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRedirectedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
-import org.apache.qpid.protonj2.client.exceptions.ClientConnectionResourceAllocationException;
-import org.apache.qpid.protonj2.client.exceptions.ClientConnectionResourceNotFoundException;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionSecurityException;
+import org.apache.qpid.protonj2.client.exceptions.ClientConnectionSecuritySaslException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
-import org.apache.qpid.protonj2.client.exceptions.ClientInvalidContainerIDException;
-import org.apache.qpid.protonj2.client.exceptions.ClientInvalidDestinationException;
+import org.apache.qpid.protonj2.client.exceptions.ClientLinkRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
-import org.apache.qpid.protonj2.client.exceptions.ClientResourceAllocationException;
-import org.apache.qpid.protonj2.client.exceptions.ClientResourceDeletedException;
-import org.apache.qpid.protonj2.client.exceptions.ClientSecurityException;
+import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
+import org.apache.qpid.protonj2.client.exceptions.ClientSessionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionRolledBackException;
+import org.apache.qpid.protonj2.engine.sasl.SaslSystemException;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.transactions.TransactionErrors;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.ConnectionError;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
+import org.apache.qpid.protonj2.types.transport.LinkError;
 
 public class ClientExceptionSupport {
 
@@ -106,42 +104,107 @@ public class ClientExceptionSupport {
      * Given an ErrorCondition instance create a new Exception that best matches
      * the error type that indicates the connection creation failed for some reason.
      *
-     * @param connection
-     *      the AMQP Client instance that originates this exception
      * @param errorCondition
      *      The ErrorCondition returned from the remote peer.
      *
      * @return a new Exception instance that best matches the ErrorCondition value.
      */
-    public static ClientConnectionRemotelyClosedException convertToConnectionClosedException(ClientConnection connection, ErrorCondition errorCondition) {
-        ClientConnectionRemotelyClosedException remoteError = null;
+    public static ClientConnectionRemotelyClosedException convertToConnectionClosedException(ErrorCondition errorCondition) {
+        final ClientConnectionRemotelyClosedException remoteError;
 
         if (errorCondition != null && errorCondition.getCondition() != null) {
             Symbol error = errorCondition.getCondition();
             String message = extractErrorMessage(errorCondition);
 
             if (error.equals(AmqpError.UNAUTHORIZED_ACCESS)) {
-                remoteError = new ClientConnectionSecurityException(message);
-            } else if (error.equals(AmqpError.RESOURCE_LIMIT_EXCEEDED)) {
-                remoteError = new ClientConnectionResourceAllocationException(message);
-            } else if (error.equals(ConnectionError.CONNECTION_FORCED)) {
-                remoteError = new ClientConnectionRemotelyClosedException(message);
-            } else if (error.equals(AmqpError.NOT_FOUND)) {
-                remoteError = new ClientConnectionResourceNotFoundException(message);
+                remoteError = new ClientConnectionSecurityException(message, new ClientErrorCondition(errorCondition));
             } else if (error.equals(ConnectionError.REDIRECT)) {
-                remoteError = createRedirectException(connection, error, message, errorCondition);
-            } else if (error.equals(AmqpError.INVALID_FIELD)) {
-                Map<?, ?> info = errorCondition.getInfo();
-                if (info != null && CONTAINER_ID.equals(info.get(INVALID_FIELD))) {
-                    remoteError = new ClientInvalidContainerIDException(message);
-                } else {
-                    remoteError = new ClientConnectionRemotelyClosedException(message);
-                }
+                remoteError = createRedirectException(error, message, errorCondition);
             } else {
-                remoteError = new ClientConnectionRemotelyClosedException(message);
+                remoteError = new ClientConnectionRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
             }
-        } else if (remoteError == null) {
+        } else {
             remoteError = new ClientConnectionRemotelyClosedException("Unknown error from remote peer");
+        }
+
+        return remoteError;
+    }
+
+    /**
+     * Given an ErrorCondition instance create a new Exception that best matches
+     * the error type that indicates the connection creation failed for some reason.
+     *
+     * @param cause
+     *        The initiating exception that should be cast or wrapped.
+     *
+     * @return a new Exception instance that best matches the ErrorCondition value.
+     */
+    public static ClientConnectionRemotelyClosedException convertToConnectionClosedException(Throwable cause) {
+        ClientConnectionRemotelyClosedException remoteError = null;
+
+        if (cause instanceof ClientConnectionRemotelyClosedException) {
+            remoteError = (ClientConnectionRemotelyClosedException) cause;
+        } else if (cause instanceof SaslSystemException) {
+            remoteError = new ClientConnectionSecuritySaslException(
+                cause.getMessage(), !((SaslSystemException) cause).isPermanent(), cause);
+        } else if (cause instanceof SaslException) {
+            remoteError = new ClientConnectionSecuritySaslException(cause.getMessage(), cause);
+        } else {
+            remoteError = new ClientConnectionRemotelyClosedException(cause.getMessage(), cause);
+        }
+
+        return remoteError;
+    }
+
+    /**
+     * Given an ErrorCondition instance create a new Exception that best matches
+     * the error type that indicates the connection creation failed for some reason.
+     *
+     * @param errorCondition
+     *      The ErrorCondition returned from the remote peer.
+     *
+     * @return a new Exception instance that best matches the ErrorCondition value.
+     */
+    public static ClientSessionRemotelyClosedException convertToSessionClosedException(ErrorCondition errorCondition) {
+        final ClientSessionRemotelyClosedException remoteError;
+
+        if (errorCondition != null && errorCondition.getCondition() != null) {
+            String message = extractErrorMessage(errorCondition);
+            if (message == null) {
+                message = "Session remotely closed without explanation";
+            }
+
+            remoteError = new ClientSessionRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
+        } else {
+            remoteError = new ClientSessionRemotelyClosedException("Session remotely closed without explanation");
+        }
+
+        return remoteError;
+    }
+
+    /**
+     * Given an ErrorCondition instance create a new Exception that best matches
+     * the error type that indicates the connection creation failed for some reason.
+     *
+     * @param errorCondition
+     *      The ErrorCondition returned from the remote peer.
+     * @param defaultMessage
+     *      The message to use if the remote provided no condition for the closure
+     *
+     * @return a new Exception instance that best matches the ErrorCondition value.
+     */
+    public static ClientLinkRemotelyClosedException convertToLinkClosedException(ErrorCondition errorCondition, String defaultMessage) {
+        final ClientLinkRemotelyClosedException remoteError;
+
+        if (errorCondition != null && errorCondition.getCondition() != null) {
+            String message = extractErrorMessage(errorCondition);
+            if (message == null) {
+                message = defaultMessage;
+            }
+
+            remoteError = new ClientLinkRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
+        } else {
+            remoteError = new ClientLinkRemotelyClosedException(defaultMessage);
         }
 
         return remoteError;
@@ -159,26 +222,30 @@ public class ClientExceptionSupport {
      * @return a new Exception instance that best matches the ErrorCondition value.
      */
     public static ClientException convertToNonFatalException(ErrorCondition errorCondition) {
-        ClientException remoteError = null;
+        final ClientException remoteError;
+
+        // TODO: Determine other cases we could map here or reduce reliance on this method.
 
         if (errorCondition != null && errorCondition.getCondition() != null) {
             Symbol error = errorCondition.getCondition();
             String message = extractErrorMessage(errorCondition);
 
-            if (error.equals(AmqpError.UNAUTHORIZED_ACCESS)) {
-                remoteError = new ClientSecurityException(message);
-            } else if (error.equals(AmqpError.RESOURCE_LIMIT_EXCEEDED)) {
-                remoteError = new ClientResourceAllocationException(message);
+            if (error.equals(AmqpError.RESOURCE_LIMIT_EXCEEDED)) {
+                remoteError = new ClientResourceRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
             } else if (error.equals(AmqpError.NOT_FOUND)) {
-                remoteError = new ClientInvalidDestinationException(message);
+                remoteError = new ClientResourceRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
+            } else if (error.equals(LinkError.DETACH_FORCED)) {
+                remoteError = new ClientResourceRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
+            } else if (error.equals(LinkError.REDIRECT)) {
+                remoteError = new ClientResourceRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
             } else if (error.equals(AmqpError.RESOURCE_DELETED)) {
-                remoteError = new ClientResourceDeletedException(message);
+                remoteError = new ClientResourceRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
             } else if (error.equals(TransactionErrors.TRANSACTION_ROLLBACK)) {
                 remoteError = new ClientTransactionRolledBackException(message);
             } else {
                 remoteError = new ClientException(message);
             }
-        } else if (remoteError == null) {
+        } else {
             remoteError = new ClientException("Unknown error from remote peer");
         }
 
@@ -225,20 +292,23 @@ public class ClientExceptionSupport {
      *
      * @return an Exception that captures the details of the redirection error.
      */
-    public static ClientConnectionRemotelyClosedException createRedirectException(ClientConnection connection, Symbol error, String message, ErrorCondition condition) {
-        ClientConnectionRemotelyClosedException result = null;
+    public static ClientConnectionRemotelyClosedException createRedirectException(Symbol error, String message, ErrorCondition condition) {
+        ClientConnectionRemotelyClosedException result;
         Map<?, ?> info = condition.getInfo();
 
         if (info == null) {
-            result = new ClientConnectionRemotelyClosedException(message + " : Redirection information not set.");
+            result = new ClientConnectionRemotelyClosedException(
+                message + " : Redirection information not set.", new ClientErrorCondition(condition));
         } else {
             @SuppressWarnings("unchecked")
-            ClientRedirect redirect = new ClientRedirect((Map<Symbol, Object>) info, connection);
+            ClientRedirect redirect = new ClientRedirect((Map<Symbol, Object>) info);
 
             try {
-                result = new ClientConnectionRedirectedException(message, redirect.validate().toURI());
+                result = new ClientConnectionRedirectedException(
+                    message, redirect.validate().toURI(), new ClientErrorCondition(condition));
             } catch (Exception ex) {
-                result = new ClientConnectionRemotelyClosedException(message + " : " + ex.getMessage());
+                result = new ClientConnectionRemotelyClosedException(
+                    message + " : " + ex.getMessage(), new ClientErrorCondition(condition));
             }
         }
 

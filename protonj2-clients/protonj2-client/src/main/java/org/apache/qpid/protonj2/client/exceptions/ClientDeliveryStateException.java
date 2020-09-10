@@ -16,25 +16,33 @@
  */
 package org.apache.qpid.protonj2.client.exceptions;
 
+import org.apache.qpid.protonj2.client.Delivery;
+import org.apache.qpid.protonj2.client.DeliveryState;
+
 /**
- * Thrown when a resource is closed or rejected due to the AMQP Error ResourceDeleted condition
+ * Thrown from client API that deal with a {@link Delivery} where the state of that
+ * can decide if the API call succeeds or fails.
  */
-public class ClientResourceDeletedException extends ClientResourceClosedException {
+public class ClientDeliveryStateException extends ClientIllegalStateException {
 
-    private static final long serialVersionUID = 6898022925741728647L;
+    private static final long serialVersionUID = -4699002536747966516L;
 
-    /**
-     * @param message
-     */
-    public ClientResourceDeletedException(String message) {
+    private final DeliveryState outcome;
+
+    public ClientDeliveryStateException(String message, DeliveryState outcome) {
         super(message);
+        this.outcome = outcome;
+    }
+
+    public ClientDeliveryStateException(String message, Throwable cause, DeliveryState outcome) {
+        super(message, cause);
+        this.outcome = outcome;
     }
 
     /**
-     * @param message
-     * @param cause
+     * @return the {@link DeliveryState} that defines the outcome returned from the remote peer.
      */
-    public ClientResourceDeletedException(String message, Throwable cause) {
-        super(message, cause);
+    public DeliveryState getOutcome() {
+        return this.outcome;
     }
 }

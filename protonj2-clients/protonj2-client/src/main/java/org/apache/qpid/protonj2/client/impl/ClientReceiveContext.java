@@ -16,12 +16,19 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.qpid.protonj2.client.Delivery;
+import org.apache.qpid.protonj2.client.InputStreamOptions;
 import org.apache.qpid.protonj2.client.Message;
-import org.apache.qpid.protonj2.client.RawInputStream;
-import org.apache.qpid.protonj2.client.RawInputStreamOptions;
 import org.apache.qpid.protonj2.client.ReceiveContext;
+import org.apache.qpid.protonj2.client.ReceiveContextOptions;
+import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryAbortedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
+import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryIsPartialException;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
@@ -31,10 +38,14 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
 public class ClientReceiveContext implements ReceiveContext {
 
     private final ClientReceiver receiver;
+    @SuppressWarnings("unused")
+    private final ReceiveContextOptions options;
+
     private ClientDelivery delivery;
 
-    ClientReceiveContext(ClientReceiver receiver) {
+    ClientReceiveContext(ClientReceiver receiver, ReceiveContextOptions options) {
         this.receiver = receiver;
+        this.options = new ReceiveContextOptions(options);
     }
 
     @Override
@@ -42,6 +53,10 @@ public class ClientReceiveContext implements ReceiveContext {
         return delivery;
     }
 
+    @Override
+    public ClientReceiver receiver() {
+        return receiver;
+    }
 
     @Override
     public <E> Message<E> message() throws ClientException {
@@ -49,9 +64,9 @@ public class ClientReceiveContext implements ReceiveContext {
             if (complete()) {
                 return delivery.message();
             } else if (aborted()) {
-                throw new IllegalStateException("Cannot read Message contents from an aborted message.");
+                throw new ClientDeliveryAbortedException("Cannot read Message contents from an aborted delivery.");
             } else {
-                throw new IllegalStateException("Cannot read Message contents from a partiall received message.");
+                throw new ClientDeliveryIsPartialException("Cannot read Message contents from a partially received delivery.");
             }
         } else {
             return null;
@@ -60,18 +75,67 @@ public class ClientReceiveContext implements ReceiveContext {
 
     @Override
     public boolean aborted() {
-        // TODO Auto-generated method stub
-        return false;
+        if (delivery != null && delivery.protonDelivery() != null) {
+            return delivery.protonDelivery().isAborted();
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean complete() {
-        // TODO Auto-generated method stub
-        return false;
+        if (delivery != null && delivery.protonDelivery() != null) {
+            return !delivery.protonDelivery().isPartial() && !delivery.protonDelivery().isAborted();
+        } else {
+            return false;
+        }
     }
 
     @Override
-    public RawInputStream inputStream(RawInputStreamOptions options) {
+    public InputStream rawInputStream(InputStreamOptions options) throws ClientException {
+        checkClosed();
+        checkAborted();
+
         return null;
+    }
+
+    private void checkClosed() throws ClientIllegalStateException {
+        if (receiver.isClosed()) {
+            throw new ClientIllegalStateException("The parent Receiver instance has already been closed.");
+        }
+    }
+
+    private void checkAborted() throws ClientIllegalStateException {
+        if (aborted()) {
+            throw new ClientIllegalStateException("The incoming delivery was aborted.");
+        }
+    }
+
+    //----- Internal InputStream implementations
+
+    @SuppressWarnings("unused")
+    private class RawInputStream extends InputStream {
+
+        protected final AtomicBoolean closed = new AtomicBoolean();
+        protected final InputStreamOptions options;
+
+        public RawInputStream(InputStreamOptions options) {
+            this.options = options;
+        }
+
+        @Override
+        public int read() throws IOException {
+            throw new IOException();
+        }
+
+        private void checkClosed() throws IOException {
+            if (closed.get()) {
+                throw new IOException("The InputStream has already been closed.");
+            }
+
+            if (receiver.isClosed()) {
+                throw new IOException("The parent Receiver instance has already been closed.");
+            }
+        }
     }
 }

@@ -28,11 +28,12 @@ import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Session;
+import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
+import org.apache.qpid.protonj2.client.exceptions.ClientLinkRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
-import org.apache.qpid.protonj2.client.exceptions.ClientSecurityException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
@@ -66,7 +67,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().ofReceiver().respond();  // TODO match other options
+            peer.expectAttach().ofReceiver().respond();
             peer.expectFlow().withLinkCredit(10);
             peer.expectDetach().withClosed(close).respond();
             peer.expectClose().respond();
@@ -129,7 +130,10 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 fail("Open of receiver should fail due to remote indicating pending close.");
             } catch (ExecutionException exe) {
                 assertNotNull(exe.getCause());
-                assertTrue(exe.getCause() instanceof ClientSecurityException);
+                assertTrue(exe.getCause() instanceof ClientLinkRemotelyClosedException);
+                ClientLinkRemotelyClosedException linkClosed = (ClientLinkRemotelyClosedException) exe.getCause();
+                assertNotNull(linkClosed.getErrorCondition());
+                assertEquals(AmqpError.UNAUTHORIZED_ACCESS.toString(), linkClosed.getErrorCondition().condition());
             }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -440,7 +444,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             Receiver receiver = session.openReceiver("test-queue", new ReceiverOptions().creditWindow(10));
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectClose();
+            peer.expectClose().respond();
 
             try {
                 receiver.addCredit(1);
@@ -549,15 +553,11 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 }
             }
 
-            if (attachResponse) {
+            try {
                 receiver.close().get();
-            } else {
-                try {
-                    receiver.close().get();
-                    fail("Should fail close to indicate remote misbehaving when connection not closed");
-                } catch (ExecutionException ex) {
-                    LOG.debug("Caught expected exception from close call", ex);
-                }
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close whenn connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -674,15 +674,11 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 }
             }
 
-            if (attachResponse) {
+            try {
                 receiver.close().get();
-            } else {
-                try {
-                    receiver.close().get();
-                    fail("Should fail close to indicate remote misbehaving when connection not closed");
-                } catch (ExecutionException ex) {
-                    LOG.debug("Caught expected exception from close call", ex);
-                }
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close whenn connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -745,15 +741,11 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 }
             }
 
-            if (attachResponse) {
+            try {
                 receiver.close().get();
-            } else {
-                try {
-                    receiver.close().get();
-                    fail("Should fail close to indicate remote misbehaving when connection not closed");
-                } catch (ExecutionException ex) {
-                    LOG.debug("Caught expected exception from close call", ex);
-                }
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close whenn connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -818,15 +810,11 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 }
             }
 
-            if (attachResponse) {
+            try {
                 receiver.close().get();
-            } else {
-                try {
-                    receiver.close().get();
-                    fail("Should fail close to indicate remote misbehaving when connection not closed");
-                } catch (ExecutionException ex) {
-                    LOG.debug("Caught expected exception from close call", ex);
-                }
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close whenn connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -891,15 +879,11 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 }
             }
 
-            if (attachResponse) {
+            try {
                 receiver.close().get();
-            } else {
-                try {
-                    receiver.close().get();
-                    fail("Should fail close to indicate remote misbehaving when connection not closed");
-                } catch (ExecutionException ex) {
-                    LOG.debug("Caught expected exception from close call", ex);
-                }
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close whenn connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -964,15 +948,11 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 }
             }
 
-            if (attachResponse) {
+            try {
                 receiver.close().get();
-            } else {
-                try {
-                    receiver.close().get();
-                    fail("Should fail close to indicate remote misbehaving when connection not closed");
-                } catch (ExecutionException ex) {
-                    LOG.debug("Caught expected exception from close call", ex);
-                }
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close whenn connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -1198,12 +1178,20 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
     @Test
     public void testReceiverHandlesAbortedSplitFrameTransfer() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
             peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -1214,29 +1202,20 @@ public class ReceiverTest extends ImperativeClientTestCase {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession();
             final Receiver receiver = session.openReceiver("test-queue");
-            receiver.openFuture().get();
 
-            final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
-            peer.remoteTransfer().withHandle(0)
-                                 .withDeliveryId(0)
-                                 .withDeliveryTag(new byte[] { 1 })
-                                 .withMore(true)
-                                 .withMessageFormat(0)
-                                 .withPayload(payload).now();
+            assertNull(receiver.receive(10, TimeUnit.MILLISECONDS));
 
-            assertNull(receiver.tryReceive());
-
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
             peer.remoteTransfer().withHandle(0)
                                  .withMore(false)
                                  .withAborted(true)
                                  .withMessageFormat(0)
                                  .withPayload(payload).now();
 
-            peer.expectDetach().respond();
-            peer.expectClose().respond();
-
-            assertNull(receiver.tryReceive());
+            assertNull(receiver.receive(15, TimeUnit.MILLISECONDS));
 
             receiver.close();
             connection.close().get();
@@ -1364,6 +1343,76 @@ public class ReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testReceiveBlockedForMessageFailsWhenConnectionRemotelyClosed() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteClose().withErrorCondition(AmqpError.RESOURCE_DELETED.toString(), "Connection was deleted").afterDelay(25).queue();
+            peer.expectClose();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Receiver test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue");
+            receiver.openFuture().get();
+
+            try {
+                receiver.receive();
+                fail("Receive should have failed when Connection remotely closed.");
+            } catch (ClientConnectionRemotelyClosedException cliEx) {
+                // Expected
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testTimedReceiveBlockedForMessageFailsWhenConnectionRemotelyClosed() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteClose().withErrorCondition(AmqpError.RESOURCE_DELETED.toString(), "Connection was deleted").afterDelay(25).queue();
+            peer.expectClose();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Receiver test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue");
+            receiver.openFuture().get();
+
+            try {
+                receiver.receive(10, TimeUnit.SECONDS);
+                fail("Receive should have failed when Connection remotely closed.");
+            } catch (ClientConnectionRemotelyClosedException cliEx) {
+                // Expected send to throw indicating that the remote closed the connection
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testReceiveTimedCallFailsWhenReceiverClosed() throws Exception {
         doTestReceiveTimedCallFailsWhenReceiverDetachedOrClosed(true);
     }
@@ -1401,7 +1450,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             try {
-                receiver.receive(60_000);
+                receiver.receive(60, TimeUnit.SECONDS);
                 fail("Receive call should fail when link closed or detached.");
             } catch (ClientIllegalStateException cliEx) {
                 LOG.debug("Receiver threw error on receive call", cliEx);
@@ -1582,6 +1631,36 @@ public class ReceiverTest extends ImperativeClientTestCase {
             } catch (ExecutionException cliEx) {
                 LOG.debug("Receiver threw error on drain call", cliEx);
                 assertTrue(cliEx.getCause() instanceof ClientException);
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testBlockedReceiveThrowsConnectionRemotelyClosedError() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().withSource().withAddress("test").and().respond();
+            peer.expectFlow();
+            peer.dropAfterLastHandler(25);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test");
+
+            try {
+                receiver.receive();
+                fail("Receive should fail with remotely closed error after remote drops");
+            } catch (ClientConnectionRemotelyClosedException cliEx) {
             }
 
             connection.close().get();

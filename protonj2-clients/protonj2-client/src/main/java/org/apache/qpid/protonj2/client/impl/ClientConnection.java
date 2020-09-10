@@ -23,19 +23,20 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import java.util.function.Supplier;
+import java.util.function.BiConsumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
+import org.apache.qpid.protonj2.client.ConnectionEvent;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Message;
@@ -46,16 +47,16 @@ import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.SessionOptions;
 import org.apache.qpid.protonj2.client.Tracker;
-import org.apache.qpid.protonj2.client.exceptions.ClientClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
-import org.apache.qpid.protonj2.client.futures.AsyncResult;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.client.futures.ClientFutureFactory;
+import org.apache.qpid.protonj2.client.transport.NettyIOContext;
 import org.apache.qpid.protonj2.client.transport.Transport;
-import org.apache.qpid.protonj2.client.transport.TransportBuilder;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
 import org.apache.qpid.protonj2.engine.sasl.client.SaslAuthenticator;
@@ -71,9 +72,6 @@ public class ClientConnection implements Connection {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientConnection.class);
 
-    private static final long INFINITE = -1;
-    private static final AtomicInteger CONNECTION_SEQUENCE = new AtomicInteger();
-
     // Future tracking of Closing. Closed. Failed state vs just simple boolean is intended here
     // later on we may decide this is overly optimized.
     private static final AtomicIntegerFieldUpdater<ClientConnection> CLOSED_UPDATER =
@@ -85,24 +83,24 @@ public class ClientConnection implements Connection {
     private final ConnectionOptions options;
     private final ClientConnectionCapabilities capabilities = new ClientConnectionCapabilities();
     private final ClientFutureFactory futureFactory;
-
+    private final NettyIOContext ioContext;
+    private final String connectionId;
+    private final ScheduledExecutorService executor;
+    private final AtomicInteger sessionCounter = new AtomicInteger();
     private final Map<ClientFuture<?>, Object> requests = new ConcurrentHashMap<>();
-    private final Engine engine;
+
+    private Engine engine;
     private org.apache.qpid.protonj2.engine.Connection protonConnection;
     private ClientSession connectionSession;
     private ClientSender connectionSender;
     private Transport transport;
-
     private SessionOptions defaultSessionOptions;
-
     private ClientFuture<Connection> openFuture;
     private ClientFuture<Connection> closeFuture;
     private volatile int closed;
-    private final AtomicInteger sessionCounter = new AtomicInteger();
     private volatile ClientException failureCause;
-    private final String connectionId;
-
-    private ScheduledExecutorService executor;
+    private final String host;
+    private final int port;
 
     /**
      * Create a connection and define the initial configuration used to manage the
@@ -117,40 +115,19 @@ public class ClientConnection implements Connection {
      * @param options
      *      the connection options that configure this {@link Connection} instance.
      */
-    public ClientConnection(ClientInstance client, String host, int port, ConnectionOptions options) {
+    ClientConnection(ClientInstance client, String host, int port, ConnectionOptions options) {
         this.client = client;
         this.options = options;
         this.connectionId = client.nextConnectionId();
         this.futureFactory = ClientFutureFactory.create(client.options().futureType());
-
-        if (options.saslOptions().saslEnabled()) {
-            // TODO - Check that all allowed mechanisms are actually supported ?
-            engine = EngineFactory.PROTON.createEngine();
-        } else {
-            engine = EngineFactory.PROTON.createNonSaslEngine();
-        }
-
-        if (options.traceFrames()) {
-            engine.configuration().setTraceFrames(true);
-            if (!engine.configuration().isTraceFrames()) {
-                LOG.info("Connection frame tracing was enabled but protocol engine does not support it");
-            }
-        }
-
-        ThreadFactory transportThreadFactory = new ClientThreadFactory(
-            "ProtonConnection :(" + CONNECTION_SEQUENCE.incrementAndGet()
-                          + "):[" + host + ":" + port + "]", true);
-
-        transport = new TransportBuilder().host(host)
-                                          .port(port)
-                                          .transportOptions(options.transportOptions())
-                                          .sslOptions(options.sslOptions())
-                                          .transportListener(new ClientTransportListener(this))
-                                          .threadFactory(transportThreadFactory)
-                                          .build();
-
-        openFuture = futureFactory.createFuture();
-        closeFuture = futureFactory.createFuture();
+        this.openFuture = futureFactory.createFuture();
+        this.closeFuture = futureFactory.createFuture();
+        this.ioContext = new NettyIOContext(options.transportOptions(),
+                                            options.sslOptions(),
+                                            "ClientConnection :(" + connectionId + "): I/O Thread");
+        this.executor = ioContext.eventLoop();
+        this.host = host;
+        this.port = port;
     }
 
     @Override
@@ -177,17 +154,37 @@ public class ClientConnection implements Connection {
 
     private Future<Connection> doClose(ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
-            executor.execute(() -> {
-                if (protonConnection.isLocallyOpen()) {
-                    protonConnection.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+            try {
+                executor.execute(() -> {
+                    LOG.trace("Close requested for connection: {}", this);
 
-                    try {
-                        protonConnection.close();
-                    } catch (Throwable ignored) {
-                        // Engine error handler will kick in if the write of Close fails
+                    if (protonConnection.isLocallyOpen()) {
+                        protonConnection.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+
+                        try {
+                            protonConnection.close();
+                        } catch (Throwable ignored) {
+                            // Engine error handler will kick in if the write of Close fails
+                        }
+                    } else {
+                        engine.shutdown();
                     }
+                });
+            } catch (RejectedExecutionException rje) {
+                LOG.trace("Close task rejected from the event loop", rje);
+            } finally {
+                try {
+                    closeFuture.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    // Ignore error as we are closed regardless
+                } finally {
+                    try {
+                        transport.close();
+                    } catch (Exception ignore) {}
+
+                    ioContext.shutdown();
                 }
-            });
+            }
         }
 
         return closeFuture;
@@ -195,12 +192,12 @@ public class ClientConnection implements Connection {
 
     @Override
     public Session defaultSession() throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         final ClientFuture<Session> defaultSession = getFutureFactory().createFuture();
 
         executor.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 defaultSession.complete(lazyCreateConnectionSession());
             } catch (Throwable error) {
                 defaultSession.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -217,13 +214,13 @@ public class ClientConnection implements Connection {
 
     @Override
     public Session openSession(SessionOptions sessionOptions) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         final ClientFuture<Session> createSession = getFutureFactory().createFuture();
         final SessionOptions sessionOpts = sessionOptions == null ? getDefaultSessionOptions() : sessionOptions;
 
         executor.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 createSession.complete(new ClientSession(sessionOpts, ClientConnection.this, protonConnection.session()).open());
             } catch (Throwable error) {
                 createSession.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -240,13 +237,13 @@ public class ClientConnection implements Connection {
 
     @Override
     public Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         Objects.requireNonNull(address, "Cannot create a receiver with a null address");
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
 
         executor.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 createReceiver.complete(lazyCreateConnectionSession().internalOpenReceiver(address, receiverOptions));
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -263,13 +260,13 @@ public class ClientConnection implements Connection {
 
     @Override
     public Receiver openDurableReceiver(String address, String subscriptionName, ReceiverOptions receiverOptions) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         Objects.requireNonNull(address, "Cannot create a receiver with a null address");
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
 
         executor.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 createReceiver.complete(lazyCreateConnectionSession().internalOpenDurableReceiver(address, subscriptionName, receiverOptions));
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -296,12 +293,12 @@ public class ClientConnection implements Connection {
 
     @Override
     public Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
 
         executor.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 createReceiver.complete(lazyCreateConnectionSession().internalOpenDynamicReceiver(dynamicNodeProperties, receiverOptions));
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -313,12 +310,12 @@ public class ClientConnection implements Connection {
 
     @Override
     public Sender defaultSender() throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         final ClientFuture<Sender> defaultSender = getFutureFactory().createFuture();
 
         executor.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 defaultSender.complete(lazyCreateConnectionSender());
             } catch (Throwable error) {
                 defaultSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -335,13 +332,13 @@ public class ClientConnection implements Connection {
 
     @Override
     public Sender openSender(String address, SenderOptions senderOptions) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         Objects.requireNonNull(address, "Cannot create a sender with a null address");
         final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
 
         executor.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 createSender.complete(lazyCreateConnectionSession().internalOpenSender(address, senderOptions));
             } catch (Throwable error) {
                 createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -358,12 +355,12 @@ public class ClientConnection implements Connection {
 
     @Override
     public Sender openAnonymousSender(SenderOptions senderOptions) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
 
         executor.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 createSender.complete(lazyCreateConnectionSession().internalOpenAnonymousSender(senderOptions));
             } catch (Throwable error) {
                 createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -375,13 +372,13 @@ public class ClientConnection implements Connection {
 
     @Override
     public Tracker send(Message<?> message) throws ClientException {
-        checkClosed();
+        checkClosedOrFailed();
         Objects.requireNonNull(message, "Cannot send a null message");
         final ClientFuture<Tracker> result = getFutureFactory().createFuture();
 
         executor.execute(() -> {
             try {
-                checkClosed();
+                checkClosedOrFailed();
                 result.complete(lazyCreateConnectionSender().send(message));
             } catch (Throwable error) {
                 result.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -409,67 +406,35 @@ public class ClientConnection implements Connection {
         return ClientConversionSupport.toStringArray(protonConnection.getRemoteDesiredCapabilities());
     }
 
+    @Override
+    public String toString() {
+        return "ClientConnection:[" + getId() + "]";
+    }
+
     //----- Internal API
 
     String getId() {
         return connectionId;
     }
 
-    ClientConnection connect() {
+    ClientConnection connect() throws ClientException {
         try {
-            executor = transport.connect(() -> {
+            // Initial configuration validation happens here, if this step fails then the
+            // user most likely configured something incorrect or that violates some constraint
+            // like an invalid SASL mechanism etc.
+            initializeProtonResources(host);
+            scheduleConnect(host, port);
 
-                engine.configuration().setBufferAllocator(transport.getBufferAllocator());
-                engine.outputHandler(toWrite -> handleEngineOutput(toWrite))
-                      .errorHandler(error -> engine.shutdown());
-
-                configureEngineSaslSupport();
-
-                protonConnection = engine.start();
-                configureConnection(protonConnection);
-                protonConnection.localOpenHandler(connection -> handleLocalOpen(connection))
-                                .localCloseHandler(connection -> handleLocalClose(connection))
-                                .openHandler(connection -> handleRemoteOpen(connection))
-                                .closeHandler(connection -> handleRemotecClose(connection))
-                                .engineShutdownHandler(engine -> handleEngineShutdown(engine));
-
-            });
-        } catch (Throwable e) {
-            try {
-                transport.close();
-            } catch (Throwable t) {
-                LOG.trace("close of transport reported error", t);
-            }
-
+            return this;
+        } catch (Exception ex) {
             CLOSED_UPDATER.set(this, 1);
-            FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ClientExceptionSupport.createOrPassthroughFatal(e));
-
-            openFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(e));
+            FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ClientExceptionSupport.createOrPassthroughFatal(ex));
+            openFuture.failed(failureCause);
             closeFuture.complete(this);
+            ioContext.shutdown();
+
+            throw failureCause;
         }
-
-        return this;
-    }
-
-    ClientConnection open() throws ClientException {
-        checkClosed();
-        executor.execute(() -> {
-            if (engine.isShutdown()) {
-                return;
-            }
-
-            try {
-                if (client.containerId() != null) {
-                    protonConnection.setContainerId(client.containerId());
-                }
-
-                protonConnection.open();
-            } catch (Throwable error) {
-                LOG.trace("Error from proton engine during connection open", error);
-            }
-        });
-
-        return this;
     }
 
     boolean isClosed() {
@@ -480,16 +445,8 @@ public class ClientConnection implements Connection {
         return executor;
     }
 
-    Engine getEngine() {
-        return engine;
-    }
-
     ClientFutureFactory getFutureFactory() {
         return futureFactory;
-    }
-
-    ClientException getFailureCause() {
-        return failureCause;
     }
 
     ConnectionOptions getOptions() {
@@ -498,10 +455,6 @@ public class ClientConnection implements Connection {
 
     ClientConnectionCapabilities getCapabilities() {
         return capabilities;
-    }
-
-    org.apache.qpid.protonj2.engine.Connection getProtonConnection() {
-        return protonConnection;
     }
 
     String nextSessionId() {
@@ -532,27 +485,9 @@ public class ClientConnection implements Connection {
         });
     }
 
-    ScheduledFuture<?> scheduleRequestTimeout(final AsyncResult<?> request, long timeout, final ClientException error) {
-        if (timeout != INFINITE) {
-            return executor.schedule(() -> request.failed(error), timeout, TimeUnit.MILLISECONDS);
-        } else {
-            return null;
-        }
-    }
-
-    ScheduledFuture<?> scheduleRequestTimeout(final AsyncResult<?> request, long timeout, Supplier<ClientException> errorSupplier) {
-        if (timeout != INFINITE) {
-            return executor.schedule(() -> request.failed(errorSupplier.get()), timeout, TimeUnit.MILLISECONDS);
-        } else {
-            return null;
-        }
-    }
-
     //----- Private implementation events handlers and utility methods
 
     private void handleLocalOpen(org.apache.qpid.protonj2.engine.Connection connection) {
-        // TODO - Possible issue with tick kicking in and writing idle frames before remote
-        //        Open actually received that should be investigated further.
         connection.tickAuto(getScheduler());
 
         if (options.openTimeout() > 0) {
@@ -561,10 +496,10 @@ public class ClientConnection implements Connection {
                     // Ensure a close write is attempted and then force failure regardless
                     // as we don't expect the remote to respond given it hasn't done so yet.
                     try {
-                        protonConnection.close();
+                        connection.close();
                     } catch (Throwable ignore) {}
 
-                    engine.engineFailed(new ClientOperationTimedOutException(
+                    connection.getEngine().engineFailed(new ClientOperationTimedOutException(
                         "Connection Open timed out waiting for remote to open"));
                 }
             }, options.openTimeout(), TimeUnit.MILLISECONDS);
@@ -572,51 +507,66 @@ public class ClientConnection implements Connection {
     }
 
     private void handleLocalClose(org.apache.qpid.protonj2.engine.Connection connection) {
-        if (!connection.isRemotelyClosed() && !engine.isShutdown()) {
+        if (connection.isRemotelyClosed()) {
+            final ClientException failureCause;
+
+            if (engine.connection().getRemoteCondition() != null) {
+                failureCause = ClientExceptionSupport.convertToConnectionClosedException(connection.getRemoteCondition());
+            } else {
+                failureCause = new ClientConnectionRemotelyClosedException("Unknown error led to connection disconnect");
+            }
+
+            try {
+                connection.getEngine().engineFailed(failureCause);
+            } catch (Throwable ignore) {
+            }
+        } else if (!engine.isShutdown() || !engine.isFailed()) {
             // Ensure engine gets shut down and future completed if remote doesn't respond.
             executor.schedule(() -> {
                 try {
-                    engine.shutdown();
+                    connection.getEngine().shutdown();
                 } catch (Throwable ignore) {
                 }
             }, options.closeTimeout(), TimeUnit.MILLISECONDS);
-        } else {
-            // Ensure that engine is shutdown and cleanup processing kicks in.
-            try {
-                engine.shutdown();
-            } catch (Throwable ignore) {
-            }
         }
     }
 
     private void handleRemoteOpen(org.apache.qpid.protonj2.engine.Connection connection) {
         capabilities.determineCapabilities(connection);
+        submitConnectionEvent(options.connectedHandler(), transport.getHost(), transport.getPort(), null);
         openFuture.complete(this);
     }
 
-    private void handleRemotecClose(org.apache.qpid.protonj2.engine.Connection connection) {
-        if (protonConnection.isLocallyClosed()) {
+    private void submitConnectionEvent(BiConsumer<Connection, ConnectionEvent> handler, String host, int port, ClientIOException cause) {
+        if (handler != null) {
             try {
-                engine.shutdown();
+                ForkJoinPool.commonPool().submit(() -> {
+                    try {
+                        handler.accept(this, new ConnectionEvent(host, port, cause));
+                    } catch (Exception ex) {
+                        LOG.trace("User supplied connection life-cycle event handler threw: ", ex);
+                    }
+                });
+            } catch (Exception ex) {
+                LOG.trace("Error thrown while attempting to submit event notification ", ex);
+            }
+        }
+    }
+
+    private void handleRemotecClose(org.apache.qpid.protonj2.engine.Connection connection) {
+        // When the connection is already locally closed this implies the application requested
+        // a close of this connection so this is normal, if not then the remote is closing for
+        // some reason and we should react as if the connection has failed which we will determine
+        // in the local close handler based on state.
+        if (connection.isLocallyClosed()) {
+            try {
+                connection.getEngine().shutdown();
             } catch (Throwable ignore) {
                 LOG.warn("Unexpected exception thrown from engine shutdown: ", ignore);
             }
         } else {
-            final ClientException ex;
-
-            if (connection.getRemoteCondition() != null) {
-                ex = ClientExceptionSupport.convertToConnectionClosedException(this, connection.getRemoteCondition());
-            } else {
-                ex = new ClientConnectionRemotelyClosedException("Remote closed with error");
-            }
-
-            FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ex);
-
-            // Remote closed first so try and close locally and allow the local close processing
-            // to handle shutdown and cleanup as needed.
-
             try {
-                protonConnection.close();
+                connection.close();
             } catch (Throwable ignored) {
                 // Engine handlers will ensure we close down if not already locally closed.
             }
@@ -627,35 +577,63 @@ public class ClientConnection implements Connection {
         try {
             transport.writeAndFlush(output);
         } catch (IOException e) {
-            LOG.warn("Error while writing engine output to transport:", e);
+            LOG.debug("Error while writing engine output to transport: ", e.getMessage());
             throw new UncheckedIOException(e);
         }
     }
 
-    private void handleEngineShutdown(Engine engine) {
-        CLOSED_UPDATER.lazySet(this, 1);
-        if (engine.failureCause() != null) {
-            FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ClientExceptionSupport.createOrPassthroughFatal(engine.failureCause()));
+    /*
+     * When an engine fails we check if we can reconnect or not and act accordingly.
+     */
+    private void handleEngineFailure(Engine engine) {
+        final ClientIOException failureCause;
+
+        if (engine.connection().getRemoteCondition() != null) {
+            failureCause = ClientExceptionSupport.convertToConnectionClosedException(engine.connection().getRemoteCondition());
+        } else if (engine.failureCause() != null) {
+            failureCause = ClientExceptionSupport.convertToConnectionClosedException(engine.failureCause());
+        } else {
+            failureCause = new ClientConnectionRemotelyClosedException("Unknown error led to connection disconnect");
         }
 
+        LOG.trace("Engine reports failure with error: {}", failureCause.getMessage());
+
+        // Engine failed so we don't need to respond to normal engine shutdown logic
+        engine.engineShutdownHandler(null);
+
+        failConnection(failureCause);
+    }
+
+    /*
+     * Handle normal engine shutdown which should only happen when the connection is closed
+     * by the user, all other cases should lead to engine failed event first which will deal
+     * with reconnect cases and avoid this event unless reconnect cannot proceed.
+     */
+    private void handleEngineShutdown(Engine engine) {
         try {
             protonConnection.close();
-        } catch (Throwable ignore) {
+        } catch (Exception ignore) {
         }
 
         try {
             transport.close();
-        } catch (IOException ignored) {
-        }
+        } catch (Exception ignored) {}
 
-        // Signal any waiters that the operation is done due to error.
-        if (failureCause != null) {
-            openFuture.failed(failureCause);
-        } else {
-            openFuture.complete(this);
-        }
-
+        openFuture.complete(this);
         closeFuture.complete(this);
+    }
+
+    private void failConnection(ClientIOException failureCause) {
+        FAILURE_CAUSE_UPDATER.compareAndSet(this, null, failureCause);
+
+        try {
+            engine.shutdown();
+        } catch (Exception ignore) {}
+
+        openFuture.failed(failureCause);
+        closeFuture.complete(this);
+
+        submitConnectionEvent(options.failedHandler(), transport.getHost(), transport.getPort(), failureCause);
     }
 
     private Engine configureEngineSaslSupport() {
@@ -690,15 +668,44 @@ public class ClientConnection implements Connection {
         return engine;
     }
 
-    private void configureConnection(org.apache.qpid.protonj2.engine.Connection protonConnection) {
+    private void initializeProtonResources(String host) throws ClientException {
+        if (options.saslOptions().saslEnabled()) {
+            engine = EngineFactory.PROTON.createEngine();
+        } else {
+            engine = EngineFactory.PROTON.createNonSaslEngine();
+        }
+
+        if (options.traceFrames()) {
+            engine.configuration().setTraceFrames(true);
+            if (!engine.configuration().isTraceFrames()) {
+                LOG.info("Connection frame tracing was enabled but protocol engine does not support it");
+            }
+        }
+
+        engine.outputHandler(this::handleEngineOutput)
+              .engineShutdownHandler(this::handleEngineShutdown)
+              .errorHandler(this::handleEngineFailure);
+
+        protonConnection = engine.connection();
+
+        if (client.containerId() != null) {
+            protonConnection.setContainerId(client.containerId());
+        }
+
         protonConnection.setLinkedResource(this);
         protonConnection.setChannelMax(options.channelMax());
         protonConnection.setMaxFrameSize(options.maxFrameSize());
-        protonConnection.setHostname(transport.getHost());
+        protonConnection.setHostname(host);
         protonConnection.setIdleTimeout((int) options.idleTimeout());
         protonConnection.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
         protonConnection.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
         protonConnection.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
+        protonConnection.localOpenHandler(this::handleLocalOpen)
+                        .localCloseHandler(this::handleLocalClose)
+                        .openHandler(this::handleRemoteOpen)
+                        .closeHandler(this::handleRemotecClose);
+
+        configureEngineSaslSupport();
     }
 
     private ClientSession lazyCreateConnectionSession() {
@@ -735,13 +742,11 @@ public class ClientConnection implements Connection {
         }
     }
 
-    protected void checkClosed() throws ClientClosedException {
-        if (CLOSED_UPDATER.get(this) > 0) {
-            if (failureCause != null) {
-                throw new ClientClosedException("The Connection failed", failureCause);
-            } else {
-                throw new ClientClosedException("The Connection is closed");
-            }
+    protected void checkClosedOrFailed() throws ClientException {
+        if (closed > 0) {
+            throw new ClientIllegalStateException("The Connection was explicity closed", failureCause);
+        } else if (failureCause != null) {
+            throw failureCause;
         }
     }
 
@@ -781,5 +786,22 @@ public class ClientConnection implements Connection {
         }
 
         return sessionOptions;
+    }
+
+    //----- Reconnection related internal API
+
+    private void attemptConnection(String host, Integer port) {
+        try {
+            transport = ioContext.newTransport();
+            LOG.trace("Attempting connection to remote {}:{}", host, port);
+            transport.connect(host, port, new ClientTransportListener(engine));
+        } catch (Throwable error) {
+            engine.engineFailed(ClientExceptionSupport.createOrPassthroughFatal(error));
+        }
+    }
+
+    private void scheduleConnect(String host, int port) {
+        LOG.trace("Initial connect attempt will be performed immediately");
+        executor.execute(() -> attemptConnection(host, port));
     }
 }

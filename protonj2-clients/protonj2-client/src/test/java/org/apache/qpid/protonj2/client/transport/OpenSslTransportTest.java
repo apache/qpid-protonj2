@@ -70,9 +70,9 @@ public class OpenSslTransportTest extends SslTransportTest {
             SslOptions options = createSSLOptions();
             options.allowNativeSSL(useOpenSSL);
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), options);
+            Transport transport = createTransport(createTransportOptions(), options);
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -89,7 +89,7 @@ public class OpenSslTransportTest extends SslTransportTest {
             transport.close();
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
+        assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
@@ -121,9 +121,9 @@ public class OpenSslTransportTest extends SslTransportTest {
             options.allowNativeSSL(true);
             options.sslContextOverride(sslContext);
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), options);
+            Transport transport = createTransport(createTransportOptions(), options);
             try {
-                transport.connect(null);
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connected to server:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
@@ -140,7 +140,7 @@ public class OpenSslTransportTest extends SslTransportTest {
             transport.close();
         }
 
-        assertTrue(!transportClosed);  // Normal shutdown does not trigger the event.
+        assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
@@ -180,7 +180,14 @@ public class OpenSslTransportTest extends SslTransportTest {
     @Override
     @Disabled("Can't apply keyAlias in Netty OpenSSL impl")
     @Test
-    public void testConnectWithSpecificClientAuthKeyAlias() throws Exception {
+    public void testConnectWithSpecificClientAuthKeyAlias1() throws Exception {
+        // TODO - Revert to superclass version if keyAlias becomes supported for Netty.
+    }
+
+    @Override
+    @Disabled("Can't apply keyAlias in Netty OpenSSL impl")
+    @Test
+    public void testConnectWithSpecificClientAuthKeyAlias2() throws Exception {
         // TODO - Revert to superclass version if keyAlias becomes supported for Netty.
     }
 

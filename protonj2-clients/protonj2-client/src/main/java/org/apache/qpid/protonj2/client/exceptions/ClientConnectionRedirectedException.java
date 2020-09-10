@@ -18,6 +18,8 @@ package org.apache.qpid.protonj2.client.exceptions;
 
 import java.net.URI;
 
+import org.apache.qpid.protonj2.client.ErrorCondition;
+
 /**
  * A {@link ClientIOException} type that defines that the remote peer has requested that this
  * connection be redirected to some alternative peer.  The redirect information can be obtained
@@ -30,8 +32,8 @@ public class ClientConnectionRedirectedException extends ClientConnectionRemotel
 
     private final URI redirect;
 
-    public ClientConnectionRedirectedException(String reason, URI redirect) {
-        super(reason);
+    public ClientConnectionRedirectedException(String reason, URI redirect, ErrorCondition condition) {
+        super(reason, condition);
 
         this.redirect = redirect;
     }

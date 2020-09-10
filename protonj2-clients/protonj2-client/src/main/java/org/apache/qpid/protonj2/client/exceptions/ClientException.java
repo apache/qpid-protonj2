@@ -16,6 +16,15 @@
  */
 package org.apache.qpid.protonj2.client.exceptions;
 
+import org.apache.qpid.protonj2.client.Connection;
+
+/**
+ * Represents a non-fatal exception that occurs from a Client {@link Connection}
+ * or one of its resources.  These error types can typically be recovered from
+ * without a full tear down and rebuild of the connection.  One example might be a
+ * failure to commit a transaction due to a forced roll back on the remote side
+ * of the connection.
+ */
 public class ClientException extends Exception {
 
     private static final long serialVersionUID = -5094579928657311571L;

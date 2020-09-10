@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.client.exceptions;
 /**
  * Thrown when a transaction operation fails and state is now unknown.
  */
-public class ClientTransactionInDoubtException extends ClientException {
+public class ClientTransactionInDoubtException extends ClientIllegalStateException {
 
     private static final long serialVersionUID = -5532644122754198664L;
 

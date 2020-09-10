@@ -41,16 +41,9 @@ public class ClientRedirect {
     private static final Logger LOG = LoggerFactory.getLogger(ClientRedirect.class);
 
     private final Map<Symbol, Object> redirect;
-    @SuppressWarnings("unused")
-    private final ClientConnection connection;
 
-    public ClientRedirect(Map<Symbol, Object> redirect, ClientConnection connection) {
+    public ClientRedirect(Map<Symbol, Object> redirect) {
         this.redirect = redirect;
-        this.connection = connection;
-
-        if (connection == null) {
-            throw new IllegalArgumentException("A Client Connection instance is required");
-        }
     }
 
     public ClientRedirect validate() throws Exception {

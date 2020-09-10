@@ -21,7 +21,7 @@ import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
-import org.apache.qpid.protonj2.client.exceptions.ClientPartialMessageException;
+import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryIsPartialException;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.Modified;
@@ -57,7 +57,7 @@ public class ClientDelivery implements Delivery {
     @Override
     public <E> Message<E> message() throws ClientException {
         if (delivery.isPartial()) {
-            throw new ClientPartialMessageException("Delivery contains only a partial amount of the message payload.");
+            throw new ClientDeliveryIsPartialException("Delivery contains only a partial amount of the message payload.");
         }
 
         Message<E> message = (Message<E>) cachedMessage;
@@ -137,5 +137,11 @@ public class ClientDelivery implements Delivery {
     @Override
     public boolean settled() {
         return delivery.isSettled();
+    }
+
+    //----- Internal API for use with Receiver extensions
+
+    IncomingDelivery protonDelivery() {
+        return delivery;
     }
 }

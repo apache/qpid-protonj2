@@ -16,19 +16,46 @@
  */
 package org.apache.qpid.protonj2.client.transport;
 
-import org.apache.qpid.protonj2.client.SslOptions;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.apache.qpid.protonj2.client.TransportOptions;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test the WebSocketTransport with channel level security enabled.
  */
 public class SecureWebSocketTransportTest extends SslTransportTest {
 
-    @Override
-    protected WebSocketTransport createTransport(String host, int port, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
-        WebSocketTransport transport = new WebSocketTransport(host, port, options, sslOptions);
-        transport.setTransportListener(listener);
-        return transport;
+    private static final Logger LOG = LoggerFactory.getLogger(SecureWebSocketTransportTest.class);
+
+    @Test
+    public void testEnsureNettyIOContextCreatesWebSocketTransport() throws Exception {
+        try (NettyEchoServer server = createEchoServer()) {
+            server.start();
+
+            final int port = server.getServerPort();
+
+            Transport transport = createTransport(createTransportOptions(), createSSLOptions());
+
+            try {
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
+            } catch (Exception e) {
+                LOG.info("Failed to connect to: {}:{} as expected.", HOSTNAME, port);
+                fail("Should not have failed to connect to the server: " + HOSTNAME + ":" + port);
+            }
+
+            assertTrue(transport instanceof WebSocketTransport);
+            assertTrue(transport.isConnected());
+
+            transport.close();
+        }
+
+        assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
+        assertTrue(exceptions.isEmpty());
+        assertTrue(data.isEmpty());
     }
 
     @Override

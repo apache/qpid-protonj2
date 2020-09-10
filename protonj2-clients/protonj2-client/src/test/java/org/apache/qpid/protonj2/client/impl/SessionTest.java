@@ -35,7 +35,6 @@ import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.SessionOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
-import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
@@ -123,9 +122,7 @@ public class SessionTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            SessionOptions options = new SessionOptions();
-            options.openTimeout(75);
-            Session session = connection.openSession(options);
+            Session session = connection.openSession();
 
             try {
                 if (timeout) {
@@ -228,11 +225,8 @@ public class SessionTest extends ImperativeClientTestCase {
                 } else {
                     session.close().get();
                 }
-
-                fail("Session Close should wait should abort when connection drops.");
             } catch (ExecutionException error) {
-                LOG.info("Session close failed with error: ", error);
-                assertTrue(error.getCause() instanceof ClientIOException);
+                fail("Session Close should complete when parent connection drops.");
             }
 
             connection.close().get();
@@ -332,15 +326,11 @@ public class SessionTest extends ImperativeClientTestCase {
                 }
             }
 
-            if (beginResponse) {
+            try {
                 session.close().get();
-            } else {
-                try {
-                    session.close().get();
-                    fail("Should fail close to indicate remote misbehaving when connection not closed");
-                } catch (ExecutionException ex) {
-                    LOG.debug("Caught expected exception from close call", ex);
-                }
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close when connection not closed and end was sent");
             }
 
             peer.expectClose().respond();
@@ -400,15 +390,11 @@ public class SessionTest extends ImperativeClientTestCase {
                 }
             }
 
-            if (beginResponse) {
+            try {
                 session.close().get();
-            } else {
-                try {
-                    session.close().get();
-                    fail("Should fail close to indicate remote misbehaving when connection not closed");
-                } catch (ExecutionException ex) {
-                    LOG.debug("Caught expected exception from close call", ex);
-                }
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close when connection not closed and end was sent");
             }
 
             peer.expectClose().respond();
@@ -466,15 +452,11 @@ public class SessionTest extends ImperativeClientTestCase {
                 }
             }
 
-            if (beginResponse) {
+            try {
                 session.close().get();
-            } else {
-                try {
-                    session.close().get();
-                    fail("Should fail close to indicate remote misbehaving when connection not closed");
-                } catch (ExecutionException ex) {
-                    LOG.debug("Caught expected exception from close call", ex);
-                }
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close to when connection not closed and end sent");
             }
 
             peer.expectClose().respond();
@@ -508,10 +490,8 @@ public class SessionTest extends ImperativeClientTestCase {
 
             try {
                 connection.openSession().close().get();
-                fail("Should fail quickly when waiting on close with quick open timeout");
             } catch (ExecutionException error) {
-                // Expected so ignore any timeout based failures
-                assertTrue(error.getCause() instanceof ClientOperationTimedOutException);
+                fail("Should not fail when waiting on close with quick open timeout");
             }
 
             connection.close().get();

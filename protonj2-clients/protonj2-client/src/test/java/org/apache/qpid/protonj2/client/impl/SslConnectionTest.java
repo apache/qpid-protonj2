@@ -120,9 +120,9 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             ConnectionOptions clientOptions = new ConnectionOptions();
             clientOptions.sslEnabled(true).sslOptions()
-                                             .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                             .trustStorePassword(PASSWORD)
-                                             .allowNativeSSL(openSSL);
+                                          .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                                          .trustStorePassword(PASSWORD)
+                                          .allowNativeSSL(openSSL);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -135,11 +135,6 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-
-            LOG.info("Connect test completed normally");
-
-            peer.expectClose().respond();
-            connection.close();
         }
     }
 
@@ -173,10 +168,10 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             ConnectionOptions clientOptions = new ConnectionOptions();
             clientOptions.sslEnabled(true).sslOptions()
-                                             .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                             .trustStorePassword(PASSWORD)
-                                             .allowNativeSSL(openSSL)
-                                             .defaultSslPort(peer.getServerURI().getPort());
+                                          .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                                          .trustStorePassword(PASSWORD)
+                                          .allowNativeSSL(openSSL)
+                                          .defaultSslPort(peer.getServerURI().getPort());
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), clientOptions);
@@ -188,12 +183,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             connection.close().get(10, TimeUnit.SECONDS);
 
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-
-            LOG.info("Connect test completed normally");
-
-            peer.expectClose().respond();
-            connection.close();
+            peer.waitForScriptToComplete();
         }
     }
 
@@ -235,9 +225,9 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             ConnectionOptions clientOptions = new ConnectionOptions();
             clientOptions.sslEnabled(true).sslOptions()
-                                             .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                             .trustStorePassword(PASSWORD)
-                                             .allowNativeSSL(openSSL);
+                                          .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                                          .trustStorePassword(PASSWORD)
+                                          .allowNativeSSL(openSSL);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -285,11 +275,11 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             ConnectionOptions clientOptions = new ConnectionOptions();
             clientOptions.sslEnabled(true).sslOptions()
-                                              .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
-                                              .keyStorePassword(PASSWORD)
-                                             .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                             .trustStorePassword(PASSWORD)
-                                             .allowNativeSSL(openSSL);
+                                          .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
+                                          .keyStorePassword(PASSWORD)
+                                          .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                                          .trustStorePassword(PASSWORD)
+                                          .allowNativeSSL(openSSL);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -340,12 +330,12 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             ConnectionOptions clientOptions = new ConnectionOptions();
             clientOptions.sslEnabled(true).sslOptions()
-                                             .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
-                                             .keyStorePassword(PASSWORD)
-                                             .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                             .trustStorePassword(PASSWORD)
-                                             .keyAlias(alias)
-                                             .allowNativeSSL(requestOpenSSL);
+                                          .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
+                                          .keyStorePassword(PASSWORD)
+                                          .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                                          .trustStorePassword(PASSWORD)
+                                          .keyAlias(alias)
+                                          .allowNativeSSL(requestOpenSSL);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -398,11 +388,11 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             ConnectionOptions clientOptions = new ConnectionOptions();
             clientOptions.sslEnabled(true).sslOptions()
-                                             .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
-                                             .keyStorePassword(PASSWORD)
-                                             .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                             .trustStorePassword(PASSWORD)
-                                             .keyAlias(alias);
+                                          .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
+                                          .keyStorePassword(PASSWORD)
+                                          .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                                          .trustStorePassword(PASSWORD)
+                                          .keyAlias(alias);
 
             Client container = Client.create();
 
@@ -467,7 +457,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             clientOptions.user("guest")
                          .password("guest")
                          .sslOptions().sslEnabled(true)
-                                         .sslContextOverride(sslContext);
+                                      .sslContextOverride(sslContext);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);

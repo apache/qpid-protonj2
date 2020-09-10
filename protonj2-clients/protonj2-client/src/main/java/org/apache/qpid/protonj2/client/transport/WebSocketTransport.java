@@ -29,6 +29,7 @@ import org.apache.qpid.protonj2.client.TransportOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -61,19 +62,17 @@ public class WebSocketTransport extends TcpTransport {
     private ScheduledFuture<?> handshakeTimeoutFuture;
 
     /**
-     * Create a new transport instance
+     * Create a new {@link WebSocketTransport} instance with the given configuration.
      *
-     * @param host
-     *        the host name or IP address that this transport connects to.
-     * @param port
-     * 		  the port on the given host that this transport connects to.
+     * @param bootstrap
+     *        the {@link Bootstrap} that this transport's IO is bound to.
      * @param options
-     *        the transport options used to configure the socket connection.
+     *        the {@link TransportOptions} used to configure the socket connection.
      * @param sslOptions
-     * 		  SSL options to use if the options indicate SSL support is enabled.
+     *        the {@link SslOptions} to use if the options indicate SSL is enabled.
      */
-    public WebSocketTransport(String host, int port, TransportOptions options, SslOptions sslOptions) {
-        super(host, port, options, sslOptions);
+    public WebSocketTransport(Bootstrap bootstrap, TransportOptions options, SslOptions sslOptions) {
+        super(bootstrap, options, sslOptions);
     }
 
     @Override
@@ -107,6 +106,18 @@ public class WebSocketTransport extends TcpTransport {
     }
 
     @Override
+    public URI getRemoteURI() {
+        if (host != null) {
+            try {
+                return new URI(getScheme(), null, host, port, options.webSocketPath(), null, null);
+            } catch (URISyntaxException e) {
+            }
+        }
+
+        return null;
+    }
+
+    @Override
     protected ChannelInboundHandlerAdapter createChannelHandler() {
         return new NettyWebSocketTransportHandler();
     }
@@ -123,25 +134,11 @@ public class WebSocketTransport extends TcpTransport {
     }
 
     @Override
-    protected void handleChannelInactive(Channel channel) throws Exception {
-        try {
-            if (handshakeTimeoutFuture != null) {
-                handshakeTimeoutFuture.cancel(false);
-            }
-        } finally {
-            super.handleChannelInactive(channel);
-        }
+    protected String getScheme() {
+        return isSecure() ? "wss" : "ws";
     }
 
     //----- Handle connection events -----------------------------------------//
-
-    private URI getRemoteLocation() {
-        try {
-            return new URI(null, null, getHost(), getPort(), options.webSocketPath(), null, null);
-        } catch (URISyntaxException use) {
-            throw new IllegalArgumentException(use);
-        }
-    }
 
     private class NettyWebSocketTransportHandler extends NettyDefaultHandler<Object> {
 
@@ -155,8 +152,17 @@ public class WebSocketTransport extends TcpTransport {
             });
 
             handshaker = WebSocketClientHandshakerFactory.newHandshaker(
-                getRemoteLocation(), WebSocketVersion.V13, AMQP_SUB_PROTOCOL,
+                getRemoteURI(), WebSocketVersion.V13, AMQP_SUB_PROTOCOL,
                 true, headers, options.webSocketMaxFrameSize());
+        }
+
+        @Override
+        public void channelInactive(ChannelHandlerContext context) throws Exception {
+            if (handshakeTimeoutFuture != null) {
+                handshakeTimeoutFuture.cancel(false);
+            }
+
+            super.channelInactive(context);
         }
 
         @Override
@@ -166,7 +172,7 @@ public class WebSocketTransport extends TcpTransport {
             handshakeTimeoutFuture = context.executor().schedule(()-> {
                 LOG.trace("WebSocket handshake timed out! Channel is {}", context.channel());
                 if (!handshaker.isHandshakeComplete()) {
-                    WebSocketTransport.super.handleException(channel, new IOException("WebSocket handshake timed out"));
+                    WebSocketTransport.super.handleTransportFailure(channel, new IOException("WebSocket handshake timed out"));
                 }
             }, getTransportOptions().connectTimeout(), TimeUnit.MILLISECONDS);
 
@@ -205,11 +211,11 @@ public class WebSocketTransport extends TcpTransport {
             } else if (frame instanceof BinaryWebSocketFrame) {
                 BinaryWebSocketFrame binaryFrame = (BinaryWebSocketFrame) frame;
                 LOG.trace("WebSocket Client received data: {} bytes", binaryFrame.content().readableBytes());
-                listener.onData(new ProtonNettyByteBuffer(binaryFrame.content()));
+                listener.transportRead(new ProtonNettyByteBuffer(binaryFrame.content()));
             } else if (frame instanceof ContinuationWebSocketFrame) {
                 ContinuationWebSocketFrame continuationFrame = (ContinuationWebSocketFrame) frame;
                 LOG.trace("WebSocket Client received data continuation: {} bytes", continuationFrame.content().readableBytes());
-                listener.onData(new ProtonNettyByteBuffer(continuationFrame.content()));
+                listener.transportRead(new ProtonNettyByteBuffer(continuationFrame.content()));
             } else if (frame instanceof PingWebSocketFrame) {
                 LOG.trace("WebSocket Client received ping, response with pong");
                 ch.write(new PongWebSocketFrame(frame.content()));

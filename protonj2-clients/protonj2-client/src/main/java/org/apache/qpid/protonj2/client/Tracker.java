@@ -17,8 +17,10 @@
 package org.apache.qpid.protonj2.client;
 
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.types.transport.Disposition;
 
 /**
  * Tracker object used to track the state of a sent {@link Message} at the remote
@@ -34,8 +36,9 @@ public interface Tracker {
     /**
      * Settles the delivery locally, if not {@link SenderOptions#autoSettle() auto-settling}.
      *
-     * @return the delivery
-     * @throws ClientException
+     * @return this {@link Tracker} instance.
+     *
+     * @throws ClientException if an error occurs while performing the settlement.
      */
     Tracker settle() throws ClientException;
 
@@ -73,17 +76,45 @@ public interface Tracker {
      * @param settle
      *            whether to {@link #settle()} the delivery at the same time
      *
-     * @return itself
+     * @return this {@link Tracker} instance.
+     *
      * @throws ClientException
      */
     Tracker disposition(DeliveryState state, boolean settle) throws ClientException;
 
     /**
      * Returns a future that can be used to wait for the remote to acknowledge receipt of
-     * a sent message.
+     * a sent message by settling it.
      *
-     * @return a {@link Future} that can be used to wait on remote acknowledgement.
+     * @return a {@link Future} that can be used to wait on remote settlement.
      */
-    Future<Tracker> acknowledgeFuture();
+    Future<Tracker> settlementFuture();
+
+    /**
+     * Waits if necessary for the remote to settle the sent delivery unless it has
+     * either already been settled or the original delivery was sent settled in which
+     * case the remote will not send a {@link Disposition} back.
+     *
+     * @return this {@link Tracker} instance.
+     *
+     * @throws ClientException if an error occurs while awaiting the remote settlement.
+     */
+    Tracker awaitSettlement() throws ClientException;
+
+    /**
+     * Waits if necessary for the remote to settle the sent delivery unless it has
+     * either already been settled or the original delivery was sent settled in which
+     * case the remote will not send a {@link Disposition} back.
+     *
+     * @param timeout
+     *      the maximum time to wait for the remote to settle.
+     * @param unit
+     *      the time unit of the timeout argument.
+     *
+     * @return this {@link Tracker} instance.
+     *
+     * @throws ClientException if an error occurs while awaiting the remote settlement.
+     */
+    Tracker awaitSettlement(long timeout, TimeUnit unit) throws ClientException;
 
 }

@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.client.examples;
 
+import java.util.concurrent.TimeUnit;
+
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
@@ -47,7 +49,7 @@ public class Respond {
 
             Receiver receiver = connection.openReceiver(address, receiverOptions);
 
-            Delivery request = receiver.receive(30_000);
+            Delivery request = receiver.receive(30, TimeUnit.SECONDS);
             if (request != null) {
                 Message<String> received = request.message();
                 System.out.println(received.body());

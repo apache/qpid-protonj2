@@ -16,21 +16,29 @@
  */
 package org.apache.qpid.protonj2.client.exceptions;
 
-import org.apache.qpid.protonj2.client.Connection;
+import org.apache.qpid.protonj2.client.ErrorCondition;
+import org.apache.qpid.protonj2.client.Session;
 
 /**
- * Exception thrown when the remote closes a {@link Connection} because it considers the set
- * container ID to be invalid.
+ * Root exception type for cases of remote closure or client created {@link Session}.
  */
-public class ClientInvalidContainerIDException extends ClientConnectionRemotelyClosedException {
+public class ClientSessionRemotelyClosedException extends ClientResourceRemotelyClosedException {
 
-    private static final long serialVersionUID = 904517921855721540L;
+    private static final long serialVersionUID = 5601827103553513599L;
 
-    public ClientInvalidContainerIDException(String message) {
-        super(message);
+    public ClientSessionRemotelyClosedException(String message) {
+        this(message, (ErrorCondition) null);
     }
 
-    public ClientInvalidContainerIDException(String message, Throwable cause) {
-        super(message, cause);
+    public ClientSessionRemotelyClosedException(String message, Throwable cause) {
+        this(message, cause, null);
+    }
+
+    public ClientSessionRemotelyClosedException(String message, ErrorCondition condition) {
+        super(message, condition);
+    }
+
+    public ClientSessionRemotelyClosedException(String message, Throwable cause, ErrorCondition condition) {
+        super(message, cause, condition);
     }
 }

@@ -23,18 +23,9 @@ public class ClientSendTimedOutException extends ClientOperationTimedOutExceptio
 
     private static final long serialVersionUID = 222325890763309867L;
 
-//    private final JmsMessage unsentMessage;  TODO
+    // private final Tracker tracker;  // TODO if sent on wire add the Tracker ?
 
     public ClientSendTimedOutException(String reason) {
         super(reason);
     }
-
-//    public ProviderSendTimedOutException(String reason, JmsMessage unsentMessage) {
-//        super(reason, null);
-//        this.unsentMessage = unsentMessage;
-//    }
-
-//    public JmsMessage getUnsentMessage() {
-//        return unsentMessage;
-//    }
 }

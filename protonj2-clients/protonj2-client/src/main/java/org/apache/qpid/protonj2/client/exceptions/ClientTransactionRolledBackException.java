@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.client.exceptions;
 /**
  * Thrown when a message send operation times out in the Provider layer.
  */
-public class ClientTransactionRolledBackException extends ClientException {
+public class ClientTransactionRolledBackException extends ClientIllegalStateException {
 
     private static final long serialVersionUID = 222325890763309867L;
 

@@ -84,7 +84,7 @@ public class SenderTest extends ImperativeClientTestSupport {
         assertNotNull(sender);
 
         Message<String> message = Message.create("Hello World").durable(durable);
-        sender.send(message).acknowledgeFuture().get();
+        sender.send(message).settlementFuture().get();
 
         final QueueViewMBean queueView = getProxyToQueue(getTestName());
         Wait.assertEquals(1, () -> queueView.getQueueSize());
@@ -121,7 +121,7 @@ public class SenderTest extends ImperativeClientTestSupport {
         final QueueViewMBean queueView = getProxyToQueue(getTestName());
         Wait.assertEquals(MESSAGE_COUNT, () -> queueView.getQueueSize());
 
-        tracker.acknowledgeFuture().get();
+        tracker.settlementFuture().get();
 
         assertNotNull(sender.close().get(5, TimeUnit.SECONDS));
         assertNotNull(connection.close().get(5, TimeUnit.SECONDS));

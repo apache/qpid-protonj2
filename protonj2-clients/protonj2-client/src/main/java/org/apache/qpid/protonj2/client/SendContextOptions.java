@@ -19,44 +19,50 @@ package org.apache.qpid.protonj2.client;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
- * Options class that controls various aspects of a {@link MessageOutputStream} instance.
+ * Options class that controls various aspects of a {@link SendContext} instance.
  */
-public class RawOutputStreamOptions {
-
-    private int messageFormat;
-    private int streamBufferLimit;
+public class SendContextOptions {
 
     /**
-     * Creates a {@link RawOutputStreamOptions} instance with default values for all options
+     * Defines the default minimum size that the context write buffer will allocate
+     * which drives the interval auto flushing of written data for this context.
      */
-    public RawOutputStreamOptions() {
+    public static final int MIN_BUFFER_SIZE_LIMIT = 256;
+
+    private int messageFormat;
+    private int bufferSize;
+
+    /**
+     * Creates a {@link SendContextOptions} instance with default values for all options
+     */
+    public SendContextOptions() {
     }
 
     /**
-     * Create a {@link RawOutputStreamOptions} instance that copies all configuration from the given
-     * {@link RawOutputStreamOptions} instance.
+     * Create a {@link SendContextOptions} instance that copies all configuration from the given
+     * {@link SendContextOptions} instance.
      *
      * @param options
      *      The options instance to copy all configuration values from.
      */
-    public RawOutputStreamOptions(RawOutputStreamOptions options) {
+    public SendContextOptions(SendContextOptions options) {
         if (options != null) {
             options.copyInto(this);
         }
     }
 
     /**
-     * Copy all options from this {@link RawOutputStreamOptions} instance into the instance
+     * Copy all options from this {@link SendContextOptions} instance into the instance
      * provided.
      *
      * @param other
      *      the target of this copy operation.
      *
-     * @return this {@link RawOutputStreamOptions} class for chaining.
+     * @return this {@link SendContextOptions} class for chaining.
      */
-    protected RawOutputStreamOptions copyInto(RawOutputStreamOptions other) {
+    protected SendContextOptions copyInto(SendContextOptions other) {
         other.messageFormat(messageFormat);
-        other.streamBufferLimit(streamBufferLimit);
+        other.bufferSize(bufferSize);
 
         return this;
     }
@@ -78,32 +84,32 @@ public class RawOutputStreamOptions {
      * @param messageFormat
      *      The message format value to use when streaming the message data.
      *
-     * @return this {@link RawOutputStreamOptions} instance.
+     * @return this {@link MessageOutputStreamOptions} instance.
      */
-    public RawOutputStreamOptions messageFormat(int messageFormat) {
+    public SendContextOptions messageFormat(int messageFormat) {
         this.messageFormat = messageFormat;
         return this;
     }
 
-   /**
-    * @return the configured stream write buffering limit for the associated {@link MessageOutputStream}
-    */
-   public int streamBufferLimit() {
-       return streamBufferLimit;
-   }
+    /**
+     * @return the configured context write buffering limit for the associated {@link SendContext}
+     */
+    public int bufferSize() {
+        return bufferSize;
+    }
 
-   /**
-    * Sets the overall number of bytes the stream will buffer before automatically flushing the
-    * currently buffered bytes.  By default the stream implementation chooses a value for this
-    * buffer limited based on the negotiated max AMQP frame size from the remote
-    *
-    * @param streamBufferLimit
-    *       The number of bytes that can be written before the stream performs a flush operation.
-    *
-    * @return this {@link RawOutputStreamOptions} instance.
-    */
-   public RawOutputStreamOptions streamBufferLimit(int streamBufferLimit) {
-       this.streamBufferLimit = streamBufferLimit;
-       return this;
-   }
+    /**
+     * Sets the overall number of bytes the context will buffer before automatically flushing the
+     * currently buffered bytes.  By default the context implementation chooses a value for this
+     * buffer limited based on the configured frame size limits of the connection.
+     *
+     * @param bufferSize
+     *       The number of bytes that can be written before the context performs a flush operation.
+     *
+     * @return this {@link SendContextOptions} instance.
+     */
+    public SendContextOptions bufferSize(int bufferSize) {
+        this.bufferSize = bufferSize;
+        return this;
+    }
 }

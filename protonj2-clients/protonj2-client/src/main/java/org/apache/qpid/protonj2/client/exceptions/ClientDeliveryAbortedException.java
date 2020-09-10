@@ -16,15 +16,19 @@
  */
 package org.apache.qpid.protonj2.client.exceptions;
 
-public class ClientConnectionResourceNotFoundException extends ClientConnectionRemotelyClosedException {
+/**
+ * Thrown in cases where an action was requested that cannot be performed because
+ * the delivery being operated on has been aborted by the remote sender.
+ */
+public class ClientDeliveryAbortedException extends ClientIllegalStateException {
 
-    private static final long serialVersionUID = -6757753762024560537L;
+    private static final long serialVersionUID = 818288499075794863L;
 
-    public ClientConnectionResourceNotFoundException(String message) {
+    public ClientDeliveryAbortedException(String message) {
         super(message);
     }
 
-    public ClientConnectionResourceNotFoundException(String message, Throwable cause) {
+    public ClientDeliveryAbortedException(String message, Throwable cause) {
         super(message, cause);
     }
 }

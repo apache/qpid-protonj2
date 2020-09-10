@@ -18,11 +18,10 @@ package org.apache.qpid.protonj2.client.transport;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
@@ -39,18 +38,14 @@ import org.slf4j.LoggerFactory;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.ReferenceCountUtil;
@@ -64,38 +59,33 @@ public class TcpTransport implements Transport {
 
     private static final Logger LOG = LoggerFactory.getLogger(TcpTransport.class);
 
-    public static final int SHUTDOWN_TIMEOUT = 50;
     public static final int DEFAULT_MAX_FRAME_SIZE = 65535;
 
-    protected Bootstrap bootstrap;
-    protected EventLoopGroup group;
-    protected Channel channel;
-    protected TransportListener listener;
-    protected ThreadFactory ioThreadfactory;
-    protected int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
+    protected final AtomicBoolean connected = new AtomicBoolean();
+    protected final AtomicBoolean closed = new AtomicBoolean();
+    protected final CountDownLatch connectedLatch = new CountDownLatch(1);
     protected final TransportOptions options;
     protected final SslOptions sslOptions;
+    protected final Bootstrap bootstrap;
 
-    private final String host;
-    private final int port;
-    private final AtomicBoolean connected = new AtomicBoolean();
-    private final AtomicBoolean closed = new AtomicBoolean();
-    private final CountDownLatch connectLatch = new CountDownLatch(1);
-    private volatile IOException failureCause;
+    protected Channel channel;
+    protected int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
+    protected volatile IOException failureCause;
+    protected String host;
+    protected int port;
+    protected TransportListener listener;
 
     /**
-     * Create a new transport instance
+     * Create a new {@link TcpTransport} instance with the given configuration.
      *
-     * @param host
-     *        the host name or IP address that this transport connects to.
-     * @param port
-     * 		  the port on the given host that this transport connects to.
+     * @param bootstrap
+     *        the Netty {@link Bootstrap} that this transport's IO layer is bound to.
      * @param options
-     *        the transport options used to configure the socket connection.
+     *        the {@link TransportOptions} used to configure the socket connection.
      * @param sslOptions
-     * 		  the SSL options to use if the options indicate SSL is enabled.
+     * 		  the {@link SslOptions} to use if the options indicate SSL is enabled.
      */
-    public TcpTransport(String host, int port, TransportOptions options, SslOptions sslOptions) {
+    public TcpTransport(Bootstrap bootstrap, TransportOptions options, SslOptions sslOptions) {
         if (options == null) {
             throw new IllegalArgumentException("Transport Options cannot be null");
         }
@@ -104,108 +94,78 @@ public class TcpTransport implements Transport {
             throw new IllegalArgumentException("Transport SSL Options cannot be null");
         }
 
-        if (host == null || host.isEmpty()) {
-            throw new IllegalArgumentException("Transport host value cannot be null");
-        }
-
-        if (port < 0) {
-            throw new IllegalArgumentException("Transport port value must be a non-negative int value");
+        if (bootstrap == null) {
+            throw new IllegalStateException("A transport must have an assigned Bootstrap before connect.");
         }
 
         this.sslOptions = sslOptions;
         this.options = options;
-        this.host = host;
-        this.port = port;
+        this.bootstrap = bootstrap;
     }
 
     @Override
-    public ScheduledExecutorService connect(final Runnable initRoutine) throws IOException {
+    public TcpTransport connect(String host, int port, TransportListener listener) throws IOException {
         if (closed.get()) {
             throw new IllegalStateException("Transport has already been closed");
         }
 
         if (listener == null) {
-            throw new IllegalStateException("A transport listener must be set before connection attempts.");
+            throw new IllegalArgumentException("A transport listener must be set before connection attempts.");
         }
 
-        boolean useKQueue = KQueueSupport.isAvailable(options);
-        boolean useEpoll = EpollSupport.isAvailable(options);
+        if (host == null || host.isEmpty()) {
+            throw new IllegalArgumentException("Transport host value cannot be null");
+        }
 
-        if (useKQueue) {
-            LOG.trace("Netty Transport using KQueue mode");
-            group = KQueueSupport.createGroup(1, ioThreadfactory);
-        } else if (useEpoll) {
-            LOG.trace("Netty Transport using Epoll mode");
-            group = EpollSupport.createGroup(1, ioThreadfactory);
+        if (port < 0 && options.defaultTcpPort() < 0 && (sslOptions.sslEnabled() && sslOptions.defaultSslPort() < 0)) {
+            throw new IllegalArgumentException("Transport port value must be a non-negative int value or a default port configured");
+        }
+
+        this.host = host;
+        this.listener = listener;
+
+        if (port > 0) {
+            this.port = port;
         } else {
-            LOG.trace("Netty Transport using NIO mode");
-            group = new NioEventLoopGroup(1, ioThreadfactory);
+            if (sslOptions.sslEnabled()) {
+                this.port = sslOptions.defaultSslPort();
+            } else {
+                this.port = options.defaultTcpPort();
+            }
         }
 
-        bootstrap = new Bootstrap();
-        bootstrap.group(group);
-        if (useKQueue) {
-            KQueueSupport.createChannel(bootstrap);
-        } else if (useEpoll) {
-            EpollSupport.createChannel(bootstrap);
-        } else {
-            bootstrap.channel(NioSocketChannel.class);
-        }
         bootstrap.handler(new ChannelInitializer<Channel>() {
             @Override
-            public void initChannel(Channel connectedChannel) throws Exception {
-                if (initRoutine != null) {
-                    try {
-                        initRoutine.run();
-                    } catch (Throwable initError) {
-                        LOG.warn("Error during initialization of channel from provided initialization routine");
-                        connectionFailed(connectedChannel, IOExceptionSupport.create(initError));
-                        throw initError;
-                    }
+            public void initChannel(Channel transportChannel) throws Exception {
+                channel = transportChannel;
+                configureChannel(transportChannel);
+                try {
+                    listener.transportInitialized(TcpTransport.this);
+                } catch (Throwable initError) {
+                    LOG.warn("Error during initialization of channel from Transport Listener");
+                    handleTransportFailure(transportChannel, IOExceptionSupport.create(initError));
+                    throw initError;
                 }
-                configureChannel(connectedChannel);
             }
         });
 
         configureNetty(bootstrap, options);
 
-        ChannelFuture future = bootstrap.connect(getHost(), getPort());
-        future.addListener(new ChannelFutureListener() {
+        bootstrap.connect(getHost(), getPort()).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
 
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (!future.isSuccess()) {
-                    handleException(future.channel(), IOExceptionSupport.create(future.cause()));
-                }
+        return this;
+    }
+
+    @Override
+    public void awaitConnect() throws InterruptedException, IOException {
+        connectedLatch.await();
+        if (!connected.get()) {
+            if (failureCause != null) {
+                throw failureCause;
+            } else {
+                throw new IOException("Transport was closed before a connection was established.");
             }
-        });
-
-        try {
-            connectLatch.await();
-        } catch (InterruptedException ex) {
-            LOG.debug("Transport connection was interrupted.");
-            Thread.interrupted();
-            failureCause = IOExceptionSupport.create(ex);
         }
-
-        if (failureCause != null) {
-            // Close out any Netty resources now as they are no longer needed.
-            if (channel != null) {
-                channel.close().syncUninterruptibly();
-                channel = null;
-            }
-
-            throw failureCause;
-        } else {
-            // Connected, allow any held async error to fire now and close the transport.
-            channel.eventLoop().execute(() -> {
-                if (failureCause != null) {
-                    channel.pipeline().fireExceptionCaught(failureCause);
-                }
-            });
-        }
-
-        return group;
     }
 
     @Override
@@ -232,17 +192,9 @@ public class TcpTransport implements Transport {
     public void close() throws IOException {
         if (closed.compareAndSet(false, true)) {
             connected.set(false);
-            try {
-                if (channel != null) {
-                    channel.close().syncUninterruptibly();
-                }
-            } finally {
-                if (group != null) {
-                    Future<?> fut = group.shutdownGracefully(0, SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS);
-                    if (!fut.awaitUninterruptibly(2 * SHUTDOWN_TIMEOUT)) {
-                        LOG.trace("Channel group shutdown failed to complete in allotted time");
-                    }
-                }
+            connectedLatch.countDown();
+            if (channel != null) {
+                channel.close().syncUninterruptibly();
             }
         }
     }
@@ -300,11 +252,6 @@ public class TcpTransport implements Transport {
         return listener;
     }
 
-    TcpTransport setTransportListener(TransportListener listener) {
-        this.listener = listener;
-        return this;
-    }
-
     @Override
     public TransportOptions getTransportOptions() {
         return options.clone();
@@ -333,20 +280,6 @@ public class TcpTransport implements Transport {
         }
 
         this.maxFrameSize = maxFrameSize;
-        return this;
-    }
-
-    @Override
-    public ThreadFactory getThreadFactory() {
-        return ioThreadfactory;
-    }
-
-    TcpTransport setThreadFactory(ThreadFactory factory) {
-        if (isConnected() || channel != null) {
-            throw new IllegalStateException("Cannot set IO ThreadFactory after Transport connect");
-        }
-
-        this.ioThreadfactory = factory;
         return this;
     }
 
@@ -396,58 +329,32 @@ public class TcpTransport implements Transport {
 
     //----- Event Handlers which can be overridden in subclasses -------------//
 
-    protected void handleConnected(Channel channel) throws Exception {
-        LOG.trace("Channel has become active! Channel is {}", channel);
-        connectionEstablished(channel);
+    protected void handleConnected(Channel connectedChannel) throws Exception {
+        LOG.trace("Channel has become active! Channel is {}", connectedChannel);
+        channel = connectedChannel;
+        connected.set(true);
+        listener.transportConnected(this);
+        connectedLatch.countDown();
     }
 
-    protected void handleChannelInactive(Channel channel) throws Exception {
-        LOG.trace("Channel has gone inactive! Channel is {}", channel);
-        if (connected.compareAndSet(true, false) && !closed.get()) {
-            LOG.trace("Firing onTransportClosed listener");
-            if (channel.eventLoop().inEventLoop()) {
-                listener.onTransportClosed();
-            } else {
-                channel.eventLoop().execute(() -> {
-                    listener.onTransportClosed();
-                });
-            }
-        } else if (!closed.get()) {
-            if (failureCause == null) {
-                failureCause = new IOException("Connection failed");
-            }
-            connectionFailed(channel, failureCause);
-        }
-    }
+    protected void handleTransportFailure(Channel failedChannel, Throwable cause) {
+        if (!closed.get()) {
+            LOG.trace("Transport indicates connection failure! Channel is {}", failedChannel);
+            failureCause = IOExceptionSupport.create(cause);
+            channel = failedChannel;
+            connected.set(false);
+            connectedLatch.countDown();
 
-    protected void handleException(Channel channel, Throwable cause) {
-        LOG.trace("Exception on channel! Channel is {}", channel);
-        if (connected.compareAndSet(true, false) && !closed.get()) {
             LOG.trace("Firing onTransportError listener");
             if (channel.eventLoop().inEventLoop()) {
-                if (failureCause != null) {
-                    listener.onTransportError(failureCause);
-                } else {
-                    listener.onTransportError(cause);
-                }
+                listener.transportError(failureCause);
             } else {
                 channel.eventLoop().execute(() -> {
-                    if (failureCause != null) {
-                        listener.onTransportError(failureCause);
-                    } else {
-                        listener.onTransportError(cause);
-                    }
+                    listener.transportError(failureCause);
                 });
             }
         } else {
-            // Hold the first failure for later dispatch if connect succeeds.
-            // This will then trigger disconnect using the first error reported.
-            if (failureCause == null) {
-                LOG.trace("Holding error until connect succeeds: {}", cause.getMessage());
-                failureCause = IOExceptionSupport.create(cause);
-            }
-
-            connectionFailed(channel, failureCause);
+            LOG.trace("Closed Transport signalled that the channel ended: {}", channel);
         }
     }
 
@@ -455,7 +362,7 @@ public class TcpTransport implements Transport {
 
     protected final void checkConnected() throws IOException {
         if (!connected.get() || !channel.isActive()) {
-            throw new IOException("Cannot send to a non-connected transport.");
+            throw new IOException("Cannot send to a non-connected transport.", failureCause);
         }
     }
 
@@ -464,27 +371,8 @@ public class TcpTransport implements Transport {
             if (output instanceof ProtonNettyByteBuffer) {
                 ReferenceCountUtil.release(output.unwrap());
             }
-            throw new IOException("Cannot send to a non-connected transport.");
+            throw new IOException("Cannot send to a non-connected transport.", failureCause);
         }
-    }
-
-    /*
-     * Called when the transport has successfully connected and is ready for use.
-     */
-    private void connectionEstablished(Channel connectedChannel) {
-        channel = connectedChannel;
-        connected.set(true);
-        connectLatch.countDown();
-    }
-
-    /*
-     * Called when the transport connection failed and an error should be returned.
-     */
-    private void connectionFailed(Channel failedChannel, IOException cause) {
-        failureCause = cause;
-        channel = failedChannel;
-        connected.set(false);
-        connectLatch.countDown();
     }
 
     private void configureNetty(Bootstrap bootstrap, TransportOptions options) {
@@ -519,8 +407,10 @@ public class TcpTransport implements Transport {
         if (isSecure()) {
             final SslHandler sslHandler;
             try {
-                sslHandler = SslSupport.createSslHandler(channel.alloc(), getHost(), getPort(), sslOptions);
+                sslHandler = SslSupport.createSslHandler(channel.alloc(), host, port, sslOptions);
             } catch (Exception ex) {
+                LOG.warn("Error during initialization of channel from SSL Handler creation:");
+                handleTransportFailure(channel, IOExceptionSupport.create(ex));
                 throw IOExceptionSupport.create(ex);
             }
 
@@ -541,7 +431,7 @@ public class TcpTransport implements Transport {
     protected abstract class NettyDefaultHandler<E> extends SimpleChannelInboundHandler<E> {
 
         @Override
-        public void channelRegistered(ChannelHandlerContext context) throws Exception {
+        public final void channelRegistered(ChannelHandlerContext context) throws Exception {
             channel = context.channel();
         }
 
@@ -561,7 +451,7 @@ public class TcpTransport implements Transport {
                             handleConnected(channel);
                         } else {
                             LOG.trace("SSL Handshake has failed: {}", channel);
-                            handleException(channel, future.cause());
+                            handleTransportFailure(channel, future.cause());
                         }
                     }
                 });
@@ -570,12 +460,12 @@ public class TcpTransport implements Transport {
 
         @Override
         public void channelInactive(ChannelHandlerContext context) throws Exception {
-            handleChannelInactive(context.channel());
+            handleTransportFailure(context.channel(), new IOException("Remote closed connection unexpectedly"));
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
-            handleException(context.channel(), cause);
+            handleTransportFailure(context.channel(), cause);
         }
     }
 
@@ -591,12 +481,28 @@ public class TcpTransport implements Transport {
 
             // Avoid all doubts to the contrary
             if (channel.eventLoop().inEventLoop()) {
-                listener.onData(wrapped);
+                listener.transportRead(wrapped);
             } else {
                 channel.eventLoop().execute(() -> {
-                    listener.onData(wrapped);
+                    listener.transportRead(wrapped);
                 });
             }
         }
+    }
+
+    @Override
+    public URI getRemoteURI() {
+        if (host != null) {
+            try {
+                return new URI(getScheme(), null, host, port, null, null, null);
+            } catch (URISyntaxException e) {
+            }
+        }
+
+        return null;
+    }
+
+    protected String getScheme() {
+        return isSecure() ? "ssl" : "tcp";
     }
 }

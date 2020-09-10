@@ -192,7 +192,7 @@ public interface AdvancedMessage<E> extends Message<E> {
 
     /**
      * Adds the given {@link Section} to the internal collection of sections that will be sent
-     * to the remote peer when this message is encoded.  If a previous section was add by a call
+     * to the remote peer when this message is encoded.  If a previous section was added by a call
      * to the {@link Message#body(Object)} method it should be retained as the first element of
      * the running list of body sections contained in this message.
      * <p>

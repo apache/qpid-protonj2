@@ -40,6 +40,8 @@ public abstract class ImperativeClientTestCase {
 
     private final Map<String, String> propertiesSetForTest = new HashMap<String, String>();
 
+    private String testName;
+
     /**
      * Set a System property for duration of this test only. The tearDown will guarantee to reset the property to its
      * previous value after the test completes.
@@ -93,6 +95,11 @@ public abstract class ImperativeClientTestCase {
     @BeforeEach
     public void setUp(TestInfo testInfo) throws Exception {
         LOG.info("========== start " + testInfo.getDisplayName() + " ==========");
+        testName = testInfo.getDisplayName();
+    }
+
+    protected String getTestName() {
+        return testName;
     }
 
     protected byte[] createEncodedMessage(Section<Object> body) {

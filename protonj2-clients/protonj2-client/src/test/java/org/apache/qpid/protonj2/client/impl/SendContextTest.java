@@ -16,23 +16,32 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.io.OutputStream;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
-import org.apache.qpid.protonj2.client.MessageOutputStream;
-import org.apache.qpid.protonj2.client.MessageOutputStreamOptions;
+import org.apache.qpid.protonj2.client.DeliveryMode;
+import org.apache.qpid.protonj2.client.OutputStreamOptions;
+import org.apache.qpid.protonj2.client.SendContext;
+import org.apache.qpid.protonj2.client.SendContextOptions;
 import org.apache.qpid.protonj2.client.Sender;
+import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.HeaderMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferPayloadCompositeMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAmqpValueMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedDataMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedPartialDataSectionMatcher;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
+import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Header;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -43,9 +52,87 @@ import org.slf4j.LoggerFactory;
  * Tests the {@link MessageOutputStream} implementation
  */
 @Timeout(20)
-class MessageOutputStreamTest {
+class SendContextTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MessageOutputStreamTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SendContextTest.class);
+
+    @Test
+    public void testSendCustomMessageWithMultipleAmqpValueSections() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.expectAttach().respond();  // Open a receiver to ensure sender link has processed
+            peer.expectFlow();              // the inbound flow frame we sent previously before send.
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            Session session = connection.openSession().openFuture().get();
+            SenderOptions options = new SenderOptions().deliveryMode(DeliveryMode.AT_MOST_ONCE);
+            Sender sender = session.openSender("test-qos", options);
+
+            // Create a custom message format send context and ensure that no early buffer writes take place
+            SendContext context = sender.openSendContext(new SendContextOptions().messageFormat(17).bufferSize(Integer.MAX_VALUE));
+
+            // Gates send on remote flow having been sent and received
+            session.openReceiver("dummy").openFuture().get();
+
+            HeaderMatcher headerMatcher = new HeaderMatcher(true);
+            headerMatcher.withDurable(true);
+            headerMatcher.withPriority((byte) 1);
+            headerMatcher.withTtl(65535);
+            headerMatcher.withFirstAcquirer(true);
+            headerMatcher.withDeliveryCount(2);
+            // Note: This is a specification violation but could be used by other message formats
+            //       and we don't attempt to enforce at the Send Context what users write
+            EncodedAmqpValueMatcher bodyMatcher1 = new EncodedAmqpValueMatcher("one", true);
+            EncodedAmqpValueMatcher bodyMatcher2 = new EncodedAmqpValueMatcher("two", true);
+            EncodedAmqpValueMatcher bodyMatcher3 = new EncodedAmqpValueMatcher("three", false);
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.setHeadersMatcher(headerMatcher);
+            payloadMatcher.addMessageContentMatcher(bodyMatcher1);
+            payloadMatcher.addMessageContentMatcher(bodyMatcher2);
+            payloadMatcher.addMessageContentMatcher(bodyMatcher3);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withMore(false).withMessageFormat(17).withPayload(payloadMatcher).accept();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            // Populate all Header values
+            Header header = new Header();
+            header.setDurable(true);
+            header.setPriority((byte) 1);
+            header.setTimeToLive(65535);
+            header.setFirstAcquirer(true);
+            header.setDeliveryCount(2);
+
+            context.write(header);
+            context.write(new AmqpValue<>("one"));
+            context.write(new AmqpValue<>("two"));
+            context.write(new AmqpValue<>("three"));
+
+            context.complete();
+
+            assertNotNull(context.tracker());
+            assertNotNull(context.tracker().settlementFuture().isDone());
+            assertNotNull(context.tracker().settlementFuture().get().settled());
+
+            sender.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 
     @Test
     void testCreateStream() throws Exception {
@@ -66,9 +153,10 @@ class MessageOutputStreamTest {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession();
             Sender sender = session.openSender("test-queue").openFuture().get();
+            SendContext sendContext = sender.openSendContext(new SendContextOptions());
 
-            MessageOutputStreamOptions options = new MessageOutputStreamOptions();
-            MessageOutputStream stream = sender.outputStream(options);
+            OutputStreamOptions options = new OutputStreamOptions();
+            OutputStream stream = sendContext.dataOutputStream(options);
 
             assertNotNull(stream);
 
@@ -100,6 +188,7 @@ class MessageOutputStreamTest {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession();
             Sender sender = session.openSender("test-queue").openFuture().get();
+            SendContext sendContext = sender.openSendContext(new SendContextOptions());
 
             // Populate all Header values
             Header header = new Header();
@@ -109,8 +198,10 @@ class MessageOutputStreamTest {
             header.setFirstAcquirer(true);
             header.setDeliveryCount(2);
 
-            MessageOutputStreamOptions options = new MessageOutputStreamOptions().header(header);
-            MessageOutputStream stream = sender.outputStream(options);
+            sendContext.write(header);
+
+            OutputStreamOptions options = new OutputStreamOptions();
+            OutputStream stream = sendContext.dataOutputStream(options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDetach().respond();
@@ -128,7 +219,7 @@ class MessageOutputStreamTest {
     }
 
     @Test
-    void testFlushAfterFirstWriteEncodesAMQPHeaderFromConfiguration() throws Exception {
+    void testFlushAfterFirstWriteEncodesAMQPHeaderSendContextBuffer() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -145,6 +236,7 @@ class MessageOutputStreamTest {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession();
             Sender sender = session.openSender("test-queue").openFuture().get();
+            SendContext sendContext = sender.openSendContext(new SendContextOptions());
 
             // Populate all Header values
             Header header = new Header();
@@ -154,8 +246,10 @@ class MessageOutputStreamTest {
             header.setFirstAcquirer(true);
             header.setDeliveryCount(2);
 
-            MessageOutputStreamOptions options = new MessageOutputStreamOptions().header(header);
-            MessageOutputStream stream = sender.outputStream(options);
+            sendContext.write(header);
+
+            OutputStreamOptions options = new OutputStreamOptions();
+            OutputStream stream = sendContext.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);
@@ -202,6 +296,7 @@ class MessageOutputStreamTest {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession();
             Sender sender = session.openSender("test-queue").openFuture().get();
+            SendContext sendContext = sender.openSendContext(new SendContextOptions().bufferSize(512));
 
             final byte[] payload = new byte[512];
             Arrays.fill(payload, (byte) 16);
@@ -214,8 +309,10 @@ class MessageOutputStreamTest {
             header.setFirstAcquirer(true);
             header.setDeliveryCount(2);
 
-            MessageOutputStreamOptions options = new MessageOutputStreamOptions().header(header).streamBufferLimit(512);
-            MessageOutputStream stream = sender.outputStream(options);
+            sendContext.write(header);
+
+            OutputStreamOptions options = new OutputStreamOptions();
+            OutputStream stream = sendContext.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);
@@ -266,6 +363,7 @@ class MessageOutputStreamTest {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession();
             Sender sender = session.openSender("test-queue").openFuture().get();
+            SendContext sendContext = sender.openSendContext(new SendContextOptions().bufferSize(256));
 
             final byte[] payload = new byte[1024];
             Arrays.fill(payload, 0, 256, (byte) 1);
@@ -290,8 +388,10 @@ class MessageOutputStreamTest {
             header.setFirstAcquirer(true);
             header.setDeliveryCount(2);
 
-            MessageOutputStreamOptions options = new MessageOutputStreamOptions().header(header).streamBufferLimit(256);
-            MessageOutputStream stream = sender.outputStream(options);
+            sendContext.write(header);
+
+            OutputStreamOptions options = new OutputStreamOptions();
+            OutputStream stream = sendContext.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);
@@ -340,7 +440,7 @@ class MessageOutputStreamTest {
     }
 
     @Test
-    void testCloseAfterSingleWriteEncodesAndCompletesTransfer() throws Exception {
+    void testCloseAfterSingleWriteEncodesAndCompletesTransferWhenNoStreamSizeConfigured() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -357,6 +457,7 @@ class MessageOutputStreamTest {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession();
             Sender sender = session.openSender("test-queue").openFuture().get();
+            SendContext sendContext = sender.openSendContext(new SendContextOptions());
 
             // Populate all Header values
             Header header = new Header();
@@ -366,8 +467,10 @@ class MessageOutputStreamTest {
             header.setFirstAcquirer(true);
             header.setDeliveryCount(2);
 
-            MessageOutputStreamOptions options = new MessageOutputStreamOptions().header(header);
-            MessageOutputStream stream = sender.outputStream(options);
+            sendContext.write(header);
+
+            OutputStreamOptions options = new OutputStreamOptions();
+            OutputStream stream = sendContext.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);
@@ -414,6 +517,7 @@ class MessageOutputStreamTest {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession();
             Sender sender = session.openSender("test-queue").openFuture().get();
+            SendContext sendContext = sender.openSendContext(new SendContextOptions());
 
             // Populate all Header values
             Header header = new Header();
@@ -423,8 +527,10 @@ class MessageOutputStreamTest {
             header.setFirstAcquirer(true);
             header.setDeliveryCount(2);
 
-            MessageOutputStreamOptions options = new MessageOutputStreamOptions().header(header);
-            MessageOutputStream stream = sender.outputStream(options);
+            sendContext.write(header);
+
+            OutputStreamOptions options = new OutputStreamOptions();
+            OutputStream stream = sendContext.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);
@@ -485,6 +591,7 @@ class MessageOutputStreamTest {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession();
             Sender sender = session.openSender("test-queue").openFuture().get();
+            SendContext sendContext = sender.openSendContext(new SendContextOptions());
 
             final byte[] payload = new byte[] { 0, 1, 2, 3 };
 
@@ -494,8 +601,10 @@ class MessageOutputStreamTest {
             header.setPriority((byte) 1);
             header.setDeliveryCount(1);
 
-            MessageOutputStreamOptions options = new MessageOutputStreamOptions().header(header).streamSize(8192);
-            MessageOutputStream stream = sender.outputStream(options);
+            sendContext.write(header);
+
+            OutputStreamOptions options = new OutputStreamOptions().streamSize(8192);
+            OutputStream stream = sendContext.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);
@@ -526,6 +635,62 @@ class MessageOutputStreamTest {
     }
 
     @Test
+    void testIncompleteStreamClosureWithNoWritesDoesNotAbortTransfer() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Sender sender = session.openSender("test-queue").openFuture().get();
+            SendContext sendContext = sender.openSendContext(new SendContextOptions());
+
+            // Populate all Header values
+            Header header = new Header();
+            header.setDurable(true);
+            header.setPriority((byte) 1);
+            header.setDeliveryCount(1);
+
+            sendContext.write(header);
+
+            OutputStreamOptions options = new OutputStreamOptions().streamSize(8192).completeContextOnClose(false);
+            OutputStream stream = sendContext.dataOutputStream(options);
+
+            HeaderMatcher headerMatcher = new HeaderMatcher(true);
+            headerMatcher.withDurable(true);
+            headerMatcher.withPriority((byte) 1);
+            headerMatcher.withDeliveryCount(1);
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.setHeadersMatcher(headerMatcher);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withAborted(anyOf(nullValue(), is(false))).withPayload(payloadMatcher).withMore(false);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            stream.close();
+
+            // This should finalize the Transfer since we asked the stream not to complete
+            // and we didn't write anything before closing.
+            sendContext.complete();
+
+            sender.close().get();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     void testCompleteStreamClosureCausesTransferCompleted() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -543,6 +708,7 @@ class MessageOutputStreamTest {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession();
             Sender sender = session.openSender("test-queue").openFuture().get();
+            SendContext sendContext = sender.openSendContext(new SendContextOptions());
 
             final byte[] payload1 = new byte[] { 0, 1, 2, 3, 4, 5 };
             final byte[] payload2 = new byte[] { 6, 7, 8, 9, 10, 11, 12, 13, 14 };
@@ -556,8 +722,10 @@ class MessageOutputStreamTest {
             header.setPriority((byte) 1);
             header.setDeliveryCount(1);
 
-            MessageOutputStreamOptions options = new MessageOutputStreamOptions().header(header).streamSize(payloadSize);
-            MessageOutputStream stream = sender.outputStream(options);
+            sendContext.write(header);
+
+            OutputStreamOptions options = new OutputStreamOptions().streamSize(payloadSize);
+            OutputStream stream = sendContext.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);

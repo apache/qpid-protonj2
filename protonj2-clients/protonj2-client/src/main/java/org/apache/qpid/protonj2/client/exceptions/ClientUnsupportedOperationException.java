@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.client.exceptions;
 /**
  * Thrown when an action request is not supported through this provider.
  */
-public class ClientUnsupportedOperationException extends ClientException {
+public class ClientUnsupportedOperationException extends ClientIllegalStateException {
 
     private static final long serialVersionUID = -680156277783719903L;
 

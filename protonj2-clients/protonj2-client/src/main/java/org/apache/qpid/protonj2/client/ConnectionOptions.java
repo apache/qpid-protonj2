@@ -19,6 +19,9 @@ package org.apache.qpid.protonj2.client;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+
+import org.apache.qpid.protonj2.types.transport.Open;
 
 /**
  * Options that control the behaviour of the {@link Connection} created from them.
@@ -36,7 +39,6 @@ public class ConnectionOptions {
     public static final long DEFAULT_DRAIN_TIMEOUT = 60000;
     public static final int DEFAULT_CHANNEL_MAX = 65535;
     public static final int DEFAULT_MAX_FRAME_SIZE = 65535;
-    public static final boolean DEFAULT_ALLOW_INSECURE_REDIRECTS = false;
 
     private long sendTimeout = DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
@@ -57,8 +59,10 @@ public class ConnectionOptions {
     private String[] desiredCapabilities = DEFAULT_DESIRED_CAPABILITIES;
     private Map<String, Object> properties;
     private String virtualHost;
-    private boolean allowInsecureRedirects = DEFAULT_ALLOW_INSECURE_REDIRECTS;
     private boolean traceFrames;
+
+    private BiConsumer<Connection, ConnectionEvent> connectedhedHandler;
+    private BiConsumer<Connection, ConnectionEvent> failedHandler;
 
     /**
      * Create a new {@link ConnectionOptions} instance configured with default configuration settings.
@@ -99,8 +103,9 @@ public class ConnectionOptions {
         other.maxFrameSize(maxFrameSize);
         other.user(user);
         other.password(password);
-        other.allowInsecureRedirects(allowInsecureRedirects);
         other.traceFrames(traceFrames);
+        other.connectedHandler(connectedhedHandler);
+        other.failedHandler(failedHandler);
 
         if (offeredCapabilities != null) {
             other.offeredCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
@@ -142,35 +147,71 @@ public class ConnectionOptions {
         return this;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a resource is opened.
+     */
     public long openTimeout() {
         return openTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to open
+     * a resource such as a {@link Sender} or {@link Receiver} has been honored.
+     *
+     * @param openTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link ConnectionOptions} instance.
+     */
     public ConnectionOptions openTimeout(long openTimeout) {
         this.openTimeout = openTimeout;
         return this;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a resource is message send.
+     */
     public long sendTimeout() {
         return sendTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a response from the remote for settlement of a
+     * message send from a {@link Sender} resource.  If the remote does not respond within the
+     * configured timeout the {@link Tracker} associated with the sent message will reflect a
+     * failed send.
+     *
+     * @param sendTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link ConnectionOptions} instance.
+     */
     public ConnectionOptions sendTimeout(long sendTimeout) {
         this.sendTimeout = sendTimeout;
         return this;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a resource makes a request.
+     */
     public long requestTimeout() {
         return requestTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to
+     * perform some action such as starting a new transaction.  If the remote does not respond
+     * within the configured timeout the resource making the request will mark it as failed and
+     * return an error to the request initiator.
+     *
+     * @param requestTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link ConnectionOptions} instance.
+     */
     public ConnectionOptions requestTimeout(long requestTimeout) {
         this.requestTimeout = requestTimeout;
         return this;
-    }
-
-    public long idleTimeout() {
-        return idleTimeout;
     }
 
     public int channelMax() {
@@ -201,10 +242,17 @@ public class ConnectionOptions {
     }
 
     /**
+     * @return the configured idle timeout value that will be sent to the remote.
+     */
+    public long idleTimeout() {
+        return idleTimeout;
+    }
+
+    /**
      * Sets the idle timeout (in milliseconds) after which the connection will
      * be closed if the peer has not send any data. The provided value will be
      * halved before being transmitted as our advertised idle-timeout in the
-     * AMQP Open frame.
+     * AMQP {@link Open} frame.
      *
      * @param idleTimeout the timeout in milliseconds.
      *
@@ -215,12 +263,15 @@ public class ConnectionOptions {
         return this;
     }
 
+    /**
+     * @return the configured drain timeout value that will use to fail a pending drain request.
+     */
     public long drainTimeout() {
         return drainTimeout;
     }
 
     /**
-     * Sets the drain timeout (in milliseconds) after which a receiver will be
+     * Sets the drain timeout (in milliseconds) after which a {@link Receiver} will be
      * treated as having failed and will be closed due to unknown state of the
      * remote having not responded to the requested drain.
      *
@@ -359,29 +410,6 @@ public class ConnectionOptions {
     }
 
     /**
-     * @return the allowInsecureRedirects
-     */
-    public boolean allowInsecureRedirects() {
-        return allowInsecureRedirects;
-    }
-
-    /**
-     * When the {@link Connection} is remotely closed with an error containing redirect information
-     * and that redirect would result in a connection being made using an insecure mechanism should
-     * that redirection be followed or disregarded.  For example a secure Web Socket connection could
-     * be redirected to and instructed to use a insecure Web Socket variant instead, this value controls
-     * whether that would be followed or ignored.
-     *
-     * @param allowInsecureRedirects the allowInsecureRedirects to set
-     *
-     * @return this options instance.
-     */
-    public ConnectionOptions allowInsecureRedirects(boolean allowInsecureRedirects) {
-        this.allowInsecureRedirects = allowInsecureRedirects;
-        return this;
-    }
-
-    /**
      * Configure if the newly created connection should enabled AMQP frame tracing to the
      * system output.
      *
@@ -423,6 +451,57 @@ public class ConnectionOptions {
      */
     public ConnectionOptions sslEnabled(boolean sslEnabled) {
         ssl.sslEnabled(sslEnabled);
+        return this;
+    }
+
+    /**
+     * @return the connection failed handler currently registered.
+     */
+    public BiConsumer<Connection, ConnectionEvent> failedHandler() {
+        return failedHandler;
+    }
+
+    /**
+     * Configures a handler that will be notified when the connection has failed and cannot be recovered
+     * should reconnect be enabled.  Once notified of the failure the {@link Connection} is no longer
+     * operable and the {@link Connection} APIs will throw an exception to indicate that the connection
+     * has failed.  The client application should close a failed {@link Connection} once it becomes
+     * aware of the failure to ensure all connection resources are cleaned up properly.
+     *
+     * @param failedHandler
+     *      the connection failed handler to notify when the connection fails for any reason.
+     *
+     * @return this {@link ReconnectOptions} instance.
+     *
+     * @see #connectedHandler()
+     */
+    public ConnectionOptions failedHandler(BiConsumer<Connection, ConnectionEvent> failedHandler) {
+        this.failedHandler = failedHandler;
+        return this;
+    }
+
+    /**
+     * @return the connection established handler that is currently registered
+     */
+    public BiConsumer<Connection, ConnectionEvent> connectedHandler() {
+        return connectedhedHandler;
+    }
+
+    /**
+     * Configures a handler that will be notified when a {@link Connection} has established.
+     * This handler is called for each connection event when reconnection is enabled unless a
+     * {@link #reconnectedHandler} is configured in which case this handler is only notified
+     * on the first connection to a remote.
+     *
+     * @param connectedHandler
+     *      the connection established handler to assign to these {@link ConnectionOptions}.
+     *
+     * @return this {@link ReconnectOptions} instance.
+     *
+     * @see #failedHandler()
+     */
+    public ConnectionOptions connectedHandler(BiConsumer<Connection, ConnectionEvent> connectedHandler) {
+        this.connectedhedHandler = connectedHandler;
         return this;
     }
 }

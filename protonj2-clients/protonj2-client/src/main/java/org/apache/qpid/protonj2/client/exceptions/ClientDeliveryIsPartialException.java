@@ -16,15 +16,19 @@
  */
 package org.apache.qpid.protonj2.client.exceptions;
 
-public class ClientResourceNotFoundException extends ClientException {
+/**
+ * Thrown in cases where an action was requested that cannot be performed because
+ * the delivery being operated on is only the partial Transfer payload.
+ */
+public class ClientDeliveryIsPartialException extends ClientIllegalStateException {
 
-    private static final long serialVersionUID = -6757753762024560537L;
+    private static final long serialVersionUID = 3354944204399500545L;
 
-    public ClientResourceNotFoundException(String message) {
+    public ClientDeliveryIsPartialException(String message) {
         super(message);
     }
 
-    public ClientResourceNotFoundException(String message, Throwable cause) {
+    public ClientDeliveryIsPartialException(String message, Throwable cause) {
         super(message, cause);
     }
 }

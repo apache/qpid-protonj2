@@ -28,8 +28,8 @@ import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
-import org.apache.qpid.protonj2.client.exceptions.ClientClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.futures.ClientFutureFactory;
 import org.apache.qpid.protonj2.client.util.IdGenerator;
 import org.slf4j.Logger;
@@ -75,25 +75,25 @@ public final class ClientInstance implements Client {
     @Override
     public synchronized Connection connect(String host, int port) throws ClientException {
         checkClosed();
-        return addConnection(new ClientConnection(this, host, port, defaultConnectionOptions).connect().open());
+        return addConnection(new ClientConnection(this, host, port, defaultConnectionOptions).connect());
     }
 
     @Override
     public synchronized Connection connect(String host, int port, ConnectionOptions options) throws ClientException {
         checkClosed();
-        return addConnection(new ClientConnection(this, host, port, new ConnectionOptions(options)).connect().open());
+        return addConnection(new ClientConnection(this, host, port, new ConnectionOptions(options)).connect());
     }
 
     @Override
     public synchronized Connection connect(String host) throws ClientException {
         checkClosed();
-        return addConnection(new ClientConnection(this, host, -1, defaultConnectionOptions).connect().open());
+        return addConnection(new ClientConnection(this, host, -1, defaultConnectionOptions).connect());
     }
 
     @Override
     public synchronized Connection connect(String host, ConnectionOptions options) throws ClientException {
         checkClosed();
-        return addConnection(new ClientConnection(this, host, -1, new ConnectionOptions(options)).connect().open());
+        return addConnection(new ClientConnection(this, host, -1, new ConnectionOptions(options)).connect());
     }
 
     @Override
@@ -135,9 +135,9 @@ public final class ClientInstance implements Client {
 
     //----- Internal API
 
-    private void checkClosed() throws ClientClosedException {
+    private void checkClosed() throws ClientIllegalStateException {
         if (closed) {
-            throw new ClientClosedException("Cannot create new connections, the Client has been closed.");
+            throw new ClientIllegalStateException("Cannot create new connections, the Client has been closed.");
         }
     }
 
