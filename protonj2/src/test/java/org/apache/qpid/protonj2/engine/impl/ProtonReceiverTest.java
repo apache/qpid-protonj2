@@ -36,6 +36,7 @@ import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -57,6 +58,7 @@ import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
+import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
@@ -67,6 +69,7 @@ import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.messaging.Section;
 import org.apache.qpid.protonj2.types.messaging.Source;
 import org.apache.qpid.protonj2.types.messaging.Target;
+import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.Role;
@@ -83,6 +86,88 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                                                      Rejected.DESCRIPTOR_SYMBOL,
                                                                      Released.DESCRIPTOR_SYMBOL,
                                                                      Modified.DESCRIPTOR_SYMBOL };
+
+    @Test(timeout = 20_000)
+    public void testLocalLinkStateCannotBeChangedAfterOpen() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("test");
+
+        receiver.setProperties(new HashMap<>());
+
+        receiver.open();
+
+        try {
+            receiver.setProperties(new HashMap<>());
+            fail("Cannot alter local link initial state data after sender opened.");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        try {
+            receiver.setDesiredCapabilities(new Symbol[] { AmqpError.DECODE_ERROR });
+            fail("Cannot alter local link initial state data after sender opened.");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        try {
+            receiver.setOfferedCapabilities(new Symbol[] { AmqpError.DECODE_ERROR });
+            fail("Cannot alter local link initial state data after sender opened.");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        try {
+            receiver.setSenderSettleMode(SenderSettleMode.MIXED);
+            fail("Cannot alter local link initial state data after sender opened.");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        try {
+            receiver.setSource(new Source());
+            fail("Cannot alter local link initial state data after sender opened.");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        try {
+            receiver.setTarget(new Target());
+            fail("Cannot alter local link initial state data after sender opened.");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        try {
+            receiver.setMaxMessageSize(UnsignedLong.ZERO);
+            fail("Cannot alter local link initial state data after sender opened.");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        receiver.detach();
+        session.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 
     @Test(timeout = 20_000)
     public void testReceiverEmitsOpenAndCloseEvents() throws Exception {

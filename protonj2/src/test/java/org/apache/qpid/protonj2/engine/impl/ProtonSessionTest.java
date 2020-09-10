@@ -1484,4 +1484,38 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
+
+    @Test(timeout = 30000)
+    public void testSessionNotifiedOfRemoteSenderOpened() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        final AtomicBoolean senderRemotelyOpened = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectEnd().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+
+        session.senderOpenHandler(result -> senderRemotelyOpened.set(true));
+        session.open();
+
+        peer.remoteAttach().ofReceiver().withHandle(1)
+                                        .withInitialDeliveryCount(1)
+                                        .withName("remote-sender").now();
+
+        session.close();
+
+        assertTrue("Session should have reported remote sender open", senderRemotelyOpened.get());
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 }
