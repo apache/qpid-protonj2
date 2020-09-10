@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.protonj2.client.Delivery;
@@ -26,9 +27,9 @@ import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.ReceiveContext;
 import org.apache.qpid.protonj2.client.ReceiveContextOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryAbortedException;
+import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryIsPartialException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
-import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryIsPartialException;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
@@ -50,6 +51,11 @@ public class ClientReceiveContext implements ReceiveContext {
 
     @Override
     public Delivery delivery() {
+        return delivery;
+    }
+
+    @Override
+    public Delivery delivery(long timeout, TimeUnit unit) throws ClientException {
         return delivery;
     }
 
