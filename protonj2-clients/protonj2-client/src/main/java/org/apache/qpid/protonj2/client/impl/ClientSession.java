@@ -19,15 +19,11 @@ package org.apache.qpid.protonj2.client.impl;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.apache.qpid.protonj2.client.ErrorCondition;
@@ -44,8 +40,6 @@ import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutExcepti
 import org.apache.qpid.protonj2.client.futures.AsyncResult;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.client.futures.ClientFutureFactory;
-import org.apache.qpid.protonj2.client.transport.IOThreadFactory;
-import org.apache.qpid.protonj2.client.util.NoOpExecutor;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.slf4j.Logger;
@@ -77,9 +71,6 @@ public class ClientSession implements Session {
     private final ClientSenderBuilder senderBuilder;
     private final ClientReceiverBuilder receiverBuilder;
     private final ClientTransactionContext txnContext;
-
-    private volatile ThreadPoolExecutor deliveryExecutor;
-    private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
 
     public ClientSession(SessionOptions options, ClientConnection connection, org.apache.qpid.protonj2.engine.Session session) {
         this.options = new SessionOptions(options);
@@ -388,25 +379,6 @@ public class ClientSession implements Session {
         return connection.getFutureFactory();
     }
 
-    Executor getDeliveryExecutor() {
-        ThreadPoolExecutor exec = deliveryExecutor;
-        if (exec == null) {
-            synchronized (options) {
-                if (deliveryExecutor == null) {
-                    if (!isClosed()) {
-                        deliveryExecutor = exec = createExecutor("delivery dispatcher", deliveryThread);
-                    } else {
-                        return NoOpExecutor.INSTANCE;
-                    }
-                } else {
-                    exec = deliveryExecutor;
-                }
-            }
-        }
-
-        return exec;
-    }
-
     ClientException getFailureCause() {
         return failureCause;
     }
@@ -473,25 +445,6 @@ public class ClientSession implements Session {
                 }
             }
         }
-    }
-
-    private ThreadPoolExecutor createExecutor(final String threadNameSuffix, AtomicReference<Thread> threadTracker) {
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
-            new IOThreadFactory("ClientSession ["+ sessionId + "] " + threadNameSuffix, true, threadTracker));
-
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy() {
-
-            @Override
-            public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
-                // Completely ignore the task if the session has closed.
-                if (!isClosed()) {
-                    LOG.trace("Task {} rejected from executor: {}", r, e);
-                    super.rejectedExecution(r, e);
-                }
-            }
-        });
-
-        return executor;
     }
 
     //----- Handle Events from the Proton Session

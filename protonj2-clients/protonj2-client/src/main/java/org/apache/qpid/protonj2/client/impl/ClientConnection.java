@@ -598,9 +598,6 @@ public class ClientConnection implements Connection {
 
         LOG.trace("Engine reports failure with error: {}", failureCause.getMessage());
 
-        // Engine failed so we don't need to respond to normal engine shutdown logic
-        engine.engineShutdownHandler(null);
-
         failConnection(failureCause);
     }
 
@@ -610,17 +607,19 @@ public class ClientConnection implements Connection {
      * with reconnect cases and avoid this event unless reconnect cannot proceed.
      */
     private void handleEngineShutdown(Engine engine) {
-        try {
-            protonConnection.close();
-        } catch (Exception ignore) {
+        if (engine.failureCause() == null) {
+            try {
+                protonConnection.close();
+            } catch (Exception ignore) {
+            }
+
+            try {
+                transport.close();
+            } catch (Exception ignored) {}
+
+            openFuture.complete(this);
+            closeFuture.complete(this);
         }
-
-        try {
-            transport.close();
-        } catch (Exception ignored) {}
-
-        openFuture.complete(this);
-        closeFuture.complete(this);
     }
 
     private void failConnection(ClientIOException failureCause) {
@@ -683,7 +682,7 @@ public class ClientConnection implements Connection {
         }
 
         engine.outputHandler(this::handleEngineOutput)
-              .engineShutdownHandler(this::handleEngineShutdown)
+              .shutdownHandler(this::handleEngineShutdown)
               .errorHandler(this::handleEngineFailure);
 
         protonConnection = engine.connection();
