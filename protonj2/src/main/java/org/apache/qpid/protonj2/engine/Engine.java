@@ -266,6 +266,6 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @return this {@link Engine}
      */
-    Engine engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler);
+    Engine shutdownHandler(EventHandler<Engine> engineShutdownEventHandler);
 
 }

@@ -287,7 +287,7 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public ProtonEngine engineShutdownHandler(EventHandler<Engine> handler) {
+    public ProtonEngine shutdownHandler(EventHandler<Engine> handler) {
         this.engineShutdownHandler = handler;
         return this;
     }

@@ -180,7 +180,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean engineShutdownEventFired = new AtomicBoolean();
 
-        engine.engineShutdownHandler(theEngine -> engineShutdownEventFired.set(true));
+        engine.shutdownHandler(theEngine -> engineShutdownEventFired.set(true));
         engine.shutdown();
 
         assertFalse(engine.isWritable());
