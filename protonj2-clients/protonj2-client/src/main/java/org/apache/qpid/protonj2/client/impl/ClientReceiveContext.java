@@ -50,12 +50,12 @@ public class ClientReceiveContext implements ReceiveContext {
     }
 
     @Override
-    public Delivery delivery() {
+    public Delivery awaitDelivery() {
         return delivery;
     }
 
     @Override
-    public Delivery delivery(long timeout, TimeUnit unit) throws ClientException {
+    public Delivery awaitDelivery(long timeout, TimeUnit unit) throws ClientException {
         return delivery;
     }
 

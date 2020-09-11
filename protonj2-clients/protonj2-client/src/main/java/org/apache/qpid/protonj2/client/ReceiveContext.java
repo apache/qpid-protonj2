@@ -45,7 +45,7 @@ public interface ReceiveContext {
      *
      * @return the associated Delivery object once a read has completed.
      */
-    Delivery delivery();
+    Delivery awaitDelivery();
 
     /**
      * Blocking method that waits the given time interval for the remote to provide a {@link Delivery}
@@ -68,9 +68,9 @@ public interface ReceiveContext {
      *
      * @throws ClientException if the {@link Receiver} or its parent is closed when the call to receive is made.
      *
-     * #see {@link #delivery()}
+     * #see {@link #awaitDelivery()}
      */
-    Delivery delivery(long timeout, TimeUnit unit) throws ClientException;
+    Delivery awaitDelivery(long timeout, TimeUnit unit) throws ClientException;
 
     /**
      * Decode the {@link Delivery} payload and return an {@link Message} object if there
