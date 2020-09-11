@@ -500,7 +500,7 @@ public class ClientReceiver implements Receiver {
     }
 
     private void handleDeliveryRemotelyUpdated(IncomingDelivery delivery) {
-        LOG.trace("Delivery was updated: {}", delivery);
+        LOG.trace("Delivery remote state was updated: {}", delivery);
     }
 
     private void handleReceiverCreditUpdated(org.apache.qpid.protonj2.engine.Receiver receiver) {

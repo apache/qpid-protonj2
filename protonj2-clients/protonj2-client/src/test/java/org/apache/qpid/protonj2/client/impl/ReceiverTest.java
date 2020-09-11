@@ -1270,6 +1270,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             // Send final aborted transfer to complete first transfer and allow next to commence.
             peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
                                  .withMore(false)
                                  .withAborted(true)
                                  .withMessageFormat(0)
@@ -1282,6 +1283,61 @@ public class ReceiverTest extends ImperativeClientTestCase {
             assertTrue(received.body() instanceof String);
             String value = (String) received.body();
             assertEquals("Hello World", value);
+
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReceiverHandlesAbortedSplitFrameTransferAndReplenishesCredit() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow().withLinkCredit(1);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            ReceiverOptions options = new ReceiverOptions();
+            options.creditWindow(1);
+            final Receiver receiver = session.openReceiver("test-queue", options);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            assertNull(receiver.receive(10, TimeUnit.MILLISECONDS));
+
+            // Credit window is one and next transfer signals aborted so receiver should
+            // top-up the credit window to allow more transfers to arrive.
+            peer.expectFlow().withLinkCredit(1);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            // Abort the delivery which should result in a credit top-up.
+            peer.remoteTransfer().withHandle(0)
+                                 .withMore(false)
+                                 .withAborted(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).now();
+
+            assertNull(receiver.receive(15, TimeUnit.MILLISECONDS));
 
             receiver.close();
             connection.close().get();
