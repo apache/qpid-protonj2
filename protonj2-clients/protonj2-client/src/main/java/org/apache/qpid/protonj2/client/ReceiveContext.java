@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
@@ -38,21 +39,33 @@ public interface ReceiveContext {
     Receiver receiver();
 
     /**
+     * Once the user has called {@link #awaitDelivery()} or {@link #awaitDelivery(long, TimeUnit)}
+     * and the result was successful this method returns the {@link Delivery} object assigned to
+     * this context which can be used to manage the incoming delivery.
+     *
+     * @return the {@link Delivery} for this {@link ReceiveContext} if one has already been assigned.
+     */
+    Delivery delivery();
+
+    /**
      * Returns immediately if a remote delivery is ready for consumption or blocks waiting on the
      * initial transfer from an incoming {@link Delivery} to arrive and be assigned this
      * {@link ReceiveContext}.  Once a Delivery is assigned the context can being processing the
      * incoming data associated with the delivery.
      *
+     * @throws ClientException if the {@link Receiver} or its parent is closed when the call to receive is
+     *                         made or some other internal error occurs.
+     *
      * @return the associated Delivery object once a read has completed.
      */
-    Delivery awaitDelivery();
+    ReceiveContext awaitDelivery() throws ClientException;
 
     /**
      * Blocking method that waits the given time interval for the remote to provide a {@link Delivery}
      * for consumption.  The amount of time this method blocks is based on the timeout value. If timeout
      * is equal to <code>-1</code> then it blocks until a Delivery is received. If timeout is equal to
-     * zero then it will not block and simply return a {@link Delivery} if one is available  locally.
-     * If timeout value is greater than zero then it blocks up to timeout amount of time.
+     * zero then it will not block and simply return if one is already available locally. If the timeout
+     * value is greater than zero then it blocks up to timeout amount of time.
      * <p>
      * This call will only grant credit for deliveries on its own if a credit window is configured in the
      * {@link ReceiverOptions} which is done by default.  If the client application has not configured
@@ -66,11 +79,13 @@ public interface ReceiveContext {
      *
      * @return a new {@link Delivery} received from the remote.
      *
-     * @throws ClientException if the {@link Receiver} or its parent is closed when the call to receive is made.
+     * @throws ClientOperationTimedOutException if the timeout expired and no delivery has arrived.
+     * @throws ClientException if the {@link Receiver} or its parent is closed when the call to receive is
+     *                         made or some other internal error occurs.
      *
      * #see {@link #awaitDelivery()}
      */
-    Delivery awaitDelivery(long timeout, TimeUnit unit) throws ClientException;
+    ReceiveContext awaitDelivery(long timeout, TimeUnit unit) throws ClientException;
 
     /**
      * Decode the {@link Delivery} payload and return an {@link Message} object if there
