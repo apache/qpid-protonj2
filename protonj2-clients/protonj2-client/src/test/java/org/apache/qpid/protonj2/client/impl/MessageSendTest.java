@@ -258,11 +258,12 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Message<String> message = Message.create("Hello World");
 
             // Populate delivery annotations
-            message.deliveryAnnotation("one", 1);
-            message.deliveryAnnotation("two", 2);
-            message.deliveryAnnotation("three", 3);
+            Map<String, Object> deliveryAnnotations = new HashMap<>();
+            deliveryAnnotations.put("one", 1);
+            deliveryAnnotations.put("two", 2);
+            deliveryAnnotations.put("three", 3);
 
-            final Tracker tracker = sender.send(message);
+            final Tracker tracker = sender.send(message, deliveryAnnotations);
 
             assertNotNull(tracker);
             assertNotNull(tracker.settlementFuture().isDone());
@@ -536,6 +537,12 @@ class MessageSendTest extends ImperativeClientTestCase {
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
+            // Populate delivery annotations
+            Map<String, Object> deliveryAnnotations = new HashMap<>();
+            deliveryAnnotations.put("da1", 1);
+            deliveryAnnotations.put("da2", 2);
+            deliveryAnnotations.put("da3", 3);
+
             final Message<String> message = Message.create("Hello World");
 
             // Populate all Header values
@@ -544,10 +551,6 @@ class MessageSendTest extends ImperativeClientTestCase {
             message.timeToLive(65535);
             message.firstAcquirer(true);
             message.deliveryCount(2);
-            // Populate delivery annotations
-            message.deliveryAnnotation("da1", 1);
-            message.deliveryAnnotation("da2", 2);
-            message.deliveryAnnotation("da3", 3);
             // Populate message annotations
             message.messageAnnotation("ma1", 1);
             message.messageAnnotation("ma2", 2);
@@ -575,7 +578,7 @@ class MessageSendTest extends ImperativeClientTestCase {
             message.footer("f2", 2);
             message.footer("f3", 3);
 
-            final Tracker tracker = sender.send(message);
+            final Tracker tracker = sender.send(message, deliveryAnnotations);
 
             assertNotNull(tracker);
             assertNotNull(tracker.settlementFuture().isDone());
@@ -1026,6 +1029,12 @@ class MessageSendTest extends ImperativeClientTestCase {
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
+            // Populate delivery annotations
+            Map<String, Object> deliveryAnnotations = new HashMap<>();
+            deliveryAnnotations.put("da1", 1);
+            deliveryAnnotations.put("da2", 2);
+            deliveryAnnotations.put("da3", 3);
+
             final Message<String> message = new ExternalMessage<>(allowAdvancedConversion);
 
             message.body("Hello World");
@@ -1035,10 +1044,6 @@ class MessageSendTest extends ImperativeClientTestCase {
             message.timeToLive(65535);
             message.firstAcquirer(true);
             message.deliveryCount(2);
-            // Populate delivery annotations
-            message.deliveryAnnotation("da1", 1);
-            message.deliveryAnnotation("da2", 2);
-            message.deliveryAnnotation("da3", 3);
             // Populate message annotations
             message.messageAnnotation("ma1", 1);
             message.messageAnnotation("ma2", 2);
@@ -1075,9 +1080,9 @@ class MessageSendTest extends ImperativeClientTestCase {
 
             final Tracker tracker;
             if (trySend) {
-                tracker = sender.trySend(message);
+                tracker = sender.trySend(message, deliveryAnnotations);
             } else {
-                tracker = sender.send(message);
+                tracker = sender.send(message, deliveryAnnotations);
             }
 
             assertNotNull(tracker);

@@ -41,7 +41,6 @@ import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
 import org.apache.qpid.protonj2.types.messaging.Data;
-import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.messaging.Footer;
 import org.apache.qpid.protonj2.types.messaging.Header;
 import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
@@ -63,7 +62,6 @@ class ClientMessageTest {
         assertTrue(message.bodySections().isEmpty());
 
         assertFalse(message.hasApplicationProperties());
-        assertFalse(message.hasDeliveryAnnotations());
         assertFalse(message.hasFooters());
         assertFalse(message.hasMessageAnnotations());
     }
@@ -77,33 +75,28 @@ class ClientMessageTest {
         assertTrue(message.bodySections().isEmpty());
 
         assertFalse(message.hasApplicationProperties());
-        assertFalse(message.hasDeliveryAnnotations());
         assertFalse(message.hasFooters());
         assertFalse(message.hasMessageAnnotations());
 
         assertNull(message.header());
-        assertNull(message.deliveryAnnotations());
         assertNull(message.messageAnnotations());
         assertNull(message.applicationProperties());
         assertNull(message.footer());
 
         Header header = new Header();
         Properties properties = new Properties();
-        DeliveryAnnotations da = new DeliveryAnnotations(new LinkedHashMap<>());
         MessageAnnotations ma = new MessageAnnotations(new LinkedHashMap<>());
         ApplicationProperties ap = new ApplicationProperties(new LinkedHashMap<>());
         Footer ft = new Footer(new LinkedHashMap<>());
 
         message.header(header);
         message.properties(properties);
-        message.deliveryAnnotations(da);
         message.messageAnnotations(ma);
         message.applicationProperties(ap);
         message.footer(ft);
 
         assertSame(header, message.header());
         assertSame(properties, message.properties());
-        assertSame(da, message.deliveryAnnotations());
         assertSame(ma, message.messageAnnotations());
         assertSame(ap, message.applicationProperties());
         assertSame(ft, message.footer());
@@ -252,7 +245,6 @@ class ClientMessageTest {
         ClientMessage<String> message = ClientMessage.create();
 
         assertFalse(message.hasApplicationProperties());
-        assertFalse(message.hasDeliveryAnnotations());
         assertFalse(message.hasFooters());
         assertFalse(message.hasMessageAnnotations());
 
@@ -265,10 +257,6 @@ class ClientMessageTest {
         });
 
         message.forEachApplicationProperty((key, value) -> {
-            fail("Should not invoke any consumers since Message is empty");
-        });
-
-        message.forEachDeliveryAnnotation((key, value) -> {
             fail("Should not invoke any consumers since Message is empty");
         });
 
@@ -518,50 +506,6 @@ class ClientMessageTest {
         });
 
         assertEquals(expected.size(), count.get());
-    }
-
-    @Test
-    public void testDeliveryAnnotation() {
-        ClientMessage<String> message = ClientMessage.create();
-
-        final Map<String, String> expectations = new HashMap<>();
-        expectations.put("test1", "1");
-        expectations.put("test2", "2");
-
-        assertFalse(message.hasDeliveryAnnotations());
-        assertFalse(message.hasDeliveryAnnotation("test1"));
-
-        assertNotNull(message.deliveryAnnotation("test1", "1"));
-        assertNotNull(message.deliveryAnnotation("test1"));
-
-        assertTrue(message.hasDeliveryAnnotations());
-        assertTrue(message.hasDeliveryAnnotation("test1"));
-
-        assertNotNull(message.deliveryAnnotation("test2", "2"));
-        assertNotNull(message.deliveryAnnotation("test2"));
-
-        final AtomicInteger count = new AtomicInteger();
-
-        message.forEachDeliveryAnnotation((k, v) -> {
-            assertTrue(expectations.containsKey(k));
-            assertEquals(v, expectations.get(k));
-            count.incrementAndGet();
-        });
-
-        assertEquals(expectations.size(), count.get());
-
-        assertEquals("1", message.removeDeliveryAnnotation("test1"));
-        assertEquals("2", message.removeDeliveryAnnotation("test2"));
-        assertNull(message.removeDeliveryAnnotation("test1"));
-        assertNull(message.removeDeliveryAnnotation("test2"));
-        assertNull(message.removeDeliveryAnnotation("test3"));
-        assertFalse(message.hasDeliveryAnnotations());
-        assertFalse(message.hasDeliveryAnnotation("test1"));
-        assertFalse(message.hasDeliveryAnnotation("test2"));
-
-        message.forEachDeliveryAnnotation((k, v) -> {
-            fail("Should not be any remaining Delivery Annotations");
-        });
     }
 
     @Test

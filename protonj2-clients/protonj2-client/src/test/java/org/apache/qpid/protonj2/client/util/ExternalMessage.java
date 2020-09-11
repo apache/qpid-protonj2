@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -33,7 +34,6 @@ import org.apache.qpid.protonj2.client.impl.ClientMessageSupport;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
-import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.messaging.Footer;
 import org.apache.qpid.protonj2.types.messaging.Header;
 import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
@@ -43,7 +43,6 @@ import org.apache.qpid.protonj2.types.messaging.Section;
 public class ExternalMessage<E> implements Message<E> {
 
     private Header header;
-    private DeliveryAnnotations deliveryAnnotations;
     private MessageAnnotations messageAnnotations;
     private Properties properties;
     private ApplicationProperties applicationProperties;
@@ -291,60 +290,6 @@ public class ExternalMessage<E> implements Message<E> {
         return this;
     }
 
-    //----- Delivery Annotations Access
-
-    @Override
-    public Object deliveryAnnotation(String key) {
-        Object value = null;
-        if (deliveryAnnotations != null && deliveryAnnotations.getValue() != null) {
-            value = deliveryAnnotations.getValue().get(Symbol.valueOf(key));
-        }
-
-        return value;
-    }
-
-    @Override
-    public boolean hasDeliveryAnnotation(String key) {
-        if (deliveryAnnotations != null && deliveryAnnotations.getValue() != null) {
-            return deliveryAnnotations.getValue().containsKey(Symbol.valueOf(key));
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public boolean hasDeliveryAnnotations() {
-        return deliveryAnnotations != null &&
-               deliveryAnnotations.getValue() != null &&
-               deliveryAnnotations.getValue().size() > 0;
-    }
-
-    @Override
-    public Object removeDeliveryAnnotation(String key) {
-        if (hasDeliveryAnnotations()) {
-            return deliveryAnnotations.getValue().remove(Symbol.valueOf(key));
-        } else {
-            return null;
-        }
-     }
-
-    @Override
-    public Message<E> forEachDeliveryAnnotation(BiConsumer<String, Object> action) {
-        if (hasDeliveryAnnotations()) {
-            deliveryAnnotations.getValue().forEach((key, value) -> {
-                action.accept(key.toString(), value);
-            });
-        }
-
-        return this;
-    }
-
-    @Override
-    public ExternalMessage<E> deliveryAnnotation(String key, Object value) {
-        lazyCreateDeliveryAnnotations().getValue().put(Symbol.valueOf(key),value);
-        return this;
-    }
-
     //----- Message Annotations Access
 
     @Override
@@ -557,14 +502,6 @@ public class ExternalMessage<E> implements Message<E> {
         return messageAnnotations;
     }
 
-    private DeliveryAnnotations lazyCreateDeliveryAnnotations() {
-        if (deliveryAnnotations == null) {
-            deliveryAnnotations = new DeliveryAnnotations(new LinkedHashMap<>());
-        }
-
-        return deliveryAnnotations;
-    }
-
     private Footer lazyCreateFooter() {
         if (footer == null) {
             footer = new Footer(new LinkedHashMap<>());
@@ -600,17 +537,6 @@ public class ExternalMessage<E> implements Message<E> {
         @Override
         public AdvancedMessage<E> header(Header header) {
             message.header = header;
-            return this;
-        }
-
-        @Override
-        public DeliveryAnnotations deliveryAnnotations() {
-            return message.deliveryAnnotations;
-        }
-
-        @Override
-        public AdvancedMessage<E> deliveryAnnotations(DeliveryAnnotations deliveryAnnotations) {
-            message.deliveryAnnotations = deliveryAnnotations;
             return this;
         }
 
@@ -670,8 +596,8 @@ public class ExternalMessage<E> implements Message<E> {
         }
 
         @Override
-        public ProtonBuffer encode() {
-            return ClientMessageSupport.encodeMessage(this);
+        public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) {
+            return ClientMessageSupport.encodeMessage(this, deliveryAnnotations);
         }
 
         @Override

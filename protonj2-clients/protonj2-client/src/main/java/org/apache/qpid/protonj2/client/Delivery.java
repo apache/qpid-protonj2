@@ -16,7 +16,10 @@
  */
 package org.apache.qpid.protonj2.client;
 
+import java.util.Map;
+
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 
 /**
  * Incoming Delivery type that provides access to the message and the delivery
@@ -31,6 +34,11 @@ public interface Delivery {
 
     /**
      * Decode the {@link Delivery} payload and return an {@link Message} object.
+     * <p>
+     * If the incoming message carried any delivery annotations they can be accessed via the
+     * {@link #deliveryAnnotations()} method.  Re-sending the returned message will not also
+     * send the incoming delivery annotations, the sender must include them in the
+     * {@link Sender#send(Message, Map)} call if they are to be forwarded onto the next recipient.
      *
      * @return a {@link Message} instance that wraps the decoded payload.
      *
@@ -39,6 +47,17 @@ public interface Delivery {
      * @param <E> The type of message body that should be contained in the returned {@link Message}.
      */
     <E> Message<E> message() throws ClientException;
+
+    /**
+     * Decodes the {@link Delivery} payload and returns a {@link Map} containing a copy
+     * of any associated {@link DeliveryAnnotations} that were transmitted with the {@link Message}
+     * payload of this {@link Delivery}.
+     *
+     * @return copy of the delivery annotations that were transmitted with the {@link Message} payload.
+     *
+     * @throws ClientException if an error occurs while decoding the payload.
+     */
+    Map<String, Object> deliveryAnnotations() throws ClientException;
 
     /**
      * Accepts and settles the delivery.

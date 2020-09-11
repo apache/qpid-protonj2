@@ -477,20 +477,6 @@ public interface Message<E> {
      */
     Message<E> replyToGroupId(String replyToGroupId);
 
-    //----- Delivery Annotations
-
-    Object deliveryAnnotation(String key);
-
-    boolean hasDeliveryAnnotation(String key);
-
-    boolean hasDeliveryAnnotations();
-
-    Object removeDeliveryAnnotation(String key);
-
-    Message<E> forEachDeliveryAnnotation(BiConsumer<String, Object> action);
-
-    Message<E> deliveryAnnotation(String key, Object value);
-
     //----- Message Annotations
 
     Object messageAnnotation(String key);

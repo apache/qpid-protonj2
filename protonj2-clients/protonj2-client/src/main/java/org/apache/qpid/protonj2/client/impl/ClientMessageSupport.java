@@ -18,6 +18,8 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
@@ -30,6 +32,7 @@ import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
+import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
@@ -86,19 +89,18 @@ public abstract class ClientMessageSupport {
 
     //----- Message Encoding
 
-    public static ProtonBuffer encodeMessage(AdvancedMessage<?> message) {
-        return encodeMessage(DEFAULT_ENCODER, DEFAULT_ENCODER.newEncoderState(), ProtonByteBufferAllocator.DEFAULT, message);
+    public static ProtonBuffer encodeMessage(AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) {
+        return encodeMessage(DEFAULT_ENCODER, DEFAULT_ENCODER.newEncoderState(), ProtonByteBufferAllocator.DEFAULT, message, deliveryAnnotations);
     }
 
-    public static ProtonBuffer encodeMessage(Encoder encoder, ProtonBufferAllocator allocator, AdvancedMessage<?> message) {
-        return encodeMessage(encoder, encoder.newEncoderState(), ProtonByteBufferAllocator.DEFAULT, message);
+    public static ProtonBuffer encodeMessage(Encoder encoder, ProtonBufferAllocator allocator, AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) {
+        return encodeMessage(encoder, encoder.newEncoderState(), ProtonByteBufferAllocator.DEFAULT, message, deliveryAnnotations);
     }
 
-    public static ProtonBuffer encodeMessage(Encoder encoder, EncoderState encoderState, ProtonBufferAllocator allocator, AdvancedMessage<?> message) {
+    public static ProtonBuffer encodeMessage(Encoder encoder, EncoderState encoderState, ProtonBufferAllocator allocator, AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) {
         ProtonBuffer buffer = allocator.allocate();
 
         Header header = message.header();
-        DeliveryAnnotations deliveryAnnotations = message.deliveryAnnotations();
         MessageAnnotations messageAnnotations = message.messageAnnotations();
         Properties properties = message.properties();
         ApplicationProperties applicationProperties = message.applicationProperties();
@@ -108,7 +110,7 @@ public abstract class ClientMessageSupport {
             encoder.writeObject(buffer, encoderState, header);
         }
         if (deliveryAnnotations != null) {
-            encoder.writeObject(buffer, encoderState, deliveryAnnotations);
+            encoder.writeObject(buffer, encoderState, new DeliveryAnnotations(StringUtils.toSymbolKeyedMap(deliveryAnnotations)));
         }
         if (messageAnnotations != null) {
             encoder.writeObject(buffer, encoderState, messageAnnotations);
@@ -131,15 +133,16 @@ public abstract class ClientMessageSupport {
 
     //----- Message Decoding
 
-    public static Message<?> decodeMessage(ProtonBuffer buffer) throws ClientException {
-        return decodeMessage(DEFAULT_DECODER, DEFAULT_DECODER.newDecoderState(), buffer);
+    public static Message<?> decodeMessage(ProtonBuffer buffer, Consumer<DeliveryAnnotations> daConsumer) throws ClientException {
+        return decodeMessage(DEFAULT_DECODER, DEFAULT_DECODER.newDecoderState(), buffer, daConsumer);
     }
 
-    public static Message<?> decodeMessage(Decoder decoder, ProtonBuffer buffer) throws ClientException {
-        return decodeMessage(decoder, decoder.newDecoderState(), buffer);
+    public static Message<?> decodeMessage(Decoder decoder, ProtonBuffer buffer, Consumer<DeliveryAnnotations> daConsumer) throws ClientException {
+        return decodeMessage(decoder, decoder.newDecoderState(), buffer, daConsumer);
     }
 
-    public static Message<?> decodeMessage(Decoder decoder, DecoderState decoderState, ProtonBuffer buffer) throws ClientException {
+    public static Message<?> decodeMessage(Decoder decoder, DecoderState decoderState,
+                                           ProtonBuffer buffer, Consumer<DeliveryAnnotations> daConsumer) throws ClientException {
         Header header = null;
         DeliveryAnnotations deliveryAnnotations = null;
         MessageAnnotations messageAnnotations = null;
@@ -189,11 +192,14 @@ public abstract class ClientMessageSupport {
 
         if (result != null) {
             result.header(header);
-            result.deliveryAnnotations(deliveryAnnotations);
             result.messageAnnotations(messageAnnotations);
             result.properties(properties);
             result.applicationProperties(applicationProperties);
             result.footer(footer);
+
+            if (daConsumer != null) {
+                daConsumer.accept(deliveryAnnotations);
+            }
 
             return result;
         }
@@ -263,19 +269,8 @@ public abstract class ClientMessageSupport {
         properties.setGroupSequence(source.groupSequence());
         properties.setReplyToGroupId(source.replyToGroupId());
 
-        final DeliveryAnnotations deliveryAnnotations;
-        if (source.hasDeliveryAnnotations()) {
-            deliveryAnnotations = new DeliveryAnnotations(new LinkedHashMap<>());
-
-            source.forEachDeliveryAnnotation((key, value) -> {
-                deliveryAnnotations.getValue().put(Symbol.valueOf(key), value);
-            });
-        } else {
-            deliveryAnnotations = null;
-        }
-
         final MessageAnnotations messageAnnotations;
-        if (source.hasDeliveryAnnotations()) {
+        if (source.hasMessageAnnotations()) {
             messageAnnotations = new MessageAnnotations(new LinkedHashMap<>());
 
             source.forEachMessageAnnotation((key, value) -> {
@@ -311,7 +306,6 @@ public abstract class ClientMessageSupport {
 
         message.header(header);
         message.properties(properties);
-        message.deliveryAnnotations(deliveryAnnotations);
         message.messageAnnotations(messageAnnotations);
         message.applicationProperties(applicationProperties);
         message.footer(footer);

@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -253,7 +254,7 @@ public class ClientSendContext implements SendContext {
         }
 
         @Override
-        public ProtonBuffer encode() {
+        public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) {
             return buffer;
         }
     }

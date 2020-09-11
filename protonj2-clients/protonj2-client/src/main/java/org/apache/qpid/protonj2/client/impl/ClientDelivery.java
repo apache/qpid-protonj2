@@ -16,14 +16,18 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.util.Map;
+
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
-import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryIsPartialException;
+import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
+import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
+import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.messaging.Modified;
 import org.apache.qpid.protonj2.types.messaging.Rejected;
 import org.apache.qpid.protonj2.types.messaging.Released;
@@ -37,6 +41,7 @@ public class ClientDelivery implements Delivery {
     private final ClientReceiver receiver;
     private final IncomingDelivery delivery;
 
+    private DeliveryAnnotations deliveryAnnotations;
     private Message<?> cachedMessage;
 
     /**
@@ -62,10 +67,22 @@ public class ClientDelivery implements Delivery {
 
         Message<E> message = (Message<E>) cachedMessage;
         if (message == null && delivery.available() > 0) {
-            message = (Message<E>) (cachedMessage = ClientMessageSupport.decodeMessage(delivery.readAll()));
+            message = (Message<E>)
+                (cachedMessage = ClientMessageSupport.decodeMessage(delivery.readAll(), this::deliveryAnnotations));
         }
 
         return message;
+    }
+
+    @Override
+    public Map<String, Object> deliveryAnnotations() throws ClientException {
+        message();
+
+        if (deliveryAnnotations != null && deliveryAnnotations.getValue() != null) {
+            return StringUtils.toStringKeyedMap(deliveryAnnotations.getValue());
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -139,9 +156,13 @@ public class ClientDelivery implements Delivery {
         return delivery.isSettled();
     }
 
-    //----- Internal API for use with Receiver extensions
+    //----- Internal API not meant to be used from outside the client package.
 
     IncomingDelivery protonDelivery() {
         return delivery;
+    }
+
+    void deliveryAnnotations(DeliveryAnnotations deliveryAnnotations) {
+        this.deliveryAnnotations = deliveryAnnotations;
     }
 }

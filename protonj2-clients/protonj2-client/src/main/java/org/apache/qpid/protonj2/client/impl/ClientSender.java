@@ -202,13 +202,25 @@ public class ClientSender implements Sender {
     @Override
     public Tracker send(Message<?> message) throws ClientException {
         checkClosedOrFailed();
-        return sendMessage(ClientMessageSupport.convertMessage(message), true);
+        return sendMessage(ClientMessageSupport.convertMessage(message), null, true);
+    }
+
+    @Override
+    public Tracker send(Message<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
+        checkClosedOrFailed();
+        return sendMessage(ClientMessageSupport.convertMessage(message), deliveryAnnotations, true);
     }
 
     @Override
     public Tracker trySend(Message<?> message) throws ClientException {
         checkClosedOrFailed();
-        return sendMessage(ClientMessageSupport.convertMessage(message), false);
+        return sendMessage(ClientMessageSupport.convertMessage(message), null, false);
+    }
+
+    @Override
+    public Tracker trySend(Message<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
+        checkClosedOrFailed();
+        return sendMessage(ClientMessageSupport.convertMessage(message), deliveryAnnotations, false);
     }
 
     @Override
@@ -488,9 +500,9 @@ public class ClientSender implements Sender {
         }
     }
 
-    Tracker sendMessage(AdvancedMessage<?> message, boolean waitForCredit) throws ClientException {
+    Tracker sendMessage(AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations, boolean waitForCredit) throws ClientException {
         final ClientFuture<ClientTracker> operation = session.getFutureFactory().createFuture();
-        final ProtonBuffer buffer = message.encode();
+        final ProtonBuffer buffer = message.encode(deliveryAnnotations);
         final ClientSendContext context = new ClientSendContext(this, message.messageFormat(), true);
 
         executor.execute(() -> {
@@ -522,7 +534,7 @@ public class ClientSender implements Sender {
 
     ClientTracker sendMessage(ClientSendContext context, AdvancedMessage<?> message) throws ClientException {
         final ClientFuture<ClientTracker> operation = session.getFutureFactory().createFuture();
-        final ProtonBuffer buffer = message.encode();
+        final ProtonBuffer buffer = message.encode(null);
 
         executor.execute(() -> {
             checkClosedOrFailed(operation);

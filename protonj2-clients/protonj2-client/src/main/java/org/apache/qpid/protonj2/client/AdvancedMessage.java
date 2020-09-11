@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.client;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
@@ -64,24 +65,6 @@ public interface AdvancedMessage<E> extends Message<E> {
      * @return this {@link AdvancedMessage} instance.
      */
     AdvancedMessage<E> header(Header header);
-
-    /**
-     * Return the current {@link DeliveryAnnotations} assigned to this message, if none was assigned yet
-     * then this method returns <code>null</code>.
-     *
-     * @return the currently assigned {@link DeliveryAnnotations} for this message.
-     */
-    DeliveryAnnotations deliveryAnnotations();
-
-    /**
-     * Assign or replace the {@link DeliveryAnnotations} instance associated with this message.
-     *
-     * @param deliveryAnnotations
-     *      The {@link DeliveryAnnotations} value to assign to this message.
-     *
-     * @return this {@link AdvancedMessage} instance.
-     */
-    AdvancedMessage<E> deliveryAnnotations(DeliveryAnnotations deliveryAnnotations);
 
     /**
      * Return the current {@link MessageAnnotations} assigned to this message, if none was assigned yet
@@ -246,10 +229,16 @@ public interface AdvancedMessage<E> extends Message<E> {
     AdvancedMessage<E> clearBodySections();
 
     /**
-     * Encodes the Message
+     * Encodes the {@link AdvancedMessage} for transmission by the client.  The provided {@link DeliveryAnnotations}
+     * can be included or augmented by the {@link AdvancedMessage} implementation based on the target message format.
+     * The implementation is responsible for ensuring that the delivery annotations are treated correctly encoded into
+     * the correct location in the message.
+     *
+     * @param deliveryAnnotations
+     *      A {@link Map} of delivery annotation values that were requested to be included in the transmitted message.
      *
      * @return the encoded form of this message in a {@link ProtonBuffer} instance.
      */
-    ProtonBuffer encode();
+    ProtonBuffer encode(Map<String, Object> deliveryAnnotations);
 
 }
