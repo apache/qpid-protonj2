@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.SslOptions;
 import org.apache.qpid.protonj2.client.TransportOptions;
+import org.apache.qpid.protonj2.client.util.TrackableThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +55,7 @@ public final class NettyIOContext {
 
         this.options = options;
         this.sslOptions = ssl;
-        this.threadFactory = new IOThreadFactory(ioThreadName, true);
+        this.threadFactory = new TrackableThreadFactory(ioThreadName, true);
 
         final boolean useKQueue = KQueueSupport.isAvailable(options) && options.allowNativeIO();
         final boolean useEpoll = EpollSupport.isAvailable(options) && options.allowNativeIO();

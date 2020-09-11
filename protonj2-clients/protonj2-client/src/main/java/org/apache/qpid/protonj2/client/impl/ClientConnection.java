@@ -23,10 +23,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -57,6 +58,7 @@ import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.client.futures.ClientFutureFactory;
 import org.apache.qpid.protonj2.client.transport.NettyIOContext;
 import org.apache.qpid.protonj2.client.transport.Transport;
+import org.apache.qpid.protonj2.client.util.TrackableThreadFactory;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
 import org.apache.qpid.protonj2.engine.sasl.client.SaslAuthenticator;
@@ -88,6 +90,7 @@ public class ClientConnection implements Connection {
     private final ScheduledExecutorService executor;
     private final AtomicInteger sessionCounter = new AtomicInteger();
     private final Map<ClientFuture<?>, Object> requests = new ConcurrentHashMap<>();
+    private final ThreadPoolExecutor notifications;
 
     private Engine engine;
     private org.apache.qpid.protonj2.engine.Connection protonConnection;
@@ -128,6 +131,12 @@ public class ClientConnection implements Connection {
         this.executor = ioContext.eventLoop();
         this.host = host;
         this.port = port;
+
+        // This executor can be used for dispatching asynchronous tasks that might block or result
+        // in reentrant calls to this Connection that could block.
+        notifications = new ThreadPoolExecutor(1, 1, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
+            new TrackableThreadFactory("QpidJMS Connection Executor: " + getId(), true));
+        notifications.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy());
     }
 
     @Override
@@ -540,7 +549,7 @@ public class ClientConnection implements Connection {
     private void submitConnectionEvent(BiConsumer<Connection, ConnectionEvent> handler, String host, int port, ClientIOException cause) {
         if (handler != null) {
             try {
-                ForkJoinPool.commonPool().submit(() -> {
+                notifications.submit(() -> {
                     try {
                         handler.accept(this, new ConnectionEvent(host, port, cause));
                     } catch (Exception ex) {
