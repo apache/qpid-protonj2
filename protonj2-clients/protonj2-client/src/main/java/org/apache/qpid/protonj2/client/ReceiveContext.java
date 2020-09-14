@@ -39,15 +39,6 @@ public interface ReceiveContext {
     Receiver receiver();
 
     /**
-     * Once the user has called {@link #awaitDelivery()} or {@link #awaitDelivery(long, TimeUnit)}
-     * and the result was successful this method returns the {@link Delivery} object assigned to
-     * this context which can be used to manage the incoming delivery.
-     *
-     * @return the {@link Delivery} for this {@link ReceiveContext} if one has already been assigned.
-     */
-    Delivery delivery();
-
-    /**
      * Returns immediately if a remote delivery is ready for consumption or blocks waiting on the
      * initial transfer from an incoming {@link Delivery} to arrive and be assigned this
      * {@link ReceiveContext}.  Once a Delivery is assigned the context can being processing the
@@ -86,6 +77,15 @@ public interface ReceiveContext {
      * #see {@link #awaitDelivery()}
      */
     ReceiveContext awaitDelivery(long timeout, TimeUnit unit) throws ClientException;
+
+    /**
+     * Once the user has called {@link #awaitDelivery()} or {@link #awaitDelivery(long, TimeUnit)}
+     * and the result was successful this method returns the {@link Delivery} object assigned to
+     * this context which can be used to manage the incoming delivery.
+     *
+     * @return the {@link Delivery} for this {@link ReceiveContext} if one has already been assigned.
+     */
+    Delivery delivery();
 
     /**
      * Decode the {@link Delivery} payload and return an {@link Message} object if there

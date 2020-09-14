@@ -16,22 +16,21 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
-import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.ErrorCondition;
-import org.apache.qpid.protonj2.client.ReceiveContext;
 import org.apache.qpid.protonj2.client.ReceiveContextOptions;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
-import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.Source;
 import org.apache.qpid.protonj2.client.Target;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
@@ -67,6 +66,7 @@ public class ClientReceiver implements Receiver {
     private final ScheduledExecutorService executor;
     private final String receiverId;
     private final FifoDeliveryQueue messageQueue;
+    private final Queue<ClientReceiveContext> waitingRcvContexts = new ArrayDeque<>();
     private volatile int closed;
     private ClientException failureCause;
 
@@ -116,12 +116,12 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public Client client() {
+    public ClientInstance client() {
         return session.client();
     }
 
     @Override
-    public Session session() {
+    public ClientSession session() {
         return session;
     }
 
@@ -177,7 +177,7 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public ReceiveContext openReceiveContext(ReceiveContextOptions options) {
+    public ClientReceiveContext openReceiveContext(ReceiveContextOptions options) {
         return new ClientReceiveContext(this, options);
     }
 
@@ -337,6 +337,32 @@ public class ClientReceiver implements Receiver {
 
     //----- Internal API
 
+    void attachToNextDelivery(ClientReceiveContext context) throws ClientException {
+        checkClosedOrFailed();
+        executor.execute(() -> {
+            ClientDelivery delivery = messageQueue.dequeueNoWait();
+            if (delivery == null) {
+                IncomingDelivery lastDelivery = null;
+                for (IncomingDelivery candidate : protonReceiver.unsettled()) {
+                    lastDelivery = candidate;
+                }
+
+                // If a partial delivery is waiting for completion and not linked to a
+                // receive context already we can grab it and assign it to this one otherwise
+                // the context has to be placed into the wait queue for a future arriving
+                // delivery.
+                if (lastDelivery.isPartial() && lastDelivery.getLinkedResource() == null) {
+                    delivery = new ClientDelivery(this, lastDelivery);
+                } else {
+                    waitingRcvContexts.offer(context);
+                }
+
+            } else {
+                context.handleDeliveryRead(delivery);
+            }
+        });
+    }
+
     void disposition(IncomingDelivery delivery, DeliveryState state, boolean settled) throws ClientException {
         checkClosedOrFailed();
         executor.execute(() -> {
@@ -358,7 +384,7 @@ public class ClientReceiver implements Receiver {
                       .closeHandler(this::handleRemoteCloseOrDetach)
                       .detachHandler(this::handleRemoteCloseOrDetach)
                       .parentEndpointClosedHandler(this::handleParentEndpointClosed)
-                      .deliveryStateUpdatedHandler(this::handleDeliveryRemotelyUpdated)
+                      .deliveryStateUpdatedHandler(this::handleDeliveryStateRemotelyUpdated)
                       .deliveryReadHandler(this::handleDeliveryReceived)
                       .creditStateUpdateHandler(this::handleReceiverCreditUpdated)
                       .engineShutdownHandler(this::handleEngineShutdown)
@@ -499,7 +525,7 @@ public class ClientReceiver implements Receiver {
         }
     }
 
-    private void handleDeliveryRemotelyUpdated(IncomingDelivery delivery) {
+    private void handleDeliveryStateRemotelyUpdated(IncomingDelivery delivery) {
         LOG.trace("Delivery remote state was updated: {}", delivery);
     }
 

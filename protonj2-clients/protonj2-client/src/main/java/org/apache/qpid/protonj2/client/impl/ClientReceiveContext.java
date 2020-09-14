@@ -18,18 +18,26 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.protonj2.client.Delivery;
+import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.InputStreamOptions;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.ReceiveContext;
 import org.apache.qpid.protonj2.client.ReceiveContextOptions;
+import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryAbortedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryIsPartialException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
+import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
+import org.apache.qpid.protonj2.client.futures.ClientFuture;
+import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
@@ -41,31 +49,58 @@ public class ClientReceiveContext implements ReceiveContext {
     private final ClientReceiver receiver;
     @SuppressWarnings("unused")
     private final ReceiveContextOptions options;
+    private final ClientFuture<ClientReceiveContextDelivery> deliveryFuture;
 
-    private ClientDelivery delivery;
+    private ClientReceiveContextDelivery delivery;
 
     ClientReceiveContext(ClientReceiver receiver, ReceiveContextOptions options) {
         this.receiver = receiver;
         this.options = new ReceiveContextOptions(options);
+
+        this.deliveryFuture = receiver.session().getFutureFactory().createFuture();
     }
 
     @Override
-    public ClientReceiveContext awaitDelivery() {
+    public ClientReceiveContext awaitDelivery() throws ClientException {
+        if (!deliveryFuture.isComplete()) {
+            try {
+                this.delivery = deliveryFuture.get();
+            } catch (InterruptedException e) {
+                Thread.interrupted();
+                throw new ClientException("Wait for delivery was interrupted", e);
+            } catch (ExecutionException e) {
+                throw ClientExceptionSupport.createNonFatalOrPassthrough(e.getCause());
+            }
+        }
+
         return this;
     }
 
     @Override
     public ClientReceiveContext awaitDelivery(long timeout, TimeUnit unit) throws ClientException {
+        if (!deliveryFuture.isComplete()) {
+            try {
+                this.delivery = deliveryFuture.get(timeout, unit);
+            } catch (InterruptedException e) {
+                Thread.interrupted();
+                throw new ClientException("Wait for delivery was interrupted", e);
+            } catch (ExecutionException e) {
+                throw ClientExceptionSupport.createNonFatalOrPassthrough(e.getCause());
+            } catch (TimeoutException e) {
+                throw new ClientOperationTimedOutException("Timed out waiting for new Delivery", e);
+            }
+        }
+
         return this;
     }
 
     @Override
-    public ClientDelivery delivery() {
+    public Delivery delivery() {
         return delivery;
     }
 
     @Override
-    public ClientReceiver receiver() {
+    public Receiver receiver() {
         return receiver;
     }
 
@@ -110,6 +145,18 @@ public class ClientReceiveContext implements ReceiveContext {
         return null;
     }
 
+    void handleDeliveryRead(ClientDelivery delivery) {
+        delivery.protonDelivery().setLinkedResource(this);
+
+        // Is this the first delivery of is this a new delivery in an ongoing
+        // transfer of a larger message set.
+        if (deliveryFuture.isComplete()) {
+            deliveryFuture.complete(new ClientReceiveContextDelivery(delivery));
+        } else {
+
+        }
+    }
+
     private void checkClosed() throws ClientIllegalStateException {
         if (receiver.isClosed()) {
             throw new ClientIllegalStateException("The parent Receiver instance has already been closed.");
@@ -123,6 +170,103 @@ public class ClientReceiveContext implements ReceiveContext {
     }
 
     //----- Internal InputStream implementations
+
+    /*
+     * The context requires its own delivery implementation to allow for handling calls to
+     * the delivery state modifiers like release or reject as the stream would need to be
+     * unblocked by those if a read was blocked.
+     */
+    private class ClientReceiveContextDelivery implements Delivery {
+
+        private final ClientDelivery delivery;
+
+        public ClientReceiveContextDelivery(ClientDelivery delivery) {
+            this.delivery = delivery;
+        }
+
+        public IncomingDelivery protonDelivery() {
+            return delivery.protonDelivery();
+        }
+
+        @Override
+        public Receiver receiver() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public <E> Message<E> message() throws ClientException {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public Map<String, Object> deliveryAnnotations() throws ClientException {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public Delivery accept() throws ClientException {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public Delivery release() throws ClientException {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public Delivery reject(String condition, String description) throws ClientException {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public Delivery modified(boolean deliveryFailed, boolean undeliverableHere) throws ClientException {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public Delivery disposition(DeliveryState state, boolean settle) throws ClientException {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public Delivery settle() throws ClientException {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public boolean settled() {
+            return delivery.settled();
+        }
+
+        @Override
+        public DeliveryState state() {
+            return delivery.state();
+        }
+
+        @Override
+        public DeliveryState remoteState() {
+            return delivery.remoteState();
+        }
+
+        @Override
+        public boolean remoteSettled() {
+            return delivery.remoteSettled();
+        }
+
+        @Override
+        public int messageFormat() {
+            return delivery.messageFormat();
+        }
+    }
 
     @SuppressWarnings("unused")
     private class RawInputStream extends InputStream {
