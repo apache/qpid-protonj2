@@ -43,6 +43,11 @@ public interface Engine extends Consumer<ProtonBuffer> {
     boolean isWritable();
 
     /**
+     * @return true if the Engine has entered the running state and is not failed or shutdown.
+     */
+    boolean isRunning();
+
+    /**
      * @return true if the Engine has been shutdown and is no longer usable.
      */
     boolean isShutdown();

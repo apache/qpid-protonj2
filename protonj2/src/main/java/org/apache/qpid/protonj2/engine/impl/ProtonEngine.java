@@ -93,6 +93,11 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
+    public boolean isRunning() {
+        return state == EngineState.STARTED;
+    }
+
+    @Override
     public boolean isShutdown() {
         return state.ordinal() >= EngineState.SHUTDOWN.ordinal();
     }
