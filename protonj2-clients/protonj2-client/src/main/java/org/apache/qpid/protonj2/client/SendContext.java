@@ -45,8 +45,8 @@ public interface SendContext {
     Sender sender();
 
     /**
-     * Following the first send of an {@link AdvancedMessage} for this {@link SendContext}
-     * the context will have an assigned {@link Tracker} that can be used to monitor the
+     * Following the first send of any message data from this {@link SendContext} the
+     * context will have an assigned {@link Tracker} that can be used to monitor the
      * remote state of the delivery that comprises the multiple framed message transfer.
      *
      * @return the {@link Tracker} instance assigned to this {@link SendContext}
@@ -95,13 +95,8 @@ public interface SendContext {
     boolean completed();
 
     /**
-     * Marks the currently streaming message as being aborted.
-     * <p>
-     * Simply marking a {@link AdvancedMessage} as being aborted does not signal
-     * the remote peer that the message was aborted, the message must be sent a final
-     * time using the {@link Sender} that was used to stream it originally.  A
-     * {@link AdvancedMessage} cannot be aborted following a send where the complete
-     * flag was set to true (default value).
+     * Marks the currently streaming message as being aborted. Once aborted no further
+     * writes regardless of whether any writes have yet been performed or not.
      *
      * @param aborted
      *      Should the message be marked as having been aborted.
