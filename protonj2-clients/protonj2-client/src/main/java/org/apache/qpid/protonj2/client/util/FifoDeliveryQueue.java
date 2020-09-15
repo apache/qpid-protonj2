@@ -98,7 +98,7 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
     }
 
     @Override
-    public final ClientDelivery dequeueNoWait() {
+    public ClientDelivery dequeueNoWait() {
         lock.lock();
         try {
             if (!isRunning()) {
@@ -112,7 +112,7 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
     }
 
     @Override
-    public final void start() {
+    public void start() {
         if (STATE_FIELD_UPDATER.compareAndSet(this, STOPPED, RUNNING)) {
             lock.lock();
             try {
@@ -124,7 +124,7 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
     }
 
     @Override
-    public final void stop() {
+    public void stop() {
         if (STATE_FIELD_UPDATER.compareAndSet(this, RUNNING, STOPPED)) {
             lock.lock();
             try {
@@ -136,7 +136,7 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
     }
 
     @Override
-    public final void close() {
+    public void close() {
         if (STATE_FIELD_UPDATER.getAndSet(this, CLOSED) > CLOSED) {
             lock.lock();
             try {
@@ -148,12 +148,12 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
     }
 
     @Override
-    public final boolean isRunning() {
+    public boolean isRunning() {
         return state == RUNNING;
     }
 
     @Override
-    public final boolean isClosed() {
+    public boolean isClosed() {
         return state == CLOSED;
     }
 

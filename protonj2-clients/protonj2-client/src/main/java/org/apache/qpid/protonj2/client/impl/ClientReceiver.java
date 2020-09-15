@@ -43,6 +43,7 @@ import org.apache.qpid.protonj2.client.util.FifoDeliveryQueue;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.Outcome;
 import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
@@ -181,34 +182,6 @@ public class ClientReceiver implements Receiver {
         return new ClientReceiveContext(this, options);
     }
 
-    private void asyncReplenishCreditIfNeeded() {
-        int creditWindow = options.creditWindow();
-        if (creditWindow > 0) {
-            executor.execute(() -> replenishCreditIfNeeded());
-        }
-    }
-
-    private void replenishCreditIfNeeded() {
-        int creditWindow = options.creditWindow();
-        if (creditWindow > 0) {
-            int currentCredit = protonReceiver.getCredit();
-            if (currentCredit <= creditWindow * 0.5) {
-                int potentialPrefetch = currentCredit + messageQueue.size();
-
-                if (potentialPrefetch <= creditWindow * 0.7) {
-                    int additionalCredit = creditWindow - potentialPrefetch;
-
-                    LOG.trace("Consumer granting additional credit: {}", additionalCredit);
-                    try {
-                        protonReceiver.addCredit(additionalCredit);
-                    } catch (Exception ex) {
-                        LOG.debug("Error caught during credit top-up", ex);
-                    }
-                }
-            }
-        }
-    }
-
     @Override
     public ClientFuture<Receiver> close() {
         return doCloseOrDetach(true, null);
@@ -340,8 +313,9 @@ public class ClientReceiver implements Receiver {
     void attachToNextDelivery(ClientReceiveContext context) throws ClientException {
         checkClosedOrFailed();
         executor.execute(() -> {
-            ClientDelivery delivery = messageQueue.dequeueNoWait();
-            if (delivery == null) {
+            final ClientDelivery delivery;
+
+            if (messageQueue.isEmpty()) {
                 IncomingDelivery lastDelivery = null;
                 for (IncomingDelivery candidate : protonReceiver.unsettled()) {
                     lastDelivery = candidate;
@@ -354,26 +328,71 @@ public class ClientReceiver implements Receiver {
                 if (lastDelivery.isPartial() && lastDelivery.getLinkedResource() == null) {
                     delivery = new ClientDelivery(this, lastDelivery);
                 } else {
+                    delivery = null;
                     waitingRcvContexts.offer(context);
                 }
-
             } else {
+                // Already have a completed prefetched message so hand that off first to preserve order
+                delivery = messageQueue.dequeueNoWait();
+            }
+
+            if (delivery != null) {
+                if (!delivery.protonDelivery().isPartial()) {
+                    if (options.autoAccept()) {
+                        asyncApplyDisposition(delivery.protonDelivery(), Accepted.getInstance(), options.autoSettle());
+                    } else {
+                        asyncReplenishCreditIfNeeded();
+                    }
+                }
+
                 context.handleDeliveryRead(delivery);
             }
         });
     }
 
-    void disposition(IncomingDelivery delivery, DeliveryState state, boolean settled) throws ClientException {
+    void disposition(IncomingDelivery delivery, DeliveryState state, boolean settle) throws ClientException {
         checkClosedOrFailed();
+        asyncApplyDisposition(delivery, state, settle);
+    }
+
+    private void asyncApplyDisposition(IncomingDelivery delivery, DeliveryState state, boolean settle) {
         executor.execute(() -> {
             if (session.getTransactionContext().isInTransaction()) {
                 delivery.disposition(session.getTransactionContext().enlistAcknowledgeInCurrentTransaction(this, (Outcome) state), true);
             } else {
-                delivery.disposition(state, settled);
+                delivery.disposition(state, settle);
             }
 
             replenishCreditIfNeeded();
         });
+    }
+
+    private void replenishCreditIfNeeded() {
+        int creditWindow = options.creditWindow();
+        if (creditWindow > 0) {
+            int currentCredit = protonReceiver.getCredit();
+            if (currentCredit <= creditWindow * 0.5) {
+                int potentialPrefetch = currentCredit + messageQueue.size();
+
+                if (potentialPrefetch <= creditWindow * 0.7) {
+                    int additionalCredit = creditWindow - potentialPrefetch;
+
+                    LOG.trace("Consumer granting additional credit: {}", additionalCredit);
+                    try {
+                        protonReceiver.addCredit(additionalCredit);
+                    } catch (Exception ex) {
+                        LOG.debug("Error caught during credit top-up", ex);
+                    }
+                }
+            }
+        }
+    }
+
+    private void asyncReplenishCreditIfNeeded() {
+        int creditWindow = options.creditWindow();
+        if (creditWindow > 0) {
+            executor.execute(() -> replenishCreditIfNeeded());
+        }
     }
 
     ClientReceiver open() {
@@ -512,11 +531,19 @@ public class ClientReceiver implements Receiver {
     private void handleDeliveryReceived(IncomingDelivery delivery) {
         LOG.trace("Delivery data was received: {}", delivery);
 
-        if (delivery.getDefaultDeliveryState() != null) {
+        if (delivery.getDefaultDeliveryState() == null) {
             delivery.setDefaultDeliveryState(Released.getInstance());
         }
 
         if (delivery.isAborted()) {
+            if (delivery.getLinkedResource() != null) {
+                try {
+                    delivery.getLinkedResource(ClientDelivery.class).handleDeliveryAborted();
+                } catch (ClassCastException cce) {
+                    // Not linked to a receive context other type checks can follow.
+                }
+            }
+
             delivery.settle();
             replenishCreditIfNeeded();
         } else if (!delivery.isPartial()) {

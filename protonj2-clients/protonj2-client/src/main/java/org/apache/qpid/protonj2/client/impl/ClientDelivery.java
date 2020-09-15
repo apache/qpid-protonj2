@@ -17,11 +17,13 @@
 package org.apache.qpid.protonj2.client.impl;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
+import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryAbortedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryIsPartialException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
@@ -36,13 +38,15 @@ import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 /**
  * Client inbound delivery object.
  */
-public class ClientDelivery implements Delivery {
+public final class ClientDelivery implements Delivery {
 
     private final ClientReceiver receiver;
     private final IncomingDelivery delivery;
 
     private DeliveryAnnotations deliveryAnnotations;
     private Message<?> cachedMessage;
+
+    private Consumer<ClientDelivery> abortedHandler;
 
     /**
      * Creates a new client delivery object linked to the given {@link IncomingDelivery}
@@ -56,6 +60,7 @@ public class ClientDelivery implements Delivery {
     ClientDelivery(ClientReceiver receiver, IncomingDelivery delivery) {
         this.receiver = receiver;
         this.delivery = delivery;
+        this.delivery.setLinkedResource(this);
     }
 
     @SuppressWarnings("unchecked")
@@ -63,6 +68,8 @@ public class ClientDelivery implements Delivery {
     public <E> Message<E> message() throws ClientException {
         if (delivery.isPartial()) {
             throw new ClientDeliveryIsPartialException("Delivery contains only a partial amount of the message payload.");
+        } else if (delivery.isAborted()) {
+            throw new ClientDeliveryAbortedException("Cannot read Message contents from an aborted delivery.");
         }
 
         Message<E> message = (Message<E>) cachedMessage;
@@ -111,12 +118,7 @@ public class ClientDelivery implements Delivery {
 
     @Override
     public Delivery disposition(DeliveryState state, boolean settle) throws ClientException {
-        org.apache.qpid.protonj2.types.transport.DeliveryState protonState = null;
-        if (state != null) {
-            protonState = ClientDeliveryState.asProtonType(state);
-        }
-
-        receiver.disposition(delivery, protonState, settle);
+        receiver.disposition(delivery, ClientDeliveryState.asProtonType(state), settle);
         return this;
     }
 
@@ -156,6 +158,14 @@ public class ClientDelivery implements Delivery {
         return delivery.isSettled();
     }
 
+    void handleDeliveryAborted() {
+        if (abortedHandler != null) {
+            try {
+                abortedHandler.accept(this);
+            } catch (Exception ignore) {}
+        }
+    }
+
     //----- Internal API not meant to be used from outside the client package.
 
     IncomingDelivery protonDelivery() {
@@ -164,5 +174,14 @@ public class ClientDelivery implements Delivery {
 
     void deliveryAnnotations(DeliveryAnnotations deliveryAnnotations) {
         this.deliveryAnnotations = deliveryAnnotations;
+    }
+
+    public Consumer<ClientDelivery> abortedHandler() {
+        return abortedHandler;
+    }
+
+    ClientDelivery abortedHandler(Consumer<ClientDelivery> abortedHandler) {
+        this.abortedHandler = abortedHandler;
+        return this;
     }
 }

@@ -134,13 +134,10 @@ public interface ReceiveContext {
      * the stream {@link InputStream#available()} method to determine if any bytes are locally
      * ready for consumption.
      *
-     * @param options
-     *      The stream options to use to configure the returned {@link InputStream}
-     *
-     * @return a {@link InputStream} instance configured using the given options.
+     * @return a {@link InputStream} instance configured using the context options.
      *
      * @throws ClientException if an error occurs while creating the input stream.
      */
-    InputStream rawInputStream(InputStreamOptions options) throws ClientException;
+    InputStream rawInputStream() throws ClientException;
 
 }

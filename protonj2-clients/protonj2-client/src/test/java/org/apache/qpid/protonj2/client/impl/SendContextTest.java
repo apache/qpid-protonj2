@@ -35,6 +35,7 @@ import org.apache.qpid.protonj2.client.SendContextOptions;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
+import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.HeaderMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferPayloadCompositeMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAmqpValueMatcher;
@@ -49,10 +50,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Tests the {@link MessageOutputStream} implementation
+ * Tests the {@link SendContext} implementation
  */
 @Timeout(20)
-class SendContextTest {
+public class SendContextTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(SendContextTest.class);
 
