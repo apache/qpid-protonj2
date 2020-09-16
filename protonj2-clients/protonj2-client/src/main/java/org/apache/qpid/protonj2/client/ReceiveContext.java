@@ -117,7 +117,7 @@ public interface ReceiveContext {
      *
      * @return true if this context has been marked as being the complete.
      */
-    boolean complete();
+    boolean completed();
 
     /**
      * Creates an {@link InputStream} instance configured with the given options that will

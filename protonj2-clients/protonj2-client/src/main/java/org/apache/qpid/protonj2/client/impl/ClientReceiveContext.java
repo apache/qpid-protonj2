@@ -121,7 +121,7 @@ public class ClientReceiveContext implements ReceiveContext {
     }
 
     @Override
-    public boolean complete() {
+    public boolean completed() {
         if (delivery != null && delivery.protonDelivery() != null) {
             return !delivery.protonDelivery().isPartial() && !delivery.protonDelivery().isAborted();
         } else {
