@@ -341,7 +341,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         }
 
         if (remotelyClosed && !locallyClosed) {
-            peer.remoteDetach();
+            peer.remoteDetach().now();
         }
 
         engine.shutdown();
@@ -3411,6 +3411,118 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
 
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_0000)
+    public void testReceiverCreditNotClearedUntilClosedAfterRemoteClosed() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(10);
+        peer.remoteDetach().queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("test").open().addCredit(10);
+
+        peer.waitForScriptToComplete();
+        peer.expectDetach();
+
+        assertEquals(10, receiver.getCredit());
+        receiver.close();
+        assertEquals(0, receiver.getCredit());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_0000)
+    public void testReceiverCreditNotClearedUntilClosedAfterSessionRemoteClosed() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(10);
+        peer.remoteEnd().queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("test").open().addCredit(10);
+
+        peer.waitForScriptToComplete();
+        peer.expectDetach();
+
+        assertEquals(10, receiver.getCredit());
+        receiver.close();
+        assertEquals(0, receiver.getCredit());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_0000)
+    public void testReceiverCreditNotClearedUntilClosedAfterConnectionRemoteClosed() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(10);
+        peer.remoteClose().queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("test").open().addCredit(10);
+
+        peer.waitForScriptToComplete();
+        peer.expectDetach();
+
+        assertEquals(10, receiver.getCredit());
+        receiver.close();
+        assertEquals(0, receiver.getCredit());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_0000)
+    public void testReceiverCreditNotClearedUntilClosedAfterEngineShutdown() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(10);
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("test").open().addCredit(10);
+
+        peer.waitForScriptToComplete();
+
+        engine.shutdown();
+
+        assertEquals(10, receiver.getCredit());
+        receiver.close();
+        assertEquals(0, receiver.getCredit());
+
+        peer.waitForScriptToComplete();
         assertNull(failure);
     }
 }

@@ -553,7 +553,10 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
     //----- Process local events from the parent session and connection
 
     final void handleSessionLocallyClosed(ProtonSession session) {
-        getCreditState().clearCredit();
+        if (isSender()) {
+            getCreditState().clearCredit();
+        }
+
         if (operability.ordinal() < LinkOperabilityState.SESSION_LOCALLY_CLOSED.ordinal()) {
             operability = LinkOperabilityState.SESSION_LOCALLY_CLOSED;
             transitionToParentLocallyClosed();
@@ -562,7 +565,10 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
     }
 
     final void handleSessionRemotelyClosed(ProtonSession session) {
-        getCreditState().clearCredit();
+        if (isSender()) {
+            getCreditState().clearCredit();
+        }
+
         if (operability.ordinal() < LinkOperabilityState.SESSION_REMOTELY_CLOSED.ordinal()) {
             operability = LinkOperabilityState.SESSION_REMOTELY_CLOSED;
             transitionToParentRemotelyClosed();
@@ -570,7 +576,10 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
     }
 
     final void handleConnectionLocallyClosed(ProtonConnection connection) {
-        getCreditState().clearCredit();
+        if (isSender()) {
+            getCreditState().clearCredit();
+        }
+
         if (operability.ordinal() < LinkOperabilityState.CONNECTION_LOCALLY_CLOSED.ordinal()) {
             operability = LinkOperabilityState.CONNECTION_LOCALLY_CLOSED;
             transitionToParentLocallyClosed();
@@ -579,7 +588,10 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
     }
 
     final void handleConnectionRemotelyClosed(ProtonConnection connection) {
-        getCreditState().clearCredit();
+        if (isSender()) {
+            getCreditState().clearCredit();
+        }
+
         if (operability.ordinal() < LinkOperabilityState.CONNECTION_REMOTELY_CLOSED.ordinal()) {
             operability = LinkOperabilityState.CONNECTION_REMOTELY_CLOSED;
             transitionToParentRemotelyClosed();
@@ -587,7 +599,10 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
     }
 
     final void handleEngineShutdown(ProtonEngine protonEngine) {
-        getCreditState().clearCredit();
+        if (isSender()) {
+            getCreditState().clearCredit();
+        }
+
         if (operability.ordinal() < LinkOperabilityState.ENGINE_FAILED.ordinal()) {
             operability = LinkOperabilityState.ENGINE_FAILED;
         }
@@ -641,7 +656,9 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
     final ProtonLink<?> remoteDetach(Detach detach) {
         LOG.trace("Link:{} Received remote Detach:{}", self(), detach);
         setRemoteCondition(detach.getError());
-        getCreditState().clearCredit();
+        if (isSender()) {
+            getCreditState().clearCredit();
+        }
 
         handleRemoteDetach(detach);
 
