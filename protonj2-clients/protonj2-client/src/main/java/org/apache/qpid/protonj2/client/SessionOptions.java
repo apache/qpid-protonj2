@@ -25,13 +25,14 @@ import java.util.Map;
  */
 public class SessionOptions {
 
-    static final SessionOptions DEFAULT = new SessionOptions();
+    public static final int DEFAULT_SESSION_CAPACITY = 100 * 1024 * 1024;
 
     private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = ConnectionOptions.DEFAULT_REQUEST_TIMEOUT;
     private long openTimeout = ConnectionOptions.DEFAULT_OPEN_TIMEOUT;
     private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
 
+    private int incomingCapacity = DEFAULT_SESSION_CAPACITY;
     private String[] offeredCapabilities;
     private String[] desiredCapabilities;
     private Map<String, Object> properties;
@@ -157,6 +158,31 @@ public class SessionOptions {
      */
     public SessionOptions properties(Map<String, Object> properties) {
         this.properties = properties;
+        return this;
+    }
+
+    /**
+     * @return the incoming capacity that is configured for newly created {@link Session} instances.
+     */
+    public int incomingCapacity() {
+        return incomingCapacity;
+    }
+
+    /**
+     * Sets the incoming capacity for a {@link Session} the created session.  The incoming capacity
+     * control how much buffering a session will allow before applying back pressure to the remote
+     * thereby preventing excessive memory overhead.
+     * <p>
+     * This is an advanced option and in most cases the client defaults should be left in place unless
+     * a specific issue needs to be addressed.
+     *
+     * @param incomingCapacity
+     *      the incoming capacity to set when creating a new {@link Session}.
+     *
+     * @return this {@link SessionOptions} instance.
+     */
+    public SessionOptions incomingCapacity(int incomingCapacity) {
+        this.incomingCapacity = incomingCapacity;
         return this;
     }
 }

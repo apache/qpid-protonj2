@@ -17,19 +17,27 @@
 package org.apache.qpid.protonj2.client;
 
 import java.io.OutputStream;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Section;
+import org.apache.qpid.protonj2.types.transport.Disposition;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
- * A send context allows for control over a {@link Message} send where the contents to
- * be sent can span multiple {@link Transfer} frames that are sent to the remote peer.
- * In order to perform a multiple framed {@link Message} send a new {@link SendContext}
- * must be created at the start of each new message boundary.
+ * Streaming Message Tracker object used to operate on and track the state of a streamed message
+ * at the remote. The {@link StreamTracker} allows for local settlement and disposition management
+ * as well as waiting for remote settlement of a streamed message.
  */
-public interface SendContext {
+public interface StreamTracker {
+
+    /**
+     * @return the {@link Sender} that was used to send the delivery that is being tracked.
+     */
+    StreamSender sender();
 
     /**
      * Returns the configured message format value that will be set on the first outgoing
@@ -40,18 +48,20 @@ public interface SendContext {
     int messageFormat();
 
     /**
-     * @return the {@link Sender} that this context is operating within.
-     */
-    Sender sender();
-
-    /**
-     * Following the first send of any message data from this {@link SendContext} the
-     * context will have an assigned {@link Tracker} that can be used to monitor the
-     * remote state of the delivery that comprises the multiple framed message transfer.
+     * Sets the configured message format value that will be set on the first outgoing
+     * AMQP {@link Transfer} frame for the delivery that comprises this streamed message.
+     * This value can only be updated before write operation is attempted and will throw
+     * an {@link ClientIllegalStateException} if any attempt to alter the value is made
+     * following a write.
      *
-     * @return the {@link Tracker} instance assigned to this {@link SendContext}
+     * @param messageFormat
+     *      The assigned AMQP message format for this streamed message.
+     *
+     * @return this {@link StreamTracker} instance.
+     *
+     * @throws ClientException if an error occurs while attempting set the message format.
      */
-    Tracker tracker();
+    StreamTracker messageFormat(int messageFormat) throws ClientException;
 
     /**
      * Writes the given {@link Section} into the {@link SendContext}.  The the data written we
@@ -61,20 +71,20 @@ public interface SendContext {
      * @param section
      *      The {@link Section} instance to be written into this send context..
      *
-     * @return this {@link SendContext} instance.
+     * @return this {@link StreamTracker} instance.
      *
      * @throws ClientException if an error occurs while attempting to write the section.
      */
-    SendContext write(Section<?> section) throws ClientException;
+    StreamTracker write(Section<?> section) throws ClientException;
 
     /**
      * Sends all currently buffered message body data over the parent {@link Sender} link.
      *
-     * @return this {@link SendContext} instance.
+     * @return this {@link StreamTracker} instance.
      *
      * @throws ClientException if an error occurs while attempting to write the buffered contents.
      */
-    SendContext flush() throws ClientException;
+    StreamTracker flush() throws ClientException;
 
     /**
      * Marks the currently streaming message as being complete.
@@ -83,11 +93,11 @@ public interface SendContext {
      * final {@link Transfer} frame to be sent to the remote indicating that the ongoing
      * streaming delivery is done and no more message data will arrive.
      *
-     * @return this {@link SendContext} instance.
+     * @return this {@link StreamTracker} instance.
      *
      * @throws ClientException if an error occurs while initiating the completion operation.
      */
-    SendContext complete() throws ClientException;
+    StreamTracker complete() throws ClientException;
 
     /**
      * @return true if this message has been marked as being complete.
@@ -101,11 +111,11 @@ public interface SendContext {
      * @param aborted
      *      Should the message be marked as having been aborted.
      *
-     * @return this {@link SendContext} instance.
+     * @return this {@link StreamTracker} instance.
      *
      * @throws ClientException if an error occurs while initiating the abort operation.
      */
-    SendContext abort() throws ClientException;
+    StreamTracker abort() throws ClientException;
 
     /**
      * @return true if this {@link SendContext} has been marked as aborted previously.
@@ -156,5 +166,89 @@ public interface SendContext {
      * @see #dataOutputStream(OutputStreamOptions)
      */
     OutputStream rawOutputStream(OutputStreamOptions options) throws ClientException;
+
+    /**
+     * Settles the delivery locally, if not {@link SenderOptions#autoSettle() auto-settling}.
+     *
+     * @return this {@link StreamTracker} instance.
+     *
+     * @throws ClientException if an error occurs while performing the settlement.
+     */
+    StreamTracker settle() throws ClientException;
+
+    /**
+     * @return true if the sent message has been locally settled.
+     */
+    boolean settled();
+
+    /**
+     * Gets the current local state for the tracked delivery.
+     *
+     * @return the delivery state
+     */
+    DeliveryState state();
+
+    /**
+     * Gets the current remote state for the tracked delivery.
+     *
+     * @return the remote {@link DeliveryState} once a value is received from the remote.
+     */
+    DeliveryState remoteState();
+
+    /**
+     * Gets whether the delivery was settled by the remote peer yet.
+     *
+     * @return whether the delivery is remotely settled
+     */
+    boolean remoteSettled();
+
+    /**
+     * Updates the DeliveryState, and optionally settle the delivery as well.
+     *
+     * @param state
+     *            the delivery state to apply
+     * @param settle
+     *            whether to {@link #settle()} the delivery at the same time
+     *
+     * @return this {@link StreamTracker} instance.
+     *
+     * @throws ClientException
+     */
+    StreamTracker disposition(DeliveryState state, boolean settle) throws ClientException;
+
+    /**
+     * Returns a future that can be used to wait for the remote to acknowledge receipt of
+     * a sent message by settling it.
+     *
+     * @return a {@link Future} that can be used to wait on remote settlement.
+     */
+    Future<StreamTracker> settlementFuture();
+
+    /**
+     * Waits if necessary for the remote to settle the sent delivery unless it has
+     * either already been settled or the original delivery was sent settled in which
+     * case the remote will not send a {@link Disposition} back.
+     *
+     * @return this {@link StreamTracker} instance.
+     *
+     * @throws ClientException if an error occurs while awaiting the remote settlement.
+     */
+    StreamTracker awaitSettlement() throws ClientException;
+
+    /**
+     * Waits if necessary for the remote to settle the sent delivery unless it has
+     * either already been settled or the original delivery was sent settled in which
+     * case the remote will not send a {@link Disposition} back.
+     *
+     * @param timeout
+     *      the maximum time to wait for the remote to settle.
+     * @param unit
+     *      the time unit of the timeout argument.
+     *
+     * @return this {@link StreamTracker} instance.
+     *
+     * @throws ClientException if an error occurs while awaiting the remote settlement.
+     */
+    StreamTracker awaitSettlement(long timeout, TimeUnit unit) throws ClientException;
 
 }

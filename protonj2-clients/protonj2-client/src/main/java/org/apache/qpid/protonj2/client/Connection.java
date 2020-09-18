@@ -97,7 +97,7 @@ public interface Connection {
      * @param receiverOptions
      *            The options for this receiver.
      *
-     * @return the consumer.
+     * @return the newly created {@link Receiver} instance.
      *
      * @throws ClientException if an internal error occurs.
      */
@@ -112,7 +112,7 @@ public interface Connection {
      * @param subscriptionName
      * 			The name to give the subscription (link name).
      *
-     * @return the newly created {@link Receiver}
+     * @return the newly created {@link Receiver} instance.
      *
      * @throws ClientException if an internal error occurs.
      */
@@ -129,7 +129,7 @@ public interface Connection {
      * @param receiverOptions
      *            The options for this receiver.
      *
-     * @return the newly created {@link Receiver}
+     * @return the newly created {@link Receiver} instance.
      *
      * @throws ClientException if an internal error occurs.
      */
@@ -145,7 +145,7 @@ public interface Connection {
      * to respond to the open request by calling the {@link Receiver#openFuture()} method and using the
      * {@link Future#get()} methods to wait for completion.
      *
-     * @return the newly created {@link Receiver}
+     * @return the newly created {@link Receiver} instance.
      *
      * @throws ClientException if an internal error occurs.
      */
@@ -162,7 +162,7 @@ public interface Connection {
      * @param dynamicNodeProperties
      * 		The dynamic node properties to be applied to the node created by the remote.
      *
-     * @return the newly created {@link Receiver}
+     * @return the newly created {@link Receiver} instance.
      *
      * @throws ClientException if an internal error occurs.
      */
@@ -179,7 +179,7 @@ public interface Connection {
      * @param receiverOptions
      * 		The options for this receiver.
      *
-     * @return the newly created {@link Receiver}
+     * @return the newly created {@link Receiver} instance.
      *
      * @throws ClientException if an internal error occurs.
      */
@@ -198,11 +198,51 @@ public interface Connection {
      * @param receiverOptions
      *      The options for this receiver.
      *
-     * @return the newly created {@link Receiver}
+     * @return the newly created {@link Receiver} instance.
      *
      * @throws ClientException if an internal error occurs.
      */
     Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException;
+
+    /**
+     * Creates a streaming message receiver used to consume large messages from the given node address.  The
+     * returned {@link StreamReceiver} will be configured using default options and will take its timeout
+     * configuration values from those specified in the parent {@link Connection}.
+     *
+     * The returned stream receiver may not have been opened on the remote when it is returned.  Some methods of
+     * the {@link StreamReceiver} can block until the remote fully opens the receiver link, the user can wait for
+     * the remote to respond to the open request by calling the {@link StreamReceiver#openFuture()} method and using
+     * the {@link Future#get()} methods to wait for completion.
+     *
+     * @param address
+     *            The source address to attach the consumer to.
+     *
+     * @return the newly created {@link StreamReceiver} instance.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    StreamReceiver openStreamReceiver(String address) throws ClientException;
+
+    /**
+     * Creates a streaming message receiver used to consume large messages from the given node address.  The
+     * returned receiver will be configured using the options provided in the given {@link ReceiverOptions}
+     * instance.
+     *
+     * The returned {@link StreamReceiver} may not have been opened on the remote when it is returned.  Some
+     * methods of the {@link StreamReceiver} can block until the remote fully opens the receiver link, the user
+     * can wait for the remote to respond to the open request by calling the {@link StreamReceiver#openFuture()}
+     * method and using the {@link Future#get()} methods to wait for completion.
+     *
+     * @param address
+     *            The source address to attach the consumer to.
+     * @param receiverOptions
+     *            The options for this receiver.
+     *
+     * @return the newly created {@link StreamReceiver} instance.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    StreamReceiver openStreamReceiver(String address, StreamReceiverOptions receiverOptions) throws ClientException;
 
     /**
      * Returns the default anonymous sender used by this {@link Connection} for {@link #send(Message)}
@@ -252,6 +292,44 @@ public interface Connection {
      * @throws ClientException if an internal error occurs.
      */
     Sender openSender(String address, SenderOptions senderOptions) throws ClientException;
+
+    /**
+     * Creates a stream sender used to send large messages to the given node address.  The returned sender will
+     * be configured using default options and will take its timeout configuration values from those
+     * specified in the parent {@link Connection}.
+     *
+     * The returned {@link StreamSender} may not have been opened on the remote when it is returned.  Some methods
+     * of the {@link StreamSender} can block until the remote fully opens the sender, the user can wait for the
+     * remote to respond to the open request by calling the {@link StreamSender#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
+     *
+     * @param address
+     *            The target address to attach to, cannot be null.
+     *
+     * @return the stream sender.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    StreamSender openStreamSender(String address) throws ClientException;
+
+    /**
+     * Creates a streaming sender used to send large messages to the given node address.
+     * <p>
+     * The returned {@link StreamSender} may not have been opened on the remote when it is returned.  Some methods
+     * of the {@link StreamSender} can block until the remote fully opens the sender, the user can wait for the
+     * remote to respond to the open request by calling the {@link StreamSender#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
+     *
+     * @param address
+     *            The target address to attach to, cannot be null.
+     * @param senderOptions
+     *            The options for this sender.
+     *
+     * @return the sender.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    StreamSender openStreamSender(String address, StreamSenderOptions senderOptions) throws ClientException;
 
     /**
      * Creates a sender that is established to the 'anonymous relay' and as such each message

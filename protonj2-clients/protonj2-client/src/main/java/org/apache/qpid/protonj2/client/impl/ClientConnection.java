@@ -29,7 +29,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.BiConsumer;
@@ -47,6 +46,10 @@ import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.SessionOptions;
+import org.apache.qpid.protonj2.client.StreamReceiver;
+import org.apache.qpid.protonj2.client.StreamReceiverOptions;
+import org.apache.qpid.protonj2.client.StreamSender;
+import org.apache.qpid.protonj2.client.StreamSenderOptions;
 import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -85,10 +88,10 @@ public class ClientConnection implements Connection {
     private final ConnectionOptions options;
     private final ClientConnectionCapabilities capabilities = new ClientConnectionCapabilities();
     private final ClientFutureFactory futureFactory;
+    private final ClientSessionBuilder sessionBuilder;
     private final NettyIOContext ioContext;
     private final String connectionId;
     private final ScheduledExecutorService executor;
-    private final AtomicInteger sessionCounter = new AtomicInteger();
     private final Map<ClientFuture<?>, Object> requests = new ConcurrentHashMap<>();
     private final ThreadPoolExecutor notifications;
 
@@ -97,7 +100,6 @@ public class ClientConnection implements Connection {
     private ClientSession connectionSession;
     private ClientSender connectionSender;
     private Transport transport;
-    private SessionOptions defaultSessionOptions;
     private ClientFuture<Connection> openFuture;
     private ClientFuture<Connection> closeFuture;
     private volatile int closed;
@@ -125,6 +127,7 @@ public class ClientConnection implements Connection {
         this.futureFactory = ClientFutureFactory.create(client.options().futureType());
         this.openFuture = futureFactory.createFuture();
         this.closeFuture = futureFactory.createFuture();
+        this.sessionBuilder = new ClientSessionBuilder(this);
         this.ioContext = new NettyIOContext(options.transportOptions(),
                                             options.sslOptions(),
                                             "ClientConnection :(" + connectionId + "): I/O Thread");
@@ -218,19 +221,18 @@ public class ClientConnection implements Connection {
 
     @Override
     public Session openSession() throws ClientException {
-        return openSession(getDefaultSessionOptions());
+        return openSession(null);
     }
 
     @Override
     public Session openSession(SessionOptions sessionOptions) throws ClientException {
         checkClosedOrFailed();
         final ClientFuture<Session> createSession = getFutureFactory().createFuture();
-        final SessionOptions sessionOpts = sessionOptions == null ? getDefaultSessionOptions() : sessionOptions;
 
         executor.execute(() -> {
             try {
                 checkClosedOrFailed();
-                createSession.complete(new ClientSession(sessionOpts, ClientConnection.this, protonConnection.session()).open());
+                createSession.complete(sessionBuilder.session(sessionOptions).open());
             } catch (Throwable error) {
                 createSession.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -365,18 +367,73 @@ public class ClientConnection implements Connection {
     @Override
     public Sender openAnonymousSender(SenderOptions senderOptions) throws ClientException {
         checkClosedOrFailed();
-        final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
+        final ClientFuture<Sender> createRequest = getFutureFactory().createFuture();
 
         executor.execute(() -> {
             try {
                 checkClosedOrFailed();
-                createSender.complete(lazyCreateConnectionSession().internalOpenAnonymousSender(senderOptions));
+                createRequest.complete(lazyCreateConnectionSession().internalOpenAnonymousSender(senderOptions));
             } catch (Throwable error) {
-                createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+                createRequest.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
         });
 
-        return request(this, createSender);
+        return request(this, createRequest);
+    }
+
+    @Override
+    public StreamReceiver openStreamReceiver(String address) throws ClientException {
+        return openStreamReceiver(address, null);
+    }
+
+    @Override
+    public StreamReceiver openStreamReceiver(String address, StreamReceiverOptions receiverOptions) throws ClientException {
+        checkClosedOrFailed();
+        final ClientFuture<StreamReceiver> createRequest = getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            try {
+                // TODO: Validate and or override session capacity as set by read buffer size
+                //       The value set should be no less that max frame size.
+                int sessionCapacity = StreamReceiverOptions.DEFAULT_READ_BUFFER_SIZE;
+                if (receiverOptions != null) {
+                    sessionCapacity = receiverOptions.readBufferSize() / 2;
+                }
+
+                checkClosedOrFailed();
+                SessionOptions sessionOptions = new SessionOptions(sessionBuilder.getDefaultSessionOptions());
+                ClientSession session = sessionBuilder.session(sessionOptions.incomingCapacity(sessionCapacity)).open();
+                createRequest.complete(session.internalOpenStreamReceiver(address, receiverOptions));
+            } catch (Throwable error) {
+                createRequest.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return request(this, createRequest);
+    }
+
+    @Override
+    public StreamSender openStreamSender(String address) throws ClientException {
+        return openStreamSender(address, null);
+    }
+
+    @Override
+    public StreamSender openStreamSender(String address, StreamSenderOptions senderOptions) throws ClientException {
+        checkClosedOrFailed();
+        Objects.requireNonNull(address, "Cannot create a sender with a null address");
+        final ClientFuture<StreamSender> createRequest = getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            try {
+                checkClosedOrFailed();
+                ClientSession session = sessionBuilder.session(null).open();
+                createRequest.complete(session.internalOpenStreamSender(address, senderOptions));
+            } catch (Throwable error) {
+                createRequest.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return request(this, createRequest);
     }
 
     @Override
@@ -466,8 +523,8 @@ public class ClientConnection implements Connection {
         return capabilities;
     }
 
-    String nextSessionId() {
-        return getId() + ":" + sessionCounter.incrementAndGet();
+    org.apache.qpid.protonj2.engine.Connection getProtonConnection() {
+        return protonConnection;
     }
 
     <T> T request(Object requestor, ClientFuture<T> request) throws ClientException {
@@ -716,9 +773,9 @@ public class ClientConnection implements Connection {
         configureEngineSaslSupport();
     }
 
-    private ClientSession lazyCreateConnectionSession() {
+    private ClientSession lazyCreateConnectionSession() throws ClientException {
         if (connectionSession == null) {
-            connectionSession = new ClientSession(getDefaultSessionOptions(), this, protonConnection.session()).open();
+            connectionSession = sessionBuilder.session(null).open();
         }
 
         return connectionSession;
@@ -771,29 +828,6 @@ public class ClientConnection implements Connection {
                 }
             }
         }
-    }
-
-    /*
-     * Session options used when none specified by the caller creating a new session.
-     */
-    private SessionOptions getDefaultSessionOptions() {
-        SessionOptions sessionOptions = defaultSessionOptions;
-        if (sessionOptions == null) {
-            synchronized (this) {
-                sessionOptions = defaultSessionOptions;
-                if (sessionOptions == null) {
-                    sessionOptions = new SessionOptions();
-                    sessionOptions.openTimeout(options.openTimeout());
-                    sessionOptions.closeTimeout(options.closeTimeout());
-                    sessionOptions.requestTimeout(options.requestTimeout());
-                    sessionOptions.sendTimeout(options.sendTimeout());
-                }
-
-                defaultSessionOptions = sessionOptions;
-            }
-        }
-
-        return sessionOptions;
     }
 
     //----- Reconnection related internal API

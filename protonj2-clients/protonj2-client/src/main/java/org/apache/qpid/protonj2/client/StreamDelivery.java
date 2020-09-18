@@ -17,26 +17,23 @@
 package org.apache.qpid.protonj2.client;
 
 import java.io.InputStream;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
+import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
- * A receive context allows for partial reads of incoming delivery data before
- * the complete message has arrived.  Requesting a {@link ReceiveContext} from
- * a {@link Receiver} will return a new context for the next available delivery
- * if one is available or block until one becomes available.  The resulting
- * context may comprise a partial message or could reference a completed message
- * if all frames of the delivery have already arrived from the remote peer.
+ *
  */
-public interface ReceiveContext {
+public interface StreamDelivery {
 
     /**
-     * @return the {@link Receiver} that this context was create under.
+     * @return the {@link StreamReceiver} that this context was create under.
      */
-    Receiver receiver();
+    StreamReceiver receiver();
 
     /**
      * Returns immediately if a remote delivery is ready for consumption or blocks waiting on the
@@ -47,9 +44,11 @@ public interface ReceiveContext {
      * @throws ClientException if the {@link Receiver} or its parent is closed when the call to receive is
      *                         made or some other internal error occurs.
      *
-     * @return the associated Delivery object once a read has completed.
+     * @return a new {@link StreamDelivery} received from the remote.
+     *
+     * @see #awaitDelivery(long, TimeUnit)
      */
-    ReceiveContext awaitDelivery() throws ClientException;
+    StreamDelivery awaitDelivery() throws ClientException;
 
     /**
      * Blocking method that waits the given time interval for the remote to provide a {@link Delivery}
@@ -68,24 +67,15 @@ public interface ReceiveContext {
      * @param unit
      *      The unit of time that the given timeout represents.
      *
-     * @return a new {@link Delivery} received from the remote.
+     * @return a new {@link StreamDelivery} received from the remote.
      *
      * @throws ClientOperationTimedOutException if the timeout expired and no delivery has arrived.
      * @throws ClientException if the {@link Receiver} or its parent is closed when the call to receive is
      *                         made or some other internal error occurs.
      *
-     * #see {@link #awaitDelivery()}
+     * @see #awaitDelivery()
      */
-    ReceiveContext awaitDelivery(long timeout, TimeUnit unit) throws ClientException;
-
-    /**
-     * Once the user has called {@link #awaitDelivery()} or {@link #awaitDelivery(long, TimeUnit)}
-     * and the result was successful this method returns the {@link Delivery} object assigned to
-     * this context which can be used to manage the incoming delivery.
-     *
-     * @return the {@link Delivery} for this {@link ReceiveContext} if one has already been assigned.
-     */
-    Delivery delivery();
+    StreamDelivery awaitDelivery(long timeout, TimeUnit unit) throws ClientException;
 
     /**
      * Decode the {@link Delivery} payload and return an {@link Message} object if there
@@ -100,6 +90,17 @@ public interface ReceiveContext {
      * @param <E> The type of message body that should be contained in the returned {@link Message}.
      */
     <E> Message<E> message() throws ClientException;
+
+    /**
+     * Decodes the {@link StreamDelivery} payload and returns a {@link Map} containing a copy
+     * of any associated {@link DeliveryAnnotations} that were transmitted with the {@link Message}
+     * payload of this {@link StreamDelivery}.
+     *
+     * @return copy of the delivery annotations that were transmitted with the {@link Message} payload.
+     *
+     * @throws ClientException if an error occurs while decoding the payload.
+     */
+    Map<String, Object> annotations() throws ClientException;
 
     /**
      * Check if the {@link Delivery} that was assigned to this {@link ReceiveContext} has been
@@ -139,5 +140,108 @@ public interface ReceiveContext {
      * @throws ClientException if an error occurs while creating the input stream.
      */
     InputStream rawInputStream() throws ClientException;
+
+    /**
+     * Accepts and settles the delivery.
+     *
+     * @return this {@link StreamDelivery} instance.
+     *
+     * @throws ClientException if an error occurs while sending the disposition
+     */
+    StreamDelivery accept() throws ClientException;
+
+    /**
+     * Releases and settles the delivery.
+     *
+     * @return this {@link StreamDelivery} instance.
+     *
+     * @throws ClientException if an error occurs while sending the disposition
+     */
+    StreamDelivery release() throws ClientException;
+
+    /**
+     * Rejects and settles the delivery, sending supplied error information along
+     * with the rejection.
+     *
+     * @param condition
+     *      The error condition value to supply with the rejection.
+     * @param description
+     *      The error description value to supply with the rejection.
+     *
+     * @return this {@link StreamDelivery} instance.
+     *
+     * @throws ClientException if an error occurs while sending the disposition
+     */
+    StreamDelivery reject(String condition, String description) throws ClientException;
+
+    /**
+     * Modifies and settles the delivery.
+     *
+     * @param deliveryFailed
+     *      Indicates if the modified delivery failed.
+     * @param undeliverableHere
+     *      Indicates if the modified delivery should not be returned here again.
+     *
+     * @return this {@link StreamDelivery} instance.
+     *
+     * @throws ClientException if an error occurs while sending the disposition
+     */
+    StreamDelivery modified(boolean deliveryFailed, boolean undeliverableHere) throws ClientException;
+
+    /**
+     * Updates the DeliveryState, and optionally settle the delivery as well.
+     *
+     * @param state
+     *            the delivery state to apply
+     * @param settle
+     *            whether to {@link #settle()} the delivery at the same time
+     *
+     * @return this {@link StreamDelivery} instance.
+     *
+     * @throws ClientException if an error occurs while sending the disposition
+     */
+    StreamDelivery disposition(DeliveryState state, boolean settle) throws ClientException;
+
+    /**
+     * Settles the delivery locally.
+     *
+     * @return this {@link StreamDelivery} instance.
+     *
+     * @throws ClientException if an error occurs while sending the disposition
+     */
+    StreamDelivery settle() throws ClientException;
+
+    /**
+     * @return true if the delivery has been locally settled.
+     */
+    boolean settled();
+
+    /**
+     * Gets the current local state for the delivery.
+     *
+     * @return the delivery state
+     */
+    DeliveryState state();
+
+    /**
+     * Gets the current remote state for the delivery.
+     *
+     * @return the remote delivery state
+     */
+    DeliveryState remoteState();
+
+    /**
+     * Gets whether the delivery was settled by the remote peer yet.
+     *
+     * @return whether the delivery is remotely settled
+     */
+    boolean remoteSettled();
+
+    /**
+     * Gets the message format for the current delivery.
+     *
+     * @return the message format
+     */
+    int messageFormat();
 
 }

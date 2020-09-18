@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.protonj2.client;
 
-import org.apache.qpid.protonj2.types.transport.Transfer;
-
 /**
- * Options class that controls various aspects of a {@link SendContext} instance.
+ * Options class that controls various aspects of a {@link StreamTracker} instance and how
+ * a streamed message transfer is written.
  */
-public class SendContextOptions {
+public class StreamSenderOptions extends SenderOptions {
 
     /**
      * Defines the default minimum size that the context write buffer will allocate
@@ -29,73 +28,49 @@ public class SendContextOptions {
      */
     public static final int MIN_BUFFER_SIZE_LIMIT = 256;
 
-    private int messageFormat;
-    private int bufferSize;
+    private int writeBufferSize;
 
     /**
-     * Creates a {@link SendContextOptions} instance with default values for all options
+     * Creates a {@link StreamSenderOptions} instance with default values for all options
      */
-    public SendContextOptions() {
+    public StreamSenderOptions() {
     }
 
     /**
-     * Create a {@link SendContextOptions} instance that copies all configuration from the given
-     * {@link SendContextOptions} instance.
+     * Create a {@link StreamSenderOptions} instance that copies all configuration from the given
+     * {@link StreamSenderOptions} instance.
      *
      * @param options
      *      The options instance to copy all configuration values from.
      */
-    public SendContextOptions(SendContextOptions options) {
+    public StreamSenderOptions(StreamSenderOptions options) {
         if (options != null) {
             options.copyInto(this);
         }
     }
 
     /**
-     * Copy all options from this {@link SendContextOptions} instance into the instance
+     * Copy all options from this {@link StreamSenderOptions} instance into the instance
      * provided.
      *
      * @param other
      *      the target of this copy operation.
      *
-     * @return this {@link SendContextOptions} class for chaining.
+     * @return this {@link StreamSenderOptions} class for chaining.
      */
-    protected SendContextOptions copyInto(SendContextOptions other) {
-        other.messageFormat(messageFormat);
-        other.bufferSize(bufferSize);
+    protected StreamSenderOptions copyInto(StreamSenderOptions other) {
+        super.copyInto(other);
 
-        return this;
-    }
+        other.writeBufferSize(writeBufferSize);
 
-    /**
-     * Returns the configured message format value that will be set on the first outgoing
-     * AMQP {@link Transfer} frame for the delivery that comprises this streamed message.
-     *
-     * @return the configured message format that will be sent.
-     */
-    public int messageFormat() {
-        return messageFormat;
-    }
-
-    /**
-     * Sets the message format value to use when writing the first AMQP {@link Transfer} frame
-     * for this streamed message.  If not set the default value (0) is used for the message.
-     *
-     * @param messageFormat
-     *      The message format value to use when streaming the message data.
-     *
-     * @return this {@link MessageOutputStreamOptions} instance.
-     */
-    public SendContextOptions messageFormat(int messageFormat) {
-        this.messageFormat = messageFormat;
         return this;
     }
 
     /**
      * @return the configured context write buffering limit for the associated {@link SendContext}
      */
-    public int bufferSize() {
-        return bufferSize;
+    public int writeBufferSize() {
+        return writeBufferSize;
     }
 
     /**
@@ -103,13 +78,13 @@ public class SendContextOptions {
      * currently buffered bytes.  By default the context implementation chooses a value for this
      * buffer limited based on the configured frame size limits of the connection.
      *
-     * @param bufferSize
+     * @param writeBufferSize
      *       The number of bytes that can be written before the context performs a flush operation.
      *
-     * @return this {@link SendContextOptions} instance.
+     * @return this {@link StreamSenderOptions} instance.
      */
-    public SendContextOptions bufferSize(int bufferSize) {
-        this.bufferSize = bufferSize;
+    public StreamSenderOptions writeBufferSize(int writeBufferSize) {
+        this.writeBufferSize = writeBufferSize;
         return this;
     }
 }

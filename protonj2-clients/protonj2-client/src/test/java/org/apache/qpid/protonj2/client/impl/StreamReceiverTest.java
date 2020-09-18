@@ -18,24 +18,20 @@ package org.apache.qpid.protonj2.client.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
-import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.Message;
-import org.apache.qpid.protonj2.client.ReceiveContext;
-import org.apache.qpid.protonj2.client.ReceiveContextOptions;
-import org.apache.qpid.protonj2.client.Receiver;
-import org.apache.qpid.protonj2.client.Session;
+import org.apache.qpid.protonj2.client.StreamDelivery;
+import org.apache.qpid.protonj2.client.StreamReceiver;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.apache.qpid.protonj2.client.util.Wait;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.transport.Role;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -44,68 +40,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Tests the {@link ReceiveContext} implementation
  */
+@Disabled
 @Timeout(20)
-class ReceiveContextTest extends ImperativeClientTestCase {
+class StreamReceiverTest extends ImperativeClientTestCase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ReceiveContextTest.class);
-
-    @Test
-    public void testOpenReceiveContextsDoNotBlockDeliveryWhenNotInitiaited() throws Exception {
-        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
-
-        try (NettyTestPeer peer = new NettyTestPeer()) {
-            peer.expectSASLAnonymousConnect();
-            peer.expectOpen().respond();
-            peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
-            peer.expectFlow();
-            peer.start();
-
-            URI remoteURI = peer.getServerURI();
-
-            LOG.info("Test started, peer listening on: {}", remoteURI);
-
-            Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Session session = connection.openSession();
-            Receiver receiver = session.openReceiver("test-queue");
-
-            ReceiveContext rcvContext1 = receiver.openReceiveContext(new ReceiveContextOptions());
-            ReceiveContext rcvContext2 = receiver.openReceiveContext(new ReceiveContextOptions());
-
-            assertNotNull(rcvContext1);
-            assertNotNull(rcvContext2);
-
-            assertNull(rcvContext1.delivery());
-            assertNull(rcvContext2.delivery());
-
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-
-            peer.expectDisposition().withSettled(true).withState().accepted();
-            peer.remoteTransfer().withHandle(0)
-                                 .withDeliveryId(0)
-                                 .withDeliveryTag(new byte[] { 1 })
-                                 .withMore(false)
-                                 .withMessageFormat(0)
-                                 .withPayload(payload).now();
-
-            Delivery delivery = receiver.receive(5, TimeUnit.SECONDS);
-            assertNotNull(delivery);
-            Message<String> message = delivery.message();
-
-            assertEquals("Hello World", message.body());
-            assertNull(rcvContext1.delivery());
-            assertNull(rcvContext2.delivery());
-
-            peer.expectDetach().respond();
-            peer.expectClose().respond();
-
-            receiver.close();
-            connection.close().get();
-
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-        }
-    }
+    private static final Logger LOG = LoggerFactory.getLogger(StreamReceiverTest.class);
 
     @Test
     public void testReceiveContextTakesDeliveryFromPrefetch() throws Exception {
@@ -131,16 +70,13 @@ class ReceiveContextTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Session session = connection.openSession();
-            Receiver receiver = session.openReceiver("test-queue");
-            ReceiveContext rcvContext = receiver.openReceiveContext(new ReceiveContextOptions());
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            StreamDelivery delivery = receiver.openStream();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDisposition().withSettled(true).withState().accepted();
 
-            Wait.assertTrue(() -> receiver.prefetchedCount() == 1);
-
-            Delivery delivery = rcvContext.awaitDelivery().delivery();
+            delivery = delivery.awaitDelivery();
             assertNotNull(delivery);
 
             Message<String> message = delivery.message();

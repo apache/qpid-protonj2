@@ -30,11 +30,10 @@ import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.DeliveryMode;
 import org.apache.qpid.protonj2.client.OutputStreamOptions;
-import org.apache.qpid.protonj2.client.SendContext;
-import org.apache.qpid.protonj2.client.SendContextOptions;
-import org.apache.qpid.protonj2.client.Sender;
-import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
+import org.apache.qpid.protonj2.client.StreamSender;
+import org.apache.qpid.protonj2.client.StreamSenderOptions;
+import org.apache.qpid.protonj2.client.StreamTracker;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.HeaderMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferPayloadCompositeMatcher;
@@ -53,9 +52,9 @@ import org.slf4j.LoggerFactory;
  * Tests the {@link SendContext} implementation
  */
 @Timeout(20)
-public class SendContextTest extends ImperativeClientTestCase {
+public class StreamSenderTest extends ImperativeClientTestCase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SendContextTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StreamSenderTest.class);
 
     @Test
     public void testSendCustomMessageWithMultipleAmqpValueSections() throws Exception {
@@ -63,6 +62,7 @@ public class SendContextTest extends ImperativeClientTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
+            peer.expectBegin().respond(); // Hidden session for stream sender
             peer.expectAttach().ofSender().respond();
             peer.remoteFlow().withLinkCredit(10).queue();
             peer.expectAttach().respond();  // Open a receiver to ensure sender link has processed
@@ -75,13 +75,18 @@ public class SendContextTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
-
             Session session = connection.openSession().openFuture().get();
-            SenderOptions options = new SenderOptions().deliveryMode(DeliveryMode.AT_MOST_ONCE);
-            Sender sender = session.openSender("test-qos", options);
+
+            StreamSenderOptions options = new StreamSenderOptions();
+            options.deliveryMode(DeliveryMode.AT_MOST_ONCE);
+            options.writeBufferSize(Integer.MAX_VALUE);
+
+            StreamSender sender = connection.openStreamSender("test-qos", options);
 
             // Create a custom message format send context and ensure that no early buffer writes take place
-            SendContext context = sender.openSendContext(new SendContextOptions().messageFormat(17).bufferSize(Integer.MAX_VALUE));
+            StreamTracker tracker = sender.openStream();
+
+            tracker.messageFormat(17);
 
             // Gates send on remote flow having been sent and received
             session.openReceiver("dummy").openFuture().get();
@@ -116,16 +121,15 @@ public class SendContextTest extends ImperativeClientTestCase {
             header.setFirstAcquirer(true);
             header.setDeliveryCount(2);
 
-            context.write(header);
-            context.write(new AmqpValue<>("one"));
-            context.write(new AmqpValue<>("two"));
-            context.write(new AmqpValue<>("three"));
+            tracker.write(header);
+            tracker.write(new AmqpValue<>("one"));
+            tracker.write(new AmqpValue<>("two"));
+            tracker.write(new AmqpValue<>("three"));
 
-            context.complete();
+            tracker.complete();
 
-            assertNotNull(context.tracker());
-            assertNotNull(context.tracker().settlementFuture().isDone());
-            assertNotNull(context.tracker().settlementFuture().get().settled());
+            assertNotNull(tracker.settlementFuture().isDone());
+            assertNotNull(tracker.settlementFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -152,14 +156,15 @@ public class SendContextTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Session session = connection.openSession();
-            Sender sender = session.openSender("test-queue").openFuture().get();
-            SendContext sendContext = sender.openSendContext(new SendContextOptions());
+            StreamSender sender = connection.openStreamSender("test-qos");
+            StreamTracker tracker = sender.openStream();
 
             OutputStreamOptions options = new OutputStreamOptions();
-            OutputStream stream = sendContext.dataOutputStream(options);
+            OutputStream stream = tracker.dataOutputStream(options);
 
             assertNotNull(stream);
+
+            sender.openFuture().get();
 
             // Nothing should be sent since we closed without ever writing anything.
             stream.close();
@@ -187,9 +192,8 @@ public class SendContextTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Session session = connection.openSession();
-            Sender sender = session.openSender("test-queue").openFuture().get();
-            SendContext sendContext = sender.openSendContext(new SendContextOptions());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamTracker sendContext = sender.openStream();
 
             // Populate all Header values
             Header header = new Header();
@@ -235,9 +239,8 @@ public class SendContextTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Session session = connection.openSession();
-            Sender sender = session.openSender("test-queue").openFuture().get();
-            SendContext sendContext = sender.openSendContext(new SendContextOptions());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamTracker sendContext = sender.openStream();
 
             // Populate all Header values
             Header header = new Header();
@@ -295,9 +298,8 @@ public class SendContextTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Session session = connection.openSession();
-            Sender sender = session.openSender("test-queue").openFuture().get();
-            SendContext sendContext = sender.openSendContext(new SendContextOptions().bufferSize(512));
+            StreamSender sender = connection.openStreamSender("test-queue", new StreamSenderOptions().writeBufferSize(512));
+            StreamTracker tracker = sender.openStream();
 
             final byte[] payload = new byte[512];
             Arrays.fill(payload, (byte) 16);
@@ -310,10 +312,10 @@ public class SendContextTest extends ImperativeClientTestCase {
             header.setFirstAcquirer(true);
             header.setDeliveryCount(2);
 
-            sendContext.write(header);
+            tracker.write(header);
 
             OutputStreamOptions options = new OutputStreamOptions();
-            OutputStream stream = sendContext.dataOutputStream(options);
+            OutputStream stream = tracker.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);
@@ -362,9 +364,8 @@ public class SendContextTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Session session = connection.openSession();
-            Sender sender = session.openSender("test-queue").openFuture().get();
-            SendContext sendContext = sender.openSendContext(new SendContextOptions().bufferSize(256));
+            StreamSender sender = connection.openStreamSender("test-queue", new StreamSenderOptions().writeBufferSize(256));
+            StreamTracker tracker = sender.openStream();
 
             final byte[] payload = new byte[1024];
             Arrays.fill(payload, 0, 256, (byte) 1);
@@ -389,10 +390,10 @@ public class SendContextTest extends ImperativeClientTestCase {
             header.setFirstAcquirer(true);
             header.setDeliveryCount(2);
 
-            sendContext.write(header);
+            tracker.write(header);
 
             OutputStreamOptions options = new OutputStreamOptions();
-            OutputStream stream = sendContext.dataOutputStream(options);
+            OutputStream stream = tracker.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);
@@ -456,9 +457,8 @@ public class SendContextTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Session session = connection.openSession();
-            Sender sender = session.openSender("test-queue").openFuture().get();
-            SendContext sendContext = sender.openSendContext(new SendContextOptions());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamTracker tracker = sender.openStream();
 
             // Populate all Header values
             Header header = new Header();
@@ -468,10 +468,10 @@ public class SendContextTest extends ImperativeClientTestCase {
             header.setFirstAcquirer(true);
             header.setDeliveryCount(2);
 
-            sendContext.write(header);
+            tracker.write(header);
 
             OutputStreamOptions options = new OutputStreamOptions();
-            OutputStream stream = sendContext.dataOutputStream(options);
+            OutputStream stream = tracker.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);
@@ -516,9 +516,8 @@ public class SendContextTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Session session = connection.openSession();
-            Sender sender = session.openSender("test-queue").openFuture().get();
-            SendContext sendContext = sender.openSendContext(new SendContextOptions());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamTracker tracker = sender.openStream();
 
             // Populate all Header values
             Header header = new Header();
@@ -528,10 +527,10 @@ public class SendContextTest extends ImperativeClientTestCase {
             header.setFirstAcquirer(true);
             header.setDeliveryCount(2);
 
-            sendContext.write(header);
+            tracker.write(header);
 
             OutputStreamOptions options = new OutputStreamOptions();
-            OutputStream stream = sendContext.dataOutputStream(options);
+            OutputStream stream = tracker.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);
@@ -590,9 +589,8 @@ public class SendContextTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Session session = connection.openSession();
-            Sender sender = session.openSender("test-queue").openFuture().get();
-            SendContext sendContext = sender.openSendContext(new SendContextOptions());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamTracker tracker = sender.openStream();
 
             final byte[] payload = new byte[] { 0, 1, 2, 3 };
 
@@ -602,10 +600,10 @@ public class SendContextTest extends ImperativeClientTestCase {
             header.setPriority((byte) 1);
             header.setDeliveryCount(1);
 
-            sendContext.write(header);
+            tracker.write(header);
 
             OutputStreamOptions options = new OutputStreamOptions().streamSize(8192);
-            OutputStream stream = sendContext.dataOutputStream(options);
+            OutputStream stream = tracker.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);
@@ -651,9 +649,8 @@ public class SendContextTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Session session = connection.openSession();
-            Sender sender = session.openSender("test-queue").openFuture().get();
-            SendContext sendContext = sender.openSendContext(new SendContextOptions());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamTracker tracker = sender.openStream();
 
             // Populate all Header values
             Header header = new Header();
@@ -661,10 +658,10 @@ public class SendContextTest extends ImperativeClientTestCase {
             header.setPriority((byte) 1);
             header.setDeliveryCount(1);
 
-            sendContext.write(header);
+            tracker.write(header);
 
             OutputStreamOptions options = new OutputStreamOptions().streamSize(8192).completeContextOnClose(false);
-            OutputStream stream = sendContext.dataOutputStream(options);
+            OutputStream stream = tracker.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);
@@ -682,7 +679,7 @@ public class SendContextTest extends ImperativeClientTestCase {
 
             // This should finalize the Transfer since we asked the stream not to complete
             // and we didn't write anything before closing.
-            sendContext.complete();
+            tracker.complete();
 
             sender.close().get();
             connection.close().get();
@@ -707,9 +704,8 @@ public class SendContextTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Session session = connection.openSession();
-            Sender sender = session.openSender("test-queue").openFuture().get();
-            SendContext sendContext = sender.openSendContext(new SendContextOptions());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamTracker tracker = sender.openStream();
 
             final byte[] payload1 = new byte[] { 0, 1, 2, 3, 4, 5 };
             final byte[] payload2 = new byte[] { 6, 7, 8, 9, 10, 11, 12, 13, 14 };
@@ -723,10 +719,10 @@ public class SendContextTest extends ImperativeClientTestCase {
             header.setPriority((byte) 1);
             header.setDeliveryCount(1);
 
-            sendContext.write(header);
+            tracker.write(header);
 
             OutputStreamOptions options = new OutputStreamOptions().streamSize(payloadSize);
-            OutputStream stream = sendContext.dataOutputStream(options);
+            OutputStream stream = tracker.dataOutputStream(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);

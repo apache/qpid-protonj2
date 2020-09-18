@@ -36,7 +36,7 @@ public interface Delivery {
      * Decode the {@link Delivery} payload and return an {@link Message} object.
      * <p>
      * If the incoming message carried any delivery annotations they can be accessed via the
-     * {@link #deliveryAnnotations()} method.  Re-sending the returned message will not also
+     * {@link #annotations()} method.  Re-sending the returned message will not also
      * send the incoming delivery annotations, the sender must include them in the
      * {@link Sender#send(Message, Map)} call if they are to be forwarded onto the next recipient.
      *
@@ -57,7 +57,7 @@ public interface Delivery {
      *
      * @throws ClientException if an error occurs while decoding the payload.
      */
-    Map<String, Object> deliveryAnnotations() throws ClientException;
+    Map<String, Object> annotations() throws ClientException;
 
     /**
      * Accepts and settles the delivery.

@@ -24,11 +24,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
-import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.ErrorCondition;
-import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Source;
+import org.apache.qpid.protonj2.client.StreamDelivery;
+import org.apache.qpid.protonj2.client.StreamReceiver;
 import org.apache.qpid.protonj2.client.Target;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -36,40 +36,36 @@ import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
-import org.apache.qpid.protonj2.client.util.FifoDeliveryQueue;
-import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
-import org.apache.qpid.protonj2.types.messaging.Outcome;
 import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ClientReceiver implements Receiver {
+public class ClientStreamReceiver implements StreamReceiver {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientReceiver.class);
 
-    private static final AtomicIntegerFieldUpdater<ClientReceiver> CLOSED_UPDATER =
-            AtomicIntegerFieldUpdater.newUpdater(ClientReceiver.class, "closed");
+    private static final AtomicIntegerFieldUpdater<ClientStreamReceiver> CLOSED_UPDATER =
+            AtomicIntegerFieldUpdater.newUpdater(ClientStreamReceiver.class, "closed");
 
-    private final ClientFuture<Receiver> openFuture;
-    private final ClientFuture<Receiver> closeFuture;
-    private ClientFuture<Receiver> drainingFuture;
+    private final ClientFuture<StreamReceiver> openFuture;
+    private final ClientFuture<StreamReceiver> closeFuture;
+    private ClientFuture<StreamReceiver> drainingFuture;
 
     private final ReceiverOptions options;
     private final ClientSession session;
     private final org.apache.qpid.protonj2.engine.Receiver protonReceiver;
     private final ScheduledExecutorService executor;
     private final String receiverId;
-    private final FifoDeliveryQueue messageQueue;
+
     private volatile int closed;
     private ClientException failureCause;
-
     private volatile Source remoteSource;
     private volatile Target remoteTarget;
 
-    public ClientReceiver(ClientSession session, ReceiverOptions options, String receiverId, org.apache.qpid.protonj2.engine.Receiver receiver) {
+    public ClientStreamReceiver(ClientSession session, ReceiverOptions options, String receiverId, org.apache.qpid.protonj2.engine.Receiver receiver) {
         this.options = options;
         this.session = session;
         this.receiverId = receiverId;
@@ -84,9 +80,110 @@ public class ClientReceiver implements Receiver {
         if (options.creditWindow() > 0) {
             protonReceiver.addCredit(options.creditWindow());
         }
+    }
 
-        messageQueue = new FifoDeliveryQueue(options.creditWindow());
-        messageQueue.start();
+    @Override
+    public ClientInstance client() {
+        return session.client();
+    }
+
+    @Override
+    public ClientConnection connection() {
+        return session.connection();
+    }
+
+    @Override
+    public ClientSession session() {
+        return session;
+    }
+
+    @Override
+    public ClientFuture<StreamReceiver> openFuture() {
+        return openFuture;
+    }
+
+    @Override
+    public ClientFuture<StreamReceiver> close() {
+        return doCloseOrDetach(true, null);
+    }
+
+    @Override
+    public ClientFuture<StreamReceiver> close(ErrorCondition error) {
+        Objects.requireNonNull(error, "Error Condition cannot be null");
+
+        return doCloseOrDetach(true, error);
+    }
+
+    @Override
+    public ClientFuture<StreamReceiver> detach() {
+        return doCloseOrDetach(false, null);
+    }
+
+    @Override
+    public ClientFuture<StreamReceiver> detach(ErrorCondition error) {
+        Objects.requireNonNull(error, "The provided Error Condition cannot be null");
+
+        return doCloseOrDetach(false, error);
+    }
+
+    private ClientFuture<StreamReceiver> doCloseOrDetach(boolean close, ErrorCondition error) {
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
+            executor.execute(() -> {
+                if (protonReceiver.isLocallyOpen()) {
+                    try {
+                        protonReceiver.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+
+                        if (close) {
+                            protonReceiver.close();
+                        } else {
+                            protonReceiver.detach();
+                        }
+                    } catch (Throwable ignore) {
+                        closeFuture.complete(this);
+                    }
+                }
+            });
+        }
+
+        return closeFuture;
+    }
+
+    @Override
+    public StreamReceiver addCredit(int credits) throws ClientException {
+        checkClosedOrFailed();
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public StreamDelivery openStream() throws ClientException {
+        checkClosedOrFailed();
+        return new ClientStreamDelivery(this);
+    }
+
+    @Override
+    public Future<StreamReceiver> drain() throws ClientException {
+        checkClosedOrFailed();
+        // TODO Auto-generated method stub
+        return drainingFuture;
+    }
+
+    @Override
+    public Map<String, Object> properties() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringKeyedMap(protonReceiver.getRemoteProperties());
+    }
+
+    @Override
+    public String[] offeredCapabilities() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringArray(protonReceiver.getRemoteOfferedCapabilities());
+    }
+
+    @Override
+    public String[] desiredCapabilities() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringArray(protonReceiver.getRemoteDesiredCapabilities());
     }
 
     @Override
@@ -111,196 +208,44 @@ public class ClientReceiver implements Receiver {
         return remoteTarget;
     }
 
-    @Override
-    public ClientInstance client() {
-        return session.client();
-    }
-
-    @Override
-    public ClientConnection connection() {
-        return session.connection();
-    }
-
-    @Override
-    public ClientSession session() {
-        return session;
-    }
-
-    @Override
-    public Future<Receiver> openFuture() {
-        return openFuture;
-    }
-
-    @Override
-    public Delivery receive() throws ClientException {
-        return receive(-1, TimeUnit.MILLISECONDS);
-    }
-
-    @Override
-    public Delivery receive(long timeout, TimeUnit units) throws ClientException {
+    void attachToNextDelivery(ClientStreamDelivery context) throws ClientException {
         checkClosedOrFailed();
-
-        try {
-            ClientDelivery delivery = messageQueue.dequeue(units.toMillis(timeout));
-            if (delivery != null) {
-                if (options.autoAccept()) {
-                    delivery.disposition(org.apache.qpid.protonj2.client.DeliveryState.accepted(), options.autoSettle());
-                } else {
-                    asyncReplenishCreditIfNeeded();
-                }
-            } else {
-                checkClosedOrFailed();
-            }
-
-            return delivery;
-        } catch (InterruptedException e) {
-            Thread.interrupted();
-            throw new ClientException("Receive wait interrupted", e);
-        }
-    }
-
-    @Override
-    public Delivery tryReceive() throws ClientException {
-        checkClosedOrFailed();
-
-        Delivery delivery = messageQueue.dequeueNoWait();
-        if (delivery != null) {
-            if (options.autoAccept()) {
-                delivery.disposition(org.apache.qpid.protonj2.client.DeliveryState.accepted(), options.autoSettle());
-            } else {
-                asyncReplenishCreditIfNeeded();
-            }
-        } else {
-            checkClosedOrFailed();
-        }
-
-        return delivery;
-    }
-
-    @Override
-    public ClientFuture<Receiver> close() {
-        return doCloseOrDetach(true, null);
-    }
-
-    @Override
-    public ClientFuture<Receiver> close(ErrorCondition error) {
-        Objects.requireNonNull(error, "Error Condition cannot be null");
-
-        return doCloseOrDetach(true, error);
-    }
-
-    @Override
-    public ClientFuture<Receiver> detach() {
-        return doCloseOrDetach(false, null);
-    }
-
-    @Override
-    public ClientFuture<Receiver> detach(ErrorCondition error) {
-        Objects.requireNonNull(error, "The provided Error Condition cannot be null");
-
-        return doCloseOrDetach(false, error);
-    }
-
-    private ClientFuture<Receiver> doCloseOrDetach(boolean close, ErrorCondition error) {
-        if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
-            executor.execute(() -> {
-                if (protonReceiver.isLocallyOpen()) {
-                    try {
-                        protonReceiver.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
-
-                        if (close) {
-                            protonReceiver.close();
-                        } else {
-                            protonReceiver.detach();
-                        }
-                    } catch (Throwable ignore) {
-                        closeFuture.complete(this);
-                    }
-                }
-            });
-        }
-
-        return closeFuture;
-    }
-
-    @Override
-    public long prefetchedCount() {
-        return messageQueue.size();
-    }
-
-    @Override
-    public Receiver addCredit(int credits) throws ClientException {
-        checkClosedOrFailed();
-        ClientFuture<Receiver> creditAdded = session.getFutureFactory().createFuture();
-
         executor.execute(() -> {
-            checkClosedOrFailed(creditAdded);
-
-            if (options.creditWindow() != 0) {
-                creditAdded.failed(new ClientIllegalStateException("Cannot add credit when a credit window has been configured"));
-            } else if (protonReceiver.isDraining()) {
-                creditAdded.failed(new ClientIllegalStateException("Cannot add credit while a drain is pending"));
-            } else {
-                try {
-                    protonReceiver.addCredit(credits);
-                    creditAdded.complete(this);
-                } catch (Exception ex) {
-                    creditAdded.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
-                }
-            }
+//            final ClientDelivery delivery;
+// TODO:
+//            if (messageQueue.isEmpty()) {
+//                IncomingDelivery lastDelivery = null;
+//                for (IncomingDelivery candidate : protonReceiver.unsettled()) {
+//                    lastDelivery = candidate;
+//                }
+//
+//                // If a partial delivery is waiting for completion and not linked to a
+//                // receive context already we can grab it and assign it to this one otherwise
+//                // the context has to be placed into the wait queue for a future arriving
+//                // delivery.
+//                if (lastDelivery.isPartial() && lastDelivery.getLinkedResource() == null) {
+//                    delivery = new ClientDelivery(this, lastDelivery);
+//                } else {
+//                    delivery = null;
+//                    waitingRcvContexts.offer(context);
+//                }
+//            } else {
+//                // Already have a completed prefetched message so hand that off first to preserve order
+//                delivery = messageQueue.dequeueNoWait();
+//            }
+//
+//            if (delivery != null) {
+//                if (!delivery.protonDelivery().isPartial()) {
+//                    if (options.autoAccept()) {
+//                        asyncApplyDisposition(delivery.protonDelivery(), Accepted.getInstance(), options.autoSettle());
+//                    } else {
+//                        asyncReplenishCreditIfNeeded();
+//                    }
+//                }
+//
+//                context.handleDeliveryRead(delivery);
+//            }
         });
-
-        return session.request(this, creditAdded);
-    }
-
-    @Override
-    public Future<Receiver> drain() throws ClientException {
-        checkClosedOrFailed();
-        final ClientFuture<Receiver> drainComplete = session.getFutureFactory().createFuture();
-
-        executor.execute(() -> {
-            checkClosedOrFailed(drainComplete);
-
-            if (protonReceiver.isDraining()) {
-                drainComplete.failed(new ClientException("Already draining"));
-                return;
-            }
-
-            if (protonReceiver.getCredit() == 0) {
-                drainComplete.complete(this);
-                return;
-            }
-
-            try {
-                if (protonReceiver.drain()) {
-                    drainingFuture = drainComplete;
-                } else {
-                    drainComplete.complete(this);
-                }
-            } catch (Exception ex) {
-                drainComplete.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
-            }
-        });
-
-        return drainComplete;
-    }
-
-    @Override
-    public Map<String, Object> properties() throws ClientException {
-        waitForOpenToComplete();
-        return ClientConversionSupport.toStringKeyedMap(protonReceiver.getRemoteProperties());
-    }
-
-    @Override
-    public String[] offeredCapabilities() throws ClientException {
-        waitForOpenToComplete();
-        return ClientConversionSupport.toStringArray(protonReceiver.getRemoteOfferedCapabilities());
-    }
-
-    @Override
-    public String[] desiredCapabilities() throws ClientException {
-        waitForOpenToComplete();
-        return ClientConversionSupport.toStringArray(protonReceiver.getRemoteDesiredCapabilities());
     }
 
     //----- Internal API for the ClientReceiver and other Client objects
@@ -310,7 +255,7 @@ public class ClientReceiver implements Receiver {
         asyncApplyDisposition(delivery, state, settle);
     }
 
-    ClientReceiver open() {
+    ClientStreamReceiver open() {
         protonReceiver.localOpenHandler(this::handleLocalOpen)
                       .localCloseHandler(this::handleLocalCloseOrDetach)
                       .localDetachHandler(this::handleLocalCloseOrDetach)
@@ -364,7 +309,7 @@ public class ClientReceiver implements Receiver {
     }
 
     private void handleLocalCloseOrDetach(org.apache.qpid.protonj2.engine.Receiver receiver) {
-        messageQueue.stop();  // Ensure blocked receivers are all unblocked.
+        // TODO messageQueue.stop();  // Ensure blocked receivers are all unblocked.
 
         // If not yet remotely closed we only wait for a remote close if the engine isn't
         // already failed and we have successfully opened the sender without a timeout.
@@ -426,7 +371,7 @@ public class ClientReceiver implements Receiver {
     }
 
     private void handleEngineShutdown(Engine engine) {
-        final Connection connection = engine.connection();
+        final org.apache.qpid.protonj2.engine.Connection connection = engine.connection();
 
         final ClientException failureCause;
 
@@ -450,12 +395,20 @@ public class ClientReceiver implements Receiver {
             delivery.setDefaultDeliveryState(Released.getInstance());
         }
 
-        if (!delivery.isPartial()) {
-            LOG.trace("{} has incoming Message(s).", this);
-            messageQueue.enqueue(new ClientDelivery(this, delivery));
-        } else if (delivery.isAborted()) {
+        if (delivery.isAborted()) {
+            if (delivery.getLinkedResource() != null) {
+                try {
+                    delivery.getLinkedResource(ClientStreamDelivery.class).handleDeliveryAborted(delivery);
+                } catch (ClassCastException cce) {
+                    // Not linked to a receive context other type checks can follow.
+                }
+            }
+
             delivery.settle();
             replenishCreditIfNeeded();
+        } else if (!delivery.isPartial()) {
+            LOG.trace("{} has incoming Message(s).", this);
+            // TODO: messageQueue.enqueue(new ClientDelivery(this, delivery));
         }
     }
 
@@ -478,7 +431,7 @@ public class ClientReceiver implements Receiver {
     private void asyncApplyDisposition(IncomingDelivery delivery, DeliveryState state, boolean settle) {
         executor.execute(() -> {
             if (session.getTransactionContext().isInTransaction()) {
-                delivery.disposition(session.getTransactionContext().enlistAcknowledgeInCurrentTransaction(this, (Outcome) state), true);
+                // TODO: delivery.disposition(session.getTransactionContext().enlistAcknowledgeInCurrentTransaction(this, (Outcome) state), true);
             } else {
                 delivery.disposition(state, settle);
             }
@@ -492,7 +445,7 @@ public class ClientReceiver implements Receiver {
         if (creditWindow > 0) {
             int currentCredit = protonReceiver.getCredit();
             if (currentCredit <= creditWindow * 0.5) {
-                int potentialPrefetch = currentCredit + messageQueue.size();
+                int potentialPrefetch = currentCredit;  // TODO: Handle any prefetch if allowed ?
 
                 if (potentialPrefetch <= creditWindow * 0.7) {
                     int additionalCredit = creditWindow - potentialPrefetch;

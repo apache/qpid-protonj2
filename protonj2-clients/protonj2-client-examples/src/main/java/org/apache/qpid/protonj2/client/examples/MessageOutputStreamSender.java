@@ -27,9 +27,8 @@ import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.OutputStreamOptions;
-import org.apache.qpid.protonj2.client.SendContext;
-import org.apache.qpid.protonj2.client.SendContextOptions;
-import org.apache.qpid.protonj2.client.Sender;
+import org.apache.qpid.protonj2.client.StreamSender;
+import org.apache.qpid.protonj2.client.StreamTracker;
 import org.apache.qpid.protonj2.types.messaging.Header;
 
 // TODO: Possibly make an advanced folder for the more complex AMQP messaging topics
@@ -47,20 +46,20 @@ public class MessageOutputStreamSender {
             Client client = Client.create(options);
 
             Connection connection = client.connect(brokerHost, brokerPort);
-            Sender sender = connection.openSender(address);
-            SendContext sendContext = sender.openSendContext(new SendContextOptions());
+            StreamSender sender = connection.openStreamSender(address);
+            StreamTracker tracker = sender.openStream();
 
             final byte[] buffer = new byte[] { 0, 1, 2, 3, 4 };
 
             Header header = new Header().setDurable(true);
-            sendContext.write(header);
+            tracker.write(header);
 
             // Create an OutputStream that will send an AMQP Header tagged as being durable
             // once the first write is flushed, the remote will retain the completed message
             // once all bytes are written and the stream is closed.  Because the stream size
             // is given up front the encoded Message body will consist of one Data section.
             OutputStreamOptions streamOptions = new OutputStreamOptions().streamSize(buffer.length);
-            OutputStream output = sendContext.dataOutputStream(streamOptions);
+            OutputStream output = tracker.dataOutputStream(streamOptions);
 
             // Simple example flushes on every byte, a real world usage would likely
             // be pulling in data in batches and flushing on some fixed boundary.

@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.SessionOptions;
 import org.apache.qpid.protonj2.client.SourceOptions;
+import org.apache.qpid.protonj2.client.StreamReceiverOptions;
 import org.apache.qpid.protonj2.client.TargetOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.engine.Receiver;
@@ -45,6 +46,7 @@ final class ClientReceiverBuilder {
     private final AtomicInteger receiverCounter = new AtomicInteger();
 
     private ReceiverOptions defaultReceivernOptions;
+    private StreamReceiverOptions defaultStreamReceiverOptions;
 
     public ClientReceiverBuilder(ClientSession session) {
         this.session = session;
@@ -63,33 +65,40 @@ final class ClientReceiverBuilder {
     }
 
     public ClientReceiver durableReceiver(String address, String subscriptionName, ReceiverOptions receiverOptions) {
-        final ReceiverOptions rcvOptions = receiverOptions != null ? receiverOptions : getDefaultReceiverOptions();
+        final ReceiverOptions options = receiverOptions != null ? receiverOptions : getDefaultReceiverOptions();
         final String receiverId = nextReceiverId();
 
-        rcvOptions.linkName(subscriptionName);
+        options.linkName(subscriptionName);
 
-        final Receiver protonReceiver = createReceiver(address, rcvOptions, receiverId);
+        final Receiver protonReceiver = createReceiver(address, options, receiverId);
 
-        protonReceiver.setSource(createDurableSource(address, rcvOptions));
-        protonReceiver.setTarget(createTarget(address, rcvOptions));
+        protonReceiver.setSource(createDurableSource(address, options));
+        protonReceiver.setTarget(createTarget(address, options));
 
-        return new ClientReceiver(session, rcvOptions, receiverId, protonReceiver);
+        return new ClientReceiver(session, options, receiverId, protonReceiver);
     }
 
     public ClientReceiver dynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException {
-        final ReceiverOptions rcvOptions = receiverOptions != null ? receiverOptions : getDefaultReceiverOptions();
+        final ReceiverOptions options = receiverOptions != null ? receiverOptions : getDefaultReceiverOptions();
         final String receiverId = nextReceiverId();
+        final Receiver protonReceiver = createReceiver(null, options, receiverId);
 
-        final Receiver protonReceiver = createReceiver(null, rcvOptions, receiverId);
-
-        protonReceiver.setSource(createSource(null, rcvOptions));
-        protonReceiver.setTarget(createTarget(null, rcvOptions));
+        protonReceiver.setSource(createSource(null, options));
+        protonReceiver.setTarget(createTarget(null, options));
 
         // Configure the dynamic nature of the source now.
         protonReceiver.getSource().setDynamic(true);
         protonReceiver.getSource().setDynamicNodeProperties(ClientConversionSupport.toSymbolKeyedMap(dynamicNodeProperties));
 
-        return new ClientReceiver(session, rcvOptions, receiverId, protonReceiver);
+        return new ClientReceiver(session, options, receiverId, protonReceiver);
+    }
+
+    public ClientStreamReceiver streamReceiver(String address, StreamReceiverOptions receiverOptions) throws ClientException {
+        final StreamReceiverOptions options = receiverOptions != null ? receiverOptions : getDefaultStreamReceiverOptions();
+        final String receiverId = nextReceiverId();
+        final Receiver protonReceiver = createReceiver(null, options, receiverId);
+
+        return new ClientStreamReceiver(session, options, receiverId, protonReceiver);
     }
 
     private String nextReceiverId() {
@@ -190,6 +199,29 @@ final class ClientReceiverBuilder {
                 }
 
                 defaultReceivernOptions = receiverOptions;
+            }
+        }
+
+        return receiverOptions;
+    }
+
+    /*
+     * Stream Receiver options used when none specified by the caller creating a new receiver.
+     */
+    private StreamReceiverOptions getDefaultStreamReceiverOptions() {
+        StreamReceiverOptions receiverOptions = defaultStreamReceiverOptions;
+        if (receiverOptions == null) {
+            synchronized (this) {
+                receiverOptions = defaultStreamReceiverOptions;
+                if (receiverOptions == null) {
+                    receiverOptions = new StreamReceiverOptions();
+                    receiverOptions.openTimeout(sessionOptions.openTimeout());
+                    receiverOptions.closeTimeout(sessionOptions.closeTimeout());
+                    receiverOptions.requestTimeout(sessionOptions.requestTimeout());
+                    receiverOptions.sendTimeout(sessionOptions.sendTimeout());
+                }
+
+                defaultStreamReceiverOptions = receiverOptions;
             }
         }
 

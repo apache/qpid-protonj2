@@ -21,9 +21,8 @@ import java.util.UUID;
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
-import org.apache.qpid.protonj2.client.SendContext;
-import org.apache.qpid.protonj2.client.SendContextOptions;
-import org.apache.qpid.protonj2.client.Sender;
+import org.apache.qpid.protonj2.client.StreamSender;
+import org.apache.qpid.protonj2.client.StreamTracker;
 import org.apache.qpid.protonj2.types.messaging.Data;
 
 public class MultipleFrameMessageTransfer {
@@ -39,17 +38,17 @@ public class MultipleFrameMessageTransfer {
             Client client = Client.create(options);
 
             Connection connection = client.connect(brokerHost, brokerPort);
-            Sender sender = connection.openSender(address);
-            SendContext context = sender.openSendContext(new SendContextOptions());
+            StreamSender sender = connection.openStreamSender(address);
+            StreamTracker tracker = sender.openStream();
 
-            context.write(new Data(new byte[] { 0, 1, 2, 3, 4 }));
-            context.flush();
+            tracker.write(new Data(new byte[] { 0, 1, 2, 3, 4 }));
+            tracker.flush();
 
-            context.write(new Data(new byte[] { 5, 6, 7, 8, 9 }));
-            context.flush();
+            tracker.write(new Data(new byte[] { 5, 6, 7, 8, 9 }));
+            tracker.flush();
 
-            context.write(new Data(new byte[] { 10, 11, 12, 13, 14 }));
-            context.flush();
+            tracker.write(new Data(new byte[] { 10, 11, 12, 13, 14 }));
+            tracker.flush();
 
             connection.close().get();
         } catch (Exception exp) {

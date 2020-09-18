@@ -18,16 +18,18 @@ package org.apache.qpid.protonj2.client;
 
 import java.util.Map;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 
-public interface Receiver {
+/**
+ *
+ */
+public interface StreamReceiver {
 
     /**
      * @return a {@link Future} that will be completed when the remote opens this {@link Receiver}.
      */
-    Future<Receiver> openFuture();
+    Future<StreamReceiver> openFuture();
 
     /**
      * Requests a close of the {@link Receiver} link at the remote and returns a {@link Future} that will be
@@ -35,18 +37,18 @@ public interface Receiver {
      *
      * @return a {@link Future} that will be completed when the remote closes this {@link Receiver} link.
      */
-    Future<Receiver> close();
+    Future<StreamReceiver> close();
 
     /**
      * Requests a close of the {@link Receiver} link at the remote and returns a {@link Future} that will be
      * completed once the link has been closed.
      *
      * @param error
-     * 		The {@link ErrorCondition} to transmit to the remote along with the close operation.
+     *      The {@link ErrorCondition} to transmit to the remote along with the close operation.
      *
      * @return a {@link Future} that will be completed when the remote closes this {@link Receiver} link.
      */
-    Future<Receiver> close(ErrorCondition error);
+    Future<StreamReceiver> close(ErrorCondition error);
 
     /**
      * Requests a detach of the {@link Receiver} link at the remote and returns a {@link Future} that will be
@@ -54,18 +56,18 @@ public interface Receiver {
      *
      * @return a {@link Future} that will be completed when the remote detaches this {@link Receiver} link.
      */
-    Future<Receiver> detach();
+    Future<StreamReceiver> detach();
 
     /**
      * Requests a detach of the {@link Receiver} link at the remote and returns a {@link Future} that will be
      * completed once the link has been detached.
      *
      * @param error
-     * 		The {@link ErrorCondition} to transmit to the remote along with the detach operation.
+     *      The {@link ErrorCondition} to transmit to the remote along with the detach operation.
      *
      * @return a {@link Future} that will be completed when the remote detaches this {@link Receiver} link.
      */
-    Future<Receiver> detach(ErrorCondition error);
+    Future<StreamReceiver> detach(ErrorCondition error);
 
     /**
      * Returns the address that the {@link Receiver} instance will be subscribed to.
@@ -145,102 +147,56 @@ public interface Receiver {
     String[] desiredCapabilities() throws ClientException;
 
     /**
-     * @return the {@link Client} instance that holds this session's {@link Receiver}
+     * @return the {@link Client} instance that holds this session's {@link StreamReceiver}
      */
     Client client();
 
     /**
-     * @return the {@link Connection} instance that holds this session's {@link Receiver}
+     * @return the {@link Connection} instance that holds this session's {@link StreamReceiver}
      */
     Connection connection();
 
     /**
-     * @return the {@link Session} that created and holds this {@link Receiver}.
+     * @return the {@link Session} that created and holds this {@link StreamReceiver}.
      */
     Session session();
 
     /**
-     * Adds credit to the {@link Receiver} link for use when there receiver has not been configured
+     * Adds credit to the {@link StreamReceiver} link for use when there receiver has not been configured
      * with a credit window.  When credit window is configured credit replenishment is automatic and
      * calling this method will result in an exception indicating that the operation is invalid.
      * <p>
-     * If the {@link Receiver} is draining and this method is called an exception will be thrown
+     * If the {@link StreamReceiver} is draining and this method is called an exception will be thrown
      * to indicate that credit cannot be replenished until the remote has drained the existing link
      * credit.
      *
      * @param credits
-     *      The number of credits to add to the {@link Receiver} link.
+     *      The number of credits to add to the {@link StreamReceiver} link.
      *
-     * @return this {@link Receiver} instance.
+     * @return this {@link StreamReceiver} instance.
      *
-     * @throws ClientException if an error occurs while attempting to add new {@link Receiver} link credit.
+     * @throws ClientException if an error occurs while attempting to add new {@link StreamReceiver} link credit.
      */
-    Receiver addCredit(int credits) throws ClientException;
+    StreamReceiver addCredit(int credits) throws ClientException;
 
     /**
-     * Blocking receive method that waits forever for the remote to provide a {@link Delivery} for consumption.
-     * <p>
-     * Receive calls will only grant credit on their own if a credit window is configured in the
-     * {@link ReceiverOptions} which is done by default.  If the client application has configured
-     * no credit window than this method will not grant any credit when it enters the wait for new
-     * incoming messages.
+     * Creates and returns a new {@link StreamDelivery} that can be used to read incoming {@link Delivery}
+     * data as it arrives regardless of the complete delivery date having been transmitted from the remote
+     * peer.
      *
-     * @return a new {@link Delivery} received from the remote.
+     * @return a new {@link StreamDelivery} that can be used to read incoming streamed message data.
      *
-     * @throws ClientException if the {@link Receiver} or its parent is closed when the call to receive is made.
+     * @throws ClientException if an error occurs while attempting to open a new {@link StreamDelivery}.
      */
-    Delivery receive() throws ClientException;
+    StreamDelivery openStream() throws ClientException;
 
     /**
-     * Blocking receive method that waits the given time interval for the remote to provide a
-     * {@link Delivery} for consumption.  The amount of time this method blocks is based on the
-     * timeout value. If timeout is equal to <code>-1</code> then it blocks until a Delivery is
-     * received. If timeout is equal to zero then it will not block and simply return a
-     * {@link Delivery} if one is available locally.  If timeout value is greater than zero then it
-     * blocks up to timeout amount of time.
-     * <p>
-     * Receive calls will only grant credit on their own if a credit window is configured in the
-     * {@link ReceiverOptions} which is done by default.  If the client application has not configured
-     * a credit window or granted credit manually this method will not automatically grant any credit
-     * when it enters the wait for a new incoming {@link Delivery}.
+     * Requests the remote to drain previously granted credit for this {@link StreamReceiver} link.
      *
-     * @param timeout
-     *      The timeout value used to control how long the receive method waits for a new {@link Delivery}.
-     * @param unit
-     *      The unit of time that the given timeout represents.
-     *
-     * @return a new {@link Delivery} received from the remote.
-     *
-     * @throws ClientException if the {@link Receiver} or its parent is closed when the call to receive is made.
-     */
-    Delivery receive(long timeout, TimeUnit unit) throws ClientException;
-
-    /**
-     * Non-blocking receive method that either returns a message is one is immediately available or
-     * returns null if none is currently at hand.
-     *
-     * @return a new {@link Delivery} received from the remote or null if no pending deliveries are available.
-     *
-     * @throws ClientException if the {@link Receiver} or its parent is closed when the call to try to receive is made.
-     */
-    Delivery tryReceive() throws ClientException;
-
-    /**
-     * Requests the remote to drain previously granted credit for this {@link Receiver} link.
-     *
-     * @return a {@link Future} that will be completed when the remote drains this {@link Receiver} link.
+     * @return a {@link Future} that will be completed when the remote drains this {@link StreamReceiver} link.
      *
      * @throws ClientException if an error occurs while attempting to drain the link credit.
      */
-    Future<Receiver> drain() throws ClientException;
-
-    /**
-     * Returns the number of Deliveries that are currently held in the {@link Receiver} prefetched
-     * queue.  This number is likely to change immediately following the call as more deliveries
-     * arrive but can be used to determine if any pending {@link Delivery} work is ready.
-     *
-     * @return the number of deliveries that are currently buffered locally.
-     */
-    long prefetchedCount();
+    Future<StreamReceiver> drain() throws ClientException;
 
 }

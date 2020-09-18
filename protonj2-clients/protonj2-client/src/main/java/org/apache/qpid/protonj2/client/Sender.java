@@ -154,6 +154,11 @@ public interface Sender {
     Client client();
 
     /**
+     * @return the {@link Connection} instance that holds this session's {@link Sender}
+     */
+    Connection connection();
+
+    /**
      * @return the {@link Session} that created and holds this {@link Sender}.
      */
     Session session();
@@ -213,17 +218,5 @@ public interface Sender {
      * @throws ClientException if an error occurs while initiating the send operation.
      */
     Tracker trySend(Message<?> message, Map<String, Object> deliveryAnnotations) throws ClientException;
-
-    /**
-     * Creates and returns a new {@link SendContext} that can be used by the caller to perform
-     * multiple sends of custom encoded messages or perform chucked large message transfers to the
-     * remote as part of a streaming send operation.
-     *
-     * @param options
-     *      The options to use when creating and configuring the new {@link SendContext}.
-     *
-     * @return a new {@link SendContext} that can be used to stream message data to the remote.
-     */
-    SendContext openSendContext(SendContextOptions options);
 
 }

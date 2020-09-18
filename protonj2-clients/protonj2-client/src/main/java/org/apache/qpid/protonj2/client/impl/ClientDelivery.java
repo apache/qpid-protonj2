@@ -17,7 +17,6 @@
 package org.apache.qpid.protonj2.client.impl;
 
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.DeliveryState;
@@ -45,8 +44,6 @@ public final class ClientDelivery implements Delivery {
 
     private DeliveryAnnotations deliveryAnnotations;
     private Message<?> cachedMessage;
-
-    private Consumer<ClientDelivery> abortedHandler;
 
     /**
      * Creates a new client delivery object linked to the given {@link IncomingDelivery}
@@ -82,7 +79,7 @@ public final class ClientDelivery implements Delivery {
     }
 
     @Override
-    public Map<String, Object> deliveryAnnotations() throws ClientException {
+    public Map<String, Object> annotations() throws ClientException {
         message();
 
         if (deliveryAnnotations != null && deliveryAnnotations.getValue() != null) {
@@ -158,14 +155,6 @@ public final class ClientDelivery implements Delivery {
         return delivery.isSettled();
     }
 
-    void handleDeliveryAborted() {
-        if (abortedHandler != null) {
-            try {
-                abortedHandler.accept(this);
-            } catch (Exception ignore) {}
-        }
-    }
-
     //----- Internal API not meant to be used from outside the client package.
 
     IncomingDelivery protonDelivery() {
@@ -174,14 +163,5 @@ public final class ClientDelivery implements Delivery {
 
     void deliveryAnnotations(DeliveryAnnotations deliveryAnnotations) {
         this.deliveryAnnotations = deliveryAnnotations;
-    }
-
-    public Consumer<ClientDelivery> abortedHandler() {
-        return abortedHandler;
-    }
-
-    ClientDelivery abortedHandler(Consumer<ClientDelivery> abortedHandler) {
-        this.abortedHandler = abortedHandler;
-        return this;
     }
 }

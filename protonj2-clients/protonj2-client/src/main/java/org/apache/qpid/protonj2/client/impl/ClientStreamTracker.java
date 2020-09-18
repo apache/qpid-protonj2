@@ -20,67 +20,64 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
+import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.OutputStreamOptions;
-import org.apache.qpid.protonj2.client.SendContext;
-import org.apache.qpid.protonj2.client.SendContextOptions;
+import org.apache.qpid.protonj2.client.StreamSenderOptions;
+import org.apache.qpid.protonj2.client.StreamTracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
+import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
+import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Section;
 
 /**
- * Sender Context used to multiple send operations that comprise the payload
- * of a single delivery.
+ * Streaming Sender context used to multiple send operations that comprise the payload
+ * of a single larger message transfer.
  */
-public class ClientSendContext implements SendContext {
+public class ClientStreamTracker implements StreamTracker {
 
     private static final int DATA_SECTION_HEADER_ENCODING_SIZE = 8;
 
-    private final ClientSender sender;
+    private final ClientStreamSender sender;
+    private final OutgoingDelivery protonDelivery;
     private final int bufferSize;
-    private final int messageFormat;
+    private final SendContextMessage contextMessage = new SendContextMessage();
+    private final ClientFuture<StreamTracker> acknowledged;
 
-    private ClientTracker tracker;
-    private SendContextMessage contextMessage;
     private ProtonBuffer buffer;
-
+    private volatile int messageFormat;
     private volatile boolean completed;
     private volatile boolean aborted;
+    private boolean active;
+    private volatile boolean remotelySetted;
+    private volatile DeliveryState remoteDeliveryState;
 
-    ClientSendContext(ClientSender sender, SendContextOptions options) {
+    ClientStreamTracker(ClientStreamSender sender, OutgoingDelivery protonDelivery) {
         this.sender = sender;
-        this.completed = completed;
-        this.messageFormat = options.messageFormat();
-        this.contextMessage = new SendContextMessage();
+        this.protonDelivery = protonDelivery;
+        this.protonDelivery.setLinkedResource(this);
+        this.acknowledged = sender.session().getFutureFactory().createFuture();
 
-        if (options.bufferSize() > 0) {
-            bufferSize = Math.max(SendContextOptions.MIN_BUFFER_SIZE_LIMIT, options.bufferSize());
+        if (sender.options().writeBufferSize() > 0) {
+            bufferSize = Math.max(StreamSenderOptions.MIN_BUFFER_SIZE_LIMIT, sender.options().writeBufferSize());
         } else {
-            bufferSize = Math.max(SendContextOptions.MIN_BUFFER_SIZE_LIMIT,
+            bufferSize = Math.max(StreamSenderOptions.MIN_BUFFER_SIZE_LIMIT,
                                   (int) sender.getProtonSender().getConnection().getMaxFrameSize());
         }
     }
 
-    ClientSendContext(ClientSender sender, int messageFormat, boolean completed) {
-        this.sender = sender;
-        this.completed = completed;
-        this.bufferSize = -1;
-        this.messageFormat = messageFormat;
-    }
-
-    ClientSendContext tracker(ClientTracker tracker) {
-        this.tracker = tracker;
-        return this;
-    }
-
     @Override
-    public ClientSender sender() {
+    public ClientStreamSender sender() {
         return sender;
     }
 
@@ -90,12 +87,18 @@ public class ClientSendContext implements SendContext {
     }
 
     @Override
-    public ClientTracker tracker() {
-        return tracker;
+    public ClientStreamTracker messageFormat(int messageFormat) throws ClientException {
+        if (active) {
+            throw new ClientIllegalStateException("Cannot set message format after writes have started.");
+        }
+
+        this.messageFormat = messageFormat;
+
+        return this;
     }
 
     @Override
-    public ClientSendContext write(Section<?> section) throws ClientException {
+    public ClientStreamTracker write(Section<?> section) throws ClientException {
         if (aborted()) {
             throw new ClientIllegalStateException("Cannot write a Section to an already aborted send context");
         }
@@ -110,7 +113,7 @@ public class ClientSendContext implements SendContext {
     }
 
     @Override
-    public ClientSendContext flush() throws ClientException {
+    public ClientStreamTracker flush() throws ClientException {
         if (aborted()) {
             throw new ClientIllegalStateException("Cannot flush already aborted send context");
         }
@@ -126,22 +129,17 @@ public class ClientSendContext implements SendContext {
 
     private void doFlush() throws ClientException {
         if (buffer != null && buffer.isReadable()) {
-
-            // Lazy create to avoid allocation for default send path.
-            if (contextMessage != null) {
-                contextMessage = new SendContextMessage();
-            }
-
             try {
-                tracker = sender.sendMessage(this, contextMessage);
+                sender.sendMessage(this, contextMessage);
             } finally {
+                active = true;
                 buffer = null;
             }
         }
     }
 
     @Override
-    public ClientSendContext abort() throws ClientException {
+    public ClientStreamTracker abort() throws ClientException {
         if (completed()) {
             throw new ClientIllegalStateException("Cannot abort an already completed send context");
         }
@@ -149,8 +147,8 @@ public class ClientSendContext implements SendContext {
         if (!aborted()) {
             aborted = true;
 
-            if (tracker != null) {
-                sender.abort(tracker.delivery());
+            if (active) {
+                sender.abort(protonDelivery);
             }
         }
 
@@ -163,7 +161,7 @@ public class ClientSendContext implements SendContext {
     }
 
     @Override
-    public ClientSendContext complete() throws ClientException {
+    public ClientStreamTracker complete() throws ClientException {
         if (aborted()) {
             throw new ClientIllegalStateException("Cannot complete an already aborted send context");
         }
@@ -176,8 +174,8 @@ public class ClientSendContext implements SendContext {
             // this context which would imply we have a Tracker.
             if (buffer != null && buffer.isReadable()) {
                 doFlush();
-            } else if (tracker != null) {
-                sender.complete(tracker.delivery());
+            } else if (active) {
+                sender.complete(protonDelivery);
             }
         }
 
@@ -223,6 +221,74 @@ public class ClientSendContext implements SendContext {
         return new SendContextRawBytesOutputStream(options, ProtonByteBufferAllocator.DEFAULT.allocate(bufferSize, bufferSize));
     }
 
+    @Override
+    public DeliveryState state() {
+        return ClientDeliveryState.fromProtonType(protonDelivery.getState());
+    }
+
+    @Override
+    public DeliveryState remoteState() {
+        return remoteDeliveryState;
+    }
+
+    @Override
+    public boolean remoteSettled() {
+        return remotelySetted;
+    }
+
+    @Override
+    public ClientStreamTracker disposition(DeliveryState state, boolean settle) throws ClientException {
+        org.apache.qpid.protonj2.types.transport.DeliveryState protonState = null;
+        if (state != null) {
+            protonState = ClientDeliveryState.asProtonType(state);
+        }
+
+        sender.disposition(protonDelivery, protonState, settle);
+        return this;
+    }
+
+    @Override
+    public ClientStreamTracker settle() throws ClientException {
+        sender.disposition(protonDelivery, null, true);
+        return this;
+    }
+
+    @Override
+    public boolean settled() {
+        return protonDelivery.isSettled();
+    }
+
+    @Override
+    public ClientFuture<StreamTracker> settlementFuture() {
+        return acknowledged;
+    }
+
+    @Override
+    public StreamTracker awaitSettlement() throws ClientException {
+        try {
+            return settlementFuture().get();
+        } catch (ExecutionException exe) {
+            throw ClientExceptionSupport.createNonFatalOrPassthrough(exe.getCause());
+        } catch (InterruptedException e) {
+            Thread.interrupted();
+            throw new ClientException("Wait for settlement was interrupted", e);
+        }
+    }
+
+    @Override
+    public StreamTracker awaitSettlement(long timeout, TimeUnit unit) throws ClientException {
+        try {
+            return settlementFuture().get(timeout, unit);
+        } catch (InterruptedException ie) {
+            Thread.interrupted();
+            throw new ClientException("Wait for settlement was interrupted", ie);
+        } catch (ExecutionException exe) {
+            throw ClientExceptionSupport.createNonFatalOrPassthrough(exe.getCause());
+        } catch (TimeoutException te) {
+            throw new ClientOperationTimedOutException("Timed out waiting for remote settlement", te);
+        }
+    }
+
     private void appenedDataToBuffer(ProtonBuffer incoming) throws ClientException {
         if (buffer == null) {
             buffer = incoming;
@@ -241,6 +307,7 @@ public class ClientSendContext implements SendContext {
             try {
                 sender.sendMessage(this, contextMessage);
             } finally {
+                active = true;
                 buffer = null;
             }
         }
@@ -376,8 +443,8 @@ public class ClientSendContext implements SendContext {
                 }
 
                 if (complete) {
-                    tracker().settlementFuture().get();
-                    tracker().settle();
+                    settlementFuture().get();
+                    settle();
                 } else {
                     streamBuffer.setIndex(0, 0);
                 }
@@ -437,6 +504,17 @@ public class ClientSendContext implements SendContext {
             }
 
             super.doFlushPending(complete);
+        }
+    }
+
+    //----- Internal Event hooks for delivery updates
+
+    void processDeliveryUpdated(OutgoingDelivery delivery) {
+        remotelySetted = delivery.isRemotelySettled();
+        remoteDeliveryState = ClientDeliveryState.fromProtonType(delivery.getRemoteState());
+
+        if (delivery.isRemotelySettled()) {
+            acknowledged.complete(this);
         }
     }
 }

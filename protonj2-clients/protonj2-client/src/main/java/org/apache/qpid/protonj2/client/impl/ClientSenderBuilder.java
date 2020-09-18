@@ -21,9 +21,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.SessionOptions;
 import org.apache.qpid.protonj2.client.SourceOptions;
+import org.apache.qpid.protonj2.client.StreamSenderOptions;
 import org.apache.qpid.protonj2.client.TargetOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.engine.Sender;
+import org.apache.qpid.protonj2.engine.Session;
+import org.apache.qpid.protonj2.engine.impl.ProtonDeliveryTagGenerator;
 import org.apache.qpid.protonj2.types.messaging.Source;
 import org.apache.qpid.protonj2.types.messaging.Target;
 import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
@@ -39,6 +42,7 @@ final class ClientSenderBuilder {
     private final AtomicInteger senderCounter = new AtomicInteger();
 
     private SenderOptions defaultSenderOptions;
+    private StreamSenderOptions defaultStreamSenderOptions;
 
     public ClientSenderBuilder(ClientSession session) {
         this.session = session;
@@ -48,7 +52,7 @@ final class ClientSenderBuilder {
     public ClientSender sender(String address, SenderOptions senderOptions) throws ClientException {
         final SenderOptions options = senderOptions != null ? senderOptions : getDefaultSenderOptions();
         final String senderId = nextSenderId();
-        final Sender protonSender = createSender(address, options, senderId);
+        final Sender protonSender = createSender(session.getProtonSession(), address, options, senderId);
 
         return new ClientSender(session, options, senderId, protonSender);
     }
@@ -56,12 +60,20 @@ final class ClientSenderBuilder {
     public ClientSender anonymousSender(SenderOptions senderOptions) throws ClientException {
         final SenderOptions options = senderOptions != null ? senderOptions : getDefaultSenderOptions();
         final String senderId = nextSenderId();
-        final Sender protonSender = createSender(null, options, senderId);
+        final Sender protonSender = createSender(session.getProtonSession(), null, options, senderId);
 
         return new ClientSender(session, options, senderId, protonSender);
     }
 
-    private Sender createSender(String address, SenderOptions options, String senderId) {
+    public ClientStreamSender streamSender(String address, StreamSenderOptions senderOptions) throws ClientException {
+        final StreamSenderOptions options = senderOptions != null ? senderOptions : getDefaultStreamSenderOptions();
+        final String senderId = nextSenderId();
+        final Sender protonSender = createSender(session.getProtonSession(), address, options, senderId);
+
+        return new ClientStreamSender(session, options, senderId, protonSender);
+    }
+
+    private static Sender createSender(Session protonSession, String address, SenderOptions options, String senderId) {
         final String linkName;
 
         if (options.linkName() != null) {
@@ -70,7 +82,7 @@ final class ClientSenderBuilder {
             linkName = "sender-" + senderId;
         }
 
-        final Sender protonSender = session.getProtonSession().sender(linkName);
+        final Sender protonSender = protonSession.sender(linkName);
 
         switch (options.deliveryMode()) {
             case AT_MOST_ONCE:
@@ -89,10 +101,17 @@ final class ClientSenderBuilder {
         protonSender.setTarget(createTarget(address, options));
         protonSender.setSource(createSource(address, options));
 
+        // Use a tag generator that will reuse old tags.  Later we might make this configurable.
+        if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
+            protonSender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.EMPTY.createGenerator());
+        } else {
+            protonSender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator());
+        }
+
         return protonSender;
     }
 
-    private Source createSource(String address, SenderOptions options) {
+    private static Source createSource(String address, SenderOptions options) {
         final SourceOptions sourceOptions = options.sourceOptions();
 
         // TODO: fully configure source from the options
@@ -102,7 +121,7 @@ final class ClientSenderBuilder {
         return source;
     }
 
-    private Target createTarget(String address, SenderOptions options) {
+    private static Target createTarget(String address, SenderOptions options) {
         final TargetOptions targetOptions = options.targetOptions();
 
         // TODO: fully configure target from the options
@@ -135,6 +154,29 @@ final class ClientSenderBuilder {
                 }
 
                 defaultSenderOptions = senderOptions;
+            }
+        }
+
+        return senderOptions;
+    }
+
+    /*
+     * Stream Sender options used when none specified by the caller creating a new sender.
+     */
+    private StreamSenderOptions getDefaultStreamSenderOptions() {
+        StreamSenderOptions senderOptions = defaultStreamSenderOptions;
+        if (senderOptions == null) {
+            synchronized (this) {
+                senderOptions = defaultStreamSenderOptions;
+                if (senderOptions == null) {
+                    senderOptions = new StreamSenderOptions();
+                    senderOptions.openTimeout(sessionOptions.openTimeout());
+                    senderOptions.closeTimeout(sessionOptions.closeTimeout());
+                    senderOptions.requestTimeout(sessionOptions.requestTimeout());
+                    senderOptions.sendTimeout(sessionOptions.sendTimeout());
+                }
+
+                defaultStreamSenderOptions = senderOptions;
             }
         }
 

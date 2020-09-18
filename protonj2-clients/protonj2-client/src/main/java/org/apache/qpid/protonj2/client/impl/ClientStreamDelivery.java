@@ -18,48 +18,59 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.qpid.protonj2.client.Delivery;
+import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.Message;
-import org.apache.qpid.protonj2.client.ReceiveContext;
-import org.apache.qpid.protonj2.client.ReceiveContextOptions;
-import org.apache.qpid.protonj2.client.Receiver;
+import org.apache.qpid.protonj2.client.StreamDelivery;
+import org.apache.qpid.protonj2.client.StreamReceiver;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
+import org.apache.qpid.protonj2.engine.IncomingDelivery;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
+import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
+import org.apache.qpid.protonj2.types.messaging.Modified;
+import org.apache.qpid.protonj2.types.messaging.Rejected;
+import org.apache.qpid.protonj2.types.messaging.Released;
+import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
- * Receive Context used to request reads of possible split framed
- * {@link Transfer} payload's that comprise a single large {@link Delivery}.
+ * Streamed message delivery context used to request reads of possible split framed
+ * {@link Transfer} payload's that comprise a single large overall message.
  */
-public class ClientReceiveContext implements ReceiveContext {
+public class ClientStreamDelivery implements StreamDelivery {
 
-    private final ClientReceiver receiver;
-    @SuppressWarnings("unused")
-    private final ReceiveContextOptions options;
-    private final ClientFuture<ClientDelivery> deliveryFuture;
+    private final ClientStreamReceiver receiver;
+    private final ClientFuture<IncomingDelivery> deliveryFuture;
 
-    private ClientDelivery delivery;
+    private IncomingDelivery protonDelivery;
+    private DeliveryAnnotations deliveryAnnotations;
+    private Message<?> cachedMessage;
 
-    ClientReceiveContext(ClientReceiver receiver, ReceiveContextOptions options) {
+    ClientStreamDelivery(ClientStreamReceiver receiver) {
         this.receiver = receiver;
-        this.options = new ReceiveContextOptions(options);
 
         this.deliveryFuture = receiver.session().getFutureFactory().createFuture();
     }
 
     @Override
-    public ClientReceiveContext awaitDelivery() throws ClientException {
+    public StreamReceiver receiver() {
+        return receiver;
+    }
+
+    @Override
+    public ClientStreamDelivery awaitDelivery() throws ClientException {
         if (!deliveryFuture.isComplete()) {
             try {
                 receiver.attachToNextDelivery(this);
-                delivery = deliveryFuture.get();
+                protonDelivery = deliveryFuture.get();
             } catch (InterruptedException e) {
                 Thread.interrupted();
                 throw new ClientException("Wait for delivery was interrupted", e);
@@ -72,13 +83,13 @@ public class ClientReceiveContext implements ReceiveContext {
     }
 
     @Override
-    public ClientReceiveContext awaitDelivery(long timeout, TimeUnit unit) throws ClientException {
+    public ClientStreamDelivery awaitDelivery(long timeout, TimeUnit unit) throws ClientException {
         if (!deliveryFuture.isComplete()) {
             try {
                 receiver.attachToNextDelivery(this);
 
                 // TODO: What happens after the timeout, the context is still attached.
-                delivery = deliveryFuture.get(timeout, unit);
+                protonDelivery = deliveryFuture.get(timeout, unit);
             } catch (InterruptedException e) {
                 Thread.interrupted();
                 throw new ClientException("Wait for delivery was interrupted", e);
@@ -93,28 +104,27 @@ public class ClientReceiveContext implements ReceiveContext {
     }
 
     @Override
-    public Delivery delivery() {
-        return delivery;
-    }
-
-    @Override
-    public Receiver receiver() {
-        return receiver;
-    }
-
-    @Override
     public <E> Message<E> message() throws ClientException {
-        if (delivery != null) {
-            return delivery.message();
+        if (protonDelivery != null) {
+            return null;
         } else {
-            throw new ClientIllegalStateException("Cannot read a message until the context has a complete delivery");
+            throw new ClientIllegalStateException("Cannot read a message until the remote begins a transfer");
+        }
+    }
+
+    @Override
+    public Map<String, Object> annotations() throws ClientException {
+        if (protonDelivery != null) {
+            return null;
+        } else {
+            throw new ClientIllegalStateException("Cannot read message data until the remote begins a transfer");
         }
     }
 
     @Override
     public boolean aborted() {
-        if (delivery != null && delivery.protonDelivery() != null) {
-            return delivery.protonDelivery().isAborted();
+        if (protonDelivery != null) {
+            return protonDelivery.isAborted();
         } else {
             return false;
         }
@@ -122,8 +132,8 @@ public class ClientReceiveContext implements ReceiveContext {
 
     @Override
     public boolean completed() {
-        if (delivery != null && delivery.protonDelivery() != null) {
-            return !delivery.protonDelivery().isPartial() && !delivery.protonDelivery().isAborted();
+        if (protonDelivery != null) {
+            return !protonDelivery.isPartial() && !protonDelivery.isAborted();
         } else {
             return false;
         }
@@ -137,14 +147,77 @@ public class ClientReceiveContext implements ReceiveContext {
         return new RawInputStream();
     }
 
+    @Override
+    public ClientStreamDelivery accept() throws ClientException {
+        disposition(Accepted.getInstance(), true);
+        return this;
+    }
+
+    @Override
+    public ClientStreamDelivery release() throws ClientException {
+        disposition(Released.getInstance(), true);
+        return this;
+    }
+
+    @Override
+    public ClientStreamDelivery reject(String condition, String description) throws ClientException {
+        disposition(new Rejected().setError(new ErrorCondition(condition, description)), true);
+        return this;
+    }
+
+    @Override
+    public ClientStreamDelivery modified(boolean deliveryFailed, boolean undeliverableHere) throws ClientException {
+        disposition(new Modified().setDeliveryFailed(deliveryFailed).setUndeliverableHere(undeliverableHere), true);
+        return this;
+    }
+
+    @Override
+    public ClientStreamDelivery disposition(DeliveryState state, boolean settle) throws ClientException {
+        disposition(ClientDeliveryState.asProtonType(state), settle);
+        return this;
+    }
+
+    @Override
+    public ClientStreamDelivery settle() throws ClientException {
+        disposition(protonDelivery.getState(), true);
+        return this;
+    }
+
+    @Override
+    public boolean settled() {
+        return protonDelivery != null ? protonDelivery.isSettled() : false;
+    }
+
+    @Override
+    public DeliveryState state() {
+        return protonDelivery != null ? ClientDeliveryState.fromProtonType(protonDelivery.getState()) : null;
+    }
+
+    @Override
+    public int messageFormat() {
+        return protonDelivery != null ? protonDelivery.getMessageFormat() : 0;
+    }
+
+    @Override
+    public DeliveryState remoteState() {
+        return protonDelivery != null ? ClientDeliveryState.fromProtonType(protonDelivery.getRemoteState()) : null;
+    }
+
+    @Override
+    public boolean remoteSettled() {
+        return protonDelivery != null ? protonDelivery.isRemotelySettled() : false;
+    }
+
+    //----- Internal Streamed Delivery API and support methods
+
     /*
      * Called within the event loop thread from the parent receiver.
      */
-    void handleDeliveryRead(ClientDelivery delivery) {
+    void handleDeliveryRead(IncomingDelivery delivery) {
         // Is this the first delivery of is this a new delivery in an ongoing
         // transfer of a larger message set.
         if (!deliveryFuture.isComplete()) {
-            deliveryFuture.complete(delivery.abortedHandler(this::handleDeliveryAborted));
+            deliveryFuture.complete(delivery);
         } else {
             // Ongoing processing kicks in now and fills read buffer
         }
@@ -153,8 +226,16 @@ public class ClientReceiveContext implements ReceiveContext {
     /*
      * Called within the event loop thread from the parent receiver.
      */
-    void handleDeliveryAborted(ClientDelivery delivery) {
+    void handleDeliveryAborted(IncomingDelivery delivery) {
         // Need to abort blocked reads waiting for new data.
+    }
+
+    IncomingDelivery protonDelivery() {
+        return protonDelivery;
+    }
+
+    void deliveryAnnotations(DeliveryAnnotations deliveryAnnotations) {
+        this.deliveryAnnotations = deliveryAnnotations;
     }
 
     private void checkClosed() throws ClientIllegalStateException {
@@ -167,6 +248,11 @@ public class ClientReceiveContext implements ReceiveContext {
         if (aborted()) {
             throw new ClientIllegalStateException("The incoming delivery was aborted.");
         }
+    }
+
+    private void disposition(org.apache.qpid.protonj2.types.transport.DeliveryState state, boolean settle) throws ClientException {
+        checkAborted();
+
     }
 
     //----- Internal InputStream implementations

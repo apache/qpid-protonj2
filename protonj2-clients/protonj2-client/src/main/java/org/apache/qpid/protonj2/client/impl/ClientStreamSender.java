@@ -16,27 +16,23 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.DeliveryMode;
 import org.apache.qpid.protonj2.client.ErrorCondition;
-import org.apache.qpid.protonj2.client.Message;
-import org.apache.qpid.protonj2.client.Sender;
-import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Source;
+import org.apache.qpid.protonj2.client.StreamSender;
+import org.apache.qpid.protonj2.client.StreamSenderOptions;
 import org.apache.qpid.protonj2.client.Target;
-import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
@@ -55,35 +51,31 @@ import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Proton based AMQP Sender
- */
-public class ClientSender implements Sender {
+public class ClientStreamSender implements StreamSender {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClientSender.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClientStreamSender.class);
 
-    private static final AtomicIntegerFieldUpdater<ClientSender> CLOSED_UPDATER =
-            AtomicIntegerFieldUpdater.newUpdater(ClientSender.class, "closed");
+    private static final AtomicIntegerFieldUpdater<ClientStreamSender> CLOSED_UPDATER =
+            AtomicIntegerFieldUpdater.newUpdater(ClientStreamSender.class, "closed");
 
-    private final ClientFuture<Sender> openFuture;
-    private final ClientFuture<Sender> closeFuture;
+    private final ClientFuture<StreamSender> openFuture;
+    private final ClientFuture<StreamSender> closeFuture;
 
-    private volatile int closed;
-    private ClientException failureCause;
-
-    private final Deque<InFlightSend> blocked = new ArrayDeque<InFlightSend>();
-    private final SenderOptions options;
+    private final StreamSenderOptions options;
     private final ClientSession session;
     private final org.apache.qpid.protonj2.engine.Sender protonSender;
     private final ScheduledExecutorService executor;
     private final String senderId;
-    private Consumer<ClientSender> senderRemotelyClosedHandler;
 
     private volatile Source remoteSource;
     private volatile Target remoteTarget;
 
-    public ClientSender(ClientSession session, SenderOptions options, String senderId, org.apache.qpid.protonj2.engine.Sender protonSender) {
-        this.options = new SenderOptions(options);
+    private InFlightSend blockedOnCredit;
+    private volatile int closed;
+    private ClientException failureCause;
+
+    public ClientStreamSender(ClientSession session, StreamSenderOptions options, String senderId, org.apache.qpid.protonj2.engine.Sender protonSender) {
+        this.options = new StreamSenderOptions(options);
         this.session = session;
         this.senderId = senderId;
         this.executor = session.getScheduler();
@@ -91,9 +83,23 @@ public class ClientSender implements Sender {
         this.closeFuture = session.getFutureFactory().createFuture();
         this.protonSender = protonSender;
 
-
         // Ensure that the sender can provide a link back to this object.
         protonSender.setLinkedResource(this);
+    }
+
+    @Override
+    public ClientInstance client() {
+        return session.client();
+    }
+
+    @Override
+    public ClientConnection connection() {
+        return session.connection();
+    }
+
+    @Override
+    public ClientSession session() {
+        return session;
     }
 
     @Override
@@ -126,55 +132,53 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public ClientInstance client() {
-        return session.client();
+    public Map<String, Object> properties() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringKeyedMap(protonSender.getRemoteProperties());
     }
 
     @Override
-    public ClientConnection connection() {
-        return session.connection();
+    public String[] offeredCapabilities() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringArray(protonSender.getRemoteOfferedCapabilities());
     }
 
     @Override
-    public ClientSession session() {
-        return session;
-    }
-
-    Sender remotelyClosedHandler(Consumer<ClientSender> handler) {
-        this.senderRemotelyClosedHandler = handler;
-        return this;
+    public String[] desiredCapabilities() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringArray(protonSender.getRemoteDesiredCapabilities());
     }
 
     @Override
-    public ClientFuture<Sender> openFuture() {
+    public Future<StreamSender> openFuture() {
         return openFuture;
     }
 
     @Override
-    public ClientFuture<Sender> close() {
+    public ClientFuture<StreamSender> close() {
         return doCloseOrDetach(true, null);
     }
 
     @Override
-    public ClientFuture<Sender> close(ErrorCondition error) {
+    public ClientFuture<StreamSender> close(ErrorCondition error) {
         Objects.requireNonNull(error, "Error Condition cannot be null");
 
         return doCloseOrDetach(true, error);
     }
 
     @Override
-    public ClientFuture<Sender> detach() {
+    public ClientFuture<StreamSender> detach() {
         return doCloseOrDetach(false, null);
     }
 
     @Override
-    public ClientFuture<Sender> detach(ErrorCondition error) {
+    public ClientFuture<StreamSender> detach(ErrorCondition error) {
         Objects.requireNonNull(error, "Error Condition cannot be null");
 
         return doCloseOrDetach(false, error);
     }
 
-    private ClientFuture<Sender> doCloseOrDetach(boolean close, ErrorCondition error) {
+    private ClientFuture<StreamSender> doCloseOrDetach(boolean close, ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             executor.execute(() -> {
                 if (protonSender.isLocallyOpen()) {
@@ -196,45 +200,19 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public Tracker send(Message<?> message) throws ClientException {
+    public ClientStreamTracker openStream() throws ClientException {
         checkClosedOrFailed();
-        return sendMessage(ClientMessageSupport.convertMessage(message), null, true);
-    }
+        final ClientFuture<ClientStreamTracker> tracker = session.getFutureFactory().createFuture();
 
-    @Override
-    public Tracker send(Message<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
-        checkClosedOrFailed();
-        return sendMessage(ClientMessageSupport.convertMessage(message), deliveryAnnotations, true);
-    }
+        executor.execute(() -> {
+            if (protonSender.current() != null) {
+                tracker.failed(new ClientIllegalStateException("Cannot initiate a new streaming send until the previous one is complete"));
+            } else {
+                tracker.complete(new ClientStreamTracker(this, protonSender.next()));
+            }
+        });
 
-    @Override
-    public Tracker trySend(Message<?> message) throws ClientException {
-        checkClosedOrFailed();
-        return sendMessage(ClientMessageSupport.convertMessage(message), null, false);
-    }
-
-    @Override
-    public Tracker trySend(Message<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
-        checkClosedOrFailed();
-        return sendMessage(ClientMessageSupport.convertMessage(message), deliveryAnnotations, false);
-    }
-
-    @Override
-    public Map<String, Object> properties() throws ClientException {
-        waitForOpenToComplete();
-        return ClientConversionSupport.toStringKeyedMap(protonSender.getRemoteProperties());
-    }
-
-    @Override
-    public String[] offeredCapabilities() throws ClientException {
-        waitForOpenToComplete();
-        return ClientConversionSupport.toStringArray(protonSender.getRemoteOfferedCapabilities());
-    }
-
-    @Override
-    public String[] desiredCapabilities() throws ClientException {
-        waitForOpenToComplete();
-        return ClientConversionSupport.toStringArray(protonSender.getRemoteDesiredCapabilities());
+        return session.request(this, tracker);
     }
 
     //----- Internal API
@@ -260,7 +238,7 @@ public class ClientSender implements Sender {
         });
     }
 
-    ClientSender open() {
+    ClientStreamSender open() {
         protonSender.localOpenHandler(this::handleLocalOpen)
                     .localCloseHandler(this::handleLocalCloseOrDetach)
                     .localDetachHandler(this::handleLocalCloseOrDetach)
@@ -306,6 +284,204 @@ public class ClientSender implements Sender {
 
     boolean isDynamic() {
         return protonSender.getTarget() != null && protonSender.<org.apache.qpid.protonj2.types.messaging.Target>getTarget().isDynamic();
+    }
+
+    StreamSenderOptions options() {
+        return this.options;
+    }
+
+    void sendMessage(ClientStreamTracker context, AdvancedMessage<?> message) throws ClientException {
+        final ClientFuture<Void> operation = session.getFutureFactory().createFuture();
+        final ProtonBuffer buffer = message.encode(null);
+
+        executor.execute(() -> {
+            checkClosedOrFailed(operation);
+
+            if (protonSender.isSendable()) {
+                try {
+                    assumeSendableAndSend(context, buffer, operation);
+                } catch (Exception ex) {
+                    operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+                }
+            } else {
+                final InFlightSend send = new InFlightSend(context, buffer, operation);
+                if (options.sendTimeout() > 0) {
+                    send.timeout = session.scheduleRequestTimeout(
+                        operation, options.sendTimeout(), () -> send.createSendTimedOutException());
+                }
+
+                blockedOnCredit = send;
+            }
+        });
+
+        session.request(this, operation);
+    }
+
+    private void assumeSendableAndSend(ClientStreamTracker tracker, ProtonBuffer buffer, AsyncResult<Void> request) {
+        final OutgoingDelivery delivery = protonSender.current().setMessageFormat(tracker.messageFormat());
+
+        if (session.getTransactionContext().isInTransaction()) {
+            if (session.getTransactionContext().isTransactionInDoubt()) {
+                tracker.settlementFuture().complete(tracker);
+                request.complete(null);
+                return;
+            } else {
+                // TODO: Transactions support ?
+                // delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this, delivery),
+                //     protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED || delivery.isSettled());
+            }
+        } else {
+            delivery.disposition(delivery.getState(), protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED || delivery.isSettled());
+        }
+
+        if (delivery.isSettled()) {
+            // Remote will not update this delivery so mark as acknowledged now.
+            tracker.settlementFuture().complete(tracker);
+        }
+
+        if (tracker.aborted()) {
+            delivery.abort();
+            request.complete(null);
+        } else {
+            // For now we only complete the request after the IO operation when the delivery mode is
+            // something other than DeliveryMode.AT_MOST_ONCE.  We should think about other options to
+            // allow this under other modes given the tracker can communicate errors if the eventual
+            // IO operation does indeed fail otherwise most modes suffer a more significant performance
+            // hit waiting on the IO operation to complete.
+            if (options.deliveryMode() == DeliveryMode.AT_MOST_ONCE) {
+                request.complete(null);
+                delivery.streamBytes(buffer, tracker.completed());
+            } else {
+                delivery.streamBytes(buffer, tracker.completed());
+                request.complete(null);
+            }
+
+            if (buffer.isReadable()) {
+                blockedOnCredit = blockedOnCredit != null ?
+                    blockedOnCredit : new InFlightSend(tracker, buffer, (ClientFuture<Void>) request);
+            } else {
+                blockedOnCredit = null;
+            }
+        }
+    }
+
+    protected void checkClosedOrFailed(ClientFuture<?> request) {
+        if (isClosed()) {
+            request.failed(new ClientIllegalStateException("The Sender was explicity closed", failureCause));
+        } else if (failureCause != null) {
+            request.failed(failureCause);
+        }
+    }
+
+    protected void checkClosedOrFailed() throws ClientException {
+        if (isClosed()) {
+            throw new ClientIllegalStateException("The Sender was explicity closed", failureCause);
+        } else if (failureCause != null) {
+            throw failureCause;
+        }
+    }
+
+    private void immediateLinkShutdown(ClientException failureCause) {
+        if (this.failureCause == null) {
+            this.failureCause = failureCause;
+        }
+
+        try {
+            if (protonSender.isRemotelyDetached()) {
+                protonSender.detach();
+            } else {
+                protonSender.close();
+            }
+        } catch (Throwable ignore) {
+        }
+
+        // Cancel any blocked send passing an appropriate error to the future
+        if (blockedOnCredit != null) {
+            if (failureCause != null) {
+                blockedOnCredit.operation.failed(failureCause);
+            } else {
+                blockedOnCredit.operation.failed(new ClientResourceRemotelyClosedException("The sender link has closed"));
+            }
+        }
+
+        protonSender.unsettled().forEach((delivery) -> {
+            try {
+                ClientStreamTracker tracker = delivery.getLinkedResource();
+                if (failureCause != null) {
+                    tracker.settlementFuture().failed(failureCause);
+                } else {
+                    tracker.settlementFuture().failed(new ClientResourceRemotelyClosedException("The sender link has closed"));
+                }
+            } catch (Exception e) {
+            }
+        });
+
+        if (failureCause != null) {
+            openFuture.failed(failureCause);
+        } else {
+            openFuture.complete(this);
+        }
+
+        closeFuture.complete(this);
+    }
+
+    private void waitForOpenToComplete() throws ClientException {
+        if (!openFuture.isComplete() || openFuture.isFailed()) {
+            try {
+                openFuture.get();
+            } catch (ExecutionException | InterruptedException e) {
+                Thread.interrupted();
+                if (failureCause != null) {
+                    throw failureCause;
+                } else {
+                    throw ClientExceptionSupport.createNonFatalOrPassthrough(e.getCause());
+                }
+            }
+        }
+    }
+
+    //----- Send Result Tracker used for send blocked on credit
+
+    private class InFlightSend implements AsyncResult<Void> {
+
+        private final ClientStreamTracker context;
+        private final ProtonBuffer encodedMessage;
+        private final ClientFuture<Void> operation;
+
+        private ScheduledFuture<?> timeout;
+
+        public InFlightSend(ClientStreamTracker context, ProtonBuffer encodedMessage, ClientFuture<Void> operation) {
+            this.encodedMessage = encodedMessage;
+            this.context = context;
+            this.operation = operation;
+        }
+
+        @Override
+        public void failed(ClientException result) {
+            if (timeout != null) {
+                timeout.cancel(true);
+            }
+
+            operation.failed(result);
+        }
+
+        @Override
+        public void complete(Void result) {
+            if (timeout != null) {
+                timeout.cancel(true);
+            }
+
+            operation.complete(null);
+        }
+
+        @Override
+        public boolean isComplete() {
+            return operation.isDone();
+        }
+
+        public ClientException createSendTimedOutException() {
+            return new ClientSendTimedOutException("Timed out waiting for credit to send");
+        }
     }
 
     //----- Handlers for proton receiver events
@@ -371,10 +547,6 @@ public class ClientSender implements Sender {
 
     private void handleRemoteCloseOrDetach(org.apache.qpid.protonj2.engine.Sender sender) {
         if (sender.isLocallyOpen()) {
-            try {
-                senderRemotelyClosedHandler.accept(this);
-            } catch (Throwable ignore) {}
-
             immediateLinkShutdown(ClientExceptionSupport.convertToLinkClosedException(
                 sender.getRemoteCondition(), "Sender remotely closed without explanation from the remote"));
         } else {
@@ -383,22 +555,19 @@ public class ClientSender implements Sender {
     }
 
     private void handleCreditStateUpdated(org.apache.qpid.protonj2.engine.Sender sender) {
-        if (!blocked.isEmpty()) {
-            while (sender.isSendable() && !blocked.isEmpty()) {
-                LOG.trace("Dispatching previously held send");
-                final InFlightSend held = blocked.poll();
-                assumeSendableAndSend(held.messageFormat, held.encodedMessage, held);
-            }
+        if (sender.isSendable() && blockedOnCredit != null) {
+            LOG.trace("Dispatching previously held send");
+            assumeSendableAndSend(blockedOnCredit.context, blockedOnCredit.encodedMessage, blockedOnCredit);
         }
 
-        if (sender.isDraining() && blocked.isEmpty()) {
+        if (sender.isDraining() && blockedOnCredit == null) {
             sender.drained();
         }
     }
 
     private void handleDeliveryUpdated(OutgoingDelivery delivery) {
         try {
-            delivery.getLinkedResource(ClientTracker.class).processDeliveryUpdated(delivery);
+            delivery.getLinkedResource(ClientStreamTracker.class).processDeliveryUpdated(delivery);
         } catch (ClassCastException ccex) {
             LOG.debug("Sender received update on Delivery not linked to a Tracker: {}", delivery);
         }
@@ -430,196 +599,5 @@ public class ClientSender implements Sender {
         if (isAnonymous() && protonSender.getState() == LinkState.IDLE) {
             immediateLinkShutdown(new ClientUnsupportedOperationException("Anonymous relay support not available from this connection"));
         }
-    }
-
-    //----- Send Result Tracker used for send blocked on credit
-
-    private class InFlightSend implements AsyncResult<ClientTracker> {
-
-        private final int messageFormat;
-        private final ProtonBuffer encodedMessage;
-        private final ClientFuture<ClientTracker> operation;
-
-        private ScheduledFuture<?> timeout;
-
-        public InFlightSend(int messageFormat, ProtonBuffer encodedMessage, ClientFuture<ClientTracker> operation) {
-            this.messageFormat = messageFormat;
-            this.encodedMessage = encodedMessage;
-            this.operation = operation;
-        }
-
-        @Override
-        public void failed(ClientException result) {
-            if (timeout != null) {
-                timeout.cancel(true);
-            }
-            operation.failed(result);
-        }
-
-        @Override
-        public void complete(ClientTracker result) {
-            if (timeout != null) {
-                timeout.cancel(true);
-            }
-            operation.complete(result);
-        }
-
-        @Override
-        public boolean isComplete() {
-            return operation.isDone();
-        }
-
-        public ClientException createSendTimedOutException() {
-            return new ClientSendTimedOutException("Timed out waiting for credit to send");
-        }
-    }
-
-    //----- Private implementation details
-
-    private void waitForOpenToComplete() throws ClientException {
-        if (!openFuture.isComplete() || openFuture.isFailed()) {
-            try {
-                openFuture.get();
-            } catch (ExecutionException | InterruptedException e) {
-                Thread.interrupted();
-                if (failureCause != null) {
-                    throw failureCause;
-                } else {
-                    throw ClientExceptionSupport.createNonFatalOrPassthrough(e.getCause());
-                }
-            }
-        }
-    }
-
-    Tracker sendMessage(AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations, boolean waitForCredit) throws ClientException {
-        final ClientFuture<ClientTracker> operation = session.getFutureFactory().createFuture();
-        final ProtonBuffer buffer = message.encode(deliveryAnnotations);
-
-        executor.execute(() -> {
-            checkClosedOrFailed(operation);
-
-            if (protonSender.isSendable()) {
-                try {
-                    assumeSendableAndSend(message.messageFormat(), buffer, operation);
-                } catch (Exception ex) {
-                    operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
-                }
-            } else {
-                if (waitForCredit) {
-                    final InFlightSend send = new InFlightSend(message.messageFormat(), buffer, operation);
-                    if (options.sendTimeout() > 0) {
-                        send.timeout = session.scheduleRequestTimeout(
-                            operation, options.sendTimeout(), () -> send.createSendTimedOutException());
-                    }
-
-                    blocked.offer(send);
-                } else {
-                    operation.complete(null);
-                }
-            }
-        });
-
-        return session.request(this, operation);
-    }
-
-    private void assumeSendableAndSend(int messageFormat, ProtonBuffer buffer, AsyncResult<ClientTracker> request) {
-        final OutgoingDelivery delivery = protonSender.next();
-        final ClientTracker tracker = new ClientTracker(this, delivery);
-
-        delivery.setLinkedResource(tracker);
-        delivery.setMessageFormat(messageFormat);
-
-        if (session.getTransactionContext().isInTransaction()) {
-            if (session.getTransactionContext().isTransactionInDoubt()) {
-                tracker.settlementFuture().complete(tracker);
-                request.complete(tracker);
-                return;
-            } else {
-                delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this, delivery),
-                    protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED || delivery.isSettled());
-            }
-        } else {
-            delivery.disposition(delivery.getState(), protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED || delivery.isSettled());
-        }
-
-        if (delivery.isSettled()) {
-            // Remote will not update this delivery so mark as acknowledged now.
-            tracker.settlementFuture().complete(tracker);
-        }
-
-        // For now we only complete the request after the IO operation when the delivery mode is
-        // something other than DeliveryMode.AT_MOST_ONCE.  We should think about other options to
-        // allow this under other modes given the tracker can communicate errors if the eventual
-        // IO operation does indeed fail otherwise most modes suffer a more significant performance
-        // hit waiting on the IO operation to complete.
-        if (options.deliveryMode() == DeliveryMode.AT_MOST_ONCE) {
-            request.complete(tracker);
-            delivery.writeBytes(buffer);
-        } else {
-            delivery.writeBytes(buffer);
-            request.complete(tracker);
-        }
-    }
-
-    protected void checkClosedOrFailed(ClientFuture<?> request) {
-        if (isClosed()) {
-            request.failed(new ClientIllegalStateException("The Sender was explicity closed", failureCause));
-        } else if (failureCause != null) {
-            request.failed(failureCause);
-        }
-    }
-
-    protected void checkClosedOrFailed() throws ClientException {
-        if (isClosed()) {
-            throw new ClientIllegalStateException("The Sender was explicity closed", failureCause);
-        } else if (failureCause != null) {
-            throw failureCause;
-        }
-    }
-
-    private void immediateLinkShutdown(ClientException failureCause) {
-        if (this.failureCause == null) {
-            this.failureCause = failureCause;
-        }
-
-        try {
-            if (protonSender.isRemotelyDetached()) {
-                protonSender.detach();
-            } else {
-                protonSender.close();
-            }
-        } catch (Throwable ignore) {
-        }
-
-        // Cancel all blocked sends passing an appropriate error to the future
-        blocked.removeIf((held) -> {
-            if (failureCause != null) {
-                held.operation.failed(failureCause);
-            } else {
-                held.operation.failed(new ClientResourceRemotelyClosedException("The sender link has closed"));
-            }
-
-            return true;
-        });
-
-        protonSender.unsettled().forEach((delivery) -> {
-            try {
-                final ClientTracker tracker = delivery.getLinkedResource();
-                if (failureCause != null) {
-                    tracker.settlementFuture().failed(failureCause);
-                } else {
-                    tracker.settlementFuture().failed(new ClientResourceRemotelyClosedException("The sender link has closed"));
-                }
-            } catch (Exception e) {
-            }
-        });
-
-        if (failureCause != null) {
-            openFuture.failed(failureCause);
-        } else {
-            openFuture.complete(this);
-        }
-
-        closeFuture.complete(this);
     }
 }

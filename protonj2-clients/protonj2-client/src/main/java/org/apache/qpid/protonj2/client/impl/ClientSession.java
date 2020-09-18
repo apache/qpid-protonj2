@@ -33,6 +33,8 @@ import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.SessionOptions;
+import org.apache.qpid.protonj2.client.StreamReceiverOptions;
+import org.apache.qpid.protonj2.client.StreamSenderOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
@@ -72,11 +74,11 @@ public class ClientSession implements Session {
     private final ClientReceiverBuilder receiverBuilder;
     private final ClientTransactionContext txnContext;
 
-    public ClientSession(SessionOptions options, ClientConnection connection, org.apache.qpid.protonj2.engine.Session session) {
+    public ClientSession(ClientConnection connection, SessionOptions options, String sessionId, org.apache.qpid.protonj2.engine.Session session) {
         this.options = new SessionOptions(options);
         this.connection = connection;
         this.protonSession = session;
-        this.sessionId = connection.nextSessionId();
+        this.sessionId = sessionId;
         this.serializer = connection.getScheduler();
         this.openFuture = connection.getFutureFactory().createFuture();
         this.closeFuture = connection.getFutureFactory().createFuture();
@@ -330,6 +332,10 @@ public class ClientSession implements Session {
         return receiverBuilder.receiver(address, receiverOptions).open();
     }
 
+    ClientStreamReceiver internalOpenStreamReceiver(String address, StreamReceiverOptions receiverOptions) throws ClientException {
+        return receiverBuilder.streamReceiver(address, receiverOptions).open();
+    }
+
     ClientReceiver internalOpenDurableReceiver(String address, String subscriptionName, ReceiverOptions receiverOptions) throws ClientException {
         return receiverBuilder.durableReceiver(address, subscriptionName, receiverOptions).open();
     }
@@ -351,6 +357,10 @@ public class ClientSession implements Session {
         } else {
             return senderBuilder.anonymousSender(senderOptions);
         }
+    }
+
+    ClientStreamSender internalOpenStreamSender(String address, StreamSenderOptions senderOptions) throws ClientException {
+        return senderBuilder.streamSender(address, senderOptions).open();
     }
 
     //----- Internal API accessible for use within the package
