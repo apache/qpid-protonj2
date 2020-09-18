@@ -96,7 +96,7 @@ final class ClientReceiverBuilder {
     public ClientStreamReceiver streamReceiver(String address, StreamReceiverOptions receiverOptions) throws ClientException {
         final StreamReceiverOptions options = receiverOptions != null ? receiverOptions : getDefaultStreamReceiverOptions();
         final String receiverId = nextReceiverId();
-        final Receiver protonReceiver = createReceiver(null, options, receiverId);
+        final Receiver protonReceiver = createReceiver(address, options, receiverId);
 
         return new ClientStreamReceiver(session, options, receiverId, protonReceiver);
     }

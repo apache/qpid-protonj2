@@ -149,23 +149,66 @@ public class ClientStreamReceiver implements StreamReceiver {
     }
 
     @Override
-    public StreamReceiver addCredit(int credits) throws ClientException {
-        checkClosedOrFailed();
-        // TODO Auto-generated method stub
-        return this;
-    }
-
-    @Override
     public StreamDelivery openStream() throws ClientException {
         checkClosedOrFailed();
         return new ClientStreamDelivery(this);
     }
 
     @Override
+    public StreamReceiver addCredit(int credits) throws ClientException {
+        checkClosedOrFailed();
+        ClientFuture<StreamReceiver> creditAdded = session.getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            checkClosedOrFailed(creditAdded);
+
+            if (options.creditWindow() != 0) {
+                creditAdded.failed(new ClientIllegalStateException("Cannot add credit when a credit window has been configured"));
+            } else if (protonReceiver.isDraining()) {
+                creditAdded.failed(new ClientIllegalStateException("Cannot add credit while a drain is pending"));
+            } else {
+                try {
+                    protonReceiver.addCredit(credits);
+                    creditAdded.complete(this);
+                } catch (Exception ex) {
+                    creditAdded.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+                }
+            }
+        });
+
+        return session.request(this, creditAdded);
+    }
+
+    @Override
     public Future<StreamReceiver> drain() throws ClientException {
         checkClosedOrFailed();
-        // TODO Auto-generated method stub
-        return drainingFuture;
+        final ClientFuture<StreamReceiver> drainComplete = session.getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            checkClosedOrFailed(drainComplete);
+
+            if (protonReceiver.isDraining()) {
+                drainComplete.failed(new ClientException("Already draining"));
+                return;
+            }
+
+            if (protonReceiver.getCredit() == 0) {
+                drainComplete.complete(this);
+                return;
+            }
+
+            try {
+                if (protonReceiver.drain()) {
+                    drainingFuture = drainComplete;
+                } else {
+                    drainComplete.complete(this);
+                }
+            } catch (Exception ex) {
+                drainComplete.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+            }
+        });
+
+        return drainComplete;
     }
 
     @Override
