@@ -250,10 +250,13 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         return this;
     }
 
-    Receiver signalDeliveryRead(IncomingDelivery delivery) {
-        if (deliveryReadEventHandler != null) {
+    Receiver signalDeliveryRead(ProtonIncomingDelivery delivery) {
+        if (delivery.deliveryReadHandler() != null) {
+            delivery.deliveryReadHandler().handle(delivery);
+        } else if (deliveryReadEventHandler != null) {
             deliveryReadEventHandler.handle(delivery);
         }
+
         return this;
     }
 
@@ -263,10 +266,13 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         return this;
     }
 
-    Receiver signalDeliveryStateUpdated(IncomingDelivery delivery) {
-        if (deliveryUpdatedEventHandler != null) {
+    Receiver signalDeliveryStateUpdated(ProtonIncomingDelivery delivery) {
+        if (delivery.deliveryStateUpdatedHandler() != null) {
+            delivery.deliveryStateUpdatedHandler().handle(delivery);
+        } else if (deliveryUpdatedEventHandler != null) {
             deliveryUpdatedEventHandler.handle(delivery);
         }
+
         return this;
     }
 

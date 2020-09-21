@@ -72,12 +72,12 @@ public interface Receiver extends Link<Receiver> {
      *
      * @return this {@link Receiver} for chaining.
      */
-    public Receiver setDefaultDeliveryState(DeliveryState state);
+    Receiver setDefaultDeliveryState(DeliveryState state);
 
     /**
      * @return the default delivery state for this delivery
      */
-    public DeliveryState getDefaultDeliveryState();
+    DeliveryState getDefaultDeliveryState();
 
     /**
      * For each unsettled outgoing delivery that is pending in the {@link Receiver} apply the given predicate
@@ -92,7 +92,7 @@ public interface Receiver extends Link<Receiver> {
      *
      * @return this {@link Receiver} for chaining
      */
-    public Receiver disposition(Predicate<IncomingDelivery> filter, DeliveryState state, boolean settle);
+    Receiver disposition(Predicate<IncomingDelivery> filter, DeliveryState state, boolean settle);
 
     /**
      * For each unsettled outgoing delivery that is pending in the {@link Receiver} apply the given predicate
@@ -103,7 +103,7 @@ public interface Receiver extends Link<Receiver> {
      *
      * @return this {@link Receiver} for chaining
      */
-    public Receiver settle(Predicate<IncomingDelivery> filter);
+    Receiver settle(Predicate<IncomingDelivery> filter);
 
     /**
      * Retrieves the list of unsettled deliveries for this {@link Receiver} link which have yet to be settled
@@ -126,24 +126,26 @@ public interface Receiver extends Link<Receiver> {
 
     /**
      * Handler for incoming deliveries that is called for each incoming {@link Transfer} frame that comprises
-     * either one complete delivery or a chunk of a split framed {@link IncomingDelivery}.  The handler should
-     * check that the delivery being read is partial or not and act accordingly, as there will be additional
-     * updates as more frames comprising that {@link IncomingDelivery} arrive.
+     * either one complete delivery or a chunk of a split framed {@link Transfer}.  The handler should check
+     * that the delivery being read is partial or not and act accordingly, as partial deliveries expect additional
+     * updates as more frames comprising that {@link IncomingDelivery} arrive or the remote aborts the transfer.
      *
      * @param handler
-     *      The handler that will be invoked when delivery arrives on this receiver link.
+     *      The handler that will be invoked when {@link Transfer} frames arrive on this receiver link.
      *
      * @return this receiver
      */
     Receiver deliveryReadHandler(EventHandler<IncomingDelivery> handler);
 
     /**
-     * Handler for updates for deliveries that have previously been received.  Updates for an {@link IncomingDelivery}
-     * can happen when the remote settles a complete {@link IncomingDelivery} or otherwise modifies the delivery outcome
-     * and the user needs to act on those changes such as a spontaneous update to the {@link DeliveryState}.
+     * Handler for updates to the remote state of incoming deliveries that have previously been received.
+     * <p>
+     * Remote state updates for an {@link IncomingDelivery} can happen when the remote settles a complete
+     * {@link IncomingDelivery} or otherwise modifies the delivery outcome and the user needs to act on those
+     * changes such as a spontaneous update to the {@link DeliveryState}.
      *
      * @param handler
-     *      The handler that will be invoked when a new update delivery arrives on this link.
+     *      The handler that will be invoked when a new remote state update for an {@link IncomingDelivery} arrives on this link.
      *
      * @return this receiver
      */

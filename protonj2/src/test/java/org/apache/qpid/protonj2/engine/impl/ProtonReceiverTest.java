@@ -3525,4 +3525,81 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
         assertNull(failure);
     }
+
+    @Test(timeout = 20_000)
+    public void testReceiverHonorsDeliverySetEventHandlers() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(2);
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(true)
+                             .withMessageFormat(0).queue();
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(false)
+                             .withMessageFormat(0).queue();
+        peer.remoteDisposition().withSettled(true)
+                                .withRole(Role.SENDER.getValue())
+                                .withState().accepted()
+                                .withFirst(0)
+                                .withLast(1).queue();
+        peer.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicInteger deliveryCounter = new AtomicInteger();
+        final AtomicInteger additionalDeliveryCounter = new AtomicInteger();
+        final AtomicInteger dispositionCounter = new AtomicInteger();
+
+        final ArrayList<IncomingDelivery> deliveries = new ArrayList<>();
+
+        receiver.deliveryReadHandler(delivery -> {
+            deliveryCounter.incrementAndGet();
+            delivery.deliveryReadHandler((target) -> {
+                additionalDeliveryCounter.incrementAndGet();
+            });
+            delivery.deliveryStateUpdatedHandler((target) -> {
+                dispositionCounter.incrementAndGet();
+                deliveries.add(delivery);
+            });
+        });
+
+        receiver.deliveryStateUpdatedHandler((delivery) -> {
+            fail("Should not have updated this handler.");
+        });
+
+        receiver.open();
+        receiver.addCredit(2);
+        receiver.close();
+
+        assertEquals("Should only be one initial delivery", 1, deliveryCounter.get());
+        assertEquals("Should be a second delivery update at the delivery handler", 1, additionalDeliveryCounter.get());
+        assertEquals("Not all deliveries received dispositions", 1, dispositionCounter.get());
+
+        byte deliveryTag = 0;
+
+        for (IncomingDelivery delivery : deliveries) {
+            assertEquals("Delivery not updated in correct order", deliveryTag++, delivery.getTag().tagBuffer().getByte(0));
+            assertTrue("Delivery should be marked as remotely setted", delivery.isRemotelySettled());
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 }

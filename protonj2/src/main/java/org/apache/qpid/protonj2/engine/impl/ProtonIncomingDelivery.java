@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.engine.impl;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
+import org.apache.qpid.protonj2.engine.EventHandler;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
@@ -49,6 +50,9 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     private ProtonAttachments attachments;
     private Object linkedResource;
+
+    private EventHandler<IncomingDelivery> deliveryReadEventHandler = null;
+    private EventHandler<IncomingDelivery> deliveryUpdatedEventHandler = null;
 
     /**
      * @param link
@@ -222,6 +226,28 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
             link.deliveryRead(this, bytesRead);
         }
         return this;
+    }
+
+    //----- Incoming Delivery event handlers
+
+    @Override
+    public ProtonIncomingDelivery deliveryReadHandler(EventHandler<IncomingDelivery> handler) {
+        this.deliveryReadEventHandler = handler;
+        return this;
+    }
+
+    EventHandler<IncomingDelivery> deliveryReadHandler() {
+        return deliveryReadEventHandler;
+    }
+
+    @Override
+    public ProtonIncomingDelivery deliveryStateUpdatedHandler(EventHandler<IncomingDelivery> handler) {
+        this.deliveryUpdatedEventHandler = handler;
+        return this;
+    }
+
+    EventHandler<IncomingDelivery> deliveryStateUpdatedHandler() {
+        return deliveryUpdatedEventHandler;
     }
 
     //----- Internal methods to manage the Delivery
