@@ -90,6 +90,22 @@ public interface IncomingDelivery extends Delivery {
     IncomingDelivery deliveryReadHandler(EventHandler<IncomingDelivery> handler);
 
     /**
+     * Handler for aborted deliveries that is called if this delivery is aborted by the {@link Sender}.
+     * <p>
+     * This handler is an optional convenience handler that supplements the standard
+     * {@link #deliveryReadHandler(EventHandler)} in cases where the users wishes to break out the
+     * processing of inbound delivery data from abort processing.  If this handler is not set the
+     * {@link Receiver} will call the registered {@link #deliveryAbortedHandler(EventHandler)}
+     * if one is set.
+     *
+     * @param handler
+     *      The handler that will be invoked when {@link Transfer} frames arrive on this receiver link.
+     *
+     * @return this {@link IncomingDelivery} instance.
+     */
+    IncomingDelivery deliveryAbortedHandler(EventHandler<IncomingDelivery> handler);
+
+    /**
      * Handler for updates to the remote state of incoming deliveries that have previously been received.
      * <p>
      * Remote state updates for an {@link IncomingDelivery} can happen when the remote settles a complete

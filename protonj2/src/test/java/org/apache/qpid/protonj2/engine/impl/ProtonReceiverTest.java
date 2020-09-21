@@ -3542,14 +3542,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMore(true)
                              .withMessageFormat(0).queue();
         peer.remoteTransfer().withDeliveryId(0)
-                             .withDeliveryTag(new byte[] {1})
                              .withMore(false)
                              .withMessageFormat(0).queue();
         peer.remoteDisposition().withSettled(true)
                                 .withRole(Role.SENDER.getValue())
                                 .withState().accepted()
-                                .withFirst(0)
-                                .withLast(1).queue();
+                                .withFirst(0).queue();
         peer.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -3597,6 +3595,145 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
             assertEquals("Delivery not updated in correct order", deliveryTag++, delivery.getTag().tagBuffer().getByte(0));
             assertTrue("Delivery should be marked as remotely setted", delivery.isRemotelySettled());
         }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testReceiverAbortedHandlerCalledWhenSet() throws Exception {
+        doTestReceiverReadHandlerOrAbortHandlerCalled(true);
+    }
+
+    @Test(timeout = 20_000)
+    public void testReceiverReadHandlerCalledForAbortWhenAbortedNotSet() throws Exception {
+        doTestReceiverReadHandlerOrAbortHandlerCalled(false);
+    }
+
+    private void doTestReceiverReadHandlerOrAbortHandlerCalled(boolean setAbortHandler) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(2);
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(true)
+                             .withMessageFormat(0).queue();
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withAborted(true)
+                             .withMore(false)
+                             .withMessageFormat(0).queue();
+        peer.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicInteger deliveryCounter = new AtomicInteger();
+        final AtomicInteger deliveryAbortedInReadEventCounter = new AtomicInteger();
+        final AtomicInteger deliveryAbortedCounter = new AtomicInteger();
+
+        receiver.deliveryReadHandler(delivery -> {
+            if (delivery.isAborted()) {
+                deliveryAbortedInReadEventCounter.incrementAndGet();
+            } else {
+                deliveryCounter.incrementAndGet();
+            }
+        });
+
+        if (setAbortHandler) {
+            receiver.deliveryAbortedHandler(delivery -> {
+                deliveryAbortedCounter.incrementAndGet();
+            });
+        }
+
+        receiver.deliveryStateUpdatedHandler((delivery) -> {
+            fail("Should not have updated this handler.");
+        });
+
+        receiver.open();
+        receiver.addCredit(2);
+        receiver.close();
+
+        assertEquals("Should only be one initial delivery", 1, deliveryCounter.get());
+        if (setAbortHandler) {
+            assertEquals("Should be no aborted delivery in read event", 0, deliveryAbortedInReadEventCounter.get());
+            assertEquals("Should only be one aborted delivery events", 1, deliveryAbortedCounter.get());
+        } else {
+            assertEquals("Should only be no aborted delivery in read event", 1, deliveryAbortedInReadEventCounter.get());
+            assertEquals("Should be no aborted delivery events", 0, deliveryAbortedCounter.get());
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testIncomingDeliveryReadEventSignaledWhenNoAbortedHandlerSet() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(2);
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(true)
+                             .withMessageFormat(0).queue();
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withAborted(true)
+                             .withMore(false)
+                             .withMessageFormat(0).queue();
+        peer.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicInteger deliveryCounter = new AtomicInteger();
+        final AtomicInteger deliveryAbortedCounter = new AtomicInteger();
+
+        receiver.deliveryReadHandler(delivery -> {
+            deliveryCounter.incrementAndGet();
+            delivery.deliveryReadHandler((target) -> {
+                if (target.isAborted()) {
+                    deliveryAbortedCounter.incrementAndGet();
+                }
+            });
+        });
+
+        receiver.deliveryStateUpdatedHandler((delivery) -> {
+            fail("Should not have updated this handler.");
+        });
+
+        receiver.open();
+        receiver.addCredit(2);
+        receiver.close();
+
+        assertEquals("Should only be one initial delivery", 1, deliveryCounter.get());
+        assertEquals("Should only be one aborted delivery", 1, deliveryAbortedCounter.get());
 
         peer.waitForScriptToComplete();
 

@@ -52,6 +52,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     private Object linkedResource;
 
     private EventHandler<IncomingDelivery> deliveryReadEventHandler = null;
+    private EventHandler<IncomingDelivery> deliveryAbortedEventHandler = null;
     private EventHandler<IncomingDelivery> deliveryUpdatedEventHandler = null;
 
     /**
@@ -238,6 +239,16 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     EventHandler<IncomingDelivery> deliveryReadHandler() {
         return deliveryReadEventHandler;
+    }
+
+    @Override
+    public ProtonIncomingDelivery deliveryAbortedHandler(EventHandler<IncomingDelivery> handler) {
+        this.deliveryAbortedEventHandler = handler;
+        return this;
+    }
+
+    EventHandler<IncomingDelivery> deliveryAbortedHandler() {
+        return deliveryAbortedEventHandler;
     }
 
     @Override

@@ -47,6 +47,7 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
 public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     private EventHandler<IncomingDelivery> deliveryReadEventHandler = null;
+    private EventHandler<IncomingDelivery> deliveryAdbortedEventHandler = null;
     private EventHandler<IncomingDelivery> deliveryUpdatedEventHandler = null;
     private EventHandler<Receiver> linkCreditUpdatedHandler = null;
 
@@ -261,6 +262,26 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
+    public Receiver deliveryAbortedHandler(EventHandler<IncomingDelivery> handler) {
+        this.deliveryAdbortedEventHandler = handler;
+        return this;
+    }
+
+    Receiver signalDeliveryAborted(ProtonIncomingDelivery delivery) {
+        if (delivery.deliveryAbortedHandler() != null) {
+            delivery.deliveryAbortedHandler().handle(delivery);
+        } else if (delivery.deliveryReadHandler() != null) {
+            delivery.deliveryReadHandler().handle(delivery);
+        } else if (deliveryAdbortedEventHandler != null) {
+            deliveryAdbortedEventHandler.handle(delivery);
+        } else if (deliveryReadEventHandler != null) {
+            deliveryReadEventHandler.handle(delivery);
+        }
+
+        return this;
+    }
+
+    @Override
     public Receiver deliveryStateUpdatedHandler(EventHandler<IncomingDelivery> handler) {
         this.deliveryUpdatedEventHandler = handler;
         return this;
@@ -397,7 +418,11 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             currentDeliveryId.reset();
         }
 
-        signalDeliveryRead(delivery);
+        if (transfer.getAborted()) {
+            signalDeliveryAborted(delivery);
+        } else {
+            signalDeliveryRead(delivery);
+        }
 
         if (isDraining() && getCredit() == 0) {
             drainStateSnapshot = null;

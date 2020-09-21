@@ -131,17 +131,15 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
 
     /**
      * Sets the sender settle mode.
-     *
-     * Should only be called during link set-up, i.e. before calling {@link #open()}.
-     *
-     * If this endpoint is the initiator of the link, this method can be used to set a value other than
-     * the default.
-     *
+     * <p>
+     * Should only be called during link set-up, i.e. before calling {@link #open()}. If this endpoint is the
+     * initiator of the link, this method can be used to set a value other than the default.
+     * <p>
      * If this endpoint is not the initiator, this method should be used to set a local value. According
      * to the AMQP spec, the application may choose to accept the sender's suggestion
      * (accessed by calling {@link #getRemoteSenderSettleMode()}) or choose another value. The value
      * has no effect on Proton, but may be useful to the application at a later point.
-     *
+     * <p>
      * In order to be AMQP compliant the application is responsible for honoring the settlement mode. See {@link Link}.
      *
      * @param senderSettleMode
@@ -164,11 +162,9 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
 
     /**
      * Sets the receiver settle mode.
-     *
-     * Should only be called during link set-up, i.e. before calling {@link #open()}.
-     *
-     * If this endpoint is the initiator of the link, this method can be used to set a value other than
-     * the default.
+     * <p>
+     * Should only be called during link set-up, i.e. before calling {@link #open()}. If this endpoint
+     * is the initiator of the link, this method can be used to set a value other than the default.
      *
      * Used in analogous way to {@link #setSenderSettleMode(SenderSettleMode)}
      *
@@ -192,7 +188,7 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
 
     /**
      * Sets the {@link Source} to assign to the local end of this {@link Link}.
-     *
+     * <p>
      * Must be called during link setup, i.e. before calling the {@link #open()} method.
      *
      * @param source
@@ -225,7 +221,7 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
 
     /**
      * Sets the {@link Coordinator} target to assign to the local end of this {@link Link}.
-     *
+     * <p>
      * Must be called during link setup, i.e. before calling the {@link #open()} method.
      *
      * @param coordinator
@@ -249,7 +245,7 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
     /**
      * Sets the local link max message size, to be conveyed to the peer via the Attach frame
      * when attaching the link to the session. Null or 0 means no limit.
-     *
+     * <p>
      * Must be called during link setup, i.e. before calling the {@link #open()} method.
      *
      * @param maxMessageSize
@@ -336,7 +332,7 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
      * Returns the remote target {@link Terminus} cast to the given type.  This can be used when
      * the underlying type is known by the caller or as a control to validate the assumption of the
      * underlying type.
-     *
+     * <p>
      * the currently set Target for this {@link Link}.  A link target can be either a {@link Target}
      * type for a {@link Sender} or {@link Receiver} link or if the link is to be transaction resource
      * then the target type will be a {@link Coordinator} instance.
@@ -389,7 +385,7 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
      * This is a convenience event that supplements the normal {@link Endpoint#localCloseHandler(EventHandler)}
      * event point if set.  If no local detached event handler is set the endpoint will route the detached event
      * to the local closed event handler if set and allow it to process the event in one location.
-     *
+     * <p>
      * Typically used by clients for logging or other state update event processing.  Clients should not perform any
      * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
      * doing so is undefined.
@@ -405,7 +401,7 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
      * Sets a {@link EventHandler} for when an AMQP Detach frame is received from the remote peer for this
      * {@link Link} which would have been locally opened previously, the Detach from would have been marked
      * as not having been closed.
-     *
+     * <p>
      * This is a convenience event that supplements the normal {@link Endpoint#closeHandler(EventHandler)}
      * event point if set.  If no detached event handler is set the endpoint will route the detached event to the
      * closed event handler if set and allow it to process the event in one location.
@@ -430,7 +426,7 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
     /**
      * Sets a {@link EventHandler} for when the parent {@link Session} or {@link Connection} of this link is
      * locally closed.
-     *
+     * <p>
      * Typically used by clients for logging or other state update event processing.  Clients should not perform any
      * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
      * doing so is undefined.
