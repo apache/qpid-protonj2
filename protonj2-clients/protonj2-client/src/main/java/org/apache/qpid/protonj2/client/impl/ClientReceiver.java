@@ -320,6 +320,7 @@ public class ClientReceiver implements Receiver {
                       .parentEndpointClosedHandler(this::handleParentEndpointClosed)
                       .deliveryStateUpdatedHandler(this::handleDeliveryStateRemotelyUpdated)
                       .deliveryReadHandler(this::handleDeliveryReceived)
+                      .deliveryAbortedHandler(this::handleDeliveryAborted)
                       .creditStateUpdateHandler(this::handleReceiverCreditUpdated)
                       .engineShutdownHandler(this::handleEngineShutdown)
                       .open();
@@ -453,10 +454,13 @@ public class ClientReceiver implements Receiver {
         if (!delivery.isPartial()) {
             LOG.trace("{} has incoming Message(s).", this);
             messageQueue.enqueue(new ClientDelivery(this, delivery));
-        } else if (delivery.isAborted()) {
-            delivery.settle();
-            replenishCreditIfNeeded();
         }
+    }
+
+    private void handleDeliveryAborted(IncomingDelivery delivery) {
+        LOG.trace("Delivery data was aborted: {}", delivery);
+        delivery.settle();
+        replenishCreditIfNeeded();
     }
 
     private void handleDeliveryStateRemotelyUpdated(IncomingDelivery delivery) {

@@ -60,6 +60,7 @@ public class ClientStreamReceiver implements StreamReceiver {
     private final ScheduledExecutorService executor;
     private final String receiverId;
 
+    private ClientStreamDelivery currentStream;
     private volatile int closed;
     private ClientException failureCause;
     private volatile Source remoteSource;
@@ -151,7 +152,32 @@ public class ClientStreamReceiver implements StreamReceiver {
     @Override
     public StreamDelivery openStream() throws ClientException {
         checkClosedOrFailed();
-        return new ClientStreamDelivery(this);
+        ClientFuture<StreamDelivery> opened = session.getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            checkClosedOrFailed(opened);
+
+            if (protonReceiver.hasUnsettled() && protonReceiver.getLinkedResource() != null) {
+                opened.failed(new ClientIllegalStateException(
+                    "Cannot open a new StreamReceiver until the previous receive has been completed and settled."));
+            }
+
+            currentStream = new ClientStreamDelivery(this);
+
+            try {
+                // There already is a delivery so we kick off processing in the stream delivery
+                // so that subsequent read attempts will already have a primed read buffer.
+                if (protonReceiver.hasUnsettled()) {
+                    currentStream.handleDeliveryRead(protonReceiver.unsettled().iterator().next());
+                }
+
+                opened.complete(currentStream);
+            } catch (Exception ex) {
+                opened.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+            }
+        });
+
+        return session.request(this, opened);
     }
 
     @Override
@@ -251,52 +277,7 @@ public class ClientStreamReceiver implements StreamReceiver {
         return remoteTarget;
     }
 
-    void attachToNextDelivery(ClientStreamDelivery context) throws ClientException {
-        checkClosedOrFailed();
-        executor.execute(() -> {
-//            final ClientDelivery delivery;
-// TODO:
-//            if (messageQueue.isEmpty()) {
-//                IncomingDelivery lastDelivery = null;
-//                for (IncomingDelivery candidate : protonReceiver.unsettled()) {
-//                    lastDelivery = candidate;
-//                }
-//
-//                // If a partial delivery is waiting for completion and not linked to a
-//                // receive context already we can grab it and assign it to this one otherwise
-//                // the context has to be placed into the wait queue for a future arriving
-//                // delivery.
-//                if (lastDelivery.isPartial() && lastDelivery.getLinkedResource() == null) {
-//                    delivery = new ClientDelivery(this, lastDelivery);
-//                } else {
-//                    delivery = null;
-//                    waitingRcvContexts.offer(context);
-//                }
-//            } else {
-//                // Already have a completed prefetched message so hand that off first to preserve order
-//                delivery = messageQueue.dequeueNoWait();
-//            }
-//
-//            if (delivery != null) {
-//                if (!delivery.protonDelivery().isPartial()) {
-//                    if (options.autoAccept()) {
-//                        asyncApplyDisposition(delivery.protonDelivery(), Accepted.getInstance(), options.autoSettle());
-//                    } else {
-//                        asyncReplenishCreditIfNeeded();
-//                    }
-//                }
-//
-//                context.handleDeliveryRead(delivery);
-//            }
-        });
-    }
-
     //----- Internal API for the ClientReceiver and other Client objects
-
-    void disposition(IncomingDelivery delivery, DeliveryState state, boolean settle) throws ClientException {
-        checkClosedOrFailed();
-        asyncApplyDisposition(delivery, state, settle);
-    }
 
     ClientStreamReceiver open() {
         protonReceiver.localOpenHandler(this::handleLocalOpen)
@@ -308,6 +289,7 @@ public class ClientStreamReceiver implements StreamReceiver {
                       .parentEndpointClosedHandler(this::handleParentEndpointClosed)
                       .deliveryStateUpdatedHandler(this::handleDeliveryStateRemotelyUpdated)
                       .deliveryReadHandler(this::handleDeliveryReceived)
+                      .deliveryAbortedHandler(this::handleDeliveryAborted)
                       .creditStateUpdateHandler(this::handleReceiverCreditUpdated)
                       .engineShutdownHandler(this::handleEngineShutdown)
                       .open();
@@ -352,8 +334,6 @@ public class ClientStreamReceiver implements StreamReceiver {
     }
 
     private void handleLocalCloseOrDetach(org.apache.qpid.protonj2.engine.Receiver receiver) {
-        // TODO messageQueue.stop();  // Ensure blocked receivers are all unblocked.
-
         // If not yet remotely closed we only wait for a remote close if the engine isn't
         // already failed and we have successfully opened the sender without a timeout.
         if (!receiver.getEngine().isShutdown() && failureCause == null && receiver.isRemotelyOpen()) {
@@ -433,26 +413,20 @@ public class ClientStreamReceiver implements StreamReceiver {
 
     private void handleDeliveryReceived(IncomingDelivery delivery) {
         LOG.trace("Delivery data was received: {}", delivery);
-
         if (delivery.getDefaultDeliveryState() == null) {
             delivery.setDefaultDeliveryState(Released.getInstance());
         }
 
-        if (delivery.isAborted()) {
-            if (delivery.getLinkedResource() != null) {
-                try {
-                    delivery.getLinkedResource(ClientStreamDelivery.class).handleDeliveryAborted(delivery);
-                } catch (ClassCastException cce) {
-                    // Not linked to a receive context other type checks can follow.
-                }
-            }
-
-            delivery.settle();
-            replenishCreditIfNeeded();
-        } else if (!delivery.isPartial()) {
-            LOG.trace("{} has incoming Message(s).", this);
-            // TODO: messageQueue.enqueue(new ClientDelivery(this, delivery));
+        // Has a StramDelivery been created and is now waiting for a delivery
+        // to arrive since one was not present at time of creation
+        if (currentStream != null && currentStream.protonDelivery() == null) {
+            currentStream.handleDeliveryRead(delivery);
         }
+    }
+
+    private void handleDeliveryAborted(IncomingDelivery delivery) {
+        LOG.trace("Delivery data was aborted: {}", delivery);
+        disposition(delivery, null, true);
     }
 
     private void handleDeliveryStateRemotelyUpdated(IncomingDelivery delivery) {
@@ -471,24 +445,27 @@ public class ClientStreamReceiver implements StreamReceiver {
 
     //----- Private implementation details
 
-    private void asyncApplyDisposition(IncomingDelivery delivery, DeliveryState state, boolean settle) {
-        executor.execute(() -> {
-            if (session.getTransactionContext().isInTransaction()) {
-                // TODO: delivery.disposition(session.getTransactionContext().enlistAcknowledgeInCurrentTransaction(this, (Outcome) state), true);
-            } else {
-                delivery.disposition(state, settle);
-            }
+    void disposition(IncomingDelivery delivery, DeliveryState state, boolean settle) {
+        if (session.getTransactionContext().isInTransaction()) {
+            // TODO: delivery.disposition(session.getTransactionContext().enlistAcknowledgeInCurrentTransaction(this, (Outcome) state), true);
+        } else {
+            delivery.disposition(state, settle);
+        }
 
-            replenishCreditIfNeeded();
-        });
+        replenishCreditIfNeeded();
     }
 
-    private void replenishCreditIfNeeded() {
+    void asyncApplyDisposition(IncomingDelivery delivery, DeliveryState state, boolean settle) throws ClientException {
+        checkClosedOrFailed();
+        executor.execute(() -> disposition(delivery, state, settle));
+    }
+
+    void replenishCreditIfNeeded() {
         int creditWindow = options.creditWindow();
         if (creditWindow > 0) {
             int currentCredit = protonReceiver.getCredit();
             if (currentCredit <= creditWindow * 0.5) {
-                int potentialPrefetch = currentCredit;  // TODO: Handle any prefetch if allowed ?
+                int potentialPrefetch = currentCredit + protonReceiver.unsettled().size();
 
                 if (potentialPrefetch <= creditWindow * 0.7) {
                     int additionalCredit = creditWindow - potentialPrefetch;
@@ -504,7 +481,7 @@ public class ClientStreamReceiver implements StreamReceiver {
         }
     }
 
-    private void asyncReplenishCreditIfNeeded() {
+    void asyncReplenishCreditIfNeeded() {
         int creditWindow = options.creditWindow();
         if (creditWindow > 0) {
             executor.execute(() -> replenishCreditIfNeeded());
@@ -555,6 +532,18 @@ public class ClientStreamReceiver implements StreamReceiver {
             }
         } catch (Exception ignore) {
         }
+
+        // TODO: Need to ensure abort handler is smart enough to throw correct errors in this case, or create
+        //       a new event point for this.
+        protonReceiver.unsettled().forEach((delivery) -> {
+            if (delivery.getLinkedResource() != null) {
+                try {
+                    // Trick the stream into breaking any in progress work and then checking on
+                    // the state of the receiver and the delivery.
+                    ((ClientStreamDelivery) delivery.getLinkedResource()).handleDeliveryAborted(delivery);
+                } catch (Exception e) {}
+            }
+        });
 
         if (failureCause != null) {
             openFuture.failed(failureCause);

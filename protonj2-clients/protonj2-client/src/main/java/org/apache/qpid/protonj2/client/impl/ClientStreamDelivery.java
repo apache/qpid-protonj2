@@ -69,7 +69,6 @@ public class ClientStreamDelivery implements StreamDelivery {
     public ClientStreamDelivery awaitDelivery() throws ClientException {
         if (!deliveryFuture.isComplete()) {
             try {
-                receiver.attachToNextDelivery(this);
                 protonDelivery = deliveryFuture.get();
             } catch (InterruptedException e) {
                 Thread.interrupted();
@@ -86,9 +85,6 @@ public class ClientStreamDelivery implements StreamDelivery {
     public ClientStreamDelivery awaitDelivery(long timeout, TimeUnit unit) throws ClientException {
         if (!deliveryFuture.isComplete()) {
             try {
-                receiver.attachToNextDelivery(this);
-
-                // TODO: What happens after the timeout, the context is still attached.
                 protonDelivery = deliveryFuture.get(timeout, unit);
             } catch (InterruptedException e) {
                 Thread.interrupted();
@@ -210,26 +206,6 @@ public class ClientStreamDelivery implements StreamDelivery {
 
     //----- Internal Streamed Delivery API and support methods
 
-    /*
-     * Called within the event loop thread from the parent receiver.
-     */
-    void handleDeliveryRead(IncomingDelivery delivery) {
-        // Is this the first delivery of is this a new delivery in an ongoing
-        // transfer of a larger message set.
-        if (!deliveryFuture.isComplete()) {
-            deliveryFuture.complete(delivery);
-        } else {
-            // Ongoing processing kicks in now and fills read buffer
-        }
-    }
-
-    /*
-     * Called within the event loop thread from the parent receiver.
-     */
-    void handleDeliveryAborted(IncomingDelivery delivery) {
-        // Need to abort blocked reads waiting for new data.
-    }
-
     IncomingDelivery protonDelivery() {
         return protonDelivery;
     }
@@ -252,7 +228,29 @@ public class ClientStreamDelivery implements StreamDelivery {
 
     private void disposition(org.apache.qpid.protonj2.types.transport.DeliveryState state, boolean settle) throws ClientException {
         checkAborted();
+        if (protonDelivery != null) {
+            receiver.disposition(protonDelivery, state, settle);
+        }
+    }
 
+    //----- Event Handlers for Delivery updates
+
+    void handleDeliveryRead(IncomingDelivery delivery) {
+        if (protonDelivery == null) {
+            protonDelivery = delivery;
+            protonDelivery.setLinkedResource(this);
+            protonDelivery.deliveryReadHandler(this::handleDeliveryRead);
+            protonDelivery.deliveryAbortedHandler(this::handleDeliveryAborted);
+        }
+
+        // TODO: Read processing kicks in now and fills read buffer
+
+        deliveryFuture.complete(protonDelivery);
+    }
+
+    void handleDeliveryAborted(IncomingDelivery delivery) {
+        // TODO: break any waiting for read cases
+        receiver.disposition(delivery, null, true);
     }
 
     //----- Internal InputStream implementations
