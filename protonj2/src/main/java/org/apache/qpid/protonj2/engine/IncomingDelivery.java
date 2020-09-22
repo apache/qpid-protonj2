@@ -33,7 +33,7 @@ public interface IncomingDelivery extends Delivery {
 
     /**
      * Returns the number of bytes currently available for reading form this delivery, which may not be complete yet.
-     *
+     * <p>
      * Note that this value will change as bytes are received, and is in general not equal to the total length of
      * a delivery, except the point where {@link #isPartial()} returns false and no content has yet been received by
      * the application.
@@ -42,14 +42,45 @@ public interface IncomingDelivery extends Delivery {
      */
     int available();
 
-    // TODO - Pick names for these, receive, readBytes, take etc the old recv names weren't the greatest
-
+    /**
+     * Returns the current read buffer without copying it effectively consuming all currently available
+     * bytes from this delivery.  If no data is available then this method returns <code>null</code>.
+     *
+     * @return the currently available read bytes for this delivery.
+     */
     ProtonBuffer readAll();
 
-    // TODO - Allow partial consumption or only support readAll (take) of buffer.
-
+    /**
+     * Reads bytes from this delivery and writes them into the destination ProtonBuffer reducing the available
+     * bytes by the value of the number of bytes written to the target. The number of bytes written will be the
+     * equal to the writable bytes of the target buffer. The write index of the target buffer will be incremented
+     * by the number of bytes written into it.
+     *
+     * @param buffer
+     *      The target buffer that will be written into.
+     *
+     * @return this {@link IncomingDelivery} instance.
+     *
+     * @throws IndexOutOfBoundsException if the target buffer has more writable bytes than this delivery has readable bytes.
+     */
     IncomingDelivery readBytes(ProtonBuffer buffer);
 
+    /**
+     * Reads bytes from this delivery and writes them into the destination array starting at the given offset and
+     * continuing for the specified length reducing the available bytes by the value of the number of bytes written
+     * to the target.
+     *
+     * @param array
+     *      The target buffer that will be written into.
+     * @param offset
+     *      The offset into the given array to begin writing.
+     * @param length
+     *      The number of bytes to write to the given array.
+     *
+     * @return this {@link IncomingDelivery} instance.
+     *
+     * @throws IndexOutOfBoundsException if the length is greater than this delivery has readable bytes.
+     */
     IncomingDelivery readBytes(byte[] array, int offset, int length);
 
     /**
