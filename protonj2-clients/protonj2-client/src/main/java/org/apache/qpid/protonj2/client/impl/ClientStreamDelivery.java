@@ -250,7 +250,10 @@ public class ClientStreamDelivery implements StreamDelivery {
 
     void handleDeliveryAborted(IncomingDelivery delivery) {
         // TODO: break any waiting for read cases
-        receiver.disposition(delivery, null, true);
+    }
+
+    void handleReceiverClosed(ClientStreamReceiver receiver) {
+        // TODO: break any waiting for read cases
     }
 
     //----- Internal InputStream implementations

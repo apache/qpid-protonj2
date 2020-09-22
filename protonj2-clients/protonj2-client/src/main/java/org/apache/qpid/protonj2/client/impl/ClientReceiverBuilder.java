@@ -98,6 +98,9 @@ final class ClientReceiverBuilder {
         final String receiverId = nextReceiverId();
         final Receiver protonReceiver = createReceiver(address, options, receiverId);
 
+        protonReceiver.setSource(createDurableSource(address, options));
+        protonReceiver.setTarget(createTarget(address, options));
+
         return new ClientStreamReceiver(session, options, receiverId, protonReceiver);
     }
 

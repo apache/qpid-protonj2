@@ -89,11 +89,7 @@ public class ClientSender implements Sender {
         this.executor = session.getScheduler();
         this.openFuture = session.getFutureFactory().createFuture();
         this.closeFuture = session.getFutureFactory().createFuture();
-        this.protonSender = protonSender;
-
-
-        // Ensure that the sender can provide a link back to this object.
-        protonSender.setLinkedResource(this);
+        this.protonSender = protonSender.setLinkedResource(this);
     }
 
     @Override

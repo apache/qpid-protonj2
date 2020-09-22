@@ -320,6 +320,36 @@ public class ClientConnection implements Connection {
     }
 
     @Override
+    public StreamReceiver openStreamReceiver(String address) throws ClientException {
+        return openStreamReceiver(address, null);
+    }
+
+    @Override
+    public StreamReceiver openStreamReceiver(String address, StreamReceiverOptions receiverOptions) throws ClientException {
+        checkClosedOrFailed();
+        final ClientFuture<StreamReceiver> createRequest = getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            try {
+                // TODO: How to handle session capacity less than max frame size configuration ?
+                int sessionCapacity = StreamReceiverOptions.DEFAULT_READ_BUFFER_SIZE;
+                if (receiverOptions != null) {
+                    sessionCapacity = receiverOptions.readBufferSize() / 2;
+                }
+
+                checkClosedOrFailed();
+                SessionOptions sessionOptions = new SessionOptions(sessionBuilder.getDefaultSessionOptions());
+                ClientSession session = sessionBuilder.session(sessionOptions.incomingCapacity(sessionCapacity)).open();
+                createRequest.complete(session.internalOpenStreamReceiver(address, receiverOptions));
+            } catch (Throwable error) {
+                createRequest.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return request(this, createRequest);
+    }
+
+    @Override
     public Sender defaultSender() throws ClientException {
         checkClosedOrFailed();
         final ClientFuture<Sender> defaultSender = getFutureFactory().createFuture();
@@ -373,37 +403,6 @@ public class ClientConnection implements Connection {
             try {
                 checkClosedOrFailed();
                 createRequest.complete(lazyCreateConnectionSession().internalOpenAnonymousSender(senderOptions));
-            } catch (Throwable error) {
-                createRequest.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
-            }
-        });
-
-        return request(this, createRequest);
-    }
-
-    @Override
-    public StreamReceiver openStreamReceiver(String address) throws ClientException {
-        return openStreamReceiver(address, null);
-    }
-
-    @Override
-    public StreamReceiver openStreamReceiver(String address, StreamReceiverOptions receiverOptions) throws ClientException {
-        checkClosedOrFailed();
-        final ClientFuture<StreamReceiver> createRequest = getFutureFactory().createFuture();
-
-        executor.execute(() -> {
-            try {
-                // TODO: Validate and or override session capacity as set by read buffer size
-                //       The value set should be no less that max frame size.
-                int sessionCapacity = StreamReceiverOptions.DEFAULT_READ_BUFFER_SIZE;
-                if (receiverOptions != null) {
-                    sessionCapacity = receiverOptions.readBufferSize() / 2;
-                }
-
-                checkClosedOrFailed();
-                SessionOptions sessionOptions = new SessionOptions(sessionBuilder.getDefaultSessionOptions());
-                ClientSession session = sessionBuilder.session(sessionOptions.incomingCapacity(sessionCapacity)).open();
-                createRequest.complete(session.internalOpenStreamReceiver(address, receiverOptions));
             } catch (Throwable error) {
                 createRequest.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }

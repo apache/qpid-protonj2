@@ -76,10 +76,7 @@ public class ClientReceiver implements Receiver {
         this.executor = session.getScheduler();
         this.openFuture = session.getFutureFactory().createFuture();
         this.closeFuture = session.getFutureFactory().createFuture();
-        this.protonReceiver = receiver;
-
-        // Ensure that the receiver can provide a link back to this object.
-        protonReceiver.setLinkedResource(this);
+        this.protonReceiver = receiver.setLinkedResource(this);
 
         if (options.creditWindow() > 0) {
             protonReceiver.addCredit(options.creditWindow());
