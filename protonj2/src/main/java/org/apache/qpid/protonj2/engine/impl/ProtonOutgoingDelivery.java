@@ -64,8 +64,9 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     }
 
     @Override
-    public void setLinkedResource(Object resource) {
+    public ProtonOutgoingDelivery setLinkedResource(Object resource) {
         this.linkedResource = resource;
+        return this;
     }
 
     @SuppressWarnings("unchecked")
@@ -87,7 +88,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     @Override
     public OutgoingDelivery setTag(byte[] deliveryTag) {
         if (transferCount > 0) {
-            throw new IllegalStateException("Cannot change delivery tag once Delivery has sent Transfers");
+            throw new IllegalStateException("Cannot change delivery tag once Delivery has sent Transfer frames");
         }
 
         if (this.deliveryTag != null) {
@@ -123,6 +124,10 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     @Override
     public OutgoingDelivery setMessageFormat(int messageFormat) {
+        if (transferCount > 0) {
+            throw new IllegalStateException("Cannot change the message format once Delivery has sent Transfer frames");
+        }
+
         this.messageFormat = messageFormat;
         return this;
     }

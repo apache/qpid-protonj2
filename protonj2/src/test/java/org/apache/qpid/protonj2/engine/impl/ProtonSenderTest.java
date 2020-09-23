@@ -41,7 +41,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.engine.Connection;
-import org.apache.qpid.protonj2.engine.Delivery;
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
@@ -1511,7 +1510,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
-        final AtomicReference<Delivery> sent = new AtomicReference<>();
+        final AtomicReference<OutgoingDelivery> sent = new AtomicReference<>();
 
         sender.creditStateUpdateHandler(handler -> {
             if (handler.isSendable()) {
@@ -2328,7 +2327,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
-        final AtomicReference<Delivery> sentDelivery = new AtomicReference<>();
+        final AtomicReference<OutgoingDelivery> sentDelivery = new AtomicReference<>();
         sender.creditStateUpdateHandler(handler -> {
             sentDelivery.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
             deliverySentAfterSenable.set(sender.isSendable());
@@ -2408,7 +2407,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
 
         Sender sender = session.sender("sender-1");
-        final AtomicReference<Delivery> sentDelivery = new AtomicReference<>();
+        final AtomicReference<OutgoingDelivery> sentDelivery = new AtomicReference<>();
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
         sender.creditStateUpdateHandler(handler -> {
@@ -2476,7 +2475,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
-        final AtomicReference<Delivery> sentDelivery = new AtomicReference<>();
+        final AtomicReference<OutgoingDelivery> sentDelivery = new AtomicReference<>();
         sender.creditStateUpdateHandler(handler -> {
             sentDelivery.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
             deliverySentAfterSenable.set(sender.isSendable());
@@ -2819,7 +2818,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
-        final AtomicReference<Delivery> sentDelivery = new AtomicReference<>();
+        final AtomicReference<OutgoingDelivery> sentDelivery = new AtomicReference<>();
         sender.creditStateUpdateHandler(link -> {
             if (link.isSendable()) {
                 sentDelivery.set(link.next().setTag(new byte[] {0}).writeBytes(payload));
@@ -3017,7 +3016,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         final int toSend = sender.getCredit();
         final byte[] expectedTag = new byte[] {0};
 
-        List<Delivery> sent = new ArrayList<>(toSend);
+        List<OutgoingDelivery> sent = new ArrayList<>(toSend);
 
         for (int i = 0; i < toSend; ++i) {
             peer.expectTransfer().withHandle(0)

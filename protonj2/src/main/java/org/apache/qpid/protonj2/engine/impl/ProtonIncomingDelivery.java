@@ -80,8 +80,9 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     }
 
     @Override
-    public void setLinkedResource(Object resource) {
+    public ProtonIncomingDelivery setLinkedResource(Object resource) {
         this.linkedResource = resource;
+        return this;
     }
 
     @SuppressWarnings("unchecked")
