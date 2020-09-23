@@ -57,8 +57,8 @@
     <!--  Test Dependencies -->
     <qpid-jms-version>0.53.0</qpid-jms-version>
     <activemq-version>5.16.0</activemq-version>
-    <mockito-version>3.4.4</mockito-version>
-    <junit.jupiter.version>5.6.2</junit.jupiter.version>
+    <mockito-version>3.5.11</mockito-version>
+    <junit.jupiter.version>5.7.0</junit.jupiter.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
