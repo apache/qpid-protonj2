@@ -31,8 +31,7 @@ import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamTracker;
 import org.apache.qpid.protonj2.types.messaging.Header;
 
-// TODO: Possibly make an advanced folder for the more complex AMQP messaging topics
-public class MessageOutputStreamSender {
+public class LargeMessageSender {
 
     public static void main(String[] args) throws Exception {
 
