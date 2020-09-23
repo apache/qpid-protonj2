@@ -16,9 +16,7 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.URI;
@@ -28,8 +26,8 @@ import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.DeliveryState;
-import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
+import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.StreamReceiverOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
@@ -38,6 +36,7 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.transport.Role;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -46,6 +45,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Tests the {@link ReceiveContext} implementation
  */
+@Disabled
 @Timeout(20)
 class StreamReceiverTest extends ImperativeClientTestCase {
 
@@ -114,17 +114,11 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             StreamReceiver receiver = connection.openStreamReceiver("test-queue");
-            StreamDelivery delivery = receiver.openStream();
+            StreamReceiverMessage delivery = receiver.receive(5, TimeUnit.MILLISECONDS);
+
+            assertNull(delivery);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-
-            assertNull(delivery.remoteState());
-            assertFalse(delivery.remoteSettled());
-            assertNull(delivery.state());
-            assertFalse(delivery.settled());
-            assertFalse(delivery.aborted());
-            assertFalse(delivery.completed());
-            assertSame(receiver, delivery.receiver());
 
             peer.expectDetach().respond();
             peer.expectClose().respond();
@@ -137,7 +131,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testStreamDeliveryAwaitTimedCanBePerformedMultipleTimes() throws Exception {
+    public void testStreamReceiverAwaitTimedCanBePerformedMultipleTimes() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -153,18 +147,17 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             StreamReceiver receiver = connection.openStreamReceiver("test-queue");
-            StreamDelivery delivery = receiver.openStream();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             try {
-                delivery.awaitDelivery(5, TimeUnit.MILLISECONDS);
+                receiver.receive(5, TimeUnit.MILLISECONDS);
                 fail("Should time out waiting on a delivery");
             } catch (ClientOperationTimedOutException ex) {
             }
 
             try {
-                delivery.awaitDelivery(5, TimeUnit.MILLISECONDS);
+                receiver.receive(5, TimeUnit.MILLISECONDS);
                 fail("Should time out waiting on a delivery");
             } catch (ClientOperationTimedOutException ex) {
             }
@@ -208,13 +201,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             final Client container = Client.create();
             final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
-            final StreamDelivery delivery = receiver.openStream();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
-            receiver.openFuture().get();
-
-            delivery.awaitDelivery();
+            final StreamReceiverMessage delivery = receiver.receive();
 
             Wait.assertTrue("Should eventually be remotely settled", delivery::remoteSettled);
             Wait.assertTrue(() -> { return delivery.remoteState() == DeliveryState.accepted(); });

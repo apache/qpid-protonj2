@@ -570,12 +570,12 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public MessageAnnotations messageAnnotations() {
+    public MessageAnnotations annotations() {
         return messageAnnotations;
     }
 
     @Override
-    public ClientMessage<E> messageAnnotations(MessageAnnotations messageAnnotations) {
+    public ClientMessage<E> annotations(MessageAnnotations messageAnnotations) {
         this.messageAnnotations = messageAnnotations;
         return this;
     }

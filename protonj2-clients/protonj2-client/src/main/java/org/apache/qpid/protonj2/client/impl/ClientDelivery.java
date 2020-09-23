@@ -45,6 +45,9 @@ public final class ClientDelivery implements Delivery {
     private DeliveryAnnotations deliveryAnnotations;
     private Message<?> cachedMessage;
 
+    // TODO: Current code is reading out of incoming outside of the IO thread which
+    //       will cause issues later if session windowing is active.
+
     /**
      * Creates a new client delivery object linked to the given {@link IncomingDelivery}
      * instance.

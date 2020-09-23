@@ -29,8 +29,8 @@ import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.OutputStreamOptions;
+import org.apache.qpid.protonj2.client.StreamSenderMessage;
 import org.apache.qpid.protonj2.client.StreamSenderOptions;
-import org.apache.qpid.protonj2.client.StreamTracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
@@ -44,7 +44,7 @@ import org.apache.qpid.protonj2.types.messaging.Section;
  * Streaming Sender context used to multiple send operations that comprise the payload
  * of a single larger message transfer.
  */
-public class ClientStreamTracker implements StreamTracker {
+public class ClientStreamSenderMessage implements StreamSenderMessage {
 
     private static final int DATA_SECTION_HEADER_ENCODING_SIZE = 8;
 
@@ -52,7 +52,7 @@ public class ClientStreamTracker implements StreamTracker {
     private final OutgoingDelivery protonDelivery;
     private final int bufferSize;
     private final SendContextMessage contextMessage = new SendContextMessage();
-    private final ClientFuture<StreamTracker> acknowledged;
+    private final ClientFuture<StreamSenderMessage> acknowledged;
 
     private ProtonBuffer buffer;
     private volatile int messageFormat;
@@ -62,7 +62,7 @@ public class ClientStreamTracker implements StreamTracker {
     private volatile boolean remotelySetted;
     private volatile DeliveryState remoteDeliveryState;
 
-    ClientStreamTracker(ClientStreamSender sender, OutgoingDelivery protonDelivery) {
+    ClientStreamSenderMessage(ClientStreamSender sender, OutgoingDelivery protonDelivery) {
         this.sender = sender;
         this.protonDelivery = protonDelivery;
         this.protonDelivery.setLinkedResource(this);
@@ -87,7 +87,7 @@ public class ClientStreamTracker implements StreamTracker {
     }
 
     @Override
-    public ClientStreamTracker messageFormat(int messageFormat) throws ClientException {
+    public ClientStreamSenderMessage messageFormat(int messageFormat) throws ClientException {
         if (active) {
             throw new ClientIllegalStateException("Cannot set message format after writes have started.");
         }
@@ -98,7 +98,7 @@ public class ClientStreamTracker implements StreamTracker {
     }
 
     @Override
-    public ClientStreamTracker write(Section<?> section) throws ClientException {
+    public ClientStreamSenderMessage write(Section<?> section) throws ClientException {
         if (aborted()) {
             throw new ClientIllegalStateException("Cannot write a Section to an already aborted send context");
         }
@@ -113,7 +113,7 @@ public class ClientStreamTracker implements StreamTracker {
     }
 
     @Override
-    public ClientStreamTracker flush() throws ClientException {
+    public ClientStreamSenderMessage flush() throws ClientException {
         if (aborted()) {
             throw new ClientIllegalStateException("Cannot flush already aborted send context");
         }
@@ -139,7 +139,7 @@ public class ClientStreamTracker implements StreamTracker {
     }
 
     @Override
-    public ClientStreamTracker abort() throws ClientException {
+    public ClientStreamSenderMessage abort() throws ClientException {
         if (completed()) {
             throw new ClientIllegalStateException("Cannot abort an already completed send context");
         }
@@ -161,7 +161,7 @@ public class ClientStreamTracker implements StreamTracker {
     }
 
     @Override
-    public ClientStreamTracker complete() throws ClientException {
+    public ClientStreamSenderMessage complete() throws ClientException {
         if (aborted()) {
             throw new ClientIllegalStateException("Cannot complete an already aborted send context");
         }
@@ -237,7 +237,7 @@ public class ClientStreamTracker implements StreamTracker {
     }
 
     @Override
-    public ClientStreamTracker disposition(DeliveryState state, boolean settle) throws ClientException {
+    public ClientStreamSenderMessage disposition(DeliveryState state, boolean settle) throws ClientException {
         org.apache.qpid.protonj2.types.transport.DeliveryState protonState = null;
         if (state != null) {
             protonState = ClientDeliveryState.asProtonType(state);
@@ -248,7 +248,7 @@ public class ClientStreamTracker implements StreamTracker {
     }
 
     @Override
-    public ClientStreamTracker settle() throws ClientException {
+    public ClientStreamSenderMessage settle() throws ClientException {
         sender.disposition(protonDelivery, null, true);
         return this;
     }
@@ -259,12 +259,12 @@ public class ClientStreamTracker implements StreamTracker {
     }
 
     @Override
-    public ClientFuture<StreamTracker> settlementFuture() {
+    public ClientFuture<StreamSenderMessage> settlementFuture() {
         return acknowledged;
     }
 
     @Override
-    public StreamTracker awaitSettlement() throws ClientException {
+    public StreamSenderMessage awaitSettlement() throws ClientException {
         try {
             return settlementFuture().get();
         } catch (ExecutionException exe) {
@@ -276,7 +276,7 @@ public class ClientStreamTracker implements StreamTracker {
     }
 
     @Override
-    public StreamTracker awaitSettlement(long timeout, TimeUnit unit) throws ClientException {
+    public StreamSenderMessage awaitSettlement(long timeout, TimeUnit unit) throws ClientException {
         try {
             return settlementFuture().get(timeout, unit);
         } catch (InterruptedException ie) {
@@ -387,7 +387,7 @@ public class ClientStreamTracker implements StreamTracker {
             checkClosed();
 
             if (streamBuffer.getReadableBytes() > 0) {
-                doFlushPending(bytesWritten == options.streamSize() && options.completeContextOnClose());
+                doFlushPending(bytesWritten == options.streamSize() && options.completeSendOnClose());
             }
         }
 
@@ -403,7 +403,7 @@ public class ClientStreamTracker implements StreamTracker {
                     }
                 } else {
                     // Limit not set or was set and user wrote that many bytes so we can complete.
-                    doFlushPending(options.completeContextOnClose());
+                    doFlushPending(options.completeSendOnClose());
                 }
             }
         }

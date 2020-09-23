@@ -79,7 +79,7 @@ class ClientMessageTest {
         assertFalse(message.hasMessageAnnotations());
 
         assertNull(message.header());
-        assertNull(message.messageAnnotations());
+        assertNull(message.annotations());
         assertNull(message.applicationProperties());
         assertNull(message.footer());
 
@@ -91,13 +91,13 @@ class ClientMessageTest {
 
         message.header(header);
         message.properties(properties);
-        message.messageAnnotations(ma);
+        message.annotations(ma);
         message.applicationProperties(ap);
         message.footer(ft);
 
         assertSame(header, message.header());
         assertSame(properties, message.properties());
-        assertSame(ma, message.messageAnnotations());
+        assertSame(ma, message.annotations());
         assertSame(ap, message.applicationProperties());
         assertSame(ft, message.footer());
     }

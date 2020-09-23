@@ -72,7 +72,7 @@ public interface AdvancedMessage<E> extends Message<E> {
      *
      * @return the currently assigned {@link MessageAnnotations} for this message.
      */
-    MessageAnnotations messageAnnotations();
+    MessageAnnotations annotations();
 
     /**
      * Assign or replace the {@link MessageAnnotations} instance associated with this message.
@@ -82,7 +82,7 @@ public interface AdvancedMessage<E> extends Message<E> {
      *
      * @return this {@link AdvancedMessage} instance.
      */
-    AdvancedMessage<E> messageAnnotations(MessageAnnotations messageAnnotations);
+    AdvancedMessage<E> annotations(MessageAnnotations messageAnnotations);
 
     /**
      * Return the current {@link Properties} assigned to this message, if none was assigned yet

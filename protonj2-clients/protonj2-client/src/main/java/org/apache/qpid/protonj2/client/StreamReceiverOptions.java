@@ -17,7 +17,7 @@
 package org.apache.qpid.protonj2.client;
 
 /**
- * Options class that controls various aspects of a {@link StreamTracker} instance and how
+ * Options class that controls various aspects of a {@link StreamReceiver} instance and how
  * a streamed message transfer is written.
  */
 public class StreamReceiverOptions extends ReceiverOptions {
@@ -77,13 +77,13 @@ public class StreamReceiverOptions extends ReceiverOptions {
     /**
      * Sets the incoming buffer capacity (in bytes) that the {@link StreamReceiver}.
      * <p>
-     * When the remote peer is sending incoming data for a {@link StreamDelivery} the amount that is stored
+     * When the remote peer is sending incoming data for a {@link StreamReceiverMessage} the amount that is stored
      * in memory before back pressure is applied to the remote is controlled by this option.  If the user
      * does not read incoming data as it arrives this limit can prevent out of memory errors that might
      * otherwise arise as the remote attempts to immediately send all contents of very large message payloads.
      *
      * @param readBufferSize
-     *       The number of bytes that the {@link StreamReceiver} will buffer for a given {@link StreamDelivery}.
+     *       The number of bytes that the {@link StreamReceiver} will buffer for a given {@link StreamReceiverMessage}.
      *
      * @return this {@link StreamReceiverOptions} instance.
      */

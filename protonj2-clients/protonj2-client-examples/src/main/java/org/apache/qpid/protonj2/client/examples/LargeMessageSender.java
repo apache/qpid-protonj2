@@ -28,7 +28,7 @@ import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.OutputStreamOptions;
 import org.apache.qpid.protonj2.client.StreamSender;
-import org.apache.qpid.protonj2.client.StreamTracker;
+import org.apache.qpid.protonj2.client.StreamSenderMessage;
 import org.apache.qpid.protonj2.types.messaging.Header;
 
 public class LargeMessageSender {
@@ -46,25 +46,24 @@ public class LargeMessageSender {
 
             Connection connection = client.connect(brokerHost, brokerPort);
             StreamSender sender = connection.openStreamSender(address);
-            StreamTracker tracker = sender.openStream();
+            StreamSenderMessage message = sender.beginMessage();
 
             final byte[] buffer = new byte[] { 0, 1, 2, 3, 4 };
 
             Header header = new Header().setDurable(true);
-            tracker.write(header);
+            message.write(header);
 
             // Create an OutputStream that will send an AMQP Header tagged as being durable
             // once the first write is flushed, the remote will retain the completed message
             // once all bytes are written and the stream is closed.  Because the stream size
             // is given up front the encoded Message body will consist of one Data section.
             OutputStreamOptions streamOptions = new OutputStreamOptions().streamSize(buffer.length);
-            OutputStream output = tracker.dataOutputStream(streamOptions);
+            OutputStream output = message.dataOutputStream(streamOptions);
 
             // Simple example flushes on every byte, a real world usage would likely
             // be pulling in data in batches and flushing on some fixed boundary.
             for(byte value : buffer) {
                 output.write(value);
-                output.flush();
             }
 
             // Close will flush pending work and complete the AMQP transfer

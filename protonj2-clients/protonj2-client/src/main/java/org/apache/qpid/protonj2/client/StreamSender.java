@@ -152,14 +152,14 @@ public interface StreamSender {
     String[] desiredCapabilities() throws ClientException;
 
     /**
-     * Creates and returns a new {@link StreamTracker} that can be used by the caller to perform
+     * Creates and returns a new {@link StreamSenderMessage} that can be used by the caller to perform
      * multiple sends of custom encoded messages or perform chucked large message transfers to the
      * remote as part of a streaming send operation.
      *
-     * @return a new {@link StreamTracker} that can be used to stream message data to the remote.
+     * @return a new {@link StreamSenderMessage} that can be used to stream message data to the remote.
      *
      * @throws ClientException if an error occurs while initiating a new streaming send tracker.
      */
-    StreamTracker openStream() throws ClientException;
+    StreamSenderMessage beginMessage() throws ClientException;
 
 }

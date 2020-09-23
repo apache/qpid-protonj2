@@ -19,19 +19,13 @@ package org.apache.qpid.protonj2.client.impl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.protonj2.client.DeliveryState;
-import org.apache.qpid.protonj2.client.Message;
-import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
+import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
-import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
-import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
@@ -45,67 +39,21 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
  * Streamed message delivery context used to request reads of possible split framed
  * {@link Transfer} payload's that comprise a single large overall message.
  */
-public class ClientStreamDelivery implements StreamDelivery {
+public class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
     private final ClientStreamReceiver receiver;
-    private final ClientFuture<IncomingDelivery> deliveryFuture;
+    private final IncomingDelivery protonDelivery;
 
-    private IncomingDelivery protonDelivery;
     private DeliveryAnnotations deliveryAnnotations;
-    private Message<?> cachedMessage;
 
-    ClientStreamDelivery(ClientStreamReceiver receiver) {
+    ClientStreamReceiverMessage(ClientStreamReceiver receiver, IncomingDelivery delivery) {
         this.receiver = receiver;
-
-        this.deliveryFuture = receiver.session().getFutureFactory().createFuture();
+        this.protonDelivery = delivery.setLinkedResource(this);
     }
 
     @Override
     public StreamReceiver receiver() {
         return receiver;
-    }
-
-    @Override
-    public ClientStreamDelivery awaitDelivery() throws ClientException {
-        if (!deliveryFuture.isComplete()) {
-            try {
-                protonDelivery = deliveryFuture.get();
-            } catch (InterruptedException e) {
-                Thread.interrupted();
-                throw new ClientException("Wait for delivery was interrupted", e);
-            } catch (ExecutionException e) {
-                throw ClientExceptionSupport.createNonFatalOrPassthrough(e.getCause());
-            }
-        }
-
-        return this;
-    }
-
-    @Override
-    public ClientStreamDelivery awaitDelivery(long timeout, TimeUnit unit) throws ClientException {
-        if (!deliveryFuture.isComplete()) {
-            try {
-                protonDelivery = deliveryFuture.get(timeout, unit);
-            } catch (InterruptedException e) {
-                Thread.interrupted();
-                throw new ClientException("Wait for delivery was interrupted", e);
-            } catch (ExecutionException e) {
-                throw ClientExceptionSupport.createNonFatalOrPassthrough(e.getCause());
-            } catch (TimeoutException e) {
-                throw new ClientOperationTimedOutException("Timed out waiting for new Delivery", e);
-            }
-        }
-
-        return this;
-    }
-
-    @Override
-    public <E> Message<E> message() throws ClientException {
-        if (protonDelivery != null) {
-            return null;
-        } else {
-            throw new ClientIllegalStateException("Cannot read a message until the remote begins a transfer");
-        }
     }
 
     @Override
@@ -144,37 +92,37 @@ public class ClientStreamDelivery implements StreamDelivery {
     }
 
     @Override
-    public ClientStreamDelivery accept() throws ClientException {
+    public ClientStreamReceiverMessage accept() throws ClientException {
         disposition(Accepted.getInstance(), true);
         return this;
     }
 
     @Override
-    public ClientStreamDelivery release() throws ClientException {
+    public ClientStreamReceiverMessage release() throws ClientException {
         disposition(Released.getInstance(), true);
         return this;
     }
 
     @Override
-    public ClientStreamDelivery reject(String condition, String description) throws ClientException {
+    public ClientStreamReceiverMessage reject(String condition, String description) throws ClientException {
         disposition(new Rejected().setError(new ErrorCondition(condition, description)), true);
         return this;
     }
 
     @Override
-    public ClientStreamDelivery modified(boolean deliveryFailed, boolean undeliverableHere) throws ClientException {
+    public ClientStreamReceiverMessage modified(boolean deliveryFailed, boolean undeliverableHere) throws ClientException {
         disposition(new Modified().setDeliveryFailed(deliveryFailed).setUndeliverableHere(undeliverableHere), true);
         return this;
     }
 
     @Override
-    public ClientStreamDelivery disposition(DeliveryState state, boolean settle) throws ClientException {
+    public ClientStreamReceiverMessage disposition(DeliveryState state, boolean settle) throws ClientException {
         disposition(ClientDeliveryState.asProtonType(state), settle);
         return this;
     }
 
     @Override
-    public ClientStreamDelivery settle() throws ClientException {
+    public ClientStreamReceiverMessage settle() throws ClientException {
         disposition(protonDelivery.getState(), true);
         return this;
     }
@@ -236,16 +184,7 @@ public class ClientStreamDelivery implements StreamDelivery {
     //----- Event Handlers for Delivery updates
 
     void handleDeliveryRead(IncomingDelivery delivery) {
-        if (protonDelivery == null) {
-            protonDelivery = delivery;
-            protonDelivery.setLinkedResource(this);
-            protonDelivery.deliveryReadHandler(this::handleDeliveryRead);
-            protonDelivery.deliveryAbortedHandler(this::handleDeliveryAborted);
-        }
-
-        // TODO: Read processing kicks in now and fills read buffer
-
-        deliveryFuture.complete(protonDelivery);
+        // TODO: break any waiting for read cases
     }
 
     void handleDeliveryAborted(IncomingDelivery delivery) {

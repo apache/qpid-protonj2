@@ -26,8 +26,8 @@ import java.util.UUID;
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
-import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
+import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 
 public class LargeMessageReceive {
@@ -46,7 +46,7 @@ public class LargeMessageReceive {
             Connection connection = client.connect(brokerHost, brokerPort);
 
             StreamReceiver receiver = connection.openStreamReceiver(address);
-            StreamDelivery delivery = receiver.openStream().awaitDelivery();
+            StreamReceiverMessage delivery = receiver.receive();
             InputStream inputStream = delivery.rawInputStream();
 
             byte[] chunk = new byte[100];

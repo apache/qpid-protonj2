@@ -22,7 +22,7 @@ import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.StreamSender;
-import org.apache.qpid.protonj2.client.StreamTracker;
+import org.apache.qpid.protonj2.client.StreamSenderMessage;
 import org.apache.qpid.protonj2.types.messaging.Data;
 
 public class MultipleFrameMessageTransfer {
@@ -39,7 +39,7 @@ public class MultipleFrameMessageTransfer {
 
             Connection connection = client.connect(brokerHost, brokerPort);
             StreamSender sender = connection.openStreamSender(address);
-            StreamTracker tracker = sender.openStream();
+            StreamSenderMessage tracker = sender.beginMessage();
 
             tracker.write(new Data(new byte[] { 0, 1, 2, 3, 4 }));
             tracker.flush();

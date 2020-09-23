@@ -21,17 +21,18 @@ import java.io.OutputStream;
 import org.apache.qpid.protonj2.types.messaging.Footer;
 
 /**
- * Options class that controls various aspects of a {@link MessageOutputStream} instance.
+ * Options class that controls various aspects of a {@link OutputStream} instance created to write
+ * the contents of a section of a {@link StreamSenderMessage}.
  */
 public class OutputStreamOptions {
 
     /**
-     * Defines the default value for the complete parent send context on close option
+     * Defines the default value for the complete parent {@link StreamSenderMessage} on close option
      */
-    public static final boolean DEFAULT_COMPLETE_CONTEXT_ON_CLOSE = true;
+    public static final boolean DEFAULT_COMPLETE_SEND_ON_CLOSE = true;
 
     private int streamSize;
-    private boolean completeContextOnClose = DEFAULT_COMPLETE_CONTEXT_ON_CLOSE;
+    private boolean completeSendOnClose = DEFAULT_COMPLETE_SEND_ON_CLOSE;
 
     /**
      * Creates a {@link OutputStreamOptions} instance with default values for all options
@@ -63,20 +64,20 @@ public class OutputStreamOptions {
      */
     protected OutputStreamOptions copyInto(OutputStreamOptions other) {
         other.streamSize(streamSize);
-        other.completeContextOnClose(completeContextOnClose);
+        other.completeSendOnClose(completeSendOnClose);
 
         return this;
     }
 
     /**
-     * @return the configured stream size limit for associated {@link RawOutputStream}
+     * @return the configured stream size limit for associated {@link OutputStream}
      */
     public int streamSize() {
         return streamSize;
     }
 
     /**
-     * Sets the overall stream size for this associated {@link RawOutputStream} that the
+     * Sets the overall stream size for this associated {@link OutputStream} that the
      * options are applied to.
      *
      * @param streamSize
@@ -89,27 +90,27 @@ public class OutputStreamOptions {
     }
 
     /**
-     * @return the whether the close of the {@link OutputStream} should complete the parent {@link SendContext}
+     * @return the whether the close of the {@link OutputStream} should complete the parent {@link StreamSenderMessage}
      */
-    public boolean completeContextOnClose() {
-        return completeContextOnClose;
+    public boolean completeSendOnClose() {
+        return completeSendOnClose;
     }
 
     /**
      * Configures if the close of the {@link OutputStream} should result in a completion of the parent
-     * {@link SendContext} (default is true).  If there is a configured stream size and the {@link OutputStream}
-     * is closed the parent {@link SendContext} will always be aborted as the send would be incomplete, but the
+     * {@link StreamSenderMessage} (default is true).  If there is a configured stream size and the {@link OutputStream}
+     * is closed the parent {@link StreamSenderMessage} will always be aborted as the send would be incomplete, but the
      * close of an {@link OutputStream} may not always be the desired outcome.  In the case the user wishes to
-     * add a {@link Footer} to the message transmitted by the {@link SendContext} this option should be set to
+     * add a {@link Footer} to the message transmitted by the {@link StreamSenderMessage} this option should be set to
      * false and the user should complete the stream manually.
      *
      * @param completeContextOnClose
-     *      Should the {@link OutputStream#close()} method complete the parent {@link SendContext}
+     *      Should the {@link OutputStream#close()} method complete the parent {@link StreamSenderMessage}
      *
      * @return this {@link OutputStreamOptions} instance.
      */
-    public OutputStreamOptions completeContextOnClose(boolean completeContextOnClose) {
-        this.completeContextOnClose = completeContextOnClose;
+    public OutputStreamOptions completeSendOnClose(boolean completeContextOnClose) {
+        this.completeSendOnClose = completeContextOnClose;
         return this;
     }
 }

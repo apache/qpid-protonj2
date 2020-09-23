@@ -17,7 +17,7 @@
 package org.apache.qpid.protonj2.client;
 
 /**
- * Options class that controls various aspects of a {@link StreamTracker} instance and how
+ * Options class that controls various aspects of a {@link StreamSenderMessage} instance and how
  * a streamed message transfer is written.
  */
 public class StreamSenderOptions extends SenderOptions {

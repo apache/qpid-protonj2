@@ -18,13 +18,31 @@ package org.apache.qpid.protonj2.client;
 
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
- *
+ * A receiver of large message content that is delivered in multiple {@link Transfer} frames from
+ * the remote.
  */
 public interface StreamReceiver {
+
+    /**
+     * @return the {@link Client} instance that holds this session's {@link StreamReceiver}
+     */
+    Client client();
+
+    /**
+     * @return the {@link Connection} instance that holds this session's {@link StreamReceiver}
+     */
+    Connection connection();
+
+    /**
+     * @return the {@link Session} that created and holds this {@link StreamReceiver}.
+     */
+    Session session();
 
     /**
      * @return a {@link Future} that will be completed when the remote opens this {@link Receiver}.
@@ -147,21 +165,6 @@ public interface StreamReceiver {
     String[] desiredCapabilities() throws ClientException;
 
     /**
-     * @return the {@link Client} instance that holds this session's {@link StreamReceiver}
-     */
-    Client client();
-
-    /**
-     * @return the {@link Connection} instance that holds this session's {@link StreamReceiver}
-     */
-    Connection connection();
-
-    /**
-     * @return the {@link Session} that created and holds this {@link StreamReceiver}.
-     */
-    Session session();
-
-    /**
      * Adds credit to the {@link StreamReceiver} link for use when there receiver has not been configured
      * with a credit window.  When credit window is configured credit replenishment is automatic and
      * calling this method will result in an exception indicating that the operation is invalid.
@@ -180,17 +183,6 @@ public interface StreamReceiver {
     StreamReceiver addCredit(int credits) throws ClientException;
 
     /**
-     * Creates and returns a new {@link StreamDelivery} that can be used to read incoming {@link Delivery}
-     * data as it arrives regardless of the complete delivery date having been transmitted from the remote
-     * peer.
-     *
-     * @return a new {@link StreamDelivery} that can be used to read incoming streamed message data.
-     *
-     * @throws ClientException if an error occurs while attempting to open a new {@link StreamDelivery}.
-     */
-    StreamDelivery openStream() throws ClientException;
-
-    /**
      * Requests the remote to drain previously granted credit for this {@link StreamReceiver} link.
      *
      * @return a {@link Future} that will be completed when the remote drains this {@link StreamReceiver} link.
@@ -198,5 +190,53 @@ public interface StreamReceiver {
      * @throws ClientException if an error occurs while attempting to drain the link credit.
      */
     Future<StreamReceiver> drain() throws ClientException;
+
+    /**
+     * Blocking receive method that waits forever for the remote to provide a {@link StreamReceiverMessage} for consumption.
+     * <p>
+     * Receive calls will only grant credit on their own if a credit window is configured in the
+     * {@link StreamReceiverOptions} which is done by default.  If the client application has configured
+     * no credit window than this method will not grant any credit when it enters the wait for new
+     * incoming messages.
+     *
+     * @return a new {@link Delivery} received from the remote.
+     *
+     * @throws ClientException if the {@link StreamReceiver} or its parent is closed when the call to receive is made.
+     */
+    StreamReceiverMessage receive() throws ClientException;
+
+    /**
+     * Blocking receive method that waits the given time interval for the remote to provide a
+     * {@link StreamReceiverMessage} for consumption.  The amount of time this method blocks is based on the
+     * timeout value. If timeout is equal to <code>-1</code> then it blocks until a Delivery is
+     * received. If timeout is equal to zero then it will not block and simply return a
+     * {@link StreamReceiverMessage} if one is available locally.  If timeout value is greater than zero then it
+     * blocks up to timeout amount of time.
+     * <p>
+     * Receive calls will only grant credit on their own if a credit window is configured in the
+     * {@link StreamReceiverOptions} which is done by default.  If the client application has not configured
+     * a credit window or granted credit manually this method will not automatically grant any credit
+     * when it enters the wait for a new incoming {@link StreamReceiverMessage}.
+     *
+     * @param timeout
+     *      The timeout value used to control how long the receive method waits for a new {@link Delivery}.
+     * @param unit
+     *      The unit of time that the given timeout represents.
+     *
+     * @return a new {@link StreamReceiverMessage} received from the remote.
+     *
+     * @throws ClientException if the {@link StreamReceiver} or its parent is closed when the call to receive is made.
+     */
+    StreamReceiverMessage receive(long timeout, TimeUnit unit) throws ClientException;
+
+    /**
+     * Non-blocking receive method that either returns a message is one is immediately available or
+     * returns null if none is currently at hand.
+     *
+     * @return a new {@link StreamReceiverMessage} received from the remote or null if no pending deliveries are available.
+     *
+     * @throws ClientException if the {@link StreamReceiver} or its parent is closed when the call to try to receive is made.
+     */
+    StreamReceiverMessage tryReceive() throws ClientException;
 
 }

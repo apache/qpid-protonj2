@@ -197,15 +197,16 @@ public class ClientStreamSender implements StreamSender {
     }
 
     @Override
-    public ClientStreamTracker openStream() throws ClientException {
+    public ClientStreamSenderMessage beginMessage() throws ClientException {
         checkClosedOrFailed();
-        final ClientFuture<ClientStreamTracker> tracker = session.getFutureFactory().createFuture();
+        final ClientFuture<ClientStreamSenderMessage> tracker = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
             if (protonSender.current() != null) {
-                tracker.failed(new ClientIllegalStateException("Cannot initiate a new streaming send until the previous one is complete"));
+                tracker.failed(new ClientIllegalStateException(
+                    "Cannot initiate a new streaming send until the previous one is complete"));
             } else {
-                tracker.complete(new ClientStreamTracker(this, protonSender.next()));
+                tracker.complete(new ClientStreamSenderMessage(this, protonSender.next()));
             }
         });
 
@@ -287,7 +288,7 @@ public class ClientStreamSender implements StreamSender {
         return this.options;
     }
 
-    void sendMessage(ClientStreamTracker context, AdvancedMessage<?> message) throws ClientException {
+    void sendMessage(ClientStreamSenderMessage context, AdvancedMessage<?> message) throws ClientException {
         final ClientFuture<Void> operation = session.getFutureFactory().createFuture();
         final ProtonBuffer buffer = message.encode(null);
 
@@ -314,7 +315,7 @@ public class ClientStreamSender implements StreamSender {
         session.request(this, operation);
     }
 
-    private void assumeSendableAndSend(ClientStreamTracker tracker, ProtonBuffer buffer, AsyncResult<Void> request) {
+    private void assumeSendableAndSend(ClientStreamSenderMessage tracker, ProtonBuffer buffer, AsyncResult<Void> request) {
         final OutgoingDelivery delivery = protonSender.current().setMessageFormat(tracker.messageFormat());
 
         if (session.getTransactionContext().isInTransaction()) {
@@ -403,7 +404,7 @@ public class ClientStreamSender implements StreamSender {
 
         protonSender.unsettled().forEach((delivery) -> {
             try {
-                ClientStreamTracker tracker = delivery.getLinkedResource();
+                ClientStreamSenderMessage tracker = delivery.getLinkedResource();
                 if (failureCause != null) {
                     tracker.settlementFuture().failed(failureCause);
                 } else {
@@ -441,13 +442,13 @@ public class ClientStreamSender implements StreamSender {
 
     private class InFlightSend implements AsyncResult<Void> {
 
-        private final ClientStreamTracker context;
+        private final ClientStreamSenderMessage context;
         private final ProtonBuffer encodedMessage;
         private final ClientFuture<Void> operation;
 
         private ScheduledFuture<?> timeout;
 
-        public InFlightSend(ClientStreamTracker context, ProtonBuffer encodedMessage, ClientFuture<Void> operation) {
+        public InFlightSend(ClientStreamSenderMessage context, ProtonBuffer encodedMessage, ClientFuture<Void> operation) {
             this.encodedMessage = encodedMessage;
             this.context = context;
             this.operation = operation;
@@ -564,7 +565,7 @@ public class ClientStreamSender implements StreamSender {
 
     private void handleDeliveryUpdated(OutgoingDelivery delivery) {
         try {
-            delivery.getLinkedResource(ClientStreamTracker.class).processDeliveryUpdated(delivery);
+            delivery.getLinkedResource(ClientStreamSenderMessage.class).processDeliveryUpdated(delivery);
         } catch (ClassCastException ccex) {
             LOG.debug("Sender received update on Delivery not linked to a Tracker: {}", delivery);
         }

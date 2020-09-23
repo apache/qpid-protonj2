@@ -28,7 +28,7 @@ import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.OutputStreamOptions;
 import org.apache.qpid.protonj2.client.StreamSender;
-import org.apache.qpid.protonj2.client.StreamTracker;
+import org.apache.qpid.protonj2.client.StreamSenderMessage;
 
 // TODO: Possibly make an advanced folder for the more complex AMQP messaging topics
 public class RawMessageOutputStreamSender {
@@ -46,7 +46,7 @@ public class RawMessageOutputStreamSender {
 
             Connection connection = client.connect(brokerHost, brokerPort);
             StreamSender sender = connection.openStreamSender(address);
-            StreamTracker tracker = sender.openStream();
+            StreamSenderMessage tracker = sender.beginMessage();
 
             final byte[] buffer = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 

@@ -18,17 +18,18 @@ package org.apache.qpid.protonj2.client;
 
 import java.io.InputStream;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
-import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
- *
+ * A specialized {@link Message} type that represents a streamed delivery possibly
+ * spanning many incoming {@link Transfer} frames from the remote peer.  It is possible
+ * for various calls in this {@link StreamReceiverMessage} to block while awaiting the
+ * receipt of sufficient bytes to provide the result.
  */
-public interface StreamDelivery {
+public interface StreamReceiverMessage {
 
     /**
      * @return the {@link StreamReceiver} that this context was create under.
@@ -36,65 +37,9 @@ public interface StreamDelivery {
     StreamReceiver receiver();
 
     /**
-     * Returns immediately if a remote delivery is ready for consumption or blocks waiting on the
-     * initial transfer from an incoming {@link Delivery} to arrive and be assigned this
-     * {@link ReceiveContext}.  Once a Delivery is assigned the context can being processing the
-     * incoming data associated with the delivery.
-     *
-     * @throws ClientException if the {@link Receiver} or its parent is closed when the call to receive is
-     *                         made or some other internal error occurs.
-     *
-     * @return a new {@link StreamDelivery} received from the remote.
-     *
-     * @see #awaitDelivery(long, TimeUnit)
-     */
-    StreamDelivery awaitDelivery() throws ClientException;
-
-    /**
-     * Blocking method that waits the given time interval for the remote to provide a {@link Delivery}
-     * for consumption.  The amount of time this method blocks is based on the timeout value. If timeout
-     * is equal to <code>-1</code> then it blocks until a Delivery is received. If timeout is equal to
-     * zero then it will not block and simply return if one is already available locally. If the timeout
-     * value is greater than zero then it blocks up to timeout amount of time.
-     * <p>
-     * This call will only grant credit for deliveries on its own if a credit window is configured in the
-     * {@link ReceiverOptions} which is done by default.  If the client application has not configured
-     * a credit window or granted credit manually this method will not automatically grant any credit
-     * when it enters the wait for a new incoming {@link Delivery}.
-     *
-     * @param timeout
-     *      The timeout value used to control how long this method waits for a new {@link Delivery}.
-     * @param unit
-     *      The unit of time that the given timeout represents.
-     *
-     * @return a new {@link StreamDelivery} received from the remote.
-     *
-     * @throws ClientOperationTimedOutException if the timeout expired and no delivery has arrived.
-     * @throws ClientException if the {@link Receiver} or its parent is closed when the call to receive is
-     *                         made or some other internal error occurs.
-     *
-     * @see #awaitDelivery()
-     */
-    StreamDelivery awaitDelivery(long timeout, TimeUnit unit) throws ClientException;
-
-    /**
-     * Decode the {@link Delivery} payload and return an {@link Message} object if there
-     * is a {@link Delivery} associated with this {@link ReceiveContext} and it has reached
-     * the completed state.
-     *
-     * @return a {@link Message} instance that wraps the decoded payload.
-     *
-     * @throws ClientException if an error occurs while decoding the payload or the delivery
-     *                         is not yet complete (received all remote transfers).
-     *
-     * @param <E> The type of message body that should be contained in the returned {@link Message}.
-     */
-    <E> Message<E> message() throws ClientException;
-
-    /**
-     * Decodes the {@link StreamDelivery} payload and returns a {@link Map} containing a copy
+     * Decodes the {@link StreamReceiverMessage} payload and returns a {@link Map} containing a copy
      * of any associated {@link DeliveryAnnotations} that were transmitted with the {@link Message}
-     * payload of this {@link StreamDelivery}.
+     * payload of this {@link StreamReceiverMessage}.
      *
      * @return copy of the delivery annotations that were transmitted with the {@link Message} payload.
      *
@@ -144,20 +89,20 @@ public interface StreamDelivery {
     /**
      * Accepts and settles the delivery.
      *
-     * @return this {@link StreamDelivery} instance.
+     * @return this {@link StreamReceiverMessage} instance.
      *
      * @throws ClientException if an error occurs while sending the disposition
      */
-    StreamDelivery accept() throws ClientException;
+    StreamReceiverMessage accept() throws ClientException;
 
     /**
      * Releases and settles the delivery.
      *
-     * @return this {@link StreamDelivery} instance.
+     * @return this {@link StreamReceiverMessage} instance.
      *
      * @throws ClientException if an error occurs while sending the disposition
      */
-    StreamDelivery release() throws ClientException;
+    StreamReceiverMessage release() throws ClientException;
 
     /**
      * Rejects and settles the delivery, sending supplied error information along
@@ -168,11 +113,11 @@ public interface StreamDelivery {
      * @param description
      *      The error description value to supply with the rejection.
      *
-     * @return this {@link StreamDelivery} instance.
+     * @return this {@link StreamReceiverMessage} instance.
      *
      * @throws ClientException if an error occurs while sending the disposition
      */
-    StreamDelivery reject(String condition, String description) throws ClientException;
+    StreamReceiverMessage reject(String condition, String description) throws ClientException;
 
     /**
      * Modifies and settles the delivery.
@@ -182,11 +127,11 @@ public interface StreamDelivery {
      * @param undeliverableHere
      *      Indicates if the modified delivery should not be returned here again.
      *
-     * @return this {@link StreamDelivery} instance.
+     * @return this {@link StreamReceiverMessage} instance.
      *
      * @throws ClientException if an error occurs while sending the disposition
      */
-    StreamDelivery modified(boolean deliveryFailed, boolean undeliverableHere) throws ClientException;
+    StreamReceiverMessage modified(boolean deliveryFailed, boolean undeliverableHere) throws ClientException;
 
     /**
      * Updates the DeliveryState, and optionally settle the delivery as well.
@@ -196,20 +141,20 @@ public interface StreamDelivery {
      * @param settle
      *            whether to {@link #settle()} the delivery at the same time
      *
-     * @return this {@link StreamDelivery} instance.
+     * @return this {@link StreamReceiverMessage} instance.
      *
      * @throws ClientException if an error occurs while sending the disposition
      */
-    StreamDelivery disposition(DeliveryState state, boolean settle) throws ClientException;
+    StreamReceiverMessage disposition(DeliveryState state, boolean settle) throws ClientException;
 
     /**
      * Settles the delivery locally.
      *
-     * @return this {@link StreamDelivery} instance.
+     * @return this {@link StreamReceiverMessage} instance.
      *
      * @throws ClientException if an error occurs while sending the disposition
      */
-    StreamDelivery settle() throws ClientException;
+    StreamReceiverMessage settle() throws ClientException;
 
     /**
      * @return true if the delivery has been locally settled.

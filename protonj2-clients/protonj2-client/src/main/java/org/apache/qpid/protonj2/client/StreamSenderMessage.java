@@ -29,10 +29,10 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
  * Streaming Message Tracker object used to operate on and track the state of a streamed message
- * at the remote. The {@link StreamTracker} allows for local settlement and disposition management
+ * at the remote. The {@link StreamSenderMessage} allows for local settlement and disposition management
  * as well as waiting for remote settlement of a streamed message.
  */
-public interface StreamTracker {
+public interface StreamSenderMessage {
 
     /**
      * @return the {@link Sender} that was used to send the delivery that is being tracked.
@@ -57,11 +57,11 @@ public interface StreamTracker {
      * @param messageFormat
      *      The assigned AMQP message format for this streamed message.
      *
-     * @return this {@link StreamTracker} instance.
+     * @return this {@link StreamSenderMessage} instance.
      *
      * @throws ClientException if an error occurs while attempting set the message format.
      */
-    StreamTracker messageFormat(int messageFormat) throws ClientException;
+    StreamSenderMessage messageFormat(int messageFormat) throws ClientException;
 
     /**
      * Writes the given {@link Section} into the {@link SendContext}.  The the data written we
@@ -71,20 +71,20 @@ public interface StreamTracker {
      * @param section
      *      The {@link Section} instance to be written into this send context..
      *
-     * @return this {@link StreamTracker} instance.
+     * @return this {@link StreamSenderMessage} instance.
      *
      * @throws ClientException if an error occurs while attempting to write the section.
      */
-    StreamTracker write(Section<?> section) throws ClientException;
+    StreamSenderMessage write(Section<?> section) throws ClientException;
 
     /**
      * Sends all currently buffered message body data over the parent {@link Sender} link.
      *
-     * @return this {@link StreamTracker} instance.
+     * @return this {@link StreamSenderMessage} instance.
      *
      * @throws ClientException if an error occurs while attempting to write the buffered contents.
      */
-    StreamTracker flush() throws ClientException;
+    StreamSenderMessage flush() throws ClientException;
 
     /**
      * Marks the currently streaming message as being complete.
@@ -93,11 +93,11 @@ public interface StreamTracker {
      * final {@link Transfer} frame to be sent to the remote indicating that the ongoing
      * streaming delivery is done and no more message data will arrive.
      *
-     * @return this {@link StreamTracker} instance.
+     * @return this {@link StreamSenderMessage} instance.
      *
      * @throws ClientException if an error occurs while initiating the completion operation.
      */
-    StreamTracker complete() throws ClientException;
+    StreamSenderMessage complete() throws ClientException;
 
     /**
      * @return true if this message has been marked as being complete.
@@ -111,11 +111,11 @@ public interface StreamTracker {
      * @param aborted
      *      Should the message be marked as having been aborted.
      *
-     * @return this {@link StreamTracker} instance.
+     * @return this {@link StreamSenderMessage} instance.
      *
      * @throws ClientException if an error occurs while initiating the abort operation.
      */
-    StreamTracker abort() throws ClientException;
+    StreamSenderMessage abort() throws ClientException;
 
     /**
      * @return true if this {@link SendContext} has been marked as aborted previously.
@@ -170,11 +170,11 @@ public interface StreamTracker {
     /**
      * Settles the delivery locally, if not {@link SenderOptions#autoSettle() auto-settling}.
      *
-     * @return this {@link StreamTracker} instance.
+     * @return this {@link StreamSenderMessage} instance.
      *
      * @throws ClientException if an error occurs while performing the settlement.
      */
-    StreamTracker settle() throws ClientException;
+    StreamSenderMessage settle() throws ClientException;
 
     /**
      * @return true if the sent message has been locally settled.
@@ -210,11 +210,11 @@ public interface StreamTracker {
      * @param settle
      *            whether to {@link #settle()} the delivery at the same time
      *
-     * @return this {@link StreamTracker} instance.
+     * @return this {@link StreamSenderMessage} instance.
      *
      * @throws ClientException
      */
-    StreamTracker disposition(DeliveryState state, boolean settle) throws ClientException;
+    StreamSenderMessage disposition(DeliveryState state, boolean settle) throws ClientException;
 
     /**
      * Returns a future that can be used to wait for the remote to acknowledge receipt of
@@ -222,18 +222,18 @@ public interface StreamTracker {
      *
      * @return a {@link Future} that can be used to wait on remote settlement.
      */
-    Future<StreamTracker> settlementFuture();
+    Future<StreamSenderMessage> settlementFuture();
 
     /**
      * Waits if necessary for the remote to settle the sent delivery unless it has
      * either already been settled or the original delivery was sent settled in which
      * case the remote will not send a {@link Disposition} back.
      *
-     * @return this {@link StreamTracker} instance.
+     * @return this {@link StreamSenderMessage} instance.
      *
      * @throws ClientException if an error occurs while awaiting the remote settlement.
      */
-    StreamTracker awaitSettlement() throws ClientException;
+    StreamSenderMessage awaitSettlement() throws ClientException;
 
     /**
      * Waits if necessary for the remote to settle the sent delivery unless it has
@@ -245,10 +245,10 @@ public interface StreamTracker {
      * @param unit
      *      the time unit of the timeout argument.
      *
-     * @return this {@link StreamTracker} instance.
+     * @return this {@link StreamSenderMessage} instance.
      *
      * @throws ClientException if an error occurs while awaiting the remote settlement.
      */
-    StreamTracker awaitSettlement(long timeout, TimeUnit unit) throws ClientException;
+    StreamSenderMessage awaitSettlement(long timeout, TimeUnit unit) throws ClientException;
 
 }

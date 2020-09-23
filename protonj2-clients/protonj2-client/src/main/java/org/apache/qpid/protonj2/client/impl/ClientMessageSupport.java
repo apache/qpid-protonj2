@@ -101,7 +101,7 @@ public abstract class ClientMessageSupport {
         ProtonBuffer buffer = allocator.allocate();
 
         Header header = message.header();
-        MessageAnnotations messageAnnotations = message.messageAnnotations();
+        MessageAnnotations messageAnnotations = message.annotations();
         Properties properties = message.properties();
         ApplicationProperties applicationProperties = message.applicationProperties();
         Footer footer = message.footer();
@@ -192,7 +192,7 @@ public abstract class ClientMessageSupport {
 
         if (result != null) {
             result.header(header);
-            result.messageAnnotations(messageAnnotations);
+            result.annotations(messageAnnotations);
             result.properties(properties);
             result.applicationProperties(applicationProperties);
             result.footer(footer);
@@ -306,7 +306,7 @@ public abstract class ClientMessageSupport {
 
         message.header(header);
         message.properties(properties);
-        message.messageAnnotations(messageAnnotations);
+        message.annotations(messageAnnotations);
         message.applicationProperties(applicationProperties);
         message.footer(footer);
 

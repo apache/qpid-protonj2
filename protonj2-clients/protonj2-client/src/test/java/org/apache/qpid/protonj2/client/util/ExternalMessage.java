@@ -541,12 +541,12 @@ public class ExternalMessage<E> implements Message<E> {
         }
 
         @Override
-        public MessageAnnotations messageAnnotations() {
+        public MessageAnnotations annotations() {
             return message.messageAnnotations;
         }
 
         @Override
-        public AdvancedMessage<E> messageAnnotations(MessageAnnotations messageAnnotations) {
+        public AdvancedMessage<E> annotations(MessageAnnotations messageAnnotations) {
             message.messageAnnotations = messageAnnotations;
             return this;
         }
