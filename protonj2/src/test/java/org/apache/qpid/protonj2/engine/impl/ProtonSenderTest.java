@@ -20,12 +20,14 @@ import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -3209,6 +3211,79 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         connection.close();
 
         peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotAlterMessageFormatAfterInitalBytesWritten() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
+        peer.expectTransfer().withHandle(0)
+                             .withMore(true)
+                             .withSettled(false)
+                             .withState(nullValue())
+                             .withMessageFormat(42)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withPayload(payload);
+        peer.expectTransfer().withHandle(0)
+                             .withState(nullValue())
+                             .withDeliveryId(0)
+                             .withMessageFormat(42)
+                             .withAborted(anyOf(nullValue(), is(false)))
+                             .withSettled(false)
+                             .withMore(anyOf(nullValue(), is(false)))
+                             .withPayload(payload);
+        peer.expectDetach().withHandle(0).respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("sender-1");
+        sender.open();
+
+        final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
+        sender.creditStateUpdateHandler(handler -> {
+            senderMarkedSendable.set(sender.isSendable());
+        });
+
+        final OutgoingDelivery delivery = sender.next();
+        assertNotNull(delivery);
+
+        delivery.setTag(new byte[] {0});
+        delivery.setMessageFormat(42);
+        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
+
+        assertThrows(IllegalStateException.class, () -> delivery.setMessageFormat(43));
+        assertDoesNotThrow(() -> delivery.setMessageFormat(42));
+
+        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), true);
+
+        assertFalse(delivery.isAborted());
+        assertFalse(delivery.isPartial());
+        assertFalse(delivery.isSettled());
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
         assertNull(failure);
     }
 }

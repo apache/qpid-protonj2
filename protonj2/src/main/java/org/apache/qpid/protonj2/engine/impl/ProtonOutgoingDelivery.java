@@ -124,7 +124,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     @Override
     public OutgoingDelivery setMessageFormat(int messageFormat) {
-        if (transferCount > 0) {
+        if (transferCount > 0 && this.messageFormat != messageFormat) {
             throw new IllegalStateException("Cannot change the message format once Delivery has sent Transfer frames");
         }
 
