@@ -1462,7 +1462,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testAwaitSettlementFutureFailedOnConnectionDropped() throws Exception {
+    public void testAwaitSettlementFutureFailedAfterConnectionDropped() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -1470,7 +1470,7 @@ public class SenderTest extends ImperativeClientTestCase {
             peer.expectAttach().ofSender().withTarget().withAddress("test").and().respond();
             peer.remoteFlow().withLinkCredit(1).queue();
             peer.expectTransfer();
-            peer.dropAfterLastHandler(25);
+            peer.dropAfterLastHandler();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -1487,6 +1487,10 @@ public class SenderTest extends ImperativeClientTestCase {
             } catch (ClientConnectionRemotelyClosedException cliEx) {
                 fail("Send not should fail with remotely closed error after remote drops");
             }
+
+            // Connection should be dropped at this point and next call should test that after
+            // the drop the future has been completed
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             try {
                 tracker.settlementFuture().get();
@@ -1510,7 +1514,7 @@ public class SenderTest extends ImperativeClientTestCase {
             peer.expectAttach().ofSender().withTarget().withAddress("test").and().respond();
             peer.remoteFlow().withLinkCredit(1).queue();
             peer.expectTransfer();
-            peer.dropAfterLastHandler(25);
+            peer.dropAfterLastHandler(30);
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -1525,16 +1529,16 @@ public class SenderTest extends ImperativeClientTestCase {
             try {
                 tracker = sender.send(message);
             } catch (ClientConnectionRemotelyClosedException cliEx) {
-                fail("Send not should fail with remotely closed error after remote drops");
+                fail("Send should not fail with remotely closed error after remote drops");
             }
 
+            // Most of the time this should await before connection drops testing that
+            // the drop completes waiting callers.
             try {
                 tracker.awaitSettlement();
                 fail("Wait for settlement should fail with remotely closed error after remote drops");
             } catch (ClientConnectionRemotelyClosedException cliRCEx) {
             }
-
-            connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
