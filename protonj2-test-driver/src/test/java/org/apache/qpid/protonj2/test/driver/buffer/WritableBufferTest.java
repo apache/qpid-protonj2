@@ -16,15 +16,15 @@
  */
 package org.apache.qpid.protonj2.test.driver.buffer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for built in ByteBuffer wrapper of WritableBuffer
@@ -170,16 +170,16 @@ public class WritableBufferTest {
         ByteBuffer buf = ByteBuffer.allocate(1024);
         buf.put((byte) 1);
         buf.flip();
-        if(readOnly) {
+        if (readOnly) {
             buf = buf.asReadOnlyBuffer();
         }
 
         ReadableBuffer input = new ReadableBuffer.ByteBufferReader(buf);
 
-        if(readOnly) {
-            assertFalse("Expected buffer not to hasArray()", input.hasArray());
+        if (readOnly) {
+            assertFalse(input.hasArray(), "Expected buffer not to hasArray()");
         } else {
-            assertTrue("Expected buffer to hasArray()", input.hasArray());
+            assertTrue(input.hasArray(), "Expected buffer to hasArray()");
         }
 
         ByteBuffer data = ByteBuffer.allocate(1024);

@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.protonj2.codec.security;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 
@@ -37,13 +37,13 @@ import org.apache.qpid.protonj2.codec.encoders.security.SaslOutcomeTypeEncoder;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.security.SaslCode;
 import org.apache.qpid.protonj2.types.security.SaslOutcome;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SaslOutcomeTypeCodecTest extends CodecTestSupport {
 
     @Override
-    @Before
+    @BeforeEach
     public void setUp() {
         decoder = ProtonDecoderFactory.createSasl();
         decoderState = decoder.newDecoderState();

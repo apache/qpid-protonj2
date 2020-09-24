@@ -16,13 +16,13 @@
  */
 package org.apache.qpid.protonj2.engine.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ProtonDeliveryTagGeneratorTest {
 

@@ -19,11 +19,11 @@ package org.apache.qpid.protonj2.codec.transport;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -41,7 +41,7 @@ import org.apache.qpid.protonj2.codec.encoders.transport.ErrorConditionTypeEncod
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ErrorConditionTypeCodecTest extends CodecTestSupport {
 

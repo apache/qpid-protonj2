@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.protonj2.codec.primitives;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test decoding of AMQP Array types
@@ -333,7 +333,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         boolean[] source = createPayloadArrayBooleans(count);
 
         try {
-            assertEquals("Unexpected source array length", count, source.length);
+            assertEquals(count, source.length, "Unexpected source array length");
 
             int encodingWidth = count < 254 ? 1 : 4; // less than 254 and not 256, since we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int arrayPayloadSize =  encodingWidth + 1 + count; // variable width for element count + byte type descriptor + number of elements
@@ -362,19 +362,19 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
                 expectedEncodingWrapper.writeByte(booleanCode);
             }
 
-            assertFalse("Should have filled expected encoding array", expectedEncodingWrapper.isWritable());
+            assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
 
             // Now verify against the actual encoding of the array
-            assertEquals("Unexpected buffer position", 0, buffer.getReadIndex());
+            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
-            assertEquals("Unexpected encoded payload length", expectedEncodedArraySize, buffer.getReadableBytes());
+            assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
             buffer.markReadIndex();
             buffer.readBytes(actualEncoding);
-            assertFalse("Should have drained the encoder buffer contents", buffer.isReadable());
+            assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
-            assertArrayEquals("Unexpected actual array encoding", expectedEncoding, actualEncoding);
+            assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
             buffer.resetReadIndex();
@@ -384,7 +384,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
             assertEquals(boolean.class, decoded.getClass().getComponentType());
 
-            assertArrayEquals("Unexpected decoding", source, (boolean[]) decoded);
+            assertArrayEquals(source, (boolean[]) decoded, "Unexpected decoding");
         } catch (Throwable t) {
             System.err.println("Error during test, source array: " + Arrays.toString(source));
             throw t;
@@ -438,7 +438,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         byte[] source = createPayloadArrayBytes(count);
 
         try {
-            assertEquals("Unexpected source array length", count, source.length);
+            assertEquals(count, source.length, "Unexpected source array length");
 
             int encodingWidth = count < 254 ? 1 : 4; // less than 254 and not 256, since we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int arrayPayloadSize = encodingWidth + 1 + count; // variable width for element count + byte type descriptor + number of elements
@@ -466,19 +466,19 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
                 expectedEncodingWrapper.writeByte(source[i]);
             }
 
-            assertFalse("Should have filled expected encoding array", expectedEncodingWrapper.isWritable());
+            assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
 
             // Now verify against the actual encoding of the array
-            assertEquals("Unexpected buffer position", 0, buffer.getReadIndex());
+            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
-            assertEquals("Unexpected encoded payload length", expectedEncodedArraySize, buffer.getReadableBytes());
+            assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
             buffer.markReadIndex();
             buffer.readBytes(actualEncoding);
-            assertFalse("Should have drained the encoder buffer contents", buffer.isReadable());
+            assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
-            assertArrayEquals("Unexpected actual array encoding", expectedEncoding, actualEncoding);
+            assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
             buffer.resetReadIndex();
@@ -488,7 +488,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
             assertEquals(byte.class, decoded.getClass().getComponentType());
 
-            assertArrayEquals("Unexpected decoding", source, (byte[]) decoded);
+            assertArrayEquals(source, (byte[]) decoded, "Unexpected decoding");
         } catch (Throwable t) {
             System.err.println("Error during test, source array: " + Arrays.toString(source));
             throw t;
@@ -529,7 +529,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         short[] source = createPayloadArrayShorts(count);
 
         try {
-            assertEquals("Unexpected source array length", count, source.length);
+            assertEquals(count, source.length, "Unexpected source array length");
 
             int encodingWidth = count < 127 ? 1 : 4; // less than 127, since each element is 2 bytes, but we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int arrayPayloadSize =  encodingWidth + 1 + (count * 2); // variable width for element count + byte type descriptor + (number of elements * size)
@@ -557,19 +557,19 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
                 expectedEncodingWrapper.writeShort(source[i]);
             }
 
-            assertFalse("Should have filled expected encoding array", expectedEncodingWrapper.isWritable());
+            assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
 
             // Now verify against the actual encoding of the array
-            assertEquals("Unexpected buffer position", 0, buffer.getReadIndex());
+            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
-            assertEquals("Unexpected encoded payload length", expectedEncodedArraySize, buffer.getReadableBytes());
+            assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
             buffer.markReadIndex();
             buffer.readBytes(actualEncoding);
-            assertFalse("Should have drained the encoder buffer contents", buffer.isReadable());
+            assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
-            assertArrayEquals("Unexpected actual array encoding", expectedEncoding, actualEncoding);
+            assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
             buffer.resetReadIndex();
@@ -579,9 +579,8 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
             assertEquals(short.class, decoded.getClass().getComponentType());
 
-            assertArrayEquals("Unexpected decoding", source, (short[]) decoded);
-        }
-        catch (Throwable t) {
+            assertArrayEquals(source, (short[]) decoded, "Unexpected decoding");
+        } catch (Throwable t) {
             System.err.println("Error during test, source array: " + Arrays.toString(source));
             throw t;
         }
@@ -621,7 +620,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         int[] source = createPayloadArrayInts(count);
 
         try {
-            assertEquals("Unexpected source array length", count, source.length);
+            assertEquals(count, source.length, "Unexpected source array length");
 
             int encodingWidth = count < 63 ? 1 : 4; // less than 63, since each element is 4 bytes, but we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int elementWidth = 4;
@@ -651,19 +650,19 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
                 expectedEncodingWrapper.writeInt(j);
             }
 
-            assertFalse("Should have filled expected encoding array", expectedEncodingWrapper.isWritable());
+            assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
 
             // Now verify against the actual encoding of the array
-            assertEquals("Unexpected buffer position", 0, buffer.getReadIndex());
+            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
-            assertEquals("Unexpected encoded payload length", expectedEncodedArraySize, buffer.getReadableBytes());
+            assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
             buffer.markReadIndex();
             buffer.readBytes(actualEncoding);
-            assertFalse("Should have drained the encoder buffer contents", buffer.isReadable());
+            assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
-            assertArrayEquals("Unexpected actual array encoding", expectedEncoding, actualEncoding);
+            assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
             buffer.resetReadIndex();
@@ -673,7 +672,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
             assertEquals(int.class, decoded.getClass().getComponentType());
 
-            assertArrayEquals("Unexpected decoding", source, (int[]) decoded);
+            assertArrayEquals(source, (int[]) decoded, "Unexpected decoding");
         } catch (Throwable t) {
             System.err.println("Error during test, source array: " + Arrays.toString(source));
             throw t;
@@ -714,7 +713,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         long[] source = createPayloadArrayLongs(count);
 
         try {
-            assertEquals("Unexpected source array length", count, source.length);
+            assertEquals(count, source.length, "Unexpected source array length");
 
             int encodingWidth = count < 31 ? 1 : 4; // less than 31, since each element is 8 bytes, but we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int elementWidth = 8;
@@ -745,19 +744,19 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
                 expectedEncodingWrapper.writeLong(j);
             }
 
-            assertFalse("Should have filled expected encoding array", expectedEncodingWrapper.isWritable());
+            assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
 
             // Now verify against the actual encoding of the array
-            assertEquals("Unexpected buffer position", 0, buffer.getReadIndex());
+            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
-            assertEquals("Unexpected encoded payload length", expectedEncodedArraySize, buffer.getReadableBytes());
+            assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
             buffer.markReadIndex();
             buffer.readBytes(actualEncoding);
-            assertFalse("Should have drained the encoder buffer contents", buffer.isReadable());
+            assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
-            assertArrayEquals("Unexpected actual array encoding", expectedEncoding, actualEncoding);
+            assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
             buffer.resetReadIndex();
@@ -767,7 +766,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
             assertEquals(long.class, decoded.getClass().getComponentType());
 
-            assertArrayEquals("Unexpected decoding", source, (long[]) decoded);
+            assertArrayEquals(source, (long[]) decoded, "Unexpected decoding");
         } catch (Throwable t) {
             System.err.println("Error during test, source array: " + Arrays.toString(source));
             throw t;
@@ -808,7 +807,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         float[] source = createPayloadArrayFloats(count);
 
         try {
-            assertEquals("Unexpected source array length", count, source.length);
+            assertEquals(count, source.length, "Unexpected source array length");
 
             int encodingWidth = count < 63 ? 1 : 4; // less than 63, since each element is 4 bytes, but we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int arrayPayloadSize =  encodingWidth + 1 + (count * 4); // variable width for element count + byte type descriptor + (number of elements * size)
@@ -836,19 +835,19 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
                 expectedEncodingWrapper.writeFloat(source[i]);
             }
 
-            assertFalse("Should have filled expected encoding array", expectedEncodingWrapper.isWritable());
+            assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
 
             // Now verify against the actual encoding of the array
-            assertEquals("Unexpected buffer position", 0, buffer.getReadIndex());
+            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
-            assertEquals("Unexpected encoded payload length", expectedEncodedArraySize, buffer.getReadableBytes());
+            assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
             buffer.markReadIndex();
             buffer.readBytes(actualEncoding);
-            assertFalse("Should have drained the encoder buffer contents", buffer.isReadable());
+            assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
-            assertArrayEquals("Unexpected actual array encoding", expectedEncoding, actualEncoding);
+            assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
             buffer.resetReadIndex();
@@ -858,7 +857,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
             assertEquals(float.class, decoded.getClass().getComponentType());
 
-            assertArrayEquals("Unexpected decoding", source, (float[]) decoded, 0.0F);
+            assertArrayEquals(source, (float[]) decoded, 0.0F, "Unexpected decoding");
         } catch (Throwable t) {
             System.err.println("Error during test, source array: " + Arrays.toString(source));
             throw t;
@@ -899,7 +898,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         double[] source = createPayloadArrayDoubles(count);
 
         try {
-            assertEquals("Unexpected source array length", count, source.length);
+            assertEquals(count, source.length, "Unexpected source array length");
 
             int encodingWidth = count < 31 ? 1 : 4; // less than 31, since each element is 8 bytes, but we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int arrayPayloadSize =  encodingWidth + 1 + (count * 8); // variable width for element count + byte type descriptor + (number of elements * size)
@@ -927,19 +926,19 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
                 expectedEncodingWrapper.writeDouble(source[i]);
             }
 
-            assertFalse("Should have filled expected encoding array", expectedEncodingWrapper.isWritable());
+            assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
 
             // Now verify against the actual encoding of the array
-            assertEquals("Unexpected buffer position", 0, buffer.getReadIndex());
+            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
-            assertEquals("Unexpected encoded payload length", expectedEncodedArraySize, buffer.getReadableBytes());
+            assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
             buffer.markReadIndex();
             buffer.readBytes(actualEncoding);
-            assertFalse("Should have drained the encoder buffer contents", buffer.isReadable());
+            assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
-            assertArrayEquals("Unexpected actual array encoding", expectedEncoding, actualEncoding);
+            assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
             buffer.resetReadIndex();
@@ -949,7 +948,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
             assertEquals(double.class, decoded.getClass().getComponentType());
 
-            assertArrayEquals("Unexpected decoding", source, (double[]) decoded, 0.0F);
+            assertArrayEquals(source, (double[]) decoded, 0.0F, "Unexpected decoding");
         } catch (Throwable t) {
             System.err.println("Error during test, source array: " + Arrays.toString(source));
             throw t;
@@ -990,7 +989,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         char[] source = createPayloadArrayChars(count);
 
         try {
-            assertEquals("Unexpected source array length", count, source.length);
+            assertEquals(count, source.length, "Unexpected source array length");
 
             int encodingWidth = count < 63 ? 1 : 4; // less than 63, since each element is 4 bytes, but we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int arrayPayloadSize =  encodingWidth + 1 + (count * 4); // variable width for element count + byte type descriptor + (number of elements * size)
@@ -1018,19 +1017,19 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
                 expectedEncodingWrapper.writeInt(source[i]); //4 byte encoding
             }
 
-            assertFalse("Should have filled expected encoding array", expectedEncodingWrapper.isWritable());
+            assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
 
             // Now verify against the actual encoding of the array
-            assertEquals("Unexpected buffer position", 0, buffer.getReadIndex());
+            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
-            assertEquals("Unexpected encoded payload length", expectedEncodedArraySize, buffer.getReadableBytes());
+            assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
             buffer.markReadIndex();
             buffer.readBytes(actualEncoding);
-            assertFalse("Should have drained the encoder buffer contents", buffer.isReadable());
+            assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
-            assertArrayEquals("Unexpected actual array encoding", expectedEncoding, actualEncoding);
+            assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
             buffer.resetReadIndex();
@@ -1040,7 +1039,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
             assertEquals(char.class, decoded.getClass().getComponentType());
 
-            assertArrayEquals("Unexpected decoding", source, (char[]) decoded);
+            assertArrayEquals(source, (char[]) decoded, "Unexpected decoding");
         } catch (Throwable t) {
             System.err.println("Error during test, source array: " + Arrays.toString(source));
             throw t;

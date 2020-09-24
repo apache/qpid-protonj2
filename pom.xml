@@ -39,16 +39,16 @@
     <!-- Test dependency versions -->
     <junit.jupiter.version>5.7.0</junit.jupiter.version>
     <junit.vintage.version>5.7.0</junit.vintage.version>
-    <mockito-version>3.5.11</mockito-version>
-    <proton-version>0.33.6</proton-version>
-    <slf4j-version>1.7.30</slf4j-version>
-    <log4j-slf4j-version>2.13.3</log4j-slf4j-version>
-    <hamcrest-version>2.2</hamcrest-version>
-    <netty-version>4.1.52.Final</netty-version>
+    <mockito.version>3.5.13</mockito.version>
+    <proton.version>0.33.6</proton.version>
+    <slf4j.version>1.7.30</slf4j.version>
+    <log4j.slf4j.version>2.13.3</log4j.slf4j.version>
+    <hamcrest.version>2.2</hamcrest.version>
+    <netty.version>4.1.52.Final</netty.version>
 
     <!-- Plugin versions -->
-    <maven-bundle-plugin-version>4.2.1</maven-bundle-plugin-version>
-    <jacoco-plugin-version>0.8.5</jacoco-plugin-version>
+    <maven.bundle.plugin.version>4.2.1</maven.bundle.plugin.version>
+    <jacoco.plugin.version>0.8.5</jacoco.plugin.version>
 
     <!-- Test properties -->
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
@@ -97,80 +97,77 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>${slf4j-version}</version>
+        <version>${slf4j.version}</version>
       </dependency>
-      <!-- Logging implementation dependency, e.g for the tests or examples -->
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-slf4j-impl</artifactId>
-        <version>${log4j-slf4j-version}</version>
+        <version>${log4j.slf4j.version}</version>
       </dependency>
-      <!-- Test and Test-Driver related dependencies -->
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-buffer</artifactId>
-        <version>${netty-version}</version>
+        <version>${netty.version}</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-common</artifactId>
-        <version>${netty-version}</version>
+        <version>${netty.version}</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-handler</artifactId>
-        <version>${netty-version}</version>
+        <version>${netty.version}</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-transport</artifactId>
-        <version>${netty-version}</version>
+        <version>${netty.version}</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec-http</artifactId>
-        <version>${netty-version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.hamcrest</groupId>
-        <artifactId>hamcrest</artifactId>
-        <version>${hamcrest-version}</version>
+        <version>${netty.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.qpid</groupId>
         <artifactId>proton-j</artifactId>
-        <version>${proton-version}</version>
-        <scope>test</scope>
+        <version>${proton.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.qpid</groupId>
         <artifactId>protonj2-test-driver</artifactId>
         <version>${project.version}</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-api</artifactId>
         <version>${junit.jupiter.version}</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-engine</artifactId>
         <version>${junit.jupiter.version}</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>org.junit.vintage</groupId>
-        <artifactId>junit-vintage-engine</artifactId>
-        <version>${junit.vintage.version}</version>
-        <scope>test</scope>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-params</artifactId>
+        <version>${junit.jupiter.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.hamcrest</groupId>
+        <artifactId>hamcrest</artifactId>
+        <version>${hamcrest.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.hamcrest</groupId>
+        <artifactId>hamcrest-library</artifactId>
+        <version>${hamcrest.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>${mockito-version}</version>
-        <scope>test</scope>
+        <version>${mockito.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -190,7 +187,7 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <version>${maven-bundle-plugin-version}</version>
+        <version>${maven.bundle.plugin.version}</version>
         <extensions>true</extensions>
         <configuration>
           <instructions>
@@ -288,7 +285,7 @@
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>${jacoco-plugin-version}</version>
+          <version>${jacoco.plugin.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -299,7 +296,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>${jacoco-plugin-version}</version>
+        <version>${jacoco.plugin.version}</version>
       </plugin>
     </plugins>
   </reporting>

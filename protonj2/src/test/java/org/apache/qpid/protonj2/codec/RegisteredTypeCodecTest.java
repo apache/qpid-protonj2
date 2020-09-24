@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.protonj2.codec;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 
@@ -26,7 +26,7 @@ import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.util.NoLocalType;
 import org.apache.qpid.protonj2.codec.util.NoLocalTypeDecoder;
 import org.apache.qpid.protonj2.codec.util.NoLocalTypeEncoder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test for handling of type when the Decoder / Encoder is registered

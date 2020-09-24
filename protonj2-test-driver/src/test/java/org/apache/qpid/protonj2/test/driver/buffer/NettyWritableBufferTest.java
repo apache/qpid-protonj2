@@ -16,15 +16,15 @@
  */
 package org.apache.qpid.protonj2.test.driver.buffer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -142,16 +142,16 @@ public class NettyWritableBufferTest {
         ByteBuffer buf = ByteBuffer.allocate(1024);
         buf.put((byte) 1);
         buf.flip();
-        if(readOnly) {
+        if (readOnly) {
             buf = buf.asReadOnlyBuffer();
         }
 
         ReadableBuffer input = new ReadableBuffer.ByteBufferReader(buf);
 
-        if(readOnly) {
-            assertFalse("Expected buffer not to hasArray()", input.hasArray());
+        if (readOnly) {
+            assertFalse(input.hasArray(), "Expected buffer not to hasArray()");
         } else {
-            assertTrue("Expected buffer to hasArray()", input.hasArray());
+            assertTrue(input.hasArray(), "Expected buffer to hasArray()");
         }
 
         ByteBuf buffer = Unpooled.buffer(1024);

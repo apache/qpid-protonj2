@@ -16,21 +16,21 @@
  */
 package org.apache.qpid.protonj2.buffer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test the Proton Composite Buffer class
@@ -632,7 +632,7 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
         buffer.append(new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
 
         assertTrue(buffer.hasArray());
-        assertEquals("Unexpected array offset", 0, buffer.getArrayOffset());
+        assertEquals(0, buffer.getArrayOffset(), "Unexpected array offset");
     }
 
     @Test
@@ -640,19 +640,19 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
         ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
         buffer.append(new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
 
-        assertEquals("Unexpected get result", 0, buffer.readByte());
+        assertEquals(0, buffer.readByte(), "Unexpected get result");
 
         ProtonBuffer duplicate = buffer.duplicate();
 
         assertTrue(duplicate.hasArray());
-        assertEquals("Unexpected array offset after duplication", 0, duplicate.getArrayOffset());
+        assertEquals(0, duplicate.getArrayOffset(), "Unexpected array offset after duplication");
 
-        assertEquals("Unexpected get result", 1, duplicate.readByte());
+        assertEquals(1, duplicate.readByte(), "Unexpected get result");
 
-        assertEquals("Unexpected array offset after duplicate use", 0, duplicate.getArrayOffset());
-        assertEquals("Unexpected get result", 2, duplicate.readByte());
+        assertEquals(0, duplicate.getArrayOffset(), "Unexpected array offset after duplicate use");
+        assertEquals(2, duplicate.readByte(), "Unexpected get result");
 
-        assertEquals("Unexpected array offset on original", 0, buffer.getArrayOffset());
+        assertEquals(0, buffer.getArrayOffset(), "Unexpected array offset on original");
     }
 
     @Test
@@ -660,21 +660,21 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
         ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
         buffer.append(new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
 
-        assertEquals("Unexpected get result", 0, buffer.readByte());
+        assertEquals(0, buffer.readByte(), "Unexpected get result");
 
         ProtonBuffer slice = buffer.slice();
         ProtonBuffer sliceDuplicated = slice.duplicate();
 
         assertTrue(sliceDuplicated.hasArray());
-        assertEquals("Unexpected array offset after duplication", 0, sliceDuplicated.getArrayOffset());
+        assertEquals(0, sliceDuplicated.getArrayOffset(), "Unexpected array offset after duplication");
 
-        assertEquals("Unexpected get result", 1, sliceDuplicated.readByte());
+        assertEquals(1, sliceDuplicated.readByte(), "Unexpected get result");
 
-        assertEquals("Unexpected array offset after duplicate use", 0, sliceDuplicated.getArrayOffset());
-        assertEquals("Unexpected get result", 2, sliceDuplicated.readByte());
+        assertEquals(0, sliceDuplicated.getArrayOffset(), "Unexpected array offset after duplicate use");
+        assertEquals(2, sliceDuplicated.readByte(), "Unexpected get result");
 
-        assertEquals("Unexpected array offset on original", 0, buffer.getArrayOffset());
-        assertEquals("Unexpected array offset on slice", 1, slice.getArrayOffset());
+        assertEquals(0, buffer.getArrayOffset(), "Unexpected array offset on original");
+        assertEquals(1, slice.getArrayOffset(), "Unexpected array offset on slice");
     }
 
     //----- Test appending data to the buffer --------------------------------//

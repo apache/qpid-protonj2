@@ -16,10 +16,10 @@
  */
 package org.apache.qpid.protonj2.engine.impl.sasl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,8 +45,8 @@ import org.apache.qpid.protonj2.types.security.SaslInit;
 import org.apache.qpid.protonj2.types.security.SaslMechanisms;
 import org.apache.qpid.protonj2.types.security.SaslPerformative;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests SASL Handling by the SaslHandler TransportHandler class.
@@ -55,7 +55,7 @@ public class ProtonSaslHandlerTest {
 
     private FrameRecordingTransportHandler testHandler;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testHandler = new FrameRecordingTransportHandler();
     }
@@ -95,11 +95,11 @@ public class ProtonSaslHandlerTest {
             // Expected
         }
 
-        assertFalse("Should not receive a Header", headerRead.get());
+        assertFalse(headerRead.get(), "Should not receive a Header");
 
         List<Frame<?>> frames = testHandler.getFramesWritten();
 
-        assertEquals("Sasl Anonymous exchange output not as expected", 1, frames.size());
+        assertEquals(1, frames.size(), "Sasl Anonymous exchange output not as expected");
 
         for (int i = 0; i < frames.size(); ++i) {
             Frame<?> frame = frames.get(i);
@@ -107,7 +107,7 @@ public class ProtonSaslHandlerTest {
                 case 0:
                     assertTrue(frame.getType() == HeaderFrame.HEADER_FRAME_TYPE);
                     HeaderFrame header = (HeaderFrame) frame;
-                    assertTrue("Should have written a SASL Header in response", header.getBody().isSaslHeader());
+                    assertTrue(header.getBody().isSaslHeader(), "Should have written a SASL Header in response");
                     break;
                 default:
                     fail("Invalid Frame read during exchange: " + frame);
@@ -143,12 +143,12 @@ public class ProtonSaslHandlerTest {
 
         engine.pipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
 
-        assertTrue("Did not receive a SASL Header", saslHeaderRead.get());
+        assertTrue(saslHeaderRead.get(), "Did not receive a SASL Header");
 
         List<Frame<?>> frames = testHandler.getFramesWritten();
 
         // We should get a SASL header indicating that the server accepted SASL
-        assertEquals("Sasl Anonymous exchange output not as expected", 1, frames.size());
+        assertEquals(1, frames.size(), "Sasl Anonymous exchange output not as expected");
 
         for (int i = 0; i < frames.size(); ++i) {
             Frame<?> frame = frames.get(i);
@@ -208,7 +208,7 @@ public class ProtonSaslHandlerTest {
         // Check for Header processing
         engine.start().getEngine().pipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
 
-        assertTrue("Did not receive a SASL Header", saslHeaderRead.get());
+        assertTrue(saslHeaderRead.get(), "Did not receive a SASL Header");
 
         SaslInit clientInit = new SaslInit();
         clientInit.setHostname("HOST-NAME");
@@ -220,11 +220,11 @@ public class ProtonSaslHandlerTest {
 
         assertEquals("HOST-NAME", clientHostname.get());
         assertEquals(Symbol.valueOf("ANONYMOUS"), clientMechanism.get());
-        assertTrue("Response should be an empty byte array", emptyResponse.get());
+        assertTrue(emptyResponse.get(), "Response should be an empty byte array");
 
         List<Frame<?>> frames = testHandler.getFramesWritten();
 
-        assertEquals("SASL Anonymous exchange output not as expected", 3, frames.size());
+        assertEquals(3, frames.size(), "SASL Anonymous exchange output not as expected");
 
         for (int i = 0; i < frames.size(); ++i) {
             Frame<?> frame = frames.get(i);

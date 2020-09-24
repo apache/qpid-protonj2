@@ -16,11 +16,12 @@
  */
 package org.apache.qpid.protonj2.types.transport;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.apache.qpid.protonj2.types.UnsignedByte;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class SenderSettleModeTest {
 
@@ -62,8 +63,8 @@ public class SenderSettleModeTest {
         assertNotEquals(mixed.getValue(), UnsignedByte.valueOf((byte) 1));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testIllegalArgument() {
-        SenderSettleMode.valueOf(UnsignedByte.valueOf((byte) 3));
+        assertThrows(IllegalArgumentException.class, () -> SenderSettleMode.valueOf(UnsignedByte.valueOf((byte) 3)));
     }
 }

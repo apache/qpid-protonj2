@@ -16,14 +16,14 @@
  */
 package org.apache.qpid.protonj2.types;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.math.BigInteger;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class UnsignedLongTest {
 
@@ -115,29 +115,29 @@ public class UnsignedLongTest {
     public void testValuesOfStringWithinRangeSucceed() throws Exception {
         // check 0 (min) to confirm success
         UnsignedLong min = UnsignedLong.valueOf("0");
-        assertEquals("unexpected value", 0, min.longValue());
+        assertEquals(0, min.longValue(), "unexpected value");
 
         // check 2^64 -1 (max) to confirm success
         BigInteger onLimit = new BigInteger(TWO_TO_64_MINUS_ONE_BYTES);
         String onlimitString = onLimit.toString();
         UnsignedLong max = UnsignedLong.valueOf(onlimitString);
-        assertEquals("unexpected value", onLimit, max.bigIntegerValue());
+        assertEquals(onLimit, max.bigIntegerValue(), "unexpected value");
     }
 
     @Test
     public void testValuesOfBigIntegerWithinRangeSucceed() throws Exception {
         // check 0 (min) to confirm success
         UnsignedLong min = UnsignedLong.valueOf(BigInteger.ZERO);
-        assertEquals("unexpected value", 0, min.longValue());
+        assertEquals(0, min.longValue(), "unexpected value");
 
         // check 2^64 -1 (max) to confirm success
         BigInteger onLimit = new BigInteger(TWO_TO_64_MINUS_ONE_BYTES);
         UnsignedLong max = UnsignedLong.valueOf(onLimit);
-        assertEquals("unexpected value", onLimit, max.bigIntegerValue());
+        assertEquals(onLimit, max.bigIntegerValue(), "unexpected value");
 
         // check Long.MAX_VALUE to confirm success
         UnsignedLong longMax = UnsignedLong.valueOf(BigInteger.valueOf(Long.MAX_VALUE));
-        assertEquals("unexpected value", Long.MAX_VALUE, longMax.longValue());
+        assertEquals(Long.MAX_VALUE, longMax.longValue(), "unexpected value");
     }
 
     @Test

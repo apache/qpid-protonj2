@@ -16,13 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.primitives;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -35,7 +35,7 @@ import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class SymbolTypeCodecTest extends CodecTestSupport {
 
@@ -262,7 +262,7 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
         Symbol[] source = createPayloadArraySmallSymbols(count);
 
         try {
-            assertEquals("Unexpected source array length", count, source.length);
+            assertEquals(count, source.length, "Unexpected source array length");
 
             int encodingWidth = 4;
             int arrayPayloadSize = encodingWidth + 1 + (count * 5); // variable width for element count + byte type descriptor + (number of elements * size[=length+content-char])
@@ -282,25 +282,25 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
             // Write the elements
             for (int i = 0; i < count; i++) {
                 Symbol symbol = source[i];
-                assertEquals("Unexpected length", 1, symbol.getLength());
+                assertEquals(1, symbol.getLength(), "Unexpected length");
 
                 expectedEncodingWrapper.writeInt(1); // Length
                 expectedEncodingWrapper.writeByte(symbol.toString().charAt(0)); // Content
             }
 
-            assertFalse("Should have filled expected encoding array", expectedEncodingWrapper.isWritable());
+            assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
 
             // Now verify against the actual encoding of the array
-            assertEquals("Unexpected buffer position", 0, buffer.getReadIndex());
+            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
-            assertEquals("Unexpected encoded payload length", expectedEncodedArraySize, buffer.getReadableBytes());
+            assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
             buffer.markReadIndex();
             buffer.readBytes(actualEncoding);
-            assertFalse("Should have drained the encoder buffer contents", buffer.isReadable());
+            assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
-            assertArrayEquals("Unexpected actual array encoding", expectedEncoding, actualEncoding);
+            assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
             buffer.resetReadIndex();
@@ -309,7 +309,7 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
             assertTrue(decoded.getClass().isArray());
             assertEquals(Symbol.class, decoded.getClass().getComponentType());
 
-            assertArrayEquals("Unexpected decoding", source, (Symbol[]) decoded);
+            assertArrayEquals(source, (Symbol[]) decoded, "Unexpected decoding");
         }
         catch (Throwable t) {
             System.err.println("Error during test, source array: " + Arrays.toString(source));

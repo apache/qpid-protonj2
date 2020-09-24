@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.protonj2.engine.impl;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
@@ -32,11 +32,13 @@ import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.exceptions.FrameDecodingException;
 import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
+@Timeout(20)
 public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
 
-    @Test(timeout = 10_000)
+    @Test
     public void testEmptyContainerIdInOpenProvokesDecodeError() throws Exception {
         // Provide the bytes for Open, but omit the mandatory container-id to provoke a decode error.
         byte[] bytes = new byte[] {  0x00, 0x00, 0x00, 0x0F, // Frame size = 15 bytes.
@@ -47,7 +49,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         doInvalidOpenProvokesDecodeErrorTestImpl(bytes, "The container-id field cannot be omitted");
     }
 
-    @Test(timeout = 10_000)
+    @Test
     public void testEmptyOpenProvokesDecodeError() throws Exception {
         // Provide the bytes for Open, but omit the mandatory container-id to provoke a decode error.
         byte[] bytes = new byte[] {  0x00, 0x00, 0x00, 0x0C, // Frame size = 12 bytes.
@@ -79,7 +81,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         assertEquals(errorDescription, failure.getMessage());
     }
 
-    @Test(timeout = 10_000)
+    @Test
     public void testEmptyBeginProvokesDecodeError() throws Exception {
         // Provide the bytes for Begin, but omit any fields to provoke a decode error.
         byte[] bytes = new byte[] {
@@ -90,7 +92,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         doInvalidBeginProvokesDecodeErrorTestImpl(bytes, "The next-outgoing-id field cannot be omitted");
     }
 
-    @Test(timeout = 10_000)
+    @Test
     public void testTruncatedBeginProvokesDecodeError1() throws Exception {
         // Provide the bytes for Begin, but only give a null (i-e not-present) for the remote-channel.
         byte[] bytes = new byte[] {
@@ -102,7 +104,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         doInvalidBeginProvokesDecodeErrorTestImpl(bytes, "The next-outgoing-id field cannot be omitted");
     }
 
-    @Test(timeout = 10_000)
+    @Test
     public void testTruncatedBeginProvokesDecodeError2() throws Exception {
         // Provide the bytes for Begin, but only give a [not-present remote-channel +] next-outgoing-id and incoming-window. Provokes a decode error as there must be 4 fields.
         byte[] bytes = new byte[] {
@@ -114,7 +116,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         doInvalidBeginProvokesDecodeErrorTestImpl(bytes, "The outgoing-window field cannot be omitted");
     }
 
-    @Test(timeout = 10_000)
+    @Test
     public void testTruncatedBeginProvokesDecodeError3() throws Exception {
         // Provide the bytes for Begin, but only give a [not-present remote-channel +] next-outgoing-id and incoming-window, and send not-present/null for outgoing-window. Provokes a decode error as must be present.
         byte[] bytes = new byte[] {
@@ -148,7 +150,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         assertEquals(errorDescription, failure.getMessage());
     }
 
-    @Test(timeout = 10_000)
+    @Test
     public void testEmptyFlowProvokesDecodeError() throws Exception {
         // Provide the bytes for Flow, but omit any fields to provoke a decode error.
         byte[] bytes = new byte[] {
@@ -159,7 +161,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         doInvalidFlowProvokesDecodeErrorTestImpl(bytes, "The incoming-window field cannot be omitted");
     }
 
-    @Test(timeout = 10_000)
+    @Test
     public void testTruncatedFlowProvokesDecodeError1() throws Exception {
         // Provide the bytes for Flow, but only give a 0 for the next-incoming-id. Provokes a decode error as there must be 4 fields.
         byte[] bytes = new byte[] {
@@ -171,7 +173,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         doInvalidFlowProvokesDecodeErrorTestImpl(bytes, "The incoming-window field cannot be omitted");
     }
 
-    @Test(timeout = 10_000)
+    @Test
     public void testTruncatedFlowProvokesDecodeError2() throws Exception {
         // Provide the bytes for Flow, but only give a next-incoming-id and incoming-window and next-outgoing-id. Provokes a decode error as there must be 4 fields.
         byte[] bytes = new byte[] {
@@ -183,7 +185,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         doInvalidFlowProvokesDecodeErrorTestImpl(bytes, "The outgoing-window field cannot be omitted");
     }
 
-    @Test(timeout = 10_000)
+    @Test
     public void testTruncatedFlowProvokesDecodeError3() throws Exception {
         // Provide the bytes for Flow, but only give a next-incoming-id and incoming-window and next-outgoing-id, and send not-present/null for outgoing-window. Provokes a decode error as must be present.
         byte[] bytes = new byte[] {
@@ -216,7 +218,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         assertEquals(errorDescription, failure.getMessage());
     }
 
-    @Test(timeout = 10_000)
+    @Test
     public void testEmptyTransferProvokesDecodeError() throws Exception {
         // Provide the bytes for Transfer, but omit any fields to provoke a decode error.
         byte[] bytes = new byte[] {
@@ -227,7 +229,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         doInvalidTransferProvokesDecodeErrorTestImpl(bytes, "The handle field cannot be omitted");
     }
 
-    @Test(timeout = 10_000)
+    @Test
     public void testTruncatedTransferProvokesDecodeError() throws Exception {
         // Provide the bytes for Transfer, but only give a null for the not-present handle. Provokes a decode error as there must be a handle.
         byte[] bytes = new byte[] {
@@ -240,7 +242,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
     }
 
 
-    @Test(timeout = 10_000)
+    @Test
     public void testTransferWithWrongHandleTypeCodeProvokesDecodeError() throws Exception {
         // Provide the bytes for Transfer, but give the wrong type code for a not-really-present handle. Provokes a decode error.
         byte[] bytes = new byte[] {
@@ -278,7 +280,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         assertEquals(errorDescription, failure.getMessage());
     }
 
-    @Test(timeout = 10_000)
+    @Test
     public void testEmptyDispositionProvokesDecodeError() throws Exception {
         // Provide the bytes for Disposition, but omit any fields to provoke a decode error.
         byte[] bytes = new byte[] {
@@ -289,7 +291,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         doInvalidDispositionProvokesDecodeErrorTestImpl(bytes, "The role field cannot be omitted");
     }
 
-    @Test(timeout = 10_000)
+    @Test
     public void testTruncatedDispositionProvokesDecodeError() throws Exception {
         // Provide the bytes for Disposition, but only give a null/not-present for the 'first' field. Provokes a decode error as there must be a role and 'first'.
         byte[] bytes = new byte[] {

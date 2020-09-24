@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.protonj2.types.messaging;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.apache.qpid.protonj2.types.Symbol;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TerminusExpiryPolicyTest {
 

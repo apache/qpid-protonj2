@@ -16,10 +16,10 @@
  */
 package org.apache.qpid.protonj2.engine.sasl.client;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.qpid.protonj2.types.Symbol;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class AbstractMechanismTest {
 

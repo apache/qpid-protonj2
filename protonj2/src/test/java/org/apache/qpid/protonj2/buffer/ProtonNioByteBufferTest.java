@@ -16,11 +16,12 @@
  */
 package org.apache.qpid.protonj2.buffer;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.ByteBuffer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test class for the NIO ByteBuffer wrapper class
@@ -74,21 +75,21 @@ public class ProtonNioByteBufferTest extends ProtonAbstractBufferTest {
     }
 
     @Override
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testCapacityEnforceMaxCapacity() {
         ProtonBuffer buffer = allocateBuffer(13, 13);
         assertEquals(13, buffer.maxCapacity());
         assertEquals(13, buffer.capacity());
-        buffer.capacity(14);
+        assertThrows(UnsupportedOperationException.class, () -> buffer.capacity(14));
     }
 
     @Override
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCapacityNegative() {
         ProtonBuffer buffer = allocateBuffer(13, 13);
         assertEquals(13, buffer.maxCapacity());
         assertEquals(13, buffer.capacity());
-        buffer.capacity(-1);
+        assertThrows(IllegalArgumentException.class, () -> buffer.capacity(-1));
     }
 
     //----- Implement generic create methods from abstract test base

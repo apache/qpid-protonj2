@@ -16,19 +16,20 @@
  */
 package org.apache.qpid.protonj2.buffer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.protonj2.buffer.util.ProtonTestByteBuffer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test behavior of the built in ProtonByteBuffer implementation.
@@ -64,9 +65,9 @@ public class ProtonByteBufferTest extends ProtonAbstractBufferTest {
         assertEquals(0, buffer.getArrayOffset());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testConstructorCapacityExceptions() {
-        new ProtonByteBuffer(-1);
+        assertThrows(IllegalArgumentException.class, () -> new ProtonByteBuffer(-1));
     }
 
     @Test

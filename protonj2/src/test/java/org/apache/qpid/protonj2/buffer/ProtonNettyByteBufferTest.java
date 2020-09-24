@@ -16,16 +16,17 @@
  */
 package org.apache.qpid.protonj2.buffer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.nio.ByteBuffer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -158,7 +159,7 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
         }
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testSetReadIndexBoundaryCheckForNegative() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
@@ -168,10 +169,11 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
         } catch (IndexOutOfBoundsException e) {
             fail("Should be able to set index to zero");
         }
-        wrapper.setReadIndex(-1);
+
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.setReadIndex(-1));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testSetReadIndexBoundaryCheckForOverCapacityValue() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
@@ -181,10 +183,11 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
         } catch (IndexOutOfBoundsException e) {
             fail();
         }
-        wrapper.setReadIndex(buffer.capacity() + 1);
+
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.setReadIndex(buffer.capacity() + 1));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void setReadIndexBoundaryCheckValueBeyondWriteIndex() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
@@ -194,10 +197,11 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
         } catch (IndexOutOfBoundsException e) {
             fail();
         }
-        wrapper.setReadIndex(CAPACITY * 3 / 2);
+
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.setReadIndex(CAPACITY * 3 / 2));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void setWriteIndexBoundaryCheckValueBeyondCapacity() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
@@ -208,10 +212,11 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
         } catch (IndexOutOfBoundsException e) {
             fail("Should be able to place indices at capacity");
         }
-        wrapper.setWriteIndex(wrapper.capacity() + 1);
+
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.setWriteIndex(wrapper.capacity() + 1));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void setWriteIndexBoundaryCheckWriteIndexBelowReadIndex() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
@@ -222,7 +227,9 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
         } catch (IndexOutOfBoundsException e) {
             fail("Should be able to place indices at capacity and half capacity");
         }
-        wrapper.setWriteIndex(CAPACITY / 4);
+
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.setWriteIndex(CAPACITY / 4));
+
     }
 
     @Test
@@ -237,88 +244,88 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
         wrapper.writeBytes(ByteBuffer.wrap(EMPTY_BYTES));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testGetBooleanBoundaryCheck1() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
-        wrapper.getBoolean(-1);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.getBoolean(-1));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testGetBooleanBoundaryCheck2() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
-        wrapper.getBoolean(wrapper.capacity());
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.getBoolean(wrapper.capacity()));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testGetByteBoundaryCheck1() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
-        wrapper.getByte(-1);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.getByte(-1));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testGetByteBoundaryCheck2() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
-        wrapper.getByte(wrapper.capacity());
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.getByte(wrapper.capacity()));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testGetShortBoundaryCheck1() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
-        wrapper.getShort(-1);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.getShort(-1));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testGetShortBoundaryCheck2() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
-        wrapper.getShort(wrapper.capacity() - 1);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.getShort(wrapper.capacity() - 1));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testGetIntBoundaryCheck1() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
-        wrapper.getInt(-1);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.getInt(-1));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testGetIntBoundaryCheck2() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
-        wrapper.getInt(wrapper.capacity() - 3);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.getInt(wrapper.capacity() - 3));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testGetLongBoundaryCheck1() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
-        wrapper.getLong(-1);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.getLong(-1));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testGetLongBoundaryCheck2() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
-        wrapper.getLong(wrapper.capacity() - 7);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.getLong(wrapper.capacity() - 7));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testGetByteArrayBoundaryCheck1() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
-        wrapper.getBytes(-1, EMPTY_BYTES);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.getBytes(-1, EMPTY_BYTES));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testGetByteArrayBoundaryCheck2() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
-        wrapper.getBytes(-1, EMPTY_BYTES, 0, 0);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.getBytes(-1, EMPTY_BYTES, 0, 0));
     }
 
     @Test
@@ -363,60 +370,60 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
         assertEquals(0, dst[3]);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testGetByteBufferBoundaryCheck() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
-        wrapper.getBytes(-1, ByteBuffer.allocate(0));
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.getBytes(-1, ByteBuffer.allocate(0)));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testCopyBoundaryCheck1() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
-        wrapper.copy(-1, 0);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.copy(-1, 0));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testCopyBoundaryCheck2() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
-        wrapper.copy(0, wrapper.capacity() + 1);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.copy(0, wrapper.capacity() + 1));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testCopyBoundaryCheck3() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
-        wrapper.copy(wrapper.capacity() + 1, 0);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.copy(wrapper.capacity() + 1, 0));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testCopyBoundaryCheck4() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
-        wrapper.copy(wrapper.capacity(), 1);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.copy(wrapper.capacity(), 1));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testSetIndexBoundaryCheck1() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
-        wrapper.setIndex(-1, CAPACITY);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.setIndex(-1, CAPACITY));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testSetIndexBoundaryCheck2() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
-        wrapper.setIndex(CAPACITY / 2, CAPACITY / 4);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.setIndex(CAPACITY / 2, CAPACITY / 4));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testSetIndexBoundaryCheck3() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
         ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
-        wrapper.setIndex(0, CAPACITY + 1);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrapper.setIndex(0, CAPACITY + 1));
     }
 
     @Test

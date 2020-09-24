@@ -18,13 +18,13 @@ package org.apache.qpid.protonj2.engine.impl;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -53,14 +53,16 @@ import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.ConnectionError;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.hamcrest.Matcher;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Tests for behaviors of the ProtonConnection class
  */
+@Timeout(20)
 public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
-    @Test(timeout = 10000)
+    @Test
     public void testConnectionSyncStateAfterEngineStarted() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -91,7 +93,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 10000)
+    @Test
     public void testNegotiateSendsAMQPHeader() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -108,7 +110,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 10000)
+    @Test
     public void testNegotiateSendsAMQPHeaderAndFireRemoteHeaderEvent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -125,7 +127,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 10000)
+    @Test
     public void testNegotiateSendsAMQPHeaderEnforcesNotNullEventHandler() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -145,7 +147,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 10000)
+    @Test
     public void testNegotiateDoesNotSendAMQPHeaderAfterOpen() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -172,7 +174,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 10000)
+    @Test
     public void testConnectionEmitsOpenAndCloseEvents() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -197,17 +199,17 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         connection.open();
         connection.close();
 
-        assertTrue("Connection should have reported local open", connectionLocalOpen.get());
-        assertTrue("Connection should have reported local close", connectionLocalClose.get());
-        assertTrue("Connection should have reported remote open", connectionRemoteOpen.get());
-        assertTrue("Connection should have reported remote close", connectionRemoteClose.get());
+        assertTrue(connectionLocalOpen.get(), "Connection should have reported local open");
+        assertTrue(connectionLocalClose.get(), "Connection should have reported local close");
+        assertTrue(connectionRemoteOpen.get(), "Connection should have reported remote open");
+        assertTrue(connectionRemoteClose.get(), "Connection should have reported remote close");
 
         peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
 
-    @Test(timeout = 10000)
+    @Test
     public void testConnectionPopulatesRemoteData() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -248,7 +250,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testOpenAndCloseConnectionWithNullSetsOnConnectionOptions() throws IOException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -305,7 +307,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         engine.shutdown();
 
-        assertTrue("Connection should have reported engine shutdown", engineShutdown.get());
+        assertTrue(engineShutdown.get(), "Connection should have reported engine shutdown");
 
         peer.waitForScriptToComplete();
 
@@ -609,7 +611,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         });
         connection.open();
 
-        assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
+        assertTrue(remotelyOpened.get(), "Connection remote opened event did not fire");
 
         assertArrayEquals(clientOfferedCapabilities, connection.getOfferedCapabilities());
         assertArrayEquals(clientDesiredCapabilities, connection.getDesiredCapabilities());
@@ -659,7 +661,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         });
         connection.open();
 
-        assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
+        assertTrue(remotelyOpened.get(), "Connection remote opened event did not fire");
 
         assertNotNull(connection.getProperties());
         assertNotNull(connection.getRemoteProperties());
@@ -712,8 +714,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertFalse(connection.isRemotelyOpen());
         assertTrue(connection.isRemotelyClosed());
 
-        assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
-        assertTrue("Connection remote closed event did not fire", remotelyClosed.get());
+        assertTrue(remotelyOpened.get(), "Connection remote opened event did not fire");
+        assertTrue(remotelyClosed.get(), "Connection remote closed event did not fire");
 
         assertNull(connection.getCondition());
         assertNotNull(connection.getRemoteCondition());
@@ -762,11 +764,11 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertTrue(connection.isRemotelyOpen());
         assertFalse(connection.isRemotelyClosed());
 
-        assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
+        assertTrue(remotelyOpened.get(), "Connection remote opened event did not fire");
 
         connection.close();
 
-        assertTrue("Connection remote closed event did not fire", remotelyClosed.get());
+        assertTrue(remotelyClosed.get(), "Connection remote closed event did not fire");
 
         peer.waitForScriptToComplete();
 
@@ -792,7 +794,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         });
         connection.open();
 
-        assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
+        assertTrue(remotelyOpened.get(), "Connection remote opened event did not fire");
 
         assertEquals(65535, connection.getChannelMax());
 
@@ -835,7 +837,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         connection.setChannelMax(eventualChannelMax);
         connection.open();
 
-        assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
+        assertTrue(remotelyOpened.get(), "Connection remote opened event did not fire");
         assertEquals(eventualChannelMax, connection.getChannelMax());
 
         connection.close();
@@ -995,7 +997,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCloseOrDetachWithErrorCondition() throws Exception {
         final String condition = "amqp:connection:forced";
         final String description = "something bad happened.";
@@ -1124,7 +1126,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetHostnameOnOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1148,12 +1150,12 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetHostnameOnLocallyClosedConnection() throws Exception {
         testCannotSetHostnameOnClosedConnection(true);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetHostnameOnRemotelyClosedConnection() throws Exception {
         testCannotSetHostnameOnClosedConnection(false);
     }
@@ -1189,7 +1191,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetChannelMaxOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1213,12 +1215,12 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetChannelMaxOnLocallyClosedConnection() throws Exception {
         testCannotSetChannelMaxOnClosedConnection(true);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetChannelMaxOnRemotelyClosedConnection() throws Exception {
         testCannotSetChannelMaxOnClosedConnection(false);
     }
@@ -1254,7 +1256,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetMaxFrameSizeOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1278,12 +1280,12 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetMaxFrameSizeOnLocallyClosedConnection() throws Exception {
         testCannotSetMaxFrameSizeOnClosedConnection(true);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetMaxFrameSizeOnRemotelyClosedConnection() throws Exception {
         testCannotSetMaxFrameSizeOnClosedConnection(false);
     }
@@ -1319,7 +1321,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetIdleTimeoutOnOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1361,12 +1363,12 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetIdleTimeoutOnLocallyClosedConnection() throws Exception {
         testCannotSetIdleTimeoutOnClosedConnection(true);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetIdleTimeoutOnRemotelyClosedConnection() throws Exception {
         testCannotSetIdleTimeoutOnClosedConnection(false);
     }
@@ -1402,7 +1404,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetOfferedCapabilitiesOnOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1426,12 +1428,12 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetOfferedCapabilitiesOnLocallyClosedConnection() throws Exception {
         testCannotSetOfferedCapabilitiesOnClosedConnection(true);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetOfferedCapabilitiesOnRemotelyClosedConnection() throws Exception {
         testCannotSetOfferedCapabilitiesOnClosedConnection(false);
     }
@@ -1467,7 +1469,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetDesiredCapabilitiesOnOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1491,12 +1493,12 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetDesiredCapabilitiesOnLocallyClosedConnection() throws Exception {
         testCannotSetDesiredCapabilitiesOnClosedConnection(true);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetDesiredCapabilitiesOnRemotelyClosedConnection() throws Exception {
         testCannotSetDesiredCapabilitiesOnClosedConnection(false);
     }
@@ -1532,7 +1534,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetPropertiesOnOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1556,12 +1558,12 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetPropertiesOnLocallyClosedConnection() throws Exception {
         testCannotSetPropertiesOnClosedConnection(true);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCannotSetPropertiesOnRemotelyClosedConnection() throws Exception {
         testCannotSetPropertiesOnClosedConnection(false);
     }
@@ -1597,7 +1599,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testIterateAndCloseSessionsFromSessionsAPI() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1633,7 +1635,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testConnectionClosedWhenChannelMaxExceeded() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1664,7 +1666,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 10000)
+    @Test
     public void testNoOpenWrittenAfterEncodeErrorFromConnectionProperties() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());

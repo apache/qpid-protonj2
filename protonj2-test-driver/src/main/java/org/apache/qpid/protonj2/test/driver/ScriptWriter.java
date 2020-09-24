@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
+import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 import java.nio.charset.StandardCharsets;
@@ -67,7 +68,6 @@ import org.apache.qpid.protonj2.test.driver.expectations.SaslMechanismsExpectati
 import org.apache.qpid.protonj2.test.driver.expectations.SaslOutcomeExpectation;
 import org.apache.qpid.protonj2.test.driver.expectations.SaslResponseExpectation;
 import org.apache.qpid.protonj2.test.driver.expectations.TransferExpectation;
-import org.hamcrest.Matchers;
 
 /**
  * Class used to create test scripts using the {@link AMQPTestDriver}
@@ -156,7 +156,7 @@ public abstract class ScriptWriter {
         AttachExpectation expecting = new AttachExpectation(getDriver());
 
         expecting.withRole(Role.SENDER);
-        expecting.withCoordinator(Matchers.isA(Coordinator.class));
+        expecting.withCoordinator(isA(Coordinator.class));
         expecting.withSource(notNullValue());
 
         getDriver().addScriptedElement(expecting);

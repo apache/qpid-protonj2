@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.protonj2.codec.primitives;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 
@@ -29,7 +29,7 @@ import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.NullTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.primitives.NullTypeEncoder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class NullTypeCodecTest extends CodecTestSupport {
 

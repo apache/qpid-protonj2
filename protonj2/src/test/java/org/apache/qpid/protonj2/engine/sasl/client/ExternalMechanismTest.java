@@ -16,14 +16,14 @@
  */
 package org.apache.qpid.protonj2.engine.sasl.client;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ExternalMechanismTest extends MechanismTestBase {
 
@@ -47,19 +47,19 @@ public class ExternalMechanismTest extends MechanismTestBase {
 
     @Test
     public void testIsNotApplicableWithUserAndPasswordButNoPrincipal() {
-        assertFalse("Should not be applicable with user and password but no principal",
-            SaslMechanisms.EXTERNAL.createMechanism().isApplicable(credentials("user", "password", false)));
+        assertFalse(SaslMechanisms.EXTERNAL.createMechanism().isApplicable(credentials("user", "password", false)),
+            "Should not be applicable with user and password but no principal");
     }
 
     @Test
     public void testIsApplicableWithUserAndPasswordAndPrincipal() {
-        assertTrue("Should be applicable with user and password and principal",
-            SaslMechanisms.EXTERNAL.createMechanism().isApplicable(credentials("user", "password", true)));
+        assertTrue(SaslMechanisms.EXTERNAL.createMechanism().isApplicable(credentials("user", "password", true)),
+            "Should be applicable with user and password and principal");
     }
 
     @Test
     public void testIsApplicableWithPrincipalOnly() {
-        assertTrue("Should be applicable with principal only",
-            SaslMechanisms.EXTERNAL.createMechanism().isApplicable(credentials(null, null, true)));
+        assertTrue(SaslMechanisms.EXTERNAL.createMechanism().isApplicable(credentials(null, null, true)),
+            "Should be applicable with principal only");
     }
 }

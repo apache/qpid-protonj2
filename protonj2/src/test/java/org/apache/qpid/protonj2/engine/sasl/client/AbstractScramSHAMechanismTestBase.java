@@ -16,14 +16,14 @@
  */
 package org.apache.qpid.protonj2.engine.sasl.client;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * The quoted text in the test method javadoc is taken from RFC 5802.

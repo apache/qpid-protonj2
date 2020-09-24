@@ -16,13 +16,13 @@
  */
 package org.apache.qpid.protonj2.engine.sasl.client;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class AnonymousMechanismTest extends MechanismTestBase {
 
@@ -46,49 +46,49 @@ public class AnonymousMechanismTest extends MechanismTestBase {
 
     @Test
     public void testIsApplicableWithNoCredentials() {
-        assertTrue("Should be applicable with no credentials",
-            SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials(null, null, false)));
+        assertTrue(SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials(null, null, false)),
+            "Should be applicable with no credentials");
     }
 
     @Test
     public void testIsNotApplicableWithNoUser() {
-        assertTrue("Should be applicable with no username",
-            SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials(null, "pass", false)));
+        assertTrue(SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials(null, "pass", false)),
+            "Should be applicable with no username");
     }
 
     @Test
     public void testIsApplicableWithNoPassword() {
-        assertTrue("Should be applicable with no password",
-            SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("user", null, false)));
+        assertTrue(SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("user", null, false)),
+            "Should be applicable with no password");
     }
 
     @Test
     public void testIsApplicableWithEmtpyUser() {
-        assertTrue("Should be applicable with empty username",
-            SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("", "pass", false)));
+        assertTrue(SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("", "pass", false)),
+            "Should be applicable with empty username");
     }
 
     @Test
     public void testIsApplicableWithEmtpyPassword() {
-        assertTrue("Should be applicable with empty password",
-            SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("user", "", false)));
+        assertTrue(SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("user", "", false)),
+            "Should be applicable with empty password");
     }
 
     @Test
     public void testIsApplicableWithEmtpyUserAndPassword() {
-        assertTrue("Should be applicable with empty user and password",
-            SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("", "", false)));
+        assertTrue(SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("", "", false)),
+            "Should be applicable with empty user and password");
     }
 
     @Test
     public void testIsApplicableWithUserAndPassword() {
-        assertTrue("Should be applicable with user and password",
-            SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("user", "password", false)));
+        assertTrue(SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("user", "password", false)),
+            "Should be applicable with user and password");
     }
 
     @Test
     public void testIsApplicableWithUserAndPasswordAndPrincipal() {
-        assertTrue("Should be applicable with user and password and principal",
-            SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("user", "password", true)));
+        assertTrue(SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("user", "password", true)),
+            "Should be applicable with user and password and principal");
     }
 }

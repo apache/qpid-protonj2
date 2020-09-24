@@ -16,14 +16,14 @@
  */
 package org.apache.qpid.protonj2.engine.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
-import org.apache.qpid.protonj2.engine.EngineState;
 import org.apache.qpid.protonj2.engine.EngineSaslDriver.SaslState;
-import org.junit.Test;
+import org.apache.qpid.protonj2.engine.EngineState;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests the ProtonEngineFactory implementation.

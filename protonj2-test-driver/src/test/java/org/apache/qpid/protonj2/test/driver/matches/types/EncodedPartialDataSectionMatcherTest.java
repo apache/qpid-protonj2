@@ -17,13 +17,13 @@
 package org.apache.qpid.protonj2.test.driver.matches.types;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import org.apache.qpid.proton.codec.EncodingCodes;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.AmqpValue;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Data;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedPartialDataSectionMatcher;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

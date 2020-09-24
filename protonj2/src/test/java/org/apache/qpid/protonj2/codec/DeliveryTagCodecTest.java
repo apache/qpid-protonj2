@@ -16,15 +16,15 @@
  */
 package org.apache.qpid.protonj2.codec;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class DeliveryTagCodecTest extends CodecTestSupport {
 

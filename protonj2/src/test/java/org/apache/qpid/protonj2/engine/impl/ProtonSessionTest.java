@@ -18,15 +18,15 @@ package org.apache.qpid.protonj2.engine.impl;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -57,16 +57,18 @@ import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.hamcrest.Matcher;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Test behaviors of the ProtonSession implementation.
  */
+@Timeout(20)
 public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonSessionTest.class);
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionEmitsOpenAndCloseEvents() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -95,32 +97,32 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         session.open();
         session.close();
 
-        assertTrue("Session should have reported local open", sessionLocalOpen.get());
-        assertTrue("Session should have reported local close", sessionLocalClose.get());
-        assertTrue("Session should have reported remote open", sessionRemoteOpen.get());
-        assertTrue("Session should have reported remote close", sessionRemoteClose.get());
+        assertTrue(sessionLocalOpen.get(), "Session should have reported local open");
+        assertTrue(sessionLocalClose.get(), "Session should have reported local close");
+        assertTrue(sessionRemoteOpen.get(), "Session should have reported remote open");
+        assertTrue(sessionRemoteClose.get(), "Session should have reported remote close");
 
         peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testEngineShutdownEventNeitherEndClosed() throws Exception {
         doTestEngineShutdownEvent(false, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testEngineShutdownEventLocallyClosed() throws Exception {
         doTestEngineShutdownEvent(true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testEngineShutdownEventRemotelyClosed() throws Exception {
         doTestEngineShutdownEvent(false, true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testEngineShutdownEventBothEndsClosed() throws Exception {
         doTestEngineShutdownEvent(true, true);
     }
@@ -161,9 +163,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         engine.shutdown();
 
         if (locallyClosed && remotelyClosed) {
-            assertFalse("Should not have reported engine shutdown", engineShutdown.get());
+            assertFalse(engineShutdown.get(), "Should not have reported engine shutdown");
         } else {
-            assertTrue("Should have reported engine shutdown", engineShutdown.get());
+            assertTrue(engineShutdown.get(), "Should have reported engine shutdown");
         }
 
         peer.waitForScriptToComplete();
@@ -171,7 +173,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionOpenAndCloseAreIdempotent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -204,12 +206,12 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSenderCreateOnClosedSessionThrowsISE() throws Exception {
         testLinkCreateOnClosedSessionThrowsISE(false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testReceiverCreateOnClosedSessionThrowsISE() throws Exception {
         testLinkCreateOnClosedSessionThrowsISE(true);
     }
@@ -253,7 +255,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testOpenSessionBeforeOpenConnection() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -275,7 +277,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testEngineEmitsBeginAfterLocalSessionOpened() throws IOException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -305,7 +307,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionFiresOpenedEventAfterRemoteOpensLocallyOpenedSession() throws IOException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -325,7 +327,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         });
         connection.open();
 
-        assertTrue("Connection remote opened event did not fire", connectionRemotelyOpened.get());
+        assertTrue(connectionRemotelyOpened.get(), "Connection remote opened event did not fire");
 
         Session session = connection.session();
         session.openHandler(result -> {
@@ -333,14 +335,14 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         });
         session.open();
 
-        assertTrue("Session remote opened event did not fire", sessionRemotelyOpened.get());
+        assertTrue(sessionRemotelyOpened.get(), "Session remote opened event did not fire");
 
         peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testNoSessionPerformativesEmiitedIfConnectionOpenedAndClosedBeforeAnyRemoteResponses() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -368,7 +370,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testOpenAndCloseSessionWithNullSetsOnSessionOptions() throws IOException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -409,7 +411,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testOpenAndCloseMultipleSessions() throws IOException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -441,7 +443,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testEngineFireRemotelyOpenedSessionEventWhenRemoteBeginArrives() throws IOException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -470,26 +472,26 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         });
         connection.open();
 
-        assertTrue("Connection remote opened event did not fire", connectionRemotelyOpened.get());
-        assertTrue("Session remote opened event did not fire", sessionRemotelyOpened.get());
-        assertNotNull("Connection did not create a local session for remote open", remoteSession.get());
+        assertTrue(connectionRemotelyOpened.get(), "Connection remote opened event did not fire");
+        assertTrue(sessionRemotelyOpened.get(), "Session remote opened event did not fire");
+        assertNotNull(remoteSession.get(), "Connection did not create a local session for remote open");
 
         peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionPopulatesBeginUsingDefaults() throws IOException {
         doTestSessionOpenPopulatesBegin(false, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionPopulatesBeginWithConfiguredMaxFrameSizeButNoIncomingCapacity() throws IOException {
         doTestSessionOpenPopulatesBegin(true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionPopulatesBeginWithConfiguredMaxFrameSizeAndIncomingCapacity() throws IOException {
         doTestSessionOpenPopulatesBegin(true, true);
     }
@@ -545,7 +547,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionOpenFailsWhenConnectionClosed() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -574,8 +576,8 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         connection.open();
         connection.close();
 
-        assertTrue("Connection remote opened event did not fire", connectionOpenedSignaled.get());
-        assertTrue("Connection remote closed event did not fire", connectionClosedSignaled.get());
+        assertTrue(connectionOpenedSignaled.get(), "Connection remote opened event did not fire");
+        assertTrue(connectionClosedSignaled.get(), "Connection remote closed event did not fire");
 
         try {
             session.open();
@@ -587,7 +589,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionOpenFailsWhenConnectionRemotelyClosed() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -615,8 +617,8 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         connection.open();
 
-        assertTrue("Connection remote opened event did not fire", connectionOpenedSignaled.get());
-        assertTrue("Connection remote closed event did not fire", connectionClosedSignaled.get());
+        assertTrue(connectionOpenedSignaled.get(), "Connection remote opened event did not fire");
+        assertTrue(connectionClosedSignaled.get(), "Connection remote closed event did not fire");
 
         try {
             session.open();
@@ -628,7 +630,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionOpenFailsWhenWriteOfBeginFailsWithException() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -662,7 +664,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNotNull(engine.failureCause());
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionOpenNotSentUntilConnectionOpened() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -705,12 +707,12 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.expectEnd().respond();
         peer.expectClose();
 
-        assertFalse("Session opened handler should not have been called yet", sessionOpenedSignaled.get());
+        assertFalse(sessionOpenedSignaled.get(), "Session opened handler should not have been called yet");
 
         connection.open();
 
         // Session was already closed so no open event should fire.
-        assertFalse("Session opened handler should not have been called yet", sessionOpenedSignaled.get());
+        assertFalse(sessionOpenedSignaled.get(), "Session opened handler should not have been called yet");
 
         connection.close();
 
@@ -719,7 +721,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testSessionRemotelyClosedWithError() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -769,7 +771,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testSessionCloseAfterConnectionRemotelyClosedWhenNoBeginResponseReceived() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -834,13 +836,13 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
 
-        assertTrue("Rmote connection should have occured", remoteOpened.get());
-        assertFalse("Should not have seen a remote session open.", remoteSession.get());
+        assertTrue(remoteOpened.get(), "Rmote connection should have occured");
+        assertFalse(remoteSession.get(), "Should not have seen a remote session open.");
 
         assertNotNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCapabilitiesArePopulatedAndAccessible() throws Exception {
         final Symbol clientOfferedSymbol = Symbol.valueOf("clientOfferedCapability");
         final Symbol clientDesiredSymbol = Symbol.valueOf("clientDesiredCapability");
@@ -880,7 +882,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         });
         session.open();
 
-        assertTrue("Session remote opened event did not fire", sessionRemotelyOpened.get());
+        assertTrue(sessionRemotelyOpened.get(), "Session remote opened event did not fire");
 
         assertArrayEquals(clientOfferedCapabilities, session.getOfferedCapabilities());
         assertArrayEquals(clientDesiredCapabilities, session.getDesiredCapabilities());
@@ -894,7 +896,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testPropertiesArePopulatedAndAccessible() throws Exception {
         final Symbol clientPropertyName = Symbol.valueOf("ClientPropertyName");
         final Integer clientPropertyValue = 1234;
@@ -935,7 +937,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         });
         session.open();
 
-        assertTrue("Session remote opened event did not fire", sessionRemotelyOpened.get());
+        assertTrue(sessionRemotelyOpened.get(), "Session remote opened event did not fire");
 
         assertNotNull(session.getProperties());
         assertNotNull(session.getRemoteProperties());
@@ -950,7 +952,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testEmittedSessionIncomingWindowOnFirstFlow() {
         doSessionIncomingWindowTestImpl(false, false);
         doSessionIncomingWindowTestImpl(true, false);
@@ -1002,7 +1004,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         // Open session and verify emitted incoming window
         session.open();
 
-        assertEquals("Unexpected session capacity", sessionCapacity, session.getIncomingCapacity());
+        assertEquals(sessionCapacity, session.getIncomingCapacity(), "Unexpected session capacity");
 
         // Use a receiver to force more session window observations.
         Receiver receiver = session.receiver("receiver");
@@ -1027,7 +1029,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         receiver.addCredit(1);
 
-        assertEquals("Unexpected delivery count", 1, deliveryArrived.get());
+        assertEquals(1, deliveryArrived.get(), "Unexpected delivery count");
         assertNotNull(delivered.get());
 
         // Flow more credit after receiving a message but not consuming it should result in a decrease in
@@ -1063,7 +1065,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionHandlesDeferredOpenAndBeginResponses() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1101,30 +1103,30 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         session.close();
 
-        assertEquals("Should get one opened event", 1, sessionOpened.get());
-        assertEquals("Should get one closed event", 1, sessionClosed.get());
+        assertEquals(1, sessionOpened.get(), "Should get one opened event");
+        assertEquals(1, sessionClosed.get(), "Should get one closed event");
 
         connection.close();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndRsponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndNoRsponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenButNoResponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, false, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenNotWritten() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(false, false, false);
     }
@@ -1168,22 +1170,22 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenAndResponseBeginWrittenAndReponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenAndResponseBeginWrittenAndNoResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenButNoResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, false, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenNotWritten() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(false, false, false);
     }
@@ -1233,11 +1235,11 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
             fail("Should throw exception indicating engine is in a failed state.");
         } catch (EngineFailedException efe) {}
 
-        assertFalse("Session should not have signalled engine failure", engineFailedEvent.get());
+        assertFalse(engineFailedEvent.get(), "Session should not have signalled engine failure");
 
         engine.shutdown();  // Explicit shutdown now allows local close to complete
 
-        assertTrue("Session should have signalled engine failure", engineFailedEvent.get());
+        assertTrue(engineFailedEvent.get(), "Session should have signalled engine failure");
 
         // Should clean up and not throw as we knowingly shutdown engine operations.
         session.close();
@@ -1248,62 +1250,62 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNotNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionStopTrackingClosedSenders() throws Exception {
         doTestSessionTrackingOfLinks(Role.SENDER, true, true, false, true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionStopTrackingDetchedSenders() throws Exception {
         doTestSessionTrackingOfLinks(Role.SENDER, true, true, false, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionStopTrackingClosedSendersRemoteGoesFirst() throws Exception {
         doTestSessionTrackingOfLinks(Role.SENDER, true, true, true, true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionStopTrackingDetachedSendersRemoteGoesFirst() throws Exception {
         doTestSessionTrackingOfLinks(Role.SENDER, true, true, true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionTracksRemotelyOpenSenders() throws Exception {
         doTestSessionTrackingOfLinks(Role.SENDER, true, false, false, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionTracksLocallyOpenSenders() throws Exception {
         doTestSessionTrackingOfLinks(Role.SENDER, false, true, false, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionStopTrackingClosedReceivers() throws Exception {
         doTestSessionTrackingOfLinks(Role.RECEIVER, true, true, false, true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionStopTrackingDetchedReceivers() throws Exception {
         doTestSessionTrackingOfLinks(Role.RECEIVER, true, true, false, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionStopTrackingClosedReceiversRemoteGoesFirst() throws Exception {
         doTestSessionTrackingOfLinks(Role.RECEIVER, true, true, true, true);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionStopTrackingDetachedReceiversRemoteGoesFirst() throws Exception {
         doTestSessionTrackingOfLinks(Role.RECEIVER, true, true, true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionTracksRemotelyOpenReceivers() throws Exception {
         doTestSessionTrackingOfLinks(Role.RECEIVER, true, false, false, false);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionTracksLocallyOpenReceivers() throws Exception {
         doTestSessionTrackingOfLinks(Role.RECEIVER, false, true, false, false);
     }
@@ -1389,12 +1391,12 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testGetSenderFromSessionByName() throws Exception {
         doTestSessionLinkByName(Role.SENDER);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testGetReceiverFromSessionByName() throws Exception {
         doTestSessionLinkByName(Role.RECEIVER);
     }
@@ -1457,7 +1459,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testCloseOrDetachWithErrorCondition() throws Exception {
         final String condition = "amqp:session:window-violation";
         final String description = "something bad happened.";
@@ -1485,7 +1487,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 
-    @Test(timeout = 30000)
+    @Test
     public void testSessionNotifiedOfRemoteSenderOpened() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1512,7 +1514,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         session.close();
 
-        assertTrue("Session should have reported remote sender open", senderRemotelyOpened.get());
+        assertTrue(senderRemotelyOpened.get(), "Session should have reported remote sender open");
 
         peer.waitForScriptToComplete();
 

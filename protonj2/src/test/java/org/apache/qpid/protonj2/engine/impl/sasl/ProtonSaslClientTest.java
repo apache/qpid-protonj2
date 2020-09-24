@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.protonj2.engine.impl.sasl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.Principal;
 
@@ -34,11 +34,13 @@ import org.apache.qpid.protonj2.engine.sasl.client.SaslAuthenticator;
 import org.apache.qpid.protonj2.engine.sasl.client.SaslCredentialsProvider;
 import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
 import org.apache.qpid.protonj2.types.security.SaslCode;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Test proton engine from the perspective of a SASL client
  */
+@Timeout(20)
 public class ProtonSaslClientTest extends ProtonEngineTestSupport {
 
     @Test
@@ -142,7 +144,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testSaslXOauth2Connection() throws Exception {
         Engine engine = EngineFactory.PROTON.createEngine();
         engine.errorHandler(result -> failure = result.failureCause());

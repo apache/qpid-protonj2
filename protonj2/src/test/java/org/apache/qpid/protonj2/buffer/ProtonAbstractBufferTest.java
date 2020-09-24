@@ -16,23 +16,24 @@
  */
 package org.apache.qpid.protonj2.buffer;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Abstract test base for testing common expected behaviors of ProtonBuffer implementations
@@ -47,7 +48,7 @@ public abstract class ProtonAbstractBufferTest {
     protected long seed;
     protected Random random;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         seed = System.currentTimeMillis();
         random = new Random();
@@ -110,24 +111,26 @@ public abstract class ProtonAbstractBufferTest {
 
     //----- Tests for altering buffer capacity -------------------------------//
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCapacityEnforceMaxCapacity() {
         assumeTrue(canBufferCapacityBeChanged());
 
         ProtonBuffer buffer = allocateBuffer(3, 13);
         assertEquals(13, buffer.maxCapacity());
         assertEquals(3, buffer.capacity());
-        buffer.capacity(14);
+
+        assertThrows(IllegalArgumentException.class, () -> buffer.capacity(14));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCapacityNegative() {
         assumeTrue(canBufferCapacityBeChanged());
 
         ProtonBuffer buffer = allocateBuffer(3, 13);
         assertEquals(13, buffer.maxCapacity());
         assertEquals(3, buffer.capacity());
-        buffer.capacity(-1);
+
+        assertThrows(IllegalArgumentException.class, () -> buffer.capacity(-1));
     }
 
     @Test
@@ -1537,7 +1540,7 @@ public abstract class ProtonAbstractBufferTest {
         } catch (IndexOutOfBoundsException iobe) {}
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testReaderIndexLargerThanWriterIndex() {
         String content1 = "hello";
         String content2 = "world";
@@ -1552,8 +1555,7 @@ public abstract class ProtonAbstractBufferTest {
         buffer.skipBytes(content2.length());
         assertTrue(buffer.getReadIndex() <= buffer.getWriteIndex());
 
-        buffer.resetWriteIndex();
-        fail("Should throw when reset positions write index before read index");
+        assertThrows(IndexOutOfBoundsException.class, () -> buffer.resetWriteIndex());
     }
 
     //----- Tests for equality and comparison --------------------------------//

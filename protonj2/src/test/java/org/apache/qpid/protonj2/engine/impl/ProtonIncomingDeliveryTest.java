@@ -16,17 +16,17 @@
  */
 package org.apache.qpid.protonj2.engine.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
@@ -44,8 +44,8 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
     public void testDefaultMessageFormat() throws Exception {
         ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
             Mockito.mock(ProtonReceiver.class), 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
-        assertEquals("Unexpected value", 0L, DEFAULT_MESSAGE_FORMAT);
-        assertEquals("Unexpected message format", DEFAULT_MESSAGE_FORMAT, delivery.getMessageFormat());
+        assertEquals(0L, DEFAULT_MESSAGE_FORMAT, "Unexpected value");
+        assertEquals(DEFAULT_MESSAGE_FORMAT, delivery.getMessageFormat(), "Unexpected message format");
     }
 
     @Test
@@ -57,8 +57,8 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
         delivery.appendTransferPayload(ProtonByteBufferAllocator.DEFAULT.wrap(data));
 
         // Check the full data is available
-        assertNotNull("expected the delivery to be present", delivery);
-        assertEquals("unexpectd available count", data.length, delivery.available());
+        assertNotNull(delivery, "expected the delivery to be present");
+        assertEquals(data.length, delivery.available(), "unexpectd available count");
 
         // Extract some of the data as the receiver link will, check available gets reduced accordingly.
         int partLength = 2;
@@ -68,13 +68,13 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
         byte[] myRecievedData1 = new byte[partLength];
 
         delivery.readBytes(myRecievedData1, 0, myRecievedData1.length);
-        assertEquals("Unexpected data length available", remainderLength, delivery.available());
+        assertEquals(remainderLength, delivery.available(), "Unexpected data length available");
 
         // Extract remainder of the data as the receiver link will, check available hits 0.
         byte[] myRecievedData2 = new byte[remainderLength];
 
         delivery.readBytes(myRecievedData2, 0, remainderLength);
-        assertEquals("Expected no data to remain available", 0, delivery.available());
+        assertEquals(0, delivery.available(), "Expected no data to remain available");
     }
 
     @Test

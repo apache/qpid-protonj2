@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.protonj2.codec.transport;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -37,7 +37,7 @@ import org.apache.qpid.protonj2.codec.decoders.transport.BeginTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.transport.BeginTypeEncoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.transport.Begin;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BeginTypeCodecTest extends CodecTestSupport {
 

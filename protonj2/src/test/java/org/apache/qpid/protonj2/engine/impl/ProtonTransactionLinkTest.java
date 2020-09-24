@@ -16,14 +16,14 @@
  */
 package org.apache.qpid.protonj2.engine.impl;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -61,11 +61,13 @@ import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.apache.qpid.protonj2.types.transport.Role;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Tests for AMQP transaction over normal {@link Sender} and {@link Receiver} links.
  */
+@Timeout(20)
 public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonTransactionLinkTest.class);
@@ -80,7 +82,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
                                                                Released.DESCRIPTOR_SYMBOL.toString(),
                                                                Modified.DESCRIPTOR_SYMBOL.toString() };
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCreateDefaultCoordinatorSender() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -113,7 +115,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCreateCoordinatorSender() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -164,7 +166,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testRemoteCoordinatorSenderSignalsTransactionManagerFromSessionWhenEnabled() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -217,7 +219,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testRemoteCoordinatorSenderSignalsTransactionManagerFromConnectionWhenEnabled() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -270,7 +272,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testRemoteCoordinatorTriggersSenderCreateWhenManagerHandlerNotSet() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -323,7 +325,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testTransactionControllerDeclaresTransaction() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -386,7 +388,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testTransactionControllerBeginComiitBeginRollback() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -452,12 +454,12 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testTransactionControllerDeclareAndDischargeOneTransactionDirect() {
         doTestTransactionControllerDeclareAndDischargeOneTransaction(false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testTransactionControllerDeclareAndDischargeOneTransactionInDirect() {
         doTestTransactionControllerDeclareAndDischargeOneTransaction(true);
     }
@@ -536,7 +538,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testTransactionDeclareRejected() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -598,7 +600,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testTransactionDischargeRejected() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -664,7 +666,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCannotDeclareTransactionFromOneControllerInAnother() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -743,7 +745,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCannotDischargeTransactionFromOneControllerInAnother() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -819,7 +821,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test
     public void testSendMessageInsideOfTransaction() throws Exception {
         final byte[] TXN_ID = new byte[] { 1, 2, 3, 4 };
         final byte [] payloadBuffer = new byte[] {0, 1, 2, 3, 4};
@@ -892,7 +894,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testTransactionManagerSignalsTxnDeclarationAndDischarge() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -961,12 +963,12 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCommitTransactionAfterConnectionDropsFollowingTxnDeclared() throws Exception {
         dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testRollbackTransactionAfterConnectionDropsFollowingTxnDeclared() throws Exception {
         dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(false);
     }

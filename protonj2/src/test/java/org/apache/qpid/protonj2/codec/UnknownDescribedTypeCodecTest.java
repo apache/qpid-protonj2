@@ -16,10 +16,10 @@
  */
 package org.apache.qpid.protonj2.codec;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.util.NoLocalType;
 import org.apache.qpid.protonj2.types.UnknownDescribedType;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests the handling of UnknownDescribedType instances.

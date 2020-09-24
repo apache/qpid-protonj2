@@ -31,10 +31,9 @@ import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
 import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 
 /**
  * Base class for Proton Engine and its components.
@@ -52,24 +51,23 @@ public abstract class ProtonEngineTestSupport {
     protected final EncoderState encoderState = encoder.newEncoderState();
 
     protected Throwable failure;
+    protected String testName;
 
-    @Rule
-    public TestName testName = new TestName();
-
-    @Before
-    public void setUp() {
-        LOG.info("========== start " + getTestName() + " ==========");
+    @BeforeEach
+    public void setUp(TestInfo testInfo) {
+        testName = testInfo.getDisplayName();
+        LOG.info("========== start " + testInfo.getDisplayName() + " ==========");
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    public void tearDown(TestInfo testInfo) {
         engineWrites.clear();
         decoderState.reset();
         encoderState.reset();
 
         failure = null;
 
-        LOG.info("========== tearDown " + getTestName() + " ==========");
+        LOG.info("========== tearDown " + testInfo.getDisplayName() + " ==========");
     }
 
     protected ProtonBuffer wrapInFrame(Object input, int channel) {
@@ -148,6 +146,6 @@ public abstract class ProtonEngineTestSupport {
     }
 
     protected String getTestName() {
-        return getClass().getSimpleName() + "." + testName.getMethodName();
+        return getClass().getSimpleName() + "." + testName;
     }
 }

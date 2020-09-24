@@ -18,11 +18,11 @@ package org.apache.qpid.protonj2.engine.impl;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 
@@ -38,8 +38,8 @@ import org.apache.qpid.protonj2.engine.util.FrameRecordingTransportHandler;
 import org.apache.qpid.protonj2.engine.util.FrameWriteSinkTransportHandler;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.Open;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
@@ -47,7 +47,7 @@ public class ProtonFrameDecodingHandlerTest {
 
     private FrameRecordingTransportHandler testHandler;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testHandler = new FrameRecordingTransportHandler();
     }

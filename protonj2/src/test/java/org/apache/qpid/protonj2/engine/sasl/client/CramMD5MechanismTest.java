@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.protonj2.engine.sasl.client;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Base64;
 
@@ -28,7 +28,7 @@ import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * The known good used by these tests is taken from the example in RFC 2195 section 2.
@@ -60,50 +60,50 @@ public class CramMD5MechanismTest extends MechanismTestBase {
 
     @Test
     public void testIsNotApplicableWithNoCredentials() {
-        assertFalse("Should not be applicable with no credentials",
-            SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials(null, null, false)));
+        assertFalse(SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials(null, null, false)),
+            "Should not be applicable with no credentials");
     }
 
     @Test
     public void testIsNotApplicableWithNoUser() {
-        assertFalse("Should not be applicable with no username",
-            SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials(null, "pass", false)));
+        assertFalse(SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials(null, "pass", false)),
+            "Should not be applicable with no username");
     }
 
     @Test
     public void testIsNotApplicableWithNoPassword() {
-        assertFalse("Should not be applicable with no password",
-            SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials("user", null, false)));
+        assertFalse(SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials("user", null, false)),
+            "Should not be applicable with no password");
     }
 
     @Test
     public void testIsNotApplicableWithEmtpyUser() {
-        assertFalse("Should not be applicable with empty username",
-            SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials("", "pass", false)));
+        assertFalse(SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials("", "pass", false)),
+            "Should not be applicable with empty username");
     }
 
     @Test
     public void testIsNotApplicableWithEmtpyPassword() {
-        assertFalse("Should not be applicable with empty password",
-            SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials("user", "", false)));
+        assertFalse(SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials("user", "", false)),
+            "Should not be applicable with empty password");
     }
 
     @Test
     public void testIsNotApplicableWithEmtpyUserAndPassword() {
-        assertFalse("Should not be applicable with empty user and password",
-            SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials("", "", false)));
+        assertFalse(SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials("", "", false)),
+            "Should not be applicable with empty user and password");
     }
 
     @Test
     public void testIsApplicableWithUserAndPassword() {
-        assertTrue("Should be applicable with user and password",
-            SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials("user", "pass", false)));
+        assertTrue(SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials("user", "pass", false)),
+            "Should be applicable with user and password");
     }
 
     @Test
     public void testIsApplicableWithUserAndPasswordAndPrincipal() {
-        assertTrue("Should be applicable with user and password and principal",
-            SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials("user", "pass", true)));
+        assertTrue(SaslMechanisms.CRAM_MD5.createMechanism().isApplicable(credentials("user", "pass", true)),
+            "Should be applicable with user and password and principal");
     }
 
     @Test

@@ -16,19 +16,19 @@
  */
 package org.apache.qpid.protonj2.engine.impl;
 
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.Matchers.anyOf;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -75,11 +75,13 @@ import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.hamcrest.Matcher;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Test the {@link ProtonReceiver}
  */
+@Timeout(20)
 public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
     public static final Symbol[] SUPPORTED_OUTCOMES = new Symbol[] { Accepted.DESCRIPTOR_SYMBOL,
@@ -87,7 +89,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                                                      Released.DESCRIPTOR_SYMBOL,
                                                                      Modified.DESCRIPTOR_SYMBOL };
 
-    @Test(timeout = 20_000)
+    @Test
     public void testLocalLinkStateCannotBeChangedAfterOpen() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -169,12 +171,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverEmitsOpenAndCloseEvents() throws Exception {
         doTestReceiverEmitsEvents(false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverEmitsOpenAndDetachEvents() throws Exception {
         doTestReceiverEmitsEvents(true);
     }
@@ -220,19 +222,19 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
             receiver.close();
         }
 
-        assertTrue("Receiver should have reported local open", receiverLocalOpen.get());
-        assertTrue("Receiver should have reported remote open", receiverRemoteOpen.get());
+        assertTrue(receiverLocalOpen.get(), "Receiver should have reported local open");
+        assertTrue(receiverRemoteOpen.get(), "Receiver should have reported remote open");
 
         if (detach) {
-            assertFalse("Receiver should not have reported local close", receiverLocalClose.get());
-            assertTrue("Receiver should have reported local detach", receiverLocalDetach.get());
-            assertFalse("Receiver should not have reported remote close", receiverRemoteClose.get());
-            assertTrue("Receiver should have reported remote close", receiverRemoteDetach.get());
+            assertFalse(receiverLocalClose.get(), "Receiver should not have reported local close");
+            assertTrue(receiverLocalDetach.get(), "Receiver should have reported local detach");
+            assertFalse(receiverRemoteClose.get(), "Receiver should not have reported remote close");
+            assertTrue(receiverRemoteDetach.get(), "Receiver should have reported remote close");
         } else {
-            assertTrue("Receiver should have reported local close", receiverLocalClose.get());
-            assertFalse("Receiver should not have reported local detach", receiverLocalDetach.get());
-            assertTrue("Receiver should have reported remote close", receiverRemoteClose.get());
-            assertFalse("Receiver should not have reported remote close", receiverRemoteDetach.get());
+            assertTrue(receiverLocalClose.get(), "Receiver should have reported local close");
+            assertFalse(receiverLocalDetach.get(), "Receiver should not have reported local detach");
+            assertTrue(receiverRemoteClose.get(), "Receiver should have reported remote close");
+            assertFalse(receiverRemoteDetach.get(), "Receiver should not have reported remote close");
         }
 
         session.close();
@@ -242,7 +244,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverRoutesDetachEventToCloseHandlerIfNonSset() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -275,10 +277,10 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.open();
         receiver.detach();
 
-        assertTrue("Receiver should have reported local open", receiverLocalOpen.get());
-        assertTrue("Receiver should have reported remote open", receiverRemoteOpen.get());
-        assertTrue("Receiver should have reported local detach", receiverLocalClose.get());
-        assertTrue("Receiver should have reported remote detach", receiverRemoteClose.get());
+        assertTrue(receiverLocalOpen.get(), "Receiver should have reported local open");
+        assertTrue(receiverRemoteOpen.get(), "Receiver should have reported remote open");
+        assertTrue(receiverLocalClose.get(), "Receiver should have reported local detach");
+        assertTrue(receiverRemoteClose.get(), "Receiver should have reported remote detach");
 
         session.close();
 
@@ -287,22 +289,22 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testEngineShutdownEventNeitherEndClosed() throws Exception {
         doTestEngineShutdownEvent(false, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testEngineShutdownEventLocallyClosed() throws Exception {
         doTestEngineShutdownEvent(true, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testEngineShutdownEventRemotelyClosed() throws Exception {
         doTestEngineShutdownEvent(false, true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testEngineShutdownEventBothEndsClosed() throws Exception {
         doTestEngineShutdownEvent(true, true);
     }
@@ -347,9 +349,9 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         engine.shutdown();
 
         if (locallyClosed && remotelyClosed) {
-            assertFalse("Should not have reported engine shutdown", engineShutdown.get());
+            assertFalse(engineShutdown.get(), "Should not have reported engine shutdown");
         } else {
-            assertTrue("Should have reported engine shutdown", engineShutdown.get());
+            assertTrue(engineShutdown.get(), "Should have reported engine shutdown");
         }
 
         peer.waitForScriptToComplete();
@@ -357,17 +359,17 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverOpenWithNoSenderOrReceiverSettleModes() throws Exception {
         doTestOpenReceiverWithConfiguredSenderAndReceiverSettlementModes(null, null);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverOpenWithSettledAndFirst() throws Exception {
         doTestOpenReceiverWithConfiguredSenderAndReceiverSettlementModes(SenderSettleMode.SETTLED, ReceiverSettleMode.FIRST);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverOpenWithUnsettledAndSecond() throws Exception {
         doTestOpenReceiverWithConfiguredSenderAndReceiverSettlementModes(SenderSettleMode.UNSETTLED, ReceiverSettleMode.SECOND);
     }
@@ -418,7 +420,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCreateReceiverAndInspectRemoteEndpoint() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -469,12 +471,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCreateReceiverAndClose() throws Exception {
         doTestCreateReceiverAndCloseOrDetachLink(true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCreateReceiverAndDetach() throws Exception {
         doTestCreateReceiverAndCloseOrDetachLink(false);
     }
@@ -515,7 +517,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverOpenAndCloseAreIdempotent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -551,7 +553,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testEngineEmitsAttachAfterLocalReceiverOpened() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -580,7 +582,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testOpenBeginAttachBeforeRemoteResponds() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -607,7 +609,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverFireOpenedEventAfterRemoteAttachArrives() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -635,7 +637,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         });
         receiver.open();
 
-        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+        assertTrue(receiverRemotelyOpened.get(), "Receiver remote opened event did not fire");
 
         receiver.close();
 
@@ -644,7 +646,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverFireClosedEventAfterRemoteDetachArrives() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -676,33 +678,33 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         });
         receiver.open();
 
-        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+        assertTrue(receiverRemotelyOpened.get(), "Receiver remote opened event did not fire");
 
         receiver.close();
 
-        assertTrue("Receiver remote closed event did not fire", receiverRemotelyClosed.get());
+        assertTrue(receiverRemotelyClosed.get(), "Receiver remote closed event did not fire");
 
         peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testRemotelyCloseReceiverAndOpenNewReceiverImmediatelyAfterWithNewLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(true, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testRemotelyDetachReceiverAndOpenNewReceiverImmediatelyAfterWithNewLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(false, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testRemotelyCloseReceiverAndOpenNewReceiverImmediatelyAfterWithSameLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(true, true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testRemotelyDetachReceiverAndOpenNewReceiverImmediatelyAfterWithSameLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(false, true);
     }
@@ -741,13 +743,14 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
 
-        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+        assertTrue(receiverRemotelyOpened.get(), "Receiver remote opened event did not fire");
+
         if (close) {
-            assertTrue("Receiver remote closed event did not fire", receiverRemotelyClosed.get());
-            assertFalse("Receiver remote detached event fired", receiverRemotelyDetached.get());
+            assertTrue(receiverRemotelyClosed.get(), "Receiver remote closed event did not fire");
+            assertFalse(receiverRemotelyDetached.get(), "Receiver remote detached event fired");
         } else {
-            assertFalse("Receiver remote closed event fired", receiverRemotelyClosed.get());
-            assertTrue("Receiver remote closed event did not fire", receiverRemotelyDetached.get());
+            assertFalse(receiverRemotelyClosed.get(), "Receiver remote closed event fired");
+            assertTrue(receiverRemotelyDetached.get(), "Receiver remote closed event did not fire");
         }
 
         peer.expectDetach().withClosed(close);
@@ -780,19 +783,20 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
 
-        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+        assertTrue(receiverRemotelyOpened.get(), "Receiver remote opened event did not fire");
+
         if (close) {
-            assertTrue("Receiver remote closed event did not fire", receiverRemotelyClosed.get());
-            assertFalse("Receiver remote detached event fired", receiverRemotelyDetached.get());
+            assertTrue(receiverRemotelyClosed.get(), "Receiver remote closed event did not fire");
+            assertFalse(receiverRemotelyDetached.get(), "Receiver remote detached event fired");
         } else {
-            assertFalse("Receiver remote closed event fired", receiverRemotelyClosed.get());
-            assertTrue("Receiver remote closed event did not fire", receiverRemotelyDetached.get());
+            assertFalse(receiverRemotelyClosed.get(), "Receiver remote closed event fired");
+            assertTrue(receiverRemotelyDetached.get(), "Receiver remote closed event did not fire");
         }
 
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverFireOpenedEventAfterRemoteAttachArrivesWithNullTarget() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -822,7 +826,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         });
         receiver.open();
 
-        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+        assertTrue(receiverRemotelyOpened.get(), "Receiver remote opened event did not fire");
         assertNull(receiver.getRemoteSource());
 
         receiver.close();
@@ -832,7 +836,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testOpenAndCloseMultipleReceivers() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -866,7 +870,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testConnectionSignalsRemoteReceiverOpen() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -899,7 +903,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
 
-        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+        assertTrue(receiverRemotelyOpened.get(), "Receiver remote opened event did not fire");
 
         receiver.get().open();
         receiver.get().close();
@@ -909,7 +913,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCannotOpenReceiverAfterSessionClosed() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -945,7 +949,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCannotOpenReceiverAfterSessionRemotelyClosed() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -978,7 +982,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testOpenReceiverBeforeOpenConnection() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1006,7 +1010,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testOpenReceiverBeforeOpenSession() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1035,12 +1039,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverDetachAfterEndSent() {
         doTestReceiverCloseOrDetachAfterEndSent(false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverCloseAfterEndSent() {
         doTestReceiverCloseOrDetachAfterEndSent(true);
     }
@@ -1082,12 +1086,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverDetachAfterCloseSent() {
         doTestReceiverClosedOrDetachedAfterCloseSent(false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverCloseAfterCloseSent() {
         doTestReceiverClosedOrDetachedAfterCloseSent(true);
     }
@@ -1129,7 +1133,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverSendsFlowWhenCreditSet() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1160,7 +1164,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverSendsFlowAfterOpenedWhenCreditSetBeforeOpened() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1191,7 +1195,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverSendsFlowAfterConnectionOpenFinallySent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1221,7 +1225,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000) //TODO: questionable. If its going to no-op the credit then it should perhaps not do this (open before parent) to begin with, as strange to send the attaches but not credit?
+    @Test //TODO: questionable. If its going to no-op the credit then it should perhaps not do this (open before parent) to begin with, as strange to send the attaches but not credit?
     public void testReceiverOmitsFlowAfterConnectionOpenFinallySentWhenAfterDetached() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1252,7 +1256,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverDrainAllOutstanding() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1296,7 +1300,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.drain();
 
         peer.waitForScriptToComplete();
-        assertTrue("Handler was not called", handlerCalled.get());
+        assertTrue(handlerCalled.get(), "Handler was not called");
 
         peer.expectDetach().respond();
         receiver.close();
@@ -1306,7 +1310,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverThrowsOnAddCreditAfterConnectionClosed() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1341,7 +1345,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverThrowsOnAddCreditAfterSessionClosed() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1376,7 +1380,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverDispatchesIncomingDelivery() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1413,15 +1417,15 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.addCredit(100);
         receiver.close();
 
-        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
-        assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
+        assertTrue(deliveryArrived.get(), "Delivery did not arrive at the receiver");
+        assertFalse(receivedDelivery.get().isPartial(), "Deliver should not be partial");
 
         peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverSendsDispostionForTransfer() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1463,8 +1467,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.open();
         receiver.addCredit(100);
 
-        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
-        assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
+        assertTrue(deliveryArrived.get(), "Delivery did not arrive at the receiver");
+        assertFalse(receivedDelivery.get().isPartial(), "Deliver should not be partial");
         assertFalse(receiver.hasUnsettled());
 
         receiver.close();
@@ -1474,7 +1478,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverSendsDispostionOnlyOnceForTransfer() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1516,8 +1520,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.open();
         receiver.addCredit(100);
 
-        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
-        assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
+        assertTrue(deliveryArrived.get(), "Delivery did not arrive at the receiver");
+        assertFalse(receivedDelivery.get().isPartial(), "Deliver should not be partial");
 
         // Already settled so this should trigger error
         try {
@@ -1534,7 +1538,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverSendsUpdatedDispostionsForTransferBeforeSettlement() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1580,8 +1584,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.open();
         receiver.addCredit(100);
 
-        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
-        assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
+        assertTrue(deliveryArrived.get(), "Delivery did not arrive at the receiver");
+        assertFalse(receivedDelivery.get().isPartial(), "Deliver should not be partial");
         assertTrue(receiver.hasUnsettled());
 
         // Second disposition should be sent as we didn't settle previously.
@@ -1598,7 +1602,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
      * Verify that no Disposition frame is emitted by the Transport should a Delivery
      * have disposition applied after the Close frame was sent.
      */
-    @Test(timeout = 20_000)
+    @Test
     public void testDispositionNoAllowedAfterCloseSent() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1635,8 +1639,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.open();
         receiver.addCredit(1);
 
-        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
-        assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
+        assertTrue(deliveryArrived.get(), "Delivery did not arrive at the receiver");
+        assertFalse(receivedDelivery.get().isPartial(), "Deliver should not be partial");
 
         connection.close();
 
@@ -1655,7 +1659,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverReportsDeliveryUpdatedOnDisposition() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1707,18 +1711,18 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.addCredit(100);
         receiver.close();
 
-        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
-        assertFalse("Delivery should not be partial", receivedDelivery.get().isPartial());
-        assertFalse("Delivery should not be partial", updatedDelivery.get().isPartial());
-        assertTrue("Delivery should have been updated to settled", deliveryUpdatedAndSettled.get());
-        assertSame("Delivery should be same object as first received", receivedDelivery.get(), updatedDelivery.get());
+        assertTrue(deliveryArrived.get(), "Delivery did not arrive at the receiver");
+        assertFalse(receivedDelivery.get().isPartial(), "Delivery should not be partial");
+        assertFalse(updatedDelivery.get().isPartial(), "Delivery should not be partial");
+        assertTrue(deliveryUpdatedAndSettled.get(), "Delivery should have been updated to settled");
+        assertSame(receivedDelivery.get(), updatedDelivery.get(), "Delivery should be same object as first received");
 
         peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverReportsDeliveryUpdatedOnDispositionForMultipleTransfers() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1774,14 +1778,14 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.addCredit(2);
         receiver.close();
 
-        assertEquals("Not all deliveries arrived", 2, deliveryCounter.get());
-        assertEquals("Not all deliveries received dispositions", 2, deliveries.size());
+        assertEquals(2, deliveryCounter.get(), "Not all deliveries arrived");
+        assertEquals(2, deliveries.size(), "Not all deliveries received dispositions");
 
         byte deliveryTag = 0;
 
         for (IncomingDelivery delivery : deliveries) {
-            assertEquals("Delivery not updated in correct order", deliveryTag++, delivery.getTag().tagBuffer().getByte(0));
-            assertTrue("Delivery should be marked as remotely setted", delivery.isRemotelySettled());
+            assertEquals(deliveryTag++, delivery.getTag().tagBuffer().getByte(0), "Delivery not updated in correct order");
+            assertTrue(delivery.isRemotelySettled(), "Delivery should be marked as remotely setted");
         }
 
         peer.waitForScriptToComplete();
@@ -1789,7 +1793,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverReportsDeliveryUpdatedNextFrameForMultiFrameTransfer() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1840,10 +1844,10 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.open();
         receiver.addCredit(2);
 
-        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
-        assertFalse("Delivery should not be partial", receivedDelivery.get().isPartial());
-        assertEquals("Deliver should have been read twice for two transfers", 2, deliverReads.get());
-        assertSame("Delivery should be same object as first received", receivedDelivery.get(), receivedDelivery.get());
+        assertTrue(deliveryArrived.get(), "Delivery did not arrive at the receiver");
+        assertFalse(receivedDelivery.get().isPartial(), "Delivery should not be partial");
+        assertEquals(2, deliverReads.get(), "Deliver should have been read twice for two transfers");
+        assertSame(receivedDelivery.get(), receivedDelivery.get(), "Delivery should be same object as first received");
 
         ProtonBuffer payload = receivedDelivery.get().readAll();
 
@@ -1861,7 +1865,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         combined.writeBytes(data1.asByteBuffer());
         combined.writeBytes(data2.asByteBuffer());
 
-        assertEquals("Encoded and Decoded strings don't match", text, combined.toString(StandardCharsets.UTF_8));
+        assertEquals(text, combined.toString(StandardCharsets.UTF_8), "Encoded and Decoded strings don't match");
 
         receiver.close();
 
@@ -1870,7 +1874,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverReportsUpdateWhenLastFrameOfMultiFrameTransferHasNoPayload() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1929,10 +1933,10 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.open();
         receiver.addCredit(1);
 
-        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
-        assertFalse("Delivery should not be partial", receivedDelivery.get().isPartial());
-        assertEquals("Deliver should have been read twice for two transfers", 4, deliverReads.get());
-        assertSame("Delivery should be same object as first received", receivedDelivery.get(), receivedDelivery.get());
+        assertTrue(deliveryArrived.get(), "Delivery did not arrive at the receiver");
+        assertFalse(receivedDelivery.get().isPartial(), "Delivery should not be partial");
+        assertEquals(4, deliverReads.get(), "Deliver should have been read twice for two transfers");
+        assertSame(receivedDelivery.get(), receivedDelivery.get(), "Delivery should be same object as first received");
 
         ProtonBuffer payload = receivedDelivery.get().readAll();
 
@@ -1950,7 +1954,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         combined.writeBytes(data1.asByteBuffer());
         combined.writeBytes(data2.asByteBuffer());
 
-        assertEquals("Encoded and Decoded strings don't match", text, combined.toString(StandardCharsets.UTF_8));
+        assertEquals(text, combined.toString(StandardCharsets.UTF_8), "Encoded and Decoded strings don't match");
 
         receiver.close();
 
@@ -1959,12 +1963,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testMultiplexMultiFrameDeliveriesOnSingleSessionIncoming() throws Exception {
         doMultiplexMultiFrameDeliveryOnSingleSessionIncomingTestImpl(true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testMultiplexMultiFrameDeliveryOnSingleSessionIncoming() throws Exception {
         doMultiplexMultiFrameDeliveryOnSingleSessionIncomingTestImpl(false);
     }
@@ -2024,8 +2028,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver1.addCredit(5);
         receiver2.addCredit(5);
 
-        assertNull("Should not have any delivery data yet on receiver 1", receivedDelivery1.get());
-        assertNull("Should not have any delivery date yet on receiver 2", receivedDelivery2.get());
+        assertNull(receivedDelivery1.get(), "Should not have any delivery data yet on receiver 1");
+        assertNull(receivedDelivery2.get(), "Should not have any delivery date yet on receiver 2");
 
         peer.remoteTransfer().withDeliveryId(0)
                              .withHandle(0)
@@ -2040,14 +2044,14 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0)
                              .withPayload(payload2).now();
 
-        assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
-        assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
+        assertNotNull(receivedDelivery1.get(), "Should have a delivery event on receiver 1");
+        assertNotNull(receivedDelivery2.get(), "Should have a delivery event on receiver 2");
 
-        assertTrue("Delivery on Receiver 1 Should not be complete", receivedDelivery1.get().isPartial());
+        assertTrue(receivedDelivery1.get().isPartial(), "Delivery on Receiver 1 Should not be complete");
         if (bothDeliveriesMultiFrame) {
-            assertTrue("Delivery on Receiver 2 Should be complete", receivedDelivery2.get().isPartial());
+            assertTrue(receivedDelivery2.get().isPartial(), "Delivery on Receiver 2 Should be complete");
         } else {
-            assertFalse("Delivery on Receiver 2 Should not be complete", receivedDelivery2.get().isPartial());
+            assertFalse(receivedDelivery2.get().isPartial(), "Delivery on Receiver 2 Should not be complete");
         }
 
         peer.remoteTransfer().withDeliveryId(0)
@@ -2065,8 +2069,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                  .withPayload(payload2).now();
         }
 
-        assertFalse("Delivery on Receiver 1 Should be complete", receivedDelivery1.get().isPartial());
-        assertFalse("Delivery on Receiver 2 Should be complete", receivedDelivery2.get().isPartial());
+        assertFalse(receivedDelivery1.get().isPartial(), "Delivery on Receiver 1 Should be complete");
+        assertFalse(receivedDelivery2.get().isPartial(), "Delivery on Receiver 2 Should be complete");
 
         peer.expectDisposition().withFirst(1)
                                 .withSettled(true)
@@ -2083,8 +2087,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         ProtonBuffer payloadBuffer1 = receivedDelivery1.get().readAll();
         ProtonBuffer payloadBuffer2 = receivedDelivery2.get().readAll();
 
-        assertEquals("Received 1 payload size is wrong", payload1.length * 2, payloadBuffer1.getReadableBytes());
-        assertEquals("Received 2 payload size is wrong", payload2.length * (bothDeliveriesMultiFrame ? 2 : 1), payloadBuffer2.getReadableBytes());
+        assertEquals(payload1.length * 2, payloadBuffer1.getReadableBytes(), "Received 1 payload size is wrong");
+        assertEquals(payload2.length * (bothDeliveriesMultiFrame ? 2 : 1), payloadBuffer2.getReadableBytes(), "Received 2 payload size is wrong");
 
         receivedDelivery2.get().disposition(Accepted.getInstance(), true);
         receivedDelivery1.get().disposition(Accepted.getInstance(), true);
@@ -2094,7 +2098,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverDeliveryIdTrackingHandlesAbortedDelivery() {
         // Check aborted=true, more=false, settled=true.
         doTestReceiverDeliveryIdTrackingHandlesAbortedDelivery(false, true);
@@ -2155,9 +2159,9 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         receiver.open();
 
-        assertNull("Should not have any delivery data yet on receiver 1", receivedDelivery.get());
-        assertEquals("Should not have any delivery data yet on receiver 1", 0, deliveryCounter.get());
-        assertFalse("Should not have any delivery data yet on receiver 1", deliveryUpdated.get());
+        assertNull(receivedDelivery.get(), "Should not have any delivery data yet on receiver 1");
+        assertEquals(0, deliveryCounter.get(), "Should not have any delivery data yet on receiver 1");
+        assertFalse(deliveryUpdated.get(), "Should not have any delivery data yet on receiver 1");
 
         // First chunk indicates more to come.
         peer.remoteTransfer().withDeliveryId(0)
@@ -2166,9 +2170,9 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0)
                              .withPayload(payload).now();
 
-        assertNotNull("Should have delivery data on receiver", receivedDelivery.get());
-        assertEquals("Should have delivery data on receiver", 1, deliveryCounter.get());
-        assertFalse("Should not have any delivery updates yet on receiver", deliveryUpdated.get());
+        assertNotNull(receivedDelivery.get(), "Should have delivery data on receiver");
+        assertEquals(1, deliveryCounter.get(), "Should have delivery data on receiver");
+        assertFalse(deliveryUpdated.get(), "Should not have any delivery updates yet on receiver");
 
         // Second chunk indicates more to come as a twist but also signals aborted.
         peer.remoteTransfer().withDeliveryId(0)
@@ -2178,12 +2182,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0)
                              .withPayload(payload).now();
 
-        assertNotNull("Should have delivery data on receiver", receivedDelivery.get());
-        assertEquals("Should have delivery data on receiver", 2, deliveryCounter.get());
-        assertFalse("Should not have a delivery updates on receiver", deliveryUpdated.get());
-        assertTrue("Should now show that delivery is aborted", receivedDelivery.get().isAborted());
-        assertTrue("Should now show that delivery is remotely settled", receivedDelivery.get().isRemotelySettled());
-        assertNull("Aboarted Delivery should discard read bytes", receivedDelivery.get().readAll());
+        assertNotNull(receivedDelivery.get(), "Should have delivery data on receiver");
+        assertEquals(2, deliveryCounter.get(), "Should have delivery data on receiver");
+        assertFalse(deliveryUpdated.get(), "Should not have a delivery updates on receiver");
+        assertTrue(receivedDelivery.get().isAborted(), "Should now show that delivery is aborted");
+        assertTrue(receivedDelivery.get().isRemotelySettled(), "Should now show that delivery is remotely settled");
+        assertNull(receivedDelivery.get().readAll(), "Aboarted Delivery should discard read bytes");
 
         // Another delivery now which should arrive just fine, no further frames on this one.
         peer.remoteTransfer().withDeliveryId(1)
@@ -2192,13 +2196,13 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0)
                              .withPayload(payload).now();
 
-        assertNotNull("should have one aborted delivery", abortedDelivery.get());
-        assertNotNull("Should have delivery data on receiver", receivedDelivery.get());
-        assertNotSame("Should have a final non-aborted delivery", abortedDelivery.get(), receivedDelivery.get());
-        assertEquals("Should have delivery data on receiver", 3, deliveryCounter.get());
-        assertFalse("Should not have a delivery updates on receiver", deliveryUpdated.get());
-        assertFalse("Should now show that delivery is not aborted", receivedDelivery.get().isAborted());
-        assertEquals("Should have delivery tagged as two", 2, receivedDelivery.get().getTag().tagBuffer().getByte(0));
+        assertNotNull(abortedDelivery.get(), "Should have one aborted delivery");
+        assertNotNull(receivedDelivery.get(), "Should have delivery data on receiver");
+        assertNotSame(abortedDelivery.get(), receivedDelivery.get(), "Should have a final non-aborted delivery");
+        assertEquals(3, deliveryCounter.get(), "Should have delivery data on receiver");
+        assertFalse(deliveryUpdated.get(), "Should not have a delivery updates on receiver");
+        assertFalse(receivedDelivery.get().isAborted(), "Should now show that delivery is not aborted");
+        assertEquals(2, receivedDelivery.get().getTag().tagBuffer().getByte(0), "Should have delivery tagged as two");
 
         // Test that delivery count updates correctly on next flow
         peer.expectFlow().withLinkCredit(10).withDeliveryCount(2);
@@ -2218,12 +2222,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testAbortedTransferRemovedFromUnsettledListOnceSettledRemoteSettles() {
         doTestAbortedTransferRemovedFromUnsettledListOnceSettled(true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testAbortedTransferRemovedFromUnsettledListOnceSettledRemoteDoesNotSettle() {
         doTestAbortedTransferRemovedFromUnsettledListOnceSettled(false);
     }
@@ -2272,7 +2276,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0)
                              .withPayload(payload).now();
 
-        assertNotNull("should have one aborted delivery", abortedDelivery.get());
+        assertNotNull(abortedDelivery.get(), "should have one aborted delivery");
 
         assertTrue(receiver.hasUnsettled());
         assertEquals(1, receiver.unsettled().size());
@@ -2293,7 +2297,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testDeliveryWithIdOmittedOnContinuationTransfers() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -2353,10 +2357,10 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver1.addCredit(5);
         receiver2.addCredit(5);
 
-        assertNull("Should not have any delivery data yet on receiver 1", receivedDelivery1.get());
-        assertNull("Should not have any delivery date yet on receiver 2", receivedDelivery2.get());
-        assertEquals("Receiver 1 should not have any transfers yet", 0, receiver1Transfers.get());
-        assertEquals("Receiver 2 should not have any transfers yet", 0, receiver2Transfers.get());
+        assertNull(receivedDelivery1.get(), "Should not have any delivery data yet on receiver 1");
+        assertNull(receivedDelivery2.get(), "Should not have any delivery date yet on receiver 2");
+        assertEquals(0, receiver1Transfers.get(), "Receiver 1 should not have any transfers yet");
+        assertEquals(0, receiver2Transfers.get(), "Receiver 2 should not have any transfers yet");
 
         peer.remoteTransfer().withDeliveryId(0)
                              .withHandle(0)
@@ -2371,10 +2375,10 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0)
                              .withPayload(new byte[] {10}).now();
 
-        assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
-        assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
-        assertEquals("Receiver 1 should have 1 transfers", 1, receiver1Transfers.get());
-        assertEquals("Receiver 2 should have 1 transfers", 1, receiver2Transfers.get());
+        assertNotNull(receivedDelivery1.get(), "Should have a delivery event on receiver 1");
+        assertNotNull(receivedDelivery2.get(), "Should have a delivery event on receiver 2");
+        assertEquals(1, receiver1Transfers.get(), "Receiver 1 should have 1 transfers");
+        assertEquals(1, receiver2Transfers.get(), "Receiver 2 should have 1 transfers");
         assertNotSame(receivedDelivery1.get(), receivedDelivery2.get());
 
         peer.remoteTransfer().withHandle(1)
@@ -2388,10 +2392,10 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0)
                              .withPayload(new byte[] {2}).now();
 
-        assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
-        assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
-        assertEquals("Receiver 1 should have 2 transfers", 2, receiver1Transfers.get());
-        assertEquals("Receiver 2 should have 2 transfers", 2, receiver2Transfers.get());
+        assertNotNull(receivedDelivery1.get(), "Should have a delivery event on receiver 1");
+        assertNotNull(receivedDelivery2.get(), "Should have a delivery event on receiver 2");
+        assertEquals(2, receiver1Transfers.get(), "Receiver 1 should have 2 transfers");
+        assertEquals(2, receiver2Transfers.get(), "Receiver 2 should have 2 transfers");
         assertNotSame(receivedDelivery1.get(), receivedDelivery2.get());
 
         peer.remoteTransfer().withHandle(0)
@@ -2405,10 +2409,10 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0)
                              .withPayload(new byte[] {12}).now();
 
-        assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
-        assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
-        assertEquals("Receiver 1 should have 3 transfers", 3, receiver1Transfers.get());
-        assertEquals("Receiver 2 should have 3 transfers", 3, receiver2Transfers.get());
+        assertNotNull(receivedDelivery1.get(), "Should have a delivery event on receiver 1");
+        assertNotNull(receivedDelivery2.get(), "Should have a delivery event on receiver 2");
+        assertEquals(3, receiver1Transfers.get(), "Receiver 1 should have 3 transfers");
+        assertEquals(3, receiver2Transfers.get(), "Receiver 2 should have 3 transfers");
         assertNotSame(receivedDelivery1.get(), receivedDelivery2.get());
 
         peer.remoteTransfer().withHandle(1)
@@ -2417,13 +2421,13 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0)
                              .withPayload(new byte[] {13}).now();
 
-        assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
-        assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
-        assertEquals("Receiver 1 should have 3 transfers", 3, receiver1Transfers.get());
-        assertEquals("Receiver 2 should have 4 transfers", 4, receiver2Transfers.get());
+        assertNotNull(receivedDelivery1.get(), "Should have a delivery event on receiver 1");
+        assertNotNull(receivedDelivery2.get(), "Should have a delivery event on receiver 2");
+        assertEquals(3, receiver1Transfers.get(), "Receiver 1 should have 3 transfers");
+        assertEquals(4, receiver2Transfers.get(), "Receiver 2 should have 4 transfers");
         assertNotSame(receivedDelivery1.get(), receivedDelivery2.get());
-        assertFalse("Delivery on Receiver 1 Should be complete", receivedDelivery1.get().isPartial());
-        assertFalse("Delivery on Receiver 2 Should be complete", receivedDelivery2.get().isPartial());
+        assertFalse(receivedDelivery1.get().isPartial(), "Delivery on Receiver 1 Should be complete");
+        assertFalse(receivedDelivery2.get().isPartial(), "Delivery on Receiver 2 Should be complete");
 
         assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag().tagBuffer().getArray());
         assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag().tagBuffer().getArray());
@@ -2457,7 +2461,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testDeliveryIdThresholdsAndWraps() {
         // Check start from 0
         doDeliveryIdThresholdsWrapsTestImpl(UnsignedInteger.ZERO, UnsignedInteger.ONE, UnsignedInteger.valueOf(2));
@@ -2524,44 +2528,44 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.open();
         receiver.addCredit(5);
 
-        assertNull("Should not have received delivery 1", receivedDelivery1.get());
-        assertNull("Should not have received delivery 2", receivedDelivery2.get());
-        assertNull("Should not have received delivery 3", receivedDelivery3.get());
-        assertEquals("Receiver should not have any deliveries yet", 0, deliveryCounter.get());
+        assertNull(receivedDelivery1.get(), "Should not have received delivery 1");
+        assertNull(receivedDelivery2.get(), "Should not have received delivery 2");
+        assertNull(receivedDelivery3.get(), "Should not have received delivery 3");
+        assertEquals(0, deliveryCounter.get(), "Receiver should not have any deliveries yet");
 
         peer.remoteTransfer().withDeliveryId(deliveryId1.intValue())
                              .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
                              .withMessageFormat(0)
                              .withPayload(new byte[] {1}).now();
 
-        assertNotNull("Should have received delivery 1", receivedDelivery1.get());
-        assertNull("Should not have received delivery 2", receivedDelivery2.get());
-        assertNull("Should not have received delivery 3", receivedDelivery3.get());
-        assertEquals("Receiver should have 1 deliveries now", 1, deliveryCounter.get());
+        assertNotNull(receivedDelivery1.get(), "Should have received delivery 1");
+        assertNull(receivedDelivery2.get(), "Should not have received delivery 2");
+        assertNull(receivedDelivery3.get(), "Should not have received delivery 3");
+        assertEquals(1, deliveryCounter.get(), "Receiver should have 1 deliveries now");
 
         peer.remoteTransfer().withDeliveryId(deliveryId2.intValue())
                              .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
                              .withMessageFormat(0)
                              .withPayload(new byte[] {2}).now();
 
-        assertNotNull("Should have received delivery 1", receivedDelivery1.get());
-        assertNotNull("Should have received delivery 2", receivedDelivery2.get());
-        assertNull("Should not have received delivery 3", receivedDelivery3.get());
-        assertEquals("Receiver should have 2 deliveries now", 2, deliveryCounter.get());
+        assertNotNull(receivedDelivery1.get(), "Should have received delivery 1");
+        assertNotNull(receivedDelivery2.get(), "Should have received delivery 2");
+        assertNull(receivedDelivery3.get(), "Should not have received delivery 3");
+        assertEquals(2, deliveryCounter.get(), "Receiver should have 2 deliveries now");
 
         peer.remoteTransfer().withDeliveryId(deliveryId3.intValue())
                              .withDeliveryTag(deliveryTag3.getBytes(StandardCharsets.UTF_8))
                              .withMessageFormat(0)
                              .withPayload(new byte[] {3}).now();
 
-        assertNotNull("Should have received delivery 1", receivedDelivery1.get());
-        assertNotNull("Should have received delivery 2", receivedDelivery2.get());
-        assertNotNull("Should have received delivery 3", receivedDelivery3.get());
-        assertEquals("Receiver should have 3 deliveries now", 3, deliveryCounter.get());
+        assertNotNull(receivedDelivery1.get(), "Should have received delivery 1");
+        assertNotNull(receivedDelivery2.get(), "Should have received delivery 2");
+        assertNotNull(receivedDelivery3.get(), "Should have received delivery 3");
+        assertEquals(3, deliveryCounter.get(), "Receiver should have 3 deliveries now");
 
-        assertNotSame("delivery duplicate detected", receivedDelivery1.get(), receivedDelivery2.get());
-        assertNotSame("delivery duplicate detected", receivedDelivery2.get(), receivedDelivery3.get());
-        assertNotSame("delivery duplicate detected", receivedDelivery1.get(), receivedDelivery3.get());
+        assertNotSame(receivedDelivery1.get(), receivedDelivery2.get(), "delivery duplicate detected");
+        assertNotSame(receivedDelivery2.get(), receivedDelivery3.get(), "delivery duplicate detected");
+        assertNotSame(receivedDelivery1.get(), receivedDelivery3.get(), "delivery duplicate detected");
 
         // Verify deliveries arrived with expected payload
         assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag().tagBuffer().getArray());
@@ -2572,9 +2576,9 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         ProtonBuffer delivery2Buffer = receivedDelivery2.get().readAll();
         ProtonBuffer delivery3Buffer = receivedDelivery3.get().readAll();
 
-        assertEquals("Delivery 1 payload not as expected", 1, delivery1Buffer.readByte());
-        assertEquals("Delivery 2 payload not as expected", 2, delivery2Buffer.readByte());
-        assertEquals("Delivery 3 payload not as expected", 3, delivery3Buffer.readByte());
+        assertEquals(1, delivery1Buffer.readByte(), "Delivery 1 payload not as expected");
+        assertEquals(2, delivery2Buffer.readByte(), "Delivery 2 payload not as expected");
+        assertEquals(3, delivery3Buffer.readByte(), "Delivery 3 payload not as expected");
 
         peer.expectDetach().respond();
         peer.expectEnd().respond();
@@ -2589,12 +2593,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverFlowSentAfterAttachWrittenWhenCreditPrefilled() throws Exception {
         doTestReceiverFlowSentAfterAttachWritten(true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverFlowSentAfterAttachWrittenWhenCreditAddedBeforeAttachResponse() throws Exception {
         doTestReceiverFlowSentAfterAttachWritten(false);
     }
@@ -2645,7 +2649,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverHandlesDeferredOpenAndBeginAttachResponses() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -2680,7 +2684,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.respondToLastBegin().now();
         peer.respondToLastAttach().now();
 
-        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+        assertTrue(receiverRemotelyOpened.get(), "Receiver remote opened event did not fire");
         assertNotNull(receiver.getRemoteSource().getAddress());
 
         connection.close();
@@ -2688,27 +2692,27 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndRsponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, true, true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndNoRsponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, true, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndNoRsponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, false, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenButNoResponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, false, false, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenNotWritten() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(false, false, false, false);
     }
@@ -2763,27 +2767,27 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndReponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndNoResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenAndResponseBeginWrittenAndNoResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenButNoResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, false, false, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenNotWritten() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(false, false, false, false);
     }
@@ -2857,12 +2861,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNotNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testCloseReceiverWithErrorCondition() throws Exception {
         doTestCloseOrDetachWithErrorCondition(true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testDetachReceiverWithErrorCondition() throws Exception {
         doTestCloseOrDetachWithErrorCondition(false);
     }
@@ -2905,32 +2909,32 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAddCreditFailsAfterReceiverLocallyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenLinkIsNotOperable(true, false, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAddCreditFailsAfterReceiverLocallyDetached() throws Exception {
         doTestReceiverAddCreditFailsWhenLinkIsNotOperable(true, false, true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAddCreditFailsAfterReceiverRemotelyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenLinkIsNotOperable(false, true, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAddCreditFailsAfterReceiverRemotelyDetached() throws Exception {
         doTestReceiverAddCreditFailsWhenLinkIsNotOperable(false, true, true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAddCreditFailsAfterReceiverFullyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenLinkIsNotOperable(true, true, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAddCreditFailsAfterReceiverFullyDetached() throws Exception {
         doTestReceiverAddCreditFailsWhenLinkIsNotOperable(true, true, true);
     }
@@ -2980,17 +2984,17 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAddCreditFailsAfterSessionLocallyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenSessionNotOperable(true, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAddCreditFailsAfterSessionRemotelyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenSessionNotOperable(false, true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAddCreditFailsAfterSessionFullyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenSessionNotOperable(true, true);
     }
@@ -3036,17 +3040,17 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAddCreditFailsAfterConnectionLocallyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenConnectionNotOperable(true, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAddCreditFailsAfterConnectionRemotelyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenConnectionNotOperable(false, true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAddCreditFailsAfterConnectionFullyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenConnectionNotOperable(true, true);
     }
@@ -3092,32 +3096,32 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverDispositionFailsAfterReceiverLocallyClosed() throws Exception {
         doTestReceiverDispositionFailsWhenLinkIsNotOperable(true, false, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverDispositionFailsAfterReceiverLocallyDetached() throws Exception {
         doTestReceiverDispositionFailsWhenLinkIsNotOperable(true, false, true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverDispositionFailsAfterReceiverRemotelyClosed() throws Exception {
         doTestReceiverDispositionFailsWhenLinkIsNotOperable(false, true, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverDispositionFailsAfterReceiverRemotelyDetached() throws Exception {
         doTestReceiverDispositionFailsWhenLinkIsNotOperable(false, true, true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverDispositionFailsAfterReceiverFullyClosed() throws Exception {
         doTestReceiverDispositionFailsWhenLinkIsNotOperable(true, true, false);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverDispositionFailsAfterReceiverFullyDetached() throws Exception {
         doTestReceiverDispositionFailsWhenLinkIsNotOperable(true, true, true);
     }
@@ -3170,17 +3174,17 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testDrainCreditAmountLessThanCurrentCreditThrowsIAE() throws Exception {
         doTestReceiverDrainThrowsIAEForCertainDrainAmountScenarios(10, 1);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testDrainOfNegativeCreditAmountThrowsIAEWhenCreditIsZero() throws Exception {
         doTestReceiverDrainThrowsIAEForCertainDrainAmountScenarios(0, -1);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testDrainOfNegativeCreditAmountThrowsIAEWhenCreditIsNotZero() throws Exception {
         doTestReceiverDrainThrowsIAEForCertainDrainAmountScenarios(10, -1);
     }
@@ -3217,7 +3221,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         } catch (IllegalArgumentException iae) {}
 
         peer.waitForScriptToComplete();
-        assertFalse("Handler was called when no flow expected", handlerCalled.get());
+        assertFalse(handlerCalled.get(), "Handler was called when no flow expected");
 
         peer.expectDetach().respond();
         receiver.close();
@@ -3227,7 +3231,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testDrainRequestWithNoCreditPendingAndAmountRequestedAsZero() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -3260,7 +3264,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertFalse(receiver.drain(0));
 
         peer.waitForScriptToComplete();
-        assertFalse("Handler was not called", handlerCalled.get());
+        assertFalse(handlerCalled.get(), "Handler was not called");
 
         peer.expectDetach().respond();
         receiver.close();
@@ -3270,7 +3274,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverDrainWithCreditsWhenNoCreditOutstanding() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -3309,7 +3313,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.drain(drainAmount);
 
         peer.waitForScriptToComplete();
-        assertTrue("Handler was not called", handlerCalled.get());
+        assertTrue(handlerCalled.get(), "Handler was not called");
 
         peer.expectDetach().respond();
         receiver.close();
@@ -3319,7 +3323,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiveComplexEndodedAMQPMessageAndDecode() throws IOException {
         final String SERIALIZED_JAVA_OBJECT_CONTENT_TYPE = "application/x-java-serialized-object";
         final String JMS_MSG_TYPE = "x-opt-jms-msg-type";
@@ -3414,7 +3418,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_0000)
+    @Test
     public void testReceiverCreditNotClearedUntilClosedAfterRemoteClosed() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -3442,7 +3446,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_0000)
+    @Test
     public void testReceiverCreditNotClearedUntilClosedAfterSessionRemoteClosed() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -3470,7 +3474,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_0000)
+    @Test
     public void testReceiverCreditNotClearedUntilClosedAfterConnectionRemoteClosed() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -3498,7 +3502,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_0000)
+    @Test
     public void testReceiverCreditNotClearedUntilClosedAfterEngineShutdown() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -3526,7 +3530,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverHonorsDeliverySetEventHandlers() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -3585,15 +3589,15 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.addCredit(2);
         receiver.close();
 
-        assertEquals("Should only be one initial delivery", 1, deliveryCounter.get());
-        assertEquals("Should be a second delivery update at the delivery handler", 1, additionalDeliveryCounter.get());
-        assertEquals("Not all deliveries received dispositions", 1, dispositionCounter.get());
+        assertEquals(1, deliveryCounter.get(), "Should only be one initial delivery");
+        assertEquals(1, additionalDeliveryCounter.get(), "Should be a second delivery update at the delivery handler");
+        assertEquals(1, dispositionCounter.get(), "Not all deliveries received dispositions");
 
         byte deliveryTag = 0;
 
         for (IncomingDelivery delivery : deliveries) {
-            assertEquals("Delivery not updated in correct order", deliveryTag++, delivery.getTag().tagBuffer().getByte(0));
-            assertTrue("Delivery should be marked as remotely setted", delivery.isRemotelySettled());
+            assertEquals(deliveryTag++, delivery.getTag().tagBuffer().getByte(0), "Delivery not updated in correct order");
+            assertTrue(delivery.isRemotelySettled(), "Delivery should be marked as remotely setted");
         }
 
         peer.waitForScriptToComplete();
@@ -3601,12 +3605,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverAbortedHandlerCalledWhenSet() throws Exception {
         doTestReceiverReadHandlerOrAbortHandlerCalled(true);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testReceiverReadHandlerCalledForAbortWhenAbortedNotSet() throws Exception {
         doTestReceiverReadHandlerOrAbortHandlerCalled(false);
     }
@@ -3667,13 +3671,13 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.addCredit(2);
         receiver.close();
 
-        assertEquals("Should only be one initial delivery", 1, deliveryCounter.get());
+        assertEquals(1, deliveryCounter.get(), "Should only be one initial delivery");
         if (setAbortHandler) {
-            assertEquals("Should be no aborted delivery in read event", 0, deliveryAbortedInReadEventCounter.get());
-            assertEquals("Should only be one aborted delivery events", 1, deliveryAbortedCounter.get());
+            assertEquals(0, deliveryAbortedInReadEventCounter.get(), "Should be no aborted delivery in read event");
+            assertEquals(1, deliveryAbortedCounter.get(), "Should only be one aborted delivery events");
         } else {
-            assertEquals("Should only be no aborted delivery in read event", 1, deliveryAbortedInReadEventCounter.get());
-            assertEquals("Should be no aborted delivery events", 0, deliveryAbortedCounter.get());
+            assertEquals(1, deliveryAbortedInReadEventCounter.get(), "Should only be no aborted delivery in read event");
+            assertEquals(0, deliveryAbortedCounter.get(), "Should be no aborted delivery events");
         }
 
         peer.waitForScriptToComplete();
@@ -3681,7 +3685,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20_000)
+    @Test
     public void testIncomingDeliveryReadEventSignaledWhenNoAbortedHandlerSet() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -3732,8 +3736,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.addCredit(2);
         receiver.close();
 
-        assertEquals("Should only be one initial delivery", 1, deliveryCounter.get());
-        assertEquals("Should only be one aborted delivery", 1, deliveryAbortedCounter.get());
+        assertEquals(1, deliveryCounter.get(), "Should only be one initial delivery");
+        assertEquals(1, deliveryAbortedCounter.get(), "Should only be one aborted delivery");
 
         peer.waitForScriptToComplete();
 

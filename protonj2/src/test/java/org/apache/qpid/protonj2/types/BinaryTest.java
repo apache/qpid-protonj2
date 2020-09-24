@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.protonj2.types;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BinaryTest {
 
@@ -30,14 +30,14 @@ public class BinaryTest {
     public void testNotEqualsWithDifferentTypeObject() {
         Binary binary = createSteppedValueBinary(10);
 
-        assertFalse("Objects should not be equal with different type", binary.equals("not-a-Binary"));
+        assertFalse(binary.equals("not-a-Binary"), "Objects should not be equal with different type");
     }
 
     @Test
     public void testEqualsWithItself() {
         Binary binary = createSteppedValueBinary(10);
 
-        assertTrue("Object should be equal to itself", binary.equals(binary));
+        assertTrue(binary.equals(binary), "Object should be equal to itself");
     }
 
     @Test
@@ -46,8 +46,8 @@ public class BinaryTest {
         Binary bin1 = createSteppedValueBinary(length);
         Binary bin2 = createSteppedValueBinary(length);
 
-        assertTrue("Objects should be equal", bin1.equals(bin2));
-        assertTrue("Objects should be equal", bin2.equals(bin1));
+        assertTrue(bin1.equals(bin2), "Objects should be equal");
+        assertTrue(bin2.equals(bin1), "Objects should be equal");
     }
 
     @Test
@@ -56,8 +56,8 @@ public class BinaryTest {
         Binary bin1 = createSteppedValueBinary(length1);
         Binary bin2 = createSteppedValueBinary(length1 + 1);
 
-        assertFalse("Objects should not be equal", bin1.equals(bin2));
-        assertFalse("Objects should not be equal", bin2.equals(bin1));
+        assertFalse(bin1.equals(bin2), "Objects should not be equal");
+        assertFalse(bin2.equals(bin1), "Objects should not be equal");
     }
 
     @Test
@@ -65,8 +65,8 @@ public class BinaryTest {
         Binary bin1 = createNewRepeatedValueBinary(10, (byte) 1);
         Binary bin2 = createNewRepeatedValueBinary(123, (byte) 1);
 
-        assertFalse("Objects should not be equal", bin1.equals(bin2));
-        assertFalse("Objects should not be equal", bin2.equals(bin1));
+        assertFalse(bin1.equals(bin2), "Objects should not be equal");
+        assertFalse(bin2.equals(bin1), "Objects should not be equal");
     }
 
     @Test
@@ -77,8 +77,8 @@ public class BinaryTest {
         Binary bin2 = createNewRepeatedValueBinary(length, (byte) 1);
         bin2.getArray()[5] = (byte) 0;
 
-        assertFalse("Objects should not be equal", bin1.equals(bin2));
-        assertFalse("Objects should not be equal", bin2.equals(bin1));
+        assertFalse(bin1.equals(bin2), "Objects should not be equal");
+        assertFalse(bin2.equals(bin1), "Objects should not be equal");
     }
 
     private Binary createSteppedValueBinary(int length) {

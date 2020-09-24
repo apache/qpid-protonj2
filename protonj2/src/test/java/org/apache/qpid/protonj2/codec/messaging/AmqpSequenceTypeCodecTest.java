@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.protonj2.codec.messaging;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ import org.apache.qpid.protonj2.codec.decoders.messaging.AmqpSequenceTypeDecoder
 import org.apache.qpid.protonj2.codec.encoders.messaging.AmqpSequenceTypeEncoder;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.Modified;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test for decoder of the AmqpValue type.

@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.protonj2.codec.primitives;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.Date;
@@ -33,7 +33,7 @@ import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.TimestampTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.primitives.TimestampTypeEncoder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TimestampTypeCodecTest extends CodecTestSupport {
 

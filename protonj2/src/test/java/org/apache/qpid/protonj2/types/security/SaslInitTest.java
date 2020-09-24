@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.protonj2.types.security;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -29,7 +29,7 @@ import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.security.SaslPerformative.SaslPerformativeHandler;
 import org.apache.qpid.protonj2.types.security.SaslPerformative.SaslPerformativeType;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class SaslInitTest {
 

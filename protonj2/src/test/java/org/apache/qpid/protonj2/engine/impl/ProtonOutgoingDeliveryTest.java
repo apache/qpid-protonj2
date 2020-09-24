@@ -16,10 +16,10 @@
  */
 package org.apache.qpid.protonj2.engine.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class ProtonOutgoingDeliveryTest extends ProtonEngineTestSupport {
@@ -36,8 +36,8 @@ public class ProtonOutgoingDeliveryTest extends ProtonEngineTestSupport {
     public void testDefaultMessageFormat() throws Exception {
         ProtonOutgoingDelivery delivery = new ProtonOutgoingDelivery(Mockito.mock(ProtonSender.class));
 
-        assertEquals("Unexpected value", 0L, DEFAULT_MESSAGE_FORMAT);
-        assertEquals("Unexpected message format", DEFAULT_MESSAGE_FORMAT, delivery.getMessageFormat());
+        assertEquals(0L, DEFAULT_MESSAGE_FORMAT, "Unexpected value");
+        assertEquals(DEFAULT_MESSAGE_FORMAT, delivery.getMessageFormat(), "Unexpected message format");
     }
 
     @Test
@@ -47,15 +47,15 @@ public class ProtonOutgoingDeliveryTest extends ProtonEngineTestSupport {
         // lowest value and default
         int newFormat = 0;
         delivery.setMessageFormat(newFormat);
-        assertEquals("Unexpected message format", newFormat, delivery.getMessageFormat());
+        assertEquals(newFormat, delivery.getMessageFormat(), "Unexpected message format");
 
         newFormat = 123456;
         delivery.setMessageFormat(newFormat);
-        assertEquals("Unexpected message format", newFormat, delivery.getMessageFormat());
+        assertEquals(newFormat, delivery.getMessageFormat(), "Unexpected message format");
 
         // Highest value
         newFormat = (1 << 32) - 1;
         delivery.setMessageFormat(newFormat);
-        assertEquals("Unexpected message format", newFormat, delivery.getMessageFormat());
+        assertEquals(newFormat, delivery.getMessageFormat(), "Unexpected message format");
     }
 }

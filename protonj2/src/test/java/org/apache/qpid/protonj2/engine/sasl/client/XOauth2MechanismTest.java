@@ -16,14 +16,14 @@
  */
 package org.apache.qpid.protonj2.engine.sasl.client;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class XOauth2MechanismTest extends MechanismTestBase {
 
@@ -47,56 +47,56 @@ public class XOauth2MechanismTest extends MechanismTestBase {
 
     @Test
     public void testIsNotApplicableWithNoCredentials() {
-        assertFalse("Should not be applicable with no credentials",
-            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials(null, null, false)));
+        assertFalse(SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials(null, null, false)),
+            "Should not be applicable with no credentials");
     }
 
     @Test
     public void testIsNotApplicableWithNoUser() {
-        assertFalse("Should not be applicable with no username",
-            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials(null, "pass", false)));
+        assertFalse(SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials(null, "pass", false)),
+            "Should not be applicable with no username");
     }
 
     @Test
     public void testIsNotApplicableWithNoToken() {
-        assertFalse("Should not be applicable with no token",
-            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", null, false)));
+        assertFalse(SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", null, false)),
+            "Should not be applicable with no token");
     }
 
     @Test
     public void testIsNotApplicableWithEmtpyUser() {
-        assertFalse("Should not be applicable with empty username",
-            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("", "pass", false)));
+        assertFalse(SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("", "pass", false)),
+            "Should not be applicable with empty username");
     }
 
     @Test
     public void testIsNotApplicableWithEmtpyToken() {
-        assertFalse("Should not be applicable with empty token",
-            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", "", false)));
+        assertFalse(SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", "", false)),
+            "Should not be applicable with empty token");
     }
 
     /** RFC6749 defines the OAUTH2 an access token as comprising VSCHAR elements (\x20-7E) */
     @Test
     public void testIsNotApplicableWithIllegalAccessToken() {
-        assertFalse("Should not be applicable with non vschars",
-            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", "illegalChar\000", false)));
+        assertFalse(SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", "illegalChar\000", false)),
+            "Should not be applicable with non vschars");
     }
 
     @Test
     public void testIsNotApplicableWithEmtpyUserAndToken() {
-        assertFalse("Should not be applicable with empty user and token",
-            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("", "", false)));
+        assertFalse(SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("", "", false)),
+            "Should not be applicable with empty user and token");
     }
 
     @Test
     public void testIsApplicableWithUserAndToken() {
-        assertTrue("Should be applicable with user and token",
-            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", "2YotnFZFEjr1zCsicMWpAA", false)));
+        assertTrue(SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", "2YotnFZFEjr1zCsicMWpAA", false)),
+            "Should be applicable with user and token");
     }
 
     @Test
     public void testIsApplicableWithUserAndPasswordAndPrincipal() {
-        assertTrue("Should be applicable with user and token and principal",
-            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", "2YotnFZFEjr1zCsicMWpAA", true)));
+        assertTrue(SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", "2YotnFZFEjr1zCsicMWpAA", true)),
+            "Should be applicable with user and token and principal");
     }
 }

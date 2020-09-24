@@ -16,13 +16,13 @@
  */
 package org.apache.qpid.protonj2.types.transactions;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.apache.qpid.protonj2.types.Symbol;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CoordinatorTest {
 
