@@ -43,7 +43,6 @@ import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedPartialDataSec
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Header;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -52,7 +51,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Tests the {@link SendContext} implementation
  */
-@Disabled
 @Timeout(20)
 public class StreamSenderTest extends ImperativeClientTestCase {
 
