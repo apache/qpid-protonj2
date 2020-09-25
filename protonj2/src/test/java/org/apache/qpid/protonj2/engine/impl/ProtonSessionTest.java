@@ -953,10 +953,22 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testEmittedSessionIncomingWindowOnFirstFlow() {
+    public void testEmittedSessionIncomingWindowOnFirstFlowNoFrameSizeOrSessionCapacitySet() {
         doSessionIncomingWindowTestImpl(false, false);
+    }
+
+    @Test
+    public void testEmittedSessionIncomingWindowOnFirstFlowWithFrameSizeButNoSessionCapacitySet() {
         doSessionIncomingWindowTestImpl(true, false);
+    }
+
+    @Test
+    public void testEmittedSessionIncomingWindowOnFirstFlowWithNoFrameSizeButWithSessionCapacitySet() {
         doSessionIncomingWindowTestImpl(false, true);
+    }
+
+    @Test
+    public void testEmittedSessionIncomingWindowOnFirstFlowWithFrameSizeAndSessionCapacitySet() {
         doSessionIncomingWindowTestImpl(true, true);
     }
 
@@ -994,6 +1006,8 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         }
         connection.open();
 
+        final int maxFrameSize = (int) connection.getMaxFrameSize();
+
         Session session = connection.session();
         int sessionCapacity = 0;
         if (setSessionCapacity) {
@@ -1003,6 +1017,12 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         // Open session and verify emitted incoming window
         session.open();
+
+        if (setSessionCapacity) {
+            assertEquals(sessionCapacity, session.getRemainingIncomingCapacity());
+        } else {
+            assertEquals(Integer.MAX_VALUE, session.getRemainingIncomingCapacity());
+        }
 
         assertEquals(sessionCapacity, session.getIncomingCapacity(), "Unexpected session capacity");
 
@@ -1036,9 +1056,11 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         // the incoming window if the capacity and max frame size are configured.
         if (setSessionCapacity && setFrameSize) {
             expectedWindowSize = expectedWindowSize - 1;
+            assertTrue(TEST_SESSION_CAPACITY > session.getRemainingIncomingCapacity());
         }
+
         peer.expectFlow().withLinkCredit(1)
-                           .withIncomingWindow(expectedWindowSize);
+                         .withIncomingWindow(expectedWindowSize);
 
         receiver.addCredit(1);
 
@@ -1047,8 +1069,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         if (setSessionCapacity && setFrameSize) {
             expectedWindowSize = expectedWindowSize + 1;
         }
-        peer.expectFlow().withLinkCredit(2)
-                         .withIncomingWindow(expectedWindowSize);
+        peer.expectFlow().withLinkCredit(2).withIncomingWindow(expectedWindowSize);
 
         // This will consume the bytes and free them from the session window tracking.
         assertNotNull(delivered.get().readAll());

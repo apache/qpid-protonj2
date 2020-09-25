@@ -29,6 +29,11 @@ public interface Session extends Endpoint<Session> {
     SessionState getState();
 
     /**
+     * @return the remaining session capacity based on how many bytes are currently pending,
+     */
+    int getRemainingIncomingCapacity();
+
+    /**
      * @return the parent {@link Connection} for this Session.
      */
     Connection getConnection();

@@ -186,6 +186,11 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     }
 
     @Override
+    public int getRemainingIncomingCapacity() {
+        return incomingWindow.getRemainingIncomingCapacity();
+    }
+
+    @Override
     public ProtonSession setProperties(Map<Symbol, Object> properties) {
         checkNotOpened("Cannot set Properties on already opened Session");
 

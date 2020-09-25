@@ -72,6 +72,18 @@ public class ProtonSessionIncomingWindow {
         return incomingCapacity;
     }
 
+    public int getRemainingIncomingCapacity() {
+        final long maxFrameSize = session.getConnection().getMaxFrameSize();
+
+        // TODO: This is linked to below update of capacity which also needs more attention.
+
+        if (incomingCapacity <= 0 || maxFrameSize == UnsignedInteger.MAX_VALUE.longValue()) {
+            return (int) DEFAULT_WINDOW_SIZE;
+        } else {
+            return (int) (incomingCapacity - incomingBytes);
+        }
+    }
+
     /**
      * Initialize the session level window values on the outbound Begin
      *
