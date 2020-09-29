@@ -195,14 +195,14 @@ public class ProtonBufferInputStream extends InputStream implements DataInput {
     @Override
     public float readFloat() throws IOException {
         checkClosed();
-        checkAvailable(Long.BYTES);
+        checkAvailable(Float.BYTES);
         return buffer.readFloat();
     }
 
     @Override
     public double readDouble() throws IOException {
         checkClosed();
-        checkAvailable(Long.BYTES);
+        checkAvailable(Double.BYTES);
         return buffer.readDouble();
     }
 

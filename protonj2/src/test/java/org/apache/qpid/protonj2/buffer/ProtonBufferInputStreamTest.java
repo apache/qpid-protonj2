@@ -16,14 +16,17 @@
  */
 package org.apache.qpid.protonj2.buffer;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
-class ProtonBufferInputStreamTest {
+public class ProtonBufferInputStreamTest {
 
     @Test
     public void testBufferWappedExposesAvailableBytes() throws IOException {
@@ -32,6 +35,51 @@ class ProtonBufferInputStreamTest {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
+
+        stream.close();
+    }
+
+    @Test
+    public void testReadDataFromByteWrittenWithJavaStreams() throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(bos);
+
+        dos.writeInt(1024);
+        dos.write(new byte[] { 0, 1, 2, 3 });
+        dos.writeBoolean(false);
+        dos.writeBoolean(true);
+        dos.writeByte(255);
+        dos.writeChar(65535);
+        dos.writeFloat(3.14f);
+
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(bos.toByteArray());
+        ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
+
+        final byte[] sink = new byte[4];
+
+        assertEquals(1024, stream.readInt());
+        stream.read(sink);
+        assertArrayEquals(new byte[] { 0, 1, 2, 3 }, sink);
+        assertEquals(false, stream.readBoolean());
+        assertEquals(true, stream.readBoolean());
+        assertEquals(255, stream.read());
+        assertEquals(65535, stream.readChar());
+        assertEquals(3.14f, stream.readFloat(), 0.01f);
+
+        stream.close();
+    }
+
+    @Test
+    public void testReadUTF8StringFromDataOuputWrite() throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(bos);
+
+        dos.writeUTF("Hello World");
+
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(bos.toByteArray());
+        ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
+
+        assertEquals("Hello World", stream.readUTF());
 
         stream.close();
     }
