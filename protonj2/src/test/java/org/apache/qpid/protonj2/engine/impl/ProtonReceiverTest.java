@@ -3743,4 +3743,53 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         assertNull(failure);
     }
+
+    @Test
+    public void testSessionWindowOpenedAfterDeliveryRead() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().withIncomingWindow(1).respond();
+        peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+        peer.expectFlow().withLinkCredit(2).withIncomingWindow(1);
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(false)
+                             .withPayload(payload)
+                             .withMessageFormat(0).queue();
+        peer.expectFlow().withLinkCredit(1).withIncomingWindow(1);
+        peer.remoteTransfer().withDeliveryId(1)
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(false)
+                             .withPayload(payload)
+                             .withMessageFormat(0).queue();
+        peer.expectFlow().withLinkCredit(0).withIncomingWindow(1);
+        peer.expectDetach().respond();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().setIncomingCapacity(1024).open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicInteger deliveryCounter = new AtomicInteger();
+
+        receiver.deliveryReadHandler(delivery -> {
+            deliveryCounter.incrementAndGet();
+            delivery.readAll();
+        });
+
+        receiver.open();
+        receiver.addCredit(2);
+        receiver.close();
+
+        assertEquals(2, deliveryCounter.get(), "Should only be one initial delivery");
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 }

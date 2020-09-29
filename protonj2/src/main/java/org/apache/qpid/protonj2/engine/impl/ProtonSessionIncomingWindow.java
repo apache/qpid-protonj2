@@ -251,6 +251,9 @@ public class ProtonSessionIncomingWindow {
 
     void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {
         this.incomingBytes -= bytesRead;
+        if (incomingWindow == 0) {
+            writeFlow(delivery.getLink());
+        }
     }
 
     void validateNextDeliveryId(long deliveryId) {
