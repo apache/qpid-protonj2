@@ -56,7 +56,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     private final ClientStreamSender sender;
     private final ClientStreamTracker tracker;
     private final OutgoingDelivery protonDelivery;
-    private final int bufferSize;
+    private final int writeBufferSize;
     private final SendContextMessage contextMessage = new SendContextMessage();
 
     private ProtonBuffer buffer;
@@ -68,13 +68,12 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     ClientStreamSenderMessage(ClientStreamSender sender, OutgoingDelivery protonDelivery) {
         this.sender = sender;
         this.protonDelivery = protonDelivery;
-        this.protonDelivery.setLinkedResource(this);
         this.tracker = new ClientStreamTracker(this);
 
         if (sender.options().writeBufferSize() > 0) {
-            bufferSize = Math.max(StreamSenderOptions.MIN_BUFFER_SIZE_LIMIT, sender.options().writeBufferSize());
+            writeBufferSize = Math.max(StreamSenderOptions.MIN_BUFFER_SIZE_LIMIT, sender.options().writeBufferSize());
         } else {
-            bufferSize = Math.max(StreamSenderOptions.MIN_BUFFER_SIZE_LIMIT,
+            writeBufferSize = Math.max(StreamSenderOptions.MIN_BUFFER_SIZE_LIMIT,
                                   (int) sender.getProtonSender().getConnection().getMaxFrameSize());
         }
     }
@@ -175,7 +174,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
             throw new ClientIllegalStateException("Cannot create an OutputStream from a aborted send context");
         }
 
-        ProtonBuffer streamBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(bufferSize, bufferSize);
+        ProtonBuffer streamBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(writeBufferSize, writeBufferSize);
 
         if (options.streamSize() > 0) {
             return new SendContextSingularDataSectionOutputStream(options, streamBuffer);
@@ -194,7 +193,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
             throw new ClientIllegalStateException("Cannot create an OutputStream from a aborted send context");
         }
 
-        return new SendContextRawBytesOutputStream(ProtonByteBufferAllocator.DEFAULT.allocate(bufferSize, bufferSize));
+        return new SendContextRawBytesOutputStream(ProtonByteBufferAllocator.DEFAULT.allocate(writeBufferSize, writeBufferSize));
     }
 
     private void appenedDataToBuffer(ProtonBuffer incoming) throws ClientException {
@@ -211,7 +210,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
             }
         }
 
-        if (buffer.getReadableBytes() >= bufferSize) {
+        if (buffer.getReadableBytes() >= writeBufferSize) {
             try {
                 sender.sendMessage(this, contextMessage);
             } finally {

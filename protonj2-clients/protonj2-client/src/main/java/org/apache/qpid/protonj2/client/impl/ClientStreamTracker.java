@@ -42,7 +42,7 @@ public class ClientStreamTracker implements StreamTracker {
     public ClientStreamTracker(ClientStreamSenderMessage message) {
         this.message = message;
         this.sender = message.sender();
-        this.delivery = message.protonDelivery();
+        this.delivery = message.protonDelivery().setLinkedResource(this);
         this.acknowledged = sender.session().getFutureFactory().createFuture();
     }
 

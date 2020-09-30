@@ -16,11 +16,15 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
@@ -60,6 +64,7 @@ public class ClientStreamReceiver implements StreamReceiver {
     private final org.apache.qpid.protonj2.engine.Receiver protonReceiver;
     private final ScheduledExecutorService executor;
     private final String receiverId;
+    private final Map<ClientFuture<StreamDelivery>, ScheduledFuture<?>> receiveRequests = new LinkedHashMap<>();
 
     private volatile int closed;
     private ClientException failureCause;
@@ -169,25 +174,25 @@ public class ClientStreamReceiver implements StreamReceiver {
                 }
             }
 
-            try {
-                // There already is a delivery so we kick off processing in the stream delivery
-                // so that subsequent read attempts will already have a primed read buffer.
-//                if (protonReceiver.hasUnsettled()) {
-//                    currentDelivery.handleDeliveryRead(protonReceiver.unsettled().iterator().next());
-//                } else {
-//                    protonReceiver.deliveryReadHandler((incoming) -> {
-//                        handleDeliveryRead(incoming);
-//                        try {
-//                            currentDelivery.handleDeliveryRead(incoming);
-//                        } finally {
-//                            protonReceiver.deliveryReadHandler(this::handleDeliveryRead);
-//                        }
-//                    });
-//                }
+            if (delivery == null) {
+                if (timeout == 0) {
+                    receive.complete(null);
+                } else {
+                    final ScheduledFuture<?> timeoutFuture;
 
-                // TODO receive.complete(new ClientStreamReceiverMessage(this, delivery));
-            } catch (Exception ex) {
-                receive.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+                    if (timeout > 0) {
+                        timeoutFuture = session.getScheduler().schedule(() -> {
+                            receiveRequests.remove(receive);
+                            receive.complete(null); // Timed receive returns null on failed wait.
+                        }, timeout, unit);
+                    } else {
+                        timeoutFuture = null;
+                    }
+
+                    receiveRequests.put(receive, timeoutFuture);
+                }
+            } else {
+                receive.complete(new ClientStreamDelivery(this, delivery));
             }
         });
 
@@ -197,7 +202,7 @@ public class ClientStreamReceiver implements StreamReceiver {
     @Override
     public StreamDelivery tryReceive() throws ClientException {
         checkClosedOrFailed();
-        return receive(-1, TimeUnit.MILLISECONDS);
+        return receive(0, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -437,22 +442,27 @@ public class ClientStreamReceiver implements StreamReceiver {
             delivery.setDefaultDeliveryState(Released.getInstance());
         }
 
-        // Has a StramDelivery been created and is now waiting for a delivery
-        // to arrive since one was not present at time of creation
-//        if (currentDelivery != null && currentDelivery.protonDelivery() == null) {
-//            currentDelivery.handleDeliveryRead(delivery);
-//        }
+        if (delivery.getLinkedResource() == null) {
+            // New delivery that can be sent to a waiting receive caller
+            if (!receiveRequests.isEmpty()) {
+                Iterator<Entry<ClientFuture<StreamDelivery>, ScheduledFuture<?>>> entries =
+                    receiveRequests.entrySet().iterator();
+
+                Entry<ClientFuture<StreamDelivery>, ScheduledFuture<?>> entry = entries.next();
+                if (entry.getValue() != null) {
+                    entry.getValue().cancel(false);
+                }
+
+                entry.getKey().complete(new ClientStreamDelivery(this, delivery));
+
+                entries.remove();
+            }
+        }
     }
 
     private void handleDeliveryAborted(IncomingDelivery delivery) {
         LOG.trace("Delivery data was aborted: {}", delivery);
-        try {
-            disposition(delivery, null, true);
-        } finally {
-//            if (currentDelivery != null) {
-//                currentDelivery.handleDeliveryAborted(delivery);
-//            }
-        }
+        disposition(delivery, null, true);
     }
 
     private void handleDeliveryStateRemotelyUpdated(IncomingDelivery delivery) {
@@ -575,7 +585,26 @@ public class ClientStreamReceiver implements StreamReceiver {
     }
 
     @Override
-    public long queuedDeliveries() {
-        return 0; // TODO
+    public long queuedDeliveries() throws ClientException {
+        checkClosedOrFailed();
+        final ClientFuture<Integer> request = session.getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            checkClosedOrFailed(request);
+
+            int queued = 0;
+
+            // Scan for an unsettled delivery that isn't yet assigned to a client delivery
+            // either it is a complete delivery or the initial stage of the next incoming
+            for (IncomingDelivery unsettled : protonReceiver.unsettled()) {
+                if (unsettled.getLinkedResource() == null) {
+                    queued++;
+                }
+            }
+
+            request.complete(queued);
+        });
+
+        return session.request(this, request);
     }
 }

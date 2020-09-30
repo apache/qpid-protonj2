@@ -247,7 +247,9 @@ public interface Receiver {
      * arrive but can be used to determine if any pending {@link Delivery} work is ready.
      *
      * @return the number of deliveries that are currently buffered locally.
+     *
+     * @throws ClientException if an error occurs while attempting to fetch the queue count.
      */
-    long queuedDeliveries();
+    long queuedDeliveries() throws ClientException;
 
 }

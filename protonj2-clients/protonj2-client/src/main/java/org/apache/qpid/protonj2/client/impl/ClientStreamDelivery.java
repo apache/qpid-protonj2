@@ -41,7 +41,7 @@ public class ClientStreamDelivery implements StreamDelivery {
 
     public ClientStreamDelivery(ClientStreamReceiver receiver, IncomingDelivery protonDelivery) {
         this.receiver = receiver;
-        this.protonDelivery = protonDelivery;
+        this.protonDelivery = protonDelivery.setLinkedResource(this);
     }
 
     @Override
