@@ -20,10 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.times;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.junit.jupiter.api.Test;
@@ -104,5 +108,156 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
         assertEquals(data1.length + data2.length, delivery.available());
         assertEquals(data1.length + data2.length, delivery.readAll().getReadableBytes());
         assertNull(delivery.readAll());
+    }
+
+    @Test
+    public void testClaimAvailableBytesIndicatesAllBytesRead() throws Exception {
+        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
+            receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
+
+        delivery.appendTransferPayload(createProtonBuffer(1024));
+
+        assertEquals(1024, delivery.available());
+        assertSame(delivery, delivery.claimAvailableBytes());
+
+        Mockito.verify(receiver).deliveryRead(delivery, 1024);
+        Mockito.verifyNoMoreInteractions(receiver);
+    }
+
+    @Test
+    public void testReadAllAfterAllClaimedDoesNotClaimMore() throws Exception {
+        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
+            receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
+
+        delivery.appendTransferPayload(createProtonBuffer(1024));
+
+        assertEquals(1024, delivery.available());
+        assertSame(delivery, delivery.claimAvailableBytes());
+
+        Mockito.verify(receiver).deliveryRead(delivery, 1024);
+
+        assertNotNull(delivery.readAll());
+
+        Mockito.verifyNoMoreInteractions(receiver);
+    }
+
+    @Test
+    public void testReadAllAfterAllClaimedSignalsBytesReadIfMoreDataArrived() throws Exception {
+        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
+            receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
+
+        delivery.appendTransferPayload(createProtonBuffer(1024));
+
+        assertEquals(1024, delivery.available());
+        assertSame(delivery, delivery.claimAvailableBytes());
+
+        Mockito.verify(receiver).deliveryRead(delivery, 1024);
+
+        delivery.appendTransferPayload(createProtonBuffer(512));
+        delivery.appendTransferPayload(createProtonBuffer(1024));
+        delivery.appendTransferPayload(createProtonBuffer(256));
+        delivery.appendTransferPayload(createProtonBuffer(256));
+
+        assertNotNull(delivery.readAll());
+
+        Mockito.verify(receiver).deliveryRead(delivery, 2048);
+        Mockito.verifyNoMoreInteractions(receiver);
+    }
+
+    @Test
+    public void testClaimAvailableBytesDoesNothingOnSecondCall() throws Exception {
+        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
+            receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
+
+        delivery.appendTransferPayload(createProtonBuffer(1024));
+
+        assertEquals(1024, delivery.available());
+        assertSame(delivery, delivery.claimAvailableBytes());
+
+        Mockito.verify(receiver).deliveryRead(delivery, 1024);
+
+        assertEquals(1024, delivery.available());
+        assertSame(delivery, delivery.claimAvailableBytes());
+
+        Mockito.verifyNoMoreInteractions(receiver);
+    }
+
+    @Test
+    public void testClaimAvailableBytesIndicatesAllBytesReadAfterNewDelivery() throws Exception {
+        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
+            receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
+
+        delivery.appendTransferPayload(createProtonBuffer(1024));
+
+        assertEquals(1024, delivery.available());
+        assertSame(delivery, delivery.claimAvailableBytes());
+
+        delivery.appendTransferPayload(createProtonBuffer(512));
+
+        assertEquals(1024 + 512, delivery.available());
+        assertSame(delivery, delivery.claimAvailableBytes());
+
+        Mockito.verify(receiver, times(1)).deliveryRead(delivery, 1024);
+        Mockito.verify(receiver, times(1)).deliveryRead(delivery, 512);
+        Mockito.verifyNoMoreInteractions(receiver);
+    }
+
+    @Test
+    public void testClaimAvailableBytesThenReadSomeAndExpectNoMoreClaimed() throws Exception {
+        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
+            receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
+
+        delivery.appendTransferPayload(createProtonBuffer(1024));
+
+        byte[] target = new byte[512];
+
+        assertEquals(1024, delivery.available());
+        assertSame(delivery, delivery.claimAvailableBytes());
+
+        Mockito.verify(receiver, times(1)).deliveryRead(delivery, 1024);
+
+        delivery.readBytes(target, 0, target.length);
+        delivery.readBytes(target, 0, target.length);
+
+        Mockito.verifyNoMoreInteractions(receiver);
+    }
+
+    @Test
+    public void testClaimThenReadSomeGetMoreAndThenClaimAgain() throws Exception {
+        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
+            receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
+
+        delivery.appendTransferPayload(createProtonBuffer(1024));
+
+        byte[] target = new byte[2048];
+
+        assertEquals(1024, delivery.available());
+        assertSame(delivery, delivery.claimAvailableBytes());
+
+        Mockito.verify(receiver, times(1)).deliveryRead(delivery, 1024);
+
+        delivery.appendTransferPayload(createProtonBuffer(1024));
+
+        delivery.readBytes(target, 0, target.length);
+
+        Mockito.verify(receiver, times(2)).deliveryRead(delivery, 1024);
+        Mockito.verifyNoMoreInteractions(receiver);
+
+        assertSame(delivery, delivery.claimAvailableBytes());
+
+        Mockito.verifyNoMoreInteractions(receiver);
+    }
+
+    private ProtonBuffer createProtonBuffer(int available) {
+        byte[] array = new byte[available];
+        Arrays.fill(array, (byte) 65);
+        return ProtonByteBufferAllocator.DEFAULT.wrap(array);
     }
 }

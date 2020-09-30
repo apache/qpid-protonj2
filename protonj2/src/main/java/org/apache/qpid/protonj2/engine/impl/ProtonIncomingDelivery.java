@@ -36,6 +36,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     private int messageFormat;
     private boolean aborted;
     private int transferCount;
+    private int claimedBytes;
 
     private DeliveryState defaultDeliveryState;
 
@@ -190,11 +191,14 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     public ProtonBuffer readAll() {
         ProtonBuffer result = null;
         if (payload != null) {
-            int bytesRead = payload.getReadableBytes();
+            int bytesRead = claimedBytes -= payload.getReadableBytes();
             result = payload;
             payload = null;
             aggregate = null;
-            link.deliveryRead(this, bytesRead);
+            if (bytesRead < 0) {
+                claimedBytes = 0;
+                link.deliveryRead(this, -bytesRead);
+            }
         }
 
         return result;
@@ -210,7 +214,12 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
                 payload = null;
                 aggregate = null;
             }
-            link.deliveryRead(this, bytesRead);
+
+            bytesRead = claimedBytes -= bytesRead;
+            if (bytesRead < 0) {
+                claimedBytes = 0;
+                link.deliveryRead(this, -bytesRead);
+            }
         }
         return this;
     }
@@ -225,8 +234,28 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
                 payload = null;
                 aggregate = null;
             }
-            link.deliveryRead(this, bytesRead);
+
+            bytesRead = claimedBytes -= bytesRead;
+            if (bytesRead < 0) {
+                claimedBytes = 0;
+                link.deliveryRead(this, -bytesRead);
+            }
         }
+        return this;
+    }
+
+    @Override
+    public IncomingDelivery claimAvailableBytes() {
+        long available = available();
+
+        if (available > 0) {
+            long unclaimed = available - claimedBytes;
+            if (unclaimed > 0) {
+                claimedBytes += unclaimed;
+                link.deliveryRead(this, (int) unclaimed);
+            }
+        }
+
         return this;
     }
 

@@ -43,6 +43,22 @@ public interface IncomingDelivery {
     int available();
 
     /**
+     * Marks all available bytes as being claimed by the caller meaning that available byte count value can
+     * be returned to the session which can expand the session incoming window to allow more bytes to be
+     * sent from the remote peer.
+     * <p>
+     * This method is useful in the case where the {@link Session} has been configured with a small incoming
+     * capacity and the receiver needs to expand the session window in order to read the entire contents of
+     * a delivery whose payload exceeds the configured session capacity.  The {@link IncomingDelivery}
+     * implementation will track the amount of claimed bytes and ensure that it never releases back more
+     * bytes to the {@link Session} than has actually been received as a whole which allows this method
+     * to be called with each incoming {@link Transfer} frame of a large split framed delivery.
+     *
+     * @return this {@link IncomingDelivery} instance.
+     */
+    IncomingDelivery claimAvailableBytes();
+
+    /**
      * Returns the current read buffer without copying it effectively consuming all currently available
      * bytes from this delivery.  If no data is available then this method returns <code>null</code>.
      *
