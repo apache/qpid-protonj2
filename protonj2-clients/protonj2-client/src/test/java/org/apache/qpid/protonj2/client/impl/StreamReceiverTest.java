@@ -26,8 +26,8 @@ import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.DeliveryState;
+import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
-import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.StreamReceiverOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
@@ -88,8 +88,9 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             ConnectionOptions connectionOptions = new ConnectionOptions().maxFrameSize(maxFrameSize);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions);
             StreamReceiverOptions streamOptions = new StreamReceiverOptions().readBufferSize(readBufferSize);
-            StreamReceiver receiver = connection.openStreamReceiver("test-queue", streamOptions).openFuture().get();
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue", streamOptions);
 
+            receiver.openFuture().get();
             receiver.close();
             connection.close().get();
 
@@ -114,7 +115,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             StreamReceiver receiver = connection.openStreamReceiver("test-queue");
-            StreamReceiverMessage delivery = receiver.receive(5, TimeUnit.MILLISECONDS);
+            StreamDelivery delivery = receiver.receive(5, TimeUnit.MILLISECONDS);
 
             assertNull(delivery);
 
@@ -204,7 +205,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
-            final StreamReceiverMessage delivery = receiver.receive();
+            final StreamDelivery delivery = receiver.receive();
 
             Wait.assertTrue("Should eventually be remotely settled", delivery::remoteSettled);
             Wait.assertTrue(() -> { return delivery.remoteState() == DeliveryState.accepted(); });

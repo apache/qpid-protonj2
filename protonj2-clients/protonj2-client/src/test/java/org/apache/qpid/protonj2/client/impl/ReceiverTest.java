@@ -364,7 +364,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                              .respond()
                              .withDrain(true).withLinkCredit(0).withDeliveryCount(credit);
 
-            Future<Receiver> draining = receiver.drain();
+            Future<? extends Receiver> draining = receiver.drain();
             draining.get(5, TimeUnit.SECONDS);
 
             // Close things down
@@ -408,7 +408,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.expectFlow().withDrain(true).withLinkCredit(credit).withDeliveryCount(0);
             peer.expectClose().respond();
 
-            Future<Receiver> draining = receiver.drain();
+            Future<? extends Receiver> draining = receiver.drain();
             assertFalse(draining.isDone());
 
             try {

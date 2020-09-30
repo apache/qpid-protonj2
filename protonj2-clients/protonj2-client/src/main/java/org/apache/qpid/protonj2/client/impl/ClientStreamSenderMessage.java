@@ -18,26 +18,31 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
-import org.apache.qpid.protonj2.client.DeliveryState;
+import org.apache.qpid.protonj2.client.AdvancedMessage;
+import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.OutputStreamOptions;
 import org.apache.qpid.protonj2.client.StreamSenderMessage;
 import org.apache.qpid.protonj2.client.StreamSenderOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
-import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
-import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
+import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
 import org.apache.qpid.protonj2.types.messaging.Data;
+import org.apache.qpid.protonj2.types.messaging.Footer;
+import org.apache.qpid.protonj2.types.messaging.Header;
+import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
+import org.apache.qpid.protonj2.types.messaging.Properties;
 import org.apache.qpid.protonj2.types.messaging.Section;
 
 /**
@@ -49,24 +54,22 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     private static final int DATA_SECTION_HEADER_ENCODING_SIZE = 8;
 
     private final ClientStreamSender sender;
+    private final ClientStreamTracker tracker;
     private final OutgoingDelivery protonDelivery;
     private final int bufferSize;
     private final SendContextMessage contextMessage = new SendContextMessage();
-    private final ClientFuture<StreamSenderMessage> acknowledged;
 
     private ProtonBuffer buffer;
     private volatile int messageFormat;
     private volatile boolean completed;
     private volatile boolean aborted;
     private boolean active;
-    private volatile boolean remotelySetted;
-    private volatile DeliveryState remoteDeliveryState;
 
     ClientStreamSenderMessage(ClientStreamSender sender, OutgoingDelivery protonDelivery) {
         this.sender = sender;
         this.protonDelivery = protonDelivery;
         this.protonDelivery.setLinkedResource(this);
-        this.acknowledged = sender.session().getFutureFactory().createFuture();
+        this.tracker = new ClientStreamTracker(this);
 
         if (sender.options().writeBufferSize() > 0) {
             bufferSize = Math.max(StreamSenderOptions.MIN_BUFFER_SIZE_LIMIT, sender.options().writeBufferSize());
@@ -82,7 +85,12 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     @Override
-    public int messageFormat() {
+    public ClientStreamTracker tracker() {
+        return tracker;
+    }
+
+    @Override
+    public int messageFormat() throws ClientException {
         return messageFormat;
     }
 
@@ -93,36 +101,6 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         }
 
         this.messageFormat = messageFormat;
-
-        return this;
-    }
-
-    @Override
-    public ClientStreamSenderMessage write(Section<?> section) throws ClientException {
-        if (aborted()) {
-            throw new ClientIllegalStateException("Cannot write a Section to an already aborted send context");
-        }
-
-        if (completed()) {
-            throw new ClientIllegalStateException("Cannot write a Section to an already completed send context");
-        }
-
-        appenedDataToBuffer(ClientMessageSupport.encodeSection(section, ProtonByteBufferAllocator.DEFAULT.allocate()));
-
-        return this;
-    }
-
-    @Override
-    public ClientStreamSenderMessage flush() throws ClientException {
-        if (aborted()) {
-            throw new ClientIllegalStateException("Cannot flush already aborted send context");
-        }
-
-        if (completed()) {
-            throw new ClientIllegalStateException("Cannot flush an already completed send context");
-        }
-
-        doFlush();
 
         return this;
     }
@@ -188,7 +166,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     @Override
-    public OutputStream dataOutputStream(OutputStreamOptions options) throws ClientException {
+    public OutputStream body(OutputStreamOptions options) throws ClientException {
         if (completed()) {
             throw new ClientIllegalStateException("Cannot create an OutputStream from a completed send context");
         }
@@ -207,7 +185,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     @Override
-    public OutputStream rawOutputStream(OutputStreamOptions options) throws ClientException {
+    public OutputStream rawOutputStream() throws ClientException {
         if (completed()) {
             throw new ClientIllegalStateException("Cannot create an OutputStream from a completed send context");
         }
@@ -216,77 +194,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
             throw new ClientIllegalStateException("Cannot create an OutputStream from a aborted send context");
         }
 
-        flush();
-
-        return new SendContextRawBytesOutputStream(options, ProtonByteBufferAllocator.DEFAULT.allocate(bufferSize, bufferSize));
-    }
-
-    @Override
-    public DeliveryState state() {
-        return ClientDeliveryState.fromProtonType(protonDelivery.getState());
-    }
-
-    @Override
-    public DeliveryState remoteState() {
-        return remoteDeliveryState;
-    }
-
-    @Override
-    public boolean remoteSettled() {
-        return remotelySetted;
-    }
-
-    @Override
-    public ClientStreamSenderMessage disposition(DeliveryState state, boolean settle) throws ClientException {
-        org.apache.qpid.protonj2.types.transport.DeliveryState protonState = null;
-        if (state != null) {
-            protonState = ClientDeliveryState.asProtonType(state);
-        }
-
-        sender.disposition(protonDelivery, protonState, settle);
-        return this;
-    }
-
-    @Override
-    public ClientStreamSenderMessage settle() throws ClientException {
-        sender.disposition(protonDelivery, null, true);
-        return this;
-    }
-
-    @Override
-    public boolean settled() {
-        return protonDelivery.isSettled();
-    }
-
-    @Override
-    public ClientFuture<StreamSenderMessage> settlementFuture() {
-        return acknowledged;
-    }
-
-    @Override
-    public StreamSenderMessage awaitSettlement() throws ClientException {
-        try {
-            return settlementFuture().get();
-        } catch (ExecutionException exe) {
-            throw ClientExceptionSupport.createNonFatalOrPassthrough(exe.getCause());
-        } catch (InterruptedException e) {
-            Thread.interrupted();
-            throw new ClientException("Wait for settlement was interrupted", e);
-        }
-    }
-
-    @Override
-    public StreamSenderMessage awaitSettlement(long timeout, TimeUnit unit) throws ClientException {
-        try {
-            return settlementFuture().get(timeout, unit);
-        } catch (InterruptedException ie) {
-            Thread.interrupted();
-            throw new ClientException("Wait for settlement was interrupted", ie);
-        } catch (ExecutionException exe) {
-            throw ClientExceptionSupport.createNonFatalOrPassthrough(exe.getCause());
-        } catch (TimeoutException te) {
-            throw new ClientOperationTimedOutException("Timed out waiting for remote settlement", te);
-        }
+        return new SendContextRawBytesOutputStream(ProtonByteBufferAllocator.DEFAULT.allocate(bufferSize, bufferSize));
     }
 
     private void appenedDataToBuffer(ProtonBuffer incoming) throws ClientException {
@@ -443,8 +351,8 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
                 }
 
                 if (complete) {
-                    settlementFuture().get();
-                    settle();
+                    tracker().settlementFuture().get();
+                    tracker().settle();
                 } else {
                     streamBuffer.setIndex(0, 0);
                 }
@@ -456,8 +364,8 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
 
     private final class SendContextRawBytesOutputStream extends SendContextOutputStream {
 
-        public SendContextRawBytesOutputStream(OutputStreamOptions options, ProtonBuffer buffer) {
-            super(options, buffer);
+        public SendContextRawBytesOutputStream(ProtonBuffer buffer) {
+            super(new OutputStreamOptions(), buffer);
         }
     }
 
@@ -507,14 +415,439 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         }
     }
 
-    //----- Internal Event hooks for delivery updates
+    @Override
+    public boolean durable() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 
-    void processDeliveryUpdated(OutgoingDelivery delivery) {
-        remotelySetted = delivery.isRemotelySettled();
-        remoteDeliveryState = ClientDeliveryState.fromProtonType(delivery.getRemoteState());
+    @Override
+    public Message<OutputStream> durable(boolean durable) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-        if (delivery.isRemotelySettled()) {
-            acknowledged.complete(this);
-        }
+    @Override
+    public byte priority() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Message<OutputStream> priority(byte priority) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long timeToLive() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Message<OutputStream> timeToLive(long timeToLive) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean firstAcquirer() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Message<OutputStream> firstAcquirer(boolean firstAcquirer) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long deliveryCount() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Message<OutputStream> deliveryCount(long deliveryCount) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Object messageId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> messageId(Object messageId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public byte[] userId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> userId(byte[] userId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String to() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> to(String to) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String subject() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> subject(String subject) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String replyTo() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> replyTo(String replyTo) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Object correlationId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> correlationId(Object correlationId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String contentType() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> contentType(String contentType) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String contentEncoding() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<?> contentEncoding(String contentEncoding) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long absoluteExpiryTime() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Message<OutputStream> absoluteExpiryTime(long expiryTime) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long creationTime() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Message<OutputStream> creationTime(long createTime) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String groupId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> groupId(String groupId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int groupSequence() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Message<OutputStream> groupSequence(int groupSequence) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String replyToGroupId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> replyToGroupId(String replyToGroupId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Object messageAnnotation(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean hasMessageAnnotation(String key) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean hasMessageAnnotations() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Object removeMessageAnnotation(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> forEachMessageAnnotation(BiConsumer<String, Object> action) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> messageAnnotation(String key, Object value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Object applicationProperty(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean hasApplicationProperty(String key) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean hasApplicationProperties() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Object removeApplicationProperty(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> forEachApplicationProperty(BiConsumer<String, Object> action) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> applicationProperty(String key, Object value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Object footer(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean hasFooter(String key) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean hasFooters() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Object removeFooter(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> forEachFooter(BiConsumer<String, Object> action) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> footer(String key, Object value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public OutputStream body() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<OutputStream> body(OutputStream value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Header header() throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<OutputStream> header(Header header) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public MessageAnnotations annotations() throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<OutputStream> annotations(MessageAnnotations messageAnnotations) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Properties properties() throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<OutputStream> properties(Properties properties) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ApplicationProperties applicationProperties() throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<OutputStream> applicationProperties(ApplicationProperties applicationProperties) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Footer footer() throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<OutputStream> footer(Footer footer) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<OutputStream> addBodySection(Section<?> bodySection) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<OutputStream> bodySections(Collection<Section<?>> sections) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Collection<Section<?>> bodySections() throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<OutputStream> forEachBodySection(Consumer<Section<?>> consumer) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<OutputStream> clearBodySections() throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    OutgoingDelivery protonDelivery() {
+        return protonDelivery;
     }
 }

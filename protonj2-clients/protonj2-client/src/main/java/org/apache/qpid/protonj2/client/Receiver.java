@@ -22,6 +22,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 
+/**
+ * AMQP Receiver that provides an interface to receive complete Deliveries from a remote
+ * peer.  Deliveries that are returned from the {@link #receive()} methods will be complete
+ * and can be read immediately without blocking waiting for additional delivery data to arrive.
+ *
+ * @see StreamReceiver
+ */
 public interface Receiver {
 
     /**
@@ -235,12 +242,12 @@ public interface Receiver {
     Future<Receiver> drain() throws ClientException;
 
     /**
-     * Returns the number of Deliveries that are currently held in the {@link Receiver} prefetched
+     * Returns the number of Deliveries that are currently held in the {@link Receiver} delivery
      * queue.  This number is likely to change immediately following the call as more deliveries
      * arrive but can be used to determine if any pending {@link Delivery} work is ready.
      *
      * @return the number of deliveries that are currently buffered locally.
      */
-    long prefetchedCount();
+    long queuedDeliveries();
 
 }

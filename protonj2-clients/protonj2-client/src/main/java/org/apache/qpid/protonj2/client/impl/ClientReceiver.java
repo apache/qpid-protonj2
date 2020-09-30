@@ -221,7 +221,7 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public long prefetchedCount() {
+    public long queuedDeliveries() {
         return messageQueue.size();
     }
 

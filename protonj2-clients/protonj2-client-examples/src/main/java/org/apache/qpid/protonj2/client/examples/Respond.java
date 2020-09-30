@@ -60,6 +60,8 @@ public class Respond {
                     sender.send(Message.create("Response").durable(true));
                     sender.close();
                 }
+            } else {
+                System.out.println("Failed to read a message during the defined wait interval.");
             }
         } catch (Exception exp) {
             System.out.println("Caught exception, exiting.");

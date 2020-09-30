@@ -16,23 +16,27 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
-import org.apache.qpid.protonj2.client.DeliveryState;
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.client.AdvancedMessage;
+import org.apache.qpid.protonj2.client.Message;
+import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
 import org.apache.qpid.protonj2.client.StreamReceiverMessage;
-import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
-import org.apache.qpid.protonj2.types.messaging.Accepted;
+import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
-import org.apache.qpid.protonj2.types.messaging.Modified;
-import org.apache.qpid.protonj2.types.messaging.Rejected;
-import org.apache.qpid.protonj2.types.messaging.Released;
-import org.apache.qpid.protonj2.types.transport.ErrorCondition;
+import org.apache.qpid.protonj2.types.messaging.Footer;
+import org.apache.qpid.protonj2.types.messaging.Header;
+import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
+import org.apache.qpid.protonj2.types.messaging.Properties;
+import org.apache.qpid.protonj2.types.messaging.Section;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
@@ -57,15 +61,6 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public Map<String, Object> annotations() throws ClientException {
-        if (protonDelivery != null) {
-            return null;
-        } else {
-            throw new ClientIllegalStateException("Cannot read message data until the remote begins a transfer");
-        }
-    }
-
-    @Override
     public boolean aborted() {
         if (protonDelivery != null) {
             return protonDelivery.isAborted();
@@ -84,72 +79,8 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public InputStream rawInputStream() throws ClientException {
-        checkClosed();
-        checkAborted();
-
-        return new RawInputStream();
-    }
-
-    @Override
-    public ClientStreamReceiverMessage accept() throws ClientException {
-        disposition(Accepted.getInstance(), true);
-        return this;
-    }
-
-    @Override
-    public ClientStreamReceiverMessage release() throws ClientException {
-        disposition(Released.getInstance(), true);
-        return this;
-    }
-
-    @Override
-    public ClientStreamReceiverMessage reject(String condition, String description) throws ClientException {
-        disposition(new Rejected().setError(new ErrorCondition(condition, description)), true);
-        return this;
-    }
-
-    @Override
-    public ClientStreamReceiverMessage modified(boolean deliveryFailed, boolean undeliverableHere) throws ClientException {
-        disposition(new Modified().setDeliveryFailed(deliveryFailed).setUndeliverableHere(undeliverableHere), true);
-        return this;
-    }
-
-    @Override
-    public ClientStreamReceiverMessage disposition(DeliveryState state, boolean settle) throws ClientException {
-        disposition(ClientDeliveryState.asProtonType(state), settle);
-        return this;
-    }
-
-    @Override
-    public ClientStreamReceiverMessage settle() throws ClientException {
-        disposition(protonDelivery.getState(), true);
-        return this;
-    }
-
-    @Override
-    public boolean settled() {
-        return protonDelivery != null ? protonDelivery.isSettled() : false;
-    }
-
-    @Override
-    public DeliveryState state() {
-        return protonDelivery != null ? ClientDeliveryState.fromProtonType(protonDelivery.getState()) : null;
-    }
-
-    @Override
     public int messageFormat() {
         return protonDelivery != null ? protonDelivery.getMessageFormat() : 0;
-    }
-
-    @Override
-    public DeliveryState remoteState() {
-        return protonDelivery != null ? ClientDeliveryState.fromProtonType(protonDelivery.getRemoteState()) : null;
-    }
-
-    @Override
-    public boolean remoteSettled() {
-        return protonDelivery != null ? protonDelivery.isRemotelySettled() : false;
     }
 
     //----- Internal Streamed Delivery API and support methods
@@ -174,13 +105,6 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
         }
     }
 
-    private void disposition(org.apache.qpid.protonj2.types.transport.DeliveryState state, boolean settle) throws ClientException {
-        checkAborted();
-        if (protonDelivery != null) {
-            receiver.disposition(protonDelivery, state, settle);
-        }
-    }
-
     //----- Event Handlers for Delivery updates
 
     void handleDeliveryRead(IncomingDelivery delivery) {
@@ -197,24 +121,451 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
     //----- Internal InputStream implementations
 
-    @SuppressWarnings("unused")
-    private class RawInputStream extends InputStream {
+    @Override
+    public Header header() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-        protected final AtomicBoolean closed = new AtomicBoolean();
+    @Override
+    public AdvancedMessage<InputStream> header(Header header) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-        @Override
-        public int read() throws IOException {
-            throw new IOException();
-        }
+    @Override
+    public MessageAnnotations annotations() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-        private void checkClosed() throws IOException {
-            if (closed.get()) {
-                throw new IOException("The InputStream has already been closed.");
-            }
+    @Override
+    public AdvancedMessage<InputStream> annotations(MessageAnnotations messageAnnotations) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-            if (receiver.isClosed()) {
-                throw new IOException("The parent Receiver instance has already been closed.");
-            }
-        }
+    DeliveryAnnotations deliveryAnnotations() {
+        return deliveryAnnotations;
+    }
+
+    @Override
+    public Properties properties() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<InputStream> properties(Properties properties) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ApplicationProperties applicationProperties() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<InputStream> applicationProperties(ApplicationProperties applicationProperties) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Footer footer() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<InputStream> footer(Footer footer) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<InputStream> messageFormat(int messageFormat) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<InputStream> addBodySection(Section<?> bodySection) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<InputStream> bodySections(Collection<Section<?>> sections) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Collection<Section<?>> bodySections() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<InputStream> forEachBodySection(Consumer<Section<?>> consumer) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AdvancedMessage<InputStream> clearBodySections() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean durable() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Message<InputStream> durable(boolean durable) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public byte priority() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Message<InputStream> priority(byte priority) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long timeToLive() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Message<InputStream> timeToLive(long timeToLive) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean firstAcquirer() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Message<InputStream> firstAcquirer(boolean firstAcquirer) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long deliveryCount() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Message<InputStream> deliveryCount(long deliveryCount) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Object messageId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> messageId(Object messageId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public byte[] userId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> userId(byte[] userId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String to() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> to(String to) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String subject() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> subject(String subject) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String replyTo() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> replyTo(String replyTo) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Object correlationId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> correlationId(Object correlationId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String contentType() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> contentType(String contentType) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String contentEncoding() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<?> contentEncoding(String contentEncoding) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long absoluteExpiryTime() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Message<InputStream> absoluteExpiryTime(long expiryTime) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public long creationTime() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Message<InputStream> creationTime(long createTime) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String groupId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> groupId(String groupId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int groupSequence() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Message<InputStream> groupSequence(int groupSequence) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String replyToGroupId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> replyToGroupId(String replyToGroupId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Object messageAnnotation(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean hasMessageAnnotation(String key) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean hasMessageAnnotations() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Object removeMessageAnnotation(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> forEachMessageAnnotation(BiConsumer<String, Object> action) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> messageAnnotation(String key, Object value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Object applicationProperty(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean hasApplicationProperty(String key) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean hasApplicationProperties() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Object removeApplicationProperty(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> forEachApplicationProperty(BiConsumer<String, Object> action) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> applicationProperty(String key, Object value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Object footer(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean hasFooter(String key) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean hasFooters() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Object removeFooter(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> forEachFooter(BiConsumer<String, Object> action) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> footer(String key, Object value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public InputStream body() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Message<InputStream> body(InputStream value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StreamDelivery delivery() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

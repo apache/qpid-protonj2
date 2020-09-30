@@ -63,7 +63,7 @@ public class OutputStreamOptions {
      * @return this {@link OutputStreamOptions} class for chaining.
      */
     protected OutputStreamOptions copyInto(OutputStreamOptions other) {
-        other.streamSize(streamSize);
+        other.bodyLength(streamSize);
         other.completeSendOnClose(completeSendOnClose);
 
         return this;
@@ -84,7 +84,7 @@ public class OutputStreamOptions {
      *
      * @return this {@link OutputStreamOptions} instance.
      */
-    public OutputStreamOptions streamSize(int streamSize) {
+    public OutputStreamOptions bodyLength(int streamSize) {
         this.streamSize = streamSize;
         return this;
     }

@@ -17,14 +17,11 @@
 package org.apache.qpid.protonj2.client;
 
 import java.io.OutputStream;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Section;
-import org.apache.qpid.protonj2.types.transport.Disposition;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
@@ -32,20 +29,17 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
  * at the remote. The {@link StreamSenderMessage} allows for local settlement and disposition management
  * as well as waiting for remote settlement of a streamed message.
  */
-public interface StreamSenderMessage {
+public interface StreamSenderMessage extends AdvancedMessage<OutputStream> {
+
+    /**
+     * @return The {@link Tracker} assigned to monitor the life-cycle of this {@link StreamSenderMessage}
+     */
+    StreamTracker tracker();
 
     /**
      * @return the {@link Sender} that was used to send the delivery that is being tracked.
      */
     StreamSender sender();
-
-    /**
-     * Returns the configured message format value that will be set on the first outgoing
-     * AMQP {@link Transfer} frame for the delivery that comprises this streamed message.
-     *
-     * @return the configured message format that will be sent.
-     */
-    int messageFormat();
 
     /**
      * Sets the configured message format value that will be set on the first outgoing
@@ -61,30 +55,8 @@ public interface StreamSenderMessage {
      *
      * @throws ClientException if an error occurs while attempting set the message format.
      */
+    @Override
     StreamSenderMessage messageFormat(int messageFormat) throws ClientException;
-
-    /**
-     * Writes the given {@link Section} into the {@link SendContext}.  The the data written we
-     * be sent to the remote peer when this {@link SendContext} is flushed or the configured send
-     * buffer limit is reached.
-     *
-     * @param section
-     *      The {@link Section} instance to be written into this send context..
-     *
-     * @return this {@link StreamSenderMessage} instance.
-     *
-     * @throws ClientException if an error occurs while attempting to write the section.
-     */
-    StreamSenderMessage write(Section<?> section) throws ClientException;
-
-    /**
-     * Sends all currently buffered message body data over the parent {@link Sender} link.
-     *
-     * @return this {@link StreamSenderMessage} instance.
-     *
-     * @throws ClientException if an error occurs while attempting to write the buffered contents.
-     */
-    StreamSenderMessage flush() throws ClientException;
 
     /**
      * Marks the currently streaming message as being complete.
@@ -143,112 +115,26 @@ public interface StreamSenderMessage {
      *
      * @see #rawOutputStream(OutputStreamOptions)
      */
-    OutputStream dataOutputStream(OutputStreamOptions options) throws ClientException;
+    OutputStream body(OutputStreamOptions options) throws ClientException;
 
     /**
-     * Creates an {@link OutputStream} instance configured with the given options that writes
-     * the bytes given without additional encoding or transformation.
+     * Creates an {@link OutputStream} instance that writes the bytes given without additional
+     * encoding or transformation.  Using this stream option disables use of any other {@link Message}
+     * APIs and the message transfer is completed upon close of this {@link OutputStream}.
      * <p>
      * The returned {@link OutputStream} can be used to write the payload of an AMQP Message in
      * chunks when the source is not readily available in memory or as part of a larger streams
      * based component.  The source of the bytes written to the {@link OutputStream} should
      * consist of already encoded AMQP {@link Message} data.  For an {@link OutputStream} that
-     * performs the encoding of message data refer to the {@link #dataOutputStream(OutputStreamOptions)}
+     * performs the encoding of message data refer to the {@link #body(OutputStreamOptions)}
      * method.
      *
-     * @param options
-     *      The stream options to use to configure the returned {@link MessageOutputStream}
-     *
-     * @return a {@link OutputStream} instance configured using the given options.
+     * @return an {@link OutputStream} instance that performs no encoding.
      *
      * @throws ClientException if an error occurs while creating the {@link OutputStream}.
      *
      * @see #dataOutputStream(OutputStreamOptions)
      */
-    OutputStream rawOutputStream(OutputStreamOptions options) throws ClientException;
-
-    /**
-     * Settles the delivery locally, if not {@link SenderOptions#autoSettle() auto-settling}.
-     *
-     * @return this {@link StreamSenderMessage} instance.
-     *
-     * @throws ClientException if an error occurs while performing the settlement.
-     */
-    StreamSenderMessage settle() throws ClientException;
-
-    /**
-     * @return true if the sent message has been locally settled.
-     */
-    boolean settled();
-
-    /**
-     * Gets the current local state for the tracked delivery.
-     *
-     * @return the delivery state
-     */
-    DeliveryState state();
-
-    /**
-     * Gets the current remote state for the tracked delivery.
-     *
-     * @return the remote {@link DeliveryState} once a value is received from the remote.
-     */
-    DeliveryState remoteState();
-
-    /**
-     * Gets whether the delivery was settled by the remote peer yet.
-     *
-     * @return whether the delivery is remotely settled
-     */
-    boolean remoteSettled();
-
-    /**
-     * Updates the DeliveryState, and optionally settle the delivery as well.
-     *
-     * @param state
-     *            the delivery state to apply
-     * @param settle
-     *            whether to {@link #settle()} the delivery at the same time
-     *
-     * @return this {@link StreamSenderMessage} instance.
-     *
-     * @throws ClientException
-     */
-    StreamSenderMessage disposition(DeliveryState state, boolean settle) throws ClientException;
-
-    /**
-     * Returns a future that can be used to wait for the remote to acknowledge receipt of
-     * a sent message by settling it.
-     *
-     * @return a {@link Future} that can be used to wait on remote settlement.
-     */
-    Future<StreamSenderMessage> settlementFuture();
-
-    /**
-     * Waits if necessary for the remote to settle the sent delivery unless it has
-     * either already been settled or the original delivery was sent settled in which
-     * case the remote will not send a {@link Disposition} back.
-     *
-     * @return this {@link StreamSenderMessage} instance.
-     *
-     * @throws ClientException if an error occurs while awaiting the remote settlement.
-     */
-    StreamSenderMessage awaitSettlement() throws ClientException;
-
-    /**
-     * Waits if necessary for the remote to settle the sent delivery unless it has
-     * either already been settled or the original delivery was sent settled in which
-     * case the remote will not send a {@link Disposition} back.
-     *
-     * @param timeout
-     *      the maximum time to wait for the remote to settle.
-     * @param unit
-     *      the time unit of the timeout argument.
-     *
-     * @return this {@link StreamSenderMessage} instance.
-     *
-     * @throws ClientException if an error occurs while awaiting the remote settlement.
-     */
-    StreamSenderMessage awaitSettlement(long timeout, TimeUnit unit) throws ClientException;
+    OutputStream rawOutputStream() throws ClientException;
 
 }

@@ -31,6 +31,7 @@ import java.util.function.Supplier;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Message;
+import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
@@ -625,7 +626,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) {
+    public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) throws ClientException {
         return ClientMessageSupport.encodeMessage(this, deliveryAnnotations);
     }
 

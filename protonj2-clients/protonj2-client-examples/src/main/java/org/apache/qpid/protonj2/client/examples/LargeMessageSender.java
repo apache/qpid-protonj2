@@ -21,15 +21,12 @@
 package org.apache.qpid.protonj2.client.examples;
 
 import java.io.OutputStream;
-import java.util.UUID;
 
 import org.apache.qpid.protonj2.client.Client;
-import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.OutputStreamOptions;
 import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamSenderMessage;
-import org.apache.qpid.protonj2.types.messaging.Header;
 
 public class LargeMessageSender {
 
@@ -40,34 +37,26 @@ public class LargeMessageSender {
             int brokerPort = 5672;
             String address = "examples";
 
-            ClientOptions options = new ClientOptions();
-            options.id(UUID.randomUUID().toString());
-            Client client = Client.create(options);
+            Client client = Client.create();
 
             Connection connection = client.connect(brokerHost, brokerPort);
             StreamSender sender = connection.openStreamSender(address);
             StreamSenderMessage message = sender.beginMessage();
 
-            final byte[] buffer = new byte[] { 0, 1, 2, 3, 4 };
+            final byte[] buffer = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
-            Header header = new Header().setDurable(true);
-            message.write(header);
+            message.durable(true);
 
-            // Create an OutputStream that will send an AMQP Header tagged as being durable
-            // once the first write is flushed, the remote will retain the completed message
-            // once all bytes are written and the stream is closed.  Because the stream size
-            // is given up front the encoded Message body will consist of one Data section.
-            OutputStreamOptions streamOptions = new OutputStreamOptions().streamSize(buffer.length);
-            OutputStream output = message.dataOutputStream(streamOptions);
+            // Creates an OutputStream that write a single Data Section whose expected
+            // size is configured in the stream options.  By default closing the stream
+            // completes the message transfer.
+            OutputStreamOptions streamOptions = new OutputStreamOptions().bodyLength(buffer.length);
+            OutputStream output = message.body(streamOptions);
 
-            // Simple example flushes on every byte, a real world usage would likely
-            // be pulling in data in batches and flushing on some fixed boundary.
-            for(byte value : buffer) {
-                output.write(value);
-            }
-
-            // Close will flush pending work and complete the AMQP transfer
+            output.write(buffer);
             output.close();
+
+            message.tracker().awaitSettlement();
 
             connection.close().get();
         } catch (Exception exp) {

@@ -16,9 +16,11 @@
  */
 package org.apache.qpid.protonj2.client;
 
+import java.io.InputStream;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 
 /**
@@ -39,6 +41,10 @@ public interface Delivery {
      * {@link #annotations()} method.  Re-sending the returned message will not also
      * send the incoming delivery annotations, the sender must include them in the
      * {@link Sender#send(Message, Map)} call if they are to be forwarded onto the next recipient.
+     * <p>
+     * Calling this message claims the payload of the delivery for the returned {@link Message} and
+     * excludes use of the {@link #rawInputStream()} method of the {@link Delivery} object.  Calling
+     * the {@link #rawInputStream()} method after calling this method throws {@link ClientIllegalStateException}.
      *
      * @return a {@link Message} instance that wraps the decoded payload.
      *
@@ -49,9 +55,28 @@ public interface Delivery {
     <E> Message<E> message() throws ClientException;
 
     /**
+     * Create and return an {@link InputStream} that reads the raw payload bytes of the given {@link Delivery}.
+     * <p>
+     * Calling this method claims the payload of the delivery for the returned {@link InputStream} and excludes
+     * use of the {@link #message()} and {@link #annotations()} methods of the {@link Delivery} object.  Closing
+     * the returned input stream discards any unread bytes from the delivery payload.  Calling the {@link #message()}
+     * or {@link #annotations()} methods after calling this method throws {@link ClientIllegalStateException}.
+     *
+     * @return an {@link InputStream} instance that can be used to read the raw delivery payload.
+     *
+     * @throws ClientException if an error occurs while decoding the payload.
+     */
+    InputStream rawInputStream() throws ClientException;
+
+    /**
      * Decodes the {@link Delivery} payload and returns a {@link Map} containing a copy
      * of any associated {@link DeliveryAnnotations} that were transmitted with the {@link Message}
      * payload of this {@link Delivery}.
+     * <p>
+     * Calling this message claims the payload of the delivery for the returned {@link Map} and the decoded
+     * {@link Message} that can be accessed via the {@link #message()} method and  excludes use of the
+     * {@link #rawInputStream()} method of the {@link Delivery} object.  Calling the {@link #rawInputStream()}
+     * method after calling this method throws {@link ClientIllegalStateException}.
      *
      * @return copy of the delivery annotations that were transmitted with the {@link Message} payload.
      *
@@ -131,35 +156,45 @@ public interface Delivery {
 
     /**
      * @return true if the delivery has been locally settled.
+     *
+     * @throws ClientException if an error occurs while reading the settled state
      */
-    boolean settled();
+    boolean settled() throws ClientException;
 
     /**
      * Gets the current local state for the delivery.
      *
      * @return the delivery state
+     *
+     * @throws ClientException if an error occurs while reading the delivery state
      */
-    DeliveryState state();
+    DeliveryState state() throws ClientException;
 
     /**
      * Gets the current remote state for the delivery.
      *
      * @return the remote delivery state
+     *
+     * @throws ClientException if an error occurs while reading the remote delivery state
      */
-    DeliveryState remoteState();
+    DeliveryState remoteState() throws ClientException;
 
     /**
      * Gets whether the delivery was settled by the remote peer yet.
      *
      * @return whether the delivery is remotely settled
+     *
+     * @throws ClientException if an error occurs while reading the remote settlement state
      */
-    boolean remoteSettled();
+    boolean remoteSettled() throws ClientException;
 
     /**
      * Gets the message format for the current delivery.
      *
      * @return the message format
+     *
+     * @throws ClientException if an error occurs while reading the delivery message format
      */
-    int messageFormat();
+    int messageFormat() throws ClientException;
 
 }

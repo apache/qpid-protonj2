@@ -67,8 +67,10 @@ public abstract class ClientMessageSupport {
      *      The {@link Message} type to attempt to convert to a {@link ClientMessage} instance.
      *
      * @return a {@link ClientMessage} that represents the given {@link Message} instance.
+     *
+     * @throws ClientException if an unrecoverable error occurs during message conversion.
      */
-    public static <E> AdvancedMessage<E> convertMessage(Message<E> message) {
+    public static <E> AdvancedMessage<E> convertMessage(Message<E> message) throws ClientException {
         if (message instanceof AdvancedMessage) {
             return (AdvancedMessage<E>) message;
         } else {
@@ -89,15 +91,15 @@ public abstract class ClientMessageSupport {
 
     //----- Message Encoding
 
-    public static ProtonBuffer encodeMessage(AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) {
+    public static ProtonBuffer encodeMessage(AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
         return encodeMessage(DEFAULT_ENCODER, DEFAULT_ENCODER.newEncoderState(), ProtonByteBufferAllocator.DEFAULT, message, deliveryAnnotations);
     }
 
-    public static ProtonBuffer encodeMessage(Encoder encoder, ProtonBufferAllocator allocator, AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) {
+    public static ProtonBuffer encodeMessage(Encoder encoder, ProtonBufferAllocator allocator, AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
         return encodeMessage(encoder, encoder.newEncoderState(), ProtonByteBufferAllocator.DEFAULT, message, deliveryAnnotations);
     }
 
-    public static ProtonBuffer encodeMessage(Encoder encoder, EncoderState encoderState, ProtonBufferAllocator allocator, AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) {
+    public static ProtonBuffer encodeMessage(Encoder encoder, EncoderState encoderState, ProtonBufferAllocator allocator, AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
         ProtonBuffer buffer = allocator.allocate();
 
         Header header = message.header();
@@ -246,7 +248,7 @@ public abstract class ClientMessageSupport {
         return (ClientMessage<?>) result;
     }
 
-    private static <E> ClientMessage<E> convertFromOutsideMessage(Message<E> source) {
+    private static <E> ClientMessage<E> convertFromOutsideMessage(Message<E> source) throws ClientException {
         Header header = new Header();
         header.setDurable(source.durable());
         header.setPriority(source.priority());

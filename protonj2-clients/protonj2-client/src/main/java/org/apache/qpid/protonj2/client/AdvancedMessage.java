@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.impl.ClientMessage;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
@@ -53,8 +54,10 @@ public interface AdvancedMessage<E> extends Message<E> {
      * then this method returns <code>null</code>.
      *
      * @return the currently assigned {@link Header} for this message.
+     *
+     * @throws ClientException if an error occurs while retrieving the message data.
      */
-    Header header();
+    Header header() throws ClientException;
 
     /**
      * Assign or replace the {@link Header} instance associated with this message.
@@ -63,16 +66,20 @@ public interface AdvancedMessage<E> extends Message<E> {
      *      The {@link Header} value to assign to this message.
      *
      * @return this {@link AdvancedMessage} instance.
+     *
+     * @throws ClientException if an error occurs while writing the message {@link Header} value.
      */
-    AdvancedMessage<E> header(Header header);
+    AdvancedMessage<E> header(Header header) throws ClientException;
 
     /**
      * Return the current {@link MessageAnnotations} assigned to this message, if none was assigned yet
      * then this method returns <code>null</code>.
      *
      * @return the currently assigned {@link MessageAnnotations} for this message.
+     *
+     * @throws ClientException if an error occurs while retrieving the message data.
      */
-    MessageAnnotations annotations();
+    MessageAnnotations annotations() throws ClientException;
 
     /**
      * Assign or replace the {@link MessageAnnotations} instance associated with this message.
@@ -81,16 +88,20 @@ public interface AdvancedMessage<E> extends Message<E> {
      *      The {@link MessageAnnotations} value to assign to this message.
      *
      * @return this {@link AdvancedMessage} instance.
+     *
+     * @throws ClientException if an error occurs while writing the message {@link MessageAnnotations} value.
      */
-    AdvancedMessage<E> annotations(MessageAnnotations messageAnnotations);
+    AdvancedMessage<E> annotations(MessageAnnotations messageAnnotations) throws ClientException;
 
     /**
      * Return the current {@link Properties} assigned to this message, if none was assigned yet
      * then this method returns <code>null</code>.
      *
      * @return the currently assigned {@link Properties} for this message.
+     *
+     * @throws ClientException if an error occurs while retrieving the message data.
      */
-    Properties properties();
+    Properties properties() throws ClientException;
 
     /**
      * Assign or replace the {@link Properties} instance associated with this message.
@@ -99,16 +110,20 @@ public interface AdvancedMessage<E> extends Message<E> {
      *      The {@link Properties} value to assign to this message.
      *
      * @return this {@link AdvancedMessage} instance.
+     *
+     * @throws ClientException if an error occurs while writing the message {@link Properties} value.
      */
-    AdvancedMessage<E> properties(Properties properties);
+    AdvancedMessage<E> properties(Properties properties) throws ClientException;
 
     /**
      * Return the current {@link ApplicationProperties} assigned to this message, if none was assigned yet
      * then this method returns <code>null</code>.
      *
      * @return the currently assigned {@link ApplicationProperties} for this message.
+     *
+     * @throws ClientException if an error occurs while retrieving the message data.
      */
-    ApplicationProperties applicationProperties();
+    ApplicationProperties applicationProperties() throws ClientException;
 
     /**
      * Assign or replace the {@link ApplicationProperties} instance associated with this message.
@@ -117,16 +132,20 @@ public interface AdvancedMessage<E> extends Message<E> {
      *      The {@link ApplicationProperties} value to assign to this message.
      *
      * @return this {@link AdvancedMessage} instance.
+     *
+     * @throws ClientException if an error occurs while writing the message {@link ApplicationProperties} value.
      */
-    AdvancedMessage<E> applicationProperties(ApplicationProperties applicationProperties);
+    AdvancedMessage<E> applicationProperties(ApplicationProperties applicationProperties) throws ClientException;
 
     /**
      * Return the current {@link Footer} assigned to this message, if none was assigned yet
      * then this method returns <code>null</code>.
      *
      * @return the currently assigned {@link Footer} for this message.
+     *
+     * @throws ClientException if an error occurs while retrieving the message data.
      */
-    Footer footer();
+    Footer footer() throws ClientException;
 
     /**
      * Assign or replace the {@link Footer} instance associated with this message.
@@ -135,13 +154,17 @@ public interface AdvancedMessage<E> extends Message<E> {
      *      The {@link Footer} value to assign to this message.
      *
      * @return this {@link AdvancedMessage} instance.
+     *
+     * @throws ClientException if an error occurs while writing the message {@link Footer} value.
      */
-    AdvancedMessage<E> footer(Footer footer);
+    AdvancedMessage<E> footer(Footer footer) throws ClientException;
 
     /**
      * @return the currently assigned message format for this message.
+     *
+     * @throws ClientException if an error occurs while retrieving the message data.
      */
-    int messageFormat();
+    int messageFormat() throws ClientException;
 
     /**
      * Sets the message format to use when the message is sent.  The exact structure of a
@@ -170,8 +193,10 @@ public interface AdvancedMessage<E> extends Message<E> {
      *      The message format to encode into the transfer frame that carries the message.
      *
      * @return this {@link AdvancedMessage} instance.
+     *
+     * @throws ClientException if an error occurs while configuring the message format.
      */
-    AdvancedMessage<E> messageFormat(int messageFormat);
+    AdvancedMessage<E> messageFormat(int messageFormat) throws ClientException;
 
     /**
      * Adds the given {@link Section} to the internal collection of sections that will be sent
@@ -186,8 +211,10 @@ public interface AdvancedMessage<E> extends Message<E> {
      *      The {@link Section} instance to append to the internal collection.
      *
      * @return this {@link AdvancedMessage} instance.
+     *
+     * @throws ClientException if an error occurs while writing to the message body sections.
      */
-    AdvancedMessage<E> addBodySection(Section<?> bodySection);
+    AdvancedMessage<E> addBodySection(Section<?> bodySection) throws ClientException;
 
     /**
      * Sets the body {@link Section} instances to use when encoding this message.  The value
@@ -199,16 +226,20 @@ public interface AdvancedMessage<E> extends Message<E> {
      *      The {@link Collection} of {@link Section} instance to assign this message.
      *
      * @return this {@link AdvancedMessage} instance.
+     *
+     * @throws ClientException if an error occurs while writing to the message body sections.
      */
-    AdvancedMessage<E> bodySections(Collection<Section<?>> sections);
+    AdvancedMessage<E> bodySections(Collection<Section<?>> sections) throws ClientException;
 
     /**
      * Create and return a {@link Collection} that contains the {@link Section} instances currently
      * assigned to this message.  Changes to the returned Collection are not reflected in the Message.
      *
      * @return a {@link Collection} that is a copy of the current sections assigned to this message.
+     *
+     * @throws ClientException if an error occurs while retrieving the message data.
      */
-    Collection<Section<?>> bodySections();
+    Collection<Section<?>> bodySections() throws ClientException;
 
     /**
      * Performs the given action for each body {@link Section} of the {@link AdvancedMessage} until all
@@ -218,15 +249,19 @@ public interface AdvancedMessage<E> extends Message<E> {
      *      the {@link Consumer} that will operate on each of the body sections in this message.
      *
      * @return this {@link AdvancedMessage} instance.
+     *
+     * @throws ClientException if an error occurs while iterating over the message data.
      */
-    AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer);
+    AdvancedMessage<E> forEachBodySection(Consumer<Section<?>> consumer) throws ClientException;
 
     /**
      * Clears all current body {@link Section} elements from the {@link AdvancedMessage}.
      *
      * @return this {@link AdvancedMessage} instance.
+     *
+     * @throws ClientException if an error occurs while clearing the message body sections.
      */
-    AdvancedMessage<E> clearBodySections();
+    AdvancedMessage<E> clearBodySections() throws ClientException;
 
     /**
      * Encodes the {@link AdvancedMessage} for transmission by the client.  The provided {@link DeliveryAnnotations}
@@ -238,7 +273,9 @@ public interface AdvancedMessage<E> extends Message<E> {
      *      A {@link Map} of delivery annotation values that were requested to be included in the transmitted message.
      *
      * @return the encoded form of this message in a {@link ProtonBuffer} instance.
+     *
+     * @throws ClientException if an error occurs while encoding the message data.
      */
-    ProtonBuffer encode(Map<String, Object> deliveryAnnotations);
+    ProtonBuffer encode(Map<String, Object> deliveryAnnotations) throws ClientException;
 
 }

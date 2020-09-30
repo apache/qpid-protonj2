@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.impl.ClientMessage;
 import org.apache.qpid.protonj2.client.impl.ClientMessageSupport;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
@@ -111,8 +112,9 @@ public interface Message<E> {
      * @return a {@link AdvancedMessage} that contains this message's current state.
      *
      * @throws UnsupportedOperationException if the {@link Message} implementation cannot be converted
+     * @throws ClientException if an error occurs while converting the message to an {@link AdvancedMessage}/
      */
-    default AdvancedMessage<E> toAdvancedMessage() {
+    default AdvancedMessage<E> toAdvancedMessage() throws ClientException {
         if (this instanceof AdvancedMessage) {
             return (AdvancedMessage<E>) this;
         } else {
@@ -129,8 +131,10 @@ public interface Message<E> {
      * the value is updated after being received by the receiver.
      *
      * @return true if the Message is marked as being durable
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    boolean durable();
+    boolean durable() throws ClientException;
 
     /**
      * Controls if the message is marked as durable when sent.
@@ -139,13 +143,17 @@ public interface Message<E> {
      *      value assigned to the durable flag for this message.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> durable(boolean durable);
+    Message<E> durable(boolean durable) throws ClientException;
 
     /**
      * @return the currently configured priority or the default if none set.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    byte priority();
+    byte priority() throws ClientException;
 
     /**
      * Sets the relative message priority.  Higher numbers indicate higher priority messages.
@@ -155,13 +163,17 @@ public interface Message<E> {
      * 		The priority value to assign this message.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> priority(byte priority);
+    Message<E> priority(byte priority) throws ClientException;
 
     /**
      * @return the currently set Time To Live duration (milliseconds).
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    long timeToLive();
+    long timeToLive() throws ClientException;
 
     /**
      * Sets the message time to live value.
@@ -179,13 +191,17 @@ public interface Message<E> {
      *      The time span in milliseconds that this message should remain live before being discarded.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> timeToLive(long timeToLive);
+    Message<E> timeToLive(long timeToLive) throws ClientException;
 
     /**
      * @return if this message has been acquired by another link previously
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    boolean firstAcquirer();
+    boolean firstAcquirer() throws ClientException;
 
     /**
      * Sets the value to assign to the first acquirer field of this {@link Message}.
@@ -197,13 +213,17 @@ public interface Message<E> {
      *      The boolean value to assign to the first acquirer field of the message.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> firstAcquirer(boolean firstAcquirer);
+    Message<E> firstAcquirer(boolean firstAcquirer) throws ClientException;
 
     /**
      * @return the number of failed delivery attempts that this message has been part of.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    long deliveryCount();
+    long deliveryCount() throws ClientException;
 
     /**
      * Sets the value to assign to the delivery count field of this {@link Message}.
@@ -217,15 +237,19 @@ public interface Message<E> {
      *      The new delivery count value to assign to this message.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> deliveryCount(long deliveryCount);
+    Message<E> deliveryCount(long deliveryCount) throws ClientException;
 
     //----- AMQP Properties Section
 
     /**
      * @return the currently set Message ID or null if none set.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    Object messageId();
+    Object messageId() throws ClientException;
 
     /**
      * Sets the message Id value to assign to this {@link Message}.
@@ -239,13 +263,17 @@ public interface Message<E> {
      *      The message Id value to assign to this {@link Message} instance.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> messageId(Object messageId);
+    Message<E> messageId(Object messageId) throws ClientException;
 
     /**
      * @return the currently set User ID or null if none set.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    byte[] userId();
+    byte[] userId() throws ClientException;
 
     /**
      * Sets the user Id value to assign to this {@link Message}.
@@ -257,13 +285,17 @@ public interface Message<E> {
      *      The user Id value to assign to this {@link Message} instance.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> userId(byte[] userId);
+    Message<E> userId(byte[] userId) throws ClientException;
 
     /**
      * @return the currently set 'To' address which indicates the intended destination of the message.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    String to();
+    String to() throws ClientException;
 
     /**
      * Sets the 'to' value to assign to this {@link Message}.
@@ -275,13 +307,17 @@ public interface Message<E> {
      *      The 'to' node value to assign to this {@link Message} instance.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> to(String to);
+    Message<E> to(String to) throws ClientException;
 
     /**
      * @return the currently set subject metadata for this message or null if none set.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    String subject();
+    String subject() throws ClientException;
 
     /**
      * Sets the subject value to assign to this {@link Message}.
@@ -292,13 +328,17 @@ public interface Message<E> {
      *      The subject node value to assign to this {@link Message} instance.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> subject(String subject);
+    Message<E> subject(String subject) throws ClientException;
 
     /**
      * @return the configured address of the node where replies to this message should be sent, or null if not set.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    String replyTo();
+    String replyTo() throws ClientException;
 
     /**
      * Sets the replyTo value to assign to this {@link Message}.
@@ -309,13 +349,17 @@ public interface Message<E> {
      *      The replyTo node value to assign to this {@link Message} instance.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> replyTo(String replyTo);
+    Message<E> replyTo(String replyTo) throws ClientException;
 
     /**
      * @return the currently assigned correlation ID or null if none set.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    Object correlationId();
+    Object correlationId() throws ClientException;
 
     /**
      * Sets the correlationId value to assign to this {@link Message}.
@@ -326,13 +370,17 @@ public interface Message<E> {
      *      The correlationId value to assign to this {@link Message} instance.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> correlationId(Object correlationId);
+    Message<E> correlationId(Object correlationId) throws ClientException;
 
     /**
      * @return the assigned content type value for the message body section or null if not set.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    String contentType();
+    String contentType() throws ClientException;
 
     /**
      * Sets the contentType value to assign to this {@link Message}.
@@ -350,13 +398,17 @@ public interface Message<E> {
      *      The contentType value to assign to this {@link Message} instance.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> contentType(String contentType);
+    Message<E> contentType(String contentType) throws ClientException;
 
     /**
      * @return the assigned content encoding value for the message body section or null if not set.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    String contentEncoding();
+    String contentEncoding() throws ClientException;
 
     /**
      * Sets the contentEncoding value to assign to this {@link Message}.
@@ -388,13 +440,17 @@ public interface Message<E> {
      *      The contentEncoding value to assign to this {@link Message} instance.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<?> contentEncoding(String contentEncoding);
+    Message<?> contentEncoding(String contentEncoding) throws ClientException;
 
     /**
      * @return the configured absolute time of expiration for this message.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    long absoluteExpiryTime();
+    long absoluteExpiryTime() throws ClientException;
 
     /**
      * Sets the absolute expiration time value to assign to this {@link Message}.
@@ -405,13 +461,17 @@ public interface Message<E> {
      *      The absolute expiration time value to assign to this {@link Message} instance.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> absoluteExpiryTime(long expiryTime);
+    Message<E> absoluteExpiryTime(long expiryTime) throws ClientException;
 
     /**
      * @return the absolute time of creation for this message.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    long creationTime();
+    long creationTime() throws ClientException;
 
     /**
      * Sets the creation time value to assign to this {@link Message}.
@@ -422,13 +482,17 @@ public interface Message<E> {
      *      The creation time value to assign to this {@link Message} instance.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> creationTime(long createTime);
+    Message<E> creationTime(long createTime) throws ClientException;
 
     /**
      * @return the assigned group ID for this message or null if not set.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    String groupId();
+    String groupId() throws ClientException;
 
     /**
      * Sets the groupId value to assign to this {@link Message}.
@@ -439,13 +503,17 @@ public interface Message<E> {
      *      The groupId value to assign to this {@link Message} instance.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> groupId(String groupId);
+    Message<E> groupId(String groupId) throws ClientException;
 
     /**
      * @return the assigned group sequence for this message.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    int groupSequence();
+    int groupSequence() throws ClientException;
 
     /**
      * Sets the group sequence value to assign to this {@link Message}.
@@ -456,13 +524,17 @@ public interface Message<E> {
      *      The group sequence to assign to this {@link Message} instance.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> groupSequence(int groupSequence);
+    Message<E> groupSequence(int groupSequence) throws ClientException;
 
     /**
      * @return the client-specific id used so that client can send replies to this message to a specific group.
+     *
+     * @throws ClientException if an error occurs while reading the given value.
      */
-    String replyToGroupId();
+    String replyToGroupId() throws ClientException;
 
     /**
      * Sets the replyTo group Id value to assign to this {@link Message}.
@@ -474,50 +546,52 @@ public interface Message<E> {
      *      The replyTo group Id to assign to this {@link Message} instance.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs while writing the given value.
      */
-    Message<E> replyToGroupId(String replyToGroupId);
+    Message<E> replyToGroupId(String replyToGroupId) throws ClientException;
 
     //----- Message Annotations
 
-    Object messageAnnotation(String key);
+    Object messageAnnotation(String key) throws ClientException;
 
-    boolean hasMessageAnnotation(String key);
+    boolean hasMessageAnnotation(String key) throws ClientException;
 
-    boolean hasMessageAnnotations();
+    boolean hasMessageAnnotations() throws ClientException;
 
-    Object removeMessageAnnotation(String key);
+    Object removeMessageAnnotation(String key) throws ClientException;
 
-    Message<E> forEachMessageAnnotation(BiConsumer<String, Object> action);
+    Message<E> forEachMessageAnnotation(BiConsumer<String, Object> action) throws ClientException;
 
-    Message<E> messageAnnotation(String key, Object value);
+    Message<E> messageAnnotation(String key, Object value) throws ClientException;
 
     //----- Application Properties
 
-    Object applicationProperty(String key);
+    Object applicationProperty(String key) throws ClientException;
 
-    boolean hasApplicationProperty(String key);
+    boolean hasApplicationProperty(String key) throws ClientException;
 
-    boolean hasApplicationProperties();
+    boolean hasApplicationProperties() throws ClientException;
 
-    Object removeApplicationProperty(String key);
+    Object removeApplicationProperty(String key) throws ClientException;
 
-    Message<E> forEachApplicationProperty(BiConsumer<String, Object> action);
+    Message<E> forEachApplicationProperty(BiConsumer<String, Object> action) throws ClientException;
 
-    Message<E> applicationProperty(String key, Object value);
+    Message<E> applicationProperty(String key, Object value) throws ClientException;
 
     //----- Footer
 
-    Object footer(String key);
+    Object footer(String key) throws ClientException;
 
-    boolean hasFooter(String key);
+    boolean hasFooter(String key) throws ClientException;
 
-    boolean hasFooters();
+    boolean hasFooters() throws ClientException;
 
-    Object removeFooter(String key);
+    Object removeFooter(String key) throws ClientException;
 
-    Message<E> forEachFooter(BiConsumer<String, Object> action);
+    Message<E> forEachFooter(BiConsumer<String, Object> action) throws ClientException;
 
-    Message<E> footer(String key, Object value);
+    Message<E> footer(String key, Object value) throws ClientException;
 
     //----- AMQP Body Section
 
@@ -527,9 +601,9 @@ public interface Message<E> {
      *
      * @return the message body value or null if none present.
      *
-     * @throws UnsupportedOperationException if the implementation can't provide a body directly.
+     * @throws ClientException if the implementation can't provide a body for some reason.
      */
-    E body();
+    E body() throws ClientException;
 
     /**
      * Sets the body value that is to be conveyed to the remote when this message is sent.
@@ -541,7 +615,9 @@ public interface Message<E> {
      *      The value to assign to the given message body {@link Section}.
      *
      * @return this {@link Message} instance.
+     *
+     * @throws ClientException if the implementation cannot write to the body section for some reason..
      */
-    Message<E> body(E value);
+    Message<E> body(E value) throws ClientException;
 
 }

@@ -494,24 +494,28 @@ public class ClientSender implements Sender {
         executor.execute(() -> {
             checkClosedOrFailed(operation);
 
-            if (protonSender.isSendable()) {
-                try {
-                    assumeSendableAndSend(message.messageFormat(), buffer, operation);
-                } catch (Exception ex) {
-                    operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
-                }
-            } else {
-                if (waitForCredit) {
-                    final InFlightSend send = new InFlightSend(message.messageFormat(), buffer, operation);
-                    if (options.sendTimeout() > 0) {
-                        send.timeout = session.scheduleRequestTimeout(
-                            operation, options.sendTimeout(), () -> send.createSendTimedOutException());
+            try {
+                if (protonSender.isSendable()) {
+                    try {
+                        assumeSendableAndSend(message.messageFormat(), buffer, operation);
+                    } catch (Exception ex) {
+                        operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
                     }
-
-                    blocked.offer(send);
                 } else {
-                    operation.complete(null);
+                    if (waitForCredit) {
+                        final InFlightSend send = new InFlightSend(message.messageFormat(), buffer, operation);
+                        if (options.sendTimeout() > 0) {
+                            send.timeout = session.scheduleRequestTimeout(
+                                operation, options.sendTimeout(), () -> send.createSendTimedOutException());
+                        }
+
+                        blocked.offer(send);
+                    } else {
+                        operation.complete(null);
+                    }
                 }
+            } catch (Exception error) {
+                operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
         });
 

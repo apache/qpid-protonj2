@@ -21,16 +21,15 @@
 package org.apache.qpid.protonj2.client.examples;
 
 import java.io.InputStream;
-import java.util.UUID;
 
 import org.apache.qpid.protonj2.client.Client;
-import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
+import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
 import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 
-public class LargeMessageReceive {
+public class LargeMessageReceiver {
 
     public static void main(String[] args) throws Exception {
 
@@ -39,15 +38,13 @@ public class LargeMessageReceive {
             int brokerPort = 5672;
             String address = "examples";
 
-            ClientOptions options = new ClientOptions();
-            options.id(UUID.randomUUID().toString());
-            Client client = Client.create(options);
-
+            Client client = Client.create();
             Connection connection = client.connect(brokerHost, brokerPort);
 
             StreamReceiver receiver = connection.openStreamReceiver(address);
-            StreamReceiverMessage delivery = receiver.receive();
-            InputStream inputStream = delivery.rawInputStream();
+            StreamDelivery delivery = receiver.receive();
+            StreamReceiverMessage message = delivery.message();
+            InputStream inputStream = message.body();
 
             byte[] chunk = new byte[100];
 

@@ -21,6 +21,9 @@ import java.util.concurrent.Future;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 
+/**
+ * AMQP Sender that provides an API for sending complete Message payload data.
+ */
 public interface Sender {
 
     /**

@@ -20,10 +20,7 @@
  */
 package org.apache.qpid.protonj2.client.examples;
 
-import java.util.UUID;
-
 import org.apache.qpid.protonj2.client.Client;
-import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.Message;
@@ -39,12 +36,8 @@ public class HelloWorld {
             int brokerPort = 5672;
             String address = "examples";
 
-            ClientOptions options = new ClientOptions();
-            options.id(UUID.randomUUID().toString());
-            Client client = Client.create(options);
-
+            Client client = Client.create();
             Connection connection = client.connect(brokerHost, brokerPort);
-
             Receiver receiver = connection.openReceiver(address);
 
             Sender sender = connection.openSender(address);

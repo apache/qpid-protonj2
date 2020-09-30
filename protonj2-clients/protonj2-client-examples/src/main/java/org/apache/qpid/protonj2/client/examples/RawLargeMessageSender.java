@@ -21,17 +21,14 @@
 package org.apache.qpid.protonj2.client.examples;
 
 import java.io.OutputStream;
-import java.util.UUID;
 
 import org.apache.qpid.protonj2.client.Client;
-import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
-import org.apache.qpid.protonj2.client.OutputStreamOptions;
 import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamSenderMessage;
 
 // TODO: Possibly make an advanced folder for the more complex AMQP messaging topics
-public class RawMessageOutputStreamSender {
+public class RawLargeMessageSender {
 
     public static void main(String[] args) throws Exception {
 
@@ -40,31 +37,22 @@ public class RawMessageOutputStreamSender {
             int brokerPort = 5672;
             String address = "examples";
 
-            ClientOptions options = new ClientOptions();
-            options.id(UUID.randomUUID().toString());
-            Client client = Client.create(options);
+            Client client = Client.create();
 
             Connection connection = client.connect(brokerHost, brokerPort);
             StreamSender sender = connection.openStreamSender(address);
-            StreamSenderMessage tracker = sender.beginMessage();
+            StreamSenderMessage message = sender.beginMessage();
 
             final byte[] buffer = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
-            tracker.messageFormat(42);
+            message.messageFormat(42);
 
-            // Create an OutputStream that will send what could be AMQP encoded data
+            // Create an OutputStream that will send what should be AMQP encoded data
             // or some other custom message formatted payload.
-            OutputStreamOptions streamOptions = new OutputStreamOptions();
-            OutputStream output = tracker.rawOutputStream(streamOptions);
+            OutputStream output = message.rawOutputStream();
 
-            // Simple example flushes on every byte, a real world usage would likely
-            // be pulling in data in batches and flushing on some fixed boundary.
-            for(byte value : buffer) {
-                output.write(value);
-                output.flush();
-            }
-
-            // Close will flush pending work and complete the AMQP transfer
+            // Write the payload and then close which completes the streamed transfer.
+            output.write(buffer);
             output.close();
 
             connection.close().get();

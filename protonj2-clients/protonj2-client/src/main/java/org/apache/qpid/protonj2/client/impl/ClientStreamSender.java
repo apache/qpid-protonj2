@@ -29,10 +29,13 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.DeliveryMode;
 import org.apache.qpid.protonj2.client.ErrorCondition;
+import org.apache.qpid.protonj2.client.Message;
+import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Source;
 import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamSenderOptions;
 import org.apache.qpid.protonj2.client.Target;
+import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
@@ -58,8 +61,8 @@ public class ClientStreamSender implements StreamSender {
     private static final AtomicIntegerFieldUpdater<ClientStreamSender> CLOSED_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(ClientStreamSender.class, "closed");
 
-    private final ClientFuture<StreamSender> openFuture;
-    private final ClientFuture<StreamSender> closeFuture;
+    private final ClientFuture<Sender> openFuture;
+    private final ClientFuture<Sender> closeFuture;
 
     private final StreamSenderOptions options;
     private final ClientSession session;
@@ -147,35 +150,35 @@ public class ClientStreamSender implements StreamSender {
     }
 
     @Override
-    public Future<StreamSender> openFuture() {
+    public Future<Sender> openFuture() {
         return openFuture;
     }
 
     @Override
-    public ClientFuture<StreamSender> close() {
+    public ClientFuture<Sender> close() {
         return doCloseOrDetach(true, null);
     }
 
     @Override
-    public ClientFuture<StreamSender> close(ErrorCondition error) {
+    public ClientFuture<Sender> close(ErrorCondition error) {
         Objects.requireNonNull(error, "Error Condition cannot be null");
 
         return doCloseOrDetach(true, error);
     }
 
     @Override
-    public ClientFuture<StreamSender> detach() {
+    public ClientFuture<Sender> detach() {
         return doCloseOrDetach(false, null);
     }
 
     @Override
-    public ClientFuture<StreamSender> detach(ErrorCondition error) {
+    public ClientFuture<Sender> detach(ErrorCondition error) {
         Objects.requireNonNull(error, "Error Condition cannot be null");
 
         return doCloseOrDetach(false, error);
     }
 
-    private ClientFuture<StreamSender> doCloseOrDetach(boolean close, ErrorCondition error) {
+    private ClientFuture<Sender> doCloseOrDetach(boolean close, ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             executor.execute(() -> {
                 if (protonSender.isLocallyOpen()) {
@@ -194,6 +197,30 @@ public class ClientStreamSender implements StreamSender {
             });
         }
         return closeFuture;
+    }
+
+    @Override
+    public Tracker send(Message<?> message) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Tracker send(Message<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Tracker trySend(Message<?> message) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Tracker trySend(Message<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
@@ -315,12 +342,12 @@ public class ClientStreamSender implements StreamSender {
         session.request(this, operation);
     }
 
-    private void assumeSendableAndSend(ClientStreamSenderMessage tracker, ProtonBuffer buffer, AsyncResult<Void> request) {
+    private void assumeSendableAndSend(ClientStreamSenderMessage tracker, ProtonBuffer buffer, AsyncResult<Void> request) throws ClientException {
         final OutgoingDelivery delivery = protonSender.current().setMessageFormat(tracker.messageFormat());
 
         if (session.getTransactionContext().isInTransaction()) {
             if (session.getTransactionContext().isTransactionInDoubt()) {
-                tracker.settlementFuture().complete(tracker);
+//                tracker.settlementFuture().complete(tracker);
                 request.complete(null);
                 return;
             } else {
@@ -334,7 +361,7 @@ public class ClientStreamSender implements StreamSender {
 
         if (delivery.isSettled()) {
             // Remote will not update this delivery so mark as acknowledged now.
-            tracker.settlementFuture().complete(tracker);
+//            tracker.settlementFuture().complete(tracker);
         }
 
         if (tracker.aborted()) {
@@ -406,9 +433,9 @@ public class ClientStreamSender implements StreamSender {
             try {
                 ClientStreamSenderMessage tracker = delivery.getLinkedResource();
                 if (failureCause != null) {
-                    tracker.settlementFuture().failed(failureCause);
+//                    tracker.settlementFuture().failed(failureCause);
                 } else {
-                    tracker.settlementFuture().failed(new ClientResourceRemotelyClosedException("The sender link has closed"));
+//                    tracker.settlementFuture().failed(new ClientResourceRemotelyClosedException("The sender link has closed"));
                 }
             } catch (Exception e) {
             }
@@ -555,7 +582,11 @@ public class ClientStreamSender implements StreamSender {
     private void handleCreditStateUpdated(org.apache.qpid.protonj2.engine.Sender sender) {
         if (sender.isSendable() && blockedOnCredit != null) {
             LOG.trace("Dispatching previously held send");
-            assumeSendableAndSend(blockedOnCredit.context, blockedOnCredit.encodedMessage, blockedOnCredit);
+            try {
+                assumeSendableAndSend(blockedOnCredit.context, blockedOnCredit.encodedMessage, blockedOnCredit);
+            } catch (Exception ex) {
+                blockedOnCredit.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+            }
         }
 
         if (sender.isDraining() && blockedOnCredit == null) {
@@ -565,7 +596,7 @@ public class ClientStreamSender implements StreamSender {
 
     private void handleDeliveryUpdated(OutgoingDelivery delivery) {
         try {
-            delivery.getLinkedResource(ClientStreamSenderMessage.class).processDeliveryUpdated(delivery);
+            delivery.getLinkedResource(ClientStreamSenderMessage.class).tracker().processDeliveryUpdated(delivery);
         } catch (ClassCastException ccex) {
             LOG.debug("Sender received update on Delivery not linked to a Tracker: {}", delivery);
         }

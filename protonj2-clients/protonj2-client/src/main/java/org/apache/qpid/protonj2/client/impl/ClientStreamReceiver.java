@@ -25,10 +25,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import org.apache.qpid.protonj2.client.ErrorCondition;
+import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Source;
+import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
-import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.Target;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -50,9 +51,9 @@ public class ClientStreamReceiver implements StreamReceiver {
     private static final AtomicIntegerFieldUpdater<ClientStreamReceiver> CLOSED_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(ClientStreamReceiver.class, "closed");
 
-    private final ClientFuture<StreamReceiver> openFuture;
-    private final ClientFuture<StreamReceiver> closeFuture;
-    private ClientFuture<StreamReceiver> drainingFuture;
+    private final ClientFuture<Receiver> openFuture;
+    private final ClientFuture<Receiver> closeFuture;
+    private ClientFuture<Receiver> drainingFuture;
 
     private final ReceiverOptions options;
     private final ClientSession session;
@@ -95,35 +96,35 @@ public class ClientStreamReceiver implements StreamReceiver {
     }
 
     @Override
-    public ClientFuture<StreamReceiver> openFuture() {
+    public ClientFuture<Receiver> openFuture() {
         return openFuture;
     }
 
     @Override
-    public ClientFuture<StreamReceiver> close() {
+    public ClientFuture<Receiver> close() {
         return doCloseOrDetach(true, null);
     }
 
     @Override
-    public ClientFuture<StreamReceiver> close(ErrorCondition error) {
+    public ClientFuture<Receiver> close(ErrorCondition error) {
         Objects.requireNonNull(error, "Error Condition cannot be null");
 
         return doCloseOrDetach(true, error);
     }
 
     @Override
-    public ClientFuture<StreamReceiver> detach() {
+    public ClientFuture<Receiver> detach() {
         return doCloseOrDetach(false, null);
     }
 
     @Override
-    public ClientFuture<StreamReceiver> detach(ErrorCondition error) {
+    public ClientFuture<Receiver> detach(ErrorCondition error) {
         Objects.requireNonNull(error, "The provided Error Condition cannot be null");
 
         return doCloseOrDetach(false, error);
     }
 
-    private ClientFuture<StreamReceiver> doCloseOrDetach(boolean close, ErrorCondition error) {
+    private ClientFuture<Receiver> doCloseOrDetach(boolean close, ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             executor.execute(() -> {
                 if (protonReceiver.isLocallyOpen()) {
@@ -146,14 +147,14 @@ public class ClientStreamReceiver implements StreamReceiver {
     }
 
     @Override
-    public StreamReceiverMessage receive() throws ClientException {
+    public StreamDelivery receive() throws ClientException {
         return receive(-1, TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public StreamReceiverMessage receive(long timeout, TimeUnit units) throws ClientException {
+    public StreamDelivery receive(long timeout, TimeUnit unit) throws ClientException {
         checkClosedOrFailed();
-        final ClientFuture<StreamReceiverMessage> receive = session.getFutureFactory().createFuture();
+        final ClientFuture<StreamDelivery> receive = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
             checkClosedOrFailed(receive);
@@ -184,7 +185,7 @@ public class ClientStreamReceiver implements StreamReceiver {
 //                    });
 //                }
 
-                receive.complete(new ClientStreamReceiverMessage(this, delivery));
+                // TODO receive.complete(new ClientStreamReceiverMessage(this, delivery));
             } catch (Exception ex) {
                 receive.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
             }
@@ -194,7 +195,7 @@ public class ClientStreamReceiver implements StreamReceiver {
     }
 
     @Override
-    public StreamReceiverMessage tryReceive() throws ClientException {
+    public StreamDelivery tryReceive() throws ClientException {
         checkClosedOrFailed();
         return receive(-1, TimeUnit.MILLISECONDS);
     }
@@ -225,9 +226,9 @@ public class ClientStreamReceiver implements StreamReceiver {
     }
 
     @Override
-    public Future<StreamReceiver> drain() throws ClientException {
+    public Future<Receiver> drain() throws ClientException {
         checkClosedOrFailed();
-        final ClientFuture<StreamReceiver> drainComplete = session.getFutureFactory().createFuture();
+        final ClientFuture<Receiver> drainComplete = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
             checkClosedOrFailed(drainComplete);
@@ -571,5 +572,10 @@ public class ClientStreamReceiver implements StreamReceiver {
         }
 
         closeFuture.complete(this);
+    }
+
+    @Override
+    public long queuedDeliveries() {
+        return 0; // TODO
     }
 }

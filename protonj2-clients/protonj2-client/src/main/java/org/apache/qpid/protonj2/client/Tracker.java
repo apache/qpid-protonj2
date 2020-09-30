@@ -78,7 +78,7 @@ public interface Tracker {
      *
      * @return this {@link Tracker} instance.
      *
-     * @throws ClientException
+     * @throws ClientException if an error occurs while applying the given disposition
      */
     Tracker disposition(DeliveryState state, boolean settle) throws ClientException;
 

@@ -20,13 +20,15 @@
  */
 package org.apache.qpid.protonj2.client.examples;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
-import org.apache.qpid.protonj2.client.Message;
-import org.apache.qpid.protonj2.client.Sender;
-import org.apache.qpid.protonj2.client.Session;
+import org.apache.qpid.protonj2.client.StreamDelivery;
+import org.apache.qpid.protonj2.client.StreamReceiver;
+import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 
-public class TransactedSender {
+public class RawLargeMessageReceiver {
 
     public static void main(String[] args) throws Exception {
 
@@ -37,16 +39,22 @@ public class TransactedSender {
 
             Client client = Client.create();
             Connection connection = client.connect(brokerHost, brokerPort);
-            Session session = connection.openSession();
 
-            session.beginTransaction();
+            StreamReceiver receiver = connection.openStreamReceiver(address);
+            StreamDelivery delivery = receiver.receive();
+            InputStream inputStream = delivery.rawInputStream();
 
-            Sender sender = session.openSender(address);
-            sender.send(Message.create("Hello World"));
+            byte[] chunk = new byte[100];
 
-            session.commitTransaction();
+            int bytesRead = inputStream.read(chunk);
+            while (bytesRead != -1) {
+                // Process inbound data
+            }
 
             connection.close().get();
+        } catch (ClientOperationTimedOutException e) {
+            System.out.println("Timed out waiting for message to arrive, exiting.");
+            System.exit(1);
         } catch (Exception exp) {
             System.out.println("Caught exception, exiting.");
             exp.printStackTrace(System.out);

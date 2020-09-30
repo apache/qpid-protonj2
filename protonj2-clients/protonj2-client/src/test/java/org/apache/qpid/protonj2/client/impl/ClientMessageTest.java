@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Message;
+import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
@@ -67,7 +68,7 @@ class ClientMessageTest {
     }
 
     @Test
-    public void testCreateEmptyAdvanced() {
+    public void testCreateEmptyAdvanced() throws ClientException {
         AdvancedMessage<String> message = ClientMessage.createAdvancedMessage();
 
         assertNull(message.body());
@@ -118,7 +119,7 @@ class ClientMessageTest {
     }
 
     @Test
-    public void testToAdvancedMessageReturnsSameInstance() {
+    public void testToAdvancedMessageReturnsSameInstance() throws ClientException {
         Message<String> message = ClientMessage.create(new AmqpValue<String>("test"));
 
         assertNotNull(message.body());

@@ -16,15 +16,17 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.io.InputStream;
 import java.util.Map;
 
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
-import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryAbortedException;
-import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryIsPartialException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
@@ -41,12 +43,11 @@ public final class ClientDelivery implements Delivery {
 
     private final ClientReceiver receiver;
     private final IncomingDelivery delivery;
+    private final ProtonBuffer payload;
 
     private DeliveryAnnotations deliveryAnnotations;
     private Message<?> cachedMessage;
-
-    // TODO: Current code is reading out of incoming outside of the IO thread which
-    //       will cause issues later if session windowing is active.
+    private InputStream rawInputStream;
 
     /**
      * Creates a new client delivery object linked to the given {@link IncomingDelivery}
@@ -61,24 +62,35 @@ public final class ClientDelivery implements Delivery {
         this.receiver = receiver;
         this.delivery = delivery;
         this.delivery.setLinkedResource(this);
+        this.payload = delivery.readAll();
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <E> Message<E> message() throws ClientException {
-        if (delivery.isPartial()) {
-            throw new ClientDeliveryIsPartialException("Delivery contains only a partial amount of the message payload.");
-        } else if (delivery.isAborted()) {
-            throw new ClientDeliveryAbortedException("Cannot read Message contents from an aborted delivery.");
+        if (rawInputStream != null) {
+            throw new ClientIllegalStateException("Cannot access Delivery Annotations API after requesting an InputStream");
         }
 
         Message<E> message = (Message<E>) cachedMessage;
-        if (message == null && delivery.available() > 0) {
-            message = (Message<E>)
-                (cachedMessage = ClientMessageSupport.decodeMessage(delivery.readAll(), this::deliveryAnnotations));
+        if (message == null && payload.isReadable()) {
+            message = (Message<E>)(cachedMessage = ClientMessageSupport.decodeMessage(payload, this::deliveryAnnotations));
         }
 
         return message;
+    }
+
+    @Override
+    public InputStream rawInputStream() throws ClientException {
+        if (cachedMessage != null) {
+            throw new ClientIllegalStateException("Cannot access Delivery InputStream API after requesting an Message");
+        }
+
+        if (rawInputStream == null) {
+            rawInputStream = new ProtonBufferInputStream(payload);
+        }
+
+        return rawInputStream;
     }
 
     @Override
