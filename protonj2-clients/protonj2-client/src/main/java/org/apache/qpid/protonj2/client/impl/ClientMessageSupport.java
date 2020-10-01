@@ -230,10 +230,10 @@ public abstract class ClientMessageSupport {
         properties.setReplyToGroupId(source.replyToGroupId());
 
         final MessageAnnotations messageAnnotations;
-        if (source.hasMessageAnnotations()) {
+        if (source.hasAnnotations()) {
             messageAnnotations = new MessageAnnotations(new LinkedHashMap<>());
 
-            source.forEachMessageAnnotation((key, value) -> {
+            source.forEachAnnotation((key, value) -> {
                 messageAnnotations.getValue().put(Symbol.valueOf(key), value);
             });
         } else {

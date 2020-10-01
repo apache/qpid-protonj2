@@ -64,7 +64,7 @@ class ClientMessageTest {
 
         assertFalse(message.hasApplicationProperties());
         assertFalse(message.hasFooters());
-        assertFalse(message.hasMessageAnnotations());
+        assertFalse(message.hasAnnotations());
     }
 
     @Test
@@ -77,7 +77,7 @@ class ClientMessageTest {
 
         assertFalse(message.hasApplicationProperties());
         assertFalse(message.hasFooters());
-        assertFalse(message.hasMessageAnnotations());
+        assertFalse(message.hasAnnotations());
 
         assertNull(message.header());
         assertNull(message.annotations());
@@ -247,7 +247,7 @@ class ClientMessageTest {
 
         assertFalse(message.hasApplicationProperties());
         assertFalse(message.hasFooters());
-        assertFalse(message.hasMessageAnnotations());
+        assertFalse(message.hasAnnotations());
 
         assertNull(message.body());
         assertNotNull(message.bodySections());
@@ -265,7 +265,7 @@ class ClientMessageTest {
             fail("Should not invoke any consumers since Message is empty");
         });
 
-        message.forEachMessageAnnotation((key, value) -> {
+        message.forEachAnnotation((key, value) -> {
             fail("Should not invoke any consumers since Message is empty");
         });
     }
@@ -517,21 +517,21 @@ class ClientMessageTest {
         expectations.put("test1", "1");
         expectations.put("test2", "2");
 
-        assertFalse(message.hasMessageAnnotations());
-        assertFalse(message.hasMessageAnnotation("test1"));
+        assertFalse(message.hasAnnotations());
+        assertFalse(message.hasAnnotation("test1"));
 
-        assertNotNull(message.messageAnnotation("test1", "1"));
-        assertNotNull(message.messageAnnotation("test1"));
+        assertNotNull(message.annotation("test1", "1"));
+        assertNotNull(message.annotation("test1"));
 
-        assertTrue(message.hasMessageAnnotations());
-        assertTrue(message.hasMessageAnnotation("test1"));
+        assertTrue(message.hasAnnotations());
+        assertTrue(message.hasAnnotation("test1"));
 
-        assertNotNull(message.messageAnnotation("test2", "2"));
-        assertNotNull(message.messageAnnotation("test2"));
+        assertNotNull(message.annotation("test2", "2"));
+        assertNotNull(message.annotation("test2"));
 
         final AtomicInteger count = new AtomicInteger();
 
-        message.forEachMessageAnnotation((k, v) -> {
+        message.forEachAnnotation((k, v) -> {
             assertTrue(expectations.containsKey(k));
             assertEquals(v, expectations.get(k));
             count.incrementAndGet();
@@ -539,16 +539,16 @@ class ClientMessageTest {
 
         assertEquals(expectations.size(), count.get());
 
-        assertEquals("1", message.removeMessageAnnotation("test1"));
-        assertEquals("2", message.removeMessageAnnotation("test2"));
-        assertNull(message.removeMessageAnnotation("test1"));
-        assertNull(message.removeMessageAnnotation("test2"));
-        assertNull(message.removeMessageAnnotation("test3"));
-        assertFalse(message.hasMessageAnnotations());
-        assertFalse(message.hasMessageAnnotation("test1"));
-        assertFalse(message.hasMessageAnnotation("test2"));
+        assertEquals("1", message.removeAnnotation("test1"));
+        assertEquals("2", message.removeAnnotation("test2"));
+        assertNull(message.removeAnnotation("test1"));
+        assertNull(message.removeAnnotation("test2"));
+        assertNull(message.removeAnnotation("test3"));
+        assertFalse(message.hasAnnotations());
+        assertFalse(message.hasAnnotation("test1"));
+        assertFalse(message.hasAnnotation("test2"));
 
-        message.forEachMessageAnnotation((k, v) -> {
+        message.forEachAnnotation((k, v) -> {
             fail("Should not be any remaining Message Annotations");
         });
     }

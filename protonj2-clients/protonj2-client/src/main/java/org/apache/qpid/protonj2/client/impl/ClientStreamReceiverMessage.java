@@ -444,37 +444,37 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public Object messageAnnotation(String key) {
+    public Object annotation(String key) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public boolean hasMessageAnnotation(String key) {
+    public boolean hasAnnotation(String key) {
         // TODO Auto-generated method stub
         return false;
     }
 
     @Override
-    public boolean hasMessageAnnotations() {
+    public boolean hasAnnotations() {
         // TODO Auto-generated method stub
         return false;
     }
 
     @Override
-    public Object removeMessageAnnotation(String key) {
+    public Object removeAnnotation(String key) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public Message<InputStream> forEachMessageAnnotation(BiConsumer<String, Object> action) {
+    public Message<InputStream> forEachAnnotation(BiConsumer<String, Object> action) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public Message<InputStream> messageAnnotation(String key, Object value) {
+    public Message<InputStream> annotation(String key, Object value) {
         // TODO Auto-generated method stub
         return null;
     }

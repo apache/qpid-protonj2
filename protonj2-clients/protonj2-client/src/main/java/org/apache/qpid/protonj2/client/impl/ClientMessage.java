@@ -329,7 +329,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     //----- Message Annotations Access
 
     @Override
-    public Object messageAnnotation(String key) {
+    public Object annotation(String key) {
         Object value = null;
         if (messageAnnotations != null) {
             value = messageAnnotations.getValue().get(Symbol.valueOf(key));
@@ -339,7 +339,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public boolean hasMessageAnnotation(String key) {
+    public boolean hasAnnotation(String key) {
         if (messageAnnotations != null && messageAnnotations.getValue() != null) {
             return messageAnnotations.getValue().containsKey(Symbol.valueOf(key));
         } else {
@@ -348,15 +348,15 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public boolean hasMessageAnnotations() {
+    public boolean hasAnnotations() {
         return messageAnnotations != null &&
                messageAnnotations.getValue() != null &&
                messageAnnotations.getValue().size() > 0;
     }
 
     @Override
-    public Object removeMessageAnnotation(String key) {
-        if (hasMessageAnnotations()) {
+    public Object removeAnnotation(String key) {
+        if (hasAnnotations()) {
             return messageAnnotations.getValue().remove(Symbol.valueOf(key));
         } else {
             return null;
@@ -364,8 +364,8 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
      }
 
     @Override
-    public Message<E> forEachMessageAnnotation(BiConsumer<String, Object> action) {
-        if (hasMessageAnnotations()) {
+    public Message<E> forEachAnnotation(BiConsumer<String, Object> action) {
+        if (hasAnnotations()) {
             messageAnnotations.getValue().forEach((key, value) -> {
                 action.accept(key.toString(), value);
             });
@@ -375,7 +375,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public ClientMessage<E> messageAnnotation(String key, Object value) {
+    public ClientMessage<E> annotation(String key, Object value) {
         lazyCreateMessageAnnotations().getValue().put(Symbol.valueOf(key),value);
         return this;
     }

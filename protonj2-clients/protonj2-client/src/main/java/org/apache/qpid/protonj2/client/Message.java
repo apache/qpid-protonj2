@@ -553,17 +553,17 @@ public interface Message<E> {
 
     //----- Message Annotations
 
-    Object messageAnnotation(String key) throws ClientException;
+    Object annotation(String key) throws ClientException;
 
-    boolean hasMessageAnnotation(String key) throws ClientException;
+    boolean hasAnnotation(String key) throws ClientException;
 
-    boolean hasMessageAnnotations() throws ClientException;
+    boolean hasAnnotations() throws ClientException;
 
-    Object removeMessageAnnotation(String key) throws ClientException;
+    Object removeAnnotation(String key) throws ClientException;
 
-    Message<E> forEachMessageAnnotation(BiConsumer<String, Object> action) throws ClientException;
+    Message<E> forEachAnnotation(BiConsumer<String, Object> action) throws ClientException;
 
-    Message<E> messageAnnotation(String key, Object value) throws ClientException;
+    Message<E> annotation(String key, Object value) throws ClientException;
 
     //----- Application Properties
 

@@ -320,9 +320,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Message<String> message = Message.create("Hello World");
 
             // Populate message annotations
-            message.messageAnnotation("one", 1);
-            message.messageAnnotation("two", 2);
-            message.messageAnnotation("three", 3);
+            message.annotation("one", 1);
+            message.annotation("two", 2);
+            message.annotation("three", 3);
 
             final Tracker tracker = sender.send(message);
 
@@ -552,9 +552,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             message.firstAcquirer(true);
             message.deliveryCount(2);
             // Populate message annotations
-            message.messageAnnotation("ma1", 1);
-            message.messageAnnotation("ma2", 2);
-            message.messageAnnotation("ma3", 3);
+            message.annotation("ma1", 1);
+            message.annotation("ma2", 2);
+            message.annotation("ma3", 3);
             // Populate all Properties values
             message.messageId("ID:12345");
             message.userId("user".getBytes(StandardCharsets.UTF_8));
@@ -1045,9 +1045,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             message.firstAcquirer(true);
             message.deliveryCount(2);
             // Populate message annotations
-            message.messageAnnotation("ma1", 1);
-            message.messageAnnotation("ma2", 2);
-            message.messageAnnotation("ma3", 3);
+            message.annotation("ma1", 1);
+            message.annotation("ma2", 2);
+            message.annotation("ma3", 3);
             // Populate all Properties values
             message.messageId("ID:12345");
             message.userId("user".getBytes(StandardCharsets.UTF_8));
