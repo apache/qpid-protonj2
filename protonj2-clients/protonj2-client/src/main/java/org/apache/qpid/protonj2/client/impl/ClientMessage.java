@@ -630,21 +630,26 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
         return ClientMessageSupport.encodeMessage(this, deliveryAnnotations);
     }
 
+    @SuppressWarnings({ "unchecked", "unused" })
     @Override
     public ClientMessage<E> addBodySection(Section<?> bodySection) {
         Objects.requireNonNull(bodySection, "Additional Body Section cannot be null");
 
-        if (bodySections == null) {
-            bodySections = new ArrayList<>();
+        if (body == null && bodySections == null) {
+            body = (Section<E>) bodySection;
+        } else {
+            if (bodySections == null) {
+                bodySections = new ArrayList<>();
 
-            // Preserve older section from original message creation.
-            if (body != null) {
-                bodySections.add(body);
-                body = null;
+                // Preserve older section from original message creation.
+                if (body != null) {
+                    bodySections.add(body);
+                    body = null;
+                }
             }
-        }
 
-        bodySections.add(validateBodySections(messageFormat, bodySections, bodySection));
+            bodySections.add(validateBodySections(messageFormat, bodySections, bodySection));
+        }
 
         return this;
     }

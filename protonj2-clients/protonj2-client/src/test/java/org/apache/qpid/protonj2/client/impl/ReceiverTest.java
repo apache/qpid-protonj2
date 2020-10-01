@@ -13,13 +13,16 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
@@ -39,6 +42,8 @@ import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutExcepti
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
+import org.apache.qpid.protonj2.types.messaging.Data;
+import org.apache.qpid.protonj2.types.messaging.Section;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.Role;
@@ -1884,6 +1889,61 @@ public class ReceiverTest extends ImperativeClientTestCase {
             } catch (ClientIllegalStateException cliEx) {
                 // Expected
             }
+
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReceiveDeliveryWithMultipleDataSections() throws Exception {
+        final Data section1 = new Data(new byte[] { 0, 1, 2, 3 });
+        final Data section2 = new Data(new byte[] { 0, 1, 2, 3 });
+        final Data section3 = new Data(new byte[] { 0, 1, 2, 3 });
+
+        final byte[] payload = createEncodedMessage(section1, section2, section3);
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withSettled(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            Delivery delivery = receiver.receive(10, TimeUnit.MILLISECONDS);
+            assertNotNull(delivery);
+
+            AdvancedMessage<?> message = delivery.message().toAdvancedMessage();
+            assertNotNull(message);
+
+            assertEquals(3, message.bodySections().size());
+            List<Section<?>> section = new ArrayList<>(message.bodySections());
+            assertEquals(section1, section.get(0));
+            assertEquals(section2, section.get(1));
+            assertEquals(section3, section.get(2));
 
             receiver.close();
             connection.close().get();

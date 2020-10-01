@@ -145,13 +145,9 @@ public abstract class ClientMessageSupport {
 
     public static Message<?> decodeMessage(Decoder decoder, DecoderState decoderState,
                                            ProtonBuffer buffer, Consumer<DeliveryAnnotations> daConsumer) throws ClientException {
-        Header header = null;
-        DeliveryAnnotations deliveryAnnotations = null;
-        MessageAnnotations messageAnnotations = null;
-        Properties properties = null;
-        ApplicationProperties applicationProperties = null;
-        Section<?> body = null;
-        Footer footer = null;
+
+        final ClientMessage<?> message = new ClientMessage<>();
+
         Section<?> section = null;
 
         while (buffer.isReadable()) {
@@ -163,50 +159,36 @@ public abstract class ClientMessageSupport {
 
             switch (section.getType()) {
                 case Header:
-                    header = (Header) section;
+                    message.header((Header) section);
                     break;
                 case DeliveryAnnotations:
-                    deliveryAnnotations = (DeliveryAnnotations) section;
+                    if (daConsumer != null) {
+                        daConsumer.accept((DeliveryAnnotations) section);
+                    }
                     break;
                 case MessageAnnotations:
-                    messageAnnotations = (MessageAnnotations) section;
+                    message.annotations((MessageAnnotations) section);
                     break;
                 case Properties:
-                    properties = (Properties) section;
+                    message.properties((Properties) section);
                     break;
                 case ApplicationProperties:
-                    applicationProperties = (ApplicationProperties) section;
+                    message.applicationProperties((ApplicationProperties) section);
                     break;
                 case Data:
                 case AmqpSequence:
                 case AmqpValue:
-                    body = section;
+                    message.addBodySection(section);
                     break;
                 case Footer:
-                    footer = (Footer) section;
+                    message.footer((Footer) section);
                     break;
                 default:
                     throw new ClientException("Unknown Message Section forced decode abort.");
             }
         }
 
-        ClientMessage<?> result = createMessageFromBodySection(body);
-
-        if (result != null) {
-            result.header(header);
-            result.annotations(messageAnnotations);
-            result.properties(properties);
-            result.applicationProperties(applicationProperties);
-            result.footer(footer);
-
-            if (daConsumer != null) {
-                daConsumer.accept(deliveryAnnotations);
-            }
-
-            return result;
-        }
-
-        throw new ClientException("Failed to create Message from encoded payload");
+        return message;
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -223,30 +205,6 @@ public abstract class ClientMessageSupport {
     }
 
     //----- Internal Implementation
-
-    @SuppressWarnings("unchecked")
-    private static ClientMessage<?> createMessageFromBodySection(Section<?> body) {
-        Message<?> result = null;
-        if (body == null) {
-            result = Message.create();
-        } else if (body instanceof Data) {
-            byte[] payload = ((Data) body).getValue();
-            if (payload != null) {
-                result = Message.create(payload);
-            }
-        } else if (body instanceof AmqpSequence) {
-            result = Message.create(((AmqpSequence<Object>) body).getValue());
-        } else if (body instanceof AmqpValue) {
-            Object value = ((AmqpValue<Object>) body).getValue();
-            if (value instanceof String) {
-                result = Message.create((String) value);
-            } else {
-                result = Message.create(value);
-            }
-        }
-
-        return (ClientMessage<?>) result;
-    }
 
     private static <E> ClientMessage<E> convertFromOutsideMessage(Message<E> source) throws ClientException {
         Header header = new Header();

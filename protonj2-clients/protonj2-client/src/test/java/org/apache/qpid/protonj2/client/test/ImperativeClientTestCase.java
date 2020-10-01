@@ -25,6 +25,7 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecFactory;
 import org.apache.qpid.protonj2.codec.Encoder;
+import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Section;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -106,6 +107,17 @@ public abstract class ImperativeClientTestCase {
         Encoder encoder = CodecFactory.getEncoder();
         ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
         encoder.writeObject(buffer, encoder.newEncoderState(), body);
+        byte[] result = new byte[buffer.getReadableBytes()];
+        buffer.readBytes(result);
+        return result;
+    }
+
+    protected byte[] createEncodedMessage(Data... body) {
+        Encoder encoder = CodecFactory.getEncoder();
+        ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
+        for (Data data : body) {
+            encoder.writeObject(buffer, encoder.newEncoderState(), data);
+        }
         byte[] result = new byte[buffer.getReadableBytes()];
         buffer.readBytes(result);
         return result;
