@@ -201,26 +201,46 @@ public class ClientStreamSender implements StreamSender {
 
     @Override
     public Tracker send(Message<?> message) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return send(message, null);
     }
 
     @Override
     public Tracker send(Message<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        checkClosedOrFailed();
+        final ClientFuture<Tracker> tracker = session.getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            if (protonSender.current() != null) {
+                // TODO: Add to blocked list and send after ?
+                tracker.failed(new ClientIllegalStateException(
+                    "Cannot perform a send while a streaming send is in progress"));
+            } else {
+                // TODO:
+            }
+        });
+
+        return session.request(this, tracker);
     }
 
     @Override
     public Tracker trySend(Message<?> message) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return trySend(message, null);
     }
 
     @Override
     public Tracker trySend(Message<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        checkClosedOrFailed();
+        final ClientFuture<Tracker> tracker = session.getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            if (protonSender.current() != null) {
+                tracker.complete(null);
+            } else {
+                // TODO:
+            }
+        });
+
+        return session.request(this, tracker);
     }
 
     @Override
@@ -342,18 +362,19 @@ public class ClientStreamSender implements StreamSender {
         session.request(this, operation);
     }
 
-    private void assumeSendableAndSend(ClientStreamSenderMessage tracker, ProtonBuffer buffer, AsyncResult<Void> request) throws ClientException {
-        final OutgoingDelivery delivery = protonSender.current().setMessageFormat(tracker.messageFormat());
+    private void assumeSendableAndSend(ClientStreamSenderMessage message, ProtonBuffer buffer, AsyncResult<Void> request) throws ClientException {
+        final OutgoingDelivery delivery = protonSender.current().setMessageFormat(message.messageFormat());
+
+        final ClientStreamTracker tracker = message.tracker();
 
         if (session.getTransactionContext().isInTransaction()) {
             if (session.getTransactionContext().isTransactionInDoubt()) {
-//                tracker.settlementFuture().complete(tracker);
+                tracker.settlementFuture().complete(tracker);
                 request.complete(null);
                 return;
             } else {
-                // TODO: Transactions support ?
-                // delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this, delivery),
-                //     protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED || delivery.isSettled());
+                delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this, delivery),
+                    protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED || delivery.isSettled());
             }
         } else {
             delivery.disposition(delivery.getState(), protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED || delivery.isSettled());
@@ -361,10 +382,10 @@ public class ClientStreamSender implements StreamSender {
 
         if (delivery.isSettled()) {
             // Remote will not update this delivery so mark as acknowledged now.
-//            tracker.settlementFuture().complete(tracker);
+            tracker.settlementFuture().complete(tracker);
         }
 
-        if (tracker.aborted()) {
+        if (message.aborted()) {
             delivery.abort();
             request.complete(null);
         } else {
@@ -375,15 +396,15 @@ public class ClientStreamSender implements StreamSender {
             // hit waiting on the IO operation to complete.
             if (options.deliveryMode() == DeliveryMode.AT_MOST_ONCE) {
                 request.complete(null);
-                delivery.streamBytes(buffer, tracker.completed());
+                delivery.streamBytes(buffer, message.completed());
             } else {
-                delivery.streamBytes(buffer, tracker.completed());
+                delivery.streamBytes(buffer, message.completed());
                 request.complete(null);
             }
 
             if (buffer.isReadable()) {
                 blockedOnCredit = blockedOnCredit != null ?
-                    blockedOnCredit : new InFlightSend(tracker, buffer, (ClientFuture<Void>) request);
+                    blockedOnCredit : new InFlightSend(message, buffer, (ClientFuture<Void>) request);
             } else {
                 blockedOnCredit = null;
             }
@@ -431,11 +452,11 @@ public class ClientStreamSender implements StreamSender {
 
         protonSender.unsettled().forEach((delivery) -> {
             try {
-                ClientStreamSenderMessage tracker = delivery.getLinkedResource();
+                ClientStreamTracker tracker = delivery.getLinkedResource();
                 if (failureCause != null) {
-//                    tracker.settlementFuture().failed(failureCause);
+                    tracker.settlementFuture().failed(failureCause);
                 } else {
-//                    tracker.settlementFuture().failed(new ClientResourceRemotelyClosedException("The sender link has closed"));
+                    tracker.settlementFuture().failed(new ClientResourceRemotelyClosedException("The sender link has closed"));
                 }
             } catch (Exception e) {
             }

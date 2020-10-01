@@ -330,17 +330,16 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public Object annotation(String key) {
-        Object value = null;
-        if (messageAnnotations != null) {
-            value = messageAnnotations.getValue().get(Symbol.valueOf(key));
+        if (hasAnnotations()) {
+            return messageAnnotations.getValue().get(Symbol.valueOf(key));
+        } else {
+            return null;
         }
-
-        return value;
     }
 
     @Override
     public boolean hasAnnotation(String key) {
-        if (messageAnnotations != null && messageAnnotations.getValue() != null) {
+        if (hasAnnotations()) {
             return messageAnnotations.getValue().containsKey(Symbol.valueOf(key));
         } else {
             return false;
@@ -384,17 +383,16 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public Object applicationProperty(String key) {
-        Object value = null;
-        if (applicationProperties != null) {
-            value = applicationProperties.getValue().get(key);
+        if (hasApplicationProperties()) {
+            return applicationProperties.getValue().get(key);
+        } else {
+            return null;
         }
-
-        return value;
     }
 
     @Override
     public boolean hasApplicationProperty(String key) {
-        if (applicationProperties != null && applicationProperties.getValue() != null) {
+        if (hasApplicationProperties()) {
             return applicationProperties.getValue().containsKey(key);
         } else {
             return false;
@@ -436,17 +434,16 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public Object footer(String key) {
-        Object value = null;
-        if (footer != null) {
-            value = footer.getValue().get(Symbol.valueOf(key));
+        if (hasFooters()) {
+            return footer.getValue().get(Symbol.valueOf(key));
+        } else {
+            return null;
         }
-
-        return value;
     }
 
     @Override
     public boolean hasFooter(String key) {
-        if (footer != null && footer.getValue() != null) {
+        if (hasFooters()) {
             return footer.getValue().containsKey(Symbol.valueOf(key));
         } else {
             return false;
@@ -630,7 +627,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
         return ClientMessageSupport.encodeMessage(this, deliveryAnnotations);
     }
 
-    @SuppressWarnings({ "unchecked", "unused" })
+    @SuppressWarnings({ "unchecked" })
     @Override
     public ClientMessage<E> addBodySection(Section<?> bodySection) {
         Objects.requireNonNull(bodySection, "Additional Body Section cannot be null");

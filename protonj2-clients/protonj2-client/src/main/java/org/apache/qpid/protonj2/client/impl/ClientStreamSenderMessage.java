@@ -18,8 +18,10 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -30,7 +32,6 @@ import java.util.function.Consumer;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
-import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.OutputStreamOptions;
 import org.apache.qpid.protonj2.client.StreamSenderMessage;
@@ -40,6 +41,8 @@ import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
+import org.apache.qpid.protonj2.types.Binary;
+import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Footer;
@@ -56,17 +59,29 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
 
     private static final int DATA_SECTION_HEADER_ENCODING_SIZE = 8;
 
+    private enum StreamState {
+        PREAMBLE,
+        BODY_WRITABLE,
+        BODY_WRITTING,
+        COMPLETE,
+        ABORTED
+    }
+
     private final ClientStreamSender sender;
     private final ClientStreamTracker tracker;
     private final OutgoingDelivery protonDelivery;
     private final int writeBufferSize;
-    private final SendContextMessage contextMessage = new SendContextMessage();
+    private final StreamMessagePacket streamMessagePacket = new StreamMessagePacket();
+
+    private Header header;
+    private MessageAnnotations annotations;
+    private Properties properties;
+    private ApplicationProperties applicationProperties;
+    private Footer footer;
 
     private ProtonBuffer buffer;
     private volatile int messageFormat;
-    private volatile boolean completed;
-    private volatile boolean aborted;
-    private boolean active;
+    private StreamState currentState;
 
     ClientStreamSenderMessage(ClientStreamSender sender, OutgoingDelivery protonDelivery) {
         this.sender = sender;
@@ -102,8 +117,8 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
 
     @Override
     public ClientStreamSenderMessage messageFormat(int messageFormat) throws ClientException {
-        if (active) {
-            throw new ClientIllegalStateException("Cannot set message format after writes have started.");
+        if (currentState != StreamState.PREAMBLE) {
+            throw new ClientIllegalStateException("Cannot set message format after body writes have started.");
         }
 
         this.messageFormat = messageFormat;
@@ -114,9 +129,8 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     private void doFlush() throws ClientException {
         if (buffer != null && buffer.isReadable()) {
             try {
-                sender.sendMessage(this, contextMessage);
+                sender.sendMessage(this, streamMessagePacket);
             } finally {
-                active = true;
                 buffer = null;
             }
         }
@@ -129,11 +143,8 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         }
 
         if (!aborted()) {
-            aborted = true;
-
-            if (active) {
-                sender.abort(protonDelivery);
-            }
+            currentState = StreamState.ABORTED;
+            sender.abort(protonDelivery);
         }
 
         return this;
@@ -141,7 +152,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
 
     @Override
     public boolean aborted() {
-        return aborted;
+        return currentState == StreamState.ABORTED;
     }
 
     @Override
@@ -151,14 +162,20 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         }
 
         if (!completed()) {
-            completed = true;
+            currentState = StreamState.COMPLETE;
+
+            // This may result in completion if the write surpasses the buffer limit but we still
+            // need to check in case it does not, or if there are no footers...
+            if (footer != null) {
+                write(footer);
+            }
 
             // If there is buffered data we can flush and complete in one Transfer
             // frame otherwise we only need to do work if there was ever a send on
             // this context which would imply we have a Tracker.
             if (buffer != null && buffer.isReadable()) {
                 doFlush();
-            } else if (active) {
+            } else {
                 sender.complete(protonDelivery);
             }
         }
@@ -168,7 +185,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
 
     @Override
     public boolean completed() {
-        return completed;
+        return currentState == StreamState.COMPLETE;
     }
 
     @Override
@@ -177,13 +194,22 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     @Override
-    public AdvancedMessage<OutputStream> addBodySection(Section<?> bodySection) throws ClientException {
-        // TODO Auto-generated method stub
+    public StreamSenderMessage addBodySection(Section<?> bodySection) throws ClientException {
+        if (completed()) {
+            throw new ClientIllegalStateException("Cannot create an OutputStream from a completed send context");
+        }
+
+        if (aborted()) {
+            throw new ClientIllegalStateException("Cannot create an OutputStream from a aborted send context");
+        }
+
+        // TODO: Transition to writing state
+
         return this;
     }
 
     @Override
-    public AdvancedMessage<OutputStream> bodySections(Collection<Section<?>> sections) throws ClientException {
+    public StreamSenderMessage bodySections(Collection<Section<?>> sections) throws ClientException {
         Objects.requireNonNull(sections, "Cannot set body sections with a null Collection");
 
         for (Section<?> section : sections) {
@@ -201,13 +227,13 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     @Override
-    public AdvancedMessage<OutputStream> forEachBodySection(Consumer<Section<?>> consumer) throws ClientException {
+    public StreamSenderMessage forEachBodySection(Consumer<Section<?>> consumer) throws ClientException {
         // Body sections are not held in memory but encoded as offered so they are not iterable.
         return this;
     }
 
     @Override
-    public AdvancedMessage<OutputStream> clearBodySections() throws ClientException {
+    public StreamSenderMessage clearBodySections() throws ClientException {
         // Body sections are not held in memory but encoded as offered so they cannot be cleared.
         return this;
     }
@@ -226,6 +252,8 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         if (aborted()) {
             throw new ClientIllegalStateException("Cannot create an OutputStream from a aborted send context");
         }
+
+        // TODO: Transition to writing state
 
         ProtonBuffer streamBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(writeBufferSize, writeBufferSize);
 
@@ -246,49 +274,14 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
             throw new ClientIllegalStateException("Cannot create an OutputStream from a aborted send context");
         }
 
+        // TODO: Transition to writing state
+
         return new SendContextRawBytesOutputStream(ProtonByteBufferAllocator.DEFAULT.allocate(writeBufferSize, writeBufferSize));
-    }
-
-    private void appenedDataToBuffer(ProtonBuffer incoming) throws ClientException {
-        if (buffer == null) {
-            buffer = incoming;
-        } else {
-            if (buffer instanceof ProtonCompositeBuffer) {
-                ((ProtonCompositeBuffer) buffer).append(incoming);
-            } else {
-                ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
-                composite.append(buffer).append(incoming);
-
-                buffer = composite;
-            }
-        }
-
-        if (buffer.getReadableBytes() >= writeBufferSize) {
-            try {
-                sender.sendMessage(this, contextMessage);
-            } finally {
-                active = true;
-                buffer = null;
-            }
-        }
-    }
-
-    private final class SendContextMessage extends ClientMessage<byte[]> {
-
-        @Override
-        public int messageFormat() {
-            return messageFormat;
-        }
-
-        @Override
-        public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) {
-            return buffer;
-        }
     }
 
     //----- OutputStream implementation for the Send Context
 
-    private abstract class SendContextOutputStream extends OutputStream {
+    private abstract class StreamMessageOutputStream extends OutputStream {
 
         protected final AtomicBoolean closed = new AtomicBoolean();
         protected final OutputStreamOptions options;
@@ -296,7 +289,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
 
         protected int bytesWritten;
 
-        public SendContextOutputStream(OutputStreamOptions options, ProtonBuffer buffer) {
+        public StreamMessageOutputStream(OutputStreamOptions options, ProtonBuffer buffer) {
             this.options = options;
             this.streamBuffer = buffer;
         }
@@ -414,14 +407,14 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         }
     }
 
-    private final class SendContextRawBytesOutputStream extends SendContextOutputStream {
+    private final class SendContextRawBytesOutputStream extends StreamMessageOutputStream {
 
         public SendContextRawBytesOutputStream(ProtonBuffer buffer) {
             super(new OutputStreamOptions(), buffer);
         }
     }
 
-    private final class SingularDataSectionOutputStream extends SendContextOutputStream {
+    private final class SingularDataSectionOutputStream extends StreamMessageOutputStream {
 
         public SingularDataSectionOutputStream(OutputStreamOptions options, ProtonBuffer buffer) throws ClientException {
             super(options, buffer);
@@ -438,7 +431,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         }
     }
 
-    private final class MultipleDataSectionsOutputStream extends SendContextOutputStream {
+    private final class MultipleDataSectionsOutputStream extends StreamMessageOutputStream {
 
         public MultipleDataSectionsOutputStream(OutputStreamOptions options, ProtonBuffer buffer) {
             super(options, buffer);
@@ -467,392 +460,547 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         }
     }
 
+    //----- Message Header API
+
     @Override
     public boolean durable() {
-        // TODO Auto-generated method stub
-        return false;
+        return header == null ? Header.DEFAULT_DURABILITY : header.isDurable();
     }
 
     @Override
-    public Message<OutputStream> durable(boolean durable) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage durable(boolean durable) throws ClientIllegalStateException {
+        lazyCreateHeader().setDurable(durable);
+        return this;
     }
 
     @Override
     public byte priority() {
-        // TODO Auto-generated method stub
-        return 0;
+        return header == null ? Header.DEFAULT_PRIORITY : header.getPriority();
     }
 
     @Override
-    public Message<OutputStream> priority(byte priority) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage priority(byte priority) throws ClientIllegalStateException {
+        lazyCreateHeader().setPriority(priority);
+        return this;
     }
 
     @Override
     public long timeToLive() {
-        // TODO Auto-generated method stub
-        return 0;
+        return header == null ? Header.DEFAULT_TIME_TO_LIVE : header.getTimeToLive();
     }
 
     @Override
-    public Message<OutputStream> timeToLive(long timeToLive) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage timeToLive(long timeToLive) throws ClientIllegalStateException {
+        lazyCreateHeader().setTimeToLive(timeToLive);
+        return this;
     }
 
     @Override
     public boolean firstAcquirer() {
-        // TODO Auto-generated method stub
-        return false;
+        return header == null ? Header.DEFAULT_FIRST_ACQUIRER : header.isFirstAcquirer();
     }
 
     @Override
-    public Message<OutputStream> firstAcquirer(boolean firstAcquirer) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage firstAcquirer(boolean firstAcquirer) throws ClientIllegalStateException {
+        lazyCreateHeader().setFirstAcquirer(firstAcquirer);
+        return this;
     }
 
     @Override
     public long deliveryCount() {
-        // TODO Auto-generated method stub
-        return 0;
+        return header == null ? Header.DEFAULT_DELIVERY_COUNT : header.getDeliveryCount();
     }
 
     @Override
-    public Message<OutputStream> deliveryCount(long deliveryCount) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage deliveryCount(long deliveryCount) throws ClientIllegalStateException {
+        lazyCreateHeader().setDeliveryCount(deliveryCount);
+        return this;
     }
+
+    //----- Message Properties access
 
     @Override
     public Object messageId() {
-        // TODO Auto-generated method stub
-        return null;
+        return properties != null ? properties.getMessageId() : null;
     }
 
     @Override
-    public Message<OutputStream> messageId(Object messageId) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage messageId(Object messageId) throws ClientIllegalStateException {
+        lazyCreateProperties().setMessageId(messageId);
+        return this;
     }
 
     @Override
     public byte[] userId() {
-        // TODO Auto-generated method stub
-        return null;
+        byte[] copyOfUserId = null;
+        if (properties != null && properties.getUserId() != null) {
+            copyOfUserId = properties.getUserId().arrayCopy();
+        }
+
+        return copyOfUserId;
     }
 
     @Override
-    public Message<OutputStream> userId(byte[] userId) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage userId(byte[] userId) throws ClientIllegalStateException {
+        lazyCreateProperties().setUserId(new Binary(Arrays.copyOf(userId, userId.length)));
+        return this;
     }
 
     @Override
     public String to() {
-        // TODO Auto-generated method stub
-        return null;
+        return properties != null ? properties.getTo() : null;
     }
 
     @Override
-    public Message<OutputStream> to(String to) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage to(String to) throws ClientIllegalStateException {
+        lazyCreateProperties().setTo(to);
+        return this;
     }
 
     @Override
     public String subject() {
-        // TODO Auto-generated method stub
-        return null;
+        return properties != null ? properties.getSubject() : null;
     }
 
     @Override
-    public Message<OutputStream> subject(String subject) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage subject(String subject) throws ClientIllegalStateException {
+        lazyCreateProperties().setSubject(subject);
+        return this;
     }
 
     @Override
     public String replyTo() {
-        // TODO Auto-generated method stub
-        return null;
+        return properties != null ? properties.getReplyTo() : null;
     }
 
     @Override
-    public Message<OutputStream> replyTo(String replyTo) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage replyTo(String replyTo) throws ClientIllegalStateException {
+        lazyCreateProperties().setReplyTo(replyTo);
+        return this;
     }
 
     @Override
     public Object correlationId() {
-        // TODO Auto-generated method stub
-        return null;
+        return properties != null ? properties.getCorrelationId() : null;
     }
 
     @Override
-    public Message<OutputStream> correlationId(Object correlationId) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage correlationId(Object correlationId) throws ClientIllegalStateException {
+        lazyCreateProperties().setCorrelationId(correlationId);
+        return this;
     }
 
     @Override
     public String contentType() {
-        // TODO Auto-generated method stub
-        return null;
+        return properties != null ? properties.getContentType() : null;
     }
 
     @Override
-    public Message<OutputStream> contentType(String contentType) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage contentType(String contentType) throws ClientIllegalStateException {
+        lazyCreateProperties().setContentType(contentType);
+        return this;
     }
 
     @Override
     public String contentEncoding() {
-        // TODO Auto-generated method stub
-        return null;
+        return properties != null ? properties.getContentEncoding() : null;
     }
 
     @Override
-    public Message<?> contentEncoding(String contentEncoding) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage contentEncoding(String contentEncoding) throws ClientIllegalStateException {
+        lazyCreateProperties().setContentEncoding(contentEncoding);
+        return this;
     }
 
     @Override
     public long absoluteExpiryTime() {
-        // TODO Auto-generated method stub
-        return 0;
+        return properties != null ? properties.getAbsoluteExpiryTime() : 0;
     }
 
     @Override
-    public Message<OutputStream> absoluteExpiryTime(long expiryTime) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage absoluteExpiryTime(long expiryTime) throws ClientIllegalStateException {
+        lazyCreateProperties().setAbsoluteExpiryTime(expiryTime);
+        return this;
     }
 
     @Override
     public long creationTime() {
-        // TODO Auto-generated method stub
-        return 0;
+        return properties != null ? properties.getCreationTime() : 0;
     }
 
     @Override
-    public Message<OutputStream> creationTime(long createTime) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage creationTime(long createTime) throws ClientIllegalStateException {
+        lazyCreateProperties().setCreationTime(createTime);
+        return this;
     }
 
     @Override
     public String groupId() {
-        // TODO Auto-generated method stub
-        return null;
+        return properties != null ? properties.getGroupId() : null;
     }
 
     @Override
-    public Message<OutputStream> groupId(String groupId) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage groupId(String groupId) throws ClientIllegalStateException {
+        lazyCreateProperties().setGroupId(groupId);
+        return this;
     }
 
     @Override
     public int groupSequence() {
-        // TODO Auto-generated method stub
-        return 0;
+        return properties != null ? (int) properties.getGroupSequence() : 0;
     }
 
     @Override
-    public Message<OutputStream> groupSequence(int groupSequence) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage groupSequence(int groupSequence) throws ClientIllegalStateException {
+        lazyCreateProperties().setGroupSequence(groupSequence);
+        return this;
     }
 
     @Override
     public String replyToGroupId() {
-        // TODO Auto-generated method stub
-        return null;
+        return properties != null ? properties.getReplyToGroupId() : null;
     }
 
     @Override
-    public Message<OutputStream> replyToGroupId(String replyToGroupId) {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage replyToGroupId(String replyToGroupId) throws ClientIllegalStateException {
+        lazyCreateProperties().setReplyToGroupId(replyToGroupId);
+        return this;
     }
+
+    //----- Message Annotations Access
 
     @Override
     public Object annotation(String key) {
-        // TODO Auto-generated method stub
-        return null;
+        Object value = null;
+        if (annotations != null) {
+            value = annotations.getValue().get(Symbol.valueOf(key));
+        }
+
+        return value;
     }
 
     @Override
     public boolean hasAnnotation(String key) {
-        // TODO Auto-generated method stub
-        return false;
+        if (annotations != null && annotations.getValue() != null) {
+            return annotations.getValue().containsKey(Symbol.valueOf(key));
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean hasAnnotations() {
-        // TODO Auto-generated method stub
-        return false;
+        return annotations != null &&
+               annotations.getValue() != null &&
+               annotations.getValue().size() > 0;
     }
 
     @Override
     public Object removeAnnotation(String key) {
-        // TODO Auto-generated method stub
-        return null;
+        if (hasAnnotations()) {
+            return annotations.getValue().remove(Symbol.valueOf(key));
+        } else {
+            return null;
+        }
+     }
+
+    @Override
+    public StreamSenderMessage forEachAnnotation(BiConsumer<String, Object> action) {
+        if (hasAnnotations()) {
+            annotations.getValue().forEach((key, value) -> {
+                action.accept(key.toString(), value);
+            });
+        }
+
+        return this;
     }
 
     @Override
-    public Message<OutputStream> forEachAnnotation(BiConsumer<String, Object> action) {
-        // TODO Auto-generated method stub
-        return null;
+    public ClientStreamSenderMessage annotation(String key, Object value) throws ClientIllegalStateException {
+        lazyCreateMessageAnnotations().getValue().put(Symbol.valueOf(key),value);
+        return this;
     }
 
-    @Override
-    public Message<OutputStream> annotation(String key, Object value) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    //----- Application Properties Access
 
     @Override
     public Object applicationProperty(String key) {
-        // TODO Auto-generated method stub
-        return null;
+        Object value = null;
+        if (hasApplicationProperties()) {
+            value = applicationProperties.getValue().get(key);
+        }
+
+        return value;
     }
 
     @Override
     public boolean hasApplicationProperty(String key) {
-        // TODO Auto-generated method stub
-        return false;
+        if (hasApplicationProperties()) {
+            return applicationProperties.getValue().containsKey(key);
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean hasApplicationProperties() {
-        // TODO Auto-generated method stub
-        return false;
+        return applicationProperties != null &&
+               applicationProperties.getValue() != null &&
+               applicationProperties.getValue().size() > 0;
     }
 
     @Override
     public Object removeApplicationProperty(String key) {
-        // TODO Auto-generated method stub
-        return null;
+        if (hasApplicationProperties()) {
+            return applicationProperties.getValue().remove(key);
+        } else {
+            return null;
+        }
+     }
+
+    @Override
+    public StreamSenderMessage forEachApplicationProperty(BiConsumer<String, Object> action) {
+        if (hasApplicationProperties()) {
+            applicationProperties.getValue().forEach(action);
+        }
+
+        return this;
     }
 
     @Override
-    public Message<OutputStream> forEachApplicationProperty(BiConsumer<String, Object> action) {
-        // TODO Auto-generated method stub
-        return null;
+    public ClientStreamSenderMessage applicationProperty(String key, Object value) throws ClientIllegalStateException {
+        lazyCreateApplicationProperties().getValue().put(key,value);
+        return this;
     }
 
-    @Override
-    public Message<OutputStream> applicationProperty(String key, Object value) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    //----- Footer Access
 
     @Override
     public Object footer(String key) {
-        // TODO Auto-generated method stub
-        return null;
+        Object value = null;
+        if (hasFooters()) {
+            value = footer.getValue().get(Symbol.valueOf(key));
+        }
+
+        return value;
     }
 
     @Override
     public boolean hasFooter(String key) {
-        // TODO Auto-generated method stub
-        return false;
+        if (hasFooters()) {
+            return footer.getValue().containsKey(Symbol.valueOf(key));
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean hasFooters() {
-        // TODO Auto-generated method stub
-        return false;
+        return footer != null &&
+               footer.getValue() != null &&
+               footer.getValue().size() > 0;
     }
 
     @Override
     public Object removeFooter(String key) {
-        // TODO Auto-generated method stub
-        return null;
+        if (hasFooters()) {
+            return footer.getValue().remove(Symbol.valueOf(key));
+        } else {
+            return null;
+        }
+     }
+
+    @Override
+    public StreamSenderMessage forEachFooter(BiConsumer<String, Object> action) {
+        if (hasFooters()) {
+            footer.getValue().forEach((key, value) -> {
+                action.accept(key.toString(), value);
+            });
+        }
+
+        return this;
     }
 
     @Override
-    public Message<OutputStream> forEachFooter(BiConsumer<String, Object> action) {
-        // TODO Auto-generated method stub
-        return null;
+    public ClientStreamSenderMessage footer(String key, Object value) throws ClientIllegalStateException {
+        lazyCreateFooter().getValue().put(Symbol.valueOf(key),value);
+        return this;
     }
 
-    @Override
-    public Message<OutputStream> footer(String key, Object value) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    //----- AdvancedMessage API
 
     @Override
     public Header header() throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return header;
     }
 
     @Override
-    public AdvancedMessage<OutputStream> header(Header header) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage header(Header header) throws ClientException {
+        checkStreamState(StreamState.PREAMBLE, "Cannot write to Message Header after body writing has started.");
+        this.header = header;
+        return this;
     }
 
     @Override
     public MessageAnnotations annotations() throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return annotations;
     }
 
     @Override
-    public AdvancedMessage<OutputStream> annotations(MessageAnnotations messageAnnotations) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage annotations(MessageAnnotations annotations) throws ClientException {
+        checkStreamState(StreamState.PREAMBLE, "Cannot write to Message Annotations after body writing has started.");
+        this.annotations = annotations;
+        return this;
     }
 
     @Override
     public Properties properties() throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return properties;
     }
 
     @Override
-    public AdvancedMessage<OutputStream> properties(Properties properties) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage properties(Properties properties) throws ClientException {
+        checkStreamState(StreamState.PREAMBLE, "Cannot write to Message Properties after body writing has started.");
+        this.properties = properties;
+        return this;
     }
 
     @Override
     public ApplicationProperties applicationProperties() throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return applicationProperties;
     }
 
     @Override
-    public AdvancedMessage<OutputStream> applicationProperties(ApplicationProperties applicationProperties) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage applicationProperties(ApplicationProperties applicationProperties) throws ClientException {
+        checkStreamState(StreamState.PREAMBLE, "Cannot write to Message Application Properties after body writing has started.");
+        this.applicationProperties = applicationProperties;
+        return this;
     }
 
     @Override
     public Footer footer() throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return footer;
     }
 
     @Override
-    public AdvancedMessage<OutputStream> footer(Footer footer) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+    public StreamSenderMessage footer(Footer footer) throws ClientException {
+        checkStreamState(StreamState.COMPLETE, "Cannot write to Message Footer after message has been marked completed.");
+        checkStreamState(StreamState.ABORTED, "Cannot write to Message Footer after message has benn marked aborted.");
+        this.footer = footer;
+        return this;
     }
 
     @Override
     public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) throws ClientException {
         throw new ClientUnsupportedOperationException("StreamSenderMessage cannot be directly encoded");
+    }
+
+    //----- Internal API
+
+    private void appenedDataToBuffer(ProtonBuffer incoming) throws ClientException {
+        if (buffer == null) {
+            buffer = incoming;
+        } else {
+            if (buffer instanceof ProtonCompositeBuffer) {
+                ((ProtonCompositeBuffer) buffer).append(incoming);
+            } else {
+                ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
+                composite.append(buffer).append(incoming);
+
+                buffer = composite;
+            }
+        }
+
+        if (buffer.getReadableBytes() >= writeBufferSize) {
+            try {
+                sender.sendMessage(this, streamMessagePacket);
+            } finally {
+                buffer = null;
+            }
+        }
+    }
+
+    private final class StreamMessagePacket extends ClientMessage<byte[]> {
+
+        @Override
+        public int messageFormat() {
+            return messageFormat;
+        }
+
+        @Override
+        public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) {
+            return buffer;
+        }
+    }
+
+    private ClientStreamSenderMessage write(Section<?> section) throws ClientException {
+        if (aborted()) {
+            throw new ClientIllegalStateException("Cannot write a Section to an already aborted send context");
+        }
+
+        if (completed()) {
+            throw new ClientIllegalStateException("Cannot write a Section to an already completed send context");
+        }
+
+        appenedDataToBuffer(ClientMessageSupport.encodeSection(section, ProtonByteBufferAllocator.DEFAULT.allocate()));
+
+        return this;
+    }
+
+    private void checkStreamState(StreamState state, String errorMessage) throws ClientIllegalStateException {
+        if (currentState != state) {
+            throw new ClientIllegalStateException(errorMessage);
+        }
+    }
+
+    private Header lazyCreateHeader() throws ClientIllegalStateException {
+        checkStreamState(StreamState.PREAMBLE, "Cannot write to Message Header after body writing has started.");
+
+        if (header == null) {
+            header = new Header();
+        }
+
+        return header;
+    }
+
+    private Properties lazyCreateProperties() throws ClientIllegalStateException {
+        checkStreamState(StreamState.PREAMBLE, "Cannot write to Message Properties after body writing has started.");
+
+        if (properties == null) {
+            properties = new Properties();
+        }
+
+        return properties;
+    }
+
+    private ApplicationProperties lazyCreateApplicationProperties() throws ClientIllegalStateException {
+        checkStreamState(StreamState.PREAMBLE, "Cannot write to Message Application Properties after body writing has started.");
+
+        if (applicationProperties == null) {
+            applicationProperties = new ApplicationProperties(new LinkedHashMap<>());
+        }
+
+        return applicationProperties;
+    }
+
+    private MessageAnnotations lazyCreateMessageAnnotations() throws ClientIllegalStateException {
+        checkStreamState(StreamState.PREAMBLE, "Cannot write to Message Annotations after body writing has started.");
+
+        if (annotations == null) {
+            annotations = new MessageAnnotations(new LinkedHashMap<>());
+        }
+
+        return annotations;
+    }
+
+    private Footer lazyCreateFooter() throws ClientIllegalStateException {
+        checkStreamState(StreamState.COMPLETE, "Cannot write to Message Footer after message has been marked completed.");
+        checkStreamState(StreamState.ABORTED, "Cannot write to Message Footer after message has benn marked aborted.");
+
+        if (footer == null) {
+            footer = new Footer(new LinkedHashMap<>());
+        }
+
+        return footer;
     }
 }
