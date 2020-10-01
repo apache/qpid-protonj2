@@ -3,6 +3,7 @@ package org.apache.qpid.protonj2.client.impl;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -10,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -1719,6 +1721,171 @@ public class ReceiverTest extends ImperativeClientTestCase {
             } catch (ClientConnectionRemotelyClosedException cliEx) {
             }
 
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testDeliveryRefusesRawStreamAfterMessage() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withSettled(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            Delivery delivery = receiver.receive(10, TimeUnit.MILLISECONDS);
+            assertNotNull(delivery);
+
+            Message<String> message = delivery.message();
+            assertNotNull(message);
+
+            try {
+                delivery.rawInputStream();
+                fail("Should not be able to use the inputstream once message is requested");
+            } catch (ClientIllegalStateException cliEx) {
+                // Expected
+            }
+
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testDeliveryRefusesRawStreamAfterAnnotations() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withSettled(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            Delivery delivery = receiver.receive(10, TimeUnit.MILLISECONDS);
+            assertNotNull(delivery);
+            assertNull(delivery.annotations());
+
+            try {
+                delivery.rawInputStream();
+                fail("Should not be able to use the inputstream once message is requested");
+            } catch (ClientIllegalStateException cliEx) {
+                // Expected
+            }
+
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testDeliveryRefusesMessageDecodeOnceRawInputStreamIsRequested() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withSettled(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            Delivery delivery = receiver.receive(10, TimeUnit.MILLISECONDS);
+            assertNotNull(delivery);
+            InputStream stream = delivery.rawInputStream();
+            assertNotNull(stream);
+
+            assertEquals(payload.length, stream.available());
+            byte[] bytesRead = new byte[payload.length];
+            assertEquals(payload.length, stream.read(bytesRead));
+            assertArrayEquals(payload, bytesRead);
+
+            try {
+                delivery.message();
+                fail("Should not be able to use the message API once raw stream is requested");
+            } catch (ClientIllegalStateException cliEx) {
+                // Expected
+            }
+
+            try {
+                delivery.annotations();
+                fail("Should not be able to use the annotations API once raw stream is requested");
+            } catch (ClientIllegalStateException cliEx) {
+                // Expected
+            }
+
+            receiver.close();
             connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
