@@ -451,6 +451,8 @@ public class ClientReceiver implements Receiver {
         if (!delivery.isPartial()) {
             LOG.trace("{} has incoming Message(s).", this);
             messageQueue.enqueue(new ClientDelivery(this, delivery));
+        } else {
+            delivery.claimAvailableBytes();
         }
     }
 

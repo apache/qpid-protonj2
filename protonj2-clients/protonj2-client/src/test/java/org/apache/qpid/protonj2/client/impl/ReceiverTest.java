@@ -33,6 +33,7 @@ import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Session;
+import org.apache.qpid.protonj2.client.SessionOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
@@ -1944,6 +1945,67 @@ public class ReceiverTest extends ImperativeClientTestCase {
             assertEquals(section1, section.get(0));
             assertEquals(section2, section.get(1));
             assertEquals(section3, section.get(2));
+
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSessionWindowExpandedAsIncomingFramesArrive() throws Exception {
+        final byte[] payload1 = new byte[255];
+        final byte[] payload2 = new byte[255];
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withMaxFrameSize(1024).respond();
+            peer.expectBegin().withIncomingWindow(1).respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow().withIncomingWindow(1).withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(true)
+                                 .withSettled(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload1).queue();
+            peer.expectFlow().withIncomingWindow(1).withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withSettled(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload2).queue();
+            peer.expectFlow().withIncomingWindow(1).withLinkCredit(9);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().maxFrameSize(1024);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            SessionOptions sessionOpts = new SessionOptions().incomingCapacity(1024);
+            Session session = connection.openSession(sessionOpts);
+            Receiver receiver = session.openReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            Delivery delivery = receiver.receive(10, TimeUnit.MILLISECONDS);
+            assertNotNull(delivery);
+
+            InputStream stream = delivery.rawInputStream();
+            assertNotNull(stream);
+
+            assertEquals(payload1.length + payload2.length, stream.available());
+            byte[] bytesRead = new byte[payload1.length + payload2.length];
+            assertEquals(payload1.length + payload2.length, stream.read(bytesRead));
 
             receiver.close();
             connection.close().get();
