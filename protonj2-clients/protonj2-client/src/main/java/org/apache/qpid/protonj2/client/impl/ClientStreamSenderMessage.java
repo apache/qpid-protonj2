@@ -19,7 +19,9 @@ package org.apache.qpid.protonj2.client.impl;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
@@ -35,6 +37,7 @@ import org.apache.qpid.protonj2.client.StreamSenderMessage;
 import org.apache.qpid.protonj2.client.StreamSenderOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
+import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
@@ -76,6 +79,10 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
             writeBufferSize = Math.max(StreamSenderOptions.MIN_BUFFER_SIZE_LIMIT,
                                   (int) sender.getProtonSender().getConnection().getMaxFrameSize());
         }
+    }
+
+    OutgoingDelivery protonDelivery() {
+        return protonDelivery;
     }
 
     @Override
@@ -165,6 +172,52 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     @Override
+    public Message<OutputStream> body(OutputStream value) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot set an OutputStream body on a StreamSenderMessage");
+    }
+
+    @Override
+    public AdvancedMessage<OutputStream> addBodySection(Section<?> bodySection) throws ClientException {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public AdvancedMessage<OutputStream> bodySections(Collection<Section<?>> sections) throws ClientException {
+        Objects.requireNonNull(sections, "Cannot set body sections with a null Collection");
+
+        for (Section<?> section : sections) {
+            addBodySection(section);
+        }
+
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Collection<Section<?>> bodySections() throws ClientException {
+        // Body sections are not held in memory but encoded as offered so they cannot be returned.
+        return Collections.EMPTY_LIST;
+    }
+
+    @Override
+    public AdvancedMessage<OutputStream> forEachBodySection(Consumer<Section<?>> consumer) throws ClientException {
+        // Body sections are not held in memory but encoded as offered so they are not iterable.
+        return this;
+    }
+
+    @Override
+    public AdvancedMessage<OutputStream> clearBodySections() throws ClientException {
+        // Body sections are not held in memory but encoded as offered so they cannot be cleared.
+        return this;
+    }
+
+    @Override
+    public OutputStream body() throws ClientException {
+        return body(new OutputStreamOptions());
+    }
+
+    @Override
     public OutputStream body(OutputStreamOptions options) throws ClientException {
         if (completed()) {
             throw new ClientIllegalStateException("Cannot create an OutputStream from a completed send context");
@@ -177,9 +230,9 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         ProtonBuffer streamBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(writeBufferSize, writeBufferSize);
 
         if (options.streamSize() > 0) {
-            return new SendContextSingularDataSectionOutputStream(options, streamBuffer);
+            return new SingularDataSectionOutputStream(options, streamBuffer);
         } else {
-            return new SendContextContiguousDataSectionsOutputStream(options, streamBuffer);
+            return new MultipleDataSectionsOutputStream(options, streamBuffer);
         }
     }
 
@@ -368,9 +421,9 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         }
     }
 
-    private final class SendContextSingularDataSectionOutputStream extends SendContextOutputStream {
+    private final class SingularDataSectionOutputStream extends SendContextOutputStream {
 
-        public SendContextSingularDataSectionOutputStream(OutputStreamOptions options, ProtonBuffer buffer) throws ClientException {
+        public SingularDataSectionOutputStream(OutputStreamOptions options, ProtonBuffer buffer) throws ClientException {
             super(options, buffer);
 
             ProtonBuffer preamble = ProtonByteBufferAllocator.DEFAULT.allocate(DATA_SECTION_HEADER_ENCODING_SIZE, DATA_SECTION_HEADER_ENCODING_SIZE);
@@ -385,9 +438,9 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         }
     }
 
-    private final class SendContextContiguousDataSectionsOutputStream extends SendContextOutputStream {
+    private final class MultipleDataSectionsOutputStream extends SendContextOutputStream {
 
-        public SendContextContiguousDataSectionsOutputStream(OutputStreamOptions options, ProtonBuffer buffer) {
+        public MultipleDataSectionsOutputStream(OutputStreamOptions options, ProtonBuffer buffer) {
             super(options, buffer);
         }
 
@@ -739,18 +792,6 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     @Override
-    public OutputStream body() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<OutputStream> body(OutputStream value) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public Header header() throws ClientException {
         // TODO Auto-generated method stub
         return null;
@@ -811,42 +852,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     @Override
-    public AdvancedMessage<OutputStream> addBodySection(Section<?> bodySection) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public AdvancedMessage<OutputStream> bodySections(Collection<Section<?>> sections) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Collection<Section<?>> bodySections() throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public AdvancedMessage<OutputStream> forEachBodySection(Consumer<Section<?>> consumer) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public AdvancedMessage<OutputStream> clearBodySections() throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    OutgoingDelivery protonDelivery() {
-        return protonDelivery;
+        throw new ClientUnsupportedOperationException("StreamSenderMessage cannot be directly encoded");
     }
 }
