@@ -16,10 +16,9 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.OutputStream;
 import java.net.URI;
@@ -34,6 +33,7 @@ import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamSenderMessage;
 import org.apache.qpid.protonj2.client.StreamSenderOptions;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.HeaderMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferPayloadCompositeMatcher;
@@ -43,7 +43,6 @@ import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedPartialDataSec
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Header;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -52,7 +51,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Tests the {@link message} implementation
  */
-@Disabled
 @Timeout(20)
 public class StreamSenderTest extends ImperativeClientTestCase {
 
@@ -142,6 +140,113 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testMessageFormatCannotBeModifiedAfterBodyWritesStart() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond(); // Hidden session for stream sender
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            StreamSender sender = connection.openStreamSender("test-qos");
+            StreamSenderMessage message = sender.beginMessage();
+
+            message.durable(true);
+            message.messageFormat(17);
+            message.body();
+
+            try {
+                message.messageFormat(17);
+                fail("Should not be able to modify message format after body writes started");
+            } catch (ClientIllegalStateException ex) {
+                // Expected
+            }
+
+            message.abort();
+
+            sender.close().get(10, TimeUnit.SECONDS);
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCannotModifyMessagePreambleAfterWritesHaveStarted() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond(); // Hidden session for stream sender
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            StreamSender sender = connection.openStreamSender("test-qos");
+            StreamSenderMessage message = sender.beginMessage();
+
+            message.durable(true);
+            message.messageId("test");
+            message.annotation("key", "value");
+            message.applicationProperty("key", "value");
+            message.body();
+
+            try {
+                message.durable(false);
+                fail("Should not be able to modify message preamble after body writes started");
+            } catch (ClientIllegalStateException ex) {
+                // Expected
+            }
+
+            try {
+                message.messageId("test1");
+                fail("Should not be able to modify message preamble after body writes started");
+            } catch (ClientIllegalStateException ex) {
+                // Expected
+            }
+
+            try {
+                message.annotation("key1", "value");
+                fail("Should not be able to modify message preamble after body writes started");
+            } catch (ClientIllegalStateException ex) {
+                // Expected
+            }
+
+            try {
+                message.applicationProperty("key", "value");
+                fail("Should not be able to modify message preamble after body writes started");
+            } catch (ClientIllegalStateException ex) {
+                // Expected
+            }
+
+            message.abort();
+
+            sender.close().get(10, TimeUnit.SECONDS);
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     void testCreateStream() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -168,7 +273,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             sender.openFuture().get();
 
-            // Nothing should be sent since we closed without ever writing anything.
+            // Nothing should be sent since we closed without ever writing anything which should
+            // abort the delivery and should result in proton simply discarding the Delivery.
             stream.close();
 
             sender.close().get();
@@ -179,7 +285,16 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testFlushWithConfiguredNonBodySections() throws Exception {
+    public void testFlushWithSetNonBodySectionsThenClose() throws Exception {
+        doTestNonBodySectionWrittenWhenNoWritesToStream(true);
+    }
+
+    @Test
+    public void testCloseWithSetNonBodySections() throws Exception {
+        doTestNonBodySectionWrittenWhenNoWritesToStream(false);
+    }
+
+    private void doTestNonBodySectionWrittenWhenNoWritesToStream(boolean flushBeforeClose) throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -210,13 +325,30 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             OutputStreamOptions options = new OutputStreamOptions();
             OutputStream stream = message.body(options);
 
+            HeaderMatcher headerMatcher = new HeaderMatcher(true);
+            headerMatcher.withDurable(true);
+            headerMatcher.withPriority((byte) 1);
+            headerMatcher.withTtl(65535);
+            headerMatcher.withFirstAcquirer(true);
+            headerMatcher.withDeliveryCount(2);
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.setHeadersMatcher(headerMatcher);
+
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withMore(true).withPayload(payloadMatcher);
+            peer.expectTransfer().withMore(false).withNullPayload()
+                                 .respond()
+                                 .withSettled(true).withState().accepted();
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
-            // Stream won't output until some body bytes are written.
+            // Once flush is called than anything in the buffer is written regardless of
+            // there being any actual stream writes.  Default close action is to complete
+            // the delivery.
             stream.flush();
             stream.close();
+
+            message.tracker().awaitSettlement(10, TimeUnit.SECONDS);
 
             sender.close().get();
             connection.close().get();
@@ -226,7 +358,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testFlushAfterFirstWriteEncodesAMQPHeadermessageBuffer() throws Exception {
+    void testFlushAfterFirstWriteEncodesAMQPHeaderAndMessageBuffer() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -269,13 +401,16 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             payloadMatcher.setMessageContentMatcher(dataMatcher);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectTransfer().withPayload(payloadMatcher);
+            peer.expectTransfer().withMore(true).withPayload(payloadMatcher);
+            peer.expectTransfer().withMore(false).withNullPayload();
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
-            // Stream won't output until some body bytes are written.
+            // Stream won't output until some body bytes are written since the buffer was not
+            // filled by the header write.  Then the close will complete the stream message.
             stream.write(new byte[] { 0, 1, 2, 3 });
             stream.flush();
+            stream.close();
 
             sender.close().get();
             connection.close().get();
@@ -285,7 +420,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testAutoFlushAfterWritesExceedConfiguredBufferLimit() throws Exception {
+    void testAutoFlushAfterSingleWriteExceedsConfiguredBufferLimit() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -636,7 +771,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testIncompleteStreamClosureWithNoWritesDoesNotAbortTransfer() throws Exception {
+    void testIncompleteStreamClosureWithNoWritesAbortsTransfer() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -652,7 +787,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             StreamSender sender = connection.openStreamSender("test-queue");
-            StreamSenderMessage tracker = sender.beginMessage();
+            StreamSenderMessage message = sender.beginMessage();
 
             // Populate all Header values
             Header header = new Header();
@@ -660,10 +795,10 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             header.setPriority((byte) 1);
             header.setDeliveryCount(1);
 
-            tracker.header(header);
+            message.header(header);
 
             OutputStreamOptions options = new OutputStreamOptions().bodyLength(8192).completeSendOnClose(false);
-            OutputStream stream = tracker.body(options);
+            OutputStream stream = message.body(options);
 
             HeaderMatcher headerMatcher = new HeaderMatcher(true);
             headerMatcher.withDurable(true);
@@ -673,15 +808,17 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             payloadMatcher.setHeadersMatcher(headerMatcher);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectTransfer().withAborted(anyOf(nullValue(), is(false))).withPayload(payloadMatcher).withMore(false);
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
+            // This should abort the transfer as we might have triggered output upon create when the
+            // preamble was written.
             stream.close();
 
-            // This should finalize the Transfer since we asked the stream not to complete
-            // and we didn't write anything before closing.
-            tracker.complete();
+            assertTrue(message.aborted());
+
+            // Should have no affect.
+            message.abort();
 
             sender.close().get();
             connection.close().get();
@@ -762,6 +899,44 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             stream.flush();
 
             // Stream should already be completed so no additional frames should be written.
+            stream.close();
+
+            sender.close().get();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void testRawOutputStreamFromMessageWritesUnmodifiedBytes() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamSenderMessage message = sender.beginMessage();
+
+            OutputStream stream = message.rawOutputStream();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withMore(true).withPayload(new byte[] { 0, 1, 2, 3 });
+            peer.expectTransfer().withMore(false).withNullPayload();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            stream.write(new byte[] { 0, 1, 2, 3 });
+            stream.flush();
             stream.close();
 
             sender.close().get();

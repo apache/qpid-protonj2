@@ -36,11 +36,6 @@ public interface StreamTracker extends Tracker {
     StreamSender sender();
 
     /**
-     * @return the {@link StreamSenderMessage} that this {@link StreamTracker} is tracking.
-     */
-    StreamSenderMessage message();
-
-    /**
      * {@inheritDoc}
      *
      * @return this {@link StreamTracker} instance.

@@ -31,28 +31,20 @@ import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 public class ClientStreamTracker implements StreamTracker {
 
     private final ClientStreamSender sender;
-    private final ClientStreamSenderMessage message;
     private final OutgoingDelivery delivery;
-
     private final ClientFuture<Tracker> acknowledged;
 
     private volatile boolean remotelySetted;
     private volatile DeliveryState remoteDeliveryState;
 
-    public ClientStreamTracker(ClientStreamSenderMessage message) {
-        this.message = message;
-        this.sender = message.sender();
-        this.delivery = message.protonDelivery().setLinkedResource(this);
+    public ClientStreamTracker(ClientStreamSender sender, OutgoingDelivery delivery) {
+        this.sender = sender;
+        this.delivery = delivery.setLinkedResource(this);
         this.acknowledged = sender.session().getFutureFactory().createFuture();
     }
 
     OutgoingDelivery delivery() {
         return delivery;
-    }
-
-    @Override
-    public ClientStreamSenderMessage message() {
-        return message;
     }
 
     @Override

@@ -49,6 +49,8 @@ import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.LinkState;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
+import org.apache.qpid.protonj2.engine.util.StringUtils;
+import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.slf4j.Logger;
@@ -209,13 +211,16 @@ public class ClientStreamSender implements StreamSender {
         checkClosedOrFailed();
         final ClientFuture<Tracker> tracker = session.getFutureFactory().createFuture();
 
+        // TODO: Implement or change implementation to extend ClientSender ?
+
         executor.execute(() -> {
             if (protonSender.current() != null) {
                 // TODO: Add to blocked list and send after ?
                 tracker.failed(new ClientIllegalStateException(
                     "Cannot perform a send while a streaming send is in progress"));
             } else {
-                // TODO:
+                tracker.failed(new ClientUnsupportedOperationException(
+                    "Cannot perform a Send from a StreamTracker must use a normal Sender "));
             }
         });
 
@@ -232,11 +237,13 @@ public class ClientStreamSender implements StreamSender {
         checkClosedOrFailed();
         final ClientFuture<Tracker> tracker = session.getFutureFactory().createFuture();
 
+        // TODO: Implement or change implementation to extend ClientSender ?
+
         executor.execute(() -> {
             if (protonSender.current() != null) {
                 tracker.complete(null);
             } else {
-                // TODO:
+                tracker.complete(null);
             }
         });
 
@@ -245,15 +252,27 @@ public class ClientStreamSender implements StreamSender {
 
     @Override
     public ClientStreamSenderMessage beginMessage() throws ClientException {
+        return beginMessage(null);
+    }
+
+    @Override
+    public ClientStreamSenderMessage beginMessage(Map<String, Object> deliveryAnnotations) throws ClientException {
         checkClosedOrFailed();
         final ClientFuture<ClientStreamSenderMessage> tracker = session.getFutureFactory().createFuture();
+        final DeliveryAnnotations annotations;
+
+        if (deliveryAnnotations != null) {
+            annotations = new DeliveryAnnotations(StringUtils.toSymbolKeyedMap(deliveryAnnotations));
+        } else {
+            annotations = null;
+        }
 
         executor.execute(() -> {
             if (protonSender.current() != null) {
                 tracker.failed(new ClientIllegalStateException(
                     "Cannot initiate a new streaming send until the previous one is complete"));
             } else {
-                tracker.complete(new ClientStreamSenderMessage(this, protonSender.next()));
+                tracker.complete(new ClientStreamSenderMessage(this, protonSender.next(), annotations));
             }
         });
 
@@ -617,7 +636,7 @@ public class ClientStreamSender implements StreamSender {
 
     private void handleDeliveryUpdated(OutgoingDelivery delivery) {
         try {
-            delivery.getLinkedResource(ClientStreamSenderMessage.class).tracker().processDeliveryUpdated(delivery);
+            delivery.getLinkedResource(ClientStreamTracker.class).processDeliveryUpdated(delivery);
         } catch (ClassCastException ccex) {
             LOG.debug("Sender received update on Delivery not linked to a Tracker: {}", delivery);
         }
