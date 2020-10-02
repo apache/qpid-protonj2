@@ -23,12 +23,12 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.client.AdvancedMessage;
+import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.protonj2.client.Message;
-import org.apache.qpid.protonj2.client.StreamDelivery;
-import org.apache.qpid.protonj2.client.StreamReceiver;
 import org.apache.qpid.protonj2.client.StreamReceiverMessage;
+import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
+import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
@@ -45,19 +45,43 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
  */
 public class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
+    private enum StreamState {
+        IDLE,
+        PREAMBLE_READ,
+        BODY_READING,
+        BODY_READ,
+        FOOTER_READ
+    }
+
     private final ClientStreamReceiver receiver;
+    private final ClientStreamDelivery delivery;
     private final IncomingDelivery protonDelivery;
+    private final ProtonCompositeBuffer deliveryBuffer = new ProtonCompositeBuffer();
 
-    private DeliveryAnnotations deliveryAnnotations;
+    private Header header;
+    private MessageAnnotations annotations;
+    private Properties properties;
+    private ApplicationProperties applicationProperties;
+    private Footer footer;
 
-    ClientStreamReceiverMessage(ClientStreamReceiver receiver, IncomingDelivery delivery) {
+    ClientStreamReceiverMessage(ClientStreamReceiver receiver, ClientStreamDelivery delivery) {
         this.receiver = receiver;
-        this.protonDelivery = delivery.setLinkedResource(this);
+        this.delivery = delivery;
+        this.protonDelivery = delivery.getProtonDelivery();
     }
 
     @Override
-    public StreamReceiver receiver() {
+    public ClientStreamReceiver receiver() {
         return receiver;
+    }
+
+    @Override
+    public ClientStreamDelivery delivery() {
+        return delivery;
+    }
+
+    IncomingDelivery protonDelivery() {
+        return protonDelivery;
     }
 
     @Override
@@ -83,15 +107,480 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
         return protonDelivery != null ? protonDelivery.getMessageFormat() : 0;
     }
 
+    @Override
+    public StreamReceiverMessage messageFormat(int messageFormat) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiverMessage");
+    }
+
+    //----- Header API implementation
+
+    @Override
+    public boolean durable() {
+        return header() != null ? header.isDurable() : false;
+    }
+
+    @Override
+    public StreamReceiverMessage durable(boolean durable) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public byte priority() {
+        return header() != null ? header.getPriority() : Header.DEFAULT_PRIORITY;
+    }
+
+    @Override
+    public StreamReceiverMessage priority(byte priority) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public long timeToLive() {
+        return header() != null ? header.getTimeToLive() : Header.DEFAULT_TIME_TO_LIVE;
+    }
+
+    @Override
+    public StreamReceiverMessage timeToLive(long timeToLive) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public boolean firstAcquirer() {
+        return header() != null ? header.isFirstAcquirer() : Header.DEFAULT_FIRST_ACQUIRER;
+    }
+
+    @Override
+    public StreamReceiverMessage firstAcquirer(boolean firstAcquirer) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public long deliveryCount() {
+        return header() != null ? header.getDeliveryCount() : Header.DEFAULT_DELIVERY_COUNT;
+    }
+
+    @Override
+    public StreamReceiverMessage deliveryCount(long deliveryCount) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public Header header() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StreamReceiverMessage header(Header header) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    //----- Properties API implementation
+
+    @Override
+    public Object messageId() {
+        if (properties() != null) {
+            return properties().getMessageId();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public StreamReceiverMessage messageId(Object messageId) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public byte[] userId() {
+        if (properties() != null) {
+            byte[] copyOfUserId = null;
+            if (properties != null && properties().getUserId() != null) {
+                copyOfUserId = properties().getUserId().arrayCopy();
+            }
+
+            return copyOfUserId;
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public StreamReceiverMessage userId(byte[] userId) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public String to() {
+        if (properties() != null) {
+            return properties().getTo();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public StreamReceiverMessage to(String to) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public String subject() {
+        if (properties() != null) {
+            return properties().getSubject();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public StreamReceiverMessage subject(String subject) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public String replyTo() {
+        if (properties() != null) {
+            return properties().getReplyTo();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public StreamReceiverMessage replyTo(String replyTo) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public Object correlationId() {
+        if (properties() != null) {
+            return properties().getCorrelationId();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public StreamReceiverMessage correlationId(Object correlationId) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public String contentType() {
+        if (properties() != null) {
+            return properties().getContentType();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public StreamReceiverMessage contentType(String contentType) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public String contentEncoding() {
+        if (properties() != null) {
+            return properties().getContentEncoding();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public Message<?> contentEncoding(String contentEncoding) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public long absoluteExpiryTime() {
+        if (properties() != null) {
+            return properties().getAbsoluteExpiryTime();
+        } else {
+            return 0l;
+        }
+    }
+
+    @Override
+    public StreamReceiverMessage absoluteExpiryTime(long expiryTime) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public long creationTime() {
+        if (properties() != null) {
+            return properties().getCreationTime();
+        } else {
+            return 0l;
+        }
+    }
+
+    @Override
+    public StreamReceiverMessage creationTime(long createTime) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public String groupId() {
+        if (properties() != null) {
+            return properties().getGroupId();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public StreamReceiverMessage groupId(String groupId) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public int groupSequence() {
+        if (properties() != null) {
+            return (int) properties().getGroupSequence();
+        } else {
+            return 0;
+        }
+    }
+
+    @Override
+    public StreamReceiverMessage groupSequence(int groupSequence) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public String replyToGroupId() {
+        if (properties() != null) {
+            return properties().getReplyToGroupId();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public StreamReceiverMessage replyToGroupId(String replyToGroupId) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
+    }
+
+    @Override
+    public Properties properties() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StreamReceiverMessage properties(Properties properties) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    //----- Delivery Annotations API (Internal Access Only)
+
+    DeliveryAnnotations deliveryAnnotations() throws ClientException {
+        return null;
+    }
+
+    //----- Message Annotations API
+
+    @Override
+    public Object annotation(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean hasAnnotation(String key) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean hasAnnotations() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Object removeAnnotation(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StreamReceiverMessage forEachAnnotation(BiConsumer<String, Object> action) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public StreamReceiverMessage annotation(String key, Object value) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public MessageAnnotations annotations() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StreamReceiverMessage annotations(MessageAnnotations messageAnnotations) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    //----- Application Properties API
+
+    @Override
+    public Object applicationProperty(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean hasApplicationProperty(String key) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean hasApplicationProperties() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Object removeApplicationProperty(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StreamReceiverMessage forEachApplicationProperty(BiConsumer<String, Object> action) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public StreamReceiverMessage applicationProperty(String key, Object value) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public ApplicationProperties applicationProperties() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StreamReceiverMessage applicationProperties(ApplicationProperties applicationProperties) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    //----- Message Footer API
+
+    @Override
+    public Object footer(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean hasFooter(String key) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean hasFooters() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Object removeFooter(String key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StreamReceiverMessage forEachFooter(BiConsumer<String, Object> action) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public StreamReceiverMessage footer(String key, Object value) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public Footer footer() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StreamReceiverMessage footer(Footer footer) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    //----- Message Body Access API
+
+    @Override
+    public StreamReceiverMessage addBodySection(Section<?> bodySection) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot encode from an StreamReceiverMessage instance.");
+    }
+
+    @Override
+    public StreamReceiverMessage bodySections(Collection<Section<?>> sections) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot encode from an StreamReceiverMessage instance.");
+    }
+
+    @Override
+    public Collection<Section<?>> bodySections() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StreamReceiverMessage forEachBodySection(Consumer<Section<?>> consumer) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public StreamReceiverMessage clearBodySections() throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot encode from an StreamReceiverMessage instance.");
+    }
+
+    @Override
+    public InputStream body() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public StreamReceiverMessage body(InputStream value) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot encode from an StreamReceiverMessage instance.");
+    }
+
+    //----- AdvancedMessage encoding API implementation.
+
+    @Override
+    public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot encode from an StreamReceiverMessage instance.");
+    }
+
     //----- Internal Streamed Delivery API and support methods
-
-    IncomingDelivery protonDelivery() {
-        return protonDelivery;
-    }
-
-    void deliveryAnnotations(DeliveryAnnotations deliveryAnnotations) {
-        this.deliveryAnnotations = deliveryAnnotations;
-    }
 
     private void checkClosed() throws ClientIllegalStateException {
         if (receiver.isClosed()) {
@@ -121,451 +610,4 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
     //----- Internal InputStream implementations
 
-    @Override
-    public Header header() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public AdvancedMessage<InputStream> header(Header header) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public MessageAnnotations annotations() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public AdvancedMessage<InputStream> annotations(MessageAnnotations messageAnnotations) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    DeliveryAnnotations deliveryAnnotations() {
-        return deliveryAnnotations;
-    }
-
-    @Override
-    public Properties properties() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public AdvancedMessage<InputStream> properties(Properties properties) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public ApplicationProperties applicationProperties() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public AdvancedMessage<InputStream> applicationProperties(ApplicationProperties applicationProperties) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Footer footer() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public AdvancedMessage<InputStream> footer(Footer footer) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public AdvancedMessage<InputStream> messageFormat(int messageFormat) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public AdvancedMessage<InputStream> addBodySection(Section<?> bodySection) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public AdvancedMessage<InputStream> bodySections(Collection<Section<?>> sections) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Collection<Section<?>> bodySections() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public AdvancedMessage<InputStream> forEachBodySection(Consumer<Section<?>> consumer) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public AdvancedMessage<InputStream> clearBodySections() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public boolean durable() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public Message<InputStream> durable(boolean durable) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public byte priority() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public Message<InputStream> priority(byte priority) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public long timeToLive() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public Message<InputStream> timeToLive(long timeToLive) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public boolean firstAcquirer() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public Message<InputStream> firstAcquirer(boolean firstAcquirer) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public long deliveryCount() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public Message<InputStream> deliveryCount(long deliveryCount) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Object messageId() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> messageId(Object messageId) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public byte[] userId() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> userId(byte[] userId) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String to() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> to(String to) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String subject() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> subject(String subject) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String replyTo() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> replyTo(String replyTo) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Object correlationId() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> correlationId(Object correlationId) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String contentType() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> contentType(String contentType) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String contentEncoding() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<?> contentEncoding(String contentEncoding) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public long absoluteExpiryTime() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public Message<InputStream> absoluteExpiryTime(long expiryTime) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public long creationTime() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public Message<InputStream> creationTime(long createTime) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String groupId() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> groupId(String groupId) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public int groupSequence() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public Message<InputStream> groupSequence(int groupSequence) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String replyToGroupId() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> replyToGroupId(String replyToGroupId) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Object annotation(String key) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public boolean hasAnnotation(String key) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean hasAnnotations() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public Object removeAnnotation(String key) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> forEachAnnotation(BiConsumer<String, Object> action) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> annotation(String key, Object value) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Object applicationProperty(String key) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public boolean hasApplicationProperty(String key) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean hasApplicationProperties() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public Object removeApplicationProperty(String key) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> forEachApplicationProperty(BiConsumer<String, Object> action) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> applicationProperty(String key, Object value) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Object footer(String key) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public boolean hasFooter(String key) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean hasFooters() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public Object removeFooter(String key) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> forEachFooter(BiConsumer<String, Object> action) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> footer(String key, Object value) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public InputStream body() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Message<InputStream> body(InputStream value) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public StreamDelivery delivery() {
-        // TODO Auto-generated method stub
-        return null;
-    }
 }

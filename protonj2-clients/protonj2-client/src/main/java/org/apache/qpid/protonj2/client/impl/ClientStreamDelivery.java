@@ -44,6 +44,10 @@ public class ClientStreamDelivery implements StreamDelivery {
         this.protonDelivery = protonDelivery.setLinkedResource(this);
     }
 
+    IncomingDelivery getProtonDelivery() {
+        return protonDelivery;
+    }
+
     @Override
     public ClientStreamReceiver receiver() {
         return receiver;
@@ -71,7 +75,7 @@ public class ClientStreamDelivery implements StreamDelivery {
         }
 
         if (message == null) {
-            message = new ClientStreamReceiverMessage(receiver, protonDelivery);
+            message = new ClientStreamReceiverMessage(receiver, this);
         }
 
         return message;
@@ -84,7 +88,7 @@ public class ClientStreamDelivery implements StreamDelivery {
         }
 
         if (message == null) {
-            message = new ClientStreamReceiverMessage(receiver, protonDelivery);
+            message = new ClientStreamReceiverMessage(receiver, this);
         }
 
         return StringUtils.toStringKeyedMap(message.deliveryAnnotations() != null ? message.deliveryAnnotations().getValue() : null);
