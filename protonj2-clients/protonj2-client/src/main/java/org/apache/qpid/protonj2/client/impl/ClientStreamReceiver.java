@@ -453,9 +453,11 @@ public class ClientStreamReceiver implements StreamReceiver {
                     entry.getValue().cancel(false);
                 }
 
-                entry.getKey().complete(new ClientStreamDelivery(this, delivery));
-
-                entries.remove();
+                try {
+                    entry.getKey().complete(new ClientStreamDelivery(this, delivery));
+                } finally {
+                    entries.remove();
+                }
             }
         }
     }
@@ -568,6 +570,26 @@ public class ClientStreamReceiver implements StreamReceiver {
             }
         } catch (Exception ignore) {
         }
+
+        receiveRequests.forEach((future, timeout) -> {
+            if (timeout != null) {
+                timeout.cancel(false);
+            }
+
+            if (failureCause != null) {
+                future.failed(failureCause);
+            } else {
+                future.failed(new ClientResourceRemotelyClosedException("The Stream Receiver has closed"));
+            }
+        });
+
+        protonReceiver.unsettled().forEach((delivery) -> {
+            if (delivery.getLinkedResource() != null) {
+                try {
+                    delivery.getLinkedResource(ClientStreamDelivery.class).handleReceiverClosed(this);
+                } catch (Exception ex) {}
+            }
+        });
 
         if (failureCause != null) {
             openFuture.failed(failureCause);

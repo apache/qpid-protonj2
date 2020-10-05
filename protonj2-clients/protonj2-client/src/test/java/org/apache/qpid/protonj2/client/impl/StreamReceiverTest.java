@@ -16,8 +16,10 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
@@ -29,14 +31,13 @@ import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
 import org.apache.qpid.protonj2.client.StreamReceiverOptions;
-import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
+import org.apache.qpid.protonj2.client.exceptions.ClientLinkRemotelyClosedException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.util.Wait;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.transport.Role;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -45,7 +46,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Tests the {@link ReceiveContext} implementation
  */
-@Disabled
 @Timeout(20)
 class StreamReceiverTest extends ImperativeClientTestCase {
 
@@ -151,20 +151,57 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
-            try {
-                receiver.receive(5, TimeUnit.MILLISECONDS);
-                fail("Should time out waiting on a delivery");
-            } catch (ClientOperationTimedOutException ex) {
-            }
-
-            try {
-                receiver.receive(5, TimeUnit.MILLISECONDS);
-                fail("Should time out waiting on a delivery");
-            } catch (ClientOperationTimedOutException ex) {
-            }
+            assertNull(receiver.receive(3, TimeUnit.MILLISECONDS));
+            assertNull(receiver.receive(3, TimeUnit.MILLISECONDS));
+            assertNull(receiver.receive(3, TimeUnit.MILLISECONDS));
 
             peer.expectDetach().respond();
             peer.expectClose().respond();
+
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReceiveFailsWhenLinkRemotelyClosed() throws Exception {
+        doTestReceiveFailsWhenLinkRemotelyClose(false);
+    }
+
+    @Test
+    public void testTimedReceiveFailsWhenLinkRemotelyClosed() throws Exception {
+        doTestReceiveFailsWhenLinkRemotelyClose(true);
+    }
+
+    private void doTestReceiveFailsWhenLinkRemotelyClose(boolean timed) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach();
+            peer.expectClose().respond();
+            peer.remoteDetach().later(50);
+
+            if (timed) {
+                assertThrows(ClientLinkRemotelyClosedException.class, () -> receiver.receive(1, TimeUnit.MINUTES));
+            } else {
+                assertThrows(ClientLinkRemotelyClosedException.class, () -> receiver.receive());
+            }
 
             receiver.close();
             connection.close().get();
@@ -209,6 +246,57 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             Wait.assertTrue("Should eventually be remotely settled", delivery::remoteSettled);
             Wait.assertTrue(() -> { return delivery.remoteState() == DeliveryState.accepted(); });
+
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamDeliveryReceivedWhileTransferIsIncomplete() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertFalse(delivery.completed());
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).now();
+
+            Wait.assertTrue("Should eventually be marked as completed", delivery::completed);
 
             peer.expectDetach().respond();
             peer.expectClose().respond();

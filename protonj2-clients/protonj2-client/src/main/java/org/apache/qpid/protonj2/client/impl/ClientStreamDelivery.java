@@ -162,4 +162,24 @@ public class ClientStreamDelivery implements StreamDelivery {
     public boolean remoteSettled() {
         return protonDelivery.isRemotelySettled();
     }
+
+    //----- Event Handlers for Delivery updates
+
+    void handleDeliveryRead(IncomingDelivery delivery) {
+        if (message != null) {
+            message.handleDeliveryRead(delivery);
+        }
+    }
+
+    void handleDeliveryAborted(IncomingDelivery delivery) {
+        if (message != null) {
+            message.handleDeliveryAborted(delivery);
+        }
+    }
+
+    void handleReceiverClosed(ClientStreamReceiver receiver) {
+        if (message != null) {
+            message.handleReceiverClosed(receiver);
+        }
+    }
 }
