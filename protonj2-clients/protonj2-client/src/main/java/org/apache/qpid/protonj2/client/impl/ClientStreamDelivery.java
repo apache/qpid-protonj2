@@ -16,13 +16,19 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 
+import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.StreamDelivery;
+import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryAbortedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
+import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
+import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
@@ -37,7 +43,7 @@ public class ClientStreamDelivery implements StreamDelivery {
     private final IncomingDelivery protonDelivery;
 
     private ClientStreamReceiverMessage message;
-    private InputStream rawInputStream;
+    private RawDeliveryInputStream rawInputStream;
 
     public ClientStreamDelivery(ClientStreamReceiver receiver, IncomingDelivery protonDelivery) {
         this.receiver = receiver;
@@ -101,7 +107,7 @@ public class ClientStreamDelivery implements StreamDelivery {
         }
 
         if (rawInputStream == null) {
-            // TODO: Create stream for large message incoming bytes.
+            rawInputStream = new RawDeliveryInputStream();
         }
 
         return rawInputStream;
@@ -169,17 +175,133 @@ public class ClientStreamDelivery implements StreamDelivery {
         if (message != null) {
             message.handleDeliveryRead(delivery);
         }
+        if (rawInputStream != null) {
+            rawInputStream.handleDeliveryRead(delivery);
+        }
     }
 
     void handleDeliveryAborted(IncomingDelivery delivery) {
         if (message != null) {
             message.handleDeliveryAborted(delivery);
         }
+        if (rawInputStream != null) {
+            rawInputStream.handleDeliveryAborted(delivery);
+        }
     }
 
     void handleReceiverClosed(ClientStreamReceiver receiver) {
         if (message != null) {
             message.handleReceiverClosed(receiver);
+        }
+        if (rawInputStream != null) {
+            rawInputStream.handleReceiverClosed(receiver);
+        }
+    }
+
+    //----- Raw InputStream Implementation
+
+    private class RawDeliveryInputStream extends InputStream {
+
+        private final ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        private ClientFuture<Integer> readRequest;
+        private ScheduledExecutorService executor = receiver.session().getScheduler();
+
+        @Override
+        public boolean markSupported() {
+            return false; // Read bytes can be discarded to marks cannot be supported.
+        }
+
+        @Override
+        public int available() throws IOException {
+            checkStreamStateIsValid();
+
+            // Check for any bytes in the delivery that haven't been moved to the read buffer yet
+            if (buffer.isReadable()) {
+                return buffer.getReadableBytes();
+            } else {
+                final ClientFuture<Integer> request = receiver.session().getFutureFactory().createFuture();
+
+                try {
+                    executor.execute(() -> {
+                        if (protonDelivery.available() > 0) {
+                            buffer.append(protonDelivery.readAll());
+                        }
+
+                        request.complete(buffer.getReadableBytes());
+                    });
+
+                    return receiver.session().request(receiver, request);
+                } catch (Exception e) {
+                    throw new IOException("Error reading requested data", e);
+                }
+            }
+        }
+
+        @Override
+        public int read() throws IOException {
+            checkStreamStateIsValid();
+
+            int result = -1;
+
+            while (true) {
+                if (buffer.isReadable()) {
+                    result = buffer.readByte();
+                    // TODO: Reclaim read buffers for GC
+                    // buffer.releaseReadBuffers
+                    break;
+                } else {
+                    final ClientFuture<Integer> request = receiver.session().getFutureFactory().createFuture();
+
+                    try {
+                        executor.execute(() -> {
+                            if (protonDelivery.available() > 0) {
+                                buffer.append(protonDelivery.readAll());
+                                request.complete(buffer.getReadableBytes());
+                            } else if (!protonDelivery.isPartial() || protonDelivery.isAborted()) {
+                                request.complete(-1);
+                            } else {
+                                readRequest = request;
+                            }
+                        });
+
+                        if (receiver.session().request(receiver, request) == -1) {
+                            break;
+                        }
+                    } catch (Exception e) {
+                        throw new IOException("Error reading requested data", e);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        void handleDeliveryRead(IncomingDelivery delivery) {
+            // An input stream is awaiting some more incoming bytes, check to see if
+            // the delivery had a non-empty transfer frame and provide them.
+            if (readRequest != null && delivery.available() > 0) {
+                buffer.append(protonDelivery.readAll());
+                readRequest.complete(buffer.getReadableBytes());
+            }
+        }
+
+        void handleDeliveryAborted(IncomingDelivery delivery) {
+            if (readRequest != null) {
+                readRequest.failed(new ClientDeliveryAbortedException("The remote sender has aborted this delivery"));
+            }
+        }
+
+        void handleReceiverClosed(ClientStreamReceiver receiver) {
+            if (readRequest != null) {
+                readRequest.failed(new ClientResourceRemotelyClosedException("The receliver link has been remotely closed."));
+            }
+        }
+
+        private void checkStreamStateIsValid() throws IOException {
+            if (receiver.isClosed()) {
+                throw new IOException("Underlying receiver has closed", receiver.getFailureCause());
+            }
         }
     }
 }

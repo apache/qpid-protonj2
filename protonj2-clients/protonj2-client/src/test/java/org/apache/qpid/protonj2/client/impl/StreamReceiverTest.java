@@ -16,11 +16,15 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
@@ -257,6 +261,71 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
+
+    @Test
+    public void testStreamDeliveryReceiveWithTransferAlreadyComplete() throws Exception {
+        doTestStreamDeliveryReceiveWithTransferAlreadyComplete(false);
+    }
+
+    @Test
+    public void testStreamDeliveryTryReceiveWithTransferAlreadyComplete() throws Exception {
+        doTestStreamDeliveryReceiveWithTransferAlreadyComplete(true);
+    }
+
+    private void doTestStreamDeliveryReceiveWithTransferAlreadyComplete(boolean tryReceive) throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+
+            // Ensures that stream receiver has the delivery in its queue.
+            connection.openSender("test-sender").openFuture().get();
+
+            final StreamDelivery delivery;
+
+            if (tryReceive) {
+                delivery = receiver.tryReceive();
+            } else {
+                delivery = receiver.receive();
+            }
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
     @Test
     public void testStreamDeliveryReceivedWhileTransferIsIncomplete() throws Exception {
         final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
@@ -297,6 +366,61 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                  .withPayload(payload).now();
 
             Wait.assertTrue("Should eventually be marked as completed", delivery::completed);
+
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamDeliveryRawInputStreamWithCompleteDelivery() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            final InputStream stream = delivery.rawInputStream();
+            assertNotNull(stream);
+
+            assertEquals(payload.length, stream.available());
+            final byte[] deliveryBytes = new byte[payload.length];
+            stream.read(deliveryBytes);
+
+            assertArrayEquals(payload, deliveryBytes);
+            assertEquals(0, stream.available());
+            assertEquals(-1, stream.read());
+
+            stream.close();
 
             peer.expectDetach().respond();
             peer.expectClose().respond();
