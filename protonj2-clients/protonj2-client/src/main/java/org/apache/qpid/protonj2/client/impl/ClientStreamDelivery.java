@@ -48,6 +48,10 @@ public class ClientStreamDelivery implements StreamDelivery {
     public ClientStreamDelivery(ClientStreamReceiver receiver, IncomingDelivery protonDelivery) {
         this.receiver = receiver;
         this.protonDelivery = protonDelivery.setLinkedResource(this);
+
+        // Capture inbound events and route to an active stream or message
+        protonDelivery.deliveryReadHandler(this::handleDeliveryRead)
+                      .deliveryAbortedHandler(this::handleDeliveryAborted);
     }
 
     IncomingDelivery getProtonDelivery() {
@@ -203,9 +207,9 @@ public class ClientStreamDelivery implements StreamDelivery {
     private class RawDeliveryInputStream extends InputStream {
 
         private final ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        private final ScheduledExecutorService executor = receiver.session().getScheduler();
 
         private ClientFuture<Integer> readRequest;
-        private ScheduledExecutorService executor = receiver.session().getScheduler();
 
         @Override
         public boolean markSupported() {
