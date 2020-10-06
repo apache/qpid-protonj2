@@ -254,51 +254,121 @@ public class ClientStreamDelivery implements StreamDelivery {
                     // TODO: Reclaim read buffers for GC
                     // buffer.releaseReadBuffers
                     break;
-                } else {
-                    final ClientFuture<Integer> request = receiver.session().getFutureFactory().createFuture();
-
-                    try {
-                        executor.execute(() -> {
-                            if (protonDelivery.available() > 0) {
-                                buffer.append(protonDelivery.readAll());
-                                request.complete(buffer.getReadableBytes());
-                            } else if (!protonDelivery.isPartial() || protonDelivery.isAborted()) {
-                                request.complete(-1);
-                            } else {
-                                readRequest = request;
-                            }
-                        });
-
-                        if (receiver.session().request(receiver, request) == -1) {
-                            break;
-                        }
-                    } catch (Exception e) {
-                        throw new IOException("Error reading requested data", e);
-                    }
+                } else if (requestMoreData() < 0) {
+                    break;
                 }
             }
 
             return result;
         }
 
-        void handleDeliveryRead(IncomingDelivery delivery) {
+        @Override
+        public int read(byte target[], int offset, int length) throws IOException {
+            if ((length | offset) < 0 || target.length > length - offset) {
+                throw new IndexOutOfBoundsException();
+            }
+
+            int remaining = length;
+            int bytesRead = 0;
+
+            if (length <= 0) {
+                return 0;
+            }
+
+            while (remaining > 0) {
+                if (buffer.isReadable()) {
+                    if (buffer.getReadableBytes() < remaining) {
+                        final int readTarget = buffer.getReadableBytes();
+                        buffer.readBytes(target, offset + bytesRead, buffer.getReadableBytes());
+                        bytesRead += readTarget;
+                        remaining -= readTarget;
+                    } else {
+                        buffer.readBytes(target, offset + bytesRead, remaining);
+                        bytesRead += remaining;
+                        remaining = 0;
+                    }
+                    // TODO: Reclaim read buffers for GC
+                    // buffer.releaseReadBuffers
+                } else if (requestMoreData() < 0) {
+                    return bytesRead > 0 ? bytesRead : -1;
+                }
+            }
+
+            return bytesRead;
+        }
+
+        @Override
+        public long skip(long amount) throws IOException {
+            long remaining = amount;
+
+            if (amount <= 0) {
+                return 0;
+            }
+
+            while (remaining > 0) {
+                if (buffer.isReadable()) {
+                    if (buffer.getReadableBytes() < remaining) {
+                        remaining -= buffer.getReadableBytes();
+                        buffer.skipBytes(buffer.getReadableBytes());
+                    } else {
+                        buffer.skipBytes((int) remaining);
+                        remaining = 0;
+                    }
+                    // TODO: Reclaim read buffers for GC
+                    // buffer.releaseReadBuffers
+                } else if (requestMoreData() < 0) {
+                    break;
+                }
+            }
+
+            return amount - remaining;
+        }
+
+        private void handleDeliveryRead(IncomingDelivery delivery) {
             // An input stream is awaiting some more incoming bytes, check to see if
             // the delivery had a non-empty transfer frame and provide them.
-            if (readRequest != null && delivery.available() > 0) {
-                buffer.append(protonDelivery.readAll());
-                readRequest.complete(buffer.getReadableBytes());
+            if (readRequest != null) {
+                if (delivery.available() > 0) {
+                    buffer.append(protonDelivery.readAll());
+                    readRequest.complete(buffer.getReadableBytes());
+                } else if (!delivery.isPartial()) {
+                    readRequest.complete(-1);
+                }
             }
         }
 
-        void handleDeliveryAborted(IncomingDelivery delivery) {
+        private void handleDeliveryAborted(IncomingDelivery delivery) {
             if (readRequest != null) {
                 readRequest.failed(new ClientDeliveryAbortedException("The remote sender has aborted this delivery"));
             }
         }
 
-        void handleReceiverClosed(ClientStreamReceiver receiver) {
+        private void handleReceiverClosed(ClientStreamReceiver receiver) {
             if (readRequest != null) {
                 readRequest.failed(new ClientResourceRemotelyClosedException("The receliver link has been remotely closed."));
+            }
+        }
+
+        private int requestMoreData() throws IOException {
+            final ClientFuture<Integer> request = receiver.session().getFutureFactory().createFuture();
+
+            try {
+                executor.execute(() -> {
+                    if (protonDelivery.available() > 0) {
+                        buffer.append(protonDelivery.readAll());
+                        request.complete(buffer.getReadableBytes());
+                    } else if (!protonDelivery.isPartial()) {
+                        request.complete(-1);
+                    } else if (protonDelivery.isAborted()) {
+                        request.failed(new ClientDeliveryAbortedException("The remote sender has aborted this delivery"));
+                    } else {
+                        readRequest = request;
+                    }
+                });
+
+                return receiver.session().request(receiver, request);
+            } catch (Exception e) {
+                throw new IOException("Error reading requested data", e);
             }
         }
 
