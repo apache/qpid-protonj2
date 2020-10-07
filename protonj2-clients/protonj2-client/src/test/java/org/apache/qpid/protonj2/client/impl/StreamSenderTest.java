@@ -131,9 +131,9 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             assertNotNull(message.tracker().settlementFuture().isDone());
             assertNotNull(message.tracker().settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -174,8 +174,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             message.abort();
 
-            sender.close().get(10, TimeUnit.SECONDS);
-            connection.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -239,8 +239,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             message.abort();
 
-            sender.close().get(10, TimeUnit.SECONDS);
-            connection.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -277,8 +277,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             // abort the delivery and should result in proton simply discarding the Delivery.
             stream.close();
 
-            sender.close().get();
-            connection.close().get();
+            sender.closeAsync().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -350,8 +350,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             message.tracker().awaitSettlement(10, TimeUnit.SECONDS);
 
-            sender.close().get();
-            connection.close().get();
+            sender.closeAsync().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -412,8 +412,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             stream.flush();
             stream.close();
 
-            sender.close().get();
-            connection.close().get();
+            sender.closeAsync().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -478,8 +478,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             stream.close();
 
-            sender.close().get();
-            connection.close().get();
+            sender.closeAsync().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -571,8 +571,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             stream.close();
 
-            sender.close().get();
-            connection.close().get();
+            sender.closeAsync().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -630,8 +630,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             stream.write(new byte[] { 0, 1, 2, 3 });
             stream.close();
 
-            sender.close().get();
-            connection.close().get();
+            sender.closeAsync().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -703,8 +703,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             // Final Transfer that completes the Delivery
             stream.close();
 
-            sender.close().get();
-            connection.close().get();
+            sender.closeAsync().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -763,8 +763,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             // Stream should abort the send now since the configured size wasn't sent.
             stream.close();
 
-            sender.close().get();
-            connection.close().get();
+            sender.closeAsync().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -820,8 +820,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             // Should have no affect.
             message.abort();
 
-            sender.close().get();
-            connection.close().get();
+            sender.closeAsync().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -901,8 +901,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             // Stream should already be completed so no additional frames should be written.
             stream.close();
 
-            sender.close().get();
-            connection.close().get();
+            sender.closeAsync().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -939,8 +939,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             stream.flush();
             stream.close();
 
-            sender.close().get();
-            connection.close().get();
+            sender.closeAsync().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

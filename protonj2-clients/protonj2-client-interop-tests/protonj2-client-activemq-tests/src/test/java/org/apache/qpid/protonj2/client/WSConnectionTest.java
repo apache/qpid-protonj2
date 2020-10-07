@@ -61,7 +61,7 @@ public class WSConnectionTest extends ImperativeClientTestSupport {
 
         Wait.assertTrue("Broker did not register a connection", () -> getProxyToBroker().getCurrentConnectionsCount() == 1);
 
-        assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
+        assertSame(connection, connection.closeAsync().get(5, TimeUnit.SECONDS));
 
         Wait.assertTrue("Broker did not register a connection close", () -> getProxyToBroker().getCurrentConnectionsCount() == 0);
     }
@@ -87,7 +87,7 @@ public class WSConnectionTest extends ImperativeClientTestSupport {
 
         Wait.assertTrue("Broker did not register a connection", () -> getProxyToBroker().getCurrentConnectionsCount() == 1);
 
-        assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
+        assertSame(connection, connection.closeAsync().get(5, TimeUnit.SECONDS));
 
         Wait.assertTrue("Broker did not register a connection close", () -> getProxyToBroker().getCurrentConnectionsCount() == 0);
     }

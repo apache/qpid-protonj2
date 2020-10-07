@@ -22,34 +22,24 @@ import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
 
-public class Sink {
+public class Receive {
 
     public static void main(String[] argv) throws Exception {
-        String brokerHost = "localhost";
-        int brokerPort = 5672;
+        String serverHost = "localhost";
+        int serverPort = 5672;
         String address = "examples";
         int count = 100;
 
         Client client = Client.create();
 
-        try {
-            Connection connection = client.connect(brokerHost, brokerPort);
+        try (Connection connection = client.connect(serverHost, serverPort)) {
             Receiver receiver = connection.openReceiver(address);
 
             for (int i = 0; i < count; ++i) {
-                Delivery del = receiver.receive();
-                Message<String> message = del.message();
-
-                System.out.println("Received: " + message.body());
-
-                del.accept();
+                Delivery delivery = receiver.receive();
+                Message<String> message = delivery.message();
+                System.out.println("Received message with body: " + message.body());
             }
-        } catch (Exception exp) {
-            System.out.println("Caught exception, exiting.");
-            exp.printStackTrace(System.out);
-            System.exit(1);
-        } finally {
-            client.close().get();
         }
     }
 }

@@ -92,7 +92,7 @@ public class SessionTest extends ImperativeClientTestCase {
                 LOG.info("Session open failed with error: ", error);
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -137,7 +137,7 @@ public class SessionTest extends ImperativeClientTestCase {
                 assertTrue(error.getCause() instanceof ClientIOException);
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -174,9 +174,9 @@ public class SessionTest extends ImperativeClientTestCase {
 
             try {
                 if (timeout) {
-                    session.close().get(10, TimeUnit.SECONDS);
+                    session.closeAsync().get(10, TimeUnit.SECONDS);
                 } else {
-                    session.close().get();
+                    session.closeAsync().get();
                 }
 
                 fail("Close should throw an error if the Session end doesn't arrive in time");
@@ -184,7 +184,7 @@ public class SessionTest extends ImperativeClientTestCase {
                 LOG.info("Session close failed with error: ", error);
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -221,15 +221,15 @@ public class SessionTest extends ImperativeClientTestCase {
 
             try {
                 if (timeout) {
-                    session.close().get(10, TimeUnit.SECONDS);
+                    session.closeAsync().get(10, TimeUnit.SECONDS);
                 } else {
-                    session.close().get();
+                    session.closeAsync().get();
                 }
             } catch (ExecutionException error) {
                 fail("Session Close should complete when parent connection drops.");
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -264,13 +264,13 @@ public class SessionTest extends ImperativeClientTestCase {
 
             if (tiemout) {
                 // Should close normally and not throw error as we initiated the close.
-                session.close().get(10, TimeUnit.SECONDS);
+                session.closeAsync().get(10, TimeUnit.SECONDS);
             } else {
                 // Should close normally and not throw error as we initiated the close.
-                session.close().get();
+                session.closeAsync().get();
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -327,14 +327,14 @@ public class SessionTest extends ImperativeClientTestCase {
             }
 
             try {
-                session.close().get();
+                session.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
                 fail("Should not fail close when connection not closed and end was sent");
             }
 
             peer.expectClose().respond();
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -391,14 +391,14 @@ public class SessionTest extends ImperativeClientTestCase {
             }
 
             try {
-                session.close().get();
+                session.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
                 fail("Should not fail close when connection not closed and end was sent");
             }
 
             peer.expectClose().respond();
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -453,14 +453,14 @@ public class SessionTest extends ImperativeClientTestCase {
             }
 
             try {
-                session.close().get();
+                session.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
                 fail("Should not fail close to when connection not closed and end sent");
             }
 
             peer.expectClose().respond();
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -489,12 +489,12 @@ public class SessionTest extends ImperativeClientTestCase {
             connection.openFuture().get();
 
             try {
-                connection.openSession().close().get();
+                connection.openSession().closeAsync().get();
             } catch (ExecutionException error) {
                 fail("Should not fail when waiting on close with quick open timeout");
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -522,9 +522,9 @@ public class SessionTest extends ImperativeClientTestCase {
             Session session = connection.openSession();
 
             session.openFuture().get();
-            session.close(ErrorCondition.create(condition, description, null));
+            session.closeAsync(ErrorCondition.create(condition, description, null));
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

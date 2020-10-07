@@ -19,54 +19,40 @@ package org.apache.qpid.protonj2.client.examples;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.Client;
-import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.SenderOptions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Sends a Request to a request Queue and awaits a response.
  */
 public class Request {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Request.class);
-
     public static void main(String[] args) throws Exception {
-
-        String brokerHost = "localhost";
-        int brokerPort = 5672;
+        String serverHost = "localhost";
+        int serverPort = 5672;
         String address = "examples";
 
-        ClientOptions options = new ClientOptions();
-        Client client = Client.create(options);
+        Client client = Client.create();
 
-        try {
-            Connection connection = client.connect(brokerHost, brokerPort);
-
+        try (Connection connection = client.connect(serverHost, serverPort)) {
             Receiver dynamicReceiver = connection.openDynamicReceiver();
             String dynamicAddress = dynamicReceiver.address();
             System.out.println("Waiting for response to requests on address: " + dynamicAddress);
 
-            SenderOptions requestorOptions = new SenderOptions();
-            requestorOptions.targetOptions().capabilities("queue");
+            SenderOptions senderOptions = new SenderOptions();
+            senderOptions.targetOptions().capabilities("queue");
 
-            Sender requestor = connection.openSender(address, requestorOptions);
-            Message<String> request = Message.create("Hello World").durable(true).replyTo(dynamicAddress);
+            Sender requestor = connection.openSender(address, senderOptions);
+            Message<String> request = Message.create("Hello World").replyTo(dynamicAddress);
             requestor.send(request);
 
             Delivery response = dynamicReceiver.receive(30, TimeUnit.SECONDS);
             Message<String> received = response.message();
-            LOG.info("Response to request message was: {}", received.body());
-        } catch (Exception exp) {
-            LOG.error("Caught exception during Request demo, exiting.", exp);
-            System.exit(1);
-        } finally {
-            client.close().get();
+            System.out.println("Received message with body: " + received.body());
         }
     }
 }

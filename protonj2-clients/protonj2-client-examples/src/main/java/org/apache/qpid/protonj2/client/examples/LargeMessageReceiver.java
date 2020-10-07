@@ -27,20 +27,17 @@ import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
 import org.apache.qpid.protonj2.client.StreamReceiverMessage;
-import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 
 public class LargeMessageReceiver {
 
     public static void main(String[] args) throws Exception {
+        String serverHost = "localhost";
+        int serverPort = 5672;
+        String address = "examples";
 
-        try {
-            String brokerHost = "localhost";
-            int brokerPort = 5672;
-            String address = "examples";
+        Client client = Client.create();
 
-            Client client = Client.create();
-            Connection connection = client.connect(brokerHost, brokerPort);
-
+        try (Connection connection = client.connect(serverHost, serverPort)) {
             StreamReceiver receiver = connection.openStreamReceiver(address);
             StreamDelivery delivery = receiver.receive();
             StreamReceiverMessage message = delivery.message();
@@ -52,16 +49,6 @@ public class LargeMessageReceiver {
             while (bytesRead != -1) {
                 // Process inbound data
             }
-
-            connection.close().get();
-        } catch (ClientOperationTimedOutException e) {
-            System.out.println("Timed out waiting for message to arrive, exiting.");
-            System.exit(1);
-        } catch (Exception exp) {
-            System.out.println("Caught exception, exiting.");
-            exp.printStackTrace(System.out);
-            System.exit(1);
-        } finally {
         }
     }
 }

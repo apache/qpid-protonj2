@@ -152,7 +152,7 @@ public class ProducerAndConsumerBench extends ImperativeClientTestSupport  {
             }
             assertNotNull(consumer.receive(), "got message " + v);
         }
-        consumer.close();
+        consumer.closeAsync();
     }
 
     @SuppressWarnings("unused")
@@ -172,7 +172,7 @@ public class ProducerAndConsumerBench extends ImperativeClientTestSupport  {
                 LOG.info("Sent message: {}", NUM_SENDS - count.get());
             }
         }
-        sender.close();
+        sender.closeAsync();
         connection.close();
     }
 

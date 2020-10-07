@@ -59,6 +59,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     private final ProtonCompositeBuffer deliveryBuffer = new ProtonCompositeBuffer();
 
     private Header header;
+    private DeliveryAnnotations deliveryAnnotations;
     private MessageAnnotations annotations;
     private Properties properties;
     private ApplicationProperties applicationProperties;
@@ -171,9 +172,8 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public StreamReceiverMessage header(Header header) {
-        // TODO Auto-generated method stub
-        return this;
+    public StreamReceiverMessage header(Header header) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
     }
 
     //----- Properties API implementation
@@ -372,9 +372,8 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public StreamReceiverMessage properties(Properties properties) {
-        // TODO Auto-generated method stub
-        return this;
+    public StreamReceiverMessage properties(Properties properties) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
     }
 
     //----- Delivery Annotations API (Internal Access Only)
@@ -404,9 +403,8 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public Object removeAnnotation(String key) {
-        // TODO Auto-generated method stub
-        return null;
+    public Object removeAnnotation(String key) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
     }
 
     @Override
@@ -416,9 +414,8 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public StreamReceiverMessage annotation(String key, Object value) {
-        // TODO Auto-generated method stub
-        return this;
+    public StreamReceiverMessage annotation(String key, Object value) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
     }
 
     @Override
@@ -428,9 +425,8 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public StreamReceiverMessage annotations(MessageAnnotations messageAnnotations) {
-        // TODO Auto-generated method stub
-        return this;
+    public StreamReceiverMessage annotations(MessageAnnotations messageAnnotations) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
     }
 
     //----- Application Properties API
@@ -454,9 +450,8 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public Object removeApplicationProperty(String key) {
-        // TODO Auto-generated method stub
-        return null;
+    public Object removeApplicationProperty(String key) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
     }
 
     @Override
@@ -466,9 +461,8 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public StreamReceiverMessage applicationProperty(String key, Object value) {
-        // TODO Auto-generated method stub
-        return this;
+    public StreamReceiverMessage applicationProperty(String key, Object value) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
     }
 
     @Override
@@ -478,9 +472,8 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public StreamReceiverMessage applicationProperties(ApplicationProperties applicationProperties) {
-        // TODO Auto-generated method stub
-        return this;
+    public StreamReceiverMessage applicationProperties(ApplicationProperties applicationProperties) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
     }
 
     //----- Message Footer API
@@ -504,9 +497,8 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public Object removeFooter(String key) {
-        // TODO Auto-generated method stub
-        return null;
+    public Object removeFooter(String key) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
     }
 
     @Override
@@ -516,9 +508,8 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public StreamReceiverMessage footer(String key, Object value) {
-        // TODO Auto-generated method stub
-        return this;
+    public StreamReceiverMessage footer(String key, Object value) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
     }
 
     @Override
@@ -528,9 +519,8 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public StreamReceiverMessage footer(Footer footer) {
-        // TODO Auto-generated method stub
-        return this;
+    public StreamReceiverMessage footer(Footer footer) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
     }
 
     //----- Message Body Access API

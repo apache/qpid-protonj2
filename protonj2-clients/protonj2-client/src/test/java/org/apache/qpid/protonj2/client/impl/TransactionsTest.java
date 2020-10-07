@@ -92,8 +92,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
             session.beginTransaction();
             session.commitTransaction();
 
-            session.close();
-            connection.close().get();
+            session.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -143,8 +143,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 // Expect this to fail since transaction not declared
             }
 
-            session.close();
-            connection.close().get();
+            session.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -202,8 +202,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             session.beginTransaction();
             session.commitTransaction();
-            session.close();
-            connection.close().get();
+            session.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -254,8 +254,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 // Expect this as the begin failed on coordinator rejected
             }
 
-            session.close();
-            connection.close().get();
+            session.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -310,8 +310,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 // Expect this as the begin failed on coordinator close
             }
 
-            session.close();
-            connection.close().get();
+            session.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -360,8 +360,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
             session.beginTransaction();
             session.commitTransaction();
 
-            session.close();
-            connection.close().get();
+            session.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -412,8 +412,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
             session.beginTransaction();
             session.rollbackTransaction();
 
-            session.close();
-            connection.close().get();
+            session.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -475,8 +475,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 }
             }
 
-            session.close();
-            connection.close().get();
+            session.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -526,8 +526,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
             session.beginTransaction();
             session.rollbackTransaction();
 
-            session.close();
-            connection.close().get();
+            session.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -577,8 +577,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
             session.beginTransaction();
             session.commitTransaction();
 
-            session.close();
-            connection.close().get();
+            session.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -613,8 +613,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             session.beginTransaction();
 
-            session.close();
-            connection.close().get(10, TimeUnit.SECONDS);
+            session.closeAsync();
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -647,8 +647,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
             session.beginTransaction();
             session.commitTransaction();
 
-            session.close();
-            connection.close().get(10, TimeUnit.SECONDS);
+            session.closeAsync();
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -681,8 +681,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
             session.beginTransaction();
             session.rollbackTransaction();
 
-            session.close();
-            connection.close().get(10, TimeUnit.SECONDS);
+            session.closeAsync();
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -715,7 +715,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 // expected to fail
             }
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToCompleteIgnoreErrors();
         }
@@ -763,8 +763,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 session.commitTransaction();
             }
 
-            session.close();
-            connection.close().get(10, TimeUnit.SECONDS);
+            session.closeAsync();
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -800,8 +800,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 // Expected
             }
 
-            session.close();
-            connection.close().get(10, TimeUnit.SECONDS);
+            session.closeAsync();
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -855,8 +855,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             session.commitTransaction();
 
-            session.close();
-            connection.close().get(10, TimeUnit.SECONDS);
+            session.closeAsync();
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -917,8 +917,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 session.commitTransaction();
             }
 
-            session.close();
-            connection.close().get(10, TimeUnit.SECONDS);
+            session.closeAsync();
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -972,8 +972,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
             assertEquals("Hello World", value);
 
             session.commitTransaction();
-            receiver.close();
-            connection.close().get();
+            receiver.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1043,8 +1043,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
             delivery.disposition(DeliveryState.accepted(), settle);
 
             session.commitTransaction();
-            receiver.close();
-            connection.close().get();
+            receiver.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1108,8 +1108,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
-            receiver.close();
-            connection.close().get();
+            receiver.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1161,8 +1161,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 // Expected roll back due to discharge rejection
             }
 
-            session.close();
-            connection.close().get(10, TimeUnit.SECONDS);
+            session.closeAsync();
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1195,7 +1195,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 LOG.debug("Client threw error on begin after connection drop", cliEx);
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1257,7 +1257,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 }
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1312,8 +1312,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 // Expected
             }
 
-            session.close();
-            connection.close().get(10, TimeUnit.SECONDS);
+            session.closeAsync();
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

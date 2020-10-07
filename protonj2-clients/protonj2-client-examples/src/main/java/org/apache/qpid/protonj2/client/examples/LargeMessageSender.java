@@ -31,15 +31,13 @@ import org.apache.qpid.protonj2.client.StreamSenderMessage;
 public class LargeMessageSender {
 
     public static void main(String[] args) throws Exception {
+        String serverHost = "localhost";
+        int serverPort = 5672;
+        String address = "examples";
 
-        try {
-            String brokerHost = "localhost";
-            int brokerPort = 5672;
-            String address = "examples";
+        Client client = Client.create();
 
-            Client client = Client.create();
-
-            Connection connection = client.connect(brokerHost, brokerPort);
+        try (Connection connection = client.connect(serverHost, serverPort)) {
             StreamSender sender = connection.openStreamSender(address);
             StreamSenderMessage message = sender.beginMessage();
 
@@ -57,13 +55,6 @@ public class LargeMessageSender {
             output.close();
 
             message.tracker().awaitSettlement();
-
-            connection.close().get();
-        } catch (Exception exp) {
-            System.out.println("Caught exception, exiting.");
-            exp.printStackTrace(System.out);
-            System.exit(1);
-        } finally {
         }
     }
 }

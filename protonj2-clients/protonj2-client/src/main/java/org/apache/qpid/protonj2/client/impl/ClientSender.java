@@ -147,24 +147,64 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public ClientFuture<Sender> close() {
+    public void close() {
+        try {
+            doCloseOrDetach(true, null).get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.interrupted();
+        }
+    }
+
+    @Override
+    public void close(ErrorCondition error) {
+        Objects.requireNonNull(error, "Error Condition cannot be null");
+
+        try {
+            doCloseOrDetach(true, error).get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.interrupted();
+        }
+    }
+
+    @Override
+    public void detach() {
+        try {
+            doCloseOrDetach(false, null).get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.interrupted();
+        }
+    }
+
+    @Override
+    public void detach(ErrorCondition error) {
+        Objects.requireNonNull(error, "Error Condition cannot be null");
+
+        try {
+            doCloseOrDetach(false, error).get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.interrupted();
+        }
+    }
+
+    @Override
+    public ClientFuture<Sender> closeAsync() {
         return doCloseOrDetach(true, null);
     }
 
     @Override
-    public ClientFuture<Sender> close(ErrorCondition error) {
+    public ClientFuture<Sender> closeAsync(ErrorCondition error) {
         Objects.requireNonNull(error, "Error Condition cannot be null");
 
         return doCloseOrDetach(true, error);
     }
 
     @Override
-    public ClientFuture<Sender> detach() {
+    public ClientFuture<Sender> detachAsync() {
         return doCloseOrDetach(false, null);
     }
 
     @Override
-    public ClientFuture<Sender> detach(ErrorCondition error) {
+    public ClientFuture<Sender> detachAsync(ErrorCondition error) {
         Objects.requireNonNull(error, "Error Condition cannot be null");
 
         return doCloseOrDetach(false, error);

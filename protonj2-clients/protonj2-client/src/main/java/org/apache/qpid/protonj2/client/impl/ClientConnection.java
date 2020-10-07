@@ -153,12 +153,30 @@ public class ClientConnection implements Connection {
     }
 
     @Override
-    public Future<Connection> close() {
+    public void close() {
+        try {
+            doClose(null).get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.interrupted();
+        }
+    }
+
+    @Override
+    public void close(ErrorCondition error) {
+        try {
+            doClose(error).get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.interrupted();
+        }
+    }
+
+    @Override
+    public Future<Connection> closeAsync() {
         return doClose(null);
     }
 
     @Override
-    public Future<Connection> close(ErrorCondition error) {
+    public Future<Connection> closeAsync(ErrorCondition error) {
         Objects.requireNonNull(error, "Error supplied cannot be null");
 
         return doClose(error);
@@ -789,7 +807,7 @@ public class ClientConnection implements Connection {
             connectionSender = lazyCreateConnectionSession().internalOpenAnonymousSender(null);
             connectionSender.remotelyClosedHandler((sender) -> {
                 try {
-                    sender.close();
+                    sender.closeAsync();
                 } catch (Throwable ignore) {}
 
                 // Clear the old closed sender, a lazy create needs to construct a new sender.

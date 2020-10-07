@@ -24,7 +24,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
 /**
  * AMQP Sender that provides an API for sending complete Message payload data.
  */
-public interface Sender {
+public interface Sender extends AutoCloseable {
 
     /**
      * @return a {@link Future} that will be completed when the remote opens this {@link Sender}.
@@ -32,12 +32,43 @@ public interface Sender {
     Future<Sender> openFuture();
 
     /**
+     * Requests a close of the {@link Sender} at the remote and waits until the Sender has been
+     * fully closed or until the configured {@link SenderOptions#closeTimeout()} is exceeded.
+     */
+    @Override
+    void close();
+
+    /**
+     * Requests a close of the {@link Sender} at the remote and waits until the Sender has been
+     * fully closed or until the configured {@link SenderOptions#closeTimeout()} is exceeded.
+     *
+     * @param error
+     *      The {@link ErrorCondition} to transmit to the remote along with the close operation.
+     */
+    void close(ErrorCondition error);
+
+    /**
+     * Requests a detach of the {@link Sender} at the remote and waits until the Sender has been
+     * fully detached or until the configured {@link SenderOptions#closeTimeout()} is exceeded.
+     */
+    void detach();
+
+    /**
+     * Requests a detach of the {@link Sender} at the remote and waits until the Sender has been
+     * fully detached or until the configured {@link SenderOptions#closeTimeout()} is exceeded.
+     *
+     * @param error
+     *      The {@link ErrorCondition} to transmit to the remote along with the detach operation.
+     */
+    void detach(ErrorCondition error);
+
+    /**
      * Requests a close of the {@link Sender} link at the remote and returns a {@link Future} that will be
      * completed once the link has been closed.
      *
      * @return a {@link Future} that will be completed when the remote closes this {@link Sender} link.
      */
-    Future<Sender> close();
+    Future<Sender> closeAsync();
 
     /**
      * Requests a close of the {@link Sender} link at the remote and returns a {@link Future} that will be
@@ -48,7 +79,7 @@ public interface Sender {
      *
      * @return a {@link Future} that will be completed when the remote closes this {@link Sender} link.
      */
-    Future<Sender> close(ErrorCondition error);
+    Future<Sender> closeAsync(ErrorCondition error);
 
     /**
      * Requests a detach of the {@link Sender} link at the remote and returns a {@link Future} that will be
@@ -56,7 +87,7 @@ public interface Sender {
      *
      * @return a {@link Future} that will be completed when the remote detaches this {@link Sender} link.
      */
-    Future<Sender> detach();
+    Future<Sender> detachAsync();
 
     /**
      * Requests a detach of the {@link Sender} link at the remote and returns a {@link Future} that will be
@@ -67,7 +98,7 @@ public interface Sender {
      *
      * @return a {@link Future} that will be completed when the remote detaches this {@link Sender} link.
      */
-    Future<Sender> detach(ErrorCondition error);
+    Future<Sender> detachAsync(ErrorCondition error);
 
     /**
      * Returns the address that the {@link Sender} instance will send {@link Message} objects

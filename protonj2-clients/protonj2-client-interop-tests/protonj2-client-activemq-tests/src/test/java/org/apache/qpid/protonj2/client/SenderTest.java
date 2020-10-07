@@ -51,11 +51,11 @@ public class SenderTest extends ImperativeClientTestSupport {
 
         Wait.assertTrue("Broker did not register a sender open", () -> getProxyToBroker().getQueueProducers().length == 1);
 
-        assertSame(sender, sender.close().get(5, TimeUnit.SECONDS));
+        assertSame(sender, sender.closeAsync().get(5, TimeUnit.SECONDS));
 
         Wait.assertTrue("Broker did not register a sender close", () -> getProxyToBroker().getQueueProducers().length == 0);
 
-        assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
+        assertSame(connection, connection.closeAsync().get(5, TimeUnit.SECONDS));
     }
 
     @Test
@@ -89,8 +89,8 @@ public class SenderTest extends ImperativeClientTestSupport {
         final QueueViewMBean queueView = getProxyToQueue(getTestName());
         Wait.assertEquals(1, () -> queueView.getQueueSize());
 
-        assertNotNull(sender.close().get(5, TimeUnit.SECONDS));
-        assertNotNull(connection.close().get(5, TimeUnit.SECONDS));
+        assertNotNull(sender.closeAsync().get(5, TimeUnit.SECONDS));
+        assertNotNull(connection.closeAsync().get(5, TimeUnit.SECONDS));
     }
 
     @Test
@@ -123,7 +123,7 @@ public class SenderTest extends ImperativeClientTestSupport {
 
         tracker.settlementFuture().get();
 
-        assertNotNull(sender.close().get(5, TimeUnit.SECONDS));
-        assertNotNull(connection.close().get(5, TimeUnit.SECONDS));
+        assertNotNull(sender.closeAsync().get(5, TimeUnit.SECONDS));
+        assertNotNull(connection.closeAsync().get(5, TimeUnit.SECONDS));
     }
 }

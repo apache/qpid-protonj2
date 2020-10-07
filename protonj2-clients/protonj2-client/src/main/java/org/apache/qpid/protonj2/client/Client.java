@@ -24,7 +24,7 @@ import org.apache.qpid.protonj2.client.impl.ClientInstance;
 /**
  * The Container that hosts AMQP Connections
  */
-public interface Client {
+public interface Client extends AutoCloseable {
 
     /**
      * @return a new {@link Client} instance configured with defaults.
@@ -55,10 +55,19 @@ public interface Client {
      * <p>
      * This method blocks and waits for each connection to close in turn using the configured
      * close timeout of the {@link ConnectionOptions} that the connection was created with.
+     */
+    @Override
+    void close();
+
+    /**
+     * Closes all currently open {@link Connection} instances created by this client.
+     * <p>
+     * This method blocks and waits for each connection to be closed in turn using the configured
+     * close timeout of the {@link ConnectionOptions} that the connection was created with.
      *
      * @return a {@link Future} that will be completed when all open connections have closed.
      */
-    Future<Client> close();
+    Future<Client> closeAsync();
 
     /**
      * Connect to the specified host and port, without credentials and with all

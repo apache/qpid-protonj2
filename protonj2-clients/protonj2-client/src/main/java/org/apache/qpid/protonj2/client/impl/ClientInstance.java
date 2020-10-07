@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -72,24 +73,28 @@ public final class ClientInstance implements Client {
         this.options = options;
     }
 
+    @SuppressWarnings("resource")
     @Override
     public synchronized Connection connect(String host, int port) throws ClientException {
         checkClosed();
         return addConnection(new ClientConnection(this, host, port, defaultConnectionOptions).connect());
     }
 
+    @SuppressWarnings("resource")
     @Override
     public synchronized Connection connect(String host, int port, ConnectionOptions options) throws ClientException {
         checkClosed();
         return addConnection(new ClientConnection(this, host, port, new ConnectionOptions(options)).connect());
     }
 
+    @SuppressWarnings("resource")
     @Override
     public synchronized Connection connect(String host) throws ClientException {
         checkClosed();
         return addConnection(new ClientConnection(this, host, -1, defaultConnectionOptions).connect());
     }
 
+    @SuppressWarnings("resource")
     @Override
     public synchronized Connection connect(String host, ConnectionOptions options) throws ClientException {
         checkClosed();
@@ -110,7 +115,16 @@ public final class ClientInstance implements Client {
     }
 
     @Override
-    public synchronized Future<Client> close() {
+    public void close() {
+        try {
+            closeAsync().get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.interrupted();
+        }
+    }
+
+    @Override
+    public synchronized Future<Client> closeAsync() {
         if (!closed) {
             closed = true;
 
@@ -119,7 +133,7 @@ public final class ClientInstance implements Client {
 
             for (Connection connection : connectionsView) {
                 try {
-                    connection.close().get();
+                    connection.close();
                 } catch (Throwable ignored) {
                     LOG.trace("Error while closing connection, ignoring", ignored);
                 }

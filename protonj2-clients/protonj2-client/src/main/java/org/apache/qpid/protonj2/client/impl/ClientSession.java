@@ -105,12 +105,30 @@ public class ClientSession implements Session {
     }
 
     @Override
-    public Future<Session> close() {
+    public void close() {
+        try {
+            doClose(null).get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.interrupted();
+        }
+    }
+
+    @Override
+    public void close(ErrorCondition error) {
+        try {
+            doClose(error).get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.interrupted();
+        }
+    }
+
+    @Override
+    public Future<Session> closeAsync() {
         return doClose(null);
     }
 
     @Override
-    public Future<Session> close(ErrorCondition error) {
+    public Future<Session> closeAsync(ErrorCondition error) {
         Objects.requireNonNull(error, "Supplied error condition cannot be null");
         return doClose(error);
     }

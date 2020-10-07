@@ -97,12 +97,60 @@ public class ReceiverTest extends ImperativeClientTestCase {
             receiver.openFuture().get(10, TimeUnit.SECONDS);
 
             if (close) {
-                receiver.close().get(10, TimeUnit.SECONDS);
+                receiver.closeAsync().get(10, TimeUnit.SECONDS);
             } else {
-                receiver.detach().get(10, TimeUnit.SECONDS);
+                receiver.detachAsync().get(10, TimeUnit.SECONDS);
             }
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateReceiverAndCloseSync() throws Exception {
+        doTestCreateReceiverAndCloseOrDetachLinkSync(true);
+    }
+
+    @Test
+    public void testCreateReceiverAndDetachSync() throws Exception {
+        doTestCreateReceiverAndCloseOrDetachLinkSync(false);
+    }
+
+    private void doTestCreateReceiverAndCloseOrDetachLinkSync(boolean close) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectDetach().withClosed(close).respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Receiver receiver = session.openReceiver("test-queue");
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            if (close) {
+                receiver.close();
+            } else {
+                receiver.detach();
+            }
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -147,10 +195,10 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             // Should not result in any close being sent now, already closed.
-            receiver.close().get();
+            receiver.closeAsync().get();
 
             peer.expectClose().respond();
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
         }
@@ -203,7 +251,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 assertTrue(cause instanceof ClientOperationTimedOutException);
             }
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -251,7 +299,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 assertTrue(cause instanceof ClientIOException);
             }
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -308,15 +356,15 @@ public class ReceiverTest extends ImperativeClientTestCase {
             try {
                 if (close) {
                     if (timeout) {
-                        receiver.close().get(10, TimeUnit.SECONDS);
+                        receiver.closeAsync().get(10, TimeUnit.SECONDS);
                     } else {
-                        receiver.close().get();
+                        receiver.closeAsync().get();
                     }
                 } else {
                     if (timeout) {
-                        receiver.detach().get(10, TimeUnit.SECONDS);
+                        receiver.detachAsync().get(10, TimeUnit.SECONDS);
                     } else {
-                        receiver.detach().get();
+                        receiver.detachAsync().get();
                     }
                 }
 
@@ -326,7 +374,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 assertTrue(cause instanceof ClientOperationTimedOutException);
             }
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -377,7 +425,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             // Close things down
             peer.expectClose().respond();
-            connection.close().get(5, TimeUnit.SECONDS);
+            connection.closeAsync().get(5, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
         }
@@ -426,7 +474,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 // Expected
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
         }
@@ -498,9 +546,9 @@ public class ReceiverTest extends ImperativeClientTestCase {
             assertNotNull("Remote should have assigned the address for the dynamic receiver", receiver.address());
             assertEquals("test-dynamic-node", receiver.address());
 
-            receiver.close().get(10, TimeUnit.SECONDS);
+            receiver.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -562,14 +610,14 @@ public class ReceiverTest extends ImperativeClientTestCase {
             }
 
             try {
-                receiver.close().get();
+                receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
                 fail("Should not fail close whenn connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -620,9 +668,9 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             assertEquals("test-qos", receiver.address());
 
-            receiver.close().get(10, TimeUnit.SECONDS);
+            receiver.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -683,14 +731,14 @@ public class ReceiverTest extends ImperativeClientTestCase {
             }
 
             try {
-                receiver.close().get();
+                receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
                 fail("Should not fail close whenn connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -750,14 +798,14 @@ public class ReceiverTest extends ImperativeClientTestCase {
             }
 
             try {
-                receiver.close().get();
+                receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
                 fail("Should not fail close whenn connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -819,14 +867,14 @@ public class ReceiverTest extends ImperativeClientTestCase {
             }
 
             try {
-                receiver.close().get();
+                receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
                 fail("Should not fail close whenn connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -888,14 +936,14 @@ public class ReceiverTest extends ImperativeClientTestCase {
             }
 
             try {
-                receiver.close().get();
+                receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
                 fail("Should not fail close whenn connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -957,14 +1005,14 @@ public class ReceiverTest extends ImperativeClientTestCase {
             }
 
             try {
-                receiver.close().get();
+                receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
                 fail("Should not fail close whenn connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1003,9 +1051,9 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.expectFlow().withLinkCredit(10);
             peer.execute(() -> {
                 if (close) {
-                    receiver.close();
+                    receiver.closeAsync();
                 } else {
-                    receiver.detach();
+                    receiver.detachAsync();
                 }
             }).queue();
             peer.expectDetach().withClosed(close).respond();
@@ -1019,7 +1067,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 // Can happen if receiver closed before the receive call gets executed.
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1065,7 +1113,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 // Can happen if receiver closed before the receive call gets executed.
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1106,12 +1154,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
             receiver.openFuture().get();
 
             if (close) {
-                receiver.close(ErrorCondition.create(condition, description, null));
+                receiver.closeAsync(ErrorCondition.create(condition, description, null));
             } else {
-                receiver.detach(ErrorCondition.create(condition, description, null));
+                receiver.detachAsync(ErrorCondition.create(condition, description, null));
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1177,8 +1225,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
             assertEquals("Hello World", value);
 
             delivery.accept();
-            receiver.close();
-            connection.close().get();
+            receiver.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1225,8 +1273,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             assertNull(receiver.receive(15, TimeUnit.MILLISECONDS));
 
-            receiver.close();
-            connection.close().get();
+            receiver.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1292,8 +1340,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
             String value = (String) received.body();
             assertEquals("Hello World", value);
 
-            receiver.close();
-            connection.close().get();
+            receiver.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1347,8 +1395,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             assertNull(receiver.receive(15, TimeUnit.MILLISECONDS));
 
-            receiver.close();
-            connection.close().get();
+            receiver.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1384,9 +1432,9 @@ public class ReceiverTest extends ImperativeClientTestCase {
             Receiver receiver = session.openReceiver("test-queue").openFuture().get();
 
             if (close) {
-                receiver.close();
+                receiver.closeAsync();
             } else {
-                receiver.detach();
+                receiver.detachAsync();
             }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -1400,7 +1448,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             peer.expectClose().respond();
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1435,7 +1483,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 // Expected
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1470,7 +1518,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 // Expected send to throw indicating that the remote closed the connection
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1506,9 +1554,9 @@ public class ReceiverTest extends ImperativeClientTestCase {
             Receiver receiver = session.openReceiver("test-queue").openFuture().get();
 
             if (close) {
-                receiver.close();
+                receiver.closeAsync();
             } else {
-                receiver.detach();
+                receiver.detachAsync();
             }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -1522,7 +1570,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             peer.expectClose().respond();
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1560,9 +1608,9 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.expectFlow().withDrain(true).withLinkCredit(10);
             peer.execute(() -> {
                 if (close) {
-                    receiver.close();
+                    receiver.closeAsync();
                 } else {
-                    receiver.detach();
+                    receiver.detachAsync();
                 }
             }).queue();
             peer.expectDetach().withClosed(close).respond();
@@ -1576,7 +1624,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 assertTrue(cliEx.getCause() instanceof ClientException);
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1625,7 +1673,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 assertTrue(cliEx.getCause() instanceof ClientException);
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1662,7 +1710,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 assertTrue(cliEx.getCause() instanceof ClientException);
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1697,7 +1745,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 assertTrue(cliEx.getCause() instanceof ClientException);
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1727,7 +1775,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             } catch (ClientConnectionRemotelyClosedException cliEx) {
             }
 
-            connection.close().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1778,8 +1826,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 // Expected
             }
 
-            receiver.close();
-            connection.close().get();
+            receiver.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1828,8 +1876,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 // Expected
             }
 
-            receiver.close();
-            connection.close().get();
+            receiver.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1891,8 +1939,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 // Expected
             }
 
-            receiver.close();
-            connection.close().get();
+            receiver.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1946,8 +1994,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
             assertEquals(section2, section.get(1));
             assertEquals(section3, section.get(2));
 
-            receiver.close();
-            connection.close().get();
+            receiver.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -2007,8 +2055,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
             byte[] bytesRead = new byte[payload1.length + payload2.length];
             assertEquals(payload1.length + payload2.length, stream.read(bytesRead));
 
-            receiver.close();
-            connection.close().get();
+            receiver.closeAsync();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

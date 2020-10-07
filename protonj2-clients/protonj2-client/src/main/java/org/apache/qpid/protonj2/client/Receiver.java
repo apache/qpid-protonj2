@@ -29,7 +29,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
  *
  * @see StreamReceiver
  */
-public interface Receiver {
+public interface Receiver extends AutoCloseable {
 
     /**
      * @return a {@link Future} that will be completed when the remote opens this {@link Receiver}.
@@ -37,12 +37,43 @@ public interface Receiver {
     Future<Receiver> openFuture();
 
     /**
+     * Requests a close of the {@link Receiver} at the remote and waits until the Receiver has been
+     * fully closed or until the configured {@link ReceiverOptions#closeTimeout()} is exceeded.
+     */
+    @Override
+    void close();
+
+    /**
+     * Requests a close of the {@link Receiver} at the remote and waits until the Receiver has been
+     * fully closed or until the configured {@link ReceiverOptions#closeTimeout()} is exceeded.
+     *
+     * @param error
+     *      The {@link ErrorCondition} to transmit to the remote along with the close operation.
+     */
+    void close(ErrorCondition error);
+
+    /**
+     * Requests a detach of the {@link Receiver} at the remote and waits until the Receiver has been
+     * fully detached or until the configured {@link SenderOptions#closeTimeout()} is exceeded.
+     */
+    void detach();
+
+    /**
+     * Requests a detach of the {@link Receiver} at the remote and waits until the Receiver has been
+     * fully detached or until the configured {@link SenderOptions#closeTimeout()} is exceeded.
+     *
+     * @param error
+     *      The {@link ErrorCondition} to transmit to the remote along with the detach operation.
+     */
+    void detach(ErrorCondition error);
+
+    /**
      * Requests a close of the {@link Receiver} link at the remote and returns a {@link Future} that will be
      * completed once the link has been closed.
      *
      * @return a {@link Future} that will be completed when the remote closes this {@link Receiver} link.
      */
-    Future<Receiver> close();
+    Future<Receiver> closeAsync();
 
     /**
      * Requests a close of the {@link Receiver} link at the remote and returns a {@link Future} that will be
@@ -53,7 +84,7 @@ public interface Receiver {
      *
      * @return a {@link Future} that will be completed when the remote closes this {@link Receiver} link.
      */
-    Future<Receiver> close(ErrorCondition error);
+    Future<Receiver> closeAsync(ErrorCondition error);
 
     /**
      * Requests a detach of the {@link Receiver} link at the remote and returns a {@link Future} that will be
@@ -61,7 +92,7 @@ public interface Receiver {
      *
      * @return a {@link Future} that will be completed when the remote detaches this {@link Receiver} link.
      */
-    Future<Receiver> detach();
+    Future<Receiver> detachAsync();
 
     /**
      * Requests a detach of the {@link Receiver} link at the remote and returns a {@link Future} that will be
@@ -72,7 +103,7 @@ public interface Receiver {
      *
      * @return a {@link Future} that will be completed when the remote detaches this {@link Receiver} link.
      */
-    Future<Receiver> detach(ErrorCondition error);
+    Future<Receiver> detachAsync(ErrorCondition error);
 
     /**
      * Returns the address that the {@link Receiver} instance will be subscribed to.

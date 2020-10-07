@@ -132,7 +132,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             assertTrue(peer.hasSecureConnection());
             assertFalse(peer.isConnectionVerified());
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -181,7 +181,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             assertTrue(peer.hasSecureConnection());
             assertFalse(peer.isConnectionVerified());
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete();
         }
@@ -236,7 +236,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             assertTrue(peer.hasSecureConnection());
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -289,7 +289,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             assertTrue(peer.hasSecureConnection());
             assertTrue(peer.isConnectionVerified());
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -355,7 +355,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             String dn = ((X509Certificate) cert).getSubjectX500Principal().getName();
             assertEquals(expectedDN, dn, "Unexpected certificate DN");
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -477,7 +477,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             String dn = ((X509Certificate) cert).getSubjectX500Principal().getName();
             assertEquals(expectedDN, dn, "Unexpected certificate DN");
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -597,7 +597,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             String dn = ((X509Certificate)cert).getSubjectX500Principal().getName();
             assertEquals(expectedDN, dn, "Unexpected certificate DN");
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

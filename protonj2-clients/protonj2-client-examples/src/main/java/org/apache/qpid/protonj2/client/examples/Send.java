@@ -22,36 +22,26 @@ import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Tracker;
 
-public class Spout {
+public class Send {
 
     public static void main(String[] argv) throws Exception {
-
-        String brokerHost = "localhost";
-        int brokerPort = 5672;
+        String serverHost = "localhost";
+        int serverPort = 5672;
         String address = "examples";
         int count = 100;
 
         Client client = Client.create();
 
-        try {
-            Connection connection = client.connect(brokerHost, brokerPort);
+        try (Connection connection = client.connect(serverHost, serverPort)) {
             Sender sender = connection.openSender(address);
 
             for (int i = 0; i < count; ++i) {
                 Message<String> message = Message.create(String.format("Hello World! [%s]", i));
-
-                Tracker tracker = sender.send(message);  // Blocks on credit
+                Tracker tracker = sender.send(message);
 
                 System.out.println(String.format("Sent message to %s: %s", sender.address(), message.body()));
-
-                tracker.settlementFuture().get();
+                tracker.awaitSettlement();
             }
-        } catch (Exception exp) {
-            System.out.println("Caught exception, exiting.");
-            exp.printStackTrace(System.out);
-            System.exit(1);
-        } finally {
-            client.close().get();
         }
     }
 }

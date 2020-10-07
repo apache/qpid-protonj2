@@ -25,7 +25,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientTransactionNotActiveExce
 /**
  * Session object used to create {@link Sender} and {@link Receiver} instances.
  */
-public interface Session {
+public interface Session extends AutoCloseable {
 
     /**
      * @return the {@link Client} instance that holds this session's {@link Connection}
@@ -43,12 +43,28 @@ public interface Session {
     Future<Session> openFuture();
 
     /**
+     * Requests a close of the {@link Session} at the remote and waits until the Session has been
+     * fully closed or until the configured {@link SessionOptions#closeTimeout()} is exceeded.
+     */
+    @Override
+    void close();
+
+    /**
+     * Requests a close of the {@link Session} at the remote and waits until the Session has been
+     * fully closed or until the configured {@link SessionOptions#closeTimeout()} is exceeded.
+     *
+     * @param error
+     *      The {@link ErrorCondition} to transmit to the remote along with the close operation.
+     */
+    void close(ErrorCondition error);
+
+    /**
      * Requests a close of the {@link Session} at the remote and returns a {@link Future} that will be
      * completed once the session has been remotely closed or an error occurs.
      *
      * @return a {@link Future} that will be completed when the remote closes this {@link Session}.
      */
-    Future<Session> close();
+    Future<Session> closeAsync();
 
     /**
      * Requests a close of the {@link Session} at the remote and returns a {@link Future} that will be
@@ -59,7 +75,7 @@ public interface Session {
      *
      * @return a {@link Future} that will be completed when the remote closes this {@link Session}.
      */
-    Future<Session> close(ErrorCondition error);
+    Future<Session> closeAsync(ErrorCondition error);
 
     /**
      * Creates a receiver used to consume messages from the given node address.

@@ -19,7 +19,6 @@ package org.apache.qpid.protonj2.client.examples;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.Client;
-import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.Message;
@@ -33,17 +32,13 @@ import org.apache.qpid.protonj2.client.Sender;
 public class Respond {
 
     public static void main(String[] args) throws Exception {
-
-        String brokerHost = "localhost";
-        int brokerPort = 5672;
+        String serverHost = "localhost";
+        int serverPort = 5672;
         String address = "examples";
 
-        ClientOptions options = new ClientOptions();
-        Client client = Client.create(options);
+        Client client = Client.create();
 
-        try {
-            Connection connection = client.connect(brokerHost, brokerPort);
-
+        try (Connection connection = client.connect(serverHost, serverPort)) {
             ReceiverOptions receiverOptions = new ReceiverOptions();
             receiverOptions.sourceOptions().capabilities("queue");
 
@@ -52,23 +47,16 @@ public class Respond {
             Delivery request = receiver.receive(30, TimeUnit.SECONDS);
             if (request != null) {
                 Message<String> received = request.message();
-                System.out.println(received.body());
+                System.out.println("Received message with body: " + received.body());
 
                 String replyAddress = received.replyTo();
                 if (replyAddress != null) {
                     Sender sender = connection.openSender(address);
-                    sender.send(Message.create("Response").durable(true));
-                    sender.close();
+                    sender.send(Message.create("Response"));
                 }
             } else {
                 System.out.println("Failed to read a message during the defined wait interval.");
             }
-        } catch (Exception exp) {
-            System.out.println("Caught exception, exiting.");
-            exp.printStackTrace(System.out);
-            System.exit(1);
-        } finally {
-            client.close().get();
         }
     }
 }

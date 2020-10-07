@@ -58,11 +58,11 @@ public class ReceiverTest extends ImperativeClientTestSupport {
 
         Wait.assertTrue("Broker did not register a receiver open", () -> getProxyToBroker().getQueueSubscribers().length == 1);
 
-        assertSame(receiver, receiver.close().get(5, TimeUnit.SECONDS));
+        assertSame(receiver, receiver.closeAsync().get(5, TimeUnit.SECONDS));
 
         Wait.assertTrue("Broker did not register a receiver close", () -> getProxyToBroker().getQueueSubscribers().length == 0);
 
-        assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
+        assertSame(connection, connection.closeAsync().get(5, TimeUnit.SECONDS));
     }
 
     @Test
@@ -92,8 +92,8 @@ public class ReceiverTest extends ImperativeClientTestSupport {
 
         delivery.accept();
 
-        assertSame(receiver, receiver.close().get(5, TimeUnit.SECONDS));
-        assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
+        assertSame(receiver, receiver.closeAsync().get(5, TimeUnit.SECONDS));
+        assertSame(connection, connection.closeAsync().get(5, TimeUnit.SECONDS));
     }
 
     @Test
@@ -137,8 +137,8 @@ public class ReceiverTest extends ImperativeClientTestSupport {
             Wait.assertEquals(0, () -> queueView.getQueueSize());
         }
 
-        assertSame(receiver, receiver.close().get(5, TimeUnit.SECONDS));
-        assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
+        assertSame(receiver, receiver.closeAsync().get(5, TimeUnit.SECONDS));
+        assertSame(connection, connection.closeAsync().get(5, TimeUnit.SECONDS));
     }
 
     private void sendTextMessageToQueue() throws Exception {

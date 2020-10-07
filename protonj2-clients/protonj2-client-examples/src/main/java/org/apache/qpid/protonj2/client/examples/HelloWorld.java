@@ -30,14 +30,13 @@ import org.apache.qpid.protonj2.client.Sender;
 public class HelloWorld {
 
     public static void main(String[] args) throws Exception {
+        String serverHost = "localhost";
+        int serverPort = 5672;
+        String address = "examples";
 
-        try {
-            String brokerHost = "localhost";
-            int brokerPort = 5672;
-            String address = "examples";
+        Client client = Client.create();
 
-            Client client = Client.create();
-            Connection connection = client.connect(brokerHost, brokerPort);
+        try (Connection connection = client.connect(serverHost, serverPort)) {
             Receiver receiver = connection.openReceiver(address);
 
             Sender sender = connection.openSender(address);
@@ -45,14 +44,7 @@ public class HelloWorld {
 
             Delivery delivery = receiver.receive();
             Message<String> received = delivery.message();
-            System.out.println(received.body());
-
-            connection.close().get();
-        } catch (Exception exp) {
-            System.out.println("Caught exception, exiting.");
-            exp.printStackTrace(System.out);
-            System.exit(1);
-        } finally {
+            System.out.println("Received message with body: " + received.body());
         }
     }
 }

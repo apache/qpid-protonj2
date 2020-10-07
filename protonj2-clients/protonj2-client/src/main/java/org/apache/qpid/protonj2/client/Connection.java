@@ -28,7 +28,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
  *
  * When a Connection is closed all the resources created by the connection are implicitly closed.
  */
-public interface Connection {
+public interface Connection extends AutoCloseable {
 
     /**
      * @return the {@link Client} instance that holds this {@link Connection}
@@ -46,12 +46,28 @@ public interface Connection {
     Future<Connection> openFuture();
 
     /**
+     * Requests a close of the {@link Connection} at the remote and waits until the Connection has been
+     * fully closed or until the configured {@link ConnectionOptions#closeTimeout()} is exceeded.
+     */
+    @Override
+    void close();
+
+    /**
+     * Requests a close of the {@link Connection} at the remote and waits until the Connection has been
+     * fully closed or until the configured {@link ConnectionOptions#closeTimeout()} is exceeded.
+     *
+     * @param error
+     *      The {@link ErrorCondition} to transmit to the remote along with the close operation.
+     */
+    void close(ErrorCondition error);
+
+    /**
      * Requests a close of the {@link Connection} at the remote and returns a {@link Future} that will be
      * completed once the Connection has been fully closed.
      *
      * @return a {@link Future} that will be completed when the remote closes this {@link Connection}.
      */
-    Future<Connection> close();
+    Future<Connection> closeAsync();
 
     /**
      * Requests a close of the {@link Connection} at the remote and returns a {@link Future} that will be
@@ -62,7 +78,7 @@ public interface Connection {
      *
      * @return a {@link Future} that will be completed when the remote closes this {@link Connection}.
      */
-    Future<Connection> close(ErrorCondition error);
+    Future<Connection> closeAsync(ErrorCondition error);
 
     /**
      * Creates a receiver used to consumer messages from the given node address.  The returned receiver will

@@ -30,33 +30,24 @@ import org.apache.qpid.protonj2.client.Session;
 public class TransactedReceiver {
 
     public static void main(String[] args) throws Exception {
+        String serverHost = "localhost";
+        int serverPort = 5672;
+        String address = "examples";
 
-        try {
-            String brokerHost = "localhost";
-            int brokerPort = 5672;
-            String address = "examples";
+        Client client = Client.create();
 
-            Client client = Client.create();
-
-            Connection connection = client.connect(brokerHost, brokerPort);
+        try (Connection connection = client.connect(serverHost, serverPort)) {
             Session session = connection.openSession();
+            Receiver receiver = session.openReceiver(address);
 
             session.beginTransaction();
 
-            Receiver receiver = session.openReceiver(address);
             Delivery delivery = receiver.receive();
             Message<String> message = delivery.message();
 
-            System.out.println("Received: " + message.body());
+            System.out.println("Received message with body: " + message.body());
 
             session.commitTransaction();
-
-            connection.close().get();
-        } catch (Exception exp) {
-            System.out.println("Caught exception, exiting.");
-            exp.printStackTrace(System.out);
-            System.exit(1);
-        } finally {
         }
     }
 }

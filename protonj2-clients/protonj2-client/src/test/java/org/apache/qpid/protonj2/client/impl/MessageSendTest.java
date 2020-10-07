@@ -126,9 +126,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -207,9 +207,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -269,9 +269,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -330,9 +330,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -391,9 +391,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -452,9 +452,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -584,9 +584,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -651,9 +651,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -718,9 +718,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -788,9 +788,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -858,9 +858,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -925,9 +925,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1089,9 +1089,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1151,9 +1151,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1220,9 +1220,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1283,9 +1283,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             assertNotNull(tracker.settlementFuture().isDone());
             assertNotNull(tracker.settlementFuture().get().settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
