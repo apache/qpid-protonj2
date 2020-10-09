@@ -16,9 +16,12 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Decoder of AMQP Symbol values from a byte stream.
@@ -26,12 +29,17 @@ import org.apache.qpid.protonj2.codec.EncodingCodes;
 public final class Symbol8TypeDecoder extends AbstractSymbolTypeDecoder {
 
     @Override
+    public int getTypeCode() {
+        return EncodingCodes.SYM8 & 0xff;
+    }
+
+    @Override
     protected int readSize(ProtonBuffer buffer) throws DecodeException {
         return buffer.readByte() & 0xff;
     }
 
     @Override
-    public int getTypeCode() {
-        return EncodingCodes.SYM8 & 0xff;
+    protected int readSize(InputStream stream) throws DecodeException {
+        return ProtonStreamUtils.readByte(stream);
     }
 }

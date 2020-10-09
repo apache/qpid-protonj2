@@ -16,12 +16,17 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.transport;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedByte;
@@ -145,6 +150,112 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
                     break;
                 case 10:
                     transfer.setBatchable(state.getDecoder().readBoolean(buffer, state, false));
+                    break;
+                default:
+                    throw new DecodeException(
+                        "To many entries in Flow list encoding: " + count + " max allowed entries = " + MAX_TRANSFER_LIST_ENTRIES);
+            }
+        }
+
+        return transfer;
+    }
+
+    @Override
+    public Transfer readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readTransfer(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Transfer[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        Transfer[] result = new Transfer[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readTransfer(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private Transfer readTransfer(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        Transfer transfer = new Transfer();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_TRANSFER_LIST_ENTRIES) {
+            throw new DecodeException("The handle field cannot be omitted");
+        }
+
+        for (int index = 0; index < count; ++index) {
+            // If the stream allows we peek ahead and see if there is a null in the next slot,
+            // if so we don't call the setter for that entry to ensure the returned type reflects
+            // the encoded state in the modification entry.
+            if (stream.markSupported()) {
+                stream.mark(1);
+                boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
+                if (nullValue) {
+                    if (index == 0) {
+                        throw new DecodeException("The handle field cannot be omitted");
+                    }
+
+                    continue;
+                } else {
+                    ProtonStreamUtils.reset(stream);
+                }
+            }
+
+            switch (index) {
+                case 0:
+                    transfer.setHandle(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 1:
+                    transfer.setDeliveryId(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 2:
+                    transfer.setDeliveryTag(state.getDecoder().readDeliveryTag(stream, state));
+                    break;
+                case 3:
+                    transfer.setMessageFormat(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 4:
+                    transfer.setSettled(state.getDecoder().readBoolean(stream, state, false));
+                    break;
+                case 5:
+                    transfer.setMore(state.getDecoder().readBoolean(stream, state, false));
+                    break;
+                case 6:
+                    UnsignedByte rcvSettleMode = state.getDecoder().readUnsignedByte(stream, state);
+                    transfer.setRcvSettleMode(rcvSettleMode == null ? null : ReceiverSettleMode.values()[rcvSettleMode.intValue()]);
+                    break;
+                case 7:
+                    transfer.setState(state.getDecoder().readObject(stream, state, DeliveryState.class));
+                    break;
+                case 8:
+                    transfer.setResume(state.getDecoder().readBoolean(stream, state, false));
+                    break;
+                case 9:
+                    transfer.setAborted(state.getDecoder().readBoolean(stream, state, false));
+                    break;
+                case 10:
+                    transfer.setBatchable(state.getDecoder().readBoolean(stream, state, false));
                     break;
                 default:
                     throw new DecodeException(

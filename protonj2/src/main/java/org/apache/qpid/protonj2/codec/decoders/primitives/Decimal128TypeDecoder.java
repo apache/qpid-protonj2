@@ -16,11 +16,15 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.types.Decimal128;
 
 /**
@@ -34,6 +38,11 @@ public final class Decimal128TypeDecoder extends AbstractPrimitiveTypeDecoder<De
     }
 
     @Override
+    public int getTypeCode() {
+        return EncodingCodes.DECIMAL128 & 0xff;
+    }
+
+    @Override
     public Decimal128 readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         long msb = buffer.readLong();
         long lsb = buffer.readLong();
@@ -42,12 +51,20 @@ public final class Decimal128TypeDecoder extends AbstractPrimitiveTypeDecoder<De
     }
 
     @Override
-    public int getTypeCode() {
-        return EncodingCodes.DECIMAL128 & 0xff;
+    public Decimal128 readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        long msb = ProtonStreamUtils.readLong(stream);
+        long lsb = ProtonStreamUtils.readLong(stream);
+
+        return new Decimal128(msb, lsb);
     }
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(Decimal128.BYTES);
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        ProtonStreamUtils.skipBytes(stream, Decimal128.BYTES);
     }
 }

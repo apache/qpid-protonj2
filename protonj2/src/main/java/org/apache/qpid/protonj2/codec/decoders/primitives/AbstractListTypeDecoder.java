@@ -16,12 +16,15 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
@@ -60,5 +63,27 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(readSize(buffer));
+    }
+
+    @Override
+    public List<Object> readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        readSize(stream);
+        int count = readCount(stream);
+
+        List<Object> list = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            list.add(state.getDecoder().readObject(stream, state));
+        }
+
+        return list;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        try {
+            stream.skip(readSize(stream));
+        } catch (IOException ex) {
+            throw new DecodeException("Error while reading List payload bytes", ex);
+        }
     }
 }

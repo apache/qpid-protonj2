@@ -16,9 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.messaging;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
@@ -102,6 +106,67 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
             switch (index) {
                 case 0:
                     rejected.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
+                    break;
+                default:
+                    throw new DecodeException("To many entries in Rejected encoding");
+            }
+        }
+
+        return rejected;
+    }
+
+    @Override
+    public Rejected readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readRejected(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Rejected[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        Rejected[] result = new Rejected[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readRejected(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private Rejected readRejected(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        Rejected rejected = new Rejected();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_REJECTED_LIST_ENTRIES) {
+            throw new DecodeException("Not enough entries in Rejected list encoding: " + count);
+        }
+
+        if (count > MAX_REJECTED_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in Rejected list encoding: " + count);
+        }
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    rejected.setError(state.getDecoder().readObject(stream, state, ErrorCondition.class));
                     break;
                 default:
                     throw new DecodeException("To many entries in Rejected encoding");

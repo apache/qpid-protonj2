@@ -16,11 +16,15 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Decoder of AMQP Bytes from a byte stream.
@@ -38,21 +42,35 @@ public final class ByteTypeDecoder extends AbstractPrimitiveTypeDecoder<Byte> {
     }
 
     @Override
+    public int getTypeCode() {
+        return EncodingCodes.BYTE & 0xff;
+    }
+
+    @Override
     public Byte readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return buffer.readByte();
     }
 
     @Override
-    public int getTypeCode() {
-        return EncodingCodes.BYTE & 0xff;
+    public Byte readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return ProtonStreamUtils.readByte(stream);
     }
 
     public byte readPrimitiveValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return buffer.readByte();
     }
 
+    public byte readPrimitiveValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return ProtonStreamUtils.readByte(stream);
+    }
+
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(Byte.BYTES);
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        ProtonStreamUtils.skipBytes(stream, Byte.BYTES);
     }
 }

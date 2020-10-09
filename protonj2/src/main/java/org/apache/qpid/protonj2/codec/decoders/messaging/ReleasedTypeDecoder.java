@@ -16,9 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.messaging;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
@@ -79,5 +83,40 @@ public final class ReleasedTypeDecoder extends AbstractDescribedTypeDecoder<Rele
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         decoder.skipValue(buffer, state);
+    }
+
+    @Override
+    public Released readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+
+        return Released.getInstance();
+    }
+
+    @Override
+    public Released[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        Released[] result = new Released[count];
+        for (int i = 0; i < count; ++i) {
+            decoder.skipValue(stream, state);
+            result[i] = Released.getInstance();
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
     }
 }

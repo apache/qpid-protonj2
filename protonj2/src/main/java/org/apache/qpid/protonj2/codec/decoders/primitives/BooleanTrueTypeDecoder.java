@@ -16,10 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 
 /**
  * Decoder of AMQP Boolean True values from a byte stream.
@@ -38,5 +41,9 @@ public final class BooleanTrueTypeDecoder extends BooleanTypeDecoder {
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
     }
 }

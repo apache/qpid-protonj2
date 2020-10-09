@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.codec.decoders;
 
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 
 /**
@@ -23,7 +24,7 @@ import org.apache.qpid.protonj2.codec.TypeDecoder;
  *
  * @param <V> the Type Class that this decoder manages.
  */
-public interface PrimitiveTypeDecoder<V> extends TypeDecoder<V> {
+public interface PrimitiveTypeDecoder<V> extends TypeDecoder<V>, StreamTypeDecoder<V> {
 
     /**
      * @return true if the type managed by this decoder is assignable to a Java primitive type.

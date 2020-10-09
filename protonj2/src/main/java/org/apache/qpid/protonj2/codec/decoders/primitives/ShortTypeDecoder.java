@@ -16,11 +16,15 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Decode AMQP Short values from a byte stream
@@ -47,12 +51,26 @@ public final class ShortTypeDecoder extends AbstractPrimitiveTypeDecoder<Short> 
         return buffer.readShort();
     }
 
+    @Override
+    public Short readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return Short.valueOf(ProtonStreamUtils.readShort(stream));
+    }
+
     public short readPrimitiveValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return buffer.readShort();
+    }
+
+    public short readPrimitiveValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return ProtonStreamUtils.readShort(stream);
     }
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(Short.BYTES);
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        ProtonStreamUtils.skipBytes(stream, Short.BYTES);
     }
 }

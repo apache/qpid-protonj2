@@ -16,9 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.messaging;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
@@ -124,6 +128,87 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
                     break;
                 case 6:
                     target.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                    break;
+                default:
+                    throw new DecodeException("To many entries in Target encoding");
+            }
+        }
+
+        return target;
+    }
+
+    @Override
+    public Target readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readTarget(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Target[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        Target[] result = new Target[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readTarget(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private Target readTarget(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        Target target = new Target();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        if (count < MIN_TARGET_LIST_ENTRIES) {
+            throw new DecodeException("Not enough entries in Target list encoding: " + count);
+        }
+
+        if (count > MAX_TARGET_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in Target list encoding: " + count);
+        }
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    target.setAddress(state.getDecoder().readString(stream, state));
+                    break;
+                case 1:
+                    long durability = state.getDecoder().readUnsignedInteger(stream, state, 0);
+                    target.setDurable(TerminusDurability.valueOf(durability));
+                    break;
+                case 2:
+                    Symbol expiryPolicy = state.getDecoder().readSymbol(stream, state);
+                    target.setExpiryPolicy(expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : TerminusExpiryPolicy.valueOf(expiryPolicy));
+                    break;
+                case 3:
+                    UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(stream, state);
+                    target.setTimeout(timeout == null ? UnsignedInteger.ZERO : timeout);
+                    break;
+                case 4:
+                    target.setDynamic(state.getDecoder().readBoolean(stream, state, false));
+                    break;
+                case 5:
+                    target.setDynamicNodeProperties(state.getDecoder().readMap(stream, state));
+                    break;
+                case 6:
+                    target.setCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
                     break;
                 default:
                     throw new DecodeException("To many entries in Target encoding");

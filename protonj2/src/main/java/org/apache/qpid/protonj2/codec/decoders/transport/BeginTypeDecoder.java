@@ -16,12 +16,17 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.transport;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -132,6 +137,102 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
                     break;
                 case 7:
                     begin.setProperties(state.getDecoder().readMap(buffer, state));
+                    break;
+                default:
+                    throw new DecodeException(
+                        "To many entries in Begin list encoding: " + count + " max allowed entries = " + MAX_BEGIN_LIST_ENTRIES);
+            }
+        }
+
+        return begin;
+    }
+
+    @Override
+    public Begin readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readBegin(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Begin[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        Begin[] result = new Begin[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readBegin(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private Begin readBegin(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        Begin begin = new Begin();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        if (count < MIN_BEGIN_LIST_ENTRIES) {
+            throw new DecodeException(errorForMissingRequiredFields(count));
+        }
+
+        for (int index = 0; index < count; ++index) {
+            // If the stream allows we peek ahead and see if there is a null in the next slot,
+            // if so we don't call the setter for that entry to ensure the returned type reflects
+            // the encoded state in the modification entry.
+            if (stream.markSupported()) {
+                stream.mark(1);
+                boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
+                if (nullValue) {
+                    // Ensure mandatory fields are set
+                    if (index > 0 && index < MIN_BEGIN_LIST_ENTRIES) {
+                        throw new DecodeException(errorForMissingRequiredFields(index));
+                    }
+
+                    continue;
+                } else {
+                    ProtonStreamUtils.reset(stream);
+                }
+            }
+
+            switch (index) {
+                case 0:
+                    begin.setRemoteChannel(state.getDecoder().readUnsignedShort(stream, state, 0));
+                    break;
+                case 1:
+                    begin.setNextOutgoingId(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 2:
+                    begin.setIncomingWindow(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 3:
+                    begin.setOutgoingWindow(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 4:
+                    begin.setHandleMax(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 5:
+                    begin.setOfferedCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    break;
+                case 6:
+                    begin.setDesiredCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    break;
+                case 7:
+                    begin.setProperties(state.getDecoder().readMap(stream, state));
                     break;
                 default:
                     throw new DecodeException(

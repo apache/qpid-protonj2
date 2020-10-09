@@ -16,12 +16,17 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.transport;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -116,6 +121,86 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
                     break;
                 case 2:
                     detach.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
+                    break;
+                default:
+                    throw new DecodeException(
+                        "To many entries in Detach list encoding: " + count + " max allowed entries = " + MAX_DETACH_LIST_ENTRIES);
+            }
+        }
+
+        return detach;
+    }
+
+    @Override
+    public Detach readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readDetach(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Detach[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        Detach[] result = new Detach[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readDetach(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private Detach readDetach(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        Detach detach = new Detach();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        if (count < MIN_DETACH_LIST_ENTRIES) {
+            throw new DecodeException("The handle field is mandatory");
+        }
+
+        for (int index = 0; index < count; ++index) {
+            // If the stream allows we peek ahead and see if there is a null in the next slot,
+            // if so we don't call the setter for that entry to ensure the returned type reflects
+            // the encoded state in the modification entry.
+            if (stream.markSupported()) {
+                stream.mark(1);
+                boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
+                if (nullValue) {
+                    if (index == 0) {
+                        throw new DecodeException("The handle field is mandatory");
+                    }
+
+                    continue;
+                } else {
+                    ProtonStreamUtils.reset(stream);
+                }
+            }
+
+            switch (index) {
+                case 0:
+                    detach.setHandle(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 1:
+                    detach.setClosed(state.getDecoder().readBoolean(stream, state, false));
+                    break;
+                case 2:
+                    detach.setError(state.getDecoder().readObject(stream, state, ErrorCondition.class));
                     break;
                 default:
                     throw new DecodeException(

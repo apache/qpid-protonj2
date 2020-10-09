@@ -16,13 +16,16 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Decoder of AMQP UUID values from a byte stream
@@ -50,7 +53,20 @@ public final class UUIDTypeDecoder extends AbstractPrimitiveTypeDecoder<UUID> {
     }
 
     @Override
+    public UUID readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        long msb = ProtonStreamUtils.readLong(stream);
+        long lsb = ProtonStreamUtils.readLong(stream);
+
+        return new UUID(msb, lsb);
+    }
+
+    @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(BYTES);
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        ProtonStreamUtils.skipBytes(stream, BYTES);
     }
 }

@@ -16,9 +16,12 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Decoder of AMQP Binary values from a byte stream.
@@ -33,5 +36,10 @@ public final class Binary32TypeDecoder extends AbstractBinaryTypeDecoder {
     @Override
     protected int readSize(ProtonBuffer buffer) throws DecodeException {
         return buffer.readInt();
+    }
+
+    @Override
+    protected int readSize(InputStream stream) {
+        return ProtonStreamUtils.readInt(stream);
     }
 }

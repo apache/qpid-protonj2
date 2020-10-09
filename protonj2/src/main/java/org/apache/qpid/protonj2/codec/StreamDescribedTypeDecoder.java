@@ -14,32 +14,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.protonj2.codec.decoders.primitives;
+package org.apache.qpid.protonj2.codec;
 
-import java.io.InputStream;
-
-import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.codec.DecodeException;
-import org.apache.qpid.protonj2.codec.EncodingCodes;
-import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
+import org.apache.qpid.protonj2.types.Symbol;
+import org.apache.qpid.protonj2.types.UnsignedLong;
 
 /**
- * Decoder of AMQP Symbol values from a byte stream.
+ * Interface for all DescribedType decoder implementations
+ *
+ * @param <V> The type this decoder handles
  */
-public final class Symbol32TypeDecoder extends AbstractSymbolTypeDecoder {
+public interface StreamDescribedTypeDecoder<V> extends StreamTypeDecoder<V> {
 
-    @Override
-    public int getTypeCode() {
-        return EncodingCodes.SYM32 & 0xff;
-    }
+    /**
+     * Returns the AMQP descriptor code for the type this decoder reads.
+     *
+     * @return an unsigned long descriptor code value.
+     */
+    UnsignedLong getDescriptorCode();
 
-    @Override
-    protected int readSize(ProtonBuffer buffer) throws DecodeException {
-        return buffer.readInt();
-    }
+    /**
+     * Returns the AMQP descriptor symbol for the type this decoder reads.
+     *
+     * @return an symbol descriptor code value.
+     */
+    Symbol getDescriptorSymbol();
 
-    @Override
-    protected int readSize(InputStream stream) throws DecodeException {
-        return ProtonStreamUtils.readInt(stream);
-    }
 }

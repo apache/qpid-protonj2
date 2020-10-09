@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.qpid.protonj2.codec.decoders.ProtonDecoderFactory;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamDecoderFactory;
 import org.apache.qpid.protonj2.codec.encoders.ProtonEncoderFactory;
 import org.apache.qpid.protonj2.codec.legacy.LegacyCodecAdapter;
 import org.apache.qpid.protonj2.types.Binary;
@@ -58,6 +59,9 @@ public class CodecTestSupport {
     protected Decoder decoder;
     protected Encoder encoder;
 
+    protected StreamDecoderState streamDecoderState;
+    protected StreamDecoder streamDecoder;
+
     protected final LegacyCodecAdapter legacyCodec = new LegacyCodecAdapter();
 
     @BeforeEach
@@ -67,6 +71,9 @@ public class CodecTestSupport {
 
         encoder = ProtonEncoderFactory.create();
         encoderState = encoder.newEncoderState();
+
+        streamDecoder = ProtonStreamDecoderFactory.create();
+        streamDecoderState = streamDecoder.newDecoderState();
     }
 
     /**

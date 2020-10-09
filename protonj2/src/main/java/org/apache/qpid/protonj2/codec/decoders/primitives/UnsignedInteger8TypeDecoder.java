@@ -16,11 +16,15 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 
 /**
@@ -34,8 +38,18 @@ public class UnsignedInteger8TypeDecoder extends AbstractPrimitiveTypeDecoder<Un
     }
 
     @Override
+    public Class<UnsignedInteger> getTypeClass() {
+        return UnsignedInteger.class;
+    }
+
+    @Override
     public UnsignedInteger readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return UnsignedInteger.valueOf((buffer.readByte()) & 0xff);
+    }
+
+    @Override
+    public UnsignedInteger readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return UnsignedInteger.valueOf(ProtonStreamUtils.readByte(stream));
     }
 
     @Override
@@ -44,7 +58,7 @@ public class UnsignedInteger8TypeDecoder extends AbstractPrimitiveTypeDecoder<Un
     }
 
     @Override
-    public Class<UnsignedInteger> getTypeClass() {
-        return UnsignedInteger.class;
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        ProtonStreamUtils.skipBytes(stream, Byte.BYTES);
     }
 }

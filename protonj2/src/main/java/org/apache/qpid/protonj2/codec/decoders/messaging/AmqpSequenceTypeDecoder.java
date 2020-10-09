@@ -16,11 +16,14 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.messaging;
 
+import java.io.InputStream;
 import java.util.List;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
@@ -87,5 +90,45 @@ public final class AmqpSequenceTypeDecoder extends AbstractDescribedTypeDecoder<
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         decoder.skipValue(buffer, state);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public AmqpSequence readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        ListTypeDecoder valueDecoder = (ListTypeDecoder) decoder;
+        List<Object> result = valueDecoder.readValue(stream, state);
+
+        return new AmqpSequence<>(result);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public AmqpSequence[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        ListTypeDecoder valueDecoder = (ListTypeDecoder) decoder;
+        List<Object>[] elements = valueDecoder.readArrayElements(stream, state, count);
+
+        AmqpSequence[] array = new AmqpSequence[count];
+        for (int i = 0; i < count; ++i) {
+            array[i] = new AmqpSequence(elements[i]);
+        }
+
+        return array;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
     }
 }

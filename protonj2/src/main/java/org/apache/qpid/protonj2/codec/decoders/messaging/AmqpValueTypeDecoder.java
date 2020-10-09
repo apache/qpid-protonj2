@@ -16,9 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.messaging;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -70,5 +74,31 @@ public final class AmqpValueTypeDecoder extends AbstractDescribedTypeDecoder<Amq
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
         decoder.skipValue(buffer, state);
+    }
+
+    @Override
+    public AmqpValue readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        return new AmqpValue<>(decoder.readValue(stream, state));
+    }
+
+    @Override
+    public AmqpValue[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        Object[] elements = decoder.readArrayElements(stream, state, count);
+
+        AmqpValue[] array = new AmqpValue[count];
+        for (int i = 0; i < count; ++i) {
+            array[i] = new AmqpValue<>(elements[i]);
+        }
+
+        return array;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        decoder.skipValue(stream, state);
     }
 }

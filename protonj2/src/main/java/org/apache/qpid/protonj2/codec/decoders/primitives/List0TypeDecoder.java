@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
@@ -23,6 +24,7 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
@@ -32,17 +34,26 @@ import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
 public final class List0TypeDecoder extends AbstractPrimitiveTypeDecoder<List> implements ListTypeDecoder {
 
     @Override
-    public List<Object> readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        return Collections.EMPTY_LIST;
-    }
-
-    @Override
     public int getTypeCode() {
         return EncodingCodes.LIST0 & 0xff;
     }
 
     @Override
+    public List<Object> readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
+        return Collections.EMPTY_LIST;
+    }
+
+    @Override
+    public List<Object> readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return Collections.EMPTY_LIST;
+    }
+
+    @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
     }
 
     @Override
@@ -52,6 +63,16 @@ public final class List0TypeDecoder extends AbstractPrimitiveTypeDecoder<List> i
 
     @Override
     public int readCount(ProtonBuffer buffer) throws DecodeException {
+        return 0;
+    }
+
+    @Override
+    public int readSize(InputStream stream) throws DecodeException {
+        return 0;
+    }
+
+    @Override
+    public int readCount(InputStream stream) throws DecodeException {
         return 0;
     }
 }

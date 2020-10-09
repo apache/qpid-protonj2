@@ -16,9 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.transactions;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
@@ -105,6 +109,70 @@ public final class TransactionStateTypeDecoder extends AbstractDescribedTypeDeco
                     break;
                 case 1:
                     transactionalState.setOutcome((Outcome) state.getDecoder().readObject(buffer, state));
+                    break;
+                default:
+                    throw new DecodeException("To many entries in TransactionalState encoding");
+            }
+        }
+
+        return transactionalState;
+    }
+
+    @Override
+    public TransactionalState readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readTransactionalState(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public TransactionalState[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        TransactionalState[] result = new TransactionalState[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readTransactionalState(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private TransactionalState readTransactionalState(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        TransactionalState transactionalState = new TransactionalState();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_TRANSACTION_STATE_LIST_ENTRIES) {
+            throw new DecodeException("Not enough entries in TransactionalState list encoding: " + count);
+        }
+
+        if (count > MAX_TRANSACTION_STATE_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in TransactionalState list encoding: " + count);
+        }
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    transactionalState.setTxnId(state.getDecoder().readBinary(stream, state));
+                    break;
+                case 1:
+                    transactionalState.setOutcome((Outcome) state.getDecoder().readObject(stream, state));
                     break;
                 default:
                     throw new DecodeException("To many entries in TransactionalState encoding");

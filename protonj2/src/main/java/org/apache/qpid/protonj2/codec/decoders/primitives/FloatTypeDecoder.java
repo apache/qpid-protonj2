@@ -16,11 +16,15 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Decoder of AMQP Float values from a byte stream.
@@ -47,12 +51,26 @@ public final class FloatTypeDecoder extends AbstractPrimitiveTypeDecoder<Float> 
         return buffer.readFloat();
     }
 
+    @Override
+    public Float readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return ProtonStreamUtils.readFloat(stream);
+    }
+
     public float readPrimitiveValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return buffer.readFloat();
+    }
+
+    public float readPrimitiveValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return ProtonStreamUtils.readFloat(stream);
     }
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(Float.BYTES);
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        ProtonStreamUtils.skipBytes(stream, Float.BYTES);
     }
 }

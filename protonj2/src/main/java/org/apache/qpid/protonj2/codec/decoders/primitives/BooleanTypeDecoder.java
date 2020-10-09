@@ -16,11 +16,15 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Decoder of AMQP Boolean values from a byte stream.
@@ -38,13 +42,26 @@ public class BooleanTypeDecoder extends AbstractPrimitiveTypeDecoder<Boolean> {
     }
 
     @Override
+    public int getTypeCode() {
+        return EncodingCodes.BOOLEAN & 0xff;
+    }
+
+    @Override
     public Boolean readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return buffer.readByte() == 0 ? Boolean.FALSE : Boolean.TRUE;
     }
 
     @Override
-    public int getTypeCode() {
-        return EncodingCodes.BOOLEAN & 0xff;
+    public Boolean readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return ProtonStreamUtils.readByte(stream) == 0 ? Boolean.FALSE : Boolean.TRUE;
+    }
+
+    public boolean readPrimitiveValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
+        return buffer.readByte() == 0 ? false : true;
+    }
+
+    public boolean readPrimitiveValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return ProtonStreamUtils.readByte(stream) == 0 ? false : true;
     }
 
     @Override
@@ -52,7 +69,8 @@ public class BooleanTypeDecoder extends AbstractPrimitiveTypeDecoder<Boolean> {
         buffer.readByte();
     }
 
-    public boolean readPrimitiveValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        return buffer.readByte() == 0 ? false : true;
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        ProtonStreamUtils.readByte(stream);
     }
 }

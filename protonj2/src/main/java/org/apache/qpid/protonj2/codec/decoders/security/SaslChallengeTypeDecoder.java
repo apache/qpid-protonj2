@@ -16,9 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.security;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
@@ -95,6 +99,62 @@ public final class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder
             switch (index) {
                 case 0:
                     challenge.setChallenge(state.getDecoder().readBinaryAsBuffer(buffer, state));
+                    break;
+                default:
+                    throw new DecodeException("To many entries in Properties encoding");
+            }
+        }
+
+        return challenge;
+    }
+
+    @Override
+    public SaslChallenge readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readProperties(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    @Override
+    public SaslChallenge[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        SaslChallenge[] result = new SaslChallenge[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readProperties(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    private SaslChallenge readProperties(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        SaslChallenge challenge = new SaslChallenge();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        if (count != REQUIRED_LIST_ENTRIES) {
+            throw new DecodeException("SASL Challenge must contain a single challenge binary: " + count);
+        }
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    challenge.setChallenge(state.getDecoder().readBinaryAsBuffer(stream, state));
                     break;
                 default:
                     throw new DecodeException("To many entries in Properties encoding");

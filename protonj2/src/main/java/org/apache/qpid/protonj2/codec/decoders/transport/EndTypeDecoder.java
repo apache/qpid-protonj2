@@ -16,9 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.transport;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
@@ -101,6 +105,66 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
             switch (index) {
                 case 0:
                     end.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
+                    break;
+                default:
+                    throw new DecodeException("To many entries in End encoding");
+            }
+        }
+
+        return end;
+    }
+
+    @Override
+    public End readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readEnd(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public End[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        End[] result = new End[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readEnd(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private End readEnd(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        End end = new End();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        if (count < MIN_END_LIST_ENTRIES) {
+            throw new DecodeException("Not enough entries in End list encoding: " + count);
+        }
+
+        if (count > MAX_END_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in End list encoding: " + count);
+        }
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    end.setError(state.getDecoder().readObject(stream, state, ErrorCondition.class));
                     break;
                 default:
                     throw new DecodeException("To many entries in End encoding");

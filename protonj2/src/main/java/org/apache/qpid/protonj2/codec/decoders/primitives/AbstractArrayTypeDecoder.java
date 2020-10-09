@@ -16,14 +16,19 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.PrimitiveArrayTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Base for the decoders of AMQP Array types that defaults to returning opaque Object
@@ -89,13 +94,43 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
     }
 
     @Override
+    public Object readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return readValueAsObject(stream, state);
+    }
+
+    @Override
+    public Object[] readValueAsObjectArray(InputStream stream, StreamDecoderState state) throws DecodeException {
+        readSize(stream);
+        int count = readCount(stream);
+
+        return decodeAsArray(stream, state, count);
+    }
+
+    @Override
+    public Object readValueAsObject(InputStream stream, StreamDecoderState state) throws DecodeException {
+        readSize(stream);
+        int count = readCount(stream);
+
+        return decodeAsObject(stream, state, count);
+    }
+
+    @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(readSize(buffer));
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        ProtonStreamUtils.skipBytes(stream, readSize(stream));
     }
 
     protected abstract int readSize(ProtonBuffer buffer);
 
     protected abstract int readCount(ProtonBuffer buffer);
+
+    protected abstract int readSize(InputStream stream);
+
+    protected abstract int readCount(InputStream stream);
 
     private static Object[] decodeAsArray(ProtonBuffer buffer, DecoderState state, final int count) throws DecodeException {
         PrimitiveTypeDecoder<?> decoder = (PrimitiveTypeDecoder<?>) state.getDecoder().readNextTypeDecoder(buffer, state);
@@ -103,7 +138,6 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
     }
 
     private static Object[] decodeNonPrimitiveArray(TypeDecoder<?> decoder, ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-
         if (count > buffer.getReadableBytes()) {
             throw new DecodeException(String.format(
                 "Array element count %d is specified to be greater than the amount of data available (%d)",
@@ -125,7 +159,6 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
     }
 
     private static Object decodeAsObject(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (decoder instanceof PrimitiveTypeDecoder) {
@@ -239,6 +272,141 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
 
         for (int i = 0; i < count; i++) {
             array[i] = decoder.readPrimitiveValue(buffer, state);
+        }
+
+        return array;
+    }
+
+    //----- InputStream based array decoding
+
+    private static Object[] decodeAsArray(InputStream stream, StreamDecoderState state, final int count) throws DecodeException {
+        PrimitiveTypeDecoder<?> decoder = (PrimitiveTypeDecoder<?>) state.getDecoder().readNextTypeDecoder(stream, state);
+        return decodeNonPrimitiveArray(decoder, stream, state, count);
+    }
+
+    private static Object[] decodeNonPrimitiveArray(StreamTypeDecoder<?> decoder, InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        if (decoder.isArrayType()) {
+            PrimitiveArrayTypeDecoder arrayDecoder = (PrimitiveArrayTypeDecoder) decoder;
+
+            Object[] array = new Object[count];
+            for (int i = 0; i < count; i++) {
+                array[i] = arrayDecoder.readValueAsObject(stream, state);
+            }
+
+            return array;
+        } else {
+            return decoder.readArrayElements(stream, state, count);
+        }
+    }
+
+    private static Object decodeAsObject(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        if (decoder instanceof PrimitiveTypeDecoder) {
+            PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) decoder;
+            if (primitiveTypeDecoder.isJavaPrimitive()) {
+                Class<?> typeClass = decoder.getTypeClass();
+
+                if (Boolean.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((BooleanTypeDecoder) decoder, stream, state, count);
+                } else if (Byte.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((ByteTypeDecoder) decoder, stream, state, count);
+                } else if (Short.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((ShortTypeDecoder) decoder, stream, state, count);
+                } else if (Integer.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((Integer32TypeDecoder) decoder, stream, state, count);
+                } else if (Long.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((LongTypeDecoder) decoder, stream, state, count);
+                } else if (Double.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((DoubleTypeDecoder) decoder, stream, state, count);
+                } else if (Float.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((FloatTypeDecoder) decoder, stream, state, count);
+                } else if (Character.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((CharacterTypeDecoder) decoder, stream, state, count);
+                } else {
+                    throw new DecodeException("Unexpected class " + decoder.getClass().getName());
+                }
+            }
+        }
+
+        return decodeNonPrimitiveArray(decoder, stream, state, count);
+    }
+
+    private static boolean[] decodePrimitiveTypeArray(BooleanTypeDecoder decoder, InputStream stream, StreamDecoderState state, int count) {
+        boolean[] array = new boolean[count];
+
+        for (int i = 0; i < count; i++) {
+            array[i] = decoder.readPrimitiveValue(stream, state);
+        }
+
+        return array;
+    }
+
+    private static byte[] decodePrimitiveTypeArray(ByteTypeDecoder decoder, InputStream stream, StreamDecoderState state, int count) {
+        byte[] array = new byte[count];
+
+        for (int i = 0; i < count; i++) {
+            array[i] = decoder.readPrimitiveValue(stream, state);
+        }
+
+        return array;
+    }
+
+    private static char[] decodePrimitiveTypeArray(CharacterTypeDecoder decoder, InputStream stream, StreamDecoderState state, int count) {
+        char[] array = new char[count];
+
+        for (int i = 0; i < count; i++) {
+            array[i] = decoder.readPrimitiveValue(stream, state);
+        }
+
+        return array;
+    }
+
+    private static short[] decodePrimitiveTypeArray(ShortTypeDecoder decoder, InputStream stream, StreamDecoderState state, int count) {
+        short[] array = new short[count];
+
+        for (int i = 0; i < count; i++) {
+            array[i] = decoder.readPrimitiveValue(stream, state);
+        }
+
+        return array;
+    }
+
+    private static int[] decodePrimitiveTypeArray(Integer32TypeDecoder decoder, InputStream stream, StreamDecoderState state, int count) {
+        int[] array = new int[count];
+
+        for (int i = 0; i < count; i++) {
+            array[i] = decoder.readPrimitiveValue(stream, state);
+        }
+
+        return array;
+    }
+
+    private static long[] decodePrimitiveTypeArray(LongTypeDecoder decoder, InputStream stream, StreamDecoderState state, int count) {
+        long[] array = new long[count];
+
+        for (int i = 0; i < count; i++) {
+            array[i] = decoder.readPrimitiveValue(stream, state);
+        }
+
+        return array;
+    }
+
+    private static float[] decodePrimitiveTypeArray(FloatTypeDecoder decoder, InputStream stream, StreamDecoderState state, int count) {
+        float[] array = new float[count];
+
+        for (int i = 0; i < count; i++) {
+            array[i] = decoder.readPrimitiveValue(stream, state);
+        }
+
+        return array;
+    }
+
+    private static double[] decodePrimitiveTypeArray(DoubleTypeDecoder decoder, InputStream stream, StreamDecoderState state, int count) {
+        double[] array = new double[count];
+
+        for (int i = 0; i < count; i++) {
+            array[i] = decoder.readPrimitiveValue(stream, state);
         }
 
         return array;

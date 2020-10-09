@@ -16,12 +16,17 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.transport;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -158,6 +163,123 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
                     break;
                 case 13:
                     attach.setProperties(state.getDecoder().readMap(buffer, state));
+                    break;
+                default:
+                    throw new DecodeException(
+                        "To many entries in Attach list encoding: " + count + " max allowed entries = " + MAX_ATTACH_LIST_ENTRIES);
+            }
+        }
+
+        return attach;
+    }
+
+    @Override
+    public Attach readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readAttach(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Attach[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        Attach[] result = new Attach[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readAttach(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private Attach readAttach(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        Attach attach = new Attach();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        if (count < MIN_ATTACH_LIST_ENTRIES) {
+            throw new DecodeException(errorForMissingRequiredFields(count));
+        }
+
+        for (int index = 0; index < count; ++index) {
+            // If the stream allows we peek ahead and see if there is a null in the next slot,
+            // if so we don't call the setter for that entry to ensure the returned type reflects
+            // the encoded state in the modification entry.
+            if (stream.markSupported()) {
+                stream.mark(1);
+                boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
+                if (nullValue) {
+                    // Ensure mandatory fields are set
+                    if (index < MIN_ATTACH_LIST_ENTRIES) {
+                        throw new DecodeException(errorForMissingRequiredFields(index));
+                    }
+
+                    continue;
+                } else {
+                    ProtonStreamUtils.reset(stream);
+                }
+            }
+
+            switch (index) {
+                case 0:
+                    attach.setName(state.getDecoder().readString(stream, state));
+                    break;
+                case 1:
+                    attach.setHandle(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 2:
+                    Boolean role = state.getDecoder().readBoolean(stream, state);
+                    attach.setRole(Boolean.TRUE.equals(role) ? Role.RECEIVER : Role.SENDER);
+                    break;
+                case 3:
+                    byte sndSettleMode = state.getDecoder().readUnsignedByte(stream, state, (byte) 2);
+                    attach.setSenderSettleMode(SenderSettleMode.valueOf(sndSettleMode));
+                    break;
+                case 4:
+                    byte rcvSettleMode = state.getDecoder().readUnsignedByte(stream, state, (byte) 0);
+                    attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(rcvSettleMode));
+                    break;
+                case 5:
+                    attach.setSource(state.getDecoder().readObject(stream, state, Source.class));
+                    break;
+                case 6:
+                    attach.setTarget(state.getDecoder().readObject(stream, state, Terminus.class));
+                    break;
+                case 7:
+                    attach.setUnsettled(state.getDecoder().readMap(stream, state));
+                    break;
+                case 8:
+                    attach.setIncompleteUnsettled(state.getDecoder().readBoolean(stream, state, true));
+                    break;
+                case 9:
+                    attach.setInitialDeliveryCount(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 10:
+                    attach.setMaxMessageSize(state.getDecoder().readUnsignedLong(stream, state));
+                    break;
+                case 11:
+                    attach.setOfferedCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    break;
+                case 12:
+                    attach.setDesiredCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    break;
+                case 13:
+                    attach.setProperties(state.getDecoder().readMap(stream, state));
                     break;
                 default:
                     throw new DecodeException(

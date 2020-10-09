@@ -16,9 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.types.DescribedType;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -56,6 +60,14 @@ public abstract class UnknownDescribedTypeDecoder extends AbstractDescribedTypeD
     }
 
     @Override
+    public final DescribedType readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        Object described = decoder.readValue(stream, state);
+
+        return new UnknownDescribedType(getDescriptor(), described);
+    }
+
+    @Override
     public final DescribedType[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
@@ -70,7 +82,26 @@ public abstract class UnknownDescribedTypeDecoder extends AbstractDescribedTypeD
     }
 
     @Override
+    public final DescribedType[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        UnknownDescribedType[] result = new UnknownDescribedType[count];
+
+        for (int i = 0; i < count; ++i) {
+            Object described = decoder.readValue(stream, state);
+            result[i] = new UnknownDescribedType(getDescriptor(), described);
+        }
+
+        return result;
+    }
+
+    @Override
     public final void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         state.getDecoder().readNextTypeDecoder(buffer, state).skipValue(buffer, state);
+    }
+
+    @Override
+    public final void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        state.getDecoder().readNextTypeDecoder(stream, state).skipValue(stream, state);
     }
 }

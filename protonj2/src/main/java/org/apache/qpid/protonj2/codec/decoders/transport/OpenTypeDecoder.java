@@ -16,12 +16,17 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.transport;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -136,6 +141,107 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
                     break;
                 case 9:
                     open.setProperties(state.getDecoder().readMap(buffer, state));
+                    break;
+                default:
+                    throw new DecodeException(
+                        "To many entries in Open list encoding: " + count + " max allowed entries = " + MAX_OPEN_LIST_ENTRIES);
+            }
+        }
+
+        return open;
+    }
+
+    @Override
+    public Open readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readOpen(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Open[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        Open[] result = new Open[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readOpen(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private Open readOpen(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        Open open = new Open();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        if (count < MIN_OPEN_LIST_ENTRIES) {
+            throw new DecodeException("The container-id field cannot be omitted");
+        }
+
+        for (int index = 0; index < count; ++index) {
+            // If the stream allows we peek ahead and see if there is a null in the next slot,
+            // if so we don't call the setter for that entry to ensure the returned type reflects
+            // the encoded state in the modification entry.
+            if (stream.markSupported()) {
+                stream.mark(1);
+                boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
+                if (nullValue) {
+                    if (index == 0) {
+                        throw new DecodeException("The container-id field cannot be omitted");
+                    }
+
+                    continue;
+                } else {
+                    ProtonStreamUtils.reset(stream);
+                }
+            }
+
+            switch (index) {
+                case 0:
+                    open.setContainerId(state.getDecoder().readString(stream, state));
+                    break;
+                case 1:
+                    open.setHostname(state.getDecoder().readString(stream, state));
+                    break;
+                case 2:
+                    open.setMaxFrameSize(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 3:
+                    open.setChannelMax(state.getDecoder().readUnsignedShort(stream, state, 0));
+                    break;
+                case 4:
+                    open.setIdleTimeout(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 5:
+                    open.setOutgoingLocales(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    break;
+                case 6:
+                    open.setIncomingLocales(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    break;
+                case 7:
+                    open.setOfferedCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    break;
+                case 8:
+                    open.setDesiredCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    break;
+                case 9:
+                    open.setProperties(state.getDecoder().readMap(stream, state));
                     break;
                 default:
                     throw new DecodeException(

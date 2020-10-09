@@ -16,9 +16,12 @@
  */
 package org.apache.qpid.protonj2.codec.util;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -48,6 +51,13 @@ public class NoLocalTypeDecoder extends AbstractDescribedTypeDecoder<NoLocalType
     }
 
     @Override
+    public NoLocalType readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        state.getDecoder().readString(stream, state);
+
+        return NoLocalType.NO_LOCAL;
+    }
+
+    @Override
     public NoLocalType[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         NoLocalType[] array = new NoLocalType[count];
         for (int i = 0; i < count; ++i) {
@@ -58,7 +68,22 @@ public class NoLocalTypeDecoder extends AbstractDescribedTypeDecoder<NoLocalType
     }
 
     @Override
+    public NoLocalType[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        NoLocalType[] array = new NoLocalType[count];
+        for (int i = 0; i < count; ++i) {
+            array[i] = readValue(stream, state);
+        }
+
+        return array;
+    }
+
+    @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         state.getDecoder().readNextTypeDecoder(buffer, state).skipValue(buffer, state);
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        state.getDecoder().readNextTypeDecoder(stream, state).skipValue(stream, state);
     }
 }

@@ -16,9 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.messaging;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
@@ -99,6 +103,66 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
                     break;
                 case 1:
                     received.setSectionOffset(state.getDecoder().readUnsignedLong(buffer, state));
+                    break;
+                default:
+                    throw new DecodeException("To many entries in Received encoding");
+            }
+        }
+
+        return received;
+    }
+
+    @Override
+    public Received readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readReceived(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Received[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        Received[] result = new Received[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readReceived(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private Received readReceived(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        Received received = new Received();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        // Don't decode anything if things already look wrong.
+        if (count != REQUIRED_RECEIVED_LIST_ENTRIES) {
+            throw new DecodeException("Invalid number of entries in Received list encoding: " + count);
+        }
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    received.setSectionNumber(state.getDecoder().readUnsignedInteger(stream, state));
+                    break;
+                case 1:
+                    received.setSectionOffset(state.getDecoder().readUnsignedLong(stream, state));
                     break;
                 default:
                     throw new DecodeException("To many entries in Received encoding");

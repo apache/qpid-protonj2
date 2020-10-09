@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
 import java.util.List;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
@@ -31,6 +32,10 @@ public interface ListTypeDecoder extends PrimitiveTypeDecoder<List> {
     int readSize(ProtonBuffer buffer) throws DecodeException;
 
     int readCount(ProtonBuffer buffer) throws DecodeException;
+
+    int readSize(InputStream stream) throws DecodeException;
+
+    int readCount(InputStream stream) throws DecodeException;
 
     @Override
     default Class<List> getTypeClass() {

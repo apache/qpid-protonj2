@@ -25,13 +25,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.types.Binary;
 import org.junit.jupiter.api.Test;
@@ -43,39 +46,83 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(false);
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisTypeFromStream() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(true);
+    }
+
+    private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.UINT);
         buffer.writeByte(EncodingCodes.UINT);
 
-        try {
-            decoder.readBinary(buffer, decoderState);
-            fail("Should not allow read of integer type as this type");
-        } catch (DecodeException e) {}
+        if (fromStream) {
+            try {
+                streamDecoder.readBinary(stream, streamDecoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
 
-        try {
-            decoder.readBinaryAsBuffer(buffer, decoderState);
-            fail("Should not allow read of integer type as this type");
-        } catch (DecodeException e) {}
+            try {
+                streamDecoder.readBinaryAsBuffer(stream, streamDecoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        } else {
+            try {
+                decoder.readBinary(buffer, decoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+
+            try {
+                decoder.readBinaryAsBuffer(buffer, decoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        }
     }
 
     @Test
     public void testReadFromNullEncodingCode() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-
         buffer.writeByte(EncodingCodes.NULL);
-
         assertNull(decoder.readBinary(buffer, decoderState));
     }
 
     @Test
-    public void testEncodeDecodeEmptyArrayBinary() throws Exception {
+    public void testReadFromNullEncodingCodeFromStream() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+        buffer.writeByte(EncodingCodes.NULL);
+        assertNull(streamDecoder.readBinary(stream, streamDecoderState));
+    }
+
+    @Test
+    public void testEncodeDecodeEmptyArrayBinary() throws Exception {
+        testEncodeDecodeEmptyArrayBinary(false);
+    }
+
+    @Test
+    public void testEncodeDecodeEmptyArrayBinaryFromStream() throws Exception {
+        testEncodeDecodeEmptyArrayBinary(true);
+    }
+
+    private void testEncodeDecodeEmptyArrayBinary(boolean fromStream) throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
         Binary input = new Binary(new byte[0]);
 
         encoder.writeBinary(buffer, encoderState, input);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertTrue(result instanceof Binary);
         Binary output = (Binary) result;
 
@@ -86,12 +133,28 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeBinary() throws Exception {
+        testEncodeDecodeBinary(false);
+    }
+
+    @Test
+    public void testEncodeDecodeBinaryFromStream() throws Exception {
+        testEncodeDecodeBinary(true);
+    }
+
+    private void testEncodeDecodeBinary(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
         Binary input = new Binary(new byte[] {0, 1, 2, 3, 4});
 
         encoder.writeBinary(buffer, encoderState, input);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertTrue(result instanceof Binary);
         Binary output = (Binary) result;
 
@@ -104,7 +167,17 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeBinaryUsingRawBytesWithSmallArray() throws Exception {
+        testEncodeDecodeBinaryUsingRawBytesWithSmallArray(false);
+    }
+
+    @Test
+    public void testEncodeDecodeBinaryUsingRawBytesWithSmallArrayFromStream() throws Exception {
+        testEncodeDecodeBinaryUsingRawBytesWithSmallArray(true);
+    }
+
+    private void testEncodeDecodeBinaryUsingRawBytesWithSmallArray(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
         Random filler = new Random();
         filler.setSeed(System.nanoTime());
 
@@ -113,7 +186,13 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
 
         encoder.writeBinary(buffer, encoderState, input);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertTrue(result instanceof Binary);
         Binary output = (Binary) result;
 
@@ -125,7 +204,17 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeBinaryUsingRawBytesWithLargeArray() throws Exception {
+        testEncodeDecodeBinaryUsingRawBytesWithLargeArray(false);
+    }
+
+    @Test
+    public void testEncodeDecodeBinaryUsingRawBytesWithLargeArrayFromStream() throws Exception {
+        testEncodeDecodeBinaryUsingRawBytesWithLargeArray(true);
+    }
+
+    private void testEncodeDecodeBinaryUsingRawBytesWithLargeArray(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
         Random filler = new Random();
         filler.setSeed(System.nanoTime());
 
@@ -134,7 +223,13 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
 
         encoder.writeBinary(buffer, encoderState, input);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertTrue(result instanceof Binary);
         Binary output = (Binary) result;
 
@@ -193,6 +288,25 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testSkipFailsEarlyOnInvliadBinaryLengthVBin8FromStream() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.VBIN8);
+        buffer.writeByte(255);
+
+        StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+        assertEquals(Binary.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.skipValue(stream, streamDecoderState);
+            fail("Should not be able to skip binary with length greater than readable bytes");
+        } catch (IllegalArgumentException ex) {}
+
+        assertEquals(2, buffer.getReadIndex());
+    }
+
+    @Test
     public void testSkipFailsEarlyOnInvliadBinaryLengthVBin32() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
 
@@ -212,13 +326,29 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testZeroSizedArrayOfBinaryObjects() throws IOException {
+        testZeroSizedArrayOfBinaryObjects(false);
+    }
+
+    @Test
+    public void testZeroSizedArrayOfBinaryObjectsFromStream() throws IOException {
+        testZeroSizedArrayOfBinaryObjects(true);
+    }
+
+    private void testZeroSizedArrayOfBinaryObjects(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Binary[] source = new Binary[0];
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
         assertFalse(result.getClass().getComponentType().isPrimitive());
@@ -229,7 +359,17 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testArrayOfBinaryObjects() throws IOException {
+        testArrayOfBinaryObjects(false);
+    }
+
+    @Test
+    public void testArrayOfBinaryObjectsFromStream() throws IOException {
+        testArrayOfBinaryObjects(true);
+    }
+
+    private void testArrayOfBinaryObjects(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
         Random filler = new Random();
         filler.setSeed(System.nanoTime());
 
@@ -243,7 +383,13 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
         assertFalse(result.getClass().getComponentType().isPrimitive());

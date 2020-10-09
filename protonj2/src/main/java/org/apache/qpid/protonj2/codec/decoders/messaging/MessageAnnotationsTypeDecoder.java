@@ -16,12 +16,15 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.messaging;
 
+import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.MapTypeDecoder;
@@ -114,6 +117,72 @@ public final class MessageAnnotationsTypeDecoder extends AbstractDescribedTypeDe
         for (int i = 0; i < count / 2; i++) {
             Symbol key = state.getDecoder().readSymbol(buffer, state);
             Object value = state.getDecoder().readObject(buffer, state);
+
+            map.put(key, value);
+        }
+
+        return map;
+    }
+
+    @Override
+    public MessageAnnotations readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        if (decoder instanceof NullTypeDecoder) {
+            decoder.readValue(stream, state);
+            return new MessageAnnotations(null);
+        }
+
+        checkIsExpectedType(MapTypeDecoder.class, decoder);
+
+        return new MessageAnnotations(readMap(stream, state, (MapTypeDecoder) decoder));
+    }
+
+    @Override
+    public MessageAnnotations[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        MessageAnnotations[] result = new MessageAnnotations[count];
+
+        if (decoder instanceof NullTypeDecoder) {
+            for (int i = 0; i < count; ++i) {
+                decoder.readValue(stream, state);
+                result[i] = new MessageAnnotations(null);
+            }
+            return result;
+        }
+
+        checkIsExpectedType(MapTypeDecoder.class, decoder);
+
+        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
+
+        for (int i = 0; i < count; ++i) {
+            result[i] = new MessageAnnotations(readMap(stream, state, mapDecoder));
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        if (!(decoder instanceof NullTypeDecoder)) {
+            checkIsExpectedType(MapTypeDecoder.class, decoder);
+            decoder.skipValue(stream, state);
+        }
+    }
+
+    private Map<Symbol, Object> readMap(InputStream stream, StreamDecoderState state, MapTypeDecoder mapDecoder) throws DecodeException {
+        @SuppressWarnings("unused")
+        int size = mapDecoder.readSize(stream);
+        int count = mapDecoder.readCount(stream);
+
+        // Count include both key and value so we must include that in the loop
+        Map<Symbol, Object> map = new LinkedHashMap<>(count);
+        for (int i = 0; i < count / 2; i++) {
+            Symbol key = state.getDecoder().readSymbol(stream, state);
+            Object value = state.getDecoder().readObject(stream, state);
 
             map.put(key, value);
         }

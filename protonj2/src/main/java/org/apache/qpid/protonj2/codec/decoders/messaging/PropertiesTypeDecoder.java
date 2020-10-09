@@ -16,12 +16,17 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.messaging;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -147,6 +152,115 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
                     break;
                 case 12:
                     properties.setReplyToGroupId(state.getDecoder().readString(buffer, state));
+                    break;
+                default:
+                    throw new DecodeException("To many entries in Properties encoding");
+            }
+        }
+
+        return properties;
+    }
+
+    @Override
+    public Properties readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readProperties(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Properties[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        Properties[] result = new Properties[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readProperties(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private Properties readProperties(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        Properties properties = new Properties();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_PROPERTIES_LIST_ENTRIES) {
+            throw new DecodeException("Not enough entries in Properties list encoding: " + count);
+        }
+
+        if (count > MAX_PROPERTIES_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in Properties list encoding: " + count);
+        }
+
+        for (int index = 0; index < count; ++index) {
+            // If the stream allows we peek ahead and see if there is a null in the next slot,
+            // if so we don't call the setter for that entry to ensure the returned type reflects
+            // the encoded state in the modification entry.
+            if (stream.markSupported()) {
+                stream.mark(1);
+                if (ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL) {
+                    continue;
+                } else {
+                    ProtonStreamUtils.reset(stream);
+                }
+            }
+
+            switch (index) {
+                case 0:
+                    properties.setMessageId(state.getDecoder().readObject(stream, state));
+                    break;
+                case 1:
+                    properties.setUserId(state.getDecoder().readBinary(stream, state));
+                    break;
+                case 2:
+                    properties.setTo(state.getDecoder().readString(stream, state));
+                    break;
+                case 3:
+                    properties.setSubject(state.getDecoder().readString(stream, state));
+                    break;
+                case 4:
+                    properties.setReplyTo(state.getDecoder().readString(stream, state));
+                    break;
+                case 5:
+                    properties.setCorrelationId(state.getDecoder().readObject(stream, state));
+                    break;
+                case 6:
+                    properties.setContentType(state.getDecoder().readSymbol(stream, state, null));
+                    break;
+                case 7:
+                    properties.setContentEncoding(state.getDecoder().readSymbol(stream, state, null));
+                    break;
+                case 8:
+                    properties.setAbsoluteExpiryTime(state.getDecoder().readTimestamp(stream, state, 0));
+                    break;
+                case 9:
+                    properties.setCreationTime(state.getDecoder().readTimestamp(stream, state, 0));
+                    break;
+                case 10:
+                    properties.setGroupId(state.getDecoder().readString(stream, state));
+                    break;
+                case 11:
+                    properties.setGroupSequence(state.getDecoder().readUnsignedInteger(stream, state, 0));
+                    break;
+                case 12:
+                    properties.setReplyToGroupId(state.getDecoder().readString(stream, state));
                     break;
                 default:
                     throw new DecodeException("To many entries in Properties encoding");

@@ -16,12 +16,17 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.transport;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -142,6 +147,112 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
                     break;
                 case 10:
                     flow.setProperties(state.getDecoder().readMap(buffer, state));
+                    break;
+                default:
+                    throw new DecodeException(
+                        "To many entries in Flow list encoding: " + count + " max allowed entries = " + MAX_FLOW_LIST_ENTRIES);
+            }
+        }
+
+        return flow;
+    }
+
+    @Override
+    public Flow readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readFlow(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Flow[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        Flow[] result = new Flow[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readFlow(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private Flow readFlow(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        Flow flow = new Flow();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_FLOW_LIST_ENTRIES) {
+            throw new DecodeException(errorForMissingRequiredFields(count));
+        }
+
+        for (int index = 0; index < count; ++index) {
+            // If the stream allows we peek ahead and see if there is a null in the next slot,
+            // if so we don't call the setter for that entry to ensure the returned type reflects
+            // the encoded state in the modification entry.
+            if (stream.markSupported()) {
+                stream.mark(1);
+                boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
+                if (nullValue) {
+                    // Ensure mandatory fields are set
+                    if (index > 0 && index < MIN_FLOW_LIST_ENTRIES) {
+                        throw new DecodeException(errorForMissingRequiredFields(index));
+                    }
+
+                    continue;
+                } else {
+                    ProtonStreamUtils.reset(stream);
+                }
+            }
+
+            switch (index) {
+                case 0:
+                    flow.setNextIncomingId(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 1:
+                    flow.setIncomingWindow(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 2:
+                    flow.setNextOutgoingId(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 3:
+                    flow.setOutgoingWindow(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 4:
+                    flow.setHandle(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 5:
+                    flow.setDeliveryCount(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 6:
+                    flow.setLinkCredit(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 7:
+                    flow.setAvailable(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    break;
+                case 8:
+                    flow.setDrain(state.getDecoder().readBoolean(stream, state, false));
+                    break;
+                case 9:
+                    flow.setEcho(state.getDecoder().readBoolean(stream, state, false));
+                    break;
+                case 10:
+                    flow.setProperties(state.getDecoder().readMap(stream, state));
                     break;
                 default:
                     throw new DecodeException(

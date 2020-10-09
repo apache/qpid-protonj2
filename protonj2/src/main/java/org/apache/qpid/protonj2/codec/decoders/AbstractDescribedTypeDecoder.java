@@ -18,6 +18,8 @@ package org.apache.qpid.protonj2.codec.decoders;
 
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.StreamDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 
 /**
@@ -26,7 +28,7 @@ import org.apache.qpid.protonj2.codec.TypeDecoder;
  *
  * @param <V> The type that this decoder handles.
  */
-public abstract class AbstractDescribedTypeDecoder<V> implements DescribedTypeDecoder<V> {
+public abstract class AbstractDescribedTypeDecoder<V> implements DescribedTypeDecoder<V>, StreamDescribedTypeDecoder<V> {
 
     @Override
     public boolean isArrayType() {
@@ -39,6 +41,13 @@ public abstract class AbstractDescribedTypeDecoder<V> implements DescribedTypeDe
     }
 
     protected static void checkIsExpectedType(Class<?> expected, TypeDecoder<?> actual) throws DecodeException {
+        if (!expected.isAssignableFrom(actual.getClass())) {
+            throw new DecodeException(
+                "Expected " + expected + "encoding but got decoder for type: " + actual.getTypeClass().getName());
+        }
+    }
+
+    protected static void checkIsExpectedType(Class<?> expected, StreamTypeDecoder<?> actual) throws DecodeException {
         if (!expected.isAssignableFrom(actual.getClass())) {
             throw new DecodeException(
                 "Expected " + expected + "encoding but got decoder for type: " + actual.getTypeClass().getName());

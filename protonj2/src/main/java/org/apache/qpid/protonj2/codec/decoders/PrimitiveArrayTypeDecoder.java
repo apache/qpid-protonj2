@@ -16,9 +16,12 @@
  */
 package org.apache.qpid.protonj2.codec.decoders;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 
 /**
  * Provides an interface for an Array type decoder that provides the Proton decoder
@@ -45,6 +48,23 @@ public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object> 
     Object[] readValueAsObjectArray(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
     /**
+     * Reads the encoded Array and returns it as an opaque Object[] meaning
+     * that any primitive language types (e.g. int, long, boolean, etc) are
+     * return using an array of primitive type Objects (e.g. Integer, Long,
+     * Boolean, etc).
+     *
+     * @param stream
+     *      The {@link InputStream} to read from.
+     * @param state
+     *      The decoder state to use while decoding.
+     *
+     * @return an opaque Object[] that represents the underlying array.
+     *
+     * @throws DecodeException if an error occurs during the decode.
+     */
+    Object[] readValueAsObjectArray(InputStream stream, StreamDecoderState state) throws DecodeException;
+
+    /**
      * Reads the encoded Array and returns it as an opaque Object rather
      * than an Object[] which allows for an array of java primitives to be
      * returned instead of an array of primitive type Objects.
@@ -59,5 +79,21 @@ public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object> 
      * @throws DecodeException if an error occurs during the decode.
      */
     Object readValueAsObject(ProtonBuffer buffer, DecoderState state) throws DecodeException;
+
+    /**
+     * Reads the encoded Array and returns it as an opaque Object rather
+     * than an Object[] which allows for an array of java primitives to be
+     * returned instead of an array of primitive type Objects.
+     *
+     * @param stream
+     *      The {@link InputStream} to read from.
+     * @param state
+     *      The decoder state to use while decoding.
+     *
+     * @return an opaque object that represents the underlying array.
+     *
+     * @throws DecodeException if an error occurs during the decode.
+     */
+    Object readValueAsObject(InputStream stream, StreamDecoderState state) throws DecodeException;
 
 }

@@ -16,9 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.messaging;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.MapTypeDecoder;
@@ -98,6 +102,60 @@ public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer
         if (!(decoder instanceof NullTypeDecoder)) {
             checkIsExpectedType(MapTypeDecoder.class, decoder);
             decoder.skipValue(buffer, state);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Footer readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        if (decoder instanceof NullTypeDecoder) {
+            decoder.readValue(stream, state);
+            return new Footer(null);
+        }
+
+        checkIsExpectedType(MapTypeDecoder.class, decoder);
+
+        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
+
+        return new Footer(mapDecoder.readValue(stream, state));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Footer[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        Footer[] result = new Footer[count];
+
+        if (decoder instanceof NullTypeDecoder) {
+            for (int i = 0; i < count; ++i) {
+                decoder.readValue(stream, state);
+                result[i] = new Footer(null);
+            }
+            return result;
+        }
+
+        checkIsExpectedType(MapTypeDecoder.class, decoder);
+
+        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
+
+        for (int i = 0; i < count; ++i) {
+            decoder.readValue(stream, state);
+            result[i] = new Footer(mapDecoder.readValue(stream, state));
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        if (!(decoder instanceof NullTypeDecoder)) {
+            checkIsExpectedType(MapTypeDecoder.class, decoder);
+            decoder.skipValue(stream, state);
         }
     }
 }

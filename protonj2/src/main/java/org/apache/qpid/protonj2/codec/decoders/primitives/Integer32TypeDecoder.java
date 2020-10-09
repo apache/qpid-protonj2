@@ -16,11 +16,15 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Decode AMQP Integer values from a byte stream
@@ -47,12 +51,26 @@ public final class Integer32TypeDecoder extends AbstractPrimitiveTypeDecoder<Int
         return buffer.readInt();
     }
 
+    @Override
+    public Integer readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return ProtonStreamUtils.readInt(stream);
+    }
+
     public int readPrimitiveValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return buffer.readInt();
+    }
+
+    public int readPrimitiveValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return ProtonStreamUtils.readInt(stream);
     }
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(Integer.BYTES);
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        ProtonStreamUtils.skipBytes(stream, Integer.BYTES);
     }
 }

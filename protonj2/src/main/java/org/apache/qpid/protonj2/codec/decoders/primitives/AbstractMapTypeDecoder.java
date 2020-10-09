@@ -16,12 +16,15 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
@@ -63,5 +66,31 @@ public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecode
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(readSize(buffer));
+    }
+
+    @Override
+    public Map<Object, Object> readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        readSize(stream);
+        int count = readCount(stream);
+
+        // Count include both key and value so we must include that in the loop
+        Map<Object, Object> map = new LinkedHashMap<>(count);
+        for (int i = 0; i < count / 2; i++) {
+            Object key = state.getDecoder().readObject(stream, state);
+            Object value = state.getDecoder().readObject(stream, state);
+
+            map.put(key, value);
+        }
+
+        return map;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        try {
+            stream.skip(readSize(stream));
+        } catch (IOException ex) {
+            throw new DecodeException("Error while reading Map payload bytes", ex);
+        }
     }
 }

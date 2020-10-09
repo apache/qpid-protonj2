@@ -16,11 +16,15 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Decoder of AMQP Character from a byte stream.
@@ -38,21 +42,35 @@ public final class CharacterTypeDecoder extends AbstractPrimitiveTypeDecoder<Cha
     }
 
     @Override
-    public Character readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        return Character.valueOf((char) (buffer.readInt() & 0xffff));
-    }
-
-    public Character readPrimitiveValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        return (char) (buffer.readInt() & 0xffff);
-    }
-
-    @Override
     public int getTypeCode() {
         return EncodingCodes.CHAR & 0xff;
     }
 
     @Override
+    public Character readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
+        return Character.valueOf((char) (buffer.readInt() & 0xffff));
+    }
+
+    @Override
+    public Character readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return Character.valueOf((char) ProtonStreamUtils.readInt(stream));
+    }
+
+    public char readPrimitiveValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
+        return (char) (buffer.readInt() & 0xffff);
+    }
+
+    public char readPrimitiveValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return (char) ProtonStreamUtils.readInt(stream);
+    }
+
+    @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(Integer.BYTES);
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        ProtonStreamUtils.skipBytes(stream, Integer.BYTES);
     }
 }

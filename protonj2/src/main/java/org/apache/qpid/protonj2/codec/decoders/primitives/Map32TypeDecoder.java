@@ -16,9 +16,12 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Decoder of AMQP Map value from a byte stream
@@ -38,5 +41,15 @@ public final class Map32TypeDecoder extends AbstractMapTypeDecoder {
     @Override
     public int readCount(ProtonBuffer buffer) throws DecodeException {
         return buffer.readInt();
+    }
+
+    @Override
+    public int readSize(InputStream stream) throws DecodeException {
+        return ProtonStreamUtils.readInt(stream);
+    }
+
+    @Override
+    public int readCount(InputStream stream) throws DecodeException {
+        return ProtonStreamUtils.readInt(stream);
     }
 }

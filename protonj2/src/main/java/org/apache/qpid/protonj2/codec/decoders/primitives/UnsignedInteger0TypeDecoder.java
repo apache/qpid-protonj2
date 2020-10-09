@@ -16,10 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 
@@ -34,7 +37,17 @@ public final class UnsignedInteger0TypeDecoder extends AbstractPrimitiveTypeDeco
     }
 
     @Override
+    public Class<UnsignedInteger> getTypeClass() {
+        return UnsignedInteger.class;
+    }
+
+    @Override
     public UnsignedInteger readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
+        return UnsignedInteger.ZERO;
+    }
+
+    @Override
+    public UnsignedInteger readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         return UnsignedInteger.ZERO;
     }
 
@@ -43,7 +56,6 @@ public final class UnsignedInteger0TypeDecoder extends AbstractPrimitiveTypeDeco
     }
 
     @Override
-    public Class<UnsignedInteger> getTypeClass() {
-        return UnsignedInteger.class;
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
     }
 }

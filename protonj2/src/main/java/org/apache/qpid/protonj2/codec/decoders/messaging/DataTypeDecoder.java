@@ -16,13 +16,18 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.messaging;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.codec.decoders.primitives.BinaryTypeDecoder;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -113,5 +118,52 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
         checkIsExpectedType(BinaryTypeDecoder.class, decoder);
 
         decoder.skipValue(buffer, state);
+    }
+
+    @Override
+    public Data readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        final byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final int size;
+
+        switch (encodingCode) {
+            case EncodingCodes.VBIN8:
+                size = ProtonStreamUtils.readByte(stream) & 0xFF;
+                break;
+            case EncodingCodes.VBIN32:
+                size = ProtonStreamUtils.readInt(stream);
+                break;
+            case EncodingCodes.NULL:
+                return EMPTY_DATA;
+            default:
+                throw new DecodeException("Expected Binary type but found encoding: " + encodingCode);
+        }
+
+        return new Data(new Binary(ProtonStreamUtils.readBytes(stream, size)));
+    }
+
+    @Override
+    public Data[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(BinaryTypeDecoder.class, decoder);
+
+        final BinaryTypeDecoder valueDecoder = (BinaryTypeDecoder) decoder;
+        final Binary[] binaryArray = valueDecoder.readArrayElements(stream, state, count);
+
+        final Data[] dataArray = new Data[count];
+        for (int i = 0; i < count; ++i) {
+            dataArray[i] = new Data(binaryArray[i]);
+        }
+
+        return dataArray;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(BinaryTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
     }
 }

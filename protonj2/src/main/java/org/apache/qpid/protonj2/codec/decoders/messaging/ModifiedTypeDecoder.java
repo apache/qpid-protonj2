@@ -16,9 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.messaging;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
@@ -107,6 +111,73 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
                     break;
                 case 2:
                     modified.setMessageAnnotations(state.getDecoder().readMap(buffer, state));
+                    break;
+                default:
+                    throw new DecodeException("To many entries in Modified encoding");
+            }
+        }
+
+        return modified;
+    }
+
+    @Override
+    public Modified readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readModified(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Modified[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        Modified[] result = new Modified[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readModified(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private Modified readModified(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        Modified modified = new Modified();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_MODIFIED_LIST_ENTRIES) {
+            throw new DecodeException("Not enough entries in Modified list encoding: " + count);
+        }
+
+        if (count > MAX_MODIFIED_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in Modified list encoding: " + count);
+        }
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    modified.setDeliveryFailed(state.getDecoder().readBoolean(stream, state, false));
+                    break;
+                case 1:
+                    modified.setUndeliverableHere(state.getDecoder().readBoolean(stream, state, false));
+                    break;
+                case 2:
+                    modified.setMessageAnnotations(state.getDecoder().readMap(stream, state));
                     break;
                 default:
                     throw new DecodeException("To many entries in Modified encoding");

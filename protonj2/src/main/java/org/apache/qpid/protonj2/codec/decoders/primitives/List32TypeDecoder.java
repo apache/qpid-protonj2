@@ -16,9 +16,12 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Decoder of AMQP List values from a byte stream
@@ -26,17 +29,27 @@ import org.apache.qpid.protonj2.codec.EncodingCodes;
 public final class List32TypeDecoder extends AbstractListTypeDecoder {
 
     @Override
-    public int readSize(ProtonBuffer buffer) throws DecodeException {
-        return buffer.readInt();
-    }
-
-    @Override
     public int getTypeCode() {
         return EncodingCodes.LIST32 & 0xff;
     }
 
     @Override
+    public int readSize(ProtonBuffer buffer) throws DecodeException {
+        return buffer.readInt();
+    }
+
+    @Override
     public int readCount(ProtonBuffer buffer) throws DecodeException {
         return buffer.readInt();
+    }
+
+    @Override
+    public int readSize(InputStream stream) throws DecodeException {
+        return ProtonStreamUtils.readInt(stream);
+    }
+
+    @Override
+    public int readCount(InputStream stream) throws DecodeException {
+        return ProtonStreamUtils.readInt(stream);
     }
 }

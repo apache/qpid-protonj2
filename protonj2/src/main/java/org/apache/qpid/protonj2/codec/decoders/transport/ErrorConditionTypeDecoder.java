@@ -16,11 +16,14 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.transport;
 
+import java.io.InputStream;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
@@ -110,6 +113,74 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
                     break;
                 case 2:
                     info = state.getDecoder().readMap(buffer, state);
+                    break;
+                default:
+                    throw new DecodeException("To many entries in ErrorCondition encoding");
+            }
+        }
+
+        return new ErrorCondition(condition, description, info);
+    }
+
+    @Override
+    public ErrorCondition readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readErrorCondition(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public ErrorCondition[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        ErrorCondition[] result = new ErrorCondition[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readErrorCondition(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private ErrorCondition readErrorCondition(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_ERROR_CONDITION_LIST_ENTRIES) {
+            throw new DecodeException("Not enough entries in ErrorCondition list encoding: " + count);
+        }
+        if (count > MAX_ERROR_CONDITION_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in ErrorCondition list encoding: " + count);
+        }
+
+        Symbol condition = null;
+        String description = null;
+        Map<Symbol, Object> info = null;
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    condition = state.getDecoder().readSymbol(stream, state);
+                    break;
+                case 1:
+                    description = state.getDecoder().readString(stream, state);
+                    break;
+                case 2:
+                    info = state.getDecoder().readMap(stream, state);
                     break;
                 default:
                     throw new DecodeException("To many entries in ErrorCondition encoding");

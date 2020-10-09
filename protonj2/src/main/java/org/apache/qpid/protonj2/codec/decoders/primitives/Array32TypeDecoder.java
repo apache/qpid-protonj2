@@ -16,14 +16,27 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Decoder of AMQP Arrays from a byte stream.
  */
 public final class Array32TypeDecoder extends AbstractArrayTypeDecoder {
+
+    @Override
+    public int getTypeCode() {
+        return EncodingCodes.ARRAY32 & 0xff;
+    }
+
+    @Override
+    public boolean isJavaPrimitive() {
+        return false;
+    }
 
     @Override
     protected int readSize(ProtonBuffer buffer) throws DecodeException {
@@ -36,12 +49,12 @@ public final class Array32TypeDecoder extends AbstractArrayTypeDecoder {
     }
 
     @Override
-    public int getTypeCode() {
-        return EncodingCodes.ARRAY32 & 0xff;
+    protected int readSize(InputStream stream) {
+        return ProtonStreamUtils.readInt(stream);
     }
 
     @Override
-    public boolean isJavaPrimitive() {
-        return false;
+    protected int readCount(InputStream stream) {
+        return ProtonStreamUtils.readInt(stream);
     }
 }

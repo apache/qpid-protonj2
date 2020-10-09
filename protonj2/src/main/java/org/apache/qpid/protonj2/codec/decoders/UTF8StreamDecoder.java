@@ -14,32 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.protonj2.codec.decoders.primitives;
+package org.apache.qpid.protonj2.codec.decoders;
 
 import java.io.InputStream;
 
-import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.codec.DecodeException;
-import org.apache.qpid.protonj2.codec.EncodingCodes;
-import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
-
 /**
- * Decoder of AMQP Symbol values from a byte stream.
+ * Interface for an external UTF8 Decoder that can be supplied by a client
+ * which implements custom decoding logic optimized for the application using
+ * the Codec.
  */
-public final class Symbol32TypeDecoder extends AbstractSymbolTypeDecoder {
+public interface UTF8StreamDecoder {
 
-    @Override
-    public int getTypeCode() {
-        return EncodingCodes.SYM32 & 0xff;
-    }
+    /**
+     * Decodes a String from the given UTF8 Bytes.
+     *
+     * @param utf8bytes
+     *      A {@link InputStream} containing the UTF-8 encoded bytes.
+     *
+     * @return a new String that represents the decoded value.
+     */
+    String decodeUTF8(InputStream utf8bytes);
 
-    @Override
-    protected int readSize(ProtonBuffer buffer) throws DecodeException {
-        return buffer.readInt();
-    }
-
-    @Override
-    protected int readSize(InputStream stream) throws DecodeException {
-        return ProtonStreamUtils.readInt(stream);
-    }
 }

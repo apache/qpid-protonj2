@@ -16,12 +16,17 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.messaging;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -123,6 +128,91 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
                     break;
                 case 4:
                     header.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    break;
+                default:
+                    throw new DecodeException("To many entries in Header encoding");
+            }
+        }
+
+        return header;
+    }
+
+    @Override
+    public Header readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        return readHeader(stream, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Header[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        Header[] result = new Header[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readHeader(stream, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
+
+        decoder.skipValue(stream, state);
+    }
+
+    private Header readHeader(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+        Header header = new Header();
+
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(stream);
+        int count = listDecoder.readCount(stream);
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_HEADER_LIST_ENTRIES) {
+            throw new DecodeException("Not enough entries in Header list encoding: " + count);
+        }
+
+        if (count > MAX_HEADER_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in Header list encoding: " + count);
+        }
+
+        for (int index = 0; index < count; ++index) {
+            // If the stream allows we peek ahead and see if there is a null in the next slot,
+            // if so we don't call the setter for that entry to ensure the returned type reflects
+            // the encoded state in the modification entry.
+            if (stream.markSupported()) {
+                stream.mark(1);
+                if (ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL) {
+                    continue;
+                } else {
+                    ProtonStreamUtils.reset(stream);
+                }
+            }
+
+            switch (index) {
+                case 0:
+                    header.setDurable(state.getDecoder().readBoolean(stream, state, false));
+                    break;
+                case 1:
+                    header.setPriority(state.getDecoder().readUnsignedByte(stream, state, Header.DEFAULT_PRIORITY));
+                    break;
+                case 2:
+                    header.setTimeToLive(state.getDecoder().readUnsignedInteger(stream, state, 0));
+                    break;
+                case 3:
+                    header.setFirstAcquirer(state.getDecoder().readBoolean(stream, state, false));
+                    break;
+                case 4:
+                    header.setDeliveryCount(state.getDecoder().readUnsignedInteger(stream, state, 0));
                     break;
                 default:
                     throw new DecodeException("To many entries in Header encoding");

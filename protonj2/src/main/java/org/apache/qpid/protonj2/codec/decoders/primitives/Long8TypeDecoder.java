@@ -16,10 +16,14 @@
  */
 package org.apache.qpid.protonj2.codec.decoders.primitives;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
  * Decode AMQP small Long values from a byte stream
@@ -32,6 +36,11 @@ public final class Long8TypeDecoder extends LongTypeDecoder {
     }
 
     @Override
+    public Long readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return Long.valueOf(ProtonStreamUtils.readByte(stream));
+    }
+
+    @Override
     public int getTypeCode() {
         return EncodingCodes.SMALLLONG & 0xff;
     }
@@ -39,5 +48,10 @@ public final class Long8TypeDecoder extends LongTypeDecoder {
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(Byte.BYTES);
+    }
+
+    @Override
+    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        ProtonStreamUtils.skipBytes(stream, Byte.BYTES);
     }
 }
