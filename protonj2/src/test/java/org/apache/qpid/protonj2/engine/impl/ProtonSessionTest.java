@@ -1541,4 +1541,50 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         assertNull(failure);
     }
+
+    @Test
+    public void testOpenSenderAndReceiverWithSameLinkNames() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        final AtomicBoolean senderRemotelyOpened = new AtomicBoolean();
+        final AtomicBoolean receiverRemotelyOpened = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().ofSender().withHandle(0).withName("link-name");
+        peer.expectAttach().ofReceiver().withHandle(1).withName("link-name");
+        peer.expectEnd().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("link-name").open();
+        Receiver receiver = session.receiver("link-name").open();
+
+        sender.openHandler(link -> senderRemotelyOpened.set(true));
+        receiver.openHandler(link -> receiverRemotelyOpened.set(true));
+
+        peer.remoteAttach().ofSender().withHandle(1)
+                                      .withInitialDeliveryCount(1)
+                                      .withName("link-name").now();
+        peer.remoteAttach().ofReceiver().withHandle(0)
+                                        .withInitialDeliveryCount(1)
+                                        .withName("link-name").now();
+
+        assertTrue(sender.isLocallyOpen());
+        assertTrue(sender.isRemotelyOpen());
+        assertTrue(receiver.isLocallyOpen());
+        assertTrue(receiver.isRemotelyOpen());
+
+        session.close();
+
+        assertTrue(senderRemotelyOpened.get(), "Sender should have reported remote sender open");
+        assertTrue(receiverRemotelyOpened.get(), "Receiver should have reported remote sender open");
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 }
