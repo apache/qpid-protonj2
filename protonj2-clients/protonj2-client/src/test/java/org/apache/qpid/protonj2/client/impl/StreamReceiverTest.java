@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -747,6 +748,71 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             } catch (IOException ioe) {
                 assertTrue(ioe.getCause() instanceof ClientDeliveryAbortedException);
             }
+
+            stream.close();
+
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            receiver.closeAsync();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamSupportsMark() throws Exception {
+        final byte[] payload = createEncodedMessage(new Data(new byte[] { 0, 1, 2, 3, 4, 5 }));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            final InputStream stream = delivery.rawInputStream();
+            assertNotNull(stream);
+            assertTrue(stream.markSupported());
+
+            assertEquals(payload.length, stream.available());
+            stream.mark(payload.length);
+
+            final byte[] deliveryBytes1 = new byte[payload.length];
+            final byte[] deliveryBytes2 = new byte[payload.length];
+            stream.read(deliveryBytes1);
+            stream.reset();
+            stream.read(deliveryBytes2);
+
+            assertNotSame(deliveryBytes1, deliveryBytes2);
+            assertArrayEquals(payload, deliveryBytes1);
+            assertArrayEquals(payload, deliveryBytes2);
+            assertEquals(0, stream.available());
+
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
 
             stream.close();
 

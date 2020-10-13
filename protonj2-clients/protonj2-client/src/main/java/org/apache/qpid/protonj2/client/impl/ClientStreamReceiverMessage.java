@@ -16,21 +16,32 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.io.FilterInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
+import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.StreamDecoder;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamDecoderFactory;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
+import org.apache.qpid.protonj2.types.Symbol;
+import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
+import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
+import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.messaging.Footer;
 import org.apache.qpid.protonj2.types.messaging.Header;
@@ -47,7 +58,12 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
     private enum StreamState {
         IDLE,
-        PREAMBLE_READ,
+        HEADER_READ,
+        DELIVERY_ANNOTATIONS_READ,
+        MESSAGE_ANNOTATIONS_READ,
+        PROPERTIES_READ,
+        APPLICATION_PROPERTIES_READ,
+        BODY_READABLE,
         BODY_READING,
         BODY_READ,
         FOOTER_READ
@@ -55,8 +71,11 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
     private final ClientStreamReceiver receiver;
     private final ClientStreamDelivery delivery;
+    private final InputStream deliveryStream;
     private final IncomingDelivery protonDelivery;
-    private final ProtonCompositeBuffer deliveryBuffer = new ProtonCompositeBuffer();
+    private final StreamDecoder protonDecoder = ProtonStreamDecoderFactory.create();
+    private final StreamDecoderState decoderState = protonDecoder.newDecoderState();
+    private final ScheduledExecutorService executor;
 
     private Header header;
     private DeliveryAnnotations deliveryAnnotations;
@@ -64,11 +83,17 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     private Properties properties;
     private ApplicationProperties applicationProperties;
     private Footer footer;
+    private long bodySize = 0;
 
-    ClientStreamReceiverMessage(ClientStreamReceiver receiver, ClientStreamDelivery delivery) {
+    private StreamState currentState = StreamState.IDLE;
+    private MessageBodyInputStream bodyStream;
+
+    ClientStreamReceiverMessage(ClientStreamReceiver receiver, ClientStreamDelivery delivery, InputStream deliveryStream) {
         this.receiver = receiver;
         this.delivery = delivery;
+        this.deliveryStream = deliveryStream;
         this.protonDelivery = delivery.getProtonDelivery();
+        this.executor = receiver.session().getScheduler();
     }
 
     @Override
@@ -104,7 +129,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public int messageFormat() {
+    public int messageFormat() throws ClientException {
         return protonDelivery != null ? protonDelivery.getMessageFormat() : 0;
     }
 
@@ -116,7 +141,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     //----- Header API implementation
 
     @Override
-    public boolean durable() {
+    public boolean durable() throws ClientException {
         return header() != null ? header.isDurable() : false;
     }
 
@@ -126,7 +151,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public byte priority() {
+    public byte priority() throws ClientException {
         return header() != null ? header.getPriority() : Header.DEFAULT_PRIORITY;
     }
 
@@ -136,7 +161,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public long timeToLive() {
+    public long timeToLive() throws ClientException {
         return header() != null ? header.getTimeToLive() : Header.DEFAULT_TIME_TO_LIVE;
     }
 
@@ -146,7 +171,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public boolean firstAcquirer() {
+    public boolean firstAcquirer() throws ClientException {
         return header() != null ? header.isFirstAcquirer() : Header.DEFAULT_FIRST_ACQUIRER;
     }
 
@@ -156,7 +181,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public long deliveryCount() {
+    public long deliveryCount() throws ClientException {
         return header() != null ? header.getDeliveryCount() : Header.DEFAULT_DELIVERY_COUNT;
     }
 
@@ -166,9 +191,9 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public Header header() {
-        // TODO Auto-generated method stub
-        return null;
+    public Header header() throws ClientException {
+        ensureStreamDecodedTo(StreamState.HEADER_READ);
+        return header;
     }
 
     @Override
@@ -179,7 +204,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     //----- Properties API implementation
 
     @Override
-    public Object messageId() {
+    public Object messageId() throws ClientException {
         if (properties() != null) {
             return properties().getMessageId();
         } else {
@@ -193,7 +218,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public byte[] userId() {
+    public byte[] userId() throws ClientException {
         if (properties() != null) {
             byte[] copyOfUserId = null;
             if (properties != null && properties().getUserId() != null) {
@@ -212,7 +237,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public String to() {
+    public String to() throws ClientException {
         if (properties() != null) {
             return properties().getTo();
         } else {
@@ -226,7 +251,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public String subject() {
+    public String subject() throws ClientException {
         if (properties() != null) {
             return properties().getSubject();
         } else {
@@ -240,7 +265,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public String replyTo() {
+    public String replyTo() throws ClientException {
         if (properties() != null) {
             return properties().getReplyTo();
         } else {
@@ -254,7 +279,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public Object correlationId() {
+    public Object correlationId() throws ClientException {
         if (properties() != null) {
             return properties().getCorrelationId();
         } else {
@@ -268,7 +293,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public String contentType() {
+    public String contentType() throws ClientException {
         if (properties() != null) {
             return properties().getContentType();
         } else {
@@ -282,7 +307,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public String contentEncoding() {
+    public String contentEncoding() throws ClientException {
         if (properties() != null) {
             return properties().getContentEncoding();
         } else {
@@ -296,7 +321,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public long absoluteExpiryTime() {
+    public long absoluteExpiryTime() throws ClientException {
         if (properties() != null) {
             return properties().getAbsoluteExpiryTime();
         } else {
@@ -310,7 +335,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public long creationTime() {
+    public long creationTime() throws ClientException {
         if (properties() != null) {
             return properties().getCreationTime();
         } else {
@@ -324,7 +349,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public String groupId() {
+    public String groupId() throws ClientException {
         if (properties() != null) {
             return properties().getGroupId();
         } else {
@@ -338,7 +363,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public int groupSequence() {
+    public int groupSequence() throws ClientException {
         if (properties() != null) {
             return (int) properties().getGroupSequence();
         } else {
@@ -352,7 +377,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public String replyToGroupId() {
+    public String replyToGroupId() throws ClientException {
         if (properties() != null) {
             return properties().getReplyToGroupId();
         } else {
@@ -366,9 +391,9 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public Properties properties() {
-        // TODO Auto-generated method stub
-        return null;
+    public Properties properties() throws ClientException {
+        ensureStreamDecodedTo(StreamState.PROPERTIES_READ);
+        return properties;
     }
 
     @Override
@@ -379,27 +404,34 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     //----- Delivery Annotations API (Internal Access Only)
 
     DeliveryAnnotations deliveryAnnotations() throws ClientException {
-        return null;
+        ensureStreamDecodedTo(StreamState.DELIVERY_ANNOTATIONS_READ);
+        return deliveryAnnotations;
     }
 
     //----- Message Annotations API
 
     @Override
-    public Object annotation(String key) {
-        // TODO Auto-generated method stub
-        return null;
+    public Object annotation(String key) throws ClientException {
+        if (hasAnnotations()) {
+            return annotations.getValue().get(Symbol.valueOf(key));
+        } else {
+            return null;
+        }
     }
 
     @Override
-    public boolean hasAnnotation(String key) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean hasAnnotation(String key) throws ClientException {
+        if (hasAnnotations()) {
+            return annotations.getValue().containsKey(Symbol.valueOf(key));
+        } else {
+            return false;
+        }
     }
 
     @Override
-    public boolean hasAnnotations() {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean hasAnnotations() throws ClientException {
+        ensureStreamDecodedTo(StreamState.MESSAGE_ANNOTATIONS_READ);
+        return annotations != null && annotations.getValue() != null && annotations.getValue().size() > 0;
     }
 
     @Override
@@ -408,8 +440,13 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public StreamReceiverMessage forEachAnnotation(BiConsumer<String, Object> action) {
-        // TODO Auto-generated method stub
+    public StreamReceiverMessage forEachAnnotation(BiConsumer<String, Object> action) throws ClientException {
+        if (hasAnnotations()) {
+            annotations.getValue().forEach((key, value) -> {
+                action.accept(key.toString(), value);
+            });
+        }
+
         return this;
     }
 
@@ -419,9 +456,12 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public MessageAnnotations annotations() {
-        // TODO Auto-generated method stub
-        return null;
+    public MessageAnnotations annotations() throws ClientException {
+        if (hasAnnotations()) {
+            return annotations;
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -432,21 +472,29 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     //----- Application Properties API
 
     @Override
-    public Object applicationProperty(String key) {
-        // TODO Auto-generated method stub
-        return null;
+    public Object applicationProperty(String key) throws ClientException {
+        if (hasApplicationProperties()) {
+            return applicationProperties.getValue().get(key);
+        } else {
+            return null;
+        }
     }
 
     @Override
-    public boolean hasApplicationProperty(String key) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean hasApplicationProperty(String key) throws ClientException {
+        if (hasApplicationProperties()) {
+            return applicationProperties.getValue().containsKey(key);
+        } else {
+            return false;
+        }
     }
 
     @Override
-    public boolean hasApplicationProperties() {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean hasApplicationProperties() throws ClientException {
+        ensureStreamDecodedTo(StreamState.APPLICATION_PROPERTIES_READ);
+        return applicationProperties != null &&
+               applicationProperties.getValue() != null &&
+               applicationProperties.getValue().size() > 0;
     }
 
     @Override
@@ -455,8 +503,10 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public StreamReceiverMessage forEachApplicationProperty(BiConsumer<String, Object> action) {
-        // TODO Auto-generated method stub
+    public StreamReceiverMessage forEachApplicationProperty(BiConsumer<String, Object> action) throws ClientException {
+        if (hasApplicationProperties()) {
+            applicationProperties.getValue().forEach(action);
+        }
         return this;
     }
 
@@ -466,9 +516,12 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public ApplicationProperties applicationProperties() {
-        // TODO Auto-generated method stub
-        return null;
+    public ApplicationProperties applicationProperties() throws ClientException {
+        if (hasApplicationProperties()) {
+            return applicationProperties;
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -479,21 +532,27 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     //----- Message Footer API
 
     @Override
-    public Object footer(String key) {
-        // TODO Auto-generated method stub
-        return null;
+    public Object footer(String key) throws ClientException {
+        if (hasFooters()) {
+            return footer.getValue().get(Symbol.valueOf(key));
+        } else {
+            return null;
+        }
     }
 
     @Override
-    public boolean hasFooter(String key) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean hasFooter(String key) throws ClientException {
+        if (hasFooters()) {
+            return footer.getValue().containsKey(Symbol.valueOf(key));
+        } else {
+            return false;
+        }
     }
 
     @Override
-    public boolean hasFooters() {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean hasFooters() throws ClientException {
+        ensureStreamDecodedTo(StreamState.FOOTER_READ);
+        return footer != null && footer.getValue() != null && footer.getValue().size() > 0;
     }
 
     @Override
@@ -502,8 +561,13 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public StreamReceiverMessage forEachFooter(BiConsumer<String, Object> action) {
-        // TODO Auto-generated method stub
+    public StreamReceiverMessage forEachFooter(BiConsumer<String, Object> action) throws ClientException {
+        if (hasFooters()) {
+            footer.getValue().forEach((key, value) -> {
+                action.accept(key.toString(), value);
+            });
+        }
+
         return this;
     }
 
@@ -513,9 +577,12 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public Footer footer() {
-        // TODO Auto-generated method stub
-        return null;
+    public Footer footer() throws ClientException {
+        if (hasFooters()) {
+            return footer;
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -536,15 +603,13 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public Collection<Section<?>> bodySections() {
-        // TODO Auto-generated method stub
-        return null;
+    public Collection<Section<?>> bodySections() throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot decode all body sections from a StreamReceiverMessage instance.");
     }
 
     @Override
-    public StreamReceiverMessage forEachBodySection(Consumer<Section<?>> consumer) {
-        // TODO Auto-generated method stub
-        return this;
+    public StreamReceiverMessage forEachBodySection(Consumer<Section<?>> consumer) throws ClientUnsupportedOperationException {
+        throw new ClientUnsupportedOperationException("Cannot decode all body sections from a StreamReceiverMessage instance.");
     }
 
     @Override
@@ -553,9 +618,18 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     }
 
     @Override
-    public InputStream body() {
-        // TODO Auto-generated method stub
-        return null;
+    public InputStream body() throws ClientException {
+        if (currentState.ordinal() > StreamState.BODY_READ.ordinal()) {
+            throw new ClientIllegalStateException("Cannot read body from message whose body has already been read.");
+        }
+
+        ensureStreamDecodedTo(StreamState.BODY_READABLE);
+
+        if (bodyStream == null) {
+            bodyStream = new MessageBodyInputStream(deliveryStream, bodySize);
+        }
+
+        return bodyStream;
     }
 
     @Override
@@ -572,32 +646,127 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
     //----- Internal Streamed Delivery API and support methods
 
-    private void checkClosed() throws ClientIllegalStateException {
+    private void checkClosedOrAborted() throws ClientIllegalStateException {
         if (receiver.isClosed()) {
             throw new ClientIllegalStateException("The parent Receiver instance has already been closed.");
         }
-    }
 
-    private void checkAborted() throws ClientIllegalStateException {
         if (aborted()) {
             throw new ClientIllegalStateException("The incoming delivery was aborted.");
         }
     }
 
-    //----- Event Handlers for Delivery updates
+    private void ensureStreamDecodedTo(StreamState desiredState) throws ClientException {
+        checkClosedOrAborted();
 
-    void handleDeliveryRead(IncomingDelivery delivery) {
-        // TODO: break any waiting for read cases
-    }
+        if (currentState.ordinal() < desiredState.ordinal()) {
+            while (currentState.ordinal() < desiredState.ordinal()) {
+                final StreamTypeDecoder<?> decoder;
+                try {
+                    decoder = protonDecoder.peekNextTypeDecoder(deliveryStream, decoderState);
+                } catch (DecodeException dex) {
+                    // TODO: Handle EOF on delivery stream reading and move to last state
+                    // currentState = StreamState.FOOTER_READ;
+                    // TODO: Handle inability to decode stream chunk
+                    throw new ClientException("Failed reading incoming message data");
+                }
 
-    void handleDeliveryAborted(IncomingDelivery delivery) {
-        // TODO: break any waiting for read cases
-    }
+                final Class<?> typeClass = decoder.getTypeClass();
 
-    void handleReceiverClosed(ClientStreamReceiver receiver) {
-        // TODO: break any waiting for read cases
+                if (typeClass == Header.class) {
+                    currentState = StreamState.HEADER_READ;
+                } else if (typeClass == DeliveryAnnotations.class) {
+                    currentState = StreamState.DELIVERY_ANNOTATIONS_READ;
+                } else if (typeClass == MessageAnnotations.class) {
+                    currentState = StreamState.MESSAGE_ANNOTATIONS_READ;
+                } else if (typeClass == Properties.class) {
+                    currentState = StreamState.PROPERTIES_READ;
+                } else if (typeClass == ApplicationProperties.class) {
+                    currentState = StreamState.APPLICATION_PROPERTIES_READ;
+                } else if (typeClass == AmqpValue.class) {
+                    currentState = StreamState.FOOTER_READ;
+                } else if (typeClass == AmqpSequence.class ||
+                           typeClass == Data.class ||
+                           typeClass == AmqpValue.class) {
+                    currentState = StreamState.BODY_READABLE;
+                    bodySize = 0;  // TODO: Peek ahead to size of first body Section
+                } else {
+                    break; // TODO: Unknown or unexpected section in message
+                }
+            }
+        }
     }
 
     //----- Internal InputStream implementations
 
+    private class MessageBodyInputStream extends FilterInputStream {
+
+        private final long bodySize;
+        private long bytesRead;
+        private boolean closed;
+
+        public MessageBodyInputStream(InputStream deliveryStream, long bodySize) {
+            super(deliveryStream);
+
+            if (bodySize < 0) {
+                throw new IllegalArgumentException("Cannot read from encoded body with size encoded as less < 0");
+            }
+
+            this.bodySize = bodySize;
+        }
+
+        @Override
+        public void close() throws IOException {
+            // TODO: Handle close before payload fully read.
+            this.closed = true;
+            super.close();
+        }
+
+        @Override
+        public int read() throws IOException {
+            checkClosed();
+
+            while (true) {
+                if (bytesRead >= bodySize) {
+                    try {
+                        ensureStreamDecodedTo(StreamState.BODY_READABLE);
+                    } catch (ClientException e) {
+                        throw new IOException(e);
+                    }
+
+                    if (currentState == StreamState.FOOTER_READ) {
+                        return -1;  // Cannot read any further.
+                    }
+                }
+
+                bytesRead++;
+
+                return super.read();
+            }
+        }
+
+        @Override
+        public int read(byte target[], int offset, int length) throws IOException {
+            checkClosed();
+
+            // TODO: Read requested handling crossover to next section if possible
+
+            return super.read(target, offset, length);
+        }
+
+        @Override
+        public long skip(long amount) throws IOException {
+            checkClosed();
+
+            // TODO: Skip requested handling crossover to next section if possible
+
+            return super.skip(amount);
+        }
+
+        private void checkClosed() throws IOException {
+            if (closed) {
+                throw new IOException("Stream was closed previously");
+            }
+        }
+    }
 }

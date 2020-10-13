@@ -80,12 +80,12 @@ public class ClientStreamDelivery implements StreamDelivery {
 
     @Override
     public ClientStreamReceiverMessage message() throws ClientException {
-        if (rawInputStream != null) {
+        if (rawInputStream != null && message == null) {
             throw new ClientIllegalStateException("Cannot access Delivery Message API after requesting an InputStream");
         }
 
         if (message == null) {
-            message = new ClientStreamReceiverMessage(receiver, this);
+            message = new ClientStreamReceiverMessage(receiver, this, rawInputStream = new RawDeliveryInputStream());
         }
 
         return message;
@@ -93,15 +93,11 @@ public class ClientStreamDelivery implements StreamDelivery {
 
     @Override
     public Map<String, Object> annotations() throws ClientException {
-        if (rawInputStream != null) {
+        if (rawInputStream != null && message == null) {
             throw new ClientIllegalStateException("Cannot access Delivery Annotations API after requesting an InputStream");
         }
 
-        if (message == null) {
-            message = new ClientStreamReceiverMessage(receiver, this);
-        }
-
-        return StringUtils.toStringKeyedMap(message.deliveryAnnotations() != null ? message.deliveryAnnotations().getValue() : null);
+        return StringUtils.toStringKeyedMap(message().deliveryAnnotations() != null ? message().deliveryAnnotations().getValue() : null);
     }
 
     @Override
@@ -176,27 +172,18 @@ public class ClientStreamDelivery implements StreamDelivery {
     //----- Event Handlers for Delivery updates
 
     void handleDeliveryRead(IncomingDelivery delivery) {
-        if (message != null) {
-            message.handleDeliveryRead(delivery);
-        }
         if (rawInputStream != null) {
             rawInputStream.handleDeliveryRead(delivery);
         }
     }
 
     void handleDeliveryAborted(IncomingDelivery delivery) {
-        if (message != null) {
-            message.handleDeliveryAborted(delivery);
-        }
         if (rawInputStream != null) {
             rawInputStream.handleDeliveryAborted(delivery);
         }
     }
 
     void handleReceiverClosed(ClientStreamReceiver receiver) {
-        if (message != null) {
-            message.handleReceiverClosed(receiver);
-        }
         if (rawInputStream != null) {
             rawInputStream.handleReceiverClosed(receiver);
         }
@@ -206,14 +193,45 @@ public class ClientStreamDelivery implements StreamDelivery {
 
     private class RawDeliveryInputStream extends InputStream {
 
+        private final int INVALID_MARK = -1;
+
         private final ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
         private final ScheduledExecutorService executor = receiver.session().getScheduler();
 
         private ClientFuture<Integer> readRequest;
 
+        private int markIndex = INVALID_MARK;
+        private int markLimit;
+
+        @Override
+        public void close() throws IOException {
+            markLimit = 0;
+            markIndex = INVALID_MARK;
+            // TODO: Release all read bytes as they are inaccessible afterwards
+            // buffer.releaseReadBuffers
+
+            super.close();
+        }
+
         @Override
         public boolean markSupported() {
-            return false; // Read bytes can be discarded to marks cannot be supported.
+            return true;
+        }
+
+        @Override
+        public synchronized void mark(int readlimit) {
+            markIndex = buffer.getReadIndex();
+            markLimit = readlimit;
+        }
+
+        @Override
+        public synchronized void reset() throws IOException {
+            if (markIndex != INVALID_MARK) {
+                buffer.setReadIndex(markIndex);
+
+                markIndex = INVALID_MARK;
+                markLimit = 0;
+            }
         }
 
         @Override
@@ -251,8 +269,7 @@ public class ClientStreamDelivery implements StreamDelivery {
             while (true) {
                 if (buffer.isReadable()) {
                     result = buffer.readByte();
-                    // TODO: Reclaim read buffers for GC
-                    // buffer.releaseReadBuffers
+                    tryReleaseReadBuffers();
                     break;
                 } else if (requestMoreData() < 0) {
                     break;
@@ -287,8 +304,8 @@ public class ClientStreamDelivery implements StreamDelivery {
                         bytesRead += remaining;
                         remaining = 0;
                     }
-                    // TODO: Reclaim read buffers for GC
-                    // buffer.releaseReadBuffers
+
+                    tryReleaseReadBuffers();
                 } else if (requestMoreData() < 0) {
                     return bytesRead > 0 ? bytesRead : -1;
                 }
@@ -314,14 +331,24 @@ public class ClientStreamDelivery implements StreamDelivery {
                         buffer.skipBytes((int) remaining);
                         remaining = 0;
                     }
-                    // TODO: Reclaim read buffers for GC
-                    // buffer.releaseReadBuffers
+
+                    tryReleaseReadBuffers();
                 } else if (requestMoreData() < 0) {
                     break;
                 }
             }
 
             return amount - remaining;
+        }
+
+        private void tryReleaseReadBuffers() {
+            if (buffer.getReadIndex() - markLimit > 0) {
+                markIndex = INVALID_MARK;
+                markLimit = 0;
+
+                // TODO: Reclaim read buffers for GC
+                // buffer.releaseReadBuffers
+            }
         }
 
         private void handleDeliveryRead(IncomingDelivery delivery) {
