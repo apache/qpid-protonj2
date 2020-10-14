@@ -27,6 +27,7 @@ import java.util.UUID;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
+import org.apache.qpid.protonj2.codec.DecodeEOFException;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.junit.jupiter.api.Test;
@@ -42,6 +43,16 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
         assertNull(decoder.readObject(buffer, decoderState));
         assertNull(decoder.readObject(buffer, decoderState, UUID.class));
+    }
+
+    @Test
+    public void testTryReadFromEmptyBuffer() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        try {
+            decoder.readObject(buffer, decoderState);
+            fail("Should fail on read of object from empty buffer");
+        } catch (DecodeEOFException dex) {}
     }
 
     @Test

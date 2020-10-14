@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.apache.qpid.protonj2.codec.DecodeEOFException;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodeException;
 
@@ -87,6 +88,19 @@ public abstract class ProtonStreamUtils {
                 }
 
                 return payload;
+            }
+        } catch (IOException ex) {
+            throw new DecodeException("Caught IO error reading from provided stream", ex);
+        }
+    }
+
+    public static byte readEncodingCode(InputStream stream) throws DecodeException {
+        try {
+            int result = stream.read();
+            if (result >= 0) {
+                return (byte) result;
+            } else {
+                throw new DecodeEOFException("Cannot read more type information from stream that has reached its end.");
             }
         } catch (IOException ex) {
             throw new DecodeException("Caught IO error reading from provided stream", ex);

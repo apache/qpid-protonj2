@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.DecodeEOFException;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
@@ -229,7 +230,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public TypeDecoder<?> readNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        int encodingCode = buffer.readByte() & 0xFF;
+        final int encodingCode = readEncodingCode(buffer) & 0xff;
 
         if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR) {
             buffer.markReadIndex();
@@ -296,7 +297,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Boolean readBoolean(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.BOOLEAN_TRUE:
@@ -314,7 +315,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public boolean readBoolean(ProtonBuffer buffer, DecoderState state, boolean defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.BOOLEAN_TRUE:
@@ -332,7 +333,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Byte readByte(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.BYTE:
@@ -346,7 +347,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public byte readByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.BYTE:
@@ -360,7 +361,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public UnsignedByte readUnsignedByte(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.UBYTE:
@@ -374,7 +375,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public byte readUnsignedByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.UBYTE:
@@ -388,7 +389,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Character readCharacter(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.CHAR:
@@ -402,7 +403,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public char readCharacter(ProtonBuffer buffer, DecoderState state, char defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.CHAR:
@@ -416,7 +417,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Decimal32 readDecimal32(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.DECIMAL32:
@@ -430,7 +431,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Decimal64 readDecimal64(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.DECIMAL64:
@@ -444,7 +445,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Decimal128 readDecimal128(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.DECIMAL128:
@@ -458,7 +459,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Short readShort(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.SHORT:
@@ -472,7 +473,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public short readShort(ProtonBuffer buffer, DecoderState state, short defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.SHORT:
@@ -486,7 +487,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public UnsignedShort readUnsignedShort(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.USHORT:
@@ -500,7 +501,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public short readUnsignedShort(ProtonBuffer buffer, DecoderState state, short defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.USHORT:
@@ -514,7 +515,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public int readUnsignedShort(ProtonBuffer buffer, DecoderState state, int defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.USHORT:
@@ -528,7 +529,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Integer readInteger(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.SMALLINT:
@@ -544,7 +545,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public int readInteger(ProtonBuffer buffer, DecoderState state, int defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.SMALLINT:
@@ -560,7 +561,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public UnsignedInteger readUnsignedInteger(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.UINT0:
@@ -578,7 +579,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public int readUnsignedInteger(ProtonBuffer buffer, DecoderState state, int defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.UINT0:
@@ -596,7 +597,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public long readUnsignedInteger(ProtonBuffer buffer, DecoderState state, long defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.UINT0:
@@ -614,7 +615,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Long readLong(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.SMALLLONG:
@@ -630,7 +631,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public long readLong(ProtonBuffer buffer, DecoderState state, long defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.SMALLLONG:
@@ -646,7 +647,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public UnsignedLong readUnsignedLong(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.ULONG0:
@@ -664,7 +665,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public long readUnsignedLong(ProtonBuffer buffer, DecoderState state, long defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.ULONG0:
@@ -682,7 +683,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Float readFloat(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.FLOAT:
@@ -696,7 +697,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public float readFloat(ProtonBuffer buffer, DecoderState state, float defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.FLOAT:
@@ -710,7 +711,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Double readDouble(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.DOUBLE:
@@ -724,7 +725,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public double readDouble(ProtonBuffer buffer, DecoderState state, double defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.DOUBLE:
@@ -738,7 +739,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Binary readBinary(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.VBIN8:
@@ -754,7 +755,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public ProtonBuffer readBinaryAsBuffer(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.VBIN8:
@@ -770,7 +771,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public DeliveryTag readDeliveryTag(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.VBIN8:
@@ -786,7 +787,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public String readString(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.STR8:
@@ -802,7 +803,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Symbol readSymbol(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.SYM8:
@@ -818,7 +819,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public String readSymbol(ProtonBuffer buffer, DecoderState state, String defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.SYM8:
@@ -834,7 +835,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public Long readTimestamp(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.TIMESTAMP:
@@ -848,7 +849,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public long readTimestamp(ProtonBuffer buffer, DecoderState state, long defaultValue) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.TIMESTAMP:
@@ -862,7 +863,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public UUID readUUID(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.UUID:
@@ -877,7 +878,7 @@ public final class ProtonDecoder implements Decoder {
     @SuppressWarnings("unchecked")
     @Override
     public <K, V> Map<K, V> readMap(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.MAP8:
@@ -894,7 +895,7 @@ public final class ProtonDecoder implements Decoder {
     @SuppressWarnings("unchecked")
     @Override
     public <V> List<V> readList(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        byte encodingCode = buffer.readByte();
+        final byte encodingCode = readEncodingCode(buffer);
 
         switch (encodingCode) {
             case EncodingCodes.LIST0:
@@ -907,6 +908,14 @@ public final class ProtonDecoder implements Decoder {
                 return null;
             default:
                 throw new DecodeException("Expected List type but found encoding: " + EncodingCodes.toString(encodingCode));
+        }
+    }
+
+    private static byte readEncodingCode(ProtonBuffer buffer) throws DecodeEOFException {
+        try {
+            return buffer.readByte();
+        } catch (IndexOutOfBoundsException iobe) {
+            throw new DecodeEOFException("Read of new type failed because buffer exhausted.", iobe);
         }
     }
 

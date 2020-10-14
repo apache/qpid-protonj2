@@ -233,7 +233,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public StreamTypeDecoder<?> readNextTypeDecoder(InputStream stream, StreamDecoderState state) throws DecodeException {
-        int encodingCode = ProtonStreamUtils.readByte(stream) & 0xFF;
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         if (stream.markSupported()) {
             if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR) {
@@ -252,7 +252,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
                     return slowReadNextTypeDecoder(stream, state);
                 }
             } else {
-                return primitiveDecoders[encodingCode];
+                return primitiveDecoders[encodingCode & 0xff];
             }
         } else {
             return slowReadNextTypeDecoder(stream, state);
@@ -305,7 +305,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Boolean readBoolean(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.BOOLEAN_TRUE:
@@ -323,7 +323,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public boolean readBoolean(InputStream stream, StreamDecoderState state, boolean defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.BOOLEAN_TRUE:
@@ -341,7 +341,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Byte readByte(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.BYTE:
@@ -355,7 +355,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public byte readByte(InputStream stream, StreamDecoderState state, byte defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.BYTE:
@@ -369,7 +369,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public UnsignedByte readUnsignedByte(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.UBYTE:
@@ -383,7 +383,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public byte readUnsignedByte(InputStream stream, StreamDecoderState state, byte defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.UBYTE:
@@ -397,7 +397,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Character readCharacter(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.CHAR:
@@ -411,7 +411,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public char readCharacter(InputStream stream, StreamDecoderState state, char defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.CHAR:
@@ -425,7 +425,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Decimal32 readDecimal32(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.DECIMAL32:
@@ -439,7 +439,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Decimal64 readDecimal64(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.DECIMAL64:
@@ -453,7 +453,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Decimal128 readDecimal128(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.DECIMAL128:
@@ -467,7 +467,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Short readShort(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.SHORT:
@@ -481,7 +481,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public short readShort(InputStream stream, StreamDecoderState state, short defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.SHORT:
@@ -495,7 +495,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public UnsignedShort readUnsignedShort(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.USHORT:
@@ -509,7 +509,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public short readUnsignedShort(InputStream stream, StreamDecoderState state, short defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.USHORT:
@@ -523,7 +523,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public int readUnsignedShort(InputStream stream, StreamDecoderState state, int defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.USHORT:
@@ -537,7 +537,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Integer readInteger(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.SMALLINT:
@@ -553,7 +553,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public int readInteger(InputStream stream, StreamDecoderState state, int defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.SMALLINT:
@@ -569,7 +569,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public UnsignedInteger readUnsignedInteger(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.UINT0:
@@ -587,7 +587,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public int readUnsignedInteger(InputStream stream, StreamDecoderState state, int defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.UINT0:
@@ -605,7 +605,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public long readUnsignedInteger(InputStream stream, StreamDecoderState state, long defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.UINT0:
@@ -623,7 +623,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Long readLong(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.SMALLLONG:
@@ -639,7 +639,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public long readLong(InputStream stream, StreamDecoderState state, long defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.SMALLLONG:
@@ -655,7 +655,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public UnsignedLong readUnsignedLong(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.ULONG0:
@@ -673,7 +673,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public long readUnsignedLong(InputStream stream, StreamDecoderState state, long defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.ULONG0:
@@ -691,7 +691,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Float readFloat(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.FLOAT:
@@ -705,7 +705,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public float readFloat(InputStream stream, StreamDecoderState state, float defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.FLOAT:
@@ -719,7 +719,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Double readDouble(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.DOUBLE:
@@ -733,7 +733,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public double readDouble(InputStream stream, StreamDecoderState state, double defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.DOUBLE:
@@ -747,7 +747,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Binary readBinary(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.VBIN8:
@@ -763,7 +763,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public ProtonBuffer readBinaryAsBuffer(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.VBIN8:
@@ -779,7 +779,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public DeliveryTag readDeliveryTag(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.VBIN8:
@@ -795,7 +795,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public String readString(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.STR8:
@@ -811,7 +811,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Symbol readSymbol(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.SYM8:
@@ -827,7 +827,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public String readSymbol(InputStream stream, StreamDecoderState state, String defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.SYM8:
@@ -843,7 +843,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public Long readTimestamp(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.TIMESTAMP:
@@ -857,7 +857,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public long readTimestamp(InputStream stream, StreamDecoderState state, long defaultValue) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.TIMESTAMP:
@@ -871,7 +871,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     @Override
     public UUID readUUID(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.UUID:
@@ -886,7 +886,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
     @SuppressWarnings("unchecked")
     @Override
     public <K, V> Map<K, V> readMap(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.MAP8:
@@ -903,7 +903,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
     @SuppressWarnings("unchecked")
     @Override
     public <V> List<V> readList(InputStream stream, StreamDecoderState state) throws DecodeException {
-        byte encodingCode = ProtonStreamUtils.readByte(stream);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.LIST0:
