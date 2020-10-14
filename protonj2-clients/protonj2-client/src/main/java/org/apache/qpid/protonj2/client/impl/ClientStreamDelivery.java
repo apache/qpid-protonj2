@@ -268,7 +268,7 @@ public class ClientStreamDelivery implements StreamDelivery {
 
             while (true) {
                 if (buffer.isReadable()) {
-                    result = buffer.readByte();
+                    result = buffer.readByte() & 0xff;
                     tryReleaseReadBuffers();
                     break;
                 } else if (requestMoreData() < 0) {
@@ -342,7 +342,7 @@ public class ClientStreamDelivery implements StreamDelivery {
         }
 
         private void tryReleaseReadBuffers() {
-            if (buffer.getReadIndex() - markLimit > 0) {
+            if (buffer.getReadIndex() - markIndex > markLimit) {
                 markIndex = INVALID_MARK;
                 markLimit = 0;
 

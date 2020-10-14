@@ -112,6 +112,17 @@ public abstract class ImperativeClientTestCase {
         return result;
     }
 
+    protected byte[] createEncodedMessage(Section<?>... body) {
+        Encoder encoder = CodecFactory.getEncoder();
+        ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
+        for (Section<?> section : body) {
+            encoder.writeObject(buffer, encoder.newEncoderState(), section);
+        }
+        byte[] result = new byte[buffer.getReadableBytes()];
+        buffer.readBytes(result);
+        return result;
+    }
+
     protected byte[] createEncodedMessage(Data... body) {
         Encoder encoder = CodecFactory.getEncoder();
         ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();

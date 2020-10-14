@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -36,7 +35,10 @@ import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.ProtonStreamDecoderFactory;
+import org.apache.qpid.protonj2.codec.decoders.primitives.BinaryTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
+import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
@@ -49,12 +51,16 @@ import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
 import org.apache.qpid.protonj2.types.messaging.Properties;
 import org.apache.qpid.protonj2.types.messaging.Section;
 import org.apache.qpid.protonj2.types.transport.Transfer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Streamed message delivery context used to request reads of possible split framed
  * {@link Transfer} payload's that comprise a single large overall message.
  */
 public class ClientStreamReceiverMessage implements StreamReceiverMessage {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ClientStreamReceiverMessage.class);
 
     private enum StreamState {
         IDLE,
@@ -75,7 +81,6 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     private final IncomingDelivery protonDelivery;
     private final StreamDecoder protonDecoder = ProtonStreamDecoderFactory.create();
     private final StreamDecoderState decoderState = protonDecoder.newDecoderState();
-    private final ScheduledExecutorService executor;
 
     private Header header;
     private DeliveryAnnotations deliveryAnnotations;
@@ -93,7 +98,6 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
         this.delivery = delivery;
         this.deliveryStream = deliveryStream;
         this.protonDelivery = delivery.getProtonDelivery();
-        this.executor = receiver.session().getScheduler();
     }
 
     @Override
@@ -659,40 +663,63 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     private void ensureStreamDecodedTo(StreamState desiredState) throws ClientException {
         checkClosedOrAborted();
 
-        if (currentState.ordinal() < desiredState.ordinal()) {
-            while (currentState.ordinal() < desiredState.ordinal()) {
-                final StreamTypeDecoder<?> decoder;
-                try {
-                    decoder = protonDecoder.peekNextTypeDecoder(deliveryStream, decoderState);
-                } catch (DecodeException dex) {
-                    // TODO: Handle EOF on delivery stream reading and move to last state
-                    // currentState = StreamState.FOOTER_READ;
-                    // TODO: Handle inability to decode stream chunk
-                    throw new ClientException("Failed reading incoming message data");
-                }
-
+        while (currentState.ordinal() < desiredState.ordinal()) {
+            try {
+                final StreamTypeDecoder<?> decoder = protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
                 final Class<?> typeClass = decoder.getTypeClass();
 
                 if (typeClass == Header.class) {
+                    header = (Header) decoder.readValue(deliveryStream, decoderState);
                     currentState = StreamState.HEADER_READ;
                 } else if (typeClass == DeliveryAnnotations.class) {
+                    deliveryAnnotations = (DeliveryAnnotations) decoder.readValue(deliveryStream, decoderState);
                     currentState = StreamState.DELIVERY_ANNOTATIONS_READ;
                 } else if (typeClass == MessageAnnotations.class) {
+                    annotations = (MessageAnnotations) decoder.readValue(deliveryStream, decoderState);
                     currentState = StreamState.MESSAGE_ANNOTATIONS_READ;
                 } else if (typeClass == Properties.class) {
+                    properties = (Properties) decoder.readValue(deliveryStream, decoderState);
                     currentState = StreamState.PROPERTIES_READ;
                 } else if (typeClass == ApplicationProperties.class) {
+                    applicationProperties = (ApplicationProperties) decoder.readValue(deliveryStream, decoderState);
                     currentState = StreamState.APPLICATION_PROPERTIES_READ;
-                } else if (typeClass == AmqpValue.class) {
+                } else if (typeClass == Footer.class) {
+                    footer = (Footer) decoder.readValue(deliveryStream, decoderState);
                     currentState = StreamState.FOOTER_READ;
-                } else if (typeClass == AmqpSequence.class ||
-                           typeClass == Data.class ||
-                           typeClass == AmqpValue.class) {
+                } else if (typeClass == AmqpSequence.class) {
+                    currentState = StreamState.BODY_READABLE;
+                    final ListTypeDecoder listDecoder =
+                        (ListTypeDecoder) protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
+                    bodySize = listDecoder.readSize(deliveryStream);
+                    int count = listDecoder.readCount(deliveryStream);
+                    LOG.trace("Body Section of AmqpSequence type with size {} and element count {} ready for read.", bodySize, count);
+                } else if (typeClass == AmqpValue.class) {
                     currentState = StreamState.BODY_READABLE;
                     bodySize = 0;  // TODO: Peek ahead to size of first body Section
+                    LOG.trace("Body Section of AmqpValue type with size {} ready for read.", bodySize);
+                } else if (typeClass == Data.class) {
+                    currentState = StreamState.BODY_READABLE;
+                    final StreamTypeDecoder<?> typeDecoder =
+                        protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
+                    if (typeDecoder.getTypeClass() == Binary.class) {
+                        LOG.trace("Data Section of size {} ready for read.", bodySize);
+                        BinaryTypeDecoder binaryDecoder = (BinaryTypeDecoder) typeDecoder;
+                        bodySize = binaryDecoder.readSize(deliveryStream);
+                    } else if (typeDecoder.getTypeClass() == Void.class) {
+                        // Null body in the Data section which can be skipped.
+                        LOG.trace("Data Section with no Binary payload read and skipped.");
+                        bodySize = 0;
+                    } else {
+                        throw new DecodeException("Unknown payload in body of Data Section encoding.");
+                    }
                 } else {
                     break; // TODO: Unknown or unexpected section in message
                 }
+            } catch (DecodeException dex) {
+                // TODO: Handle EOF on delivery stream reading and move to last state
+                // currentState = StreamState.FOOTER_READ;
+                // TODO: Handle inability to decode stream chunk
+                throw new ClientException("Failed reading incoming message data");
             }
         }
     }

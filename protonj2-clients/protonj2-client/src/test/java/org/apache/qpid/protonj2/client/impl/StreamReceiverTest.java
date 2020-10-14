@@ -37,6 +37,7 @@ import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
+import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.StreamReceiverOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryAbortedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientLinkRemotelyClosedException;
@@ -46,6 +47,7 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
+import org.apache.qpid.protonj2.types.messaging.Header;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -815,6 +817,52 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertFalse(delivery.aborted());
 
             stream.close();
+
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            receiver.closeAsync();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamMessageWithHeaderOnly() throws Exception {
+        final byte[] payload = createEncodedMessage(new Header().setDurable(true));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            StreamReceiverMessage message = delivery.message();
+            assertNotNull(message);
+            Header header = message.header();
+            assertNotNull(header);
 
             peer.expectDetach().respond();
             peer.expectClose().respond();
