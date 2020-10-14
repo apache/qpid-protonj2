@@ -113,8 +113,10 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
         }
     }
 
-    protected abstract int readSize(ProtonBuffer buffer);
+    @Override
+    public abstract int readSize(ProtonBuffer buffer);
 
-    protected abstract int readSize(InputStream stream);
+    @Override
+    public abstract int readSize(InputStream stream);
 
 }

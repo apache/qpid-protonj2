@@ -34,12 +34,12 @@ public final class Binary8TypeDecoder extends AbstractBinaryTypeDecoder {
     }
 
     @Override
-    protected int readSize(ProtonBuffer buffer) throws DecodeException {
+    public int readSize(ProtonBuffer buffer) throws DecodeException {
         return buffer.readByte() & 0xff;
     }
 
     @Override
-    protected int readSize(InputStream stream) {
-        return ProtonStreamUtils.readByte(stream);
+    public int readSize(InputStream stream) {
+        return ProtonStreamUtils.readByte(stream) & 0xff;
     }
 }

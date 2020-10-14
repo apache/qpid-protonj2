@@ -36,6 +36,7 @@ import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.primitives.BinaryTypeDecoder;
 import org.apache.qpid.protonj2.types.Binary;
 import org.junit.jupiter.api.Test;
 
@@ -300,8 +301,9 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
 
         try {
             typeDecoder.skipValue(stream, streamDecoderState);
-            fail("Should not be able to skip binary with length greater than readable bytes");
-        } catch (IllegalArgumentException ex) {}
+        } catch (IllegalArgumentException ex) {
+            fail("Should be able to skip binary with length greater than readable bytes");
+        }
 
         assertEquals(2, buffer.getReadIndex());
     }
@@ -322,6 +324,57 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
         } catch (IllegalArgumentException ex) {}
 
         assertEquals(5, buffer.getReadIndex());
+    }
+
+    @Test
+    public void testSkipFailsEarlyOnInvliadBinaryLengthVBin32FromStream() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.VBIN32);
+        buffer.writeInt(Integer.MAX_VALUE);
+
+        StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+        assertEquals(Binary.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.skipValue(stream, streamDecoderState);
+        } catch (IllegalArgumentException ex) {
+            fail("Should be able to skip binary with length greater than readable bytes");
+        }
+
+        assertEquals(5, buffer.getReadIndex());
+    }
+
+    @Test
+    public void testReadEncodedSizeFromVBin8Encoding() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
+
+        buffer.writeByte(EncodingCodes.VBIN8);
+        buffer.writeByte(255);
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(Binary.class, typeDecoder.getTypeClass());
+        BinaryTypeDecoder binaryDecoder = (BinaryTypeDecoder) typeDecoder;
+        assertEquals(255, binaryDecoder.readSize(buffer));
+
+        assertEquals(2, buffer.getReadIndex());
+    }
+
+    @Test
+    public void testReadEncodedSizeFromVBin8EncodingUsingStream() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.VBIN8);
+        buffer.writeByte(255);
+
+        StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+        assertEquals(Binary.class, typeDecoder.getTypeClass());
+        BinaryTypeDecoder binaryDecoder = (BinaryTypeDecoder) typeDecoder;
+        assertEquals(255, binaryDecoder.readSize(stream));
+
+        assertEquals(2, buffer.getReadIndex());
     }
 
     @Test
