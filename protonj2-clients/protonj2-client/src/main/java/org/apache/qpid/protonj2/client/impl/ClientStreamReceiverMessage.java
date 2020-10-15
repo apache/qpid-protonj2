@@ -20,6 +20,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -70,9 +71,8 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
         MESSAGE_ANNOTATIONS_READ,
         PROPERTIES_READ,
         APPLICATION_PROPERTIES_READ,
+        BODY_PENDING,
         BODY_READABLE,
-        BODY_READING,
-        BODY_READ,
         FOOTER_READ
     }
 
@@ -92,7 +92,6 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
     private StreamState currentState = StreamState.IDLE;
     private MessageBodyInputStream bodyStream;
-    private long remainingBodyBytes = 0;
 
     ClientStreamReceiverMessage(ClientStreamReceiver receiver, ClientStreamDelivery delivery, InputStream deliveryStream) {
         this.receiver = receiver;
@@ -556,7 +555,11 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
     @Override
     public boolean hasFooters() throws ClientException {
-        ensureStreamDecodedTo(StreamState.FOOTER_READ);
+        ensureStreamDecodedTo(StreamState.BODY_READABLE);
+        if (currentState != StreamState.FOOTER_READ) {
+            throw new ClientIllegalStateException("Cannot read message Footer until message body fully read");
+        }
+
         return footer != null && footer.getValue() != null && footer.getValue().size() > 0;
     }
 
@@ -624,15 +627,11 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
     @Override
     public InputStream body() throws ClientException {
-        if (currentState.ordinal() > StreamState.BODY_READ.ordinal()) {
+        if (currentState.ordinal() > StreamState.BODY_READABLE.ordinal()) {
             throw new ClientIllegalStateException("Cannot read body from message whose body has already been read.");
         }
 
         ensureStreamDecodedTo(StreamState.BODY_READABLE);
-
-        if (bodyStream == null) {
-            bodyStream = new MessageBodyInputStream(deliveryStream);
-        }
 
         return bodyStream;
     }
@@ -691,37 +690,24 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
                 } else if (typeClass == ApplicationProperties.class) {
                     applicationProperties = (ApplicationProperties) decoder.readValue(deliveryStream, decoderState);
                     currentState = StreamState.APPLICATION_PROPERTIES_READ;
+                } else if (typeClass == AmqpSequence.class) {
+                    currentState = StreamState.BODY_READABLE;
+                    if (bodyStream == null) {
+                        bodyStream = new AmqpSequenceInputStream(deliveryStream);
+                    }
+                } else if (typeClass == AmqpValue.class) {
+                    currentState = StreamState.BODY_READABLE;
+                    if (bodyStream == null) {
+                        bodyStream = new AmqpValueInputStream(deliveryStream);
+                    }
+                } else if (typeClass == Data.class) {
+                    currentState = StreamState.BODY_READABLE;
+                    if (bodyStream == null) {
+                        bodyStream = new DataSectionInputStream(deliveryStream);
+                    }
                 } else if (typeClass == Footer.class) {
                     footer = (Footer) decoder.readValue(deliveryStream, decoderState);
                     currentState = StreamState.FOOTER_READ;
-                } else if (typeClass == AmqpSequence.class) {
-                    currentState = StreamState.BODY_READABLE;
-                    final ListTypeDecoder listDecoder =
-                        (ListTypeDecoder) protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
-                    remainingBodyBytes = listDecoder.readSize(deliveryStream);
-                    int count = listDecoder.readCount(deliveryStream);
-                    LOG.trace("Body Section of AmqpSequence type with size {} and element count {} ready for read.", remainingBodyBytes, count);
-                } else if (typeClass == AmqpValue.class) {
-                    currentState = StreamState.BODY_READABLE;
-                    remainingBodyBytes = 0;  // TODO: Peek ahead to size of first body Section
-                    LOG.trace("Body Section of AmqpValue type with size {} ready for read.", remainingBodyBytes);
-                } else if (typeClass == Data.class) {
-                    currentState = StreamState.BODY_READABLE;
-                    final StreamTypeDecoder<?> typeDecoder =
-                        protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
-
-                    if (typeDecoder.getTypeClass() == Binary.class) {
-                        LOG.trace("Data Section of size {} ready for read.", remainingBodyBytes);
-                        BinaryTypeDecoder binaryDecoder = (BinaryTypeDecoder) typeDecoder;
-                        remainingBodyBytes = binaryDecoder.readSize(deliveryStream);
-                    } else if (typeDecoder.getTypeClass() == Void.class) {
-                        // Null body in the Data section which can be skipped.
-                        LOG.trace("Data Section with no Binary payload read and skipped.");
-                        currentState = StreamState.BODY_READ;
-                        remainingBodyBytes = 0;
-                    } else {
-                        throw new DecodeException("Unknown payload in body of Data Section encoding.");
-                    }
                 } else {
                     break; // TODO: Unknown or unexpected section in message
                 }
@@ -734,19 +720,28 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
     //----- Internal InputStream implementations
 
-    private class MessageBodyInputStream extends FilterInputStream {
+    private abstract class MessageBodyInputStream extends FilterInputStream {
 
-        private boolean closed;
+        protected boolean closed;
+        protected long remainingBodyBytes = 0;
 
-        public MessageBodyInputStream(InputStream deliveryStream) {
+        protected MessageBodyInputStream(InputStream deliveryStream) throws ClientException {
             super(deliveryStream);
+
+            validateAndScanNextSection();
         }
 
         @Override
         public void close() throws IOException {
-            // TODO: Handle close before payload fully read.
-            this.closed = true;
-            super.close();
+            // TODO: Refine and test to ensure to remaining message body left after close.
+            try {
+                ensureStreamDecodedTo(StreamState.FOOTER_READ);
+            } catch (ClientException e) {
+                throw new IOException("Caught error while attempting to advabce past remaining message body");
+            } finally {
+                this.closed = true;
+                super.close();
+            }
         }
 
         @Override
@@ -754,21 +749,12 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
             checkClosed();
 
             while (true) {
-                if (remainingBodyBytes <= 0) {
-                    try {
-                        ensureStreamDecodedTo(StreamState.BODY_READABLE);
-                    } catch (ClientException e) {
-                        throw new IOException(e);
-                    }
-
-                    if (currentState == StreamState.FOOTER_READ) {
-                        return -1;  // Cannot read any further.
-                    }
+                if (remainingBodyBytes == 0 && !tryMoveToNextBodySection()) {
+                    return -1;  // Cannot read any further.
+                } else {
+                    remainingBodyBytes--;
+                    return super.read();
                 }
-
-                remainingBodyBytes--;
-
-                return super.read();
             }
         }
 
@@ -795,7 +781,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
                         throw new IOException(e);
                     }
 
-                    if (currentState == StreamState.FOOTER_READ) {
+                    if (remainingBodyBytes == 0 && !tryMoveToNextBodySection()) {
                         break;  // Cannot read any further whatever was read is all there is.
                     }
                 }
@@ -821,26 +807,111 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
                     return bytesSkipped;
                 }
 
-                if (remainingBodyBytes == 0) {
-                    try {
-                        ensureStreamDecodedTo(StreamState.BODY_READABLE);
-                    } catch (ClientException e) {
-                        throw new IOException(e);
-                    }
-
-                    if (currentState == StreamState.FOOTER_READ) {
-                        break;  // Cannot skip any further whatever was read is all there is.
-                    }
+                if (remainingBodyBytes == 0 && !tryMoveToNextBodySection()) {
+                    break;
                 }
             }
 
             return bytesSkipped;
         }
 
-        private void checkClosed() throws IOException {
+        public abstract Class<?> getBodyTypeClass();
+
+        protected abstract void validateAndScanNextSection() throws ClientException;
+
+        protected boolean tryMoveToNextBodySection() throws IOException {
+            try {
+                currentState = StreamState.BODY_PENDING;
+                ensureStreamDecodedTo(StreamState.BODY_READABLE);
+                if (currentState == StreamState.BODY_READABLE) {
+                    validateAndScanNextSection();
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (ClientException e) {
+                throw new IOException(e);
+            }
+        }
+
+        protected void checkClosed() throws IOException {
             if (closed) {
                 throw new IOException("Stream was closed previously");
             }
+        }
+    }
+
+    private class DataSectionInputStream extends MessageBodyInputStream {
+
+        public DataSectionInputStream(InputStream deliveryStream) throws ClientException {
+            super(deliveryStream);
+        }
+
+        @Override
+        public Class<?> getBodyTypeClass() {
+            return byte[].class;
+        }
+
+        @Override
+        protected void validateAndScanNextSection() throws ClientException {
+            final StreamTypeDecoder<?> typeDecoder =
+                protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
+
+            if (typeDecoder.getTypeClass() == Binary.class) {
+                LOG.trace("Data Section of size {} ready for read.", remainingBodyBytes);
+                BinaryTypeDecoder binaryDecoder = (BinaryTypeDecoder) typeDecoder;
+                remainingBodyBytes = binaryDecoder.readSize(deliveryStream);
+            } else if (typeDecoder.getTypeClass() == Void.class) {
+                // Null body in the Data section which can be skipped.
+                LOG.trace("Data Section with no Binary payload read and skipped.");
+                remainingBodyBytes = 0;
+            } else {
+                throw new DecodeException("Unknown payload in body of Data Section encoding.");
+            }
+        }
+    }
+
+    private class AmqpSequenceInputStream extends MessageBodyInputStream {
+
+        public AmqpSequenceInputStream(InputStream deliveryStream) throws ClientException {
+            super(deliveryStream);
+        }
+
+        @Override
+        public Class<?> getBodyTypeClass() {
+            return List.class;
+        }
+
+        @Override
+        protected void validateAndScanNextSection() throws ClientException {
+            final ListTypeDecoder listDecoder =
+                (ListTypeDecoder) protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
+            remainingBodyBytes = listDecoder.readSize(deliveryStream);
+            int count = listDecoder.readCount(deliveryStream);
+            LOG.trace("Body Section of AmqpSequence type with size {} and element count {} ready for read.", remainingBodyBytes, count);
+        }
+    }
+
+    private class AmqpValueInputStream extends MessageBodyInputStream {
+
+        private Class<?> bodyTypeClass = Void.class;
+
+        public AmqpValueInputStream(InputStream deliveryStream) throws ClientException {
+            super(deliveryStream);
+        }
+
+        @Override
+        public Class<?> getBodyTypeClass() {
+            return bodyTypeClass;
+        }
+
+        @Override
+        protected void validateAndScanNextSection() throws ClientException {
+            final StreamTypeDecoder<?> decoder = protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
+
+            bodyTypeClass = decoder.getTypeClass();
+            remainingBodyBytes = 0;  // TODO: Peek ahead to size of first body Section
+            LOG.trace("Body Section of AmqpValue type with size {} ready for read.", remainingBodyBytes);
         }
     }
 }

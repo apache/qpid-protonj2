@@ -1039,6 +1039,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                 receivedBody[i] = (byte) bodyStream.read();
             }
             assertArrayEquals(body, receivedBody);
+            assertEquals(-1, bodyStream.read());
             assertNull(message.footer());
 
             peer.expectDetach().respond();
