@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.client.impl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
@@ -281,9 +282,7 @@ public class ClientStreamDelivery implements StreamDelivery {
 
         @Override
         public int read(byte target[], int offset, int length) throws IOException {
-            if ((length | offset) < 0 || target.length > length - offset) {
-                throw new IndexOutOfBoundsException();
-            }
+            Objects.checkFromIndexSize(offset, length, target.length);
 
             int remaining = length;
             int bytesRead = 0;

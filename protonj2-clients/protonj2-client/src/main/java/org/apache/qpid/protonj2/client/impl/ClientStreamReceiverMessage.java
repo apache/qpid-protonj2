@@ -30,6 +30,7 @@ import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
+import org.apache.qpid.protonj2.codec.DecodeEOFException;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
@@ -88,10 +89,10 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
     private Properties properties;
     private ApplicationProperties applicationProperties;
     private Footer footer;
-    private long bodySize = 0;
 
     private StreamState currentState = StreamState.IDLE;
     private MessageBodyInputStream bodyStream;
+    private long remainingBodyBytes = 0;
 
     ClientStreamReceiverMessage(ClientStreamReceiver receiver, ClientStreamDelivery delivery, InputStream deliveryStream) {
         this.receiver = receiver;
@@ -630,7 +631,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
         ensureStreamDecodedTo(StreamState.BODY_READABLE);
 
         if (bodyStream == null) {
-            bodyStream = new MessageBodyInputStream(deliveryStream, bodySize);
+            bodyStream = new MessageBodyInputStream(deliveryStream);
         }
 
         return bodyStream;
@@ -665,7 +666,14 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
         while (currentState.ordinal() < desiredState.ordinal()) {
             try {
-                final StreamTypeDecoder<?> decoder = protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
+                final StreamTypeDecoder<?> decoder;
+                try {
+                    decoder = protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
+                } catch (DecodeEOFException eof) {
+                    currentState = StreamState.FOOTER_READ;
+                    break;
+                }
+
                 final Class<?> typeClass = decoder.getTypeClass();
 
                 if (typeClass == Header.class) {
@@ -690,25 +698,27 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
                     currentState = StreamState.BODY_READABLE;
                     final ListTypeDecoder listDecoder =
                         (ListTypeDecoder) protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
-                    bodySize = listDecoder.readSize(deliveryStream);
+                    remainingBodyBytes = listDecoder.readSize(deliveryStream);
                     int count = listDecoder.readCount(deliveryStream);
-                    LOG.trace("Body Section of AmqpSequence type with size {} and element count {} ready for read.", bodySize, count);
+                    LOG.trace("Body Section of AmqpSequence type with size {} and element count {} ready for read.", remainingBodyBytes, count);
                 } else if (typeClass == AmqpValue.class) {
                     currentState = StreamState.BODY_READABLE;
-                    bodySize = 0;  // TODO: Peek ahead to size of first body Section
-                    LOG.trace("Body Section of AmqpValue type with size {} ready for read.", bodySize);
+                    remainingBodyBytes = 0;  // TODO: Peek ahead to size of first body Section
+                    LOG.trace("Body Section of AmqpValue type with size {} ready for read.", remainingBodyBytes);
                 } else if (typeClass == Data.class) {
                     currentState = StreamState.BODY_READABLE;
                     final StreamTypeDecoder<?> typeDecoder =
                         protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
+
                     if (typeDecoder.getTypeClass() == Binary.class) {
-                        LOG.trace("Data Section of size {} ready for read.", bodySize);
+                        LOG.trace("Data Section of size {} ready for read.", remainingBodyBytes);
                         BinaryTypeDecoder binaryDecoder = (BinaryTypeDecoder) typeDecoder;
-                        bodySize = binaryDecoder.readSize(deliveryStream);
+                        remainingBodyBytes = binaryDecoder.readSize(deliveryStream);
                     } else if (typeDecoder.getTypeClass() == Void.class) {
                         // Null body in the Data section which can be skipped.
                         LOG.trace("Data Section with no Binary payload read and skipped.");
-                        bodySize = 0;
+                        currentState = StreamState.BODY_READ;
+                        remainingBodyBytes = 0;
                     } else {
                         throw new DecodeException("Unknown payload in body of Data Section encoding.");
                     }
@@ -716,8 +726,6 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
                     break; // TODO: Unknown or unexpected section in message
                 }
             } catch (DecodeException dex) {
-                // TODO: Handle EOF on delivery stream reading and move to last state
-                // currentState = StreamState.FOOTER_READ;
                 // TODO: Handle inability to decode stream chunk
                 throw new ClientException("Failed reading incoming message data");
             }
@@ -728,18 +736,10 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
     private class MessageBodyInputStream extends FilterInputStream {
 
-        private final long bodySize;
-        private long bytesRead;
         private boolean closed;
 
-        public MessageBodyInputStream(InputStream deliveryStream, long bodySize) {
+        public MessageBodyInputStream(InputStream deliveryStream) {
             super(deliveryStream);
-
-            if (bodySize < 0) {
-                throw new IllegalArgumentException("Cannot read from encoded body with size encoded as less < 0");
-            }
-
-            this.bodySize = bodySize;
         }
 
         @Override
@@ -754,7 +754,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
             checkClosed();
 
             while (true) {
-                if (bytesRead >= bodySize) {
+                if (remainingBodyBytes <= 0) {
                     try {
                         ensureStreamDecodedTo(StreamState.BODY_READABLE);
                     } catch (ClientException e) {
@@ -766,7 +766,7 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
                     }
                 }
 
-                bytesRead++;
+                remainingBodyBytes--;
 
                 return super.read();
             }
@@ -776,18 +776,65 @@ public class ClientStreamReceiverMessage implements StreamReceiverMessage {
         public int read(byte target[], int offset, int length) throws IOException {
             checkClosed();
 
-            // TODO: Read requested handling crossover to next section if possible
+            int bytesRead = 0;
 
-            return super.read(target, offset, length);
+            while (bytesRead != length) {
+                final int readChunk = (int) Math.min(remainingBodyBytes, length - bytesRead);
+                final int actualRead = super.read(target, offset + bytesRead, readChunk);
+
+                bytesRead += (actualRead >= 0 ? actualRead : 0);
+
+                if (actualRead < 0 || bytesRead == length) {
+                    return bytesRead > 0 ? bytesRead : -1;
+                }
+
+                if (remainingBodyBytes == 0) {
+                    try {
+                        ensureStreamDecodedTo(StreamState.BODY_READABLE);
+                    } catch (ClientException e) {
+                        throw new IOException(e);
+                    }
+
+                    if (currentState == StreamState.FOOTER_READ) {
+                        break;  // Cannot read any further whatever was read is all there is.
+                    }
+                }
+            }
+
+            return bytesRead;
         }
 
         @Override
-        public long skip(long amount) throws IOException {
+        public long skip(long skipSize) throws IOException {
             checkClosed();
 
-            // TODO: Skip requested handling crossover to next section if possible
+            int bytesSkipped = 0;
 
-            return super.skip(amount);
+            while (bytesSkipped != skipSize) {
+                final long skipChunk = (int) Math.min(remainingBodyBytes, skipSize - bytesSkipped);
+                final long actualSkip = super.skip(skipChunk);
+
+                // Ensure we handle wrapped stream not honoring the API and returning -1 for EOF
+                bytesSkipped += (actualSkip > 0 ? actualSkip : 0);
+
+                if (actualSkip == 0 || bytesSkipped == skipSize) {
+                    return bytesSkipped;
+                }
+
+                if (remainingBodyBytes == 0) {
+                    try {
+                        ensureStreamDecodedTo(StreamState.BODY_READABLE);
+                    } catch (ClientException e) {
+                        throw new IOException(e);
+                    }
+
+                    if (currentState == StreamState.FOOTER_READ) {
+                        break;  // Cannot skip any further whatever was read is all there is.
+                    }
+                }
+            }
+
+            return bytesSkipped;
         }
 
         private void checkClosed() throws IOException {

@@ -29,6 +29,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.Client;
@@ -45,9 +48,12 @@ import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.util.Wait;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
+import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Header;
+import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
+import org.apache.qpid.protonj2.types.messaging.Properties;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -863,6 +869,255 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertNotNull(message);
             Header header = message.header();
             assertNotNull(header);
+
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            receiver.closeAsync();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReadHeaderFromStreamMessageWithoutHeaderSection() throws Exception {
+        Map<Symbol, Object> annotationsMap = new HashMap<>();
+        annotationsMap.put(Symbol.valueOf("test-1"), UUID.randomUUID());
+        annotationsMap.put(Symbol.valueOf("test-2"), UUID.randomUUID());
+        annotationsMap.put(Symbol.valueOf("test-3"), UUID.randomUUID());
+
+        final byte[] payload = createEncodedMessage(new MessageAnnotations(annotationsMap));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            StreamReceiverMessage message = delivery.message();
+            assertNotNull(message);
+            Header header = message.header();
+            assertNull(header);
+            MessageAnnotations annotations = message.annotations();
+            assertNotNull(annotations);
+            assertEquals(annotationsMap, annotations.getValue());
+
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            receiver.closeAsync();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testTryReadSectionBeyondWhatIsEncodedIntoMessage() throws Exception {
+        Map<Symbol, Object> annotationsMap = new HashMap<>();
+        annotationsMap.put(Symbol.valueOf("test-1"), UUID.randomUUID());
+        annotationsMap.put(Symbol.valueOf("test-2"), UUID.randomUUID());
+        annotationsMap.put(Symbol.valueOf("test-3"), UUID.randomUUID());
+
+        final byte[] payload = createEncodedMessage(new Header(), new MessageAnnotations(annotationsMap));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            StreamReceiverMessage message = delivery.message();
+            assertNotNull(message);
+
+            Properties properties = message.properties();
+            assertNull(properties);
+            Header header = message.header();
+            assertNotNull(header);
+            MessageAnnotations annotations = message.annotations();
+            assertNotNull(annotations);
+            assertEquals(annotationsMap, annotations.getValue());
+
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            receiver.closeAsync();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReadBytesFromBodyInputStreamUsingReadByteAPI() throws Exception {
+        final byte[] body = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        final byte[] payload = createEncodedMessage(new Data(body));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            StreamReceiverMessage message = delivery.message();
+            assertNotNull(message);
+
+            InputStream bodyStream = message.body();
+            assertNotNull(bodyStream);
+
+            assertNull(message.header());
+            assertNull(message.annotations());
+            assertNull(message.properties());
+            assertNull(delivery.annotations());
+
+            final byte[] receivedBody = new byte[body.length];
+            for (int i = 0; i < body.length; ++i) {
+                receivedBody[i] = (byte) bodyStream.read();
+            }
+            assertArrayEquals(body, receivedBody);
+            assertNull(message.footer());
+
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            receiver.closeAsync();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReadBytesFromInputStreamUsingReadByteWithSingleByteSplitTransfers() throws Exception {
+        testReadBytesFromBodyInputStreamWithSplitSingleByteTransfers(1);
+    }
+
+    @Test
+    public void testReadBytesFromInputStreamUsingSingleReadBytesWithSingleByteSplitTransfers() throws Exception {
+        testReadBytesFromBodyInputStreamWithSplitSingleByteTransfers(2);
+    }
+
+    @Test
+    public void testSkipBytesFromInputStreamWithSingleByteSplitTransfers() throws Exception {
+        testReadBytesFromBodyInputStreamWithSplitSingleByteTransfers(3);
+    }
+
+    private void testReadBytesFromBodyInputStreamWithSplitSingleByteTransfers(int option) throws Exception {
+
+        final byte[] body = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        final byte[] payload = createEncodedMessage(new Data(body));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            for (int i = 0; i < payload.length; ++i) {
+                peer.remoteTransfer().withHandle(0)
+                                     .withDeliveryId(0)
+                                     .withDeliveryTag(new byte[] { 1 })
+                                     .withMore(true)
+                                     .withMessageFormat(0)
+                                     .withPayload(new byte[] { payload[i] }).afterDelay(3).queue();
+            }
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0).afterDelay(5).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+            final StreamReceiverMessage message = delivery.message();
+            final InputStream bodyStream = message.body();
+
+            final byte[] receivedBody = new byte[body.length];
+
+            if (option == 1) {
+                for (int i = 0; i < body.length; ++i) {
+                    receivedBody[i] = (byte) bodyStream.read();
+                }
+                assertArrayEquals(body, receivedBody);
+            } else if (option == 2) {
+                assertEquals(body.length, bodyStream.read(receivedBody));
+                assertArrayEquals(body, receivedBody);
+            } else if (option == 3) {
+                assertEquals(body.length, bodyStream.skip(body.length));
+            } else {
+                fail("Unknown test option");
+            }
 
             peer.expectDetach().respond();
             peer.expectClose().respond();
