@@ -21,11 +21,11 @@
 
   <parent>
     <groupId>org.apache.qpid</groupId>
-    <artifactId>protonj2-client-parent</artifactId>
+    <artifactId>protonj2-imperative-client-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>protonj2-client</artifactId>
+  <artifactId>protonj2-imperative-client</artifactId>
   <name>Qpid protonj2 Imperative API Client Library</name>
   <description>Imperative API for AMQP Messaging.</description>
   <packaging>jar</packaging>

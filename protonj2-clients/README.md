@@ -11,8 +11,8 @@ dependency in your project pom file:
 
     <dependency>
       <groupId>org.apache.qpid</groupId>
-      <artifactId>protonj2-client</artifactId>
-      <version>${protonj2-client-version}</version>
+      <artifactId>protonj2-imperative-client</artifactId>
+      <version>${protonj2-version}</version>
     </dependency>
 
 ## Building the code
