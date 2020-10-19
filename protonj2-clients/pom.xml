@@ -85,7 +85,6 @@
 
   <modules>
     <module>protonj2-client</module>
-    <module>protonj2-client-interop-tests</module>
     <module>protonj2-client-examples</module>
     <module>protonj2-client-docs</module>
   </modules>
