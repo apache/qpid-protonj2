@@ -21,7 +21,7 @@
 
   <parent>
     <groupId>org.apache.qpid</groupId>
-    <artifactId>protonj2-imperative-client-parent</artifactId>
+    <artifactId>protonj2-clients-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
@@ -29,6 +29,12 @@
   <name>Qpid protonj2 Imperative API Client Library</name>
   <description>Imperative API for AMQP Messaging.</description>
   <packaging>jar</packaging>
+
+  <properties>
+    <!-- See also maven.compiler.release in the java9on profile -->
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -105,34 +111,5 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
-
-  <reporting>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>findbugs-maven-plugin</artifactId>
-        <version>${findbugs-maven-plugin-version}</version>
-        <configuration>
-          <threshold>Normal</threshold>
-          <effort>Default</effort>
-          <excludeFilterFile>${project.basedir}/src/site/findbugs-exclude.xml</excludeFilterFile>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <version>${jacoco-plugin-version}</version>
-      </plugin>
-    </plugins>
-  </reporting>
 
 </project>

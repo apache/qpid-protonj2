@@ -45,15 +45,20 @@
     <log4j.slf4j.version>2.13.3</log4j.slf4j.version>
     <hamcrest.version>2.2</hamcrest.version>
     <netty.version>4.1.53.Final</netty.version>
+    <netty-tcnative-version>2.0.34.Final</netty-tcnative-version>
 
     <!-- Plugin versions -->
     <maven.bundle.plugin.version>4.2.1</maven.bundle.plugin.version>
     <jacoco.plugin.version>0.8.5</jacoco.plugin.version>
+    <spotbugs.maven.plugin.version>4.1.4</spotbugs.maven.plugin.version>
 
     <!-- Test properties -->
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
     <surefire.runOrder>filesystem</surefire.runOrder>
     <proton.trace.frames>false</proton.trace.frames>
+
+    <netty-transport-native-epoll-classifier>linux-x86_64</netty-transport-native-epoll-classifier>
+    <netty-transport-native-kqueue-classifier>osx-x86_64</netty-transport-native-kqueue-classifier>
 
     <!-- surefire forked jvm arguments -->
     <argLine>-Xmx2g -enableassertions ${jacoco-config}</argLine>
@@ -78,6 +83,7 @@
     <module>protonj2</module>
     <module>protonj2-performance-tests</module>
     <module>protonj2-test-driver</module>
+    <module>protonj2-clients</module>
     <module>apache-qpid-protonj2</module>
   </modules>
 
@@ -130,14 +136,27 @@
         <version>${netty.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.qpid</groupId>
-        <artifactId>proton-j</artifactId>
-        <version>${proton.version}</version>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-transport-native-epoll</artifactId>
+        <version>${netty.version}</version>
+        <classifier>${netty-transport-native-epoll-classifier}</classifier>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-transport-native-kqueue</artifactId>
+        <version>${netty.version}</version>
+        <classifier>${netty-transport-native-kqueue-classifier}</classifier>
+      </dependency>
+      <!--  Testing only Uber Jar inclusion -->
+      <dependency>
+         <groupId>io.netty</groupId>
+         <artifactId>netty-tcnative-boringssl-static</artifactId>
+         <version>${netty-tcnative-version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.qpid</groupId>
-        <artifactId>protonj2-test-driver</artifactId>
-        <version>${project.version}</version>
+        <artifactId>proton-j</artifactId>
+        <version>${proton.version}</version>
       </dependency>
       <dependency>
         <groupId>org.junit.jupiter</groupId>
@@ -294,6 +313,11 @@
   <reporting>
     <plugins>
       <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <version>${spotbugs-maven-plugin-version}</version>
+      </plugin>
+      <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${jacoco.plugin.version}</version>
@@ -342,14 +366,6 @@
         </plugins>
       </build>
     </profile>
-    <profile>
-      <id>java9on</id>
-      <activation>
-        <jdk>[9,)</jdk>
-      </activation>
-      <properties>
-        <maven.compiler.release>8</maven.compiler.release>
-      </properties>
-    </profile>
   </profiles>
+
 </project>
