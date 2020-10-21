@@ -85,7 +85,8 @@ public interface OutgoingDelivery {
 
     /**
      * Sets the message-format for this Delivery, representing the 32bit value using an integer value. The message format can
-     * only be set prior to the first {@link Transfer} of delivery payload having been written.  If one of the delivery write
+     * only be set@Override
+     prior to the first {@link Transfer} of delivery payload having been written.  If one of the delivery write
      * methods is called prior to the message format being set then it defaults to the AMQP default format of zero.
      *
      * The default value is 0 as per the message format defined in the core AMQP 1.0 specification.<p>
@@ -150,24 +151,31 @@ public interface OutgoingDelivery {
      * @return true if the delivery is partial
      *
      * @see #isAborted()
+     * @see #isComplete()
      */
     boolean isPartial();
 
     /**
-     * Write the given bytes as the payload of this delivery, no additional writes can occur on this delivery,
+     * Write the given bytes as the payload of this delivery, no additional writes can occur on this delivery
+     * if the write succeeds in sending all of the given bytes.
      * <p>
      * When called the provided buffer is treated as containing the entirety of the transfer payload and the
      * Transfer(s) that result from this call will result in a final Transfer frame whose more flag is set to
-     * false which tells the remote that no additional data will be sent for this {@link Transfer}.
+     * false which tells the remote that no additional data will be sent for this {@link Transfer}.  The
+     * {@link Sender} will output as much of the buffer as possible within the constraints of both the link
+     * credit and the current capacity of the parent {@link Session}.
+     * <p>
+     * The caller must check that all bytes were written and if not they should await updates from the
+     * {@link Sender#creditStateUpdateHandler(EventHandler)} that indicate that the {@link Sender#isSendable()}
+     * has become true again or the caller should check {@link Sender#isSendable()} periodically until it
+     * becomes true once again.
      *
      * @param buffer
      *      The buffer whose contents should be sent.
      *
      * @return this {@link OutgoingDelivery} instance.
      *
-     * TODO - Decide how we handle not being able to write some or all of the bytes
-     *
-     * @throws IllegalStateException if the current credit prohibits sending the requested amount of bytes
+     * @throws IllegalStateException if the parent {@link Sender} link becomes inoperable due to closure or failure.
      */
     OutgoingDelivery writeBytes(ProtonBuffer buffer);
 
@@ -175,7 +183,13 @@ public interface OutgoingDelivery {
      * Write the given bytes as a portion of the payload of this delivery, additional bytes can be streamed until
      * the stream complete flag is set to true on a call to {@link #streamBytes(ProtonBuffer, boolean)} or a call
      * to {@link #writeBytes(ProtonBuffer)} is made.
-     *
+     * <p>
+     * The {@link Sender} will output as much of the buffer as possible within the constraints of both the link
+     * credit and the current capacity of the parent {@link Session}.  The caller must check that all bytes were0
+     * written and if not they should await updates from the {@link Sender#creditStateUpdateHandler(EventHandler)}
+     * that indicate that the {@link Sender#isSendable()} has become true again or the caller should check
+     * {@link Sender#isSendable()} periodically until it becomes true once again.
+     * <p>
      * This method is the same as calling {@link #streamBytes(ProtonBuffer, boolean)} with the complete value set
      * to false.
      *
@@ -184,15 +198,20 @@ public interface OutgoingDelivery {
      *
      * @return this {@link OutgoingDelivery} instance.
      *
-     * TODO - Decide how we handle not being able to write some or all of the bytes
-     *
-     * @throws IllegalStateException if the current credit prohibits sending the requested amount of bytes
+     * @throws IllegalStateException if the parent {@link Sender} link becomes inoperable due to closure or failure.
      */
     OutgoingDelivery streamBytes(ProtonBuffer buffer);
 
     /**
      * Write the given bytes as a portion of the payload of this delivery, additional bytes can be streamed until
-     * the stream complete flag is set to true on a call to {@link #streamBytes(ProtonBuffer, boolean)}
+     * the stream complete flag is set to true on a call to {@link #streamBytes(ProtonBuffer, boolean)} and the
+     * buffer contents on that send are fully written.
+     * <p>
+     * The {@link Sender} will output as much of the buffer as possible within the constraints of both the link
+     * credit and the current capacity of the parent {@link Session}.  The caller must check that all bytes were0
+     * written and if not they should await updates from the {@link Sender#creditStateUpdateHandler(EventHandler)}
+     * that indicate that the {@link Sender#isSendable()} has become true again or the caller should check
+     * {@link Sender#isSendable()} periodically until it becomes true once again.
      *
      * @param buffer
      *      The buffer whose contents should be sent.
@@ -201,9 +220,7 @@ public interface OutgoingDelivery {
      *
      * @return this {@link OutgoingDelivery} instance.
      *
-     * TODO - Decide how we handle not being able to write some or all of the bytes
-     *
-     * @throws IllegalStateException if the current credit prohibits sending the requested amount of bytes
+     * @throws IllegalStateException if the parent {@link Sender} link becomes inoperable due to closure or failure.
      */
     OutgoingDelivery streamBytes(ProtonBuffer buffer, boolean complete);
 

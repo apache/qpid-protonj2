@@ -179,11 +179,11 @@ public class ProtonSessionOutgoingWindow {
         }
     };
 
-    void processSend(ProtonSender sender, ProtonOutgoingDelivery delivery, ProtonBuffer payload) {
+    void processSend(ProtonSender sender, ProtonOutgoingDelivery delivery, ProtonBuffer payload, boolean complete) {
         // For a transfer that hasn't completed but has no bytes in the final transfer write we want
         // to allow a transfer to go out with the more flag as false.
 
-        boolean wasThereMore = delivery.isPartial();
+        boolean wasThereMore = !complete;
 
         if (!delivery.isSettled()) {
             // TODO - Casting is ugly
@@ -202,7 +202,6 @@ public class ProtonSessionOutgoingWindow {
             cachedTransfer.setSettled(delivery.isSettled());
             cachedTransfer.setState(delivery.getState());
 
-            // TODO - Write up to session window limits or until done.
             do {
                 // Only the first transfer requires the delivery tag, afterwards we can omit it for efficiency.
                 if (delivery.getTransferCount() == 0) {
@@ -221,7 +220,7 @@ public class ProtonSessionOutgoingWindow {
                 // Update session window tracking
                 nextOutgoingId++;
                 remoteIncomingWindow--;
-            } while (payload != null && payload.isReadable());
+            } while (payload != null && payload.isReadable() && remoteIncomingWindow > 0);
         } finally {
             cachedTransfer.reset();
         }

@@ -176,7 +176,11 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         // and if no work actually requested we don't emit a useless frame.  After complete send we
         // must send a disposition instead for this transfer until it is settled.
         if (complete && (oldState != localState || settle)) {
-            link.disposition(this);
+            try {
+                link.disposition(this);
+            } finally {
+                tryRetireDeliveryId();
+            }
         }
 
         return this;
@@ -190,10 +194,10 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     @Override
     public OutgoingDelivery writeBytes(ProtonBuffer buffer) {
         checkCompleteOrAborted();
-        complete = true;
-        link.send(this, buffer);
-        if (isSettled()) {
-            retire();
+        try {
+            link.send(this, buffer, true);
+        } finally {
+            tryRetireDeliveryId();
         }
         return this;
     }
@@ -206,8 +210,11 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     @Override
     public OutgoingDelivery streamBytes(ProtonBuffer buffer, boolean complete) {
         checkCompleteOrAborted();
-        this.complete = complete;
-        link.send(this, buffer);
+        try {
+            link.send(this, buffer, complete);
+        } finally {
+            tryRetireDeliveryId();
+        }
         return this;
     }
 
@@ -219,9 +226,12 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         if (deliveryId > DELIVERY_INACTIVE) {
             aborted = true;
             locallySettled = true;
-            link.abort(this);
-            retire();
-            deliveryId = DELIVERY_ABORTED;
+            try {
+                link.abort(this);
+            } finally {
+                tryRetireDeliveryId();
+                deliveryId = DELIVERY_ABORTED;
+            }
         }
 
         return this;
@@ -229,8 +239,8 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     //----- Internal methods meant only for use by Proton resources
 
-    void retire() {
-        if (deliveryTag != null) {
+    private void tryRetireDeliveryId() {
+        if (deliveryTag != null && isSettled()) {
             deliveryTag.release();
         }
     }
@@ -268,6 +278,11 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     ProtonOutgoingDelivery localState(DeliveryState localState) {
         this.localState = localState;
+        return this;
+    }
+
+    ProtonOutgoingDelivery markComplete() {
+        this.complete = true;
         return this;
     }
 

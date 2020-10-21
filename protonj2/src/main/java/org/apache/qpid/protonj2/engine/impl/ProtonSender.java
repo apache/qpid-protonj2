@@ -285,37 +285,38 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     //----- Delivery output related access points
 
-    void send(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
-        if (!isSendable()) {
-            checkLinkOperable("Send failed due to link state");
+    void send(ProtonOutgoingDelivery delivery, ProtonBuffer buffer, boolean complete) {
+        checkLinkOperable("Cannot send when link has become inoperable");
 
-            throw new IllegalStateException("Cannot send when sender has no capacity to do so.");
-        }
+        if (isSendable()) {
+            if (currentDelivery.isEmpty()) {
+                currentDelivery.set(sessionWindow.getAndIncrementNextDeliveryId());
 
-        if (currentDelivery.isEmpty()) {
-            currentDelivery.set(sessionWindow.getAndIncrementNextDeliveryId());
+                delivery.setDeliveryId(currentDelivery.longValue());
+            }
 
-            delivery.setDeliveryId(currentDelivery.longValue());
-        }
+            if (!delivery.isSettled()) {
+                // TODO - Casting is ugly but right now our unsigned integers are longs
+                unsettled.put((int) delivery.getDeliveryId(), delivery);
+            }
 
-        if (!delivery.isSettled()) {
-            // TODO - Casting is ugly but right now our unsigned integers are longs
-            unsettled.put((int) delivery.getDeliveryId(), delivery);
-        }
+            try {
+                sessionWindow.processSend(this, delivery, buffer, complete);
+            } finally {
+                if (complete && (buffer == null || !buffer.isReadable())) {
+                    delivery.markComplete();
+                    currentDelivery.reset();
+                    current = null;
+                    getCreditState().incrementDeliveryCount();
+                    getCreditState().decrementCredit();
 
-        if (!delivery.isPartial()) {
-            currentDelivery.reset();
-            current = null;
-            getCreditState().incrementDeliveryCount();
-            getCreditState().decrementCredit();
-
-            if (getCredit() == 0) {
-                sendable = false;
-                getCreditState().clearDrain();
+                    if (getCredit() == 0) {
+                        sendable = false;
+                        getCreditState().clearDrain();
+                    }
+                }
             }
         }
-
-        sessionWindow.processSend(this, delivery, buffer);
     }
 
     void disposition(ProtonOutgoingDelivery delivery) {
@@ -329,7 +330,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
             if (delivery.isSettled()) {
                 // TODO - Casting is ugly but right now our unsigned integers are longs
                 unsettled.remove((int) delivery.getDeliveryId());
-                delivery.retire();
             }
         }
     }
@@ -344,7 +344,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
             unsettled.remove((int) delivery.getDeliveryId());
             currentDelivery.reset();
             current = null;
-            delivery.retire();
         }
     }
 

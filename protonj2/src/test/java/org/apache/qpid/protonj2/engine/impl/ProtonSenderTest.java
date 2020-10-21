@@ -23,6 +23,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -34,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -3009,11 +3011,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
 
         sender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator());
-
-        sender.deliveryStateUpdatedHandler((delivery) -> {
-            delivery.settle();
-        });
-
         sender.open();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -3028,6 +3025,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                                  .withSettled(sendSettled)
                                  .withState(nullValue())
                                  .withDeliveryId(i)
+                                 .withMore(false)
                                  .withDeliveryTag(expectedTag)
                                  .respond()
                                  .withSettled(receiverSettles)
@@ -3045,7 +3043,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
             if (sendSettled) {
                 delivery.settle();
             }
+
             delivery.writeBytes(payload.duplicate());
+
+            if (!sendSettled) {
+                delivery.settle();
+            }
         }
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -3180,7 +3183,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                          .withLinkCredit(10)
                          .withIncomingWindow(1024)
                          .withOutgoingWindow(10)
-                         .withNextIncomingId(0)
+                         .withNextIncomingId(1)
                          .withNextOutgoingId(1).now();
 
         assertTrue(sender1MarkedSendable.get(), "Sender 1 should now be sendable");
@@ -3403,12 +3406,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNotNull(delivery);
 
         delivery.setTag(new byte[] {0});
-        try {
-            delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
-            fail("Sender should not be sendable");
-        } catch (IllegalStateException ise) {
-            // Expected
-        }
+        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
 
         assertFalse(sender.isSendable());
 
@@ -3458,12 +3456,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNotNull(delivery);
 
         delivery.setTag(new byte[] {0});
-        try {
-            delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
-            fail("Sender should not be sendable");
-        } catch (IllegalStateException ise) {
-            // Expected
-        }
+        // Shouldn't generate any frames as there's no session capacity
+        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
 
         {
             final CountDownLatch senderCreditUpdated = new CountDownLatch(1);
@@ -3493,6 +3487,83 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
 
+        assertFalse(sender.isSendable());
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSenderOnlyWritesToSessionRemoteIncomingLimitWriteBytes() throws Exception {
+        doTestSenderOnlyWritesToSessionRemoteIncomingLimit(false);
+    }
+
+    @Test
+    public void testSenderOnlyWritesToSessionRemoteIncomingLimitStreamBytes() throws Exception {
+        doTestSenderOnlyWritesToSessionRemoteIncomingLimit(true);
+    }
+
+    private void doTestSenderOnlyWritesToSessionRemoteIncomingLimit(boolean streamBytes) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        byte[] payload = new byte[1536];
+        Arrays.fill(payload, (byte) 64);
+        ProtonBuffer payloadBuffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver").withMaxFrameSize(1024);
+        peer.expectBegin().respond().withIncomingWindow(1);
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
+        peer.remoteFlow().withLinkCredit(10).queue();
+        peer.expectTransfer().withHandle(0)
+                             .withMore(true)
+                             .withSettled(false)
+                             .withState(nullValue())
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withNonNullPayload();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1").open();
+
+        final OutgoingDelivery delivery = sender.next();
+
+        delivery.setTag(new byte[] {0});
+        if (streamBytes) {
+            delivery.streamBytes(payloadBuffer, true);
+        } else {
+            delivery.writeBytes(payloadBuffer);
+        }
+
+        assertTrue(delivery.isPartial());
+        assertTrue(payloadBuffer.isReadable());
+        assertNotEquals(payload.length, payloadBuffer.getReadableBytes());
+        assertFalse(sender.isSendable());
+
+        peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(2).withLinkCredit(10).now();
+
+        assertTrue(sender.isSendable());
+
+        peer.expectTransfer().withHandle(0)
+                             .withMore(false)
+                             .withDeliveryId(0)
+                             .withNonNullPayload();
+        peer.expectDetach().withHandle(0).respond();
+
+        if (streamBytes) {
+            delivery.streamBytes(payloadBuffer, true);
+        } else {
+            delivery.writeBytes(payloadBuffer);
+        }
+
+        assertFalse(delivery.isPartial());
+        assertFalse(payloadBuffer.isReadable());
         assertFalse(sender.isSendable());
 
         sender.close();
