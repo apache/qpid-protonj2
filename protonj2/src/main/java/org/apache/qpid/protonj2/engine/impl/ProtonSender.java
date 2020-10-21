@@ -90,7 +90,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public boolean isSendable() {
-        return sendable;
+        return sendable && sessionWindow.getRemoteIncomingWindow() > 0;
     }
 
     @Override

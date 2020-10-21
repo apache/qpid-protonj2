@@ -38,6 +38,8 @@ import io.netty.buffer.ByteBuf;
  */
 public class SessionTracker {
 
+    private static final UnsignedInteger DEFAULT_WINDOW_SIZE = UnsignedInteger.valueOf(Integer.MAX_VALUE);
+
     private final Deque<LinkTracker> senders = new ArrayDeque<>();
     private final Deque<LinkTracker> receivers = new ArrayDeque<>();
 
@@ -48,8 +50,9 @@ public class SessionTracker {
     private final UnsignedShort remoteChannel;
 
     private UnsignedInteger nextOutgoingId = UnsignedInteger.ONE;
-    private UnsignedInteger incomingWindow = UnsignedInteger.ZERO;
-    private UnsignedInteger outgoingWindow = UnsignedInteger.ZERO;
+    private UnsignedInteger nextIncomingId = UnsignedInteger.ONE;
+    private UnsignedInteger incomingWindow = DEFAULT_WINDOW_SIZE;
+    private UnsignedInteger outgoingWindow = DEFAULT_WINDOW_SIZE;
     private UnsignedInteger handleMax;
     private End end;
     private LinkTracker lastOpenedLink;
@@ -62,6 +65,7 @@ public class SessionTracker {
         this.begin = begin;
         this.localChannel = localChannel;
         this.remoteChannel = remoteChannel;
+        this.nextIncomingId = begin.getNextOutgoingId();
     }
 
     public AMQPTestDriver getDriver() {
@@ -109,6 +113,15 @@ public class SessionTracker {
     public UnsignedInteger setNextOutgoingId(UnsignedInteger nextOutgoingId) {
         this.nextOutgoingId = nextOutgoingId;
         return nextOutgoingId;
+    }
+
+    public UnsignedInteger getNextIncomingId() {
+        return nextIncomingId;
+    }
+
+    public UnsignedInteger setNextIncomingId(UnsignedInteger nextIncomingId) {
+        this.nextIncomingId = nextIncomingId;
+        return nextIncomingId;
     }
 
     public UnsignedInteger getIncomingWindow() {

@@ -116,6 +116,9 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
         if (flow.getIncomingWindow() == null) {
             flow.setIncomingWindow(session.getIncomingWindow());
         }
+        if (flow.getNextIncomingId() == null) {
+            flow.setNextIncomingId(session.getNextIncomingId());
+        }
         if (flow.getNextOutgoingId() == null) {
             flow.setNextOutgoingId(session.getNextOutgoingId());
         }

@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.test.driver.actions;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
+import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
@@ -32,6 +33,9 @@ import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
 
     private final Begin begin = new Begin();
+    private boolean explicitNulNextOutgoingId;
+    private boolean explicitNullIncomingWindow;
+    private boolean explicitNullOutgoingWindow;
 
     /**
      * Set defaults for the required fields of the performative
@@ -41,10 +45,6 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
      */
     public BeginInjectAction(AMQPTestDriver driver) {
         super(driver);
-
-        begin.setNextOutgoingId(UnsignedInteger.ONE);
-        begin.setIncomingWindow(UnsignedInteger.ZERO);
-        begin.setOutgoingWindow(UnsignedInteger.ZERO);
     }
 
     @Override
@@ -73,6 +73,7 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
     }
 
     public BeginInjectAction withNextOutgoingId(UnsignedInteger nextOutgoingId) {
+        explicitNulNextOutgoingId = nextOutgoingId == null;
         begin.setNextOutgoingId(nextOutgoingId);
         return this;
     }
@@ -88,6 +89,7 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
     }
 
     public BeginInjectAction withIncomingWindow(UnsignedInteger incomingWindow) {
+        explicitNullIncomingWindow = incomingWindow == null;
         begin.setIncomingWindow(incomingWindow);
         return this;
     }
@@ -103,6 +105,7 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
     }
 
     public BeginInjectAction withOutgoingWindow(UnsignedInteger outgoingWindow) {
+        explicitNullOutgoingWindow = outgoingWindow == null;
         begin.setOutgoingWindow(outgoingWindow);
         return this;
     }
@@ -160,6 +163,16 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
             onChannel(driver.getSessions().getNextChannelId());
         }
 
-        driver.getSessions().processLocalBegin(begin, onChannel());
+        SessionTracker tracker = driver.getSessions().processLocalBegin(begin, onChannel());
+
+        if (begin.getNextOutgoingId() == null && !explicitNulNextOutgoingId) {
+            begin.setNextOutgoingId(tracker.getNextOutgoingId());
+        }
+        if (begin.getOutgoingWindow() == null && !explicitNullOutgoingWindow) {
+            begin.setOutgoingWindow(tracker.getOutgoingWindow());
+        }
+        if (begin.getIncomingWindow() == null && !explicitNullIncomingWindow) {
+            begin.setIncomingWindow(tracker.getIncomingWindow());
+        }
     }
 }

@@ -106,7 +106,7 @@ public class ProtonSessionOutgoingWindow {
     Flow handleFlow(Flow flow) {
         if (flow.hasNextIncomingId()) {
             remoteNextIncomingId = (int) flow.getNextIncomingId();
-            remoteIncomingWindow = (flow.getNextIncomingId() + flow.getIncomingWindow()) - nextOutgoingId;
+            remoteIncomingWindow = (remoteNextIncomingId + flow.getIncomingWindow()) - nextOutgoingId;
         } else {
             remoteIncomingWindow = flow.getIncomingWindow();
         }

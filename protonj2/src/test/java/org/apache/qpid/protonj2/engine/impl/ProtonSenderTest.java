@@ -36,6 +36,7 @@ import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -2863,7 +2864,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond();
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
-        peer.remoteFlow().withLinkCredit(10).queue();
+        peer.remoteFlow().withIncomingWindow(10).withLinkCredit(10).queue();
 
         Connection connection = engine.start().open();
         Session session = connection.session().open();
@@ -3366,6 +3367,133 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         } else {
             assertFalse(delivery.isSettled());
         }
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSenderNotSendableWhenRemoteIncomingWindowIsZero() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(0)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(1)
+                         .withNextOutgoingId(1).queue();
+        peer.expectDetach().withHandle(0).respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1").open();
+
+        final OutgoingDelivery delivery = sender.next();
+        assertNotNull(delivery);
+
+        delivery.setTag(new byte[] {0});
+        try {
+            delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
+            fail("Sender should not be sendable");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        assertFalse(sender.isSendable());
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSenderBecomesSendableAfterRemoteIncomingWindowExpeanded() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(0)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(1)
+                         .withNextOutgoingId(1).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1");
+
+        {
+            final CountDownLatch senderCreditUpdated = new CountDownLatch(1);
+            sender.creditStateUpdateHandler(handler -> {
+                senderCreditUpdated.countDown();
+            });
+
+            sender.open();
+
+            assertTrue(senderCreditUpdated.await(10, TimeUnit.SECONDS));
+            assertFalse(sender.isSendable());
+        }
+
+        final OutgoingDelivery delivery = sender.next();
+        assertNotNull(delivery);
+
+        delivery.setTag(new byte[] {0});
+        try {
+            delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
+            fail("Sender should not be sendable");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        {
+            final CountDownLatch senderCreditUpdated = new CountDownLatch(1);
+            sender.creditStateUpdateHandler(handler -> {
+                senderCreditUpdated.countDown();
+            });
+
+            peer.remoteFlow().withDeliveryCount(0)
+                             .withLinkCredit(10)
+                             .withIncomingWindow(1)
+                             .withOutgoingWindow(10)
+                             .withNextIncomingId(1)
+                             .withNextOutgoingId(1).now();
+
+            assertTrue(senderCreditUpdated.await(10, TimeUnit.SECONDS));
+            assertTrue(sender.isSendable());
+        }
+
+        peer.expectTransfer().withHandle(0)
+                             .withMore(false)
+                             .withSettled(false)
+                             .withState(nullValue())
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withPayload(payload);
+        peer.expectDetach().withHandle(0).respond();
+
+        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        assertFalse(sender.isSendable());
 
         sender.close();
 
