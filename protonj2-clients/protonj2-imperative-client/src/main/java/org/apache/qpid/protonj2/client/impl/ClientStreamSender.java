@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -27,7 +29,6 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
-import org.apache.qpid.protonj2.client.DeliveryMode;
 import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Sender;
@@ -66,6 +67,7 @@ public class ClientStreamSender implements StreamSender {
     private final ClientFuture<Sender> openFuture;
     private final ClientFuture<Sender> closeFuture;
 
+    private final Deque<InFlightSend> blocked = new ArrayDeque<>();
     private final StreamSenderOptions options;
     private final ClientSession session;
     private final org.apache.qpid.protonj2.engine.Sender protonSender;
@@ -75,7 +77,6 @@ public class ClientStreamSender implements StreamSender {
     private volatile Source remoteSource;
     private volatile Target remoteTarget;
 
-    private InFlightSend blockedOnCredit;
     private volatile int closed;
     private ClientException failureCause;
 
@@ -401,35 +402,35 @@ public class ClientStreamSender implements StreamSender {
         executor.execute(() -> {
             checkClosedOrFailed(operation);
 
+            final InFlightSend send = new InFlightSend(context, buffer, operation);
+
             if (protonSender.isSendable()) {
                 try {
-                    assumeSendableAndSend(context, buffer, operation);
+                    assumeSendableAndSend(send);
                 } catch (Exception ex) {
                     operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
                 }
             } else {
-                final InFlightSend send = new InFlightSend(context, buffer, operation);
                 if (options.sendTimeout() > 0) {
                     send.timeout = session.scheduleRequestTimeout(
                         operation, options.sendTimeout(), () -> send.createSendTimedOutException());
                 }
 
-                blockedOnCredit = send;
+                blocked.offer(send);
             }
         });
 
         session.request(this, operation);
     }
 
-    private void assumeSendableAndSend(ClientStreamSenderMessage message, ProtonBuffer buffer, AsyncResult<Void> request) throws ClientException {
-        final OutgoingDelivery delivery = protonSender.current().setMessageFormat(message.messageFormat());
-
-        final ClientStreamTracker tracker = message.tracker();
+    private void assumeSendableAndSend(InFlightSend send) throws ClientException {
+        final OutgoingDelivery delivery = protonSender.current().setMessageFormat(send.context.messageFormat());
+        final ClientStreamTracker tracker = send.context.tracker();
 
         if (session.getTransactionContext().isInTransaction()) {
             if (session.getTransactionContext().isTransactionInDoubt()) {
                 tracker.settlementFuture().complete(tracker);
-                request.complete(null);
+                send.complete(null);
                 return;
             } else {
                 delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this, delivery),
@@ -444,28 +445,20 @@ public class ClientStreamSender implements StreamSender {
             tracker.settlementFuture().complete(tracker);
         }
 
-        if (message.aborted()) {
+        if (send.context.aborted()) {
             delivery.abort();
-            request.complete(null);
+            send.complete(null);
         } else {
-            // For now we only complete the request after the IO operation when the delivery mode is
-            // something other than DeliveryMode.AT_MOST_ONCE.  We should think about other options to
-            // allow this under other modes given the tracker can communicate errors if the eventual
-            // IO operation does indeed fail otherwise most modes suffer a more significant performance
-            // hit waiting on the IO operation to complete.
-            if (options.deliveryMode() == DeliveryMode.AT_MOST_ONCE) {
-                request.complete(null);
-                delivery.streamBytes(buffer, message.completed());
+            // We must check if the delivery was fully written and then complete the send operation otherwise
+            // if the session capacity limited the amount of payload data we need to hold the completion until
+            // the session capacity is refilled and we can fully write the remaining message payload.  This
+            // area could use some enhancement to allow control of write and flush when dealing with delivery
+            // modes that have low assurance versus those that are strict.
+            delivery.streamBytes(send.encodedMessage, send.context.completed());
+            if (send.encodedMessage.isReadable()) {
+                blocked.addFirst(send);
             } else {
-                delivery.streamBytes(buffer, message.completed());
-                request.complete(null);
-            }
-
-            if (buffer.isReadable()) {
-                blockedOnCredit = blockedOnCredit != null ?
-                    blockedOnCredit : new InFlightSend(message, buffer, (ClientFuture<Void>) request);
-            } else {
-                blockedOnCredit = null;
+                send.complete(null);
             }
         }
     }
@@ -500,14 +493,16 @@ public class ClientStreamSender implements StreamSender {
         } catch (Throwable ignore) {
         }
 
-        // Cancel any blocked send passing an appropriate error to the future
-        if (blockedOnCredit != null) {
+        // Cancel all blocked sends passing an appropriate error to the future
+        blocked.removeIf((held) -> {
             if (failureCause != null) {
-                blockedOnCredit.operation.failed(failureCause);
+                held.operation.failed(failureCause);
             } else {
-                blockedOnCredit.operation.failed(new ClientResourceRemotelyClosedException("The sender link has closed"));
+                held.operation.failed(new ClientResourceRemotelyClosedException("The sender link has closed"));
             }
-        }
+
+            return true;
+        });
 
         protonSender.unsettled().forEach((delivery) -> {
             try {
@@ -660,16 +655,19 @@ public class ClientStreamSender implements StreamSender {
     }
 
     private void handleCreditStateUpdated(org.apache.qpid.protonj2.engine.Sender sender) {
-        if (sender.isSendable() && blockedOnCredit != null) {
-            LOG.trace("Dispatching previously held send");
-            try {
-                assumeSendableAndSend(blockedOnCredit.context, blockedOnCredit.encodedMessage, blockedOnCredit);
-            } catch (Exception ex) {
-                blockedOnCredit.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+        if (!blocked.isEmpty()) {
+            while (sender.isSendable() && !blocked.isEmpty()) {
+                LOG.trace("Dispatching previously held send");
+                final InFlightSend held = blocked.poll();
+                try {
+                    assumeSendableAndSend(held);
+                } catch (Exception ex) {
+                    held.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+                }
             }
         }
 
-        if (sender.isDraining() && blockedOnCredit == null) {
+        if (sender.isDraining() && blocked.isEmpty()) {
             sender.drained();
         }
     }

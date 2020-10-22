@@ -16,14 +16,18 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
@@ -570,6 +574,113 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.expectClose().respond();
 
             stream.close();
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void testAutoFlushDuringWriteThatExceedConfiguredBufferLimitSessionCreditLimitOnTransfer() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSender sender = connection.openStreamSender("test-queue", new StreamSenderOptions().writeBufferSize(256));
+            StreamSenderMessage tracker = sender.beginMessage();
+
+            final byte[] payload = new byte[1024];
+            Arrays.fill(payload, 0, 256, (byte) 1);
+            Arrays.fill(payload, 256, 512, (byte) 2);
+            Arrays.fill(payload, 512, 768, (byte) 3);
+            Arrays.fill(payload, 768, 1024, (byte) 4);
+
+            final byte[] payload1 = new byte[256];
+            Arrays.fill(payload1, (byte) 1);
+            final byte[] payload2 = new byte[256];
+            Arrays.fill(payload2, (byte) 2);
+            final byte[] payload3 = new byte[256];
+            Arrays.fill(payload3, (byte) 3);
+            final byte[] payload4 = new byte[256];
+            Arrays.fill(payload4, (byte) 4);
+
+            // Populate all Header values
+            Header header = new Header();
+            header.setDurable(true);
+            header.setPriority((byte) 1);
+            header.setTimeToLive(65535);
+            header.setFirstAcquirer(true);
+            header.setDeliveryCount(2);
+
+            tracker.header(header);
+
+            OutputStreamOptions options = new OutputStreamOptions();
+            OutputStream stream = tracker.body(options);
+
+            HeaderMatcher headerMatcher = new HeaderMatcher(true);
+            headerMatcher.withDurable(true);
+            headerMatcher.withPriority((byte) 1);
+            headerMatcher.withTtl(65535);
+            headerMatcher.withFirstAcquirer(true);
+            headerMatcher.withDeliveryCount(2);
+            EncodedDataMatcher dataMatcher1 = new EncodedDataMatcher(payload1);
+            TransferPayloadCompositeMatcher payloadMatcher1 = new TransferPayloadCompositeMatcher();
+            payloadMatcher1.setHeadersMatcher(headerMatcher);
+            payloadMatcher1.setMessageContentMatcher(dataMatcher1);
+
+            EncodedDataMatcher dataMatcher2 = new EncodedDataMatcher(payload2);
+            TransferPayloadCompositeMatcher payloadMatcher2 = new TransferPayloadCompositeMatcher();
+            payloadMatcher2.setMessageContentMatcher(dataMatcher2);
+
+            EncodedDataMatcher dataMatcher3 = new EncodedDataMatcher(payload3);
+            TransferPayloadCompositeMatcher payloadMatcher3 = new TransferPayloadCompositeMatcher();
+            payloadMatcher3.setMessageContentMatcher(dataMatcher3);
+
+            EncodedDataMatcher dataMatcher4 = new EncodedDataMatcher(payload4);
+            TransferPayloadCompositeMatcher payloadMatcher4 = new TransferPayloadCompositeMatcher();
+            payloadMatcher4.setMessageContentMatcher(dataMatcher4);
+
+            final AtomicBoolean sendFailed = new AtomicBoolean();
+            // Stream won't output until some body bytes are written.
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    stream.write(payload);
+                } catch (IOException e) {
+                    LOG.info("send failed with error: ", e);
+                    sendFailed.set(true);
+                }
+            });
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).now();
+            peer.expectTransfer().withPayload(payloadMatcher1).withMore(true);
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(2).withLinkCredit(10).queue();
+            peer.expectTransfer().withPayload(payloadMatcher2).withMore(true);
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(3).withLinkCredit(10).queue();
+            peer.expectTransfer().withPayload(payloadMatcher3).withMore(true);
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(4).withLinkCredit(10).queue();
+            peer.expectTransfer().withPayload(payloadMatcher4).withMore(true);
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(5).withLinkCredit(10).queue();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withNullPayload().withMore(false).accept();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            stream.close();
+
+            assertFalse(sendFailed.get());
 
             sender.closeAsync().get();
             connection.closeAsync().get();

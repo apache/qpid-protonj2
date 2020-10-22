@@ -29,7 +29,6 @@ import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
-import org.apache.qpid.protonj2.client.DeliveryMode;
 import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Sender;
@@ -71,7 +70,7 @@ public class ClientSender implements Sender {
     private volatile int closed;
     private ClientException failureCause;
 
-    private final Deque<InFlightSend> blocked = new ArrayDeque<InFlightSend>();
+    private final Deque<InFlightSend> blocked = new ArrayDeque<>();
     private final SenderOptions options;
     private final ClientSession session;
     private final org.apache.qpid.protonj2.engine.Sender protonSender;
@@ -423,7 +422,11 @@ public class ClientSender implements Sender {
             while (sender.isSendable() && !blocked.isEmpty()) {
                 LOG.trace("Dispatching previously held send");
                 final InFlightSend held = blocked.poll();
-                assumeSendableAndSend(held.messageFormat, held.encodedMessage, held);
+                try {
+                    assumeSendableAndSend(held);
+                } catch (Exception ex) {
+                    held.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+                }
             }
         }
 
@@ -477,11 +480,27 @@ public class ClientSender implements Sender {
         private final ClientFuture<ClientTracker> operation;
 
         private ScheduledFuture<?> timeout;
+        private ClientTracker tracker;
+        private OutgoingDelivery delivery;
 
         public InFlightSend(int messageFormat, ProtonBuffer encodedMessage, ClientFuture<ClientTracker> operation) {
             this.messageFormat = messageFormat;
             this.encodedMessage = encodedMessage;
             this.operation = operation;
+        }
+
+        public OutgoingDelivery delivery() {
+            if (delivery == null) {
+                delivery = protonSender.next();
+                delivery.setMessageFormat(messageFormat);
+                delivery.setLinkedResource(tracker = new ClientTracker(ClientSender.this, delivery));
+            }
+
+            return delivery;
+        }
+
+        public ClientTracker tracker() {
+            return tracker;
         }
 
         @Override
@@ -490,6 +509,10 @@ public class ClientSender implements Sender {
                 timeout.cancel(true);
             }
             operation.failed(result);
+        }
+
+        public void complete() {
+            complete(tracker);
         }
 
         @Override
@@ -535,15 +558,16 @@ public class ClientSender implements Sender {
             checkClosedOrFailed(operation);
 
             try {
-                if (protonSender.isSendable()) {
+                final InFlightSend send = new InFlightSend(message.messageFormat(), buffer, operation);
+
+                if (protonSender.isSendable() && protonSender.current() == null) {
                     try {
-                        assumeSendableAndSend(message.messageFormat(), buffer, operation);
+                        assumeSendableAndSend(send);
                     } catch (Exception ex) {
                         operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
                     }
                 } else {
                     if (waitForCredit) {
-                        final InFlightSend send = new InFlightSend(message.messageFormat(), buffer, operation);
                         if (options.sendTimeout() > 0) {
                             send.timeout = session.scheduleRequestTimeout(
                                 operation, options.sendTimeout(), () -> send.createSendTimedOutException());
@@ -562,17 +586,13 @@ public class ClientSender implements Sender {
         return session.request(this, operation);
     }
 
-    private void assumeSendableAndSend(int messageFormat, ProtonBuffer buffer, AsyncResult<ClientTracker> request) {
-        final OutgoingDelivery delivery = protonSender.next();
-        final ClientTracker tracker = new ClientTracker(this, delivery);
-
-        delivery.setLinkedResource(tracker);
-        delivery.setMessageFormat(messageFormat);
+    private void assumeSendableAndSend(InFlightSend send) {
+        final OutgoingDelivery delivery = send.delivery();
 
         if (session.getTransactionContext().isInTransaction()) {
             if (session.getTransactionContext().isTransactionInDoubt()) {
-                tracker.settlementFuture().complete(tracker);
-                request.complete(tracker);
+                send.tracker().settlementFuture().complete(send.tracker());
+                send.complete();
                 return;
             } else {
                 delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this, delivery),
@@ -584,20 +604,19 @@ public class ClientSender implements Sender {
 
         if (delivery.isSettled()) {
             // Remote will not update this delivery so mark as acknowledged now.
-            tracker.settlementFuture().complete(tracker);
+            send.tracker().settlementFuture().complete(send.tracker());
         }
 
-        // For now we only complete the request after the IO operation when the delivery mode is
-        // something other than DeliveryMode.AT_MOST_ONCE.  We should think about other options to
-        // allow this under other modes given the tracker can communicate errors if the eventual
-        // IO operation does indeed fail otherwise most modes suffer a more significant performance
-        // hit waiting on the IO operation to complete.
-        if (options.deliveryMode() == DeliveryMode.AT_MOST_ONCE) {
-            request.complete(tracker);
-            delivery.writeBytes(buffer);
+        // We must check if the delivery was fully written and then complete the send operation otherwise
+        // if the session capacity limited the amount of payload data we need to hold the completion until
+        // the session capacity is refilled and we can fully write the remaining message payload.  This
+        // area could use some enhancement to allow control of write and flush when dealing with delivery
+        // modes that have low assurance versus those that are strict.
+        delivery.writeBytes(send.encodedMessage);
+        if (delivery.isPartial()) {
+            blocked.addFirst(send);
         } else {
-            delivery.writeBytes(buffer);
-            request.complete(tracker);
+            send.complete();
         }
     }
 
