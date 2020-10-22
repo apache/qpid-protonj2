@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.engine;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
+import org.apache.qpid.protonj2.types.transport.Disposition;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
@@ -66,9 +67,9 @@ public interface OutgoingDelivery {
 
     /**
      * Gets the message-format for this Delivery, representing the 32bit value using an int.
-     *
+     * <p>
      * The default value is 0 as per the message format defined in the core AMQP 1.0 specification.<p>
-     *
+     * <p>
      * See the following for more details:<br>
      * <a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#type-transfer">
      *          http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#type-transfer</a><br>
@@ -85,12 +86,11 @@ public interface OutgoingDelivery {
 
     /**
      * Sets the message-format for this Delivery, representing the 32bit value using an integer value. The message format can
-     * only be set@Override
-     prior to the first {@link Transfer} of delivery payload having been written.  If one of the delivery write
-     * methods is called prior to the message format being set then it defaults to the AMQP default format of zero.
-     *
+     * only be set@Override prior to the first {@link Transfer} of delivery payload having been written.  If one of the delivery
+     * write methods is called prior to the message format being set then it defaults to the AMQP default format of zero.
+     * <p>
      * The default value is 0 as per the message format defined in the core AMQP 1.0 specification.<p>
-     *
+     * <p>
      * See the following for more details:<br>
      * <a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#type-transfer">
      *          http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#type-transfer</a><br>
@@ -138,13 +138,13 @@ public interface OutgoingDelivery {
 
     /**
      * Check for whether the delivery is still partial.
-     *
+     * <p>
      * For a receiving Delivery, this means the delivery does not hold
      * a complete message payload as all the content hasn't been
      * received yet. Note that an {@link #isAborted() aborted} delivery
      * will also be considered partial and the full payload won't
      * be received.
-     *
+     * <p>
      * For a sending Delivery, this means that the application has not marked
      * the delivery as complete yet.
      *
@@ -251,10 +251,20 @@ public interface OutgoingDelivery {
     OutgoingDelivery disposition(DeliveryState state);
 
     /**
-     * Update the delivery with the given disposition if not locally settled
-     * and optionally settles the delivery if not already settled.
-     *
-     * TODO - Fully document the result of this call.
+     * Update the delivery with the given disposition if not locally settled and optionally
+     * settles the delivery if not already settled.
+     * <p>
+     * The action taken by this method depends on the state of the {@link OutgoingDelivery}
+     * at the time it is called.
+     * <p>
+     * If there has yet to be any writes from this delivery the delivery state and settlement
+     * value is cached and applied to the first (or only) write of payload from this delivery.
+     * If however a write has already been performed than this method result in a {@link Disposition}
+     * frame being sent to the remote with the given delivery state and settlement value.  Once
+     * the delivery is marked as settled any future call to this method will do nothing if the
+     * requested disposition and settlement is the same however if a new state is applied which
+     * cannot be conveyed due to having already locally settling the {@link OutgoingDelivery} than
+     * an {@link IllegalStateException} is thrown to indicate that request is not valid.
      *
      * @param state
      *      the new delivery state
@@ -271,9 +281,10 @@ public interface OutgoingDelivery {
     boolean isSettled();
 
     /**
-     * Settles this delivery.
-     *
-     * TODO - Fully document the result of this call.
+     * Settles this delivery if not already settled.  Once settled locally no further updates
+     * to the delivery state can be applied.  If called prior to the first write of payload
+     * bytes the settlement state is cached and transmitted within the first {@link Transfer}
+     * frame of this {@link OutgoingDelivery}.
      *
      * @return this {@link OutgoingDelivery} instance.
      */

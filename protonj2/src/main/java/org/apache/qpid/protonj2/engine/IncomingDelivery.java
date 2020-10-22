@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.engine;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
+import org.apache.qpid.protonj2.types.transport.Disposition;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
@@ -159,9 +160,9 @@ public interface IncomingDelivery {
 
     /**
      * Gets the message-format for this Delivery, representing the 32bit value using an int.
-     *
+     * <p>
      * The default value is 0 as per the message format defined in the core AMQP 1.0 specification.<p>
-     *
+     * <p>
      * See the following for more details:<br>
      * <a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#type-transfer">
      *          http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#type-transfer</a><br>
@@ -178,13 +179,13 @@ public interface IncomingDelivery {
 
     /**
      * Check for whether the delivery is still partial.
-     *
+     * <p>
      * For a receiving Delivery, this means the delivery does not hold
      * a complete message payload as all the content hasn't been
      * received yet. Note that an {@link #isAborted() aborted} delivery
      * will also be considered partial and the full payload won't
      * be received.
-     *
+     * <p>
      * For a sending Delivery, this means that the application has not marked
      * the delivery as complete yet.
      *
@@ -216,8 +217,12 @@ public interface IncomingDelivery {
     /**
      * Update the delivery with the given disposition if not locally settled
      * and optionally settles the delivery if not already settled.
-     *
-     * TODO - Fully document the result of this call.
+     * <p>
+     * Applies the given delivery state and local settlement value to this delivery
+     * writing a new {@link Disposition} frame if the remote has not already settled
+     * the delivery.  Once locally settled no additional updates to the local
+     * {@link DeliveryState} can be applied and if attempted an {@link IllegalStateException}
+     * will be thrown to indicate this is not possible.
      *
      * @param state
      *      the new delivery state
@@ -229,9 +234,11 @@ public interface IncomingDelivery {
     IncomingDelivery disposition(DeliveryState state, boolean settle);
 
     /**
-     * Settles this delivery.
-     *
-     * TODO - Fully document the result of this call.
+     * Settles this delivery locally, transmitting a {@link Disposition} frame to the remote
+     * if the remote has not already settled the delivery.  Once locally settled the delivery
+     * will not accept any additional updates to the {@link DeliveryState} via one of the
+     * {@link #disposition(DeliveryState)} or {@link #disposition(DeliveryState, boolean)}
+     * methods.
      *
      * @return this {@link IncomingDelivery} instance.
      */
