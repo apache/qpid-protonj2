@@ -30,9 +30,9 @@ public abstract class ClientFutureFactory {
     private static final String WINDOWS_OS_PREFIX = "Windows";
     private static final boolean IS_WINDOWS = isOsNameMatch(OS_NAME, WINDOWS_OS_PREFIX);
 
-    private static final String CONSERVATIVE = "conservative";
-    private static final String BALANCED = "balanced";
-    private static final String PROGRESSIVE = "progressive";
+    public static final String CONSERVATIVE = "conservative";
+    public static final String BALANCED = "balanced";
+    public static final String PROGRESSIVE = "progressive";
 
     /**
      * Create a new ClientFutureFactory instance based on the given type name.
@@ -67,7 +67,7 @@ public abstract class ClientFutureFactory {
     }
 
     public static <T> Future<T> completedFuture(T result) {
-        BalancedClientFuture<T> future = new BalancedClientFuture<T>();
+        BalancedClientFuture<T> future = new BalancedClientFuture<>();
         future.complete(result);
 
         return future;
@@ -117,17 +117,17 @@ public abstract class ClientFutureFactory {
 
         @Override
         public <V> ClientFuture<V> createFuture() {
-            return new ConservativeClientFuture<V>();
+            return new ConservativeClientFuture<>();
         }
 
         @Override
         public <V> ClientFuture<V> createFuture(ClientSynchronization synchronization) {
-            return new ConservativeClientFuture<V>(synchronization);
+            return new ConservativeClientFuture<>(synchronization);
         }
 
         @Override
         public <V> ClientFuture<V> createUnfailableFuture() {
-            return new ConservativeClientFuture<V>() {
+            return new ConservativeClientFuture<>() {
 
                 @Override
                 public void failed(ClientException t) {
@@ -141,17 +141,17 @@ public abstract class ClientFutureFactory {
 
         @Override
         public <V> ClientFuture<V> createFuture() {
-            return new BalancedClientFuture<V>();
+            return new BalancedClientFuture<>();
         }
 
         @Override
         public <V> ClientFuture<V> createFuture(ClientSynchronization synchronization) {
-            return new BalancedClientFuture<V>(synchronization);
+            return new BalancedClientFuture<>(synchronization);
         }
 
         @Override
         public <V> ClientFuture<V> createUnfailableFuture() {
-            return new BalancedClientFuture<V>() {
+            return new BalancedClientFuture<>() {
 
                 @Override
                 public void failed(ClientException t) {
@@ -165,17 +165,17 @@ public abstract class ClientFutureFactory {
 
         @Override
         public <V> ClientFuture<V> createFuture() {
-            return new ProgressiveClientFuture<V>();
+            return new ProgressiveClientFuture<>();
         }
 
         @Override
         public <V> ClientFuture<V> createFuture(ClientSynchronization synchronization) {
-            return new ProgressiveClientFuture<V>(synchronization);
+            return new ProgressiveClientFuture<>(synchronization);
         }
 
         @Override
         public <V> ClientFuture<V> createUnfailableFuture() {
-            return new ProgressiveClientFuture<V>() {
+            return new ProgressiveClientFuture<>() {
 
                 @Override
                 public void failed(ClientException t) {

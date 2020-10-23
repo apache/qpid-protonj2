@@ -31,6 +31,7 @@ import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
+import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.client.futures.ClientFutureFactory;
 import org.apache.qpid.protonj2.client.util.IdGenerator;
 import org.slf4j.Logger;
@@ -45,12 +46,14 @@ public final class ClientInstance implements Client {
     private static final Logger LOG = LoggerFactory.getLogger(ClientInstance.class);
 
     private static final IdGenerator CONTAINER_ID_GENERATOR = new IdGenerator();
+    private static final ClientFutureFactory FUTURES = ClientFutureFactory.create(ClientFutureFactory.CONSERVATIVE);
 
     private final AtomicInteger CONNECTION_COUNTER = new AtomicInteger();
     private final ClientOptions options;
     private final ConnectionOptions defaultConnectionOptions = new ConnectionOptions();
     private final Map<String, ClientConnection> connections = new HashMap<>();
     private final String clientUniqueId = CONTAINER_ID_GENERATOR.generateId();
+    private final ClientFuture<Client> closedFuture = FUTURES.createFuture();
 
     private volatile boolean closed;
 
@@ -128,23 +131,23 @@ public final class ClientInstance implements Client {
         if (!closed) {
             closed = true;
 
-            List<Connection> connectionsView = new ArrayList<>(connections.values());
-            connectionsView.forEach((connection) -> connection.close());
+            if (connections.isEmpty()) {
+                closedFuture.complete(this);
+            } else {
+                List<Connection> connectionsView = new ArrayList<>(connections.values());
+                connectionsView.forEach((connection) -> connection.close());
 
-            for (Connection connection : connectionsView) {
-                try {
-                    connection.close();
-                } catch (Throwable ignored) {
-                    LOG.trace("Error while closing connection, ignoring", ignored);
+                for (Connection connection : connectionsView) {
+                    try {
+                        connection.close();
+                    } catch (Throwable ignored) {
+                        LOG.trace("Error while closing connection, ignoring", ignored);
+                    }
                 }
             }
-
-            //TODO: await the actual futures above after starting the process.
-            //      we don't have a future that can aggregate the futures from above.
-            return ClientFutureFactory.completedFuture(this);
-        } else {
-            return ClientFutureFactory.completedFuture(this);
         }
+
+        return closedFuture;
     }
 
     //----- Internal API
@@ -160,13 +163,16 @@ public final class ClientInstance implements Client {
     }
 
     private ClientConnection addConnection(ClientConnection connection) {
-        this.connections.put(connection.getId(), connection);
+        connections.put(connection.getId(), connection);
         return connection;
     }
 
     void unregisterConnection(ClientConnection connection) {
         synchronized (connections) {
-            this.connections.remove(connection.getId());
+            connections.remove(connection.getId());
+            if (closed && connections.isEmpty()) {
+                closedFuture.complete(this);
+            }
         }
     }
 }

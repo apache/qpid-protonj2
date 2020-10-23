@@ -22,12 +22,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
+import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
+import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -99,6 +104,47 @@ public class ClientTest extends ImperativeClientTestCase {
             fail("Should enforce no new connections on Client close");
         } catch (ClientIllegalStateException closed) {
             // Expected
+        }
+    }
+
+    @Test
+    public void testCloseAllConnectionWhenNonCreatedDoesNotBlock() throws Exception {
+        Client.create().close();
+    }
+
+    @Test
+    public void testCloseAllConnectionAndWait() throws Exception {
+        try (NettyTestPeer firstPeer = new NettyTestPeer();
+             NettyTestPeer secondPeer = new NettyTestPeer()) {
+
+            firstPeer.expectSASLAnonymousConnect();
+            firstPeer.expectOpen().respond();
+            firstPeer.start();
+
+            secondPeer.expectSASLAnonymousConnect();
+            secondPeer.expectOpen().respond();
+            secondPeer.start();
+
+            final URI firstURI = firstPeer.getServerURI();
+            final URI secondURI = secondPeer.getServerURI();
+
+            Client container = Client.create();
+            Connection connection1 = container.connect(firstURI.getHost(), firstURI.getPort());
+            Connection connection2 = container.connect(secondURI.getHost(), secondURI.getPort());
+
+            connection1.openFuture().get();
+            connection2.openFuture().get();
+
+            firstPeer.waitForScriptToComplete();
+            secondPeer.waitForScriptToComplete();
+
+            firstPeer.expectClose().respond().afterDelay(10);
+            secondPeer.expectClose().respond().afterDelay(11);
+
+            container.closeAsync().get(5, TimeUnit.SECONDS);
+
+            firstPeer.waitForScriptToComplete();
+            secondPeer.waitForScriptToComplete();
         }
     }
 }

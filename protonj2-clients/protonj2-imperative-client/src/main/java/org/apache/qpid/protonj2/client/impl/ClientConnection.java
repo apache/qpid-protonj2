@@ -700,6 +700,8 @@ public class ClientConnection implements Connection {
                 transport.close();
             } catch (Exception ignored) {}
 
+            client.unregisterConnection(this);
+
             openFuture.complete(this);
             closeFuture.complete(this);
         }
