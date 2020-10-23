@@ -503,6 +503,16 @@ public class ClientSender implements Sender {
             return tracker;
         }
 
+        @SuppressWarnings("unused")
+        public boolean aborted() {
+            return false;
+        }
+
+        @SuppressWarnings("unused")
+        public boolean more() {
+            return true;
+        }
+
         @Override
         public void failed(ClientException result) {
             if (timeout != null) {

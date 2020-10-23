@@ -164,13 +164,13 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         }
 
         if (!completed()) {
-            currentState = StreamState.COMPLETE;
-
             // This may result in completion if the write surpasses the buffer limit but we still
             // need to check in case it does not, or if there are no footers...
             if (footer != null) {
                 write(footer);
             }
+
+            currentState = StreamState.COMPLETE;
 
             // If there is buffered data we can flush and complete in one Transfer
             // frame otherwise we only need to do work if there was ever a send on
@@ -904,8 +904,10 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
 
     @Override
     public StreamSenderMessage footer(Footer footer) throws ClientException {
-        checkStreamState(StreamState.COMPLETE, "Cannot write to Message Footer after message has been marked completed.");
-        checkStreamState(StreamState.ABORTED, "Cannot write to Message Footer after message has benn marked aborted.");
+        if (currentState.ordinal() >= StreamState.COMPLETE.ordinal()) {
+            throw new ClientIllegalStateException(
+                "Cannot write to Message Footer after message has been marked completed or aborted.");
+        }
         this.footer = footer;
         return this;
     }
@@ -1042,8 +1044,10 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     private Footer lazyCreateFooter() throws ClientIllegalStateException {
-        checkStreamState(StreamState.COMPLETE, "Cannot write to Message Footer after message has been marked completed.");
-        checkStreamState(StreamState.ABORTED, "Cannot write to Message Footer after message has benn marked aborted.");
+        if (currentState.ordinal() >= StreamState.COMPLETE.ordinal()) {
+            throw new ClientIllegalStateException(
+                "Cannot write to Message Footer after message has been marked completed or aborted.");
+        }
 
         if (footer == null) {
             footer = new Footer(new LinkedHashMap<>());
