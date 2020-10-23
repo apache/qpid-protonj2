@@ -1680,4 +1680,213 @@ public class SenderTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    void testConcurrentSendOnlyBlocksForInitialSendInProgress() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
+            peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Sender sender = connection.openSender("test-queue").openFuture().get();
+            // Ensure that sender gets its flow before the sends are triggered.
+            connection.openReceiver("test-queue").openFuture().get();
+
+            final byte[] payload = new byte[1024];
+            Arrays.fill(payload, (byte) 1);
+
+            // One should block on the send waiting for the others send to finish
+            // otherwise they should not care about concurrency of sends.
+
+            final AtomicBoolean sendFailed = new AtomicBoolean();
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    LOG.info("Test send 1 is preparing to fire:");
+                    Tracker tracker = sender.send(Message.create(payload));
+                    tracker.awaitSettlement(10, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    LOG.info("Test send 1 failed with error: ", e);
+                    sendFailed.set(true);
+                }
+            });
+
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    LOG.info("Test send 2 is preparing to fire:");
+                    Tracker tracker = sender.send(Message.create(payload));
+                    tracker.awaitSettlement(10, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    LOG.info("Test send 2 failed with error: ", e);
+                    sendFailed.set(true);
+                }
+            });
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            assertFalse(sendFailed.get());
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void testConcurrentSendBlocksBehindSendWaitingForCredit() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Sender sender = connection.openSender("test-queue").openFuture().get();
+
+            final byte[] payload = new byte[1024];
+            Arrays.fill(payload, (byte) 1);
+
+            final CountDownLatch send1Started = new CountDownLatch(1);
+            final CountDownLatch send2Completed = new CountDownLatch(1);
+
+            final AtomicBoolean sendFailed = new AtomicBoolean();
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    LOG.info("Test send 1 is preparing to fire:");
+                    ForkJoinPool.commonPool().execute(() -> send1Started.countDown());
+                    sender.send(Message.create(payload));
+                } catch (Exception e) {
+                    LOG.info("Test send 1 failed with error: ", e);
+                    sendFailed.set(true);
+                }
+            });
+
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    assertTrue(send1Started.await(10, TimeUnit.SECONDS));
+                    LOG.info("Test send 2 is preparing to fire:");
+                    Tracker tracker = sender.send(Message.create(payload));
+                    tracker.awaitSettlement(10, TimeUnit.SECONDS);
+                    send2Completed.countDown();
+                } catch (Exception e) {
+                    LOG.info("Test send 2 failed with error: ", e);
+                    sendFailed.set(true);
+                }
+            });
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(0).withNextIncomingId(1).withLinkCredit(1).now();
+            peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
+            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(1).withNextIncomingId(2).withLinkCredit(1).queue();
+            peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
+
+            assertTrue(send2Completed.await(10, TimeUnit.SECONDS));
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            assertFalse(sendFailed.get());
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void testConcurrentSendWaitingOnSplitFramedSendToCompleteIsSentAfterCreditUpdated() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().maxFrameSize(1024);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            Sender sender = connection.openSender("test-queue");
+
+            final byte[] payload = new byte[1536];
+            Arrays.fill(payload, (byte) 1);
+
+            final CountDownLatch send1Started = new CountDownLatch(1);
+            final CountDownLatch send2Completed = new CountDownLatch(1);
+
+            final AtomicBoolean sendFailed = new AtomicBoolean();
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    LOG.info("Test send 1 is preparing to fire:");
+                    ForkJoinPool.commonPool().execute(() -> send1Started.countDown());
+                    sender.send(Message.create(payload));
+                } catch (Exception e) {
+                    LOG.info("Test send 1 failed with error: ", e);
+                    sendFailed.set(true);
+                }
+            });
+
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    assertTrue(send1Started.await(10, TimeUnit.SECONDS));
+                    LOG.info("Test send 2 is preparing to fire:");
+                    Tracker tracker = sender.send(Message.create(payload));
+                    tracker.awaitSettlement(10, TimeUnit.SECONDS);
+                    send2Completed.countDown();
+                } catch (Exception e) {
+                    LOG.info("Test send 2 failed with error: ", e);
+                    sendFailed.set(true);
+                }
+            });
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(0).withNextIncomingId(1).withLinkCredit(1).now();
+            peer.expectTransfer().withNonNullPayload().withMore(true);
+            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(0).withNextIncomingId(2).withLinkCredit(1).queue();
+            peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
+            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(1).withNextIncomingId(3).withLinkCredit(1).queue();
+            peer.expectTransfer().withNonNullPayload().withMore(true);
+            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(1).withNextIncomingId(4).withLinkCredit(1).queue();
+            peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
+
+            assertTrue(send2Completed.await(10, TimeUnit.SECONDS));
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            assertFalse(sendFailed.get());
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }
