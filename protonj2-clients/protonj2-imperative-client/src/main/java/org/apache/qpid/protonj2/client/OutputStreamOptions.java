@@ -72,13 +72,18 @@ public class OutputStreamOptions {
     /**
      * @return the configured stream size limit for associated {@link OutputStream}
      */
-    public int streamSize() {
+    public int bodyLength() {
         return streamSize;
     }
 
     /**
      * Sets the overall stream size for this associated {@link OutputStream} that the
      * options are applied to.
+     * <p>
+     * When set this option indicates the number of bytes that can be written to the stream before an error
+     * would be thrown indicating that this value was exceeded.  Conversely if the stream is closed before
+     * the number of bytes indicated is written the send will be aborted and an error will be thrown to the
+     * caller.
      *
      * @param streamSize
      *

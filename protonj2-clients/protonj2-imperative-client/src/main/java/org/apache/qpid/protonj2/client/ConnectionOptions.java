@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
+import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 import org.apache.qpid.protonj2.types.transport.Open;
 
 /**
@@ -135,7 +137,8 @@ public class ConnectionOptions {
 
     /**
      * Configures the timeout used when awaiting a response from the remote that a request to close
-     * a resource such as a {@link Sender} or {@link Receiver} has been honored.
+     * a resource such as a {@link Connection}, {@link Session}, {@link Sender} or {@link Receiver} h
+     * as been honored.
      *
      * @param closeTimeout
      *      Timeout value in milliseconds to wait for a remote response.
@@ -156,7 +159,8 @@ public class ConnectionOptions {
 
     /**
      * Configures the timeout used when awaiting a response from the remote that a request to open
-     * a resource such as a {@link Sender} or {@link Receiver} has been honored.
+     * a resource such as a {@link Connection}, {@link Session}, {@link Sender} or {@link Receiver}
+     * has been honored.
      *
      * @param openTimeout
      *      Timeout value in milliseconds to wait for a remote response.
@@ -176,10 +180,10 @@ public class ConnectionOptions {
     }
 
     /**
-     * Configures the timeout used when awaiting a response from the remote for settlement of a
-     * message send from a {@link Sender} resource.  If the remote does not respond within the
-     * configured timeout the {@link Tracker} associated with the sent message will reflect a
-     * failed send.
+     * Configures the timeout used when awaiting a send operation to complete.  A send will block if the
+     * remote has not granted the {@link Sender} or the {@link Session} credit to do so, if the send blocks
+     * for longer than this timeout the send call will fail with an {@link ClientSendTimedOutException}
+     * exception to indicate that the send did not complete.
      *
      * @param sendTimeout
      *      Timeout value in milliseconds to wait for a remote response.
@@ -202,7 +206,8 @@ public class ConnectionOptions {
      * Configures the timeout used when awaiting a response from the remote that a request to
      * perform some action such as starting a new transaction.  If the remote does not respond
      * within the configured timeout the resource making the request will mark it as failed and
-     * return an error to the request initiator.
+     * return an error to the request initiator usually in the form of a
+     * {@link ClientOperationTimedOutException}.
      *
      * @param requestTimeout
      *      Timeout value in milliseconds to wait for a remote response.
@@ -214,15 +219,36 @@ public class ConnectionOptions {
         return this;
     }
 
+    /**
+     * @return the configured or default channel max value for create {@link Connection} instances.
+     */
     public int channelMax() {
         return channelMax;
     }
 
+    /**
+     * Configure the channel maximum value for the new {@link Connection} created with these options.
+     * <p>
+     * The channel max value controls how many {@link Session} instances can be created by a given
+     * Connection, the default value is <i>65535</i>.
+     *
+     * @param channelMax
+     *      The channel max value to assign to newly created {@link Connection} instances.
+     *
+     * @return this {@link ConnectionOptions} instance.
+     */
     public ConnectionOptions channelMax(int channelMax) {
+        if (channelMax < 0 || channelMax > 65535) {
+            throw new IllegalArgumentException("Cannot set a channel max less than zero or greater than 65535");
+        }
+
         this.channelMax = channelMax;
         return this;
     }
 
+    /**
+     * @return the configure maximum frame size value for newly create {@link Connection} instances.
+     */
     public int maxFrameSize() {
         return maxFrameSize;
     }

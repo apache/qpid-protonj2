@@ -269,7 +269,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
 
         ProtonBuffer streamBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(writeBufferSize, writeBufferSize);
 
-        if (options.streamSize() > 0) {
+        if (options.bodyLength() > 0) {
             return new SingularDataSectionOutputStream(options, streamBuffer);
         } else {
             return new MultipleDataSectionsOutputStream(options, streamBuffer);
@@ -358,10 +358,10 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         public void flush() throws IOException {
             checkClosed();
 
-            if (options.streamSize() <= 0) {
+            if (options.bodyLength() <= 0) {
                 doFlushPending(false);
             } else {
-                doFlushPending(bytesWritten == options.streamSize() && options.completeSendOnClose());
+                doFlushPending(bytesWritten == options.bodyLength() && options.completeSendOnClose());
             }
         }
 
@@ -370,7 +370,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
             if (closed.compareAndSet(false, true) && !completed()) {
                 currentState = StreamState.BODY_WRITABLE;
 
-                if (options.streamSize() > 0 && options.streamSize() != bytesWritten) {
+                if (options.bodyLength() > 0 && options.bodyLength() != bytesWritten) {
                     // Limit was set but user did not write all of it so we must abort.
                     try {
                         abort();
@@ -385,7 +385,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         }
 
         private void checkOutputLimitReached(int writeSize) throws IOException {
-            final int outputLimit = options.streamSize();
+            final int outputLimit = options.bodyLength();
 
             if (completed()) {
                 throw new IOException("Cannot write to an already completed message output stream");
@@ -445,7 +445,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
             preamble.writeByte(EncodingCodes.SMALLULONG);
             preamble.writeByte(Data.DESCRIPTOR_CODE.byteValue());
             preamble.writeByte(EncodingCodes.VBIN32);
-            preamble.writeInt(options.streamSize());
+            preamble.writeInt(options.bodyLength());
 
             appenedDataToBuffer(preamble);
         }

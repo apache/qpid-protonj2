@@ -54,11 +54,23 @@ public class ReceiverOptions {
         }
     }
 
+    /**
+     * Controls if the created Receiver will automatically accept and settle deliveries that have
+     * been received by the application (default is <code>true</code>).
+     *
+     * @param autoAccept
+     *      The value to assign for auto delivery acceptance.
+     *
+     * @return this {@link ReceiverOptions} instance.
+     */
     public ReceiverOptions autoAccept(boolean autoAccept) {
         this.autoAccept = autoAccept;
         return this;
     }
 
+    /**
+     * @return the current value of the {@link Receiver} auto accept setting.
+     */
     public boolean autoAccept() {
         return autoAccept;
     }
@@ -187,14 +199,14 @@ public class ReceiverOptions {
     }
 
     /**
-     * @return the source
+     * @return the source options that will be used when creating new {@link Receiver} instances.
      */
     public SourceOptions sourceOptions() {
         return source;
     }
 
     /**
-     * @return the target
+     * @return the target options that will be used when creating new {@link Sender} instances.
      */
     public TargetOptions targetOptions() {
         return target;
