@@ -670,6 +670,22 @@ public abstract class ProtonAbstractBuffer implements ProtonBuffer {
         internalCheckReadableBytes(minimumReadableBytes);
     }
 
+    protected final void adjustIndexMarks(int decrement) {
+        final int markedReaderIndex = markedReadIndex;
+        if (markedReaderIndex <= decrement) {
+            markedReadIndex = 0;
+            final int markedWriterIndex = markedWriteIndex;
+            if (markedWriterIndex <= decrement) {
+                markedWriteIndex = 0;
+            } else {
+                markedWriteIndex = markedWriterIndex - decrement;
+            }
+        } else {
+            markedReadIndex = markedReaderIndex - decrement;
+            markedWriteIndex -= decrement;
+        }
+    }
+
     private void internalCheckReadableBytes(int minimumReadableBytes) {
         // Called when we know that we don't need to validate if the minimum readable
         // value is negative.

@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -1570,6 +1571,92 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
         });
 
         assertEquals(2, walked.get());
+    }
+
+    //----- Test reclaim read buffers to preserve memory
+
+    @Test
+    public void testReclaimBuffersFromEmptyComposite() {
+        ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
+
+        assertEquals(0, composite.getReadableBytes());
+        assertEquals(0, composite.numberOfBuffers());
+
+        composite.reclaimRead();
+
+        assertEquals(0, composite.numberOfBuffers());
+        assertEquals(0, composite.getReadableBytes());
+    }
+
+    @Test
+    public void testReclaimReadBuffersWhenNoneRead() {
+        ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+
+        ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
+
+        composite.append(buffer1);
+        composite.append(buffer2);
+
+        assertEquals(2, composite.numberOfBuffers());
+        assertEquals(buffer1.getReadableBytes() + buffer2.getReadableBytes(), composite.getReadableBytes());
+
+        composite.reclaimRead();
+
+        assertEquals(2, composite.numberOfBuffers());
+        assertEquals(buffer1.getReadableBytes() + buffer2.getReadableBytes(), composite.getReadableBytes());
+    }
+
+    @Test
+    public void testReclaimAllBuffers() {
+        ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+
+        ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
+
+        composite.append(buffer1);
+        composite.append(buffer2);
+
+        assertEquals(2, composite.numberOfBuffers());
+        assertEquals(buffer1.getReadableBytes() + buffer2.getReadableBytes(), composite.getReadableBytes());
+
+        composite.setIndex(composite.getReadableBytes(), composite.getReadableBytes());
+
+        assertEquals(0, composite.getReadableBytes());
+
+        composite.reclaimRead();
+
+        assertEquals(0, composite.numberOfBuffers());
+        assertEquals(0, composite.getReadableBytes());
+    }
+
+    @Test
+    public void testReclaimFirstReadChunk() {
+        ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0  });
+
+        ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
+
+        composite.append(buffer1);
+        composite.append(buffer2);
+
+        assertEquals(2, composite.numberOfBuffers());
+        assertEquals(buffer1.getReadableBytes() + buffer2.getReadableBytes(), composite.getReadableBytes());
+
+        composite.setIndex(buffer1.getReadableBytes(), composite.getReadableBytes());
+
+        assertEquals(buffer2.getReadableBytes(), composite.getReadableBytes());
+
+        composite.reclaimRead();
+
+        assertEquals(1, composite.numberOfBuffers());
+        assertEquals(buffer2.getReadableBytes(), composite.getReadableBytes());
+
+        for (int i = 0; i < buffer2.getReadableBytes(); ++i) {
+            assertEquals(buffer2.getByte(i), composite.readByte());
+        }
+
+        assertThrows(IndexOutOfBoundsException.class, () -> composite.readByte());
     }
 
     //----- Implement abstract methods from the abstract buffer test base class

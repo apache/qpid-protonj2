@@ -200,8 +200,7 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
      *
      * @return this {@link ProtonCompositeBuffer} instance.
      */
-    @SuppressWarnings("unused")
-    private ProtonCompositeBuffer reclaimRead() {
+    public ProtonCompositeBuffer reclaimRead() {
         final int readIndex = this.readIndex;
         if (readIndex == 0) {
             return this;
@@ -216,9 +215,37 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
             tail.prev = head;
             markedReadIndex = 0;
             markedWriteIndex = 0;
-            // TODO: Markers need to be reset
+            adjustIndexMarks(readIndex);
         } else {
-            // TODO: remove some and adjust chunks with new buffer data
+            Chunk current = head.next;
+            int chunksToRemove = 0;
+
+            while (current != tail) {
+                if (current.endIndex > readIndex) {
+                    break;
+                }
+                chunksToRemove++;
+                current = current.next;
+            }
+
+            if (lastAccessedChunk != null && lastAccessedChunk.endIndex < readIndex) {
+                lastAccessedChunk = head;
+            }
+
+            current = head.next;
+            int removedSize = 0;
+            while (chunksToRemove-- > 0) {
+                removedSize += current.length;
+                current = head.next = current.next;
+                current.prev = head;
+                current.startIndex -= removedSize;
+                current.endIndex -= removedSize;
+                totalChunks--;
+                capacity -= removedSize;
+            }
+
+            setIndex(getReadIndex() - removedSize, getWriteIndex() - removedSize);
+            adjustIndexMarks(removedSize);
         }
 
         return this;
@@ -627,8 +654,8 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
 
         // We can more quickly traverse the chunks to locate an index read / write
         // by tracking in this chunk where it lives in the buffer scope.
-        private final int startIndex;
-        private final int endIndex;
+        private int startIndex;
+        private int endIndex;
 
         private Chunk next;
         private Chunk prev;
