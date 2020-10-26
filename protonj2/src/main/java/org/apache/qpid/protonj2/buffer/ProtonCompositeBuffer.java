@@ -633,6 +633,8 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
         return this;
     }
 
+    // TODO: Need to validate access of individual buffer chunks if API is added for that.
+    @SuppressWarnings("unused")
     private void checkBufferIndex(int index) {
         if (index < 0 || index > totalChunks) {
             throw new IndexOutOfBoundsException(String.format(
