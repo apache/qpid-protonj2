@@ -20,6 +20,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
+import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
+
 /**
  * Options that control the behavior of a {@link Sender} created from them.
  */
@@ -52,11 +55,22 @@ public class SenderOptions {
         }
     }
 
+    /**
+     * Configures the link name to use when creating a given {@link Sender} instance.
+     *
+     * @param linkName
+     *      The assigned link name to use when creating a {@link Sender}.
+     *
+     * @return this {@link SenderOptions} instance.
+     */
     public SenderOptions linkName(String linkName) {
         this.linkName = linkName;
         return this;
     }
 
+    /**
+     * @return the configured link name to use when creating a {@link Sender}.
+     */
     public String linkName() {
         return linkName;
     }
@@ -90,46 +104,110 @@ public class SenderOptions {
         return autoSettle;
     }
 
+    /**
+     * Sets the {@link DeliveryMode} value to assign to newly created {@link Sender} instances.
+     *
+     * @param deliveryMode
+     *      The delivery mode value to configure.
+     *
+     * @return this {@link SenderOptions} instance.
+     */
     public SenderOptions deliveryMode(DeliveryMode deliveryMode) {
         this.deliveryMode = deliveryMode;
         return this;
     }
 
+    /**
+     * @return the current value of the {@link Sender} delivery mode configuration.
+     */
     public DeliveryMode deliveryMode() {
         return deliveryMode;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a {@link Sender} is closed.
+     */
     public long closeTimeout() {
         return closeTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to close
+     * the {@link Sender} link.
+     *
+     * @param closeTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link SenderOptions} instance.
+     */
     public SenderOptions closeTimeout(long closeTimeout) {
         this.closeTimeout = closeTimeout;
         return this;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a {@link Sender} is opened.
+     */
     public long openTimeout() {
         return openTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to open
+     * a {@link Sender} has been honored.
+     *
+     * @param openTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link SenderOptions} instance.
+     */
     public SenderOptions openTimeout(long openTimeout) {
         this.openTimeout = openTimeout;
         return this;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a resource is message send.
+     */
     public long sendTimeout() {
         return sendTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a send operation to complete.  A send will block if the
+     * remote has not granted the {@link Sender} or the {@link Session} credit to do so, if the send blocks
+     * for longer than this timeout the send call will fail with an {@link ClientSendTimedOutException}
+     * exception to indicate that the send did not complete.
+     *
+     * @param sendTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link SenderOptions} instance.
+     */
     public SenderOptions sendTimeout(long sendTimeout) {
         this.sendTimeout = sendTimeout;
         return this;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a resource makes a request.
+     */
     public long requestTimeout() {
         return requestTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to
+     * perform some action such as starting a new transaction.  If the remote does not respond
+     * within the configured timeout the resource making the request will mark it as failed and
+     * return an error to the request initiator usually in the form of a
+     * {@link ClientOperationTimedOutException}.
+     *
+     * @param requestTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link SenderOptions} instance.
+     */
     public SenderOptions requestTimeout(long requestTimeout) {
         this.requestTimeout = requestTimeout;
         return this;
@@ -210,7 +288,6 @@ public class SenderOptions {
      * @return this options class for chaining.
      */
     protected SenderOptions copyInto(SenderOptions other) {
-        // TODO - Copy source and target options
         other.autoSettle(autoSettle);
         other.linkName(linkName);
         other.closeTimeout(closeTimeout);
@@ -227,6 +304,9 @@ public class SenderOptions {
         if (properties != null) {
             other.properties(new HashMap<>(properties));
         }
+
+        source.copyInto(other.sourceOptions());
+        target.copyInto(other.targetOptions());
 
         return this;
     }

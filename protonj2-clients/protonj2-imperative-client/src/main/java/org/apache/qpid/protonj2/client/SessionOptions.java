@@ -20,6 +20,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
+import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
+
 /**
  * Options that control the behaviour of the {@link Session} created from them.
  */
@@ -28,6 +31,7 @@ public class SessionOptions {
     public static final int DEFAULT_SESSION_CAPACITY = 100 * 1024 * 1024;
 
     private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
+    private long drainTimeout = ConnectionOptions.DEFAULT_DRAIN_TIMEOUT;
     private long requestTimeout = ConnectionOptions.DEFAULT_REQUEST_TIMEOUT;
     private long openTimeout = ConnectionOptions.DEFAULT_OPEN_TIMEOUT;
     private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
@@ -59,6 +63,7 @@ public class SessionOptions {
         other.closeTimeout(closeTimeout);
         other.openTimeout(openTimeout);
         other.sendTimeout(sendTimeout);
+        other.drainTimeout(drainTimeout);
         other.requestTimeout(requestTimeout);
 
         if (offeredCapabilities != null) {
@@ -74,39 +79,113 @@ public class SessionOptions {
         return this;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a resource is closed.
+     */
     public long closeTimeout() {
         return closeTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to close
+     * a {@link Session} as been honored.
+     *
+     * @param closeTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link SessionOptions} instance.
+     */
     public SessionOptions closeTimeout(long closeTimeout) {
         this.closeTimeout = closeTimeout;
         return this;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a resource is opened.
+     */
     public long openTimeout() {
         return openTimeout;
     }
 
-    public SessionOptions openTimeout(long connectTimeout) {
-        this.openTimeout = connectTimeout;
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to open
+     * a {@link Session} has been honored.
+     *
+     * @param openTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link SessionOptions} instance.
+     */
+    public SessionOptions openTimeout(long openTimeout) {
+        this.openTimeout = openTimeout;
         return this;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a resource is message send.
+     */
     public long sendTimeout() {
         return sendTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a send operation to complete.  A send will block if the
+     * remote has not granted the {@link Sender} or the {@link Session} credit to do so, if the send blocks
+     * for longer than this timeout the send call will fail with an {@link ClientSendTimedOutException}
+     * exception to indicate that the send did not complete.
+     *
+     * @param sendTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link SessionOptions} instance.
+     */
     public SessionOptions sendTimeout(long sendTimeout) {
         this.sendTimeout = sendTimeout;
         return this;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a resource makes a request.
+     */
     public long requestTimeout() {
         return requestTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to
+     * perform some action such as starting a new transaction.  If the remote does not respond
+     * within the configured timeout the resource making the request will mark it as failed and
+     * return an error to the request initiator usually in the form of a
+     * {@link ClientOperationTimedOutException}.
+     *
+     * @param requestTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link SessionOptions} instance.
+     */
     public SessionOptions requestTimeout(long requestTimeout) {
         this.requestTimeout = requestTimeout;
+        return this;
+    }
+
+    /**
+     * @return the configured drain timeout value that will use to fail a pending drain request.
+     */
+    public long drainTimeout() {
+        return drainTimeout;
+    }
+
+    /**
+     * Sets the drain timeout (in milliseconds) after which a {@link Receiver} request to drain
+     * link credit is considered failed and the request will be marked as such.
+     *
+     * @param drainTimeout
+     *      the drainTimeout to use for receiver links.
+     *
+     * @return this {@link SessionOptions} instance.
+     */
+    public SessionOptions drainTimeout(long drainTimeout) {
+        this.drainTimeout = drainTimeout;
         return this;
     }
 

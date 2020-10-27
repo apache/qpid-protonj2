@@ -198,7 +198,7 @@ final class ClientReceiverBuilder {
                     receiverOptions.openTimeout(sessionOptions.openTimeout());
                     receiverOptions.closeTimeout(sessionOptions.closeTimeout());
                     receiverOptions.requestTimeout(sessionOptions.requestTimeout());
-                    receiverOptions.sendTimeout(sessionOptions.sendTimeout());
+                    receiverOptions.drainTimeout(sessionOptions.drainTimeout());
                 }
 
                 defaultReceivernOptions = receiverOptions;
@@ -221,7 +221,7 @@ final class ClientReceiverBuilder {
                     receiverOptions.openTimeout(sessionOptions.openTimeout());
                     receiverOptions.closeTimeout(sessionOptions.closeTimeout());
                     receiverOptions.requestTimeout(sessionOptions.requestTimeout());
-                    receiverOptions.sendTimeout(sessionOptions.sendTimeout());
+                    receiverOptions.drainTimeout(sessionOptions.drainTimeout());
                 }
 
                 defaultStreamReceiverOptions = receiverOptions;

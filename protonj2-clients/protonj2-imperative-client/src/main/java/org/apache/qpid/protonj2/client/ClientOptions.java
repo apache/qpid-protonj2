@@ -61,7 +61,8 @@ public class ClientOptions {
 
     /**
      * Sets the desired future type that the client connection should use when creating
-     * the futures used by the API.
+     * the futures used by the API.  By default the client will select a Future implementation
+     * by itself however the user can override this selection here if desired.
      *
      * @param futureType
      *      The name of the future type to use.

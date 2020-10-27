@@ -58,8 +58,7 @@ public interface ErrorCondition {
      *
      * @return a new read-only {@link ErrorCondition} object
      */
-    public static ErrorCondition create(String condition, String description, Map<String, Object> info) {
+    static ErrorCondition create(String condition, String description, Map<String, Object> info) {
         return new ClientErrorCondition(condition, description, info);
     }
-
 }

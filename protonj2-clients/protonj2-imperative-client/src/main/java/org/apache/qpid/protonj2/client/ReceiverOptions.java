@@ -20,14 +20,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
+
 /**
  * Options that control the behavior of the {@link Receiver} created from them.
  */
 public class ReceiverOptions {
 
-    // TODO: simplify configuration options for things like durable subs, shared subs? Or add a helper to create the options?
-
-    private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
+    private long drainTimeout = ConnectionOptions.DEFAULT_DRAIN_TIMEOUT;
     private long requestTimeout = ConnectionOptions.DEFAULT_REQUEST_TIMEOUT;
     private long openTimeout = ConnectionOptions.DEFAULT_OPEN_TIMEOUT;
     private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
@@ -55,7 +55,7 @@ public class ReceiverOptions {
     }
 
     /**
-     * Controls if the created Receiver will automatically accept and settle deliveries that have
+     * Controls if the created Receiver will automatically accept the deliveries that have
      * been received by the application (default is <code>true</code>).
      *
      * @param autoAccept
@@ -75,73 +75,175 @@ public class ReceiverOptions {
         return autoAccept;
     }
 
+    /**
+     * Controls if the created Receiver will automatically settle the deliveries that have
+     * been received by the application (default is <code>true</code>).
+     *
+     * @param autoSettle
+     *      The value to assign for auto delivery settlement.
+     *
+     * @return this {@link ReceiverOptions} instance.
+     */
     public ReceiverOptions autoSettle(boolean autoSettle) {
         this.autoSettle = autoSettle;
         return this;
     }
 
+    /**
+     * @return the current value of the {@link Receiver} auto settlement setting.
+     */
     public boolean autoSettle() {
         return autoSettle;
     }
 
+    /**
+     * Sets the {@link DeliveryMode} value to assign to newly created {@link Receiver} instances.
+     *
+     * @param deliveryMode
+     *      The delivery mode value to configure.
+     *
+     * @return this {@link ReceiverOptions} instance.
+     */
     public ReceiverOptions deliveryMode(DeliveryMode deliveryMode) {
         this.deliveryMode = deliveryMode;
         return this;
     }
 
+    /**
+     * @return the current value of the {@link Receiver} delivery mode configuration.
+     */
     public DeliveryMode deliveryMode() {
         return deliveryMode;
     }
 
+    /**
+     * Configures the link name to use when creating a given {@link Receiver} instance.
+     *
+     * @param linkName
+     *      The assigned link name to use when creating a {@link Receiver}.
+     *
+     * @return this {@link ReceiverOptions} instance.
+     */
     public ReceiverOptions linkName(String linkName) {
         this.linkName = linkName;
         return this;
     }
 
+    /**
+     * @return the configured link name to use when creating a {@link Receiver}.
+     */
     public String linkName() {
         return linkName;
     }
 
+    /**
+     * @return the credit window configuration that will be applied to created {@link Receiver} instances.
+     */
     public int creditWindow() {
         return creditWindow;
     }
 
+    /**
+     * A credit window value that will be used to maintain an window of credit for Receiver instances
+     * that are created.  The {@link Receiver} will allow up to the credit window amount of incoming
+     * deliveries to be queued and as they are read from the {@link Receiver} the window will be extended
+     * to maintain a consistent backlog of deliveries.  The default is to configure a credit window of 10.
+     * <p>
+     * To disable credit windowing and allow the client application to control the credit on the {@link Receiver}
+     * link the credit window value should be set to zero.
+     *
+     * @param creditWindow
+     *      The assigned credit window value to use.
+     *
+     * @return this {@link ReceiverOptions} instance.
+     */
     public ReceiverOptions creditWindow(int creditWindow) {
         this.creditWindow = creditWindow;
         return this;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a {@link Receiver} is closed.
+     */
     public long closeTimeout() {
         return closeTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to close
+     * the {@link Receiver} link.
+     *
+     * @param closeTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link ReceiverOptions} instance.
+     */
     public ReceiverOptions closeTimeout(long closeTimeout) {
         this.closeTimeout = closeTimeout;
         return this;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a {@link Receiver} is opened.
+     */
     public long openTimeout() {
         return openTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to open
+     * a {@link Receiver} has been honored.
+     *
+     * @param openTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link ReceiverOptions} instance.
+     */
     public ReceiverOptions openTimeout(long openTimeout) {
         this.openTimeout = openTimeout;
         return this;
     }
 
-    public long sendTimeout() {
-        return sendTimeout;
+    /**
+     * @return the configured drain timeout value that will use to fail a pending drain request.
+     */
+    public long drainTimeout() {
+        return drainTimeout;
     }
 
-    public ReceiverOptions sendTimeout(long sendTimeout) {
-        this.sendTimeout = sendTimeout;
+    /**
+     * Sets the drain timeout (in milliseconds) after which a {@link Receiver} request to drain
+     * link credit is considered failed and the request will be marked as such.
+     *
+     * @param drainTimeout
+     *      the drainTimeout to use for receiver links.
+     *
+     * @return this {@link ReceiverOptions} instance.
+     */
+    public ReceiverOptions drainTimeout(long drainTimeout) {
+        this.drainTimeout = drainTimeout;
         return this;
     }
 
+    /**
+     * @return the timeout used when awaiting a response from the remote when a resource makes a request.
+     */
     public long requestTimeout() {
         return requestTimeout;
     }
 
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to
+     * perform some action such as starting a new transaction.  If the remote does not respond
+     * within the configured timeout the resource making the request will mark it as failed and
+     * return an error to the request initiator usually in the form of a
+     * {@link ClientOperationTimedOutException}.
+     *
+     * @param requestTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link ReceiverOptions} instance.
+     */
     public ReceiverOptions requestTimeout(long requestTimeout) {
         this.requestTimeout = requestTimeout;
         return this;
@@ -226,7 +328,7 @@ public class ReceiverOptions {
         other.linkName(linkName);
         other.closeTimeout(closeTimeout);
         other.openTimeout(openTimeout);
-        other.sendTimeout(sendTimeout);
+        other.drainTimeout(drainTimeout);
         other.requestTimeout(requestTimeout);
 
         if (offeredCapabilities != null) {

@@ -553,44 +553,230 @@ public interface Message<E> {
 
     //----- Message Annotations
 
+    /**
+     * Returns the requested message annotation value from this {@link Message} if it exists
+     * or returns null otherwise.
+     *
+     * @param key
+     *      The key of the message annotation to query for.
+     *
+     * @return the corresponding message annotation value of null if none was carried in this {@link Message}.
+     *
+     * @throws ClientException if an error occurs accessing the message annotations in this {@link Message}.
+     */
     Object annotation(String key) throws ClientException;
 
+    /**
+     * Query the {@link Message} to determine if it carries the given message annotation key.
+     *
+     * @param key
+     *      The key of the message annotation to query for.
+     *
+     * @return <code>true</code> if the Message carries the given message annotation.
+     *
+     * @throws ClientException if an error occurs accessing the message annotations in this {@link Message}.
+     */
     boolean hasAnnotation(String key) throws ClientException;
 
+    /**
+     * Query the {@link Message} to determine if it carries any message annotations.
+     *
+     * @return <code>true</code> if the Message carries any message annotations.
+     *
+     * @throws ClientException if an error occurs accessing the message annotations in this {@link Message}.
+     */
     boolean hasAnnotations() throws ClientException;
 
+    /**
+     * Removes the given message annotation from the values carried in the message currently, if none
+     * was present than this method returns <code>null</code>.
+     *
+     * @param key
+     *      The key of the message annotation to query for removal.
+     *
+     * @return the message annotation value that was previously assigned to that key.
+     *
+     * @throws ClientException if an error occurs accessing the message annotations in this {@link Message}.
+     */
     Object removeAnnotation(String key) throws ClientException;
 
+    /**
+     * Invokes the given {@link BiConsumer} on each message annotation entry carried in this {@link Message}.
+     *
+     * @param action
+     *      The action that will be invoked on each message annotation entry.
+     *
+     * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs accessing the message annotations in this {@link Message}.
+     */
     Message<E> forEachAnnotation(BiConsumer<String, Object> action) throws ClientException;
 
+    /**
+     * Sets the given message annotation value at the given key, replacing any previous value
+     * that was assigned to this {@link Message}.
+     *
+     * @param key
+     *      The message annotation key where the value is to be assigned.
+     * @param value
+     *      The value to assign to the given message annotation key.
+     *
+     * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs accessing the message annotations in this {@link Message}.
+     */
     Message<E> annotation(String key, Object value) throws ClientException;
 
     //----- Application Properties
 
+    /**
+     * Returns the requested application property value from this {@link Message} if it exists
+     * or returns null otherwise.
+     *
+     * @param key
+     *      The key of the application property to query for.
+     *
+     * @return the corresponding application property value of null if none was carried in this {@link Message}.
+     *
+     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
+     */
     Object applicationProperty(String key) throws ClientException;
 
+    /**
+     * Query the {@link Message} to determine if it carries the given application property key.
+     *
+     * @param key
+     *      The key of the application property to query for.
+     *
+     * @return <code>true</code> if the Message carries the given application property.
+     *
+     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
+     */
     boolean hasApplicationProperty(String key) throws ClientException;
 
+    /**
+     * Query the {@link Message} to determine if it carries any application properties.
+     *
+     * @return <code>true</code> if the Message carries any application properties.
+     *
+     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
+     */
     boolean hasApplicationProperties() throws ClientException;
 
+    /**
+     * Removes the given application property from the values carried in the message currently, if none
+     * was present than this method returns <code>null</code>.
+     *
+     * @param key
+     *      The key of the application property to query for removal.
+     *
+     * @return the application property value that was previously assigned to that key.
+     *
+     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
+     */
     Object removeApplicationProperty(String key) throws ClientException;
 
+    /**
+     * Invokes the given {@link BiConsumer} on each application property entry carried in this {@link Message}.
+     *
+     * @param action
+     *      The action that will be invoked on each application property entry.
+     *
+     * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
+     */
     Message<E> forEachApplicationProperty(BiConsumer<String, Object> action) throws ClientException;
 
+    /**
+     * Sets the given application property value at the given key, replacing any previous value
+     * that was assigned to this {@link Message}.
+     *
+     * @param key
+     *      The application property key where the value is to be assigned.
+     * @param value
+     *      The value to assign to the given application property key.
+     *
+     * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
+     */
     Message<E> applicationProperty(String key, Object value) throws ClientException;
 
     //----- Footer
 
+    /**
+     * Returns the requested footer value from this {@link Message} if it exists or returns
+     * <code>null</code> otherwise.
+     *
+     * @param key
+     *      The key of the footer to query for.
+     *
+     * @return the corresponding footer value of null if none was carried in this {@link Message}.
+     *
+     * @throws ClientException if an error occurs accessing the footers in this {@link Message}.
+     */
     Object footer(String key) throws ClientException;
 
+    /**
+     * Query the {@link Message} to determine if it carries the given footer key.
+     *
+     * @param key
+     *      The key of the footer to query for.
+     *
+     * @return <code>true</code> if the Message carries the given footer.
+     *
+     * @throws ClientException if an error occurs accessing the footers in this {@link Message}.
+     */
     boolean hasFooter(String key) throws ClientException;
 
+    /**
+     * Query the {@link Message} to determine if it carries any footers.
+     *
+     * @return <code>true</code> if the Message carries any footers.
+     *
+     * @throws ClientException if an error occurs accessing the footers in this {@link Message}.
+     */
     boolean hasFooters() throws ClientException;
 
+    /**
+     * Removes the given footer from the values carried in the message currently, if none
+     * was present than this method returns <code>null</code>.
+     *
+     * @param key
+     *      The key of the footer to query for removal.
+     *
+     * @return the footer value that was previously assigned to that key.
+     *
+     * @throws ClientException if an error occurs accessing the footers in this {@link Message}.
+     */
     Object removeFooter(String key) throws ClientException;
 
+    /**
+     * Invokes the given {@link BiConsumer} on each footer entry carried in this {@link Message}.
+     *
+     * @param action
+     *      The action that will be invoked on each footer entry.
+     *
+     * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs accessing the footers in this {@link Message}.
+     */
     Message<E> forEachFooter(BiConsumer<String, Object> action) throws ClientException;
 
+    /**
+     * Sets the given footer value at the given key, replacing any previous value
+     * that was assigned to this {@link Message}.
+     *
+     * @param key
+     *      The footer key where the value is to be assigned.
+     * @param value
+     *      The value to assign to the given footer key.
+     *
+     * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs accessing the footers in this {@link Message}.
+     */
     Message<E> footer(String key, Object value) throws ClientException;
 
     //----- AMQP Body Section

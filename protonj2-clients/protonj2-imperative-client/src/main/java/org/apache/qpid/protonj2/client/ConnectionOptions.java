@@ -126,8 +126,6 @@ public class ConnectionOptions {
         return this;
     }
 
-    // TODO - Proper Javadocs for the various configuration options
-
     /**
      * @return the timeout used when awaiting a response from the remote when a resource is closed.
      */
@@ -254,13 +252,11 @@ public class ConnectionOptions {
     }
 
     /**
-     * Sets the max frame size (in bytes).
-     *
-     * Values of -1 indicates to use the proton default.
+     * Sets the max frame size (in bytes), values of -1 indicates to use the client selected default.
      *
      * @param maxFrameSize the frame size in bytes.
      *
-     * @return this options object for chaining.
+     * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions maxFrameSize(int maxFrameSize) {
         this.maxFrameSize = maxFrameSize;
@@ -282,7 +278,7 @@ public class ConnectionOptions {
      *
      * @param idleTimeout the timeout in milliseconds.
      *
-     * @return this options object for chaining.
+     * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions idleTimeout(long idleTimeout) {
         this.idleTimeout = idleTimeout;
@@ -297,14 +293,13 @@ public class ConnectionOptions {
     }
 
     /**
-     * Sets the drain timeout (in milliseconds) after which a {@link Receiver} will be
-     * treated as having failed and will be closed due to unknown state of the
-     * remote having not responded to the requested drain.
+     * Sets the drain timeout (in milliseconds) after which a {@link Receiver} request to drain
+     * link credit is considered failed and the request will be marked as such.
      *
      * @param drainTimeout
      *      the drainTimeout to use for receiver links.
      *
-     * @return this options object for chaining.
+     * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions drainTimeout(long drainTimeout) {
         this.drainTimeout = drainTimeout;
@@ -312,16 +307,21 @@ public class ConnectionOptions {
     }
 
     /**
-     * @return the offeredCapabilities
+     * @return the offeredCapabilities that have been configured.
      */
     public String[] offeredCapabilities() {
         return offeredCapabilities;
     }
 
     /**
-     * @param offeredCapabilities the offeredCapabilities to set
+     * Sets the collection of capabilities to offer to the remote from a new {@link Connection}
+     * created using these {@link ConnectionOptions}.  The offered capabilities advertise to the
+     * remote capabilities that this {@link Connection} supports.
      *
-     * @return this options object for chaining.
+     * @param offeredCapabilities
+     *      the offeredCapabilities to set on a new {@link Connection}.
+     *
+     * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions offeredCapabilities(String... offeredCapabilities) {
         this.offeredCapabilities = offeredCapabilities;
@@ -329,16 +329,22 @@ public class ConnectionOptions {
     }
 
     /**
-     * @return the desiredCapabilities
+     * @return the desiredCapabilities that have been configured.
      */
     public String[] desiredCapabilities() {
         return desiredCapabilities;
     }
 
     /**
-     * @param desiredCapabilities the desiredCapabilities to set
+     * Sets the collection of capabilities to request from the remote for a new {@link Connection}
+     * created using these {@link ConnectionOptions}.  The desired capabilities inform the remote
+     * peer of the various capabilities the new {@link Connection} requires and the remote should
+     * return those that it supports in its offered capabilities.
      *
-     * @return this options object for chaining.
+     * @param desiredCapabilities
+     *      the desiredCapabilities to set on a new {@link Connection}.
+     *
+     * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions desiredCapabilities(String... desiredCapabilities) {
         this.desiredCapabilities = desiredCapabilities;
@@ -346,16 +352,19 @@ public class ConnectionOptions {
     }
 
     /**
-     * @return the properties
+     * @return the properties that have been configured.
      */
     public Map<String, Object> properties() {
         return properties;
     }
 
     /**
+     * Sets a {@link Map} of properties to convey to the remote when a new {@link Connection}
+     * is created from these {@link ConnectionOptions}.
+     *
      * @param properties the properties to set
      *
-     * @return this options object for chaining.
+     * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions properties(Map<String, Object> properties) {
         this.properties = properties;
@@ -370,10 +379,12 @@ public class ConnectionOptions {
     }
 
     /**
+     * The virtual host value to provide to the remote when creating a new {@link Connection}.
+     *
      * @param virtualHost
      * 		the virtual host to set
      *
-     * @return this options instance.
+     * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions virtualHost(String virtualHost) {
         this.virtualHost = virtualHost;
@@ -381,16 +392,18 @@ public class ConnectionOptions {
     }
 
     /**
-     * @return the user
+     * @return the user name that is configured for new {@link Connection} instances.
      */
     public String user() {
         return user;
     }
 
     /**
+     * Sets the user name used when performing connection authentication.
+     *
      * @param user the user to set
      *
-     * @return this options instance.
+     * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions user(String user) {
         this.user = user;
@@ -398,16 +411,18 @@ public class ConnectionOptions {
     }
 
     /**
-     * @return the password
+     * @return the password that is configured for new {@link Connection} instances.
      */
     public String password() {
         return password;
     }
 
     /**
+     * Sets the password used when performing connection authentication.
+     *
      * @param password the password to set
      *
-     * @return this options instance.
+     * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions password(String password) {
         this.password = password;
@@ -442,7 +457,7 @@ public class ConnectionOptions {
      * @param traceFrames
      * 		true if frame tracing on this connection should be enabled.
      *
-     * @return this options instance.
+     * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions traceFrames(boolean traceFrames) {
         this.traceFrames = traceFrames;
@@ -473,7 +488,7 @@ public class ConnectionOptions {
      * @param sslEnabled
      * 		Is SSL encryption enabled for the {@link Connection}.
      *
-     * @return this options instance.
+     * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions sslEnabled(boolean sslEnabled) {
         ssl.sslEnabled(sslEnabled);
@@ -497,7 +512,7 @@ public class ConnectionOptions {
      * @param failedHandler
      *      the connection failed handler to notify when the connection fails for any reason.
      *
-     * @return this {@link ReconnectOptions} instance.
+     * @return this {@link ConnectionOptions} instance.
      *
      * @see #connectedHandler()
      */
@@ -522,7 +537,7 @@ public class ConnectionOptions {
      * @param connectedHandler
      *      the connection established handler to assign to these {@link ConnectionOptions}.
      *
-     * @return this {@link ReconnectOptions} instance.
+     * @return this {@link ConnectionOptions} instance.
      *
      * @see #failedHandler()
      */
