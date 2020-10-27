@@ -829,13 +829,6 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
         assertEquals(0, dup.getWriteIndex());
         assertEquals(0, buffer.getWriteIndex());
         assertContentEquals(buffer, dup);
-
-        // TODO - Compact
-//        try {
-//            dup.reclaimRead();
-//        } catch (Throwable t) {
-//            fail("Compacting an empty duplicate should not fail");
-//        }
     }
 
     @Test
@@ -877,15 +870,6 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
 
         assertEquals(10, buffer.capacity());
         assertEquals(buffer.capacity(), duplicate.capacity());
-
-        // TODO - Compact
-//        buffer.reclaimRead();
-//        assertEquals(10, buffer.capacity());
-//        assertEquals(buffer.capacity(), duplicate.capacity());
-//
-//        duplicate.reclaimRead();
-//        assertEquals(10, buffer.capacity());
-//        assertEquals(buffer.capacity(), duplicate.capacity());
     }
 
     @Test
@@ -1586,6 +1570,77 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
 
         assertEquals(0, composite.numberOfBuffers());
         assertEquals(0, composite.getReadableBytes());
+    }
+
+    @Test
+    public void testReclaimBufferWhenNothingReadHasNoEffect() {
+        ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+
+        ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
+
+        composite.append(buffer1);
+
+        assertEquals(buffer1.getReadableBytes(), composite.getReadableBytes());
+        assertEquals(1, composite.numberOfBuffers());
+
+        composite.reclaimRead();
+
+        assertEquals(buffer1.getReadableBytes(), composite.getReadableBytes());
+        assertEquals(1, composite.numberOfBuffers());
+    }
+
+    @Test
+    public void testReclaimAfterSingleBufferFullyRead() {
+        ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+
+        ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
+
+        composite.append(buffer1);
+
+        assertEquals(buffer1.getReadableBytes(), composite.getReadableBytes());
+
+        composite.setReadIndex(buffer1.getReadableBytes());
+
+        assertEquals(buffer1.getReadableBytes(), composite.getReadIndex());
+        assertEquals(buffer1.getReadableBytes(), composite.getWriteIndex());
+        assertEquals(1, composite.numberOfBuffers());
+        assertEquals(0, composite.getReadableBytes());
+        assertEquals(0, composite.getWritableBytes());
+
+        composite.reclaimRead();
+
+        assertEquals(0, composite.getReadIndex());
+        assertEquals(0, composite.getWriteIndex());
+        assertEquals(0, composite.capacity());
+        assertEquals(0, composite.getReadableBytes());
+        assertEquals(0, composite.numberOfBuffers());
+    }
+
+    @Test
+    public void testReclaimAfterSingleBufferReadToOnyByteLeft() {
+        ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+
+        ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
+
+        composite.append(buffer1);
+
+        assertEquals(buffer1.getReadableBytes(), composite.getReadableBytes());
+
+        composite.setReadIndex(buffer1.getReadableBytes() - 1);
+
+        assertEquals(1, composite.getReadableBytes());
+        assertEquals(1, composite.numberOfBuffers());
+
+        composite.reclaimRead();
+
+        assertEquals(1, composite.getReadableBytes());
+        assertEquals(1, composite.numberOfBuffers());
+
+        composite.readByte();
+        composite.reclaimRead();
+
+        assertEquals(0, composite.getReadableBytes());
+        assertEquals(0, composite.numberOfBuffers());
     }
 
     @Test

@@ -208,8 +208,7 @@ public class ClientStreamDelivery implements StreamDelivery {
         public void close() throws IOException {
             markLimit = 0;
             markIndex = INVALID_MARK;
-            // TODO: Release all read bytes as they are inaccessible afterwards
-            // buffer.releaseReadBuffers
+            buffer.reclaimRead();
 
             super.close();
         }
@@ -344,9 +343,7 @@ public class ClientStreamDelivery implements StreamDelivery {
             if (buffer.getReadIndex() - markIndex > markLimit) {
                 markIndex = INVALID_MARK;
                 markLimit = 0;
-
-                // TODO: Reclaim read buffers for GC
-                // buffer.releaseReadBuffers
+                buffer.reclaimRead();
             }
         }
 

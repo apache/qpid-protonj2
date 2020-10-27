@@ -105,7 +105,7 @@ class ClientMessageTest {
 
     @Test
     public void testCreateWithBody() {
-        ClientMessage<String> message = ClientMessage.create(new AmqpValue<String>("test"));
+        ClientMessage<String> message = ClientMessage.create(new AmqpValue<>("test"));
 
         assertNotNull(message.body());
         assertNotNull(message.bodySections());
@@ -120,7 +120,7 @@ class ClientMessageTest {
 
     @Test
     public void testToAdvancedMessageReturnsSameInstance() throws ClientException {
-        Message<String> message = ClientMessage.create(new AmqpValue<String>("test"));
+        Message<String> message = ClientMessage.create(new AmqpValue<>("test"));
 
         assertNotNull(message.body());
 
@@ -416,7 +416,7 @@ class ClientMessageTest {
 
         List<Section<?>> expected = new ArrayList<>();
         expected.add(new Data(new byte[] { 0 }));
-        expected.add(new AmqpValue<String>("test"));
+        expected.add(new AmqpValue<>("test"));
         expected.add(new AmqpSequence<>(new ArrayList<>()));
 
         assertThrows(IllegalArgumentException.class, () -> message.bodySections(expected));
@@ -428,7 +428,7 @@ class ClientMessageTest {
 
         List<Section<?>> expected = new ArrayList<>();
         expected.add(new Data(new byte[] { 0 }));
-        expected.add(new AmqpValue<String>("test"));
+        expected.add(new AmqpValue<>("test"));
         expected.add(new AmqpSequence<>(new ArrayList<>()));
 
         assertThrows(IllegalArgumentException.class, () -> expected.forEach(section -> message.addBodySection(section)));
@@ -454,7 +454,7 @@ class ClientMessageTest {
 
         List<Section<?>> expected = new ArrayList<>();
         expected.add(new Data(new byte[] { 0 }));
-        expected.add(new AmqpValue<String>("test"));
+        expected.add(new AmqpValue<>("test"));
         expected.add(new AmqpSequence<>(new ArrayList<>()));
 
         assertThrows(IllegalArgumentException.class, () -> message.bodySections(expected));
@@ -475,7 +475,7 @@ class ClientMessageTest {
 
         List<Section<?>> expected = new ArrayList<>();
         expected.add(new Data(new byte[] { 0 }));
-        expected.add(new AmqpValue<String>("test"));
+        expected.add(new AmqpValue<>("test"));
         expected.add(new AmqpSequence<>(new ArrayList<>()));
 
         assertDoesNotThrow(() -> message.bodySections(expected));
@@ -495,7 +495,7 @@ class ClientMessageTest {
 
         List<Section<?>> expected = new ArrayList<>();
         expected.add(new Data(new byte[] { 0 }));
-        expected.add(new AmqpValue<String>("test"));
+        expected.add(new AmqpValue<>("test"));
         expected.add(new AmqpSequence<>(new ArrayList<>()));
 
         assertDoesNotThrow(() -> message.bodySections(expected));

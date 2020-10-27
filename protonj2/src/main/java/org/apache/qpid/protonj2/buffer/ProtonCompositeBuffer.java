@@ -210,17 +210,16 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
         if (readIndex == writeIndex && writeIndex == capacity()) {
             capacity = 0;
             totalChunks = 0;
-            lastAccessedChunk = null;
+            lastAccessedChunk = head;
             head.next = tail;
             tail.prev = head;
-            markedReadIndex = 0;
-            markedWriteIndex = 0;
+            setIndex(0, 0);
             adjustIndexMarks(readIndex);
         } else {
             int removedSize = 0;
 
             while (head.next != tail) {
-                if (head.next.endIndex > readIndex) {
+                if (head.next.endIndex >= readIndex) {
                     break;
                 }
 
