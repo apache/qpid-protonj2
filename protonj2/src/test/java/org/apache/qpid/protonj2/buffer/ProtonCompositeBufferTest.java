@@ -1659,6 +1659,109 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
         assertThrows(IndexOutOfBoundsException.class, () -> composite.readByte());
     }
 
+    @Test
+    public void testReclaimFirstReadChunksWithMultplePendingBuffers() {
+        ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0  });
+        ProtonBuffer buffer3 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+        ProtonBuffer buffer4 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0  });
+        ProtonBuffer buffer5 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+        ProtonBuffer buffer6 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0  });
+
+        final int totalPayload = buffer1.capacity() * 6;
+
+        ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
+
+        composite.append(buffer1);
+        composite.append(buffer2);
+        composite.append(buffer3);
+        composite.append(buffer4);
+        composite.append(buffer5);
+        composite.append(buffer6);
+
+        assertEquals(6, composite.numberOfBuffers());
+        assertEquals(totalPayload, composite.getReadableBytes());
+
+        composite.setIndex(buffer1.getReadableBytes() * 2, composite.getReadableBytes());
+
+        assertEquals(buffer1.capacity() * 4, composite.getReadableBytes());
+
+        composite.reclaimRead();
+
+        assertEquals(4, composite.numberOfBuffers());
+        assertEquals(buffer1.capacity() * 4, composite.getReadableBytes());
+
+        for (int i = 0; i < buffer3.getReadableBytes(); ++i) {
+            assertEquals(buffer3.getByte(i), composite.readByte());
+        }
+        for (int i = 0; i < buffer4.getReadableBytes(); ++i) {
+            assertEquals(buffer4.getByte(i), composite.readByte());
+        }
+        for (int i = 0; i < buffer5.getReadableBytes(); ++i) {
+            assertEquals(buffer5.getByte(i), composite.readByte());
+        }
+        for (int i = 0; i < buffer6.getReadableBytes(); ++i) {
+            assertEquals(buffer6.getByte(i), composite.readByte());
+        }
+
+        assertThrows(IndexOutOfBoundsException.class, () -> composite.readByte());
+    }
+
+    @Test
+    public void testReclaimBufferWhenIndexIsBeyondStartOfNextBuffer() {
+        ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0  });
+
+        ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
+
+        composite.append(buffer1);
+        composite.append(buffer2);
+
+        assertEquals(2, composite.numberOfBuffers());
+        assertEquals(buffer1.getReadableBytes() + buffer2.getReadableBytes(), composite.getReadableBytes());
+
+        composite.setIndex(buffer1.getReadableBytes() + 2, composite.getReadableBytes());
+
+        assertEquals(buffer2.getReadableBytes() - 2, composite.getReadableBytes());
+
+        composite.reclaimRead();
+
+        assertEquals(1, composite.numberOfBuffers());
+        assertEquals(buffer2.getReadableBytes() - 2, composite.getReadableBytes());
+
+        for (int i = 2; i < buffer2.getReadableBytes(); ++i) {
+            assertEquals(buffer2.getByte(i), composite.readByte());
+        }
+
+        assertThrows(IndexOutOfBoundsException.class, () -> composite.readByte());
+    }
+
+    @Test
+    public void testReclaimBufferWhileMarksSetInSuccessiveBuffer() {
+        ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0  });
+
+        ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
+
+        composite.append(buffer1);
+        composite.append(buffer2);
+
+        composite.setIndex(buffer1.getReadableBytes(), composite.getReadableBytes());
+
+        assertEquals(buffer2.getByte(0), composite.readByte());
+
+        composite.markReadIndex();
+
+        assertEquals(buffer2.getByte(1), composite.readByte());
+        assertEquals(buffer2.getByte(2), composite.readByte());
+
+        composite.reclaimRead();
+        composite.resetReadIndex();
+
+        assertEquals(buffer2.getByte(1), composite.readByte());
+        assertEquals(buffer2.getByte(2), composite.readByte());
+    }
+
     //----- Implement abstract methods from the abstract buffer test base class
 
     @Override
@@ -1693,10 +1796,6 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
         ProtonCompositeBuffer composite = new ProtonCompositeBuffer(Integer.MAX_VALUE);
         return composite.append(ProtonByteBufferAllocator.DEFAULT.wrap(array));
     }
-
-    // TODO - Once abstract buffer test base doesn't assume the buffer under test has a backing array
-    //        we should create a variant of this test that always creates a composite that is made up
-    //        of offset buffers and buffers where the write index doesn't touch the end.
 
     private ProtonBuffer allocateBufferOfOffsetComposites(int capacity) {
         ProtonBuffer buffer1 = new ProtonNioByteBuffer(ByteBuffer.allocate((capacity / 2) + 10)).skipBytes(10);

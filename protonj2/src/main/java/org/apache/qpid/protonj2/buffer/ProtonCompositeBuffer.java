@@ -217,33 +217,37 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
             markedWriteIndex = 0;
             adjustIndexMarks(readIndex);
         } else {
-            Chunk current = head.next;
-            int chunksToRemove = 0;
+            int removedSize = 0;
 
-            while (current != tail) {
-                if (current.endIndex > readIndex) {
+            while (head.next != tail) {
+                if (head.next.endIndex > readIndex) {
                     break;
                 }
-                chunksToRemove++;
-                current = current.next;
+
+                totalChunks--;
+                removedSize += head.next.length;
+
+                head.next = head.next.next;
+                head.next.prev = head;
+            }
+
+            if (removedSize == 0) {
+                return this;
             }
 
             if (lastAccessedChunk != null && lastAccessedChunk.endIndex < readIndex) {
                 lastAccessedChunk = head;
             }
 
-            current = head.next;
-            int removedSize = 0;
-            while (chunksToRemove-- > 0) {
-                removedSize += current.length;
-                current = head.next = current.next;
-                current.prev = head;
+            // All successive chunks need their index values reduced to reflect what was reclaimed.
+            Chunk current = head.next;
+            while (current != tail) {
                 current.startIndex -= removedSize;
                 current.endIndex -= removedSize;
-                totalChunks--;
-                capacity -= removedSize;
+                current = current.next;
             }
 
+            capacity -= removedSize;
             setIndex(getReadIndex() - removedSize, getWriteIndex() - removedSize);
             adjustIndexMarks(removedSize);
         }
