@@ -502,9 +502,12 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     public ProtonBuffer setBytes(int index, ProtonBuffer source, int sourceIndex, int length) {
         checkSourceIndex(index, length, sourceIndex, source.capacity());
 
-        // TODO - Initial exceedingly slow implementation for test construction
-        for (int i = 0; i < length; ++i) {
-            setByte(index++, source.getByte(sourceIndex++));
+        while (length > 0) {
+            lastAccessedChunk = findChunkWithIndex(index);
+            final int writtenBytes = lastAccessedChunk.setBytes(index, source, sourceIndex, length);
+            index += writtenBytes;
+            length -= writtenBytes;
+            sourceIndex += writtenBytes;
         }
 
         return this;
@@ -514,9 +517,12 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     public ProtonBuffer setBytes(int index, byte[] source, int sourceIndex, int length) {
         checkSourceIndex(index, length, sourceIndex, source.length);
 
-        // TODO - Initial exceedingly slow implementation for test construction
-        for (int i = 0; i < length; ++i) {
-            setByte(index++, source[sourceIndex + i]);
+        while (length > 0) {
+            lastAccessedChunk = findChunkWithIndex(index);
+            final int writtenBytes = lastAccessedChunk.setBytes(index, source, sourceIndex, length);
+            index += writtenBytes;
+            length -= writtenBytes;
+            sourceIndex += writtenBytes;
         }
 
         return this;
@@ -526,9 +532,10 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     public ProtonBuffer setBytes(int index, ByteBuffer source) {
         checkSourceIndex(index, source.remaining() - source.position(), source.position(), source.remaining());
 
-        // TODO - Initial exceedingly slow implementation for test construction
         while (source.hasRemaining()) {
-            setByte(index++, source.get());
+            lastAccessedChunk = findChunkWithIndex(index);
+            final int writtenBytes = lastAccessedChunk.setBytes(index, source);
+            index += writtenBytes;
         }
 
         return this;
@@ -687,6 +694,20 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
             return readable;
         }
 
+        public int setBytes(int index, ByteBuffer source) {
+            final int writeable = Math.min(length - (index - startIndex), source.remaining());
+
+            int oldLimit = source.limit();
+            source.limit(source.position() + writeable);
+            try {
+                buffer.setBytes(offset(index), source);
+            } finally {
+                source.limit(oldLimit);
+            }
+
+            return writeable;
+        }
+
         public int getBytes(int index, byte[] destination, int offset, int desiredLength) {
             final int readable = Math.min(length - (index - startIndex), desiredLength);
 
@@ -695,12 +716,28 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
             return readable;
         }
 
+        public int setBytes(int index, byte[] source, int offset, int desiredLength) {
+            final int writeable = Math.min(length - (index - startIndex), desiredLength);
+
+            buffer.setBytes(offset(index), source, offset, writeable);
+
+            return writeable;
+        }
+
         public int getBytes(int index, ProtonBuffer destination, int destinationIndex, int desiredLength) {
             final int readable = Math.min(length - (index - startIndex), desiredLength);
 
             buffer.getBytes(offset(index), destination, destinationIndex, readable);
 
             return readable;
+        }
+
+        public int setBytes(int index, ProtonBuffer source, int sourceIndex, int desiredLength) {
+            final int writeable = Math.min(length - (index - startIndex), desiredLength);
+
+            buffer.setBytes(offset(index), source, sourceIndex, writeable);
+
+            return writeable;
         }
 
         public byte readByte(int index) {
