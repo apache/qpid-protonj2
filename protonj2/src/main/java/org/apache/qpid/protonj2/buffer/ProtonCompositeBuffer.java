@@ -546,16 +546,7 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
         checkIndex(index, length);
 
         final ProtonBuffer copy = ProtonByteBufferAllocator.DEFAULT.allocate(length);
-
-        // TODO - Exceedingly slow initial implementation test get tests going.
-        lastAccessedChunk = findChunkWithIndex(index);
-        for (int i = 0; i < length; ++i) {
-            copy.setByte(i, lastAccessedChunk.readByte(index++));
-            if (lastAccessedChunk.endIndex < index) {
-                lastAccessedChunk = lastAccessedChunk.next;
-            }
-        }
-
+        getBytes(index, copy);
         copy.setWriteIndex(length);
 
         return copy;
