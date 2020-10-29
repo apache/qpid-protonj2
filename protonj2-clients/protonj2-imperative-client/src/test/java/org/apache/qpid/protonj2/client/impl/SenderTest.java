@@ -34,6 +34,7 @@ import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientLinkRedirectedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientLinkRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
@@ -42,6 +43,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationExce
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
+import org.apache.qpid.protonj2.types.transport.LinkError;
 import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.hamcrest.Matchers;
@@ -193,6 +195,75 @@ public class SenderTest extends ImperativeClientTestCase {
             connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testRemotelyCloseSenderLinkWithRedirect() throws Exception {
+        final String redirectVhost = "vhost";
+        final String redirectNetworkHost = "localhost";
+        final String redirectAddress = "redirect-queue";
+        final int redirectPort = 5677;
+        final String redirectScheme = "wss";
+        final String redirectPath = "/websockets";
+
+        // Tell the test peer to close the connection when executing its last handler
+        final Map<String, Object> errorInfo = new HashMap<>();
+        errorInfo.put(ClientConstants.OPEN_HOSTNAME.toString(), redirectVhost);
+        errorInfo.put(ClientConstants.NETWORK_HOST.toString(), redirectNetworkHost);
+        errorInfo.put(ClientConstants.PORT.toString(), redirectPort);
+        errorInfo.put(ClientConstants.SCHEME.toString(), redirectScheme);
+        errorInfo.put(ClientConstants.PATH.toString(), redirectPath);
+        errorInfo.put(ClientConstants.ADDRESS.toString(), redirectAddress);
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond().withNullTarget();
+            peer.remoteDetach().withClosed(true)
+                               .withErrorCondition(LinkError.REDIRECT.toString(), "Not accepting links here", errorInfo).queue();
+            peer.expectDetach();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Sender sender = session.openSender("test-queue");
+
+            try {
+                sender.openFuture().get();
+                fail("Should not be able to create sender since the remote is redirecting.");
+            } catch (Exception ex) {
+                LOG.debug("Received expected exception from sender open: {}", ex.getMessage());
+                Throwable cause = ex.getCause();
+                assertTrue(cause instanceof ClientLinkRedirectedException);
+
+                ClientLinkRedirectedException linkRedirect = (ClientLinkRedirectedException) ex.getCause();
+
+                assertEquals(redirectVhost, linkRedirect.getHostname());
+                assertEquals(redirectNetworkHost, linkRedirect.getNetworkHost());
+                assertEquals(redirectPort, linkRedirect.getPort());
+                assertEquals(redirectScheme, linkRedirect.getScheme());
+                assertEquals(redirectPath, linkRedirect.getPath());
+                assertEquals(redirectAddress, linkRedirect.getAddress());
+
+                URI redirect = linkRedirect.getRedirectionURI();
+
+                assertEquals(redirectNetworkHost, redirect.getHost());
+                assertEquals(redirectPort, redirect.getPort());
+                assertEquals(redirectScheme, redirect.getScheme());
+                assertEquals(redirectPath, redirect.getPath());
+            }
+
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
 

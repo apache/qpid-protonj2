@@ -60,11 +60,19 @@ public class OpenExpectation extends AbstractExpectation<Open> {
         return reject(Symbol.valueOf(condition), description);
     }
 
+    public CloseInjectAction reject(String condition, String description, Map<String, Object> infoMap) {
+        return reject(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(infoMap));
+    }
+
     public CloseInjectAction reject(Symbol condition, String description) {
+        return reject(condition, description, null);
+    }
+
+    public CloseInjectAction reject(Symbol condition, String description, Map<Symbol, Object> infoMap) {
         response = new OpenInjectAction(driver);
         driver.addScriptedElement(response);
 
-        CloseInjectAction closeAction = new CloseInjectAction(driver).withErrorCondition(condition, description);
+        CloseInjectAction closeAction = new CloseInjectAction(driver).withErrorCondition(condition, description, infoMap);
         driver.addScriptedElement(closeAction);
 
         return closeAction;

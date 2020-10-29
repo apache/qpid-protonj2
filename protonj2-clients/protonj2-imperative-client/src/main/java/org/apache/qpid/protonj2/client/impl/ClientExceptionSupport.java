@@ -27,6 +27,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientConnectionSecurityExcept
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionSecuritySaslException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
+import org.apache.qpid.protonj2.client.exceptions.ClientLinkRedirectedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientLinkRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
@@ -119,7 +120,7 @@ public class ClientExceptionSupport {
             if (error.equals(AmqpError.UNAUTHORIZED_ACCESS)) {
                 remoteError = new ClientConnectionSecurityException(message, new ClientErrorCondition(errorCondition));
             } else if (error.equals(ConnectionError.REDIRECT)) {
-                remoteError = createRedirectException(error, message, errorCondition);
+                remoteError = createConnectionRedirectException(error, message, errorCondition);
             } else {
                 remoteError = new ClientConnectionRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
             }
@@ -198,11 +199,17 @@ public class ClientExceptionSupport {
 
         if (errorCondition != null && errorCondition.getCondition() != null) {
             String message = extractErrorMessage(errorCondition);
+            Symbol error = errorCondition.getCondition();
+
             if (message == null) {
                 message = defaultMessage;
             }
 
-            remoteError = new ClientLinkRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
+            if (error.equals(LinkError.REDIRECT)) {
+                remoteError = createLinkRedirectException(error, message, errorCondition);
+            } else {
+                remoteError = new ClientLinkRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
+            }
         } else {
             remoteError = new ClientLinkRemotelyClosedException(defaultMessage);
         }
@@ -224,8 +231,6 @@ public class ClientExceptionSupport {
     public static ClientException convertToNonFatalException(ErrorCondition errorCondition) {
         final ClientException remoteError;
 
-        // TODO: Determine other cases we could map here or reduce reliance on this method.
-
         if (errorCondition != null && errorCondition.getCondition() != null) {
             Symbol error = errorCondition.getCondition();
             String message = extractErrorMessage(errorCondition);
@@ -237,7 +242,7 @@ public class ClientExceptionSupport {
             } else if (error.equals(LinkError.DETACH_FORCED)) {
                 remoteError = new ClientResourceRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
             } else if (error.equals(LinkError.REDIRECT)) {
-                remoteError = new ClientResourceRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
+                remoteError = createLinkRedirectException(error, message, errorCondition);
             } else if (error.equals(AmqpError.RESOURCE_DELETED)) {
                 remoteError = new ClientResourceRemotelyClosedException(message, new ClientErrorCondition(errorCondition));
             } else if (error.equals(TransactionErrors.TRANSACTION_ROLLBACK)) {
@@ -278,11 +283,9 @@ public class ClientExceptionSupport {
     }
 
     /**
-     * When a redirect type exception is received this method is called to create the
+     * When a connection redirect type exception is received this method is called to create the
      * appropriate redirect exception type containing the error details needed.
      *
-     * @param connection
-     *        the AMQP Client instance that originates this exception
      * @param error
      *        the Symbol that defines the redirection error type.
      * @param message
@@ -292,7 +295,7 @@ public class ClientExceptionSupport {
      *
      * @return an Exception that captures the details of the redirection error.
      */
-    public static ClientConnectionRemotelyClosedException createRedirectException(Symbol error, String message, ErrorCondition condition) {
+    public static ClientConnectionRemotelyClosedException createConnectionRedirectException(Symbol error, String message, ErrorCondition condition) {
         ClientConnectionRemotelyClosedException result;
         Map<?, ?> info = condition.getInfo();
 
@@ -305,9 +308,45 @@ public class ClientExceptionSupport {
 
             try {
                 result = new ClientConnectionRedirectedException(
-                    message, redirect.validate().toURI(), new ClientErrorCondition(condition));
+                    message, redirect.validate(), new ClientErrorCondition(condition));
             } catch (Exception ex) {
                 result = new ClientConnectionRemotelyClosedException(
+                    message + " : " + ex.getMessage(), new ClientErrorCondition(condition));
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * When a link redirect type exception is received this method is called to create the
+     * appropriate redirect exception type containing the error details needed.
+     *
+     * @param error
+     *        the Symbol that defines the redirection error type.
+     * @param message
+     *        the basic error message that should used or amended for the returned exception.
+     * @param condition
+     *        the ErrorCondition that describes the redirection.
+     *
+     * @return an Exception that captures the details of the redirection error.
+     */
+    public static ClientLinkRemotelyClosedException createLinkRedirectException(Symbol error, String message, ErrorCondition condition) {
+        ClientLinkRemotelyClosedException result;
+        Map<?, ?> info = condition.getInfo();
+
+        if (info == null) {
+            result = new ClientLinkRemotelyClosedException(
+                message + " : Redirection information not set.", new ClientErrorCondition(condition));
+        } else {
+            @SuppressWarnings("unchecked")
+            ClientRedirect redirect = new ClientRedirect((Map<Symbol, Object>) info);
+
+            try {
+                result = new ClientLinkRedirectedException(
+                    message, redirect.validate(), new ClientErrorCondition(condition));
+            } catch (Exception ex) {
+                result = new ClientLinkRemotelyClosedException(
                     message + " : " + ex.getMessage(), new ClientErrorCondition(condition));
             }
         }

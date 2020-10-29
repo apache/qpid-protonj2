@@ -21,29 +21,32 @@ import java.net.URI;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.ErrorCondition;
+import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.impl.ClientRedirect;
 import org.apache.qpid.protonj2.types.transport.Open;
 
 /**
- * A {@link ClientIOException} type that defines that the remote peer has requested that this
- * connection be redirected to some alternative peer.  The redirect information can be obtained
- * by calling the {@link ClientConnectionRedirectedException#getRedirectionURI()} method which
- * return the URI of the peer the client is being redirect to.
+ * A {@link ClientLinkRemotelyClosedException} type that defines that the remote peer has requested that
+ * this link be redirected to some alternative peer.  The redirect information can be obtained
+ * by calling the {@link ClientLinkRedirectedException#getRedirectionURI()} method which
+ * return the URI of the peer the client is being redirect to.  The address is also accessible
+ * for use in creating a new link after reconnection.
  */
-public class ClientConnectionRedirectedException extends ClientConnectionRemotelyClosedException {
+public class ClientLinkRedirectedException extends ClientLinkRemotelyClosedException {
 
     private static final long serialVersionUID = 5872211116061710369L;
 
     private final ClientRedirect redirect;
 
-    public ClientConnectionRedirectedException(String reason, ClientRedirect redirect, ErrorCondition condition) {
+    public ClientLinkRedirectedException(String reason, ClientRedirect redirect, ErrorCondition condition) {
         super(reason, condition);
 
         this.redirect = redirect;
     }
 
     /**
-     * the host name of the remote peer where the {@link Connection} is being redirected.
+     * the host name of the remote peer where the {@link Sender} or {@link Receiver} is being
+     * redirected.
      * <p>
      * This value should be used in the 'hostname' field of the {@link Open} frame, and
      * during SASL negotiation (if used).  When using this client to reconnect this value
@@ -95,8 +98,18 @@ public class ClientConnectionRedirectedException extends ClientConnectionRemotel
     }
 
     /**
+     * The address value that should be used when connecting to the provided host and port and
+     * creating a new link instance as directed.
+     *
+     * @return the address value that should be used when redirecting to the provided host and port.
+     */
+    public String getAddress() {
+        return redirect.getAddress();
+    }
+
+    /**
      * Attempt to construct a URI that represents the location where the redirect is
-     * sending the client {@link Connection}.
+     * sending the client {@link Sender} or {@link Receiver}.
      *
      * @return the URI that represents the redirection.
      *

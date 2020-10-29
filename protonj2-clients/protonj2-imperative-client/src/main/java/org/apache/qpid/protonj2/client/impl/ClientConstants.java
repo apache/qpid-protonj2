@@ -34,7 +34,8 @@ public class ClientConstants {
     public static final Symbol DELAYED_DELIVERY = Symbol.valueOf("DELAYED_DELIVERY");
     public static final Symbol SHARED_SUBS = Symbol.valueOf("SHARED-SUBS");
 
-    // Symbols used to announce connection redirect ErrorCondition 'info'
+    // Symbols used to announce connection and link redirect ErrorCondition 'info'
+    public static final Symbol ADDRESS = Symbol.valueOf("address");
     public static final Symbol PATH = Symbol.valueOf("path");
     public static final Symbol SCHEME = Symbol.valueOf("scheme");
     public static final Symbol PORT = Symbol.valueOf("port");

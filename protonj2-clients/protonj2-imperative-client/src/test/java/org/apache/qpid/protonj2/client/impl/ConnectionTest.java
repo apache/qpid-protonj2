@@ -37,6 +37,7 @@ import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Session;
+import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRedirectedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
@@ -275,6 +276,64 @@ public class ConnectionTest extends ImperativeClientTestCase {
                 connection.openFuture().get();
                 // Should close normally and not throw error as we initiated the close.
                 connection.closeAsync().get();
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testRemotelyCloseConnectionWithRedirect() throws Exception {
+        final String redirectVhost = "vhost";
+        final String redirectNetworkHost = "localhost";
+        final int redirectPort = 5677;
+        final String redirectScheme = "wss";
+        final String redirectPath = "/websockets";
+
+        // Tell the test peer to close the connection when executing its last handler
+        final Map<String, Object> errorInfo = new HashMap<>();
+        errorInfo.put(ClientConstants.OPEN_HOSTNAME.toString(), redirectVhost);
+        errorInfo.put(ClientConstants.NETWORK_HOST.toString(), redirectNetworkHost);
+        errorInfo.put(ClientConstants.PORT.toString(), redirectPort);
+        errorInfo.put(ClientConstants.SCHEME.toString(), redirectScheme);
+        errorInfo.put(ClientConstants.PATH.toString(), redirectPath);
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().reject(ConnectionError.REDIRECT.toString(), "Not accepting connections", errorInfo);
+            peer.expectBegin().optional();
+            peer.expectClose();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            try {
+                connection.defaultSession().openFuture().get();
+                fail("Should not be able to connect since the connection is redirected.");
+            } catch (Exception ex) {
+                LOG.debug("Received expected exception from session open: {}", ex.getMessage());
+                Throwable cause = ex.getCause();
+                assertTrue(cause instanceof ClientConnectionRedirectedException);
+
+                ClientConnectionRedirectedException connectionRedirect = (ClientConnectionRedirectedException) ex.getCause();
+
+                assertEquals(redirectVhost, connectionRedirect.getHostname());
+                assertEquals(redirectNetworkHost, connectionRedirect.getNetworkHost());
+                assertEquals(redirectPort, connectionRedirect.getPort());
+                assertEquals(redirectScheme, connectionRedirect.getScheme());
+                assertEquals(redirectPath, connectionRedirect.getPath());
+
+                URI redirect = connectionRedirect.getRedirectionURI();
+
+                assertEquals(redirectNetworkHost, redirect.getHost());
+                assertEquals(redirectPort, redirect.getPort());
+                assertEquals(redirectScheme, redirect.getScheme());
+                assertEquals(redirectPath, redirect.getPath());
             }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
