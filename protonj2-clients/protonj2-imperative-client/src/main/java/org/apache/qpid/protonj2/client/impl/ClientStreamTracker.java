@@ -32,7 +32,7 @@ public class ClientStreamTracker implements StreamTracker {
 
     private final ClientStreamSender sender;
     private final OutgoingDelivery delivery;
-    private final ClientFuture<Tracker> acknowledged;
+    private final ClientFuture<Tracker> remoteSettlementFuture;
 
     private volatile boolean remotelySetted;
     private volatile DeliveryState remoteDeliveryState;
@@ -40,7 +40,8 @@ public class ClientStreamTracker implements StreamTracker {
     public ClientStreamTracker(ClientStreamSender sender, OutgoingDelivery delivery) {
         this.sender = sender;
         this.delivery = delivery.setLinkedResource(this);
-        this.acknowledged = sender.session().getFutureFactory().createFuture();
+        this.delivery.deliveryStateUpdatedHandler(this::processDeliveryUpdated);
+        this.remoteSettlementFuture = sender.session().getFutureFactory().createFuture();
     }
 
     OutgoingDelivery delivery() {
@@ -74,13 +75,25 @@ public class ClientStreamTracker implements StreamTracker {
             protonState = ClientDeliveryState.asProtonType(state);
         }
 
-        sender.disposition(delivery, protonState, settle);
+        try {
+            sender.disposition(delivery, protonState, settle);
+        } finally {
+            if (settle) {
+                remoteSettlementFuture.complete(this);
+            }
+        }
+
         return this;
     }
 
     @Override
     public ClientStreamTracker settle() throws ClientException {
-        sender.disposition(delivery, null, true);
+        try {
+            sender.disposition(delivery, null, true);
+        } finally {
+            remoteSettlementFuture.complete(this);
+        }
+
         return this;
     }
 
@@ -91,13 +104,20 @@ public class ClientStreamTracker implements StreamTracker {
 
     @Override
     public ClientFuture<Tracker> settlementFuture() {
-        return acknowledged;
+        if (delivery.isSettled()) {
+            remoteSettlementFuture.complete(this);
+        }
+
+        return remoteSettlementFuture;
     }
 
     @Override
     public StreamTracker awaitSettlement() throws ClientException {
         try {
-            settlementFuture().get();
+            if (!delivery.isSettled()) {
+                settlementFuture().get();
+            }
+
             return this;
         } catch (ExecutionException exe) {
             throw ClientExceptionSupport.createNonFatalOrPassthrough(exe.getCause());
@@ -110,7 +130,10 @@ public class ClientStreamTracker implements StreamTracker {
     @Override
     public StreamTracker awaitSettlement(long timeout, TimeUnit unit) throws ClientException {
         try {
-            settlementFuture().get(timeout, unit);
+            if (!delivery.isSettled()) {
+                settlementFuture().get(timeout, unit);
+            }
+
             return this;
         } catch (InterruptedException ie) {
             Thread.interrupted();
@@ -124,12 +147,16 @@ public class ClientStreamTracker implements StreamTracker {
 
     //----- Internal Event hooks for delivery updates
 
-    void processDeliveryUpdated(OutgoingDelivery delivery) {
+    private void processDeliveryUpdated(OutgoingDelivery delivery) {
         remotelySetted = delivery.isRemotelySettled();
         remoteDeliveryState = ClientDeliveryState.fromProtonType(delivery.getRemoteState());
 
         if (delivery.isRemotelySettled()) {
-            acknowledged.complete(this);
+            remoteSettlementFuture.complete(this);
+        }
+
+        if (sender.options().autoSettle() && delivery.isRemotelySettled()) {
+            delivery.settle();
         }
     }
 }

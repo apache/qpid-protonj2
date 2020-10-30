@@ -300,4 +300,19 @@ public interface OutgoingDelivery {
      */
     DeliveryState getRemoteState();
 
+    /**
+     * Handler for updates to the remote state of outgoing deliveries that have begun transferring frames.
+     * <p>
+     * Remote state updates for an {@link OutgoingDelivery} can happen when the remote settles a complete
+     * {@link OutgoingDelivery} or otherwise modifies the delivery outcome and the user needs to act on those
+     * changes such as a spontaneous update to the {@link DeliveryState}.  If the initial {@link Transfer} of
+     * an outgoing delivery already indicates settlement then this handler will never be called.
+     *
+     * @param handler
+     *      The handler that will be invoked when a new remote state update for an {@link OutgoingDelivery} arrives on this link.
+     *
+     * @return this {@link OutgoingDelivery} instance.
+     */
+    OutgoingDelivery deliveryStateUpdatedHandler(EventHandler<OutgoingDelivery> handler);
+
 }

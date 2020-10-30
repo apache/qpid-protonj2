@@ -374,10 +374,13 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         return this;
     }
 
-    Sender signalDeliveryStateUpdated(OutgoingDelivery delivery) {
-        if (deliveryUpdatedEventHandler != null) {
+    Sender signalDeliveryStateUpdated(ProtonOutgoingDelivery delivery) {
+        if (delivery.deliveryStateUpdatedHandler() != null) {
+            delivery.deliveryStateUpdatedHandler().handle(delivery);
+        } else if (deliveryUpdatedEventHandler != null) {
             deliveryUpdatedEventHandler.handle(delivery);
         }
+
         return this;
     }
 

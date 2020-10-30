@@ -991,7 +991,6 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         if (setSessionCapacity && setFrameSize) {
             expectedWindowSize = TEST_SESSION_CAPACITY / TEST_MAX_FRAME_SIZE;
         } else if (setSessionCapacity) {
-            // TODO - Hack to get test passing with current implementation of session windowing
             expectedWindowSize = TEST_SESSION_CAPACITY / engine.connection().getMaxFrameSize();
         }
 
@@ -1005,8 +1004,6 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
             connection.setMaxFrameSize(TEST_MAX_FRAME_SIZE);
         }
         connection.open();
-
-        final int maxFrameSize = (int) connection.getMaxFrameSize();
 
         Session session = connection.session();
         int sessionCapacity = 0;

@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.engine.impl;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.engine.EventHandler;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
@@ -48,6 +49,8 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     private ProtonAttachments attachments;
     private Object linkedResource;
+
+    private EventHandler<OutgoingDelivery> deliveryUpdatedEventHandler = null;
 
     public ProtonOutgoingDelivery(ProtonSender link) {
         this.link = link;
@@ -235,6 +238,16 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         }
 
         return this;
+    }
+
+    @Override
+    public ProtonOutgoingDelivery deliveryStateUpdatedHandler(EventHandler<OutgoingDelivery> handler) {
+        this.deliveryUpdatedEventHandler = handler;
+        return this;
+    }
+
+    EventHandler<OutgoingDelivery> deliveryStateUpdatedHandler() {
+        return deliveryUpdatedEventHandler;
     }
 
     //----- Internal methods meant only for use by Proton resources

@@ -3572,4 +3572,57 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertNull(failure);
     }
+
+    @Test
+    public void testSenderUpdateDeliveryUpdatedEventHandlerInDelivery() throws InterruptedException {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().ofSender().respond();
+        peer.remoteFlow().withDeliveryCount(0).withLinkCredit(1).queue();
+        peer.expectTransfer().withHandle(0)
+                             .withSettled(false)
+                             .withState(nullValue())
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .respond()
+                             .withSettled(true)
+                             .withState().accepted();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1");
+
+        final CountDownLatch stateUpdated = new CountDownLatch(1);
+        sender.creditStateUpdateHandler(link -> {
+            if (link.isSendable()) {
+                OutgoingDelivery delivery = sender.next();
+                delivery.deliveryStateUpdatedHandler((outgoing) -> {
+                    stateUpdated.countDown();
+                });
+
+                delivery.setTag(new byte[] {0});
+                delivery.writeBytes(payload);
+            }
+        });
+
+        sender.open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectDetach().respond();
+        peer.expectClose().respond();
+
+        assertTrue(stateUpdated.await(5, TimeUnit.SECONDS));
+
+        sender.close();
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+    }
 }

@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.qpid.protonj2.client.DeliveryState;
-import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
@@ -36,7 +35,7 @@ public class ClientTracker implements Tracker {
     private final ClientSender sender;
     private final OutgoingDelivery delivery;
 
-    private final ClientFuture<Tracker> acknowledged;
+    private final ClientFuture<Tracker> remoteSettlementFuture;
 
     private volatile boolean remotelySetted;
     private volatile DeliveryState remoteDeliveryState;
@@ -52,7 +51,8 @@ public class ClientTracker implements Tracker {
     ClientTracker(ClientSender sender, OutgoingDelivery delivery) {
         this.sender = sender;
         this.delivery = delivery;
-        this.acknowledged = sender.session().getFutureFactory().createFuture();
+        this.delivery.deliveryStateUpdatedHandler(this::processDeliveryUpdated);
+        this.remoteSettlementFuture = sender.session().getFutureFactory().createFuture();
     }
 
     OutgoingDelivery delivery() {
@@ -60,7 +60,7 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public Sender sender() {
+    public ClientSender sender() {
         return sender;
     }
 
@@ -86,13 +86,25 @@ public class ClientTracker implements Tracker {
             protonState = ClientDeliveryState.asProtonType(state);
         }
 
-        sender.disposition(delivery, protonState, settle);
+        try {
+            sender.disposition(delivery, protonState, settle);
+        } finally {
+            if (settle) {
+                remoteSettlementFuture.complete(this);
+            }
+        }
+
         return this;
     }
 
     @Override
     public ClientTracker settle() throws ClientException {
-        sender.disposition(delivery, null, true);
+        try {
+            sender.disposition(delivery, null, true);
+        } finally {
+            remoteSettlementFuture.complete(this);
+        }
+
         return this;
     }
 
@@ -103,13 +115,21 @@ public class ClientTracker implements Tracker {
 
     @Override
     public ClientFuture<Tracker> settlementFuture() {
-        return acknowledged;
+        if (delivery.isSettled()) {
+            remoteSettlementFuture.complete(this);
+        }
+
+        return remoteSettlementFuture;
     }
 
     @Override
     public Tracker awaitSettlement() throws ClientException {
         try {
-            return settlementFuture().get();
+            if (settled()) {
+                return this;
+            } else {
+                return settlementFuture().get();
+            }
         } catch (ExecutionException exe) {
             throw ClientExceptionSupport.createNonFatalOrPassthrough(exe.getCause());
         } catch (InterruptedException e) {
@@ -121,7 +141,11 @@ public class ClientTracker implements Tracker {
     @Override
     public Tracker awaitSettlement(long timeout, TimeUnit unit) throws ClientException {
         try {
-            return settlementFuture().get(timeout, unit);
+            if (settled()) {
+                return this;
+            } else {
+                return settlementFuture().get(timeout, unit);
+            }
         } catch (InterruptedException ie) {
             Thread.interrupted();
             throw new ClientException("Wait for settlement was interrupted", ie);
@@ -134,12 +158,16 @@ public class ClientTracker implements Tracker {
 
     //----- Internal Event hooks for delivery updates
 
-    void processDeliveryUpdated(OutgoingDelivery delivery) {
+    private void processDeliveryUpdated(OutgoingDelivery delivery) {
         remotelySetted = delivery.isRemotelySettled();
         remoteDeliveryState = ClientDeliveryState.fromProtonType(delivery.getRemoteState());
 
         if (delivery.isRemotelySettled()) {
-            acknowledged.complete(this);
+            remoteSettlementFuture.complete(this);
+        }
+
+        if (sender.options().autoSettle() && delivery.isRemotelySettled()) {
+            delivery.settle();
         }
     }
 }

@@ -18,6 +18,8 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.util.Arrays;
 
+import org.apache.qpid.protonj2.client.Receiver;
+import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
@@ -168,7 +170,7 @@ public class ClientTransactionContext {
         }
     }
 
-    public DeliveryState enlistSendInCurrentTransaction(ClientSender seder, OutgoingDelivery delivery) {
+    public DeliveryState enlistSendInCurrentTransaction(Sender seder, OutgoingDelivery delivery) {
         if (isInTransaction()) {
             return cachedSenderOutcome != null ?
                 cachedSenderOutcome : (cachedSenderOutcome = new TransactionalState().setTxnId(currentTxn.getTxnId()));
@@ -177,25 +179,7 @@ public class ClientTransactionContext {
         }
     }
 
-    public DeliveryState enlistSendInCurrentTransaction(ClientStreamSender seder, OutgoingDelivery delivery) {
-        if (isInTransaction()) {
-            return cachedSenderOutcome != null ?
-                cachedSenderOutcome : (cachedSenderOutcome = new TransactionalState().setTxnId(currentTxn.getTxnId()));
-        } else {
-            return null;
-        }
-    }
-
-    public DeliveryState enlistAcknowledgeInCurrentTransaction(ClientReceiver receiver, Outcome outcome) {
-        if (isInTransaction()) {
-            return cachedReceiverOutcome != null ? cachedReceiverOutcome :
-                (cachedReceiverOutcome = new TransactionalState().setTxnId(currentTxn.getTxnId()).setOutcome(outcome));
-        } else {
-            return null;
-        }
-    }
-
-    public DeliveryState enlistAcknowledgeInCurrentTransaction(ClientStreamReceiver receiver, Outcome outcome) {
+    public DeliveryState enlistAcknowledgeInCurrentTransaction(Receiver receiver, Outcome outcome) {
         if (isInTransaction()) {
             return cachedReceiverOutcome != null ? cachedReceiverOutcome :
                 (cachedReceiverOutcome = new TransactionalState().setTxnId(currentTxn.getTxnId()).setOutcome(outcome));
