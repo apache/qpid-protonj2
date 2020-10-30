@@ -266,7 +266,8 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         this.deliveryId = deliveryId;
     }
 
-    int getTransferCount() {
+    @Override
+    public int getTransferCount() {
         return transferCount;
     }
 

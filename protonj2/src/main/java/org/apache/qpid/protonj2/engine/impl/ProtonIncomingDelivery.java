@@ -293,7 +293,8 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     //----- Internal methods to manage the Delivery
 
-    int getTransferCount() {
+    @Override
+    public int getTransferCount() {
         return transferCount;
     }
 

@@ -46,16 +46,13 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
 public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     private final ProtonSessionOutgoingWindow sessionWindow;
-
-    private final DeliveryIdTracker currentDelivery = new DeliveryIdTracker();
-
-    private boolean sendable;
-
+    private final DeliveryIdTracker currentDeliveryId = new DeliveryIdTracker();
     private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
     private EventHandler<OutgoingDelivery> deliveryUpdatedEventHandler = null;
     private EventHandler<Sender> linkCreditUpdatedHandler = null;
 
+    private boolean sendable;
     private DeliveryTagGenerator autoTagGenerator;
     private OutgoingDelivery current;
 
@@ -289,10 +286,10 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         checkLinkOperable("Cannot send when link has become inoperable");
 
         if (isSendable()) {
-            if (currentDelivery.isEmpty()) {
-                currentDelivery.set(sessionWindow.getAndIncrementNextDeliveryId());
+            if (currentDeliveryId.isEmpty()) {
+                currentDeliveryId.set(sessionWindow.getAndIncrementNextDeliveryId());
 
-                delivery.setDeliveryId(currentDelivery.longValue());
+                delivery.setDeliveryId(currentDeliveryId.longValue());
             }
 
             if (!delivery.isSettled()) {
@@ -305,7 +302,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
             } finally {
                 if (complete && (buffer == null || !buffer.isReadable())) {
                     delivery.markComplete();
-                    currentDelivery.reset();
+                    currentDeliveryId.reset();
                     current = null;
                     getCreditState().incrementDeliveryCount();
                     getCreditState().decrementCredit();
@@ -342,7 +339,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         } finally {
             // TODO - Casting is ugly but right now our unsigned integers are longs
             unsettled.remove((int) delivery.getDeliveryId());
-            currentDelivery.reset();
+            currentDeliveryId.reset();
             current = null;
         }
     }
@@ -388,7 +385,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     protected void transitionedToLocallyOpened() {
-        localAttach.setInitialDeliveryCount(currentDelivery.longValue());
+        localAttach.setInitialDeliveryCount(currentDeliveryId.longValue());
         if (getCredit() > 0) {
             sendable = true;
         }

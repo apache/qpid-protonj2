@@ -3625,4 +3625,67 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
+
+    @Test
+    public void testTransferCountTracksOutgoingDeliveryLifecycle() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
+        peer.remoteFlow().withDeliveryCount(0).withLinkCredit(10).queue();
+        peer.expectTransfer().withHandle(0)
+                             .withMore(true)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withPayload(payload);
+        peer.expectTransfer().withHandle(0)
+                             .withMore(true)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(anyOf(nullValue(), is(new byte[] {0})))
+                             .withPayload(payload);
+        peer.expectTransfer().withHandle(0)
+                             .withState(nullValue())
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withAborted(true)
+                             .withMore(anyOf(nullValue(), is(false)))
+                             .withNullPayload();
+        peer.expectDetach().withHandle(0).respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1").open();
+
+        OutgoingDelivery delivery = sender.next();
+        assertNotNull(delivery);
+
+        assertEquals(0, delivery.getTransferCount());
+
+        delivery.setTag(new byte[] {0});
+        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        assertEquals(1, delivery.getTransferCount());
+
+        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        assertEquals(2, delivery.getTransferCount());
+
+        delivery.abort();
+
+        assertEquals(2, delivery.getTransferCount());
+
+        assertTrue(delivery.isAborted());
+        assertFalse(delivery.isPartial());
+        assertTrue(delivery.isSettled());
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 }

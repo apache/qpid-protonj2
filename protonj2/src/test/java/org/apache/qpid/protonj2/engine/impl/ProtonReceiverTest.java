@@ -3792,4 +3792,54 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         assertNull(failure);
     }
+
+    @Test
+    public void testIncomingDeliveryTracksTransferInCount() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+        peer.expectFlow().withLinkCredit(2).withIncomingWindow(1);
+        peer.expectDetach().respond();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().setIncomingCapacity(1024).open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicReference<IncomingDelivery> received = new AtomicReference<>();
+
+        receiver.deliveryReadHandler(delivery -> {
+            received.compareAndSet(null, delivery);
+        });
+
+        receiver.open();
+        receiver.addCredit(2);
+
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(true)
+                             .withPayload(payload).now();
+
+        assertNotNull(received.get());
+        assertEquals(1, received.get().getTransferCount());
+
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withMore(false)
+                             .withPayload(payload).now();
+
+        assertNotNull(received.get());
+        assertEquals(2, received.get().getTransferCount());
+
+        receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 }

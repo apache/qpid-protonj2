@@ -301,6 +301,16 @@ public interface OutgoingDelivery {
     DeliveryState getRemoteState();
 
     /**
+     * Returns the total number of transfer frames that have occurred for the given {@link OutgoingDelivery}.
+     * If the {@link OutgoingDelivery} has yet to have any of its write methods called this value will read
+     * zero.  Aborting a transfer after any {@link Transfer} frames have been written will not result in an
+     * addition recorded {@link Transfer} write.
+     *
+     * @return the number of {@link Transfer} frames that this {@link OutgoingDelivery} has initiated.
+     */
+    int getTransferCount();
+
+    /**
      * Handler for updates to the remote state of outgoing deliveries that have begun transferring frames.
      * <p>
      * Remote state updates for an {@link OutgoingDelivery} can happen when the remote settles a complete

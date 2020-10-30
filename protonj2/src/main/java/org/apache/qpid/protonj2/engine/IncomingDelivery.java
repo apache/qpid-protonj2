@@ -254,6 +254,13 @@ public interface IncomingDelivery {
      */
     boolean isRemotelySettled();
 
+    /**
+     * Returns the total number of transfer frames that have occurred for the given {@link IncomingDelivery}.
+     *
+     * @return the number of {@link Transfer} frames that this {@link OutgoingDelivery} has initiated.
+     */
+    int getTransferCount();
+
     //----- Event handlers for the Incoming Delivery
 
     /**
