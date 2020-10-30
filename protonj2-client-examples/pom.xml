@@ -16,42 +16,48 @@
   limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
+  <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.apache.qpid</groupId>
     <artifactId>protonj2-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
-  <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.apache.qpid</groupId>
-  <artifactId>protonj2-clients-parent</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
-  <packaging>pom</packaging>
-
-  <name>Qpid protonj2 API Client Libraries Parent</name>
-  <description>protonj2 AMQP Clients Project</description>
+  <artifactId>protonj2-client-examples</artifactId>
+  <name>Qpid protonj2 Client Examples</name>
+  <description>Examples showing the use of the AMQP client</description>
+  <packaging>jar</packaging>
 
   <properties>
-    <!-- See also maven.compiler.release in the java9on profile -->
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <jacoco.skip>true</jacoco.skip>
   </properties>
 
-  <modules>
-    <module>protonj2-imperative-client</module>
-    <module>protonj2-imperative-client-examples</module>
-    <module>protonj2-imperative-client-docs</module>
-  </modules>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.qpid</groupId>
+      <artifactId>protonj2-client</artifactId>
+    </dependency>
 
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.apache.qpid</groupId>
-        <artifactId>protonj2-imperative-client</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
+    <!-- Provide a logging implementation to avoid
+         notice from SLF4J that none was found -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <!-- Skip deploying the examples, the source is what is
+               useful and will be bundled with the main assembly -->
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>

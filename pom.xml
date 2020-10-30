@@ -83,7 +83,9 @@
     <module>protonj2</module>
     <module>protonj2-performance-tests</module>
     <module>protonj2-test-driver</module>
-    <module>protonj2-clients</module>
+    <module>protonj2-client</module>
+    <module>protonj2-client-examples</module>
+    <module>protonj2-client-docs</module>
     <module>apache-qpid-protonj2</module>
   </modules>
 
@@ -98,6 +100,11 @@
       <dependency>
         <groupId>org.apache.qpid</groupId>
         <artifactId>protonj2-test-driver</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.qpid</groupId>
+        <artifactId>protonj2-client</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

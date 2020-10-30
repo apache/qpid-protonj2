@@ -1,17 +1,17 @@
-# Qpid protonj2 Imperative API Client
+# Qpid protonj2 Client Library
 
-Imperative API for AMQP messaging applications
+This client provides an imperative API for AMQP messaging applications
 
 Below are some quick pointers you might find useful.
 
 ## Using the client library
 
-To use the imperative API client library in your projects you can include the maven
+To use the protonj2 API client library in your projects you can include the maven
 dependency in your project pom file:
 
     <dependency>
       <groupId>org.apache.qpid</groupId>
-      <artifactId>protonj2-imperative-client</artifactId>
+      <artifactId>protonj2-client</artifactId>
       <version>${protonj2-version}</version>
     </dependency>
 
