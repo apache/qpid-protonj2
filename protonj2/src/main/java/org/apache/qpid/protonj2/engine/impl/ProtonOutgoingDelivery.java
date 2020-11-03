@@ -182,7 +182,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
             try {
                 link.disposition(this);
             } finally {
-                tryRetireDeliveryId();
+                tryRetireDeliveryTag();
             }
         }
 
@@ -200,7 +200,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         try {
             link.send(this, buffer, true);
         } finally {
-            tryRetireDeliveryId();
+            tryRetireDeliveryTag();
         }
         return this;
     }
@@ -216,7 +216,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         try {
             link.send(this, buffer, complete);
         } finally {
-            tryRetireDeliveryId();
+            tryRetireDeliveryTag();
         }
         return this;
     }
@@ -226,13 +226,13 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         checkComplete();
 
         // Cannot abort when nothing has been sent so far.
-        if (deliveryId > DELIVERY_INACTIVE) {
-            aborted = true;
+        if (deliveryId != DELIVERY_ABORTED) {
             locallySettled = true;
+            aborted = true;
             try {
                 link.abort(this);
             } finally {
-                tryRetireDeliveryId();
+                tryRetireDeliveryTag();
                 deliveryId = DELIVERY_ABORTED;
             }
         }
@@ -252,7 +252,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     //----- Internal methods meant only for use by Proton resources
 
-    private void tryRetireDeliveryId() {
+    private void tryRetireDeliveryTag() {
         if (deliveryTag != null && isSettled()) {
             deliveryTag.release();
         }

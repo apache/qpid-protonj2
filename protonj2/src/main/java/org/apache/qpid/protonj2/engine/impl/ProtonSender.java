@@ -335,7 +335,9 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         checkLinkOperable("Cannot abort Transfer");
 
         try {
-            sessionWindow.processAbort(this, delivery);
+            if (delivery.getTransferCount() > 0) {
+                sessionWindow.processAbort(this, delivery);
+            }
         } finally {
             // TODO - Casting is ugly but right now our unsigned integers are longs
             unsettled.remove((int) delivery.getDeliveryId());

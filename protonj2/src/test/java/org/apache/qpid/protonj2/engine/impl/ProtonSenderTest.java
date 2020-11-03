@@ -2169,10 +2169,10 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         delivery.setTag(new byte[] {0});
         delivery.abort();
 
-        assertSame(delivery, sender.current());
-        assertFalse(delivery.isAborted());
-        assertTrue(delivery.isPartial());
-        assertFalse(delivery.isSettled());
+        assertNull(sender.current());
+        assertTrue(delivery.isAborted());
+        assertFalse(delivery.isPartial());
+        assertTrue(delivery.isSettled());
 
         sender.close();
 
@@ -2220,16 +2220,16 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         delivery.setTag(new byte[] {0});
         delivery.abort();
 
-        assertSame(delivery, sender.current());
+        assertNull(sender.current());
+        assertTrue(delivery.isAborted());
+        assertFalse(delivery.isPartial());
+        assertTrue(delivery.isSettled());
+
         try {
             sender.next();
-            fail("Should not be able to next as current was not aborted since nothing was ever written.");
         } catch (IllegalStateException ise) {
-            // Expected
+            fail("Should not be able to next as current was not aborted since nothing was ever written.");
         }
-        assertFalse(delivery.isAborted());
-        assertTrue(delivery.isPartial());
-        assertFalse(delivery.isSettled());
 
         peer.expectTransfer().withHandle(0)
                              .withSettled(false)
