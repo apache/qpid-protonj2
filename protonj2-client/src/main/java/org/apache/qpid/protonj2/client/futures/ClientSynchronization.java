@@ -20,10 +20,12 @@ package org.apache.qpid.protonj2.client.futures;
  * Synchronization callback interface used to execute state updates
  * or similar tasks in the thread context where the associated
  * Future is managed.
+ *
+ * @param <V> The value that result when a {@link ClientFuture} succeeds
  */
-public interface ClientSynchronization {
+public interface ClientSynchronization<V> {
 
-    void onPendingSuccess();
+    void onPendingSuccess(V result);
 
     void onPendingFailure(Throwable cause);
 

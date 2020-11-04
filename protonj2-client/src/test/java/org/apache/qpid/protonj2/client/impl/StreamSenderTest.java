@@ -352,17 +352,25 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             payloadMatcher.setHeadersMatcher(headerMatcher);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectTransfer().withMore(true).withPayload(payloadMatcher);
-            peer.expectTransfer().withMore(false).withNullPayload()
-                                 .respond()
-                                 .withSettled(true).withState().accepted();
+            if (flushBeforeClose) {
+                peer.expectTransfer().withMore(true).withPayload(payloadMatcher);
+                peer.expectTransfer().withMore(false).withNullPayload()
+                                     .respond()
+                                     .withSettled(true).withState().accepted();
+            } else {
+                peer.expectTransfer().withMore(false).withPayload(payloadMatcher)
+                                     .respond()
+                                     .withSettled(true).withState().accepted();
+            }
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
             // Once flush is called than anything in the buffer is written regardless of
             // there being any actual stream writes.  Default close action is to complete
             // the delivery.
-            stream.flush();
+            if (flushBeforeClose) {
+                stream.flush();
+            }
             stream.close();
 
             message.tracker().awaitSettlement(10, TimeUnit.SECONDS);
@@ -1635,6 +1643,68 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.expectClose().respond();
 
             assertFalse(sendFailed.get());
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void testMessageSendWhileStreamSendIsOpenShouldBlock() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+            final byte[] payload = new byte[1536];
+            Arrays.fill(payload, (byte) 1);
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamSenderMessage message = sender.beginMessage();
+            OutputStreamOptions options = new OutputStreamOptions().bodyLength(8192).completeSendOnClose(false);
+            OutputStream stream = message.body(options);
+
+            final CountDownLatch sendStarted = new CountDownLatch(1);
+            final CountDownLatch sendCompleted = new CountDownLatch(1);
+            final AtomicBoolean sendFailed = new AtomicBoolean();
+
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    LOG.info("Test send 1 is preparing to fire:");
+                    ForkJoinPool.commonPool().execute(() -> sendStarted.countDown());
+                    sender.send(Message.create(payload));
+                    sendCompleted.countDown();
+                } catch (Exception e) {
+                    LOG.info("Test send 1 failed with error: ", e);
+                    sendFailed.set(true);
+                }
+            });
+
+            EncodedDataMatcher bodyMatcher = new EncodedDataMatcher(payload);
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.setMessageContentMatcher(bodyMatcher);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(payloadMatcher).accept();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            assertTrue(sendStarted.await(10, TimeUnit.SECONDS));
+
+            // This should abort the streamed send as we provided a size for the body.
+            stream.close();
+            assertTrue(message.aborted());
+            assertTrue(sendCompleted.await(100, TimeUnit.SECONDS));
 
             sender.closeAsync().get();
             connection.closeAsync().get();

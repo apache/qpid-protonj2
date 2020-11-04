@@ -16,147 +16,46 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.qpid.protonj2.client.DeliveryState;
+import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamTracker;
-import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
-import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
-import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 
-public class ClientStreamTracker implements StreamTracker {
-
-    private final ClientStreamSender sender;
-    private final OutgoingDelivery delivery;
-    private final ClientFuture<Tracker> remoteSettlementFuture;
-
-    private volatile boolean remotelySetted;
-    private volatile DeliveryState remoteDeliveryState;
+/**
+ * {@link StreamTracker} implementation that relies on the ClientTracker to handle the
+ * basic {@link OutgoingDelivery} management.
+ */
+final class ClientStreamTracker extends ClientTracker implements StreamTracker {
 
     public ClientStreamTracker(ClientStreamSender sender, OutgoingDelivery delivery) {
-        this.sender = sender;
-        this.delivery = delivery.setLinkedResource(this);
-        this.delivery.deliveryStateUpdatedHandler(this::processDeliveryUpdated);
-        this.remoteSettlementFuture = sender.session().getFutureFactory().createFuture();
-    }
-
-    OutgoingDelivery delivery() {
-        return delivery;
+        super(sender, delivery);
     }
 
     @Override
-    public ClientStreamSender sender() {
-        return sender;
+    public StreamSender sender() {
+        return (StreamSender) super.sender();
     }
 
     @Override
-    public DeliveryState state() {
-        return ClientDeliveryState.fromProtonType(delivery.getState());
+    public StreamTracker disposition(DeliveryState state, boolean settle) throws ClientException {
+        return (StreamTracker) super.disposition(state, settle);
     }
 
     @Override
-    public DeliveryState remoteState() {
-        return remoteDeliveryState;
-    }
-
-    @Override
-    public boolean remoteSettled() {
-        return remotelySetted;
-    }
-
-    @Override
-    public ClientStreamTracker disposition(DeliveryState state, boolean settle) throws ClientException {
-        org.apache.qpid.protonj2.types.transport.DeliveryState protonState = null;
-        if (state != null) {
-            protonState = ClientDeliveryState.asProtonType(state);
-        }
-
-        try {
-            sender.disposition(delivery, protonState, settle);
-        } finally {
-            if (settle) {
-                remoteSettlementFuture.complete(this);
-            }
-        }
-
-        return this;
-    }
-
-    @Override
-    public ClientStreamTracker settle() throws ClientException {
-        try {
-            sender.disposition(delivery, null, true);
-        } finally {
-            remoteSettlementFuture.complete(this);
-        }
-
-        return this;
-    }
-
-    @Override
-    public boolean settled() {
-        return delivery.isSettled();
-    }
-
-    @Override
-    public ClientFuture<Tracker> settlementFuture() {
-        if (delivery.isSettled()) {
-            remoteSettlementFuture.complete(this);
-        }
-
-        return remoteSettlementFuture;
+    public StreamTracker settle() throws ClientException {
+        return (StreamTracker) super.settle();
     }
 
     @Override
     public StreamTracker awaitSettlement() throws ClientException {
-        try {
-            if (!delivery.isSettled()) {
-                settlementFuture().get();
-            }
-
-            return this;
-        } catch (ExecutionException exe) {
-            throw ClientExceptionSupport.createNonFatalOrPassthrough(exe.getCause());
-        } catch (InterruptedException e) {
-            Thread.interrupted();
-            throw new ClientException("Wait for settlement was interrupted", e);
-        }
+        return (StreamTracker) super.awaitSettlement();
     }
 
     @Override
     public StreamTracker awaitSettlement(long timeout, TimeUnit unit) throws ClientException {
-        try {
-            if (!delivery.isSettled()) {
-                settlementFuture().get(timeout, unit);
-            }
-
-            return this;
-        } catch (InterruptedException ie) {
-            Thread.interrupted();
-            throw new ClientException("Wait for settlement was interrupted", ie);
-        } catch (ExecutionException exe) {
-            throw ClientExceptionSupport.createNonFatalOrPassthrough(exe.getCause());
-        } catch (TimeoutException te) {
-            throw new ClientOperationTimedOutException("Timed out waiting for remote settlement", te);
-        }
-    }
-
-    //----- Internal Event hooks for delivery updates
-
-    private void processDeliveryUpdated(OutgoingDelivery delivery) {
-        remotelySetted = delivery.isRemotelySettled();
-        remoteDeliveryState = ClientDeliveryState.fromProtonType(delivery.getRemoteState());
-
-        if (delivery.isRemotelySettled()) {
-            remoteSettlementFuture.complete(this);
-        }
-
-        if (sender.options().autoSettle() && delivery.isRemotelySettled()) {
-            delivery.settle();
-        }
+        return (StreamTracker) super.awaitSettlement(timeout, unit);
     }
 }

@@ -31,7 +31,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
  */
 public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
 
-    protected final ClientSynchronization synchronization;
+    protected final ClientSynchronization<V> synchronization;
 
     // States used to track progress of this future
     protected static final int INCOMPLETE = 0;
@@ -53,7 +53,7 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
         this(null);
     }
 
-    public ClientFuture(ClientSynchronization synchronization) {
+    public ClientFuture(ClientSynchronization<V> synchronization) {
         this.synchronization = synchronization;
     }
 
@@ -121,7 +121,7 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
             this.result = result;
 
             if (synchronization != null) {
-                synchronization.onPendingSuccess();
+                synchronization.onPendingSuccess(result);
             }
 
             STATE_FIELD_UPDATER.lazySet(this, SUCCESS);

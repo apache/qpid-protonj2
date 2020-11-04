@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.qpid.protonj2.client.DeliveryState;
+import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
@@ -60,7 +61,7 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public ClientSender sender() {
+    public Sender sender() {
         return sender;
     }
 
@@ -80,7 +81,7 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public ClientTracker disposition(DeliveryState state, boolean settle) throws ClientException {
+    public Tracker disposition(DeliveryState state, boolean settle) throws ClientException {
         org.apache.qpid.protonj2.types.transport.DeliveryState protonState = null;
         if (state != null) {
             protonState = ClientDeliveryState.asProtonType(state);
@@ -98,7 +99,7 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public ClientTracker settle() throws ClientException {
+    public Tracker settle() throws ClientException {
         try {
             sender.disposition(delivery, null, true);
         } finally {

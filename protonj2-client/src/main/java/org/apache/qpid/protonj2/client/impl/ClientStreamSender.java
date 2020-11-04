@@ -17,7 +17,6 @@
 package org.apache.qpid.protonj2.client.impl;
 
 import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
@@ -25,15 +24,15 @@ import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamSenderOptions;
 import org.apache.qpid.protonj2.client.StreamTracker;
+import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
-import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 
-public class ClientStreamSender extends ClientAbstractSender implements StreamSender {
+final class ClientStreamSender extends ClientSender implements StreamSender {
 
     private final StreamSenderOptions options;
 
@@ -46,25 +45,25 @@ public class ClientStreamSender extends ClientAbstractSender implements StreamSe
     @Override
     public StreamTracker send(Message<?> message) throws ClientException {
         checkClosedOrFailed();
-        return sendMessage(ClientMessageSupport.convertMessage(message), null, true);
+        return (StreamTracker) sendMessage(ClientMessageSupport.convertMessage(message), null, true);
     }
 
     @Override
     public StreamTracker send(Message<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
         checkClosedOrFailed();
-        return sendMessage(ClientMessageSupport.convertMessage(message), null, true);
+        return (StreamTracker) sendMessage(ClientMessageSupport.convertMessage(message), null, true);
     }
 
     @Override
     public StreamTracker trySend(Message<?> message) throws ClientException {
         checkClosedOrFailed();
-        return sendMessage(ClientMessageSupport.convertMessage(message), null, false);
+        return (StreamTracker) sendMessage(ClientMessageSupport.convertMessage(message), null, false);
     }
 
     @Override
     public StreamTracker trySend(Message<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
         checkClosedOrFailed();
-        return sendMessage(ClientMessageSupport.convertMessage(message), null, false);
+        return (StreamTracker) sendMessage(ClientMessageSupport.convertMessage(message), null, false);
     }
 
     @Override
@@ -75,7 +74,7 @@ public class ClientStreamSender extends ClientAbstractSender implements StreamSe
     @Override
     public ClientStreamSenderMessage beginMessage(Map<String, Object> deliveryAnnotations) throws ClientException {
         checkClosedOrFailed();
-        final ClientFuture<ClientStreamSenderMessage> tracker = session.getFutureFactory().createFuture();
+        final ClientFuture<ClientStreamSenderMessage> request = session.getFutureFactory().createFuture();
         final DeliveryAnnotations annotations;
 
         if (deliveryAnnotations != null) {
@@ -86,18 +85,26 @@ public class ClientStreamSender extends ClientAbstractSender implements StreamSe
 
         executor.execute(() -> {
             if (protonSender.current() != null) {
-                tracker.failed(new ClientIllegalStateException(
+                request.failed(new ClientIllegalStateException(
                     "Cannot initiate a new streaming send until the previous one is complete"));
             } else {
-                tracker.complete(new ClientStreamSenderMessage(this, protonSender.next(), annotations));
+                // Grab the next delivery and hold for stream writes, no other sends
+                // can occur while we hold the delivery.
+                final OutgoingDelivery streamDelivery = protonSender.next();
+                final ClientStreamTracker streamTracker = createTracker(streamDelivery);
+
+                streamDelivery.setLinkedResource(streamTracker);
+
+                request.complete(new ClientStreamSenderMessage(this, streamTracker, annotations));
             }
         });
 
-        return session.request(this, tracker);
+        return session.request(this, request);
     }
 
     //----- Internal API
 
+    @Override
     StreamSenderOptions options() {
         return this.options;
     }
@@ -107,148 +114,35 @@ public class ClientStreamSender extends ClientAbstractSender implements StreamSe
         return (ClientStreamSender) super.open();
     }
 
-    void sendMessage(ClientStreamSenderMessage context, AdvancedMessage<?> message) throws ClientException {
-        final ClientFuture<ClientStreamTracker> operation = session.getFutureFactory().createFuture();
+    StreamTracker sendMessage(ClientStreamSenderMessage context, AdvancedMessage<?> message) throws ClientException {
+        final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
         final ProtonBuffer buffer = message.encode(null);
+        final ClientOutgoingEnvelope envelope = new ClientOutgoingEnvelope(
+            this, context.getProtonDelivery(), message.messageFormat(), buffer, context.completed(), operation);
 
         executor.execute(() -> {
             checkClosedOrFailed(operation);
 
             try {
-                final InFlightSend send = new SenderInFlightSend(message.messageFormat(), context, buffer, operation);
-
                 if (protonSender.isSendable()) {
                     try {
-                        assumeSendableAndSend(send);
+                        envelope.sendPayload();
                     } catch (Exception ex) {
                         operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
                     }
                 } else {
-                    addToTailOfBlockedQueue(send);
+                    addToTailOfBlockedQueue(envelope);
                 }
             } catch (Exception error) {
                 operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
         });
 
-        session.request(this, operation);
+        return (StreamTracker) session.request(this, operation);
     }
 
     @Override
-    protected StreamTracker sendMessage(AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations, boolean waitForCredit) throws ClientException {
-        final ClientFuture<ClientStreamTracker> operation = session.getFutureFactory().createFuture();
-        final ProtonBuffer buffer = message.encode(deliveryAnnotations);
-
-        executor.execute(() -> {
-            checkClosedOrFailed(operation);
-
-            try {
-                final InFlightSend send = new SenderInFlightSend(message.messageFormat(), null, buffer, operation);
-
-                if (protonSender.isSendable() && protonSender.current() == null) {
-                    try {
-                        assumeSendableAndSend(send);
-                    } catch (Exception ex) {
-                        operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
-                    }
-                } else if (waitForCredit) {
-                    addToTailOfBlockedQueue(send);
-                } else {
-                    operation.complete(null);
-                }
-            } catch (Exception error) {
-                operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
-            }
-        });
-
-        return session.request(this, operation);
-    }
-
-    private class SenderInFlightSend implements ClientAbstractSender.InFlightSend {
-
-        private final int messageFormat;
-        private final ProtonBuffer encodedMessage;
-        private final ClientFuture<ClientStreamTracker> operation;
-        private final ClientStreamSenderMessage context;
-
-        private ScheduledFuture<?> timeout;
-        private ClientStreamTracker tracker;
-        private OutgoingDelivery delivery;
-
-        public SenderInFlightSend(int messageFormat, ClientStreamSenderMessage context, ProtonBuffer encodedMessage, ClientFuture<ClientStreamTracker> operation) {
-            this.context = context;
-            this.delivery = context != null ? context.protonDelivery() : null;
-            this.messageFormat = messageFormat;
-            this.encodedMessage = encodedMessage;
-            this.operation = operation;
-        }
-
-        @Override
-        public OutgoingDelivery delivery() {
-            if (delivery == null) {
-                delivery = protonSender.next();
-                delivery.setMessageFormat(messageFormat);
-                delivery.setLinkedResource(tracker = new ClientStreamTracker(ClientStreamSender.this, delivery));
-            } else {
-                delivery.setMessageFormat(messageFormat);
-            }
-
-            return delivery;
-        }
-
-        @Override
-        public ClientStreamTracker tracker() {
-            return tracker;
-        }
-
-        @Override
-        public boolean aborted() {
-            return context != null ? context.aborted() : false;
-        }
-
-        @Override
-        public boolean complete() {
-            return context != null ? context.completed() : true;
-        }
-
-        @Override
-        public InFlightSend failed(ClientException result) {
-            if (timeout != null) {
-                timeout.cancel(true);
-            }
-            operation.failed(result);
-            return this;
-        }
-
-        @Override
-        public void ignored() {
-            tracker.settlementFuture().complete(tracker);
-            operation.complete(tracker);
-        }
-
-        @Override
-        public void succeeded() {
-            operation.complete(tracker);
-        }
-
-        @Override
-        public ClientException createSendTimedOutException() {
-            return new ClientSendTimedOutException("Timed out waiting for credit to send");
-        }
-
-        @Override
-        public ScheduledFuture<?> timeout() {
-            return timeout;
-        }
-
-        @Override
-        public void timeout(ScheduledFuture<?> sendTimeout) {
-            timeout = sendTimeout;
-        }
-
-        @Override
-        public ProtonBuffer encodedMessage() {
-            return encodedMessage;
-        }
+    protected ClientStreamTracker createTracker(OutgoingDelivery delivery) {
+        return new ClientStreamTracker(this, delivery);
     }
 }

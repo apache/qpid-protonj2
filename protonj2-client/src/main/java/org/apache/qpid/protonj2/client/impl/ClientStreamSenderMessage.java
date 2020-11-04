@@ -35,6 +35,7 @@ import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.OutputStreamOptions;
 import org.apache.qpid.protonj2.client.StreamSenderMessage;
 import org.apache.qpid.protonj2.client.StreamSenderOptions;
+import org.apache.qpid.protonj2.client.StreamTracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
@@ -55,7 +56,7 @@ import org.apache.qpid.protonj2.types.messaging.Section;
  * Streaming Sender context used to multiple send operations that comprise the payload
  * of a single larger message transfer.
  */
-public class ClientStreamSenderMessage implements StreamSenderMessage {
+final class ClientStreamSenderMessage implements StreamSenderMessage {
 
     private static final int DATA_SECTION_HEADER_ENCODING_SIZE = 8;
 
@@ -68,11 +69,10 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     private final ClientStreamSender sender;
-    private final ClientStreamTracker tracker;
-    private final OutgoingDelivery protonDelivery;
     private final DeliveryAnnotations deliveryAnnotations;
     private final int writeBufferSize;
     private final StreamMessagePacket streamMessagePacket = new StreamMessagePacket();
+    private final ClientStreamTracker tracker;
 
     private Header header;
     private MessageAnnotations annotations;
@@ -84,11 +84,10 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     private volatile int messageFormat;
     private StreamState currentState = StreamState.PREAMBLE;
 
-    ClientStreamSenderMessage(ClientStreamSender sender, OutgoingDelivery protonDelivery, DeliveryAnnotations deliveryAnnotations) {
+    ClientStreamSenderMessage(ClientStreamSender sender, ClientStreamTracker tracker, DeliveryAnnotations deliveryAnnotations) {
         this.sender = sender;
-        this.protonDelivery = protonDelivery;
         this.deliveryAnnotations = deliveryAnnotations;
-        this.tracker = new ClientStreamTracker(sender, protonDelivery);
+        this.tracker = tracker;
 
         if (sender.options().writeBufferSize() > 0) {
             writeBufferSize = Math.max(StreamSenderOptions.MIN_BUFFER_SIZE_LIMIT, sender.options().writeBufferSize());
@@ -98,8 +97,8 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
         }
     }
 
-    OutgoingDelivery protonDelivery() {
-        return protonDelivery;
+    OutgoingDelivery getProtonDelivery() {
+        return tracker.delivery();
     }
 
     @Override
@@ -108,8 +107,8 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     @Override
-    public ClientStreamTracker tracker() {
-        return tracker;
+    public StreamTracker tracker() {
+        return completed() ? tracker : null;
     }
 
     @Override
@@ -146,7 +145,7 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
 
         if (!aborted()) {
             currentState = StreamState.ABORTED;
-            sender.abort(protonDelivery);
+            sender.abort(getProtonDelivery());
         }
 
         return this;
@@ -174,11 +173,11 @@ public class ClientStreamSenderMessage implements StreamSenderMessage {
 
             // If there is buffered data we can flush and complete in one Transfer
             // frame otherwise we only need to do work if there was ever a send on
-            // this context which would imply we have a Tracker.
+            // this context which would imply we have a Tracker and a Delivery.
             if (buffer != null && buffer.isReadable()) {
                 doFlush();
             } else {
-                sender.complete(protonDelivery);
+                sender.complete(getProtonDelivery());
             }
         }
 

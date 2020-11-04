@@ -145,10 +145,10 @@ public class ClientFutureTest {
         final AtomicBoolean syncCalled = new AtomicBoolean(false);
         final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
 
-        final ClientFuture<Void> future = futuresFactory.createFuture(new ClientSynchronization() {
+        final ClientFuture<Void> future = futuresFactory.createFuture(new ClientSynchronization<Void>() {
 
             @Override
-            public void onPendingSuccess() {
+            public void onPendingSuccess(Void result) {
                 syncCalled.set(true);
             }
 
@@ -174,10 +174,10 @@ public class ClientFutureTest {
         final AtomicBoolean syncCalled = new AtomicBoolean(false);
         final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
 
-        final ClientFuture<Void> future = futuresFactory.createFuture(new ClientSynchronization() {
+        final ClientFuture<Void> future = futuresFactory.createFuture(new ClientSynchronization<Void>() {
 
             @Override
-            public void onPendingSuccess() {
+            public void onPendingSuccess(Void result) {
             }
 
             @Override
