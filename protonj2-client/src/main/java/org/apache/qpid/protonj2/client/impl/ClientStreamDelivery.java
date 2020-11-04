@@ -38,7 +38,7 @@ import org.apache.qpid.protonj2.types.messaging.Rejected;
 import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 
-public class ClientStreamDelivery implements StreamDelivery {
+public final class ClientStreamDelivery implements StreamDelivery {
 
     private final ClientStreamReceiver receiver;
     private final IncomingDelivery protonDelivery;

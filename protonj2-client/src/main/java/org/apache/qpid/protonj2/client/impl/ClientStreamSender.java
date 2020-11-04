@@ -32,7 +32,7 @@ import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 
-final class ClientStreamSender extends ClientSender implements StreamSender {
+public final class ClientStreamSender extends ClientSender implements StreamSender {
 
     private final StreamSenderOptions options;
 

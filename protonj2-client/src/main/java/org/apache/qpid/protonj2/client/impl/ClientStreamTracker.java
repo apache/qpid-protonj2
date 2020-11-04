@@ -28,7 +28,7 @@ import org.apache.qpid.protonj2.engine.OutgoingDelivery;
  * {@link StreamTracker} implementation that relies on the ClientTracker to handle the
  * basic {@link OutgoingDelivery} management.
  */
-final class ClientStreamTracker extends ClientTracker implements StreamTracker {
+public final class ClientStreamTracker extends ClientTracker implements StreamTracker {
 
     public ClientStreamTracker(ClientStreamSender sender, OutgoingDelivery delivery) {
         super(sender, delivery);

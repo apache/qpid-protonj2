@@ -392,10 +392,10 @@ class ClientSender implements Sender {
     private void handleRemoteOpen(org.apache.qpid.protonj2.engine.Sender sender) {
         // Check for deferred close pending and hold completion if so
         if (sender.getRemoteTarget() != null) {
-            remoteSource = new RemoteSource(sender.getRemoteSource());
+            remoteSource = new ClientRemoteSource(sender.getRemoteSource());
 
             if (sender.getRemoteTarget() != null) {
-                remoteTarget = new RemoteTarget(sender.getRemoteTarget());
+                remoteTarget = new ClientRemoteTarget(sender.getRemoteTarget());
             }
 
             openFuture.complete(this);

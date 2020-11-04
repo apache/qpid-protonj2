@@ -48,7 +48,7 @@ import org.apache.qpid.protonj2.types.transport.DeliveryState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ClientStreamReceiver implements StreamReceiver {
+public final class ClientStreamReceiver implements StreamReceiver {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientReceiver.class);
 
@@ -416,10 +416,10 @@ public class ClientStreamReceiver implements StreamReceiver {
     private void handleRemoteOpen(org.apache.qpid.protonj2.engine.Receiver receiver) {
         // Check for deferred close pending and hold completion if so
         if (receiver.getRemoteSource() != null) {
-            remoteSource = new RemoteSource(receiver.getRemoteSource());
+            remoteSource = new ClientRemoteSource(receiver.getRemoteSource());
 
             if (receiver.getRemoteTarget() != null) {
-                remoteTarget = new RemoteTarget(receiver.getRemoteTarget());
+                remoteTarget = new ClientRemoteTarget(receiver.getRemoteTarget());
             }
 
             replenishCreditIfNeeded();

@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Encapsulates the AMQP Redirect Map
  */
-public class ClientRedirect {
+public final class ClientRedirect {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientRedirect.class);
 

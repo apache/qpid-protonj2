@@ -28,14 +28,14 @@ import org.apache.qpid.protonj2.client.Target;
  * Wrapper around a remote {@link Target} that provides read-only access to
  * the remote Target configuration.
  */
-public class RemoteTarget implements Target {
+final class ClientRemoteTarget implements Target {
 
     private final org.apache.qpid.protonj2.types.messaging.Target remoteTarget;
 
     private Map<String, Object> cachedDynamicNodeProperties;
     private Set<String> cachedCapabilities;
 
-    RemoteTarget(org.apache.qpid.protonj2.types.messaging.Target remoteTarget) {
+    ClientRemoteTarget(org.apache.qpid.protonj2.types.messaging.Target remoteTarget) {
         this.remoteTarget = remoteTarget;
     }
 

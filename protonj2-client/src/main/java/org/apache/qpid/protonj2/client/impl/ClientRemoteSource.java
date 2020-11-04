@@ -33,7 +33,7 @@ import org.apache.qpid.protonj2.types.Symbol;
  * Wrapper around a remote {@link Source} that provides read-only accees to
  * the remote Source configuration.
  */
-public class RemoteSource implements Source {
+final class ClientRemoteSource implements Source {
 
     private final org.apache.qpid.protonj2.types.messaging.Source remoteSource;
 
@@ -44,7 +44,7 @@ public class RemoteSource implements Source {
     private Set<DeliveryState.Type> cachedOutcomes;
     private Set<String> cachedCapabilities;
 
-    RemoteSource(org.apache.qpid.protonj2.types.messaging.Source remoteSource) {
+    ClientRemoteSource(org.apache.qpid.protonj2.types.messaging.Source remoteSource) {
         this.remoteSource = remoteSource;
     }
 
@@ -128,7 +128,7 @@ public class RemoteSource implements Source {
     @Override
     public Map<String, String> filters() {
         if (cachedFilters == null && remoteSource.getFilter() != null) {
-            final Map<String, String> result = cachedFilters = new LinkedHashMap<String, String>();
+            final Map<String, String> result = cachedFilters = new LinkedHashMap<>();
             remoteSource.getFilter().forEach((key, value) -> {
                 result.put(key.toString(), value.toString());
             });

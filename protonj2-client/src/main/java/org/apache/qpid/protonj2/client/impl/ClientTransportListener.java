@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * for its lifetime which prevent duplication of error or connection closed events from
  * influencing a {@link ClientConnection} that will attempt reconnection.
  */
-public final class ClientTransportListener implements TransportListener {
+final class ClientTransportListener implements TransportListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientTransportListener.class);
 

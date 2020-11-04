@@ -60,7 +60,7 @@ import org.slf4j.LoggerFactory;
  * Streamed message delivery context used to request reads of possible split framed
  * {@link Transfer} payload's that comprise a single large overall message.
  */
-public class ClientStreamReceiverMessage implements StreamReceiverMessage {
+public final class ClientStreamReceiverMessage implements StreamReceiverMessage {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientStreamReceiverMessage.class);
 

@@ -31,7 +31,7 @@ import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 /**
  * Client outgoing delivery tracker object.
  */
-public class ClientTracker implements Tracker {
+class ClientTracker implements Tracker {
 
     private final ClientSender sender;
     private final OutgoingDelivery delivery;

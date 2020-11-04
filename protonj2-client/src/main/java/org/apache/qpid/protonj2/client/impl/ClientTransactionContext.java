@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Transaction context used to manage a running transaction within a single {@link Session}
  */
-public class ClientTransactionContext {
+class ClientTransactionContext {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientTransactionContext.class);
 
