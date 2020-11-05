@@ -31,6 +31,7 @@ import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
+import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 
 public final class ClientStreamSender extends ClientSender implements StreamSender {
 
@@ -126,7 +127,7 @@ public final class ClientStreamSender extends ClientSender implements StreamSend
             try {
                 if (protonSender.isSendable()) {
                     try {
-                        envelope.sendPayload();
+                        session.getTransactionContext().send(envelope, null, protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED);
                     } catch (Exception ex) {
                         operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
                     }
@@ -144,5 +145,10 @@ public final class ClientStreamSender extends ClientSender implements StreamSend
     @Override
     protected ClientStreamTracker createTracker(OutgoingDelivery delivery) {
         return new ClientStreamTracker(this, delivery);
+    }
+
+    @Override
+    protected ClientNoOpStreamTracker createNoOpTracker() {
+        return new ClientNoOpStreamTracker(this);
     }
 }

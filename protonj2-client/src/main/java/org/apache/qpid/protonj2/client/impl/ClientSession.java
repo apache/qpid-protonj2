@@ -58,9 +58,7 @@ public final class ClientSession implements Session {
 
     private static final AtomicIntegerFieldUpdater<ClientSession> CLOSED_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(ClientSession.class, "closed");
-
-    private volatile int closed;
-    private volatile ClientException failureCause;
+    private static final ClientNoOpTransactionContext NO_OP_TXN_CONTEXT = new ClientNoOpTransactionContext();
 
     private final ClientFuture<Session> openFuture;
     private final ClientFuture<Session> closeFuture;
@@ -72,7 +70,10 @@ public final class ClientSession implements Session {
     private final String sessionId;
     private final ClientSenderBuilder senderBuilder;
     private final ClientReceiverBuilder receiverBuilder;
-    private final ClientTransactionContext txnContext;
+
+    private volatile int closed;
+    private volatile ClientException failureCause;
+    private ClientTransactionContext txnContext = NO_OP_TXN_CONTEXT;
 
     public ClientSession(ClientConnection connection, SessionOptions options, String sessionId, org.apache.qpid.protonj2.engine.Session session) {
         this.options = new SessionOptions(options);
@@ -84,7 +85,6 @@ public final class ClientSession implements Session {
         this.closeFuture = connection.getFutureFactory().createFuture();
         this.senderBuilder = new ClientSenderBuilder(this);
         this.receiverBuilder = new ClientReceiverBuilder(this);
-        this.txnContext = new ClientTransactionContext(this);
 
         configureSession();
     }
@@ -301,6 +301,9 @@ public final class ClientSession implements Session {
         serializer.execute(() -> {
             try {
                 checkClosedOrFailed();
+                if (txnContext == NO_OP_TXN_CONTEXT) {
+                    txnContext = new ClientLocalTransactionContext(this);
+                }
                 txnContext.begin(beginFuture);
             } catch (Throwable error) {
                 beginFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));

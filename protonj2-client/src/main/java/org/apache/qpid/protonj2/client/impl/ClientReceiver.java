@@ -40,7 +40,6 @@ import org.apache.qpid.protonj2.client.util.FifoDeliveryQueue;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
-import org.apache.qpid.protonj2.types.messaging.Outcome;
 import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
 import org.slf4j.Logger;
@@ -520,12 +519,7 @@ public final class ClientReceiver implements Receiver {
 
     private void asyncApplyDisposition(IncomingDelivery delivery, DeliveryState state, boolean settle) {
         executor.execute(() -> {
-            if (session.getTransactionContext().isInTransaction()) {
-                delivery.disposition(session.getTransactionContext().enlistAcknowledgeInCurrentTransaction(this, (Outcome) state), true);
-            } else {
-                delivery.disposition(state, settle);
-            }
-
+            session.getTransactionContext().disposition(delivery, state, settle);
             replenishCreditIfNeeded();
         });
     }

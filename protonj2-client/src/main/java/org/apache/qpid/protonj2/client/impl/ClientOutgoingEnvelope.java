@@ -25,7 +25,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.engine.Sender;
-import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
+import org.apache.qpid.protonj2.types.transport.DeliveryState;
 
 /**
  * Tracking object used to manage the life-cycle of a send of message payload
@@ -148,8 +148,7 @@ public class ClientOutgoingEnvelope {
             }
             request.complete(delivery.getLinkedResource());
         } else {
-            // TODO: Need a no-op tracker.
-//            request.complete((T) delivery.getLinkedResource());
+            request.complete(sender.createNoOpTracker());
         }
 
         return this;
@@ -175,26 +174,15 @@ public class ClientOutgoingEnvelope {
         return this;
     }
 
-    public void sendPayload() {
+    public void sendPayload(DeliveryState state, boolean settled) {
         if (delivery == null) {
             delivery = protonSender.next();
             delivery.setLinkedResource(sender.createTracker(delivery));
         }
 
-        if (sender.session().getTransactionContext().isInTransaction()) {
-            if (sender.session().getTransactionContext().isTransactionInDoubt()) {
-                discard();
-                return;
-            } else {
-                delivery.disposition(sender.session().getTransactionContext().enlistSendInCurrentTransaction(sender, delivery),
-                    protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED || delivery.isSettled());
-            }
-        } else {
-            delivery.disposition(delivery.getState(), protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED || delivery.isSettled());
-        }
-
         if (delivery.getTransferCount() == 0) {
             delivery.setMessageFormat(messageFormat);
+            delivery.disposition(state, settled);
         }
 
         // We must check if the delivery was fully written and then complete the send operation otherwise

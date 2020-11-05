@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.OutputStream;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
@@ -32,10 +33,13 @@ import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.Message;
+import org.apache.qpid.protonj2.client.OutputStreamOptions;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Session;
+import org.apache.qpid.protonj2.client.StreamSender;
+import org.apache.qpid.protonj2.client.StreamSenderMessage;
 import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -44,9 +48,13 @@ import org.apache.qpid.protonj2.client.exceptions.ClientTransactionDeclarationEx
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionNotActiveException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionRolledBackException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
+import org.apache.qpid.protonj2.test.driver.matchers.messaging.HeaderMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferPayloadCompositeMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedDataMatcher;
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
+import org.apache.qpid.protonj2.types.messaging.Header;
 import org.apache.qpid.protonj2.types.messaging.Modified;
 import org.apache.qpid.protonj2.types.messaging.Rejected;
 import org.apache.qpid.protonj2.types.messaging.Released;
@@ -1264,7 +1272,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testSendMessageNoOpWhenTransactionInDoubt() throws Exception {
+    public void testSendMessagesNoOpWhenTransactionInDoubt() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
         try (NettyTestPeer peer = new NettyTestPeer()) {
@@ -1297,13 +1305,17 @@ public class TransactionsTest extends ImperativeClientTestCase {
             peer.expectClose().respond();
 
             final Sender sender = session.openSender("address").openFuture().get();
-            final Tracker tracker = sender.send(Message.create("test-message-"));
 
-            assertNotNull(tracker);
-            assertNotNull(tracker.settlementFuture().get());
-            assertNull(tracker.remoteState());
-            assertNull(tracker.state());
-            assertFalse(tracker.settled());
+            for (int i = 0; i < 10; ++i) {
+                final Tracker tracker = sender.send(Message.create("test-message-"));
+
+                assertNotNull(tracker);
+                assertNotNull(tracker.settlementFuture().get());
+                assertEquals(ClientDeliveryState.ClientAccepted.getInstance(), tracker.remoteState());
+                assertTrue(tracker.remoteSettled());
+                assertNull(tracker.state());
+                assertFalse(tracker.settled());
+            }
 
             try {
                 session.commitTransaction();
@@ -1314,6 +1326,84 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             session.closeAsync();
             connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void testStreamSenderMessageCanOperatesWithinTransaction() throws Exception {
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamSenderMessage message = sender.beginMessage();
+
+            // Populate all Header values
+            Header header = new Header();
+            header.setDurable(true);
+            header.setPriority((byte) 1);
+            header.setTimeToLive(65535);
+            header.setFirstAcquirer(true);
+            header.setDeliveryCount(2);
+
+            message.header(header);
+
+            OutputStreamOptions options = new OutputStreamOptions();
+            OutputStream stream = message.body(options);
+
+            HeaderMatcher headerMatcher = new HeaderMatcher(true);
+            headerMatcher.withDurable(true);
+            headerMatcher.withPriority((byte) 1);
+            headerMatcher.withTtl(65535);
+            headerMatcher.withFirstAcquirer(true);
+            headerMatcher.withDeliveryCount(2);
+            EncodedDataMatcher dataMatcher = new EncodedDataMatcher(new byte[] { 0, 1, 2, 3 });
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.setHeadersMatcher(headerMatcher);
+            payloadMatcher.setMessageContentMatcher(dataMatcher);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(5).queue();
+            peer.expectDeclare().accept(txnId);
+            peer.expectTransfer().withHandle(0)
+                                 .withMore(true)
+                                 .withPayload(payloadMatcher)
+                                 .withState().transactional().withTxnId(txnId).and()
+                                 .respond()
+                                 .withState().transactional().withTxnId(txnId).withAccepted().and()
+                                 .withSettled(true);
+            peer.expectTransfer().withMore(false).withNullPayload();
+            peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            sender.session().beginTransaction();
+
+            // Stream won't output until some body bytes are written since the buffer was not
+            // filled by the header write.  Then the close will complete the stream message.
+            stream.write(new byte[] { 0, 1, 2, 3 });
+            stream.flush();
+            stream.close();
+
+            sender.session().commitTransaction();
+            sender.closeAsync().get();
+
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

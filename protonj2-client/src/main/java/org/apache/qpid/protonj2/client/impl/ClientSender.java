@@ -47,6 +47,7 @@ import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.LinkState;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
+import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -425,7 +426,10 @@ class ClientSender implements Sender {
                 if (held.delivery() == protonSender.current()) {
                     LOG.trace("Dispatching previously held send");
                     try {
-                        held.sendPayload();
+                        // We don't currently allow a sender to define any outcome so we pass null for
+                        // now, however a transaction context will apply its TransactionalState outcome
+                        // and would wrap anything we passed in the future.
+                        session.getTransactionContext().send(held, null, protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED);
                     } catch (Exception ex) {
                         held.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
                     } finally {
@@ -515,7 +519,7 @@ class ClientSender implements Sender {
 
                 if (protonSender.isSendable() && protonSender.current() == null) {
                     try {
-                        envelope.sendPayload();
+                        session.getTransactionContext().send(envelope, null, protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED);
                     } catch (Exception ex) {
                         operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
                     }
@@ -534,6 +538,10 @@ class ClientSender implements Sender {
 
     protected Tracker createTracker(OutgoingDelivery delivery) {
         return new ClientTracker(this, delivery);
+    }
+
+    protected Tracker createNoOpTracker() {
+        return new ClientNoOpTracker(this);
     }
 
     protected void checkClosedOrFailed(ClientFuture<?> request) {
