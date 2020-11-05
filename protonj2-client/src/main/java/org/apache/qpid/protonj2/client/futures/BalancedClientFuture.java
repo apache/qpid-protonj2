@@ -38,7 +38,7 @@ public class BalancedClientFuture<V> extends ClientFuture<V> {
         this(null);
     }
 
-    public BalancedClientFuture(ClientSynchronization synchronization) {
+    public BalancedClientFuture(ClientSynchronization<V> synchronization) {
         super(synchronization);
     }
 

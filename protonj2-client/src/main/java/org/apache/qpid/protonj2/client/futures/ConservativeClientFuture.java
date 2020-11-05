@@ -34,7 +34,7 @@ public class ConservativeClientFuture<V> extends ClientFuture<V> {
         this(null);
     }
 
-    public ConservativeClientFuture(ClientSynchronization synchronization) {
+    public ConservativeClientFuture(ClientSynchronization<V> synchronization) {
         super(synchronization);
     }
 

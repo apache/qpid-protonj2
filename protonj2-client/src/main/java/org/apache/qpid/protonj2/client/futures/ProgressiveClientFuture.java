@@ -42,7 +42,7 @@ public class ProgressiveClientFuture<V> extends ClientFuture<V> {
         this(null);
     }
 
-    public ProgressiveClientFuture(ClientSynchronization synchronization) {
+    public ProgressiveClientFuture(ClientSynchronization<V> synchronization) {
         super(synchronization);
     }
 

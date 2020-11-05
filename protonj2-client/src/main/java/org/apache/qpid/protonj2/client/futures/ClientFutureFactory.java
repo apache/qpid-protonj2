@@ -88,7 +88,7 @@ public abstract class ClientFutureFactory {
      *
      * @param <V> the eventual result type for this Future
      */
-    public abstract <V> ClientFuture<V> createFuture(ClientSynchronization synchronization);
+    public abstract <V> ClientFuture<V> createFuture(ClientSynchronization<V> synchronization);
 
     /**
      * @return a ClientFuture that treats failures as success calls that simply complete the operation.
@@ -121,7 +121,7 @@ public abstract class ClientFutureFactory {
         }
 
         @Override
-        public <V> ClientFuture<V> createFuture(ClientSynchronization synchronization) {
+        public <V> ClientFuture<V> createFuture(ClientSynchronization<V> synchronization) {
             return new ConservativeClientFuture<>(synchronization);
         }
 
@@ -145,7 +145,7 @@ public abstract class ClientFutureFactory {
         }
 
         @Override
-        public <V> ClientFuture<V> createFuture(ClientSynchronization synchronization) {
+        public <V> ClientFuture<V> createFuture(ClientSynchronization<V> synchronization) {
             return new BalancedClientFuture<>(synchronization);
         }
 
@@ -169,7 +169,7 @@ public abstract class ClientFutureFactory {
         }
 
         @Override
-        public <V> ClientFuture<V> createFuture(ClientSynchronization synchronization) {
+        public <V> ClientFuture<V> createFuture(ClientSynchronization<V> synchronization) {
             return new ProgressiveClientFuture<>(synchronization);
         }
 
