@@ -38,12 +38,15 @@ import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.DeliveryState;
+import org.apache.qpid.protonj2.client.ReceiverOptions;
+import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
 import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.StreamReceiverOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryAbortedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientLinkRemotelyClosedException;
+import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.util.Wait;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
@@ -94,6 +97,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             peer.expectAttach().ofReceiver().respond();
             peer.expectFlow();
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
             peer.start();
 
@@ -108,7 +112,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             StreamReceiver receiver = connection.openStreamReceiver("test-queue", streamOptions);
 
             receiver.openFuture().get();
-            receiver.closeAsync();
+            receiver.closeAsync().get();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -139,10 +143,11 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
-            connection.closeAsync().get();
+            receiver.close();
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -173,9 +178,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertNull(receiver.receive(3, TimeUnit.MILLISECONDS));
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
+            receiver.close();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -211,6 +217,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDetach();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
             peer.remoteDetach().later(50);
 
@@ -265,10 +272,11 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             Wait.assertTrue(() -> { return delivery.remoteState() == DeliveryState.accepted(); });
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
-            connection.closeAsync().get();
+            receiver.close();
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -329,9 +337,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertFalse(delivery.aborted());
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
+            receiver.close();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -380,9 +389,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             Wait.assertTrue("Should eventually be marked as completed", delivery::completed);
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
+            receiver.closeAsync().get();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -437,9 +447,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             stream.close();
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
+            receiver.close();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -492,9 +503,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             stream.close();
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
+            receiver.close();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -563,10 +575,11 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             stream.close();
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
-            connection.closeAsync().get();
+            receiver.close();
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -631,9 +644,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             stream.close();
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
+            receiver.close();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -696,10 +710,11 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             stream.close();
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
-            connection.closeAsync().get();
+            receiver.close();
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -760,9 +775,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             stream.close();
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
+            receiver.closeAsync().get();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -825,10 +841,11 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             stream.close();
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
-            connection.closeAsync().get();
+            receiver.close();
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -871,9 +888,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertNotNull(header);
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
+            receiver.close();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -925,9 +943,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertEquals(annotationsMap, annotations.getValue());
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
+            receiver.closeAsync().get();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -982,9 +1001,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertEquals(annotationsMap, annotations.getValue());
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
+            receiver.closeAsync().get();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -1043,9 +1063,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertNull(message.footer());
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
+            receiver.closeAsync().get();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -1068,7 +1089,6 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     }
 
     private void testReadBytesFromBodyInputStreamWithSplitSingleByteTransfers(int option) throws Exception {
-
         final byte[] body = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
         final byte[] payload = createEncodedMessage(new Data(body));
 
@@ -1121,10 +1141,55 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             }
 
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
-            receiver.closeAsync();
+            receiver.close();
             connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamReceiverSessionCannotCreateNewResources() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+
+            assertThrows(ClientUnsupportedOperationException.class, () -> receiver.session().openReceiver("test"));
+            assertThrows(ClientUnsupportedOperationException.class, () -> receiver.session().openReceiver("test", new ReceiverOptions()));
+            assertThrows(ClientUnsupportedOperationException.class, () -> receiver.session().openDurableReceiver("test", "test"));
+            assertThrows(ClientUnsupportedOperationException.class, () -> receiver.session().openDurableReceiver("test", "test", new ReceiverOptions()));
+            assertThrows(ClientUnsupportedOperationException.class, () -> receiver.session().openDynamicReceiver());
+            assertThrows(ClientUnsupportedOperationException.class, () -> receiver.session().openDynamicReceiver(new HashMap<>()));
+            assertThrows(ClientUnsupportedOperationException.class, () -> receiver.session().openDynamicReceiver(new ReceiverOptions()));
+            assertThrows(ClientUnsupportedOperationException.class, () -> receiver.session().openDynamicReceiver(new HashMap<>(), new ReceiverOptions()));
+            assertThrows(ClientUnsupportedOperationException.class, () -> receiver.session().openSender("test"));
+            assertThrows(ClientUnsupportedOperationException.class, () -> receiver.session().openSender("test", new SenderOptions()));
+            assertThrows(ClientUnsupportedOperationException.class, () -> receiver.session().openAnonymousSender());
+            assertThrows(ClientUnsupportedOperationException.class, () -> receiver.session().openAnonymousSender(new SenderOptions()));
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

@@ -357,7 +357,7 @@ public class ClientConnection implements Connection {
 
                 checkClosedOrFailed();
                 SessionOptions sessionOptions = new SessionOptions(sessionBuilder.getDefaultSessionOptions());
-                ClientSession session = sessionBuilder.session(sessionOptions.incomingCapacity(sessionCapacity)).open();
+                ClientStreamSession session = (ClientStreamSession) sessionBuilder.streamSession(sessionOptions.incomingCapacity(sessionCapacity)).open();
                 createRequest.complete(session.internalOpenStreamReceiver(address, receiverOptions));
             } catch (Throwable error) {
                 createRequest.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -443,7 +443,7 @@ public class ClientConnection implements Connection {
         executor.execute(() -> {
             try {
                 checkClosedOrFailed();
-                ClientSession session = sessionBuilder.session(null).open();
+                ClientStreamSession session = (ClientStreamSession) sessionBuilder.streamSession(null).open();
                 createRequest.complete(session.internalOpenStreamSender(address, senderOptions));
             } catch (Throwable error) {
                 createRequest.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));

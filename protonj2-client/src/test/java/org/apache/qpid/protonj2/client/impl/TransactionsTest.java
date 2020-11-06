@@ -1390,6 +1390,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             peer.expectTransfer().withMore(false).withNullPayload();
             peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
             peer.expectDetach().respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
 
             sender.session().beginTransaction();

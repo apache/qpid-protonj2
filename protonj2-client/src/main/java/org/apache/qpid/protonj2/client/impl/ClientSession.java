@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Client implementation of the Session API.
  */
-public final class ClientSession implements Session {
+public class ClientSession implements Session {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientSession.class);
 

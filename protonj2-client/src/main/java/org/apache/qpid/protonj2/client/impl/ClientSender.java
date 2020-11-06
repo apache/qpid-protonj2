@@ -572,6 +572,14 @@ class ClientSender implements Sender {
                 protonSender.close();
             }
         } catch (Throwable ignore) {
+            // Ingore
+        } finally {
+            // If the parent of this sender is a stream session than this sender owns it
+            // and must close it when it closes itself to ensure that the resources are
+            // clueaned up on the remote for the session.
+            if (session instanceof ClientStreamSession) {
+                session.closeAsync();
+            }
         }
 
         // Cancel all blocked sends passing an appropriate error to the future

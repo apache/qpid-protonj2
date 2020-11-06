@@ -45,6 +45,14 @@ final class ClientSessionBuilder {
         return new ClientSession(connection, options, sessionId, protonSession);
     }
 
+    public ClientStreamSession streamSession(SessionOptions sessionOptions) throws ClientException {
+        final SessionOptions options = sessionOptions != null ? sessionOptions : getDefaultSessionOptions();
+        final String sessionId = nextSessionId();
+        final Session protonSession = createSession(connection.getProtonConnection(), options);
+
+        return new ClientStreamSession(connection, options, sessionId, protonSession);
+    }
+
     private static Session createSession(Connection connection, SessionOptions options) {
         return connection.session().setIncomingCapacity(options.incomingCapacity());
     }

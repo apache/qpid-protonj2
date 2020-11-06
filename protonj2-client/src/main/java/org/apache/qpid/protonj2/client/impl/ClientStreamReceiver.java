@@ -609,6 +609,9 @@ public final class ClientStreamReceiver implements StreamReceiver {
                 protonReceiver.close();
             }
         } catch (Exception ignore) {
+            // Ignore
+        } finally {
+            session.closeAsync();
         }
 
         receiveRequests.forEach((future, timeout) -> {
