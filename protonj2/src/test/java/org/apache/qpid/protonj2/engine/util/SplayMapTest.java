@@ -213,6 +213,51 @@ public class SplayMapTest {
     }
 
     @Test
+    public void testPutIfAbsent() {
+        SplayMap<String> map = new SplayMap<>();
+
+        assertNull(map.putIfAbsent(UnsignedInteger.valueOf(0), "zero"));
+        assertNull(map.putIfAbsent(UnsignedInteger.valueOf(1), "one"));
+        assertNull(map.putIfAbsent(UnsignedInteger.valueOf(2), "two"));
+        assertNull(map.putIfAbsent(UnsignedInteger.valueOf(3), "three"));
+        assertNull(map.putIfAbsent(UnsignedInteger.valueOf(5), "five"));
+        assertNull(map.putIfAbsent(UnsignedInteger.valueOf(9), "nine"));
+        assertNull(map.putIfAbsent(UnsignedInteger.valueOf(7), "seven"));
+        assertNull(map.putIfAbsent(UnsignedInteger.valueOf(-1), "minus one"));
+
+        assertEquals(8, map.size());
+
+        assertEquals("zero", map.get(0));
+        assertEquals("one", map.get(1));
+        assertEquals("two", map.get(2));
+        assertEquals("three", map.get(3));
+        assertEquals("five", map.get(5));
+        assertEquals("nine", map.get(9));
+        assertEquals("seven", map.get(7));
+        assertEquals("minus one", map.get(-1));
+
+        assertNotNull(map.putIfAbsent(UnsignedInteger.valueOf(0), "zero-zero"));
+        assertNotNull(map.putIfAbsent(UnsignedInteger.valueOf(1), "one-one"));
+        assertNotNull(map.putIfAbsent(UnsignedInteger.valueOf(2), "two-two"));
+        assertNotNull(map.putIfAbsent(UnsignedInteger.valueOf(3), "three-three"));
+        assertNotNull(map.putIfAbsent(UnsignedInteger.valueOf(5), "five-five"));
+        assertNotNull(map.putIfAbsent(UnsignedInteger.valueOf(9), "nine-nine"));
+        assertNotNull(map.putIfAbsent(UnsignedInteger.valueOf(7), "seven-seven"));
+        assertNotNull(map.putIfAbsent(UnsignedInteger.valueOf(-1), "minus one minus one"));
+
+        assertEquals(8, map.size());
+
+        assertEquals("zero", map.get(0));
+        assertEquals("one", map.get(1));
+        assertEquals("two", map.get(2));
+        assertEquals("three", map.get(3));
+        assertEquals("five", map.get(5));
+        assertEquals("nine", map.get(9));
+        assertEquals("seven", map.get(7));
+        assertEquals("minus one", map.get(-1));
+    }
+
+    @Test
     public void testGetWhenEmpty() {
         SplayMap<String> map = new SplayMap<>();
 
