@@ -1782,4 +1782,102 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    void testStreamMessageWaitingOnCreditWritesWhileCompleteSendWaitsInQueue() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamSenderMessage tracker = sender.beginMessage();
+            OutputStream stream = tracker.body();
+
+            final byte[] payload1 = new byte[256];
+            Arrays.fill(payload1, (byte) 1);
+            final byte[] payload2 = new byte[256];
+            Arrays.fill(payload2, (byte) 2);
+
+            EncodedDataMatcher dataMatcher1 = new EncodedDataMatcher(payload1);
+            TransferPayloadCompositeMatcher payloadMatcher1 = new TransferPayloadCompositeMatcher();
+            payloadMatcher1.setMessageContentMatcher(dataMatcher1);
+
+            EncodedDataMatcher dataMatcher2 = new EncodedDataMatcher(payload2);
+            TransferPayloadCompositeMatcher payloadMatcher2 = new TransferPayloadCompositeMatcher();
+            payloadMatcher2.setMessageContentMatcher(dataMatcher2);
+
+            EncodedDataMatcher dataMatcher3 = new EncodedDataMatcher(payload1);
+            TransferPayloadCompositeMatcher payloadMatcher3 = new TransferPayloadCompositeMatcher();
+            payloadMatcher3.setMessageContentMatcher(dataMatcher3);
+
+            final AtomicBoolean sendFailed = new AtomicBoolean();
+            // Stream won't output until some body bytes are written.
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    stream.write(payload1);
+                    stream.flush();
+                } catch (IOException e) {
+                    LOG.info("send failed with error: ", e);
+                    sendFailed.set(true);
+                }
+            });
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).now();
+            peer.expectTransfer().withPayload(payloadMatcher1).withMore(true);
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            final CountDownLatch sendStarted = new CountDownLatch(1);
+            final CountDownLatch sendCompleted = new CountDownLatch(1);
+
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    LOG.info("Test send 1 is preparing to fire:");
+                    ForkJoinPool.commonPool().execute(() -> sendStarted.countDown());
+                    sender.send(Message.create(payload1));
+                    sendCompleted.countDown();
+                } catch (Exception e) {
+                    LOG.info("Test send 1 failed with error: ", e);
+                    sendFailed.set(true);
+                }
+            });
+
+            assertTrue(sendStarted.await(10, TimeUnit.SECONDS));
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(2).withLinkCredit(10).now();
+            peer.expectTransfer().withPayload(payloadMatcher2).withMore(true);
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(3).withLinkCredit(10).queue();
+
+            stream.write(payload2);
+            stream.flush();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withNullPayload().withMore(false).accept();
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(4).withLinkCredit(10).queue();
+            peer.expectTransfer().withPayload(payloadMatcher3).withMore(false);
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            stream.close();
+
+            assertTrue(sendCompleted.await(100, TimeUnit.SECONDS));
+            assertFalse(sendFailed.get());
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

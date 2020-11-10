@@ -132,13 +132,10 @@ public class ClientOutgoingEnvelope {
         return delivery;
     }
 
-    public boolean isComplete() {
-        return complete;
-    }
-
     public ClientOutgoingEnvelope discard() {
         if (sendTimeout != null) {
             sendTimeout.cancel(true);
+            sendTimeout = null;
         }
 
         if (delivery != null) {

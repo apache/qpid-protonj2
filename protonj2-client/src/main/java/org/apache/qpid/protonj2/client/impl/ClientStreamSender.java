@@ -132,7 +132,7 @@ public final class ClientStreamSender extends ClientSender implements StreamSend
                         operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
                     }
                 } else {
-                    addToTailOfBlockedQueue(envelope);
+                    addToHeadOfBlockedQueue(envelope);
                 }
             } catch (Exception error) {
                 operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
