@@ -97,6 +97,16 @@ public abstract class ClientFutureFactory {
      */
     public abstract <V> ClientFuture<V> createUnfailableFuture();
 
+    /**
+     * @param synchronization
+     *      The {@link ClientSynchronization} to assign to the returned {@link ClientFuture}.
+     *
+     * @return a ClientFuture that treats failures as success calls that simply complete the operation.
+     *
+     * @param <V> the eventual result type for this Future
+     */
+    public abstract <V> ClientFuture<V> createUnfailableFuture(ClientSynchronization<V> synchronization);
+
     //----- Internal support methods -----------------------------------------//
 
     private static boolean isWindows() {
@@ -127,7 +137,12 @@ public abstract class ClientFutureFactory {
 
         @Override
         public <V> ClientFuture<V> createUnfailableFuture() {
-            return new ConservativeClientFuture<>() {
+            return createUnfailableFuture(null);
+        }
+
+        @Override
+        public <V> ClientFuture<V> createUnfailableFuture(ClientSynchronization<V> synchronization) {
+            return new ConservativeClientFuture<>(synchronization) {
 
                 @Override
                 public void failed(ClientException t) {
@@ -151,7 +166,12 @@ public abstract class ClientFutureFactory {
 
         @Override
         public <V> ClientFuture<V> createUnfailableFuture() {
-            return new BalancedClientFuture<>() {
+            return createUnfailableFuture(null);
+        }
+
+        @Override
+        public <V> ClientFuture<V> createUnfailableFuture(ClientSynchronization<V> synchronization) {
+            return new BalancedClientFuture<>(synchronization) {
 
                 @Override
                 public void failed(ClientException t) {
@@ -175,7 +195,12 @@ public abstract class ClientFutureFactory {
 
         @Override
         public <V> ClientFuture<V> createUnfailableFuture() {
-            return new ProgressiveClientFuture<>() {
+            return createUnfailableFuture(null);
+        }
+
+        @Override
+        public <V> ClientFuture<V> createUnfailableFuture(ClientSynchronization<V> synchronization) {
+            return new ProgressiveClientFuture<>(synchronization) {
 
                 @Override
                 public void failed(ClientException t) {

@@ -313,4 +313,63 @@ public class ClientFutureTest {
 
         assertTrue(interrupted.get());
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "conservative", "balanced", "progressive" })
+    public void testUnfailableOnSuccessCallsSuccessSynchronization(String futureType) {
+        final AtomicBoolean syncCalled = new AtomicBoolean(false);
+        final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
+
+        final ClientFuture<Void> future = futuresFactory.createUnfailableFuture(new ClientSynchronization<Void>() {
+
+            @Override
+            public void onPendingSuccess(Void result) {
+                syncCalled.set(true);
+            }
+
+            @Override
+            public void onPendingFailure(Throwable cause) {
+
+            }
+        });
+
+        future.complete(null);
+        try {
+            future.get(5, TimeUnit.SECONDS);
+        } catch (Exception cause) {
+            fail("Should not throw an error");
+        }
+
+        assertTrue(syncCalled.get(), "Synchronization not called");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "conservative", "balanced", "progressive" })
+    public void testUnfailableOnFailureCallsSuccessSynchronization(String futureType) {
+        final AtomicBoolean syncCalled = new AtomicBoolean(false);
+        final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
+
+        final ClientFuture<Void> future = futuresFactory.createUnfailableFuture(new ClientSynchronization<Void>() {
+
+            @Override
+            public void onPendingSuccess(Void result) {
+                syncCalled.set(true);
+            }
+
+            @Override
+            public void onPendingFailure(Throwable cause) {
+            }
+        });
+
+        final ClientException ex = new ClientException("Failed");
+
+        future.failed(ex);
+        try {
+            future.get(5, TimeUnit.SECONDS);
+        } catch (Exception cause) {
+            fail("Should not throw an error");
+        }
+
+        assertTrue(syncCalled.get(), "Synchronization not called");
+    }
 }
