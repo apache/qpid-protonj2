@@ -42,6 +42,7 @@ public class ClientOutgoingEnvelope {
     private final boolean complete;
     private final int messageFormat;
 
+    private boolean aborted;
     private ScheduledFuture<?> sendTimeout;
     private OutgoingDelivery delivery;
 
@@ -132,6 +133,15 @@ public class ClientOutgoingEnvelope {
         return delivery;
     }
 
+    public ClientOutgoingEnvelope abort() {
+        this.aborted = true;
+        return this;
+    }
+
+    public boolean aborted() {
+        return aborted;
+    }
+
     public ClientOutgoingEnvelope discard() {
         if (sendTimeout != null) {
             sendTimeout.cancel(true);
@@ -187,11 +197,16 @@ public class ClientOutgoingEnvelope {
         // the session capacity is refilled and we can fully write the remaining message payload.  This
         // area could use some enhancement to allow control of write and flush when dealing with delivery
         // modes that have low assurance versus those that are strict.
-        delivery.streamBytes(payload, complete);
-        if (payload.isReadable()) {
-            sender.addToHeadOfBlockedQueue(this);
-        } else {
+        if (aborted()) {
+            delivery.abort();
             succeeded();
+        } else {
+            delivery.streamBytes(payload, complete);
+            if (payload != null && payload.isReadable()) {
+                sender.addToHeadOfBlockedQueue(this);
+            } else {
+                succeeded();
+            }
         }
     }
 

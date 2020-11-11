@@ -145,7 +145,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
 
         if (!aborted()) {
             currentState = StreamState.ABORTED;
-            sender.abort(getProtonDelivery());
+            sender.abort(getProtonDelivery(), tracker);
         }
 
         return this;
@@ -177,7 +177,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
             if (buffer != null && buffer.isReadable()) {
                 doFlush();
             } else {
-                sender.complete(getProtonDelivery());
+                sender.complete(getProtonDelivery(), tracker);
             }
         }
 

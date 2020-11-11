@@ -42,6 +42,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutExcepti
 import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
+import org.apache.qpid.protonj2.client.futures.ClientSynchronization;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.LinkState;
@@ -282,20 +283,71 @@ class ClientSender implements Sender {
         });
     }
 
-    void abort(OutgoingDelivery delivery) throws ClientException {
+    void abort(OutgoingDelivery delivery, ClientTracker tracker) throws ClientException {
         checkClosedOrFailed();
-        executor.execute(() -> {
-            delivery.abort();
-            handleCreditStateUpdated(getProtonSender());
+        ClientFuture<Tracker> request = session().getFutureFactory().createFuture(new ClientSynchronization<Tracker>() {
+
+            @Override
+            public void onPendingSuccess(Tracker result) {
+                handleCreditStateUpdated(getProtonSender());
+            }
+
+            @Override
+            public void onPendingFailure(Throwable cause) {
+                handleCreditStateUpdated(getProtonSender());
+            }
         });
+
+        executor.execute(() -> {
+            if (delivery.getTransferCount() == 0) {
+                delivery.abort();
+                request.complete(tracker);
+            } else {
+                ClientOutgoingEnvelope envelope = new ClientOutgoingEnvelope(this, delivery, delivery.getMessageFormat(), null, false, request).abort();
+                if (protonSender.isSendable() && protonSender.current() == null || protonSender.current() == delivery) {
+                    envelope.sendPayload(delivery.getState(), delivery.isSettled());
+                } else {
+                    if (protonSender.current() == delivery) {
+                        addToHeadOfBlockedQueue(envelope);
+                    } else {
+                        addToTailOfBlockedQueue(envelope);
+                    }
+                }
+            }
+        });
+
+        session.request(this, request);
     }
 
-    void complete(OutgoingDelivery delivery) throws ClientException {
+    void complete(OutgoingDelivery delivery, ClientTracker tracker) throws ClientException {
         checkClosedOrFailed();
-        executor.execute(() -> {
-            delivery.streamBytes(null, true);
-            handleCreditStateUpdated(getProtonSender());
+        ClientFuture<Tracker> request = session().getFutureFactory().createFuture(new ClientSynchronization<Tracker>() {
+
+            @Override
+            public void onPendingSuccess(Tracker result) {
+                handleCreditStateUpdated(getProtonSender());
+            }
+
+            @Override
+            public void onPendingFailure(Throwable cause) {
+                handleCreditStateUpdated(getProtonSender());
+            }
         });
+
+        executor.execute(() -> {
+            ClientOutgoingEnvelope envelope = new ClientOutgoingEnvelope(this, delivery, delivery.getMessageFormat(), null, true, request);
+            if (protonSender.isSendable() && protonSender.current() == null || protonSender.current() == delivery) {
+                envelope.sendPayload(delivery.getState(), delivery.isSettled());
+            } else {
+                if (protonSender.current() == delivery) {
+                    addToHeadOfBlockedQueue(envelope);
+                } else {
+                    addToTailOfBlockedQueue(envelope);
+                }
+            }
+        });
+
+        session.request(this, request);
     }
 
     ClientSender open() {
