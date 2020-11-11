@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
@@ -1476,6 +1477,50 @@ public abstract class ProtonAbstractBufferTest {
         String decoded = buffer.toString(StandardCharsets.UTF_8);
 
         assertEquals(sourceString, decoded);
+    }
+
+    @Test
+    public void testReadUnicodeStringAcrossArrayBoundries() throws IOException {
+        String expected = "\u1f4a9\\u1f4a9\\u1f4a9";
+
+        byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
+
+        byte[] slice1 = new byte[] { utf8[0] };
+        byte[] slice2 = new byte[utf8.length - 1];
+
+        System.arraycopy(utf8, 1, slice2, 0, slice2.length);
+
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        buffer.append(slice1);
+        buffer.append(slice2);
+
+        String result = buffer.toString(StandardCharsets.UTF_8);
+
+        assertEquals(expected, result, "Failed to round trip String correctly: ");
+    }
+
+    @Test
+    public void testReadUnicodeStringAcrossMultipleArrayBoundries() throws IOException {
+        String expected = "\u1f4a9\\u1f4a9\\u1f4a9";
+
+        byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
+
+        byte[] slice1 = new byte[] { utf8[0] };
+        byte[] slice2 = new byte[] { utf8[1], utf8[2] };
+        byte[] slice3 = new byte[] { utf8[3], utf8[4] };
+        byte[] slice4 = new byte[utf8.length - 5];
+
+        System.arraycopy(utf8, 5, slice4, 0, slice4.length);
+
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        buffer.append(slice1);
+        buffer.append(slice2);
+        buffer.append(slice3);
+        buffer.append(slice4);
+
+        String result = buffer.toString(StandardCharsets.UTF_8);
+
+        assertEquals(expected, result, "Failed to round trip String correctly: ");
     }
 
     //----- Tests for index marking ------------------------------------------//
