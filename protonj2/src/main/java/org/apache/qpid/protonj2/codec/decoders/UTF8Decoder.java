@@ -26,13 +26,17 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 public interface UTF8Decoder {
 
     /**
-     * Decodes a String from the given UTF8 Bytes.
+     * Decodes a String from the given UTF8 Bytes advancing the buffer read index
+     * by the given length value once complete.  If the implementation does not advance
+     * the buffer read index the outcome of future decode calls is not defined.
      *
-     * @param utf8bytes
+     * @param buffer
      *      A ProtonBuffer containing the UTF-8 encoded bytes.
+     * @param utf8length
+     *      The number of bytes in the passed buffer that comprise the UTF-8 encoded value.
      *
      * @return a new String that represents the decoded value.
      */
-    String decodeUTF8(ProtonBuffer utf8bytes);
+    String decodeUTF8(ProtonBuffer buffer, int utf8length);
 
 }

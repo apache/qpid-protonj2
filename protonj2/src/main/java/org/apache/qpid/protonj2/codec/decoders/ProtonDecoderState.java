@@ -68,15 +68,14 @@ public final class ProtonDecoderState implements DecoderState {
         if (stringDecoder == null) {
             return internalDecode(buffer, length, STRING_DECODER, length > MAX_CHAR_BUFFER_CAHCE_SIZE ? new char[length] : decodeCache);
         } else {
-            // TODO - We could pass the buffer and length here as well and specify that the
-            //        decoder must move the buffer position to consume them if we really trust
-            //        that the user will actually do the right thing.
-            ProtonBuffer slice = buffer.slice(buffer.getReadIndex(), length);
-            buffer.skipBytes(length);
+            final int originalPosition = buffer.getReadIndex();
+
             try {
-                return stringDecoder.decodeUTF8(slice);
+                return stringDecoder.decodeUTF8(buffer, length);
             } catch (Exception ex) {
                 throw new DecodeException("Cannot parse encoded UTF8 String", ex);
+            } finally {
+                buffer.setReadIndex(originalPosition + length);
             }
         }
     }
