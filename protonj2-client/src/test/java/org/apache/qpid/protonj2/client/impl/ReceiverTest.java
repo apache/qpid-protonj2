@@ -231,11 +231,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            connection.openFuture().get(10, TimeUnit.SECONDS);
-
-            Session session = connection.openSession();
-            session.openFuture().get(10, TimeUnit.SECONDS);
-
+            Session session = connection.openSession().openFuture().get(10, TimeUnit.SECONDS);
             Receiver receiver = session.openReceiver("test-queue", new ReceiverOptions().openTimeout(10));
 
             try {

@@ -293,7 +293,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Session session = connection.openSession();
+            Session session = connection.openSession().openFuture().get();
             Sender sender = session.openSender("test-queue", new SenderOptions().openTimeout(10));
 
             try {
@@ -308,6 +308,8 @@ public class SenderTest extends ImperativeClientTestCase {
                 Throwable cause = exe.getCause();
                 assertTrue(cause instanceof ClientOperationTimedOutException);
             }
+
+            LOG.info("Closing connection after waiting for sender open");
 
             connection.closeAsync().get(10, TimeUnit.SECONDS);
 
