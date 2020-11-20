@@ -304,14 +304,18 @@ class ClientSender implements Sender {
                 request.complete(tracker);
             } else {
                 ClientOutgoingEnvelope envelope = new ClientOutgoingEnvelope(this, delivery, delivery.getMessageFormat(), null, false, request).abort();
-                if (protonSender.isSendable() && protonSender.current() == null || protonSender.current() == delivery) {
-                    envelope.sendPayload(delivery.getState(), delivery.isSettled());
-                } else {
-                    if (protonSender.current() == delivery) {
-                        addToHeadOfBlockedQueue(envelope);
+                try {
+                    if (protonSender.isSendable() && protonSender.current() == null || protonSender.current() == delivery) {
+                        envelope.sendPayload(delivery.getState(), delivery.isSettled());
                     } else {
-                        addToTailOfBlockedQueue(envelope);
+                        if (protonSender.current() == delivery) {
+                            addToHeadOfBlockedQueue(envelope);
+                        } else {
+                            addToTailOfBlockedQueue(envelope);
+                        }
                     }
+                } catch (Exception error) {
+                    request.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
                 }
             }
         });
@@ -336,14 +340,18 @@ class ClientSender implements Sender {
 
         executor.execute(() -> {
             ClientOutgoingEnvelope envelope = new ClientOutgoingEnvelope(this, delivery, delivery.getMessageFormat(), null, true, request);
-            if (protonSender.isSendable() && protonSender.current() == null || protonSender.current() == delivery) {
-                envelope.sendPayload(delivery.getState(), delivery.isSettled());
-            } else {
-                if (protonSender.current() == delivery) {
-                    addToHeadOfBlockedQueue(envelope);
+            try {
+                if (protonSender.isSendable() && protonSender.current() == null || protonSender.current() == delivery) {
+                    envelope.sendPayload(delivery.getState(), delivery.isSettled());
                 } else {
-                    addToTailOfBlockedQueue(envelope);
+                    if (protonSender.current() == delivery) {
+                        addToHeadOfBlockedQueue(envelope);
+                    } else {
+                        addToTailOfBlockedQueue(envelope);
+                    }
                 }
+            } catch (Exception error) {
+                request.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
         });
 
@@ -482,8 +490,8 @@ class ClientSender implements Sender {
                         // now, however a transaction context will apply its TransactionalState outcome
                         // and would wrap anything we passed in the future.
                         session.getTransactionContext().send(held, null, protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED);
-                    } catch (Exception ex) {
-                        held.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+                    } catch (Exception error) {
+                        held.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
                     } finally {
                         blocked.poll();
                     }
@@ -570,11 +578,7 @@ class ClientSender implements Sender {
                 final ClientOutgoingEnvelope envelope = new ClientOutgoingEnvelope(this, message.messageFormat(), buffer, operation);
 
                 if (protonSender.isSendable() && protonSender.current() == null) {
-                    try {
-                        session.getTransactionContext().send(envelope, null, protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED);
-                    } catch (Exception ex) {
-                        operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
-                    }
+                    session.getTransactionContext().send(envelope, null, protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED);
                 } else if (waitForCredit) {
                     addToTailOfBlockedQueue(envelope);
                 } else {
