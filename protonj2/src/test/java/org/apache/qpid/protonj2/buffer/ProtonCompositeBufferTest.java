@@ -27,8 +27,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
@@ -1815,6 +1817,255 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
 
         assertEquals(buffer2.getByte(1), composite.readByte());
         assertEquals(buffer2.getByte(2), composite.readByte());
+    }
+
+    //----- Test readString ------------------------------------------//
+
+    @Test
+    public void testReadStringFromEmptyBuffer() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        assertEquals("", buffer.toString(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    public void testReadStringFromUTF8InSingleArray() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        final String testString = "Test String to Decode!";
+        byte[] encoded = testString.getBytes(StandardCharsets.UTF_8);
+
+        buffer.append(encoded);
+
+        assertEquals(testString, buffer.toString(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    public void testReadStringFromUTF8InSingleArrayWithLimits() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        final String testString = "Test String to Decode!";
+        byte[] encoded = testString.getBytes(StandardCharsets.UTF_8);
+
+        // Only read the first character
+        buffer.append(encoded);
+        buffer.setWriteIndex(1);
+
+        assertEquals("T", buffer.toString(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    public void testReadStringFromUTF8InMulitpleArrays() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        final String testString = "Test String to Decode!!";
+        byte[] encoded = testString.getBytes(StandardCharsets.UTF_8);
+
+        byte[] first = new byte[encoded.length / 2];
+        byte[] second = new byte[encoded.length - (encoded.length / 2)];
+
+        System.arraycopy(encoded, 0, first, 0, first.length);
+        System.arraycopy(encoded, first.length, second, 0, second.length);
+
+        buffer.append(first).append(second);
+
+        String result = buffer.toString(StandardCharsets.UTF_8);
+
+        assertEquals(testString, result);
+    }
+
+    @Test
+    public void testReadStringFromUTF8InMultipleArraysWithLimits() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        final String testString = "Test String to Decode!";
+        byte[] encoded = testString.getBytes(StandardCharsets.UTF_8);
+
+        byte[] first = new byte[encoded.length / 2];
+        byte[] second = new byte[encoded.length - (encoded.length / 2)];
+
+        System.arraycopy(encoded, 0, first, 0, first.length);
+        System.arraycopy(encoded, first.length, second, 0, second.length);
+
+        buffer.append(first).append(second);
+
+        // Only read the first character
+        buffer.setWriteIndex(1);
+
+        assertEquals("T", buffer.toString(StandardCharsets.UTF_8));
+    }
+
+    @Override
+    @Test
+    public void testReadUnicodeStringAcrossArrayBoundries() throws IOException {
+        String expected = "\u1f4a9\u1f4a9\u1f4a9";
+
+        byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
+
+        byte[] slice1 = new byte[] { utf8[0] };
+        byte[] slice2 = new byte[utf8.length - 1];
+
+        System.arraycopy(utf8, 1, slice2, 0, slice2.length);
+
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        buffer.append(slice1);
+        buffer.append(slice2);
+
+        String result = buffer.toString(StandardCharsets.UTF_8);
+
+        assertEquals(expected, result, "Failed to round trip String correctly: ");
+    }
+
+    @Override
+    @Test
+    public void testReadUnicodeStringAcrossMultipleArrayBoundries() throws IOException {
+        String expected = "\u1f4a9\u1f4a9\u1f4a9";
+
+        byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
+
+        byte[] slice1 = new byte[] { utf8[0] };
+        byte[] slice2 = new byte[] { utf8[1], utf8[2] };
+        byte[] slice3 = new byte[] { utf8[3], utf8[4] };
+        byte[] slice4 = new byte[utf8.length - 5];
+
+        System.arraycopy(utf8, 5, slice4, 0, slice4.length);
+
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        buffer.append(slice1);
+        buffer.append(slice2);
+        buffer.append(slice3);
+        buffer.append(slice4);
+
+        String result = buffer.toString(StandardCharsets.UTF_8);
+
+        assertEquals(expected, result, "Failed to round trip String correctly: ");
+    }
+
+    @Test
+    public void testReadUnicodeStringEachByteInOwnArray() throws IOException {
+        String expected = "\u1f4a9";
+
+        byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
+
+        assertEquals(4, utf8.length);
+
+        byte[] slice1 = new byte[] { utf8[0] };
+        byte[] slice2 = new byte[] { utf8[1] };
+        byte[] slice3 = new byte[] { utf8[2] };
+        byte[] slice4 = new byte[] { utf8[3] };
+
+        System.arraycopy(utf8, 1, slice2, 0, slice2.length);
+
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        buffer.append(slice1);
+        buffer.append(slice2);
+        buffer.append(slice3);
+        buffer.append(slice4);
+
+        String result = buffer.toString(StandardCharsets.UTF_8);
+
+        assertEquals(expected, result, "Failed to round trip String correctly: ");
+    }
+
+    @Test
+    public void testReadSlicedWithInvalidEncodingsOutsideSlicedRange() throws IOException {
+        String expected = "\u1f4a9\u1f4a9\u1f4a9";
+
+        byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
+
+        byte[] payload = new byte[utf8.length + 2];  // Add two for malformed UTF8
+
+        System.arraycopy(utf8, 0, payload, 0, utf8.length);
+
+        payload[utf8.length] = (byte) 0b11000111;     // Two byte utf8 encoding prefix
+        payload[utf8.length + 1] = (byte) 0b00110000; // invalid next byte encoding should be 0b10xxxxxx
+
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer().append(payload);
+        ProtonBuffer slicedComposite = buffer.setWriteIndex(utf8.length).slice();
+
+        String result = slicedComposite.toString(StandardCharsets.UTF_8);
+
+        assertEquals(expected, result, "Failed to round trip String correctly: ");
+    }
+
+    @Test
+    public void testReadSliceWithInvalidEncodingsOutsideSlicedRangeWithArraySpans() throws IOException {
+        String expected = "\u1f4a9\u1f4a9\u1f4a9";
+
+        byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
+
+        byte[] span1 = new byte[] { utf8[0] };
+        byte[] span2 = new byte[utf8.length + 2];  // Add two for malformed UTF8
+
+        System.arraycopy(utf8, 1, span2, 0, utf8.length - 1);
+
+        span2[utf8.length] = (byte) 0b11000111;     // Two byte utf8 encoding prefix
+        span2[utf8.length + 1] = (byte) 0b00110000; // invalid next byte encoding should be 0b10xxxxxx
+
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        buffer.append(span1);
+        buffer.append(span2);
+
+        ProtonBuffer slicedComposite = buffer.setWriteIndex(utf8.length).slice();
+
+        String result = slicedComposite.toString(StandardCharsets.UTF_8);
+
+        assertEquals(expected, result, "Failed to round trip String correctly: ");
+    }
+
+    @Test
+    public void testReadSliceWithInvalidEncodingsOutsideSlicedRangeWithArraySpansAndEarlySpan() throws IOException {
+        String expected = "\u1f4a9\u1f4a9\u1f4a9";
+
+        byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
+
+        byte[] span1 = new byte[] { 0, 1, 2, 3, 4 };
+        byte[] span2 = new byte[] { utf8[0] };
+        byte[] span3 = new byte[utf8.length + 2];  // Add two for malformed UTF8
+
+        System.arraycopy(utf8, 1, span3, 0, utf8.length - 1);
+
+        span3[utf8.length] = (byte) 0b11000111;     // Two byte utf8 encoding prefix
+        span3[utf8.length + 1] = (byte) 0b00110000; // invalid next byte encoding should be 0b10xxxxxx
+
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        buffer.append(span1);
+        buffer.append(span2);
+        buffer.append(span3);
+
+        ProtonBuffer slicedComposite = buffer.setReadIndex(span1.length).setWriteIndex(span1.length + utf8.length).slice();
+
+        String result = slicedComposite.toString(StandardCharsets.UTF_8);
+
+        assertEquals(expected, result, "Failed to round trip String correctly: ");
+    }
+
+    @Test
+    public void testReadSliceWithInvalidEncodingsSurroundingSlicedSpanningRanges() throws IOException {
+        String expected = "\u1f4a9\u1f4a9\u1f4a9";
+
+        byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
+
+        byte[] span1 = new byte[] { (byte) 0b11000111, 0b00110000, utf8[0] };
+        byte[] span2 = new byte[] { utf8[1] };
+        byte[] span3 = new byte[utf8.length];  // provides two slots for malformed UTF8
+
+        System.arraycopy(utf8, 2, span3, 0, utf8.length - 2);
+
+        span3[span3.length - 2] = (byte) 0b11000111;     // Two byte utf8 encoding prefix
+        span3[span3.length - 1] = (byte) 0b00110000; // invalid next byte encoding should be 0b10xxxxxx
+
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        buffer.append(span1);
+        buffer.append(span2);
+        buffer.append(span3);
+
+        // Start at first utf8 byte and run to end of span 2 minus the trailing
+        ProtonBuffer slicedComposite = buffer.setIndex(span1.length - 1, span1.length + utf8.length - 1).slice();
+
+        String result = slicedComposite.toString(StandardCharsets.UTF_8);
+
+        assertEquals(expected, result, "Failed to round trip String correctly: ");
     }
 
     //----- Implement abstract methods from the abstract buffer test base class
