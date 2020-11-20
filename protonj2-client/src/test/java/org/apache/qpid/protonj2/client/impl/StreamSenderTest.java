@@ -64,6 +64,7 @@ import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Header;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -1822,7 +1823,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test
+    @RepeatedTest(1)
     void testStreamMessageWaitingOnCreditWritesWhileCompleteSendWaitsInQueue() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -1845,6 +1846,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             Arrays.fill(payload1, (byte) 1);
             final byte[] payload2 = new byte[256];
             Arrays.fill(payload2, (byte) 2);
+            final byte[] payload3 = new byte[256];
+            Arrays.fill(payload3, (byte) 3);
 
             EncodedDataMatcher dataMatcher1 = new EncodedDataMatcher(payload1);
             TransferPayloadCompositeMatcher payloadMatcher1 = new TransferPayloadCompositeMatcher();
@@ -1854,7 +1857,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             TransferPayloadCompositeMatcher payloadMatcher2 = new TransferPayloadCompositeMatcher();
             payloadMatcher2.setMessageContentMatcher(dataMatcher2);
 
-            EncodedDataMatcher dataMatcher3 = new EncodedDataMatcher(payload1);
+            EncodedDataMatcher dataMatcher3 = new EncodedDataMatcher(payload3);
             TransferPayloadCompositeMatcher payloadMatcher3 = new TransferPayloadCompositeMatcher();
             payloadMatcher3.setMessageContentMatcher(dataMatcher3);
 
@@ -1871,8 +1874,9 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             });
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).now();
             peer.expectTransfer().withPayload(payloadMatcher1).withMore(true);
+            // Now trigger the next send by granting credit for payload 1
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).now();
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             final CountDownLatch sendStarted = new CountDownLatch(1);
@@ -1882,20 +1886,23 @@ public class StreamSenderTest extends ImperativeClientTestCase {
                 try {
                     LOG.info("Test send 1 is preparing to fire:");
                     ForkJoinPool.commonPool().execute(() -> sendStarted.countDown());
-                    sender.send(Message.create(payload1));
-                    sendCompleted.countDown();
+                    sender.send(Message.create(payload3));
                 } catch (Exception e) {
                     LOG.info("Test send 1 failed with error: ", e);
                     sendFailed.set(true);
+                } finally {
+                    sendCompleted.countDown();
                 }
             });
 
             assertTrue(sendStarted.await(10, TimeUnit.SECONDS));
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(2).withLinkCredit(10).now();
             peer.expectTransfer().withPayload(payloadMatcher2).withMore(true);
+            // Queue a flow that will allow send by granting credit for payload 3 via sender.send
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(3).withLinkCredit(10).queue();
+            // Now trigger the next send by granting credit for payload 2
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(2).withLinkCredit(10).now();
 
             stream.write(payload2);
             stream.flush();
