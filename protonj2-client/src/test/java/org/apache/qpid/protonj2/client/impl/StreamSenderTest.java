@@ -205,6 +205,45 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testCannotCreateNewStreamingMessageWhileCurrentInstanceIsIncomplete() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond(); // Hidden session for stream sender
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            StreamSender sender = connection.openStreamSender("test-qos");
+            StreamSenderMessage message = sender.beginMessage();
+
+            try {
+                sender.beginMessage();
+                fail("Should not be able create a new streaming sender message before last one is compelted.");
+            } catch (ClientIllegalStateException ex) {
+                // Expected
+            }
+
+            message.abort();
+
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testCannotModifyMessagePreambleAfterWritesHaveStarted() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
