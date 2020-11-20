@@ -64,7 +64,6 @@ import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Header;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -317,6 +316,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.expectTransfer().withMore(false).withNullPayload();
             peer.expectDetach().withClosed(true).respond();
             peer.expectEnd().respond();
             peer.expectClose().respond();
@@ -338,8 +339,6 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             sender.openFuture().get();
 
-            // Nothing should be sent since we closed without ever writing anything which should
-            // abort the delivery and should result in proton simply discarding the Delivery.
             stream.close();
 
             sender.closeAsync().get();
@@ -1823,7 +1822,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @RepeatedTest(1)
+    @Test
     void testStreamMessageWaitingOnCreditWritesWhileCompleteSendWaitsInQueue() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -1919,6 +1918,67 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             assertTrue(sendCompleted.await(100, TimeUnit.SECONDS));
             assertFalse(sendFailed.get());
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void testWriteToCreditLimitFramesOfMessagePayload() throws Exception {
+        final int WRITE_COUNT = 10;
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withIncomingWindow(WRITE_COUNT).withNextIncomingId(1).withLinkCredit(WRITE_COUNT).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamSenderMessage tracker = sender.beginMessage();
+            OutputStream stream = tracker.body();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            final byte[][] payloads = new byte[WRITE_COUNT][256];
+            for (int i = 0; i < WRITE_COUNT; ++i) {
+                payloads[i] = new byte[256];
+                Arrays.fill(payloads[i], (byte)(i + 1));
+            }
+
+            for (int i = 0; i < WRITE_COUNT; ++i) {
+                EncodedDataMatcher dataMatcher = new EncodedDataMatcher(payloads[i]);
+                TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+                payloadMatcher.setMessageContentMatcher(dataMatcher);
+
+                peer.expectTransfer().withPayload(payloadMatcher).withMore(true);
+            }
+
+            for (int i = 0; i < WRITE_COUNT; ++i) {
+                stream.write(payloads[i]);
+                stream.flush();
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withNullPayload().withMore(false).accept();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            // grant one more credit for the complete to arrive.
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(WRITE_COUNT + 1).withLinkCredit(1).now();
+
+            stream.close();
 
             sender.closeAsync().get();
             connection.closeAsync().get();

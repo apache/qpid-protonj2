@@ -305,7 +305,7 @@ class ClientSender implements Sender {
             } else {
                 ClientOutgoingEnvelope envelope = new ClientOutgoingEnvelope(this, delivery, delivery.getMessageFormat(), null, false, request).abort();
                 try {
-                    if (protonSender.isSendable() && protonSender.current() == null || protonSender.current() == delivery) {
+                    if (protonSender.isSendable() && (protonSender.current() == null || protonSender.current() == delivery)) {
                         envelope.sendPayload(delivery.getState(), delivery.isSettled());
                     } else {
                         if (protonSender.current() == delivery) {
@@ -341,7 +341,7 @@ class ClientSender implements Sender {
         executor.execute(() -> {
             ClientOutgoingEnvelope envelope = new ClientOutgoingEnvelope(this, delivery, delivery.getMessageFormat(), null, true, request);
             try {
-                if (protonSender.isSendable() && protonSender.current() == null || protonSender.current() == delivery) {
+                if (protonSender.isSendable() && (protonSender.current() == null || protonSender.current() == delivery)) {
                     envelope.sendPayload(delivery.getState(), delivery.isSettled());
                 } else {
                     if (protonSender.current() == delivery) {
