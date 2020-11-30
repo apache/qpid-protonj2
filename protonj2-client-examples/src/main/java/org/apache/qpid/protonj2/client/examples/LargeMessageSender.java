@@ -45,9 +45,8 @@ public class LargeMessageSender {
 
             message.durable(true);
 
-            // Creates an OutputStream that write a single Data Section whose expected
-            // size is configured in the stream options.  By default closing the stream
-            // completes the message transfer.
+            // Creates an OutputStream that writes a single Data Section whose expected
+            // size is configured in the stream options.
             OutputStreamOptions streamOptions = new OutputStreamOptions().bodyLength(buffer.length);
             OutputStream output = message.body(streamOptions);
 
