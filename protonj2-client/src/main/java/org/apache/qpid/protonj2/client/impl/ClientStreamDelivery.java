@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
@@ -337,6 +338,13 @@ public final class ClientStreamDelivery implements StreamDelivery {
             }
 
             return amount - remaining;
+        }
+
+        @Override
+        public long transferTo(OutputStream target) throws IOException {
+            // TODO: Implement efficient read and forward without intermediate copies
+            //       from the currently available buffer to the output stream.
+            return super.transferTo(target);
         }
 
         private void tryReleaseReadBuffers() {
