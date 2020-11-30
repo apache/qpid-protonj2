@@ -1861,6 +1861,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             payloadMatcher3.setMessageContentMatcher(dataMatcher3);
 
             final AtomicBoolean sendFailed = new AtomicBoolean();
+            final CountDownLatch streamSend1Complete = new CountDownLatch(1);
             // Stream won't output until some body bytes are written.
             ForkJoinPool.commonPool().execute(() -> {
                 try {
@@ -1869,6 +1870,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
                 } catch (IOException e) {
                     LOG.info("send failed with error: ", e);
                     sendFailed.set(true);
+                } finally {
+                    streamSend1Complete.countDown();
                 }
             });
 
@@ -1876,7 +1879,9 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.expectTransfer().withPayload(payloadMatcher1).withMore(true);
             // Now trigger the next send by granting credit for payload 1
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).now();
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            assertTrue(streamSend1Complete.await(5, TimeUnit.SECONDS), "Stream sender completed first send");
+            assertFalse(sendFailed.get());
 
             final CountDownLatch sendStarted = new CountDownLatch(1);
             final CountDownLatch sendCompleted = new CountDownLatch(1);
