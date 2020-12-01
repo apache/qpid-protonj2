@@ -48,6 +48,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientTransactionDeclarationEx
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionNotActiveException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionRolledBackException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
+import org.apache.qpid.protonj2.client.test.Wait;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.HeaderMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferPayloadCompositeMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedDataMatcher;
@@ -859,7 +860,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             assertNotNull(tracker.state());
             assertEquals(tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL,
                          "Delivery inside transaction should have Transactional state: " + tracker.state().getType());
-            assertTrue(tracker.settled(), "Delivery in transaction should be locally settled after response");
+            Wait.assertTrue("Delivery in transaction should be locally settled after response", () -> tracker.settled());
 
             session.commitTransaction();
 
@@ -921,7 +922,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 assertNotNull(tracker.state());
                 assertEquals(tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL,
                     "Delivery inside transaction should have Transactional state: " + tracker.state().getType());
-                assertTrue(tracker.settled());
+                Wait.assertTrue("Delivery in transaction should be locally settled after response", () -> tracker.settled());
 
                 session.commitTransaction();
             }
