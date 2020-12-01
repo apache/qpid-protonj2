@@ -1746,7 +1746,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             ForkJoinPool.commonPool().execute(() -> {
                 try {
                     LOG.info("Test send 1 is preparing to fire:");
-                    ForkJoinPool.commonPool().execute(() -> sendStarted.countDown());
+                    sendStarted.countDown();
                     sender.send(Message.create(payload));
                     sendCompleted.countDown();
                 } catch (Exception e) {
@@ -1889,7 +1889,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             ForkJoinPool.commonPool().execute(() -> {
                 try {
                     LOG.info("Test send 1 is preparing to fire:");
-                    ForkJoinPool.commonPool().execute(() -> sendStarted.countDown());
+                    sendStarted.countDown();
                     sender.send(Message.create(payload3));
                 } catch (Exception e) {
                     LOG.info("Test send 1 failed with error: ", e);
