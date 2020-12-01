@@ -365,6 +365,8 @@ public final class ClientStreamDelivery implements StreamDelivery {
                 } else if (!delivery.isPartial()) {
                     readRequest.complete(-1);
                 }
+
+                readRequest = null;
             }
         }
 
