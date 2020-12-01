@@ -733,7 +733,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
 
         @Override
         public void close() throws IOException {
-            // TODO: Refine and test to ensure to remaining message body left after close.
+            // TODO: Refine and test to ensure reclaim remaining message body left after close and auto settle maybe ?
             try {
                 ensureStreamDecodedTo(StreamState.FOOTER_READ);
             } catch (ClientException e) {

@@ -211,6 +211,9 @@ public final class ClientStreamDelivery implements StreamDelivery {
             markIndex = INVALID_MARK;
             buffer.reclaimRead();
 
+            // TODO: Handle close and ensure all data read and reclaimed ?
+            //       What about auto settle in this case ?
+
             super.close();
         }
 

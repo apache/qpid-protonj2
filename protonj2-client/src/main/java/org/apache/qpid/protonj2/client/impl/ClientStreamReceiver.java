@@ -342,6 +342,30 @@ public final class ClientStreamReceiver implements StreamReceiver {
         return remoteTarget;
     }
 
+    @Override
+    public long queuedDeliveries() throws ClientException {
+        checkClosedOrFailed();
+        final ClientFuture<Integer> request = session.getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            checkClosedOrFailed(request);
+
+            int queued = 0;
+
+            // Scan for an unsettled delivery that isn't yet assigned to a client delivery
+            // either it is a complete delivery or the initial stage of the next incoming
+            for (IncomingDelivery unsettled : protonReceiver.unsettled()) {
+                if (unsettled.getLinkedResource() == null) {
+                    queued++;
+                }
+            }
+
+            request.complete(queued);
+        });
+
+        return session.request(this, request);
+    }
+
     //----- Internal API for the ClientReceiver and other Client objects
 
     ClientStreamReceiver open() {
@@ -504,7 +528,8 @@ public final class ClientStreamReceiver implements StreamReceiver {
 
     private void handleDeliveryAborted(IncomingDelivery delivery) {
         LOG.trace("Delivery data was aborted: {}", delivery);
-        disposition(delivery, null, true);
+        delivery.settle();
+        replenishCreditIfNeeded();
     }
 
     private void handleDeliveryStateRemotelyUpdated(IncomingDelivery delivery) {
@@ -523,22 +548,19 @@ public final class ClientStreamReceiver implements StreamReceiver {
 
     //----- Private implementation details
 
-    void disposition(IncomingDelivery delivery, DeliveryState state, boolean settle) {
-        if (session.getTransactionContext().isInTransaction()) {
-            // TODO: delivery.disposition(session.getTransactionContext().enlistAcknowledgeInCurrentTransaction(this, (Outcome) state), true);
-        } else {
-            delivery.disposition(state, settle);
-        }
-
-        replenishCreditIfNeeded();
-    }
-
-    void asyncApplyDisposition(IncomingDelivery delivery, DeliveryState state, boolean settle) throws ClientException {
+    void disposition(IncomingDelivery delivery, DeliveryState state, boolean settle) throws ClientException {
         checkClosedOrFailed();
-        executor.execute(() -> disposition(delivery, state, settle));
+        asyncApplyDisposition(delivery, state, settle);
     }
 
-    void replenishCreditIfNeeded() {
+    private void asyncApplyDisposition(IncomingDelivery delivery, DeliveryState state, boolean settle) throws ClientException {
+        executor.execute(() -> {
+            session.getTransactionContext().disposition(delivery, state, settle);
+            replenishCreditIfNeeded();
+        });
+    }
+
+    private void replenishCreditIfNeeded() {
         int creditWindow = options.creditWindow();
         if (creditWindow > 0) {
             int currentCredit = protonReceiver.getCredit();
@@ -559,7 +581,9 @@ public final class ClientStreamReceiver implements StreamReceiver {
         }
     }
 
-    void asyncReplenishCreditIfNeeded() {
+    // TODO: Should we auto accept complete deliveries or force all to be read fully before allowing more
+    @SuppressWarnings("unused")
+    private void asyncReplenishCreditIfNeeded() {
         int creditWindow = options.creditWindow();
         if (creditWindow > 0) {
             executor.execute(() -> replenishCreditIfNeeded());
@@ -647,29 +671,5 @@ public final class ClientStreamReceiver implements StreamReceiver {
         }
 
         closeFuture.complete(this);
-    }
-
-    @Override
-    public long queuedDeliveries() throws ClientException {
-        checkClosedOrFailed();
-        final ClientFuture<Integer> request = session.getFutureFactory().createFuture();
-
-        executor.execute(() -> {
-            checkClosedOrFailed(request);
-
-            int queued = 0;
-
-            // Scan for an unsettled delivery that isn't yet assigned to a client delivery
-            // either it is a complete delivery or the initial stage of the next incoming
-            for (IncomingDelivery unsettled : protonReceiver.unsettled()) {
-                if (unsettled.getLinkedResource() == null) {
-                    queued++;
-                }
-            }
-
-            request.complete(queued);
-        });
-
-        return session.request(this, request);
     }
 }
