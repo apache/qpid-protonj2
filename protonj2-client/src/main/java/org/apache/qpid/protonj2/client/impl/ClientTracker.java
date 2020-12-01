@@ -66,7 +66,7 @@ class ClientTracker implements Tracker {
     }
 
     @Override
-    public DeliveryState state() {
+    public synchronized DeliveryState state() {
         return ClientDeliveryState.fromProtonType(delivery.getState());
     }
 
@@ -110,7 +110,7 @@ class ClientTracker implements Tracker {
     }
 
     @Override
-    public boolean settled() {
+    public synchronized boolean settled() {
         return delivery.isSettled();
     }
 

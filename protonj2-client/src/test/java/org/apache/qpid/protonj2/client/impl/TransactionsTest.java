@@ -859,7 +859,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             assertNotNull(tracker.state());
             assertEquals(tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL,
                          "Delivery inside transaction should have Transactional state: " + tracker.state().getType());
-            assertTrue(tracker.settled(), "Delivery in transaction should be locally settled");
+            assertTrue(tracker.settled(), "Delivery in transaction should be locally settled after response");
 
             session.commitTransaction();
 
