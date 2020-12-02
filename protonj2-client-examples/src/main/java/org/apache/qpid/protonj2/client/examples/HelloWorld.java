@@ -32,7 +32,7 @@ public class HelloWorld {
     public static void main(String[] args) throws Exception {
         String serverHost = "localhost";
         int serverPort = 5672;
-        String address = "examples";
+        String address = "hello-world-example";
 
         Client client = Client.create();
 

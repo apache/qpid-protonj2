@@ -27,7 +27,7 @@ public class Send {
     public static void main(String[] argv) throws Exception {
         String serverHost = "localhost";
         int serverPort = 5672;
-        String address = "examples";
+        String address = "send-receive-example";
         int count = 100;
 
         Client client = Client.create();

@@ -34,7 +34,7 @@ public class Respond {
     public static void main(String[] args) throws Exception {
         String serverHost = "localhost";
         int serverPort = 5672;
-        String address = "examples";
+        String address = "request-respond-example";
 
         Client client = Client.create();
 
@@ -44,7 +44,7 @@ public class Respond {
 
             Receiver receiver = connection.openReceiver(address, receiverOptions);
 
-            Delivery request = receiver.receive(30, TimeUnit.SECONDS);
+            Delivery request = receiver.receive(60, TimeUnit.SECONDS);
             if (request != null) {
                 Message<String> received = request.message();
                 System.out.println("Received message with body: " + received.body());

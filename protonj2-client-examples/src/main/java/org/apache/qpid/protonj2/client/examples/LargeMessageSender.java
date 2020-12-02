@@ -34,7 +34,7 @@ public class LargeMessageSender {
     public static void main(String[] args) throws Exception {
         String serverHost = "localhost";
         int serverPort = 5672;
-        String address = "examples";
+        String address = "large-message-example";
 
         Client client = Client.create();
 
@@ -42,7 +42,7 @@ public class LargeMessageSender {
             StreamSender sender = connection.openStreamSender(address);
             StreamSenderMessage message = sender.beginMessage();
 
-            final byte[] buffer = new byte[1000];
+            final byte[] buffer = new byte[100];
             Arrays.fill(buffer, (byte) 'A');
 
             message.durable(true);
