@@ -51,7 +51,7 @@ public class Respond {
 
                 String replyAddress = received.replyTo();
                 if (replyAddress != null) {
-                    Sender sender = connection.openSender(address);
+                    Sender sender = connection.openSender(replyAddress);
                     sender.send(Message.create("Response"));
                 }
             } else {
