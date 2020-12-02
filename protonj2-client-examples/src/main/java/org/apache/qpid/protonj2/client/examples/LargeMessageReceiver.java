@@ -21,6 +21,7 @@
 package org.apache.qpid.protonj2.client.examples;
 
 import java.io.InputStream;
+import java.util.Arrays;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
@@ -43,12 +44,14 @@ public class LargeMessageReceiver {
             StreamReceiverMessage message = delivery.message();
             InputStream inputStream = message.body();
 
-            byte[] chunk = new byte[100];
+            byte[] chunk = new byte[10];
 
             int bytesRead = inputStream.read(chunk);
             while (bytesRead != -1) {
-                // Process inbound data
+                System.out.println("Read data chunk: " + Arrays.toString(chunk));
             }
+
+            inputStream.close();
         }
     }
 }

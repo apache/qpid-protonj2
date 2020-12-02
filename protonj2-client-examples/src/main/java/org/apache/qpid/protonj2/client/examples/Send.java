@@ -38,9 +38,9 @@ public class Send {
             for (int i = 0; i < count; ++i) {
                 Message<String> message = Message.create(String.format("Hello World! [%s]", i));
                 Tracker tracker = sender.send(message);
+                tracker.awaitSettlement();
 
                 System.out.println(String.format("Sent message to %s: %s", sender.address(), message.body()));
-                tracker.awaitSettlement();
             }
         }
     }

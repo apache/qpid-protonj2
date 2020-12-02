@@ -24,7 +24,7 @@ import org.apache.qpid.protonj2.client.Receiver;
 
 public class Receive {
 
-    public static void main(String[] argv) throws Exception {
+    public static void main(String[] args) throws Exception {
         String serverHost = "localhost";
         int serverPort = 5672;
         String address = "examples";
@@ -38,6 +38,7 @@ public class Receive {
             for (int i = 0; i < count; ++i) {
                 Delivery delivery = receiver.receive();
                 Message<String> message = delivery.message();
+
                 System.out.println("Received message with body: " + message.body());
             }
         }

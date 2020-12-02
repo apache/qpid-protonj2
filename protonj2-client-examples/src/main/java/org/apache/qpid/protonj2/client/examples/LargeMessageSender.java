@@ -21,6 +21,7 @@
 package org.apache.qpid.protonj2.client.examples;
 
 import java.io.OutputStream;
+import java.util.Arrays;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
@@ -41,7 +42,8 @@ public class LargeMessageSender {
             StreamSender sender = connection.openStreamSender(address);
             StreamSenderMessage message = sender.beginMessage();
 
-            final byte[] buffer = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+            final byte[] buffer = new byte[1000];
+            Arrays.fill(buffer, (byte) 'A');
 
             message.durable(true);
 
@@ -50,8 +52,13 @@ public class LargeMessageSender {
             OutputStreamOptions streamOptions = new OutputStreamOptions().bodyLength(buffer.length);
             OutputStream output = message.body(streamOptions);
 
-            output.write(buffer);
-            output.close();
+            final int chunkSize = 10;
+
+            for (int i = 0; i < buffer.length; i += chunkSize) {
+                output.write(buffer, i, chunkSize);
+            }
+
+            output.close();  // This completes the message send.
 
             message.tracker().awaitSettlement();
         }

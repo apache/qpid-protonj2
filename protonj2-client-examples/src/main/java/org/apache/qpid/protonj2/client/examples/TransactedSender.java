@@ -41,7 +41,7 @@ public class TransactedSender {
 
             session.beginTransaction();
 
-            sender.send(Message.create("Hello World"));
+            sender.send(Message.create("Transacted Hello"));
 
             session.commitTransaction();
         }
