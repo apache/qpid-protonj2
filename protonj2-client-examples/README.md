@@ -8,9 +8,9 @@ alongside their output:
 
 Now you can run the examples using commands of the format:
 
-    Linux:   java -cp "target/classes/:target/dependency/*" org.apache.qpid.protonj2.client.example.HelloWorld
+    Linux:   java -cp "target/classes/:target/dependency/*" org.apache.qpid.protonj2.client.examples.HelloWorld
 
-    Windows: java -cp "target\classes\;target\dependency\*" org.apache.qpid.protonj2.client.example.HelloWorld
+    Windows: java -cp "target\classes\;target\dependency\*" org.apache.qpid.protonj2.client.examples.HelloWorld
 
 NOTE: The examples expect to use a Queue named "queue". You may need to create
 this before running the examples, depending on the broker/peer you are using.
@@ -19,9 +19,9 @@ NOTE: By default the examples can only connect anonymously. A username and
 password with which the connection can authenticate with the server may be set
 through system properties named USER and PASSWORD respectively. E.g:
 
-    Linux:   java -DUSER=guest -DPASSWORD=guest -cp "target/classes/:target/dependency/*" org.apache.qpid.protonj2.client.example.HelloWorld
+    Linux:   java -DUSER=guest -DPASSWORD=guest -cp "target/classes/:target/dependency/*" org.apache.qpid.protonj2.client.examples.HelloWorld
 
-    Windows: java -DUSER=guest -DPASSWORD=guest -cp "target\classes\;target\dependency\*" org.apache.qpid.protonj2.client.example.HelloWorld
+    Windows: java -DUSER=guest -DPASSWORD=guest -cp "target\classes\;target\dependency\*" org.apache.qpid.protonj2.client.examples.HelloWorld
 
 NOTE: You can configure the connection and queue details used by updating the
 JNDI configuration file before building. It can be found at:
