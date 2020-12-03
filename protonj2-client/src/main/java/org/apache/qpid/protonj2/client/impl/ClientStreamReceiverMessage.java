@@ -723,7 +723,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
     private abstract class MessageBodyInputStream extends FilterInputStream {
 
         protected boolean closed;
-        protected long remainingBodyBytes = 0;
+        protected long remainingSectionBytes = 0;
 
         protected MessageBodyInputStream(InputStream deliveryStream) throws ClientException {
             super(deliveryStream);
@@ -749,10 +749,10 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
             checkClosed();
 
             while (true) {
-                if (remainingBodyBytes == 0 && !tryMoveToNextBodySection()) {
+                if (remainingSectionBytes == 0 && !tryMoveToNextBodySection()) {
                     return -1;  // Cannot read any further.
                 } else {
-                    remainingBodyBytes--;
+                    remainingSectionBytes--;
                     return super.read();
                 }
             }
@@ -765,25 +765,17 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
             int bytesRead = 0;
 
             while (bytesRead != length) {
-                final int readChunk = (int) Math.min(remainingBodyBytes, length - bytesRead);
-                final int actualRead = super.read(target, offset + bytesRead, readChunk);
-
-                bytesRead += (actualRead >= 0 ? actualRead : 0);
-
-                if (actualRead < 0 || bytesRead == length) {
-                    return bytesRead > 0 ? bytesRead : -1;
+                if (remainingSectionBytes == 0 && !tryMoveToNextBodySection()) {
+                    bytesRead = bytesRead > 0 ? bytesRead : -1;
+                    break; // We are at the end of the body sections
                 }
 
-                if (remainingBodyBytes == 0) {
-                    try {
-                        ensureStreamDecodedTo(StreamState.BODY_READABLE);
-                    } catch (ClientException e) {
-                        throw new IOException(e);
-                    }
+                final int readChunk = (int) Math.min(remainingSectionBytes, length - bytesRead);
+                final int actualRead = super.read(target, offset + bytesRead, readChunk);
 
-                    if (remainingBodyBytes == 0 && !tryMoveToNextBodySection()) {
-                        break;  // Cannot read any further whatever was read is all there is.
-                    }
+                if (actualRead > 0) {
+                    bytesRead += actualRead;
+                    remainingSectionBytes -= actualRead;
                 }
             }
 
@@ -797,18 +789,18 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
             int bytesSkipped = 0;
 
             while (bytesSkipped != skipSize) {
-                final long skipChunk = (int) Math.min(remainingBodyBytes, skipSize - bytesSkipped);
+                if (remainingSectionBytes == 0 && !tryMoveToNextBodySection()) {
+                    bytesSkipped = bytesSkipped > 0 ? bytesSkipped : -1;
+                    break; // We are at the end of the body sections
+                }
+
+                final long skipChunk = (int) Math.min(remainingSectionBytes, skipSize - bytesSkipped);
                 final long actualSkip = super.skip(skipChunk);
 
                 // Ensure we handle wrapped stream not honoring the API and returning -1 for EOF
-                bytesSkipped += (actualSkip > 0 ? actualSkip : 0);
-
-                if (actualSkip == 0 || bytesSkipped == skipSize) {
-                    return bytesSkipped;
-                }
-
-                if (remainingBodyBytes == 0 && !tryMoveToNextBodySection()) {
-                    break;
+                if (actualSkip > 0) {
+                    bytesSkipped += actualSkip;
+                    remainingSectionBytes -= actualSkip;
                 }
             }
 
@@ -821,14 +813,16 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
 
         protected boolean tryMoveToNextBodySection() throws IOException {
             try {
-                currentState = StreamState.BODY_PENDING;
-                ensureStreamDecodedTo(StreamState.BODY_READABLE);
-                if (currentState == StreamState.BODY_READABLE) {
-                    validateAndScanNextSection();
-                    return true;
-                } else {
-                    return false;
+                if (currentState != StreamState.FOOTER_READ) {
+                    currentState = StreamState.BODY_PENDING;
+                    ensureStreamDecodedTo(StreamState.BODY_READABLE);
+                    if (currentState == StreamState.BODY_READABLE) {
+                        validateAndScanNextSection();
+                        return true;
+                    }
                 }
+
+                return false;
             } catch (ClientException e) {
                 throw new IOException(e);
             }
@@ -858,13 +852,13 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
                 protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
 
             if (typeDecoder.getTypeClass() == Binary.class) {
-                LOG.trace("Data Section of size {} ready for read.", remainingBodyBytes);
+                LOG.trace("Data Section of size {} ready for read.", remainingSectionBytes);
                 BinaryTypeDecoder binaryDecoder = (BinaryTypeDecoder) typeDecoder;
-                remainingBodyBytes = binaryDecoder.readSize(deliveryStream);
+                remainingSectionBytes = binaryDecoder.readSize(deliveryStream);
             } else if (typeDecoder.getTypeClass() == Void.class) {
                 // Null body in the Data section which can be skipped.
                 LOG.trace("Data Section with no Binary payload read and skipped.");
-                remainingBodyBytes = 0;
+                remainingSectionBytes = 0;
             } else {
                 throw new DecodeException("Unknown payload in body of Data Section encoding.");
             }
@@ -886,9 +880,9 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
         protected void validateAndScanNextSection() throws ClientException {
             final ListTypeDecoder listDecoder =
                 (ListTypeDecoder) protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
-            remainingBodyBytes = listDecoder.readSize(deliveryStream);
+            remainingSectionBytes = listDecoder.readSize(deliveryStream);
             int count = listDecoder.readCount(deliveryStream);
-            LOG.trace("Body Section of AmqpSequence type with size {} and element count {} ready for read.", remainingBodyBytes, count);
+            LOG.trace("Body Section of AmqpSequence type with size {} and element count {} ready for read.", remainingSectionBytes, count);
         }
     }
 
@@ -910,8 +904,8 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
             final StreamTypeDecoder<?> decoder = protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
 
             bodyTypeClass = decoder.getTypeClass();
-            remainingBodyBytes = 0;  // TODO: Peek ahead to size of first body Section
-            LOG.trace("Body Section of AmqpValue type with size {} ready for read.", remainingBodyBytes);
+            remainingSectionBytes = 0;  // TODO: Peek ahead to size of first body Section
+            LOG.trace("Body Section of AmqpValue type with size {} ready for read.", remainingSectionBytes);
         }
     }
 }

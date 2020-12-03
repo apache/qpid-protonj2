@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -1190,6 +1191,161 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             receiver.close();
             connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReadByteArrayPayloadInChunksFromSingleTransferMessage() throws Exception {
+        testReadPayloadInChunksFromLargerMessage(false);
+    }
+
+    @Test
+    public void testReadBytesWithArgsPayloadInChunksFromSingleTransferMessage() throws Exception {
+        testReadPayloadInChunksFromLargerMessage(true);
+    }
+
+    private void testReadPayloadInChunksFromLargerMessage(boolean readWithArgs) throws Exception {
+        final byte[] body = new byte[100];
+        final Random random = new Random();
+        random.setSeed(System.currentTimeMillis());
+        random.nextBytes(body);
+        final byte[] payload = createEncodedMessage(new Data(body));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            StreamReceiverMessage message = delivery.message();
+            assertNotNull(message);
+
+            InputStream bodyStream = message.body();
+            assertNotNull(bodyStream);
+
+            assertNull(message.header());
+            assertNull(message.annotations());
+            assertNull(message.properties());
+            assertNull(delivery.annotations());
+
+            final byte[] aggregateBody = new byte[body.length];
+            final byte[] receivedBody = new byte[10];
+
+            for (int i = 0; i < body.length; i += 10) {
+                if (readWithArgs) {
+                    bodyStream.read(receivedBody, 0, receivedBody.length);
+                } else {
+                    bodyStream.read(receivedBody);
+                }
+
+                System.arraycopy(receivedBody, 0, aggregateBody, i, receivedBody.length);
+            }
+
+            assertArrayEquals(body, aggregateBody);
+            assertEquals(-1, bodyStream.read(receivedBody, 0, receivedBody.length));
+            assertEquals(-1, bodyStream.read(receivedBody));
+            assertEquals(-1, bodyStream.read());
+            assertNull(message.footer());
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSkipPayloadInChunksFromSingleTransferMessage() throws Exception {
+        final byte[] body = new byte[100];
+        final Random random = new Random();
+        random.setSeed(System.currentTimeMillis());
+        random.nextBytes(body);
+        final byte[] payload = createEncodedMessage(new Data(body));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            StreamReceiverMessage message = delivery.message();
+            assertNotNull(message);
+
+            InputStream bodyStream = message.body();
+            assertNotNull(bodyStream);
+
+            assertNull(message.header());
+            assertNull(message.annotations());
+            assertNull(message.properties());
+            assertNull(delivery.annotations());
+
+            final int skipSize = 10;
+
+            for (int i = 0; i < body.length; i += skipSize) {
+                bodyStream.skip(10);
+            }
+
+            final byte[] scratchBuffer = new byte[10];
+
+            assertEquals(-1, bodyStream.read(scratchBuffer, 0, scratchBuffer.length));
+            assertEquals(-1, bodyStream.read(scratchBuffer));
+            assertEquals(-1, bodyStream.read());
+            assertNull(message.footer());
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.closeAsync().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
