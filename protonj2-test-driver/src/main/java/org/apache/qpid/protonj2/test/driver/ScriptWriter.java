@@ -16,8 +16,11 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -165,12 +168,24 @@ public abstract class ScriptWriter {
 
     public DeclareExpectation expectDeclare() {
         DeclareExpectation expecting = new DeclareExpectation(getDriver());
+
+        expecting.withHandle(notNullValue());
+        expecting.withDeliveryId(notNullValue());
+        expecting.withDeliveryTag(notNullValue());
+        expecting.withMessageFormat(anyOf(nullValue(), equalTo(0)));
+
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public DischargeExpectation expectDischarge() {
         DischargeExpectation expecting = new DischargeExpectation(getDriver());
+
+        expecting.withHandle(notNullValue());
+        expecting.withDeliveryId(notNullValue());
+        expecting.withDeliveryTag(notNullValue());
+        expecting.withMessageFormat(anyOf(nullValue(), equalTo(0)));
+
         getDriver().addScriptedElement(expecting);
         return expecting;
     }

@@ -96,6 +96,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         super(senderLink.getEngine());
 
         this.senderLink = senderLink;
+        this.senderLink.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator());
         this.senderLink.deliveryStateUpdatedHandler(this::handleDeliveryRemotelyUpdated)
                        .creditStateUpdateHandler(this::handleLinkCreditUpdated)
                        .openHandler(this::handleSenderLinkOpened)
@@ -151,7 +152,8 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
             throw new IllegalStateException("Cannot Declare due to current capicity restrictions.");
         }
 
-        ProtonControllerTransaction transaction = newTransaction();
+        final ProtonControllerTransaction transaction = newTransaction();
+
         declare(transaction);
 
         return transaction;
@@ -209,6 +211,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         commandEncoder.writeObject(encoding.clear(), commandEncoder.getCachedEncoderState(), new AmqpValue<>(discharge));
 
         OutgoingDelivery command = senderLink.next();
+        command.setMessageFormat(0);
         command.setLinkedResource(transaction);
         command.writeBytes(encoding);
 
