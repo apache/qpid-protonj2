@@ -122,6 +122,40 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testOpenStreamReceiverWithLinCapabilities() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue())
+                               .withSource().withCapabilities("queue").and()
+                               .respond();
+            peer.expectFlow();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("StreamReceiver test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamReceiverOptions receiverOptions = new StreamReceiverOptions();
+            receiverOptions.sourceOptions().capabilities("queue");
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue", receiverOptions);
+
+            receiver.openFuture().get();
+            receiver.close();
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testCreateStreamDeliveryWithoutAnyIncomingDeliveryPresent() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();

@@ -63,6 +63,7 @@ import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedPartialDataSec
 import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Header;
+import org.apache.qpid.protonj2.types.transport.Role;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -76,6 +77,39 @@ import org.slf4j.LoggerFactory;
 public class StreamSenderTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(StreamSenderTest.class);
+
+    @Test
+    public void testOpenStreamSenderWithLinCapabilities() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER.getValue())
+                               .withTarget().withCapabilities("queue").and()
+                               .respond();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("StreamSender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSenderOptions senderOptions = new StreamSenderOptions();
+            senderOptions.targetOptions().capabilities("queue");
+            StreamSender sender = connection.openStreamSender("test-queue", senderOptions);
+
+            sender.openFuture().get();
+            sender.close();
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 
     @Test
     public void testSendCustomMessageWithMultipleAmqpValueSections() throws Exception {
