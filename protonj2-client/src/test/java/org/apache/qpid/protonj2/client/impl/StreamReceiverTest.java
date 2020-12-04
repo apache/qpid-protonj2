@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -1441,6 +1442,91 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertEquals(-1, bodyStream.read(receivedBody));
             assertEquals(-1, bodyStream.read());
             assertNull(message.footer());
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReadPayloadFromSplitFrameTransferWithBufferLargerThanTotalPayload() throws Exception {
+        final Random random = new Random();
+        final long seed = System.currentTimeMillis();
+        final int numChunks = 4;
+        final int chunkSize = 30;
+
+        random.setSeed(seed);
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            for (int i = 0; i < numChunks; ++i) {
+                final byte[] chunk = new byte[chunkSize];
+                random.nextBytes(chunk);
+                peer.remoteTransfer().withHandle(0)
+                                     .withDeliveryId(0)
+                                     .withDeliveryTag(new byte[] { 1 })
+                                     .withMore(true)
+                                     .withMessageFormat(0)
+                                     .withPayload(createEncodedMessage(new Data(chunk))).queue();
+            }
+            peer.remoteTransfer().withHandle(0).withMore(false).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+
+            StreamReceiverMessage message = delivery.message();
+            assertNotNull(message);
+
+            InputStream bodyStream = message.body();
+            assertNotNull(bodyStream);
+
+            assertNull(message.header());
+            assertNull(message.annotations());
+            assertNull(message.properties());
+            assertNull(delivery.annotations());
+
+            final byte[] receivedBody = new byte[(chunkSize * numChunks) + 100];
+            Arrays.fill(receivedBody, (byte) 0);
+            final int totalBytesRead = bodyStream.read(receivedBody);
+
+            assertEquals(chunkSize * numChunks, totalBytesRead);
+            assertEquals(-1, bodyStream.read(receivedBody, 0, receivedBody.length));
+            assertEquals(-1, bodyStream.read(receivedBody));
+            assertEquals(-1, bodyStream.read());
+            assertNull(message.footer());
+
+            // Regenerate what should have been sent plus empty trailing section to
+            // check that the read doesn't write anything into the area we gave beyond
+            // what was expected payload size.
+            random.setSeed(seed);
+            final byte[] regeneratedPayload = new byte[numChunks * chunkSize + 100];
+            Arrays.fill(regeneratedPayload, (byte) 0);
+            for (int i = 0; i < numChunks; ++i) {
+                final byte[] chunk = new byte[chunkSize];
+                random.nextBytes(chunk);
+                System.arraycopy(chunk, 0, regeneratedPayload, chunkSize * i, chunkSize);
+            }
+
+            assertArrayEquals(regeneratedPayload, receivedBody);
 
             peer.expectDetach().respond();
             peer.expectEnd().respond();
