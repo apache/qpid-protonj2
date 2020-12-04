@@ -45,10 +45,10 @@ public class LargeMessageReceiver {
             InputStream inputStream = message.body();
 
             byte[] chunk = new byte[10];
+            int readCount = 0;
 
-            int bytesRead = inputStream.read(chunk);
-            while (bytesRead != -1) {
-                System.out.println("Read data chunk: " + Arrays.toString(chunk));
+            while (inputStream.read(chunk) != -1) {
+                System.out.println(String.format("Read data chunk [%2d]: %s", ++readCount, Arrays.toString(chunk)));
             }
 
             inputStream.close();
