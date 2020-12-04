@@ -45,6 +45,7 @@ import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.LinkError;
 import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
+import org.apache.qpid.protonj2.types.transport.Role;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -1284,6 +1285,39 @@ public class SenderTest extends ImperativeClientTestCase {
 
             peer.expectClose().respond();
             connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testOpenSenderWithLinCapabilities() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER.getValue())
+                               .withTarget().withCapabilities("queue").and()
+                               .respond();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Receiver test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get(10, TimeUnit.SECONDS);
+            SenderOptions senderOptions = new SenderOptions();
+            senderOptions.targetOptions().capabilities("queue");
+            Sender sender = session.openSender("test-queue", senderOptions);
+
+            sender.openFuture().get();
+            sender.close();
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

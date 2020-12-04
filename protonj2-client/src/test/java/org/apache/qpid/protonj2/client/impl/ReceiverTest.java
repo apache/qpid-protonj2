@@ -1162,6 +1162,40 @@ public class ReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testOpenReceiverWithLinCapabilities() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue())
+                               .withSource().withCapabilities("queue").and()
+                               .respond();
+            peer.expectFlow();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Receiver test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get(10, TimeUnit.SECONDS);
+            ReceiverOptions receiverOptions = new ReceiverOptions();
+            receiverOptions.sourceOptions().capabilities("queue");
+            Receiver receiver = session.openReceiver("test-queue", receiverOptions);
+
+            receiver.openFuture().get();
+            receiver.close();
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testReceiveMessageInSplitTransferFrames() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
