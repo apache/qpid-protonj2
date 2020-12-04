@@ -218,15 +218,19 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             StreamSender sender = connection.openStreamSender("test-qos");
             StreamSenderMessage message = sender.beginMessage();
 
+            sender.openFuture().get();
+
             message.durable(true);
             message.messageFormat(17);
             message.body();
 
             try {
-                message.messageFormat(17);
+                message.messageFormat(16);
                 fail("Should not be able to modify message format after body writes started");
             } catch (ClientIllegalStateException ex) {
                 // Expected
+            } catch (Exception unexpected) {
+                fail("Failed test due to message format set throwing unexpected error: " + unexpected);
             }
 
             message.abort();
@@ -757,6 +761,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             TransferPayloadCompositeMatcher payloadMatcher4 = new TransferPayloadCompositeMatcher();
             payloadMatcher4.setMessageContentMatcher(dataMatcher4);
 
+            final CountDownLatch sendComplete = new CountDownLatch(1);
             final AtomicBoolean sendFailed = new AtomicBoolean();
             // Stream won't output until some body bytes are written.
             ForkJoinPool.commonPool().execute(() -> {
@@ -765,11 +770,12 @@ public class StreamSenderTest extends ImperativeClientTestCase {
                 } catch (IOException e) {
                     LOG.info("send failed with error: ", e);
                     sendFailed.set(true);
+                } finally {
+                    sendComplete.countDown();
                 }
             });
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).now();
             peer.expectTransfer().withPayload(payloadMatcher1).withMore(true);
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(2).withLinkCredit(10).queue();
             peer.expectTransfer().withPayload(payloadMatcher2).withMore(true);
@@ -778,12 +784,15 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(4).withLinkCredit(10).queue();
             peer.expectTransfer().withPayload(payloadMatcher4).withMore(true);
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(5).withLinkCredit(10).queue();
-
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectTransfer().withNullPayload().withMore(false).accept();
             peer.expectDetach().respond();
             peer.expectEnd().respond();
             peer.expectClose().respond();
+
+            // Initiate the above script of transfers and flows
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).now();
+
+            assertTrue(sendComplete.await(10, TimeUnit.SECONDS));
 
             stream.close();
 
