@@ -1010,6 +1010,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                  .withMore(false)
                                  .withMessageFormat(0)
                                  .withPayload(payload).queue();
+            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -1064,6 +1065,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                  .withMore(false)
                                  .withMessageFormat(0)
                                  .withPayload(payload).queue();
+            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -1260,6 +1262,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                  .withMore(false)
                                  .withMessageFormat(0)
                                  .withPayload(payload).queue();
+            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -1336,6 +1339,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                  .withMore(false)
                                  .withMessageFormat(0)
                                  .withPayload(payload).queue();
+            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -1421,6 +1425,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                      .withPayload(createEncodedMessage(new Data(chunk))).queue();
             }
             peer.remoteTransfer().withHandle(0).withMore(false).queue();
+            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -1514,6 +1519,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                      .withPayload(createEncodedMessage(new Data(chunk))).queue();
             }
             peer.remoteTransfer().withHandle(0).withMore(false).queue();
+            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
             peer.start();
 
             URI remoteURI = peer.getServerURI();

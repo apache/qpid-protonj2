@@ -42,6 +42,7 @@ import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
@@ -671,9 +672,10 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
                     decoder = protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
                 } catch (DecodeEOFException eof) {
                     currentState = StreamState.FOOTER_READ;
-                    // TODO: At this point we should auto settle if configured to do so unless
-                    //       the user has already settled.  We should also add a state that indicates
-                    //       that an error occurred and that new incoming data should be discarded.
+                    // TODO: What is user already applied a disposition ?
+                    if (receiver.receiverOptions().autoAccept()) {
+                        receiver.disposition(delivery.getProtonDelivery(), Accepted.getInstance(), receiver.receiverOptions().autoSettle());
+                    }
                     break;
                 }
 

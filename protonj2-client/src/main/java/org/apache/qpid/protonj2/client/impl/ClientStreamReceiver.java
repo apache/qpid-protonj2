@@ -30,10 +30,10 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Receiver;
-import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Source;
 import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
+import org.apache.qpid.protonj2.client.StreamReceiverOptions;
 import org.apache.qpid.protonj2.client.Target;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -59,7 +59,7 @@ public final class ClientStreamReceiver implements StreamReceiver {
     private final ClientFuture<Receiver> closeFuture;
     private ClientFuture<Receiver> drainingFuture;
 
-    private final ReceiverOptions options;
+    private final StreamReceiverOptions options;
     private final ClientSession session;
     private final org.apache.qpid.protonj2.engine.Receiver protonReceiver;
     private final ScheduledExecutorService executor;
@@ -71,7 +71,7 @@ public final class ClientStreamReceiver implements StreamReceiver {
     private volatile Source remoteSource;
     private volatile Target remoteTarget;
 
-    public ClientStreamReceiver(ClientSession session, ReceiverOptions options, String receiverId, org.apache.qpid.protonj2.engine.Receiver receiver) {
+    public ClientStreamReceiver(ClientSession session, StreamReceiverOptions options, String receiverId, org.apache.qpid.protonj2.engine.Receiver receiver) {
         this.options = options;
         this.session = session;
         this.receiverId = receiverId;
@@ -408,6 +408,10 @@ public final class ClientStreamReceiver implements StreamReceiver {
 
     boolean isDynamic() {
         return protonReceiver.getSource() != null && protonReceiver.getSource().isDynamic();
+    }
+
+    StreamReceiverOptions receiverOptions() {
+        return options;
     }
 
     //----- Handlers for proton receiver events
