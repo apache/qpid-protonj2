@@ -433,7 +433,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond().withInitialDeliveryCount(20);
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -450,14 +450,14 @@ public class ReceiverTest extends ImperativeClientTestCase {
             // Add some credit, verify not draining
             int credit = 7;
             Matcher<Boolean> drainMatcher = anyOf(equalTo(false), nullValue());
-            peer.expectFlow().withDrain(drainMatcher).withLinkCredit(credit).withDeliveryCount(0);
+            peer.expectFlow().withDrain(drainMatcher).withLinkCredit(credit);
 
             receiver.addCredit(credit);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             // Drain all the credit
-            peer.expectFlow().withDrain(true).withLinkCredit(credit).withDeliveryCount(0);
+            peer.expectFlow().withDrain(true).withLinkCredit(credit).withDeliveryCount(20);
             peer.expectClose().respond();
 
             Future<? extends Receiver> draining = receiver.drain();
