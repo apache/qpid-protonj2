@@ -74,6 +74,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
         BODY_PENDING,
         BODY_READABLE,
         FOOTER_READ
+        // STREAM_DISCARDING ?  TODO
     }
 
     private final ClientStreamReceiver receiver;
@@ -670,6 +671,9 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
                     decoder = protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
                 } catch (DecodeEOFException eof) {
                     currentState = StreamState.FOOTER_READ;
+                    // TODO: At this point we should auto settle if configured to do so unless
+                    //       the user has already settled.  We should also add a state that indicates
+                    //       that an error occurred and that new incoming data should be discarded.
                     break;
                 }
 
@@ -712,7 +716,10 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
                     break; // TODO: Unknown or unexpected section in message
                 }
             } catch (DecodeException dex) {
-                // TODO: Handle inability to decode stream chunk
+                // TODO: Handle inability to decode stream chunk by setting some configured
+                //       disposition and closing the stream plus ensuring that the remaining
+                //       transfers get their incoming bytes read and discarded to ensure that
+                //       session credit is expanded.
                 throw new ClientException("Failed reading incoming message data");
             }
         }
@@ -735,6 +742,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
         public void close() throws IOException {
             // TODO: Refine and test to ensure reclaim remaining message body left after close and auto settle maybe ?
             try {
+                // TODO: This doesn't advance but will at leat throw some error for now.
                 ensureStreamDecodedTo(StreamState.FOOTER_READ);
             } catch (ClientException e) {
                 throw new IOException("Caught error while attempting to advabce past remaining message body");
@@ -886,6 +894,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
         }
     }
 
+    // TODO: This doesn't currently read anything as we need to figure out how to inspect the payload bytes.
     private class AmqpValueInputStream extends MessageBodyInputStream {
 
         private Class<?> bodyTypeClass = Void.class;
