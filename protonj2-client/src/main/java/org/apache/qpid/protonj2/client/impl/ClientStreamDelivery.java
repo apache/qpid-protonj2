@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.protonj2.client.DeliveryState;
@@ -38,8 +39,12 @@ import org.apache.qpid.protonj2.types.messaging.Modified;
 import org.apache.qpid.protonj2.types.messaging.Rejected;
 import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class ClientStreamDelivery implements StreamDelivery {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ClientStreamDelivery.class);
 
     private final ClientStreamReceiver receiver;
     private final IncomingDelivery protonDelivery;
@@ -202,6 +207,7 @@ public final class ClientStreamDelivery implements StreamDelivery {
 
         private ClientFuture<Integer> readRequest;
 
+        private AtomicBoolean closed = new AtomicBoolean();
         private int markIndex = INVALID_MARK;
         private int markLimit;
 
@@ -209,12 +215,30 @@ public final class ClientStreamDelivery implements StreamDelivery {
         public void close() throws IOException {
             markLimit = 0;
             markIndex = INVALID_MARK;
-            buffer.reclaimRead();
 
-            // TODO: Handle close and ensure all data read and reclaimed ?
-            //       What about auto settle in this case ?
+            if (closed.compareAndSet(false, true)) {
+                final ClientFuture<Void> closed = receiver.session().getFutureFactory().createFuture();
 
-            super.close();
+                try {
+                    executor.execute(() -> {
+                        if (readRequest != null) {
+                            readRequest.complete(-1);
+                        }
+
+                        // TODO: Handle close and ensure all data read and reclaimed ?
+                        //       What about auto settle in this case ?
+                        buffer.reclaimRead();
+
+                        closed.complete(null);
+                    });
+
+                    receiver.session().request(receiver, closed);
+                } catch (Exception error) {
+                    LOG.debug("Ignoring error on RawInputStream close: ", error);
+                } finally {
+                    super.close();
+                }
+            }
         }
 
         @Override
