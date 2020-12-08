@@ -221,13 +221,18 @@ public final class ClientStreamDelivery implements StreamDelivery {
 
                 try {
                     executor.execute(() -> {
+                        // If the deliver wasn't fully read either because there are remaining
+                        // bytes locally we need to discard those to aid in retention avoidance.
+                        protonDelivery.readAll();
+
+                        // Clear anything that wasn't yet read and then clear any pending read request as EOF
+                        buffer.setIndex(buffer.capacity(), buffer.capacity());
+                        buffer.reclaimRead();
+
                         if (readRequest != null) {
                             readRequest.complete(-1);
+                            readRequest = null;
                         }
-
-                        // TODO: Handle close and ensure all data read and reclaimed ?
-                        //       What about auto settle in this case ?
-                        buffer.reclaimRead();
 
                         closed.complete(null);
                     });
@@ -383,17 +388,22 @@ public final class ClientStreamDelivery implements StreamDelivery {
         }
 
         private void handleDeliveryRead(IncomingDelivery delivery) {
-            // An input stream is awaiting some more incoming bytes, check to see if
-            // the delivery had a non-empty transfer frame and provide them.
-            if (readRequest != null) {
-                if (delivery.available() > 0) {
-                    buffer.append(protonDelivery.readAll());
-                    readRequest.complete(buffer.getReadableBytes());
-                } else if (!delivery.isPartial()) {
-                    readRequest.complete(-1);
-                }
+            if (closed.get()) {
+                // Clear any pending data to expand session window if not yet complete
+                delivery.readAll();
+            } else {
+                // An input stream is awaiting some more incoming bytes, check to see if
+                // the delivery had a non-empty transfer frame and provide them.
+                if (readRequest != null) {
+                    if (delivery.available() > 0) {
+                        buffer.append(protonDelivery.readAll());
+                        readRequest.complete(buffer.getReadableBytes());
+                    } else if (!delivery.isPartial()) {
+                        readRequest.complete(-1);
+                    }
 
-                readRequest = null;
+                    readRequest = null;
+                }
             }
         }
 
@@ -401,6 +411,8 @@ public final class ClientStreamDelivery implements StreamDelivery {
             if (readRequest != null) {
                 readRequest.failed(new ClientDeliveryAbortedException("The remote sender has aborted this delivery"));
             }
+
+            delivery.settle();
         }
 
         private void handleReceiverClosed(ClientStreamReceiver receiver) {
@@ -414,13 +426,15 @@ public final class ClientStreamDelivery implements StreamDelivery {
 
             try {
                 executor.execute(() -> {
-                    if (protonDelivery.available() > 0) {
+                    if (closed.get()) {
+                        request.complete(-1);
+                    } else if (protonDelivery.available() > 0) {
                         buffer.append(protonDelivery.readAll());
                         request.complete(buffer.getReadableBytes());
-                    } else if (!protonDelivery.isPartial()) {
-                        request.complete(-1);
                     } else if (protonDelivery.isAborted()) {
                         request.failed(new ClientDeliveryAbortedException("The remote sender has aborted this delivery"));
+                    } else if(!protonDelivery.isPartial()) {
+                        request.complete(-1);
                     } else {
                         readRequest = request;
                     }

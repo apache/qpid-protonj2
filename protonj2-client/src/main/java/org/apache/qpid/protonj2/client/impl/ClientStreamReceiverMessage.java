@@ -75,7 +75,6 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
         BODY_PENDING,
         BODY_READABLE,
         FOOTER_READ
-        // STREAM_DISCARDING ?  TODO
     }
 
     private final ClientStreamReceiver receiver;
@@ -672,8 +671,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
                     decoder = protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
                 } catch (DecodeEOFException eof) {
                     currentState = StreamState.FOOTER_READ;
-                    // TODO: What is user already applied a disposition ?
-                    if (receiver.receiverOptions().autoAccept()) {
+                    if (receiver.receiverOptions().autoAccept() && !delivery.getProtonDelivery().isSettled()) {
                         receiver.disposition(delivery.getProtonDelivery(), Accepted.getInstance(), receiver.receiverOptions().autoSettle());
                     }
                     break;
@@ -742,9 +740,10 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
 
         @Override
         public void close() throws IOException {
-            // TODO: Refine and test to ensure reclaim remaining message body left after close and auto settle maybe ?
             try {
-                // TODO: This doesn't advance but will at leat throw some error for now.
+                // TODO: Refine and test to ensure reclaim remaining message body left after close and auto settle maybe ?
+                // TODO: This only works if we've consumed the whole body, need to determine best strategy for
+                //       handling close of stream when not explicitly read all data.
                 ensureStreamDecodedTo(StreamState.FOOTER_READ);
             } catch (ClientException e) {
                 throw new IOException("Caught error while attempting to advabce past remaining message body");
