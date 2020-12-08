@@ -53,6 +53,7 @@ import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.ConnectionError;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.hamcrest.Matcher;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -1695,5 +1696,38 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
 
         assertNotNull(failure);
+    }
+
+    @Disabled("Disabled until solution to pipelined close allows for remote begin to arrive late")
+    @Test
+    public void testPipelinedResourceOpenAllowsForReturningResponsesAfterCloseOfConnection() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin();
+        peer.expectAttach().ofSender();
+        peer.expectDetach();
+        peer.expectEnd();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("test").open();
+
+        sender.close();
+        session.close();
+
+        peer.waitForScriptToComplete();
+        peer.expectClose();
+        peer.remoteBegin().withRemoteChannel(0)
+                          .withNextOutgoingId(0).queue();
+        peer.remoteClose().queue();
+
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
     }
 }
