@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.StreamDelivery;
+import org.apache.qpid.protonj2.client.StreamReceiverOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryAbortedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
@@ -221,8 +222,12 @@ public final class ClientStreamDelivery implements StreamDelivery {
 
                 try {
                     executor.execute(() -> {
+                        autoAcceptDeliveryIfNecessary();
+
                         // If the deliver wasn't fully read either because there are remaining
                         // bytes locally we need to discard those to aid in retention avoidance.
+                        // and to potentially open the session window to allow for fully reading
+                        // and discarding any inbound bytes that remain.
                         protonDelivery.readAll();
 
                         // Clear anything that wasn't yet read and then clear any pending read request as EOF
@@ -399,6 +404,7 @@ public final class ClientStreamDelivery implements StreamDelivery {
                         buffer.append(protonDelivery.readAll());
                         readRequest.complete(buffer.getReadableBytes());
                     } else if (!delivery.isPartial()) {
+                        autoAcceptDeliveryIfNecessary();
                         readRequest.complete(-1);
                     }
 
@@ -433,7 +439,8 @@ public final class ClientStreamDelivery implements StreamDelivery {
                         request.complete(buffer.getReadableBytes());
                     } else if (protonDelivery.isAborted()) {
                         request.failed(new ClientDeliveryAbortedException("The remote sender has aborted this delivery"));
-                    } else if(!protonDelivery.isPartial()) {
+                    } else if (!protonDelivery.isPartial()) {
+                        autoAcceptDeliveryIfNecessary();
                         request.complete(-1);
                     } else {
                         readRequest = request;
@@ -443,6 +450,28 @@ public final class ClientStreamDelivery implements StreamDelivery {
                 return receiver.session().request(receiver, request);
             } catch (Exception e) {
                 throw new IOException("Error reading requested data", e);
+            }
+        }
+
+        private void autoAcceptDeliveryIfNecessary() {
+            if (receiver.receiverOptions().autoAccept() && !protonDelivery.isSettled()) {
+                if (!buffer.isReadable() && protonDelivery.available() == 0 &&
+                    (protonDelivery.isAborted() || !protonDelivery.isPartial())) {
+
+                    StreamReceiverOptions options = receiver.receiverOptions();
+
+                    try {
+                        if (Accepted.getInstance().equals(protonDelivery.getState())) {
+                            if (options.autoSettle()) {
+                                protonDelivery.settle();
+                            }
+                        } else {
+                            protonDelivery.disposition(Accepted.getInstance(), receiver.receiverOptions().autoSettle());
+                        }
+                    } catch (Exception error) {
+                        LOG.trace("Caught error while attempting to auto accept the fully read delivery.", error);
+                    }
+                }
             }
         }
 

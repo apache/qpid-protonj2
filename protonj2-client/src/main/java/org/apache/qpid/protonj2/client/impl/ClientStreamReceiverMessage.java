@@ -42,7 +42,6 @@ import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
-import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
@@ -671,9 +670,6 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
                     decoder = protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
                 } catch (DecodeEOFException eof) {
                     currentState = StreamState.FOOTER_READ;
-                    if (receiver.receiverOptions().autoAccept() && !delivery.getProtonDelivery().isSettled()) {
-                        receiver.disposition(delivery.getProtonDelivery(), Accepted.getInstance(), receiver.receiverOptions().autoSettle());
-                    }
                     break;
                 }
 
