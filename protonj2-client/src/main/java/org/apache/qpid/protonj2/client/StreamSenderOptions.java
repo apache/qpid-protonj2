@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.client;
 
+import java.util.Map;
+
 /**
  * Options class that controls various aspects of a {@link StreamSenderMessage} instance and how
  * a streamed message transfer is written.
@@ -86,5 +88,57 @@ public class StreamSenderOptions extends SenderOptions {
     public StreamSenderOptions writeBufferSize(int writeBufferSize) {
         this.writeBufferSize = writeBufferSize;
         return this;
+    }
+
+    //----- Override super methods to return this options type for ease of use
+
+    @Override
+    public StreamSenderOptions linkName(String linkName) {
+        return (StreamSenderOptions) super.linkName(linkName);
+    }
+
+    @Override
+    public StreamSenderOptions autoSettle(boolean autoSettle) {
+        return (StreamSenderOptions) super.autoSettle(autoSettle);
+    }
+
+    @Override
+    public StreamSenderOptions deliveryMode(DeliveryMode deliveryMode) {
+        return (StreamSenderOptions) super.deliveryMode(deliveryMode);
+    }
+
+    @Override
+    public StreamSenderOptions closeTimeout(long closeTimeout) {
+        return (StreamSenderOptions) super.closeTimeout(closeTimeout);
+    }
+
+    @Override
+    public StreamSenderOptions openTimeout(long openTimeout) {
+        return (StreamSenderOptions) super.openTimeout(openTimeout);
+    }
+
+    @Override
+    public StreamSenderOptions sendTimeout(long sendTimeout) {
+        return (StreamSenderOptions) super.sendTimeout(sendTimeout);
+    }
+
+    @Override
+    public StreamSenderOptions requestTimeout(long requestTimeout) {
+        return (StreamSenderOptions) super.requestTimeout(requestTimeout);
+    }
+
+    @Override
+    public StreamSenderOptions offeredCapabilities(String... offeredCapabilities) {
+        return (StreamSenderOptions) super.offeredCapabilities(offeredCapabilities);
+    }
+
+    @Override
+    public StreamSenderOptions desiredCapabilities(String... desiredCapabilities) {
+        return (StreamSenderOptions) super.desiredCapabilities(desiredCapabilities);
+    }
+
+    @Override
+    public StreamSenderOptions properties(Map<String, Object> properties) {
+        return (StreamSenderOptions) super.properties(properties);
     }
 }

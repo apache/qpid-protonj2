@@ -737,10 +737,14 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
         @Override
         public void close() throws IOException {
             try {
-                // TODO: Refine and test to ensure reclaim remaining message body left after close and auto settle maybe ?
-                // TODO: This only works if we've consumed the whole body, need to determine best strategy for
-                //       handling close of stream when not explicitly read all data.
-                ensureStreamDecodedTo(StreamState.FOOTER_READ);
+                // This will check is another body section is present or if there was a footer and if
+                // a Footer is present it will be decoded and the message payload should be fully consumed
+                // at that point.  Otherwise the underlying raw InputStream will handle the task of
+                // discarding pending bytes for the message to ensure the receiver does not still on
+                // waiting for session window to be opened.
+                if (remainingSectionBytes == 0) {
+                    ensureStreamDecodedTo(StreamState.FOOTER_READ);
+                }
             } catch (ClientException e) {
                 throw new IOException("Caught error while attempting to advabce past remaining message body");
             } finally {

@@ -56,6 +56,7 @@ import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
+import org.apache.qpid.protonj2.types.messaging.Footer;
 import org.apache.qpid.protonj2.types.messaging.Header;
 import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
 import org.apache.qpid.protonj2.types.messaging.Properties;
@@ -495,6 +496,62 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testStreamDeliveryRawInputStreamBehaviorAfterStreamClosed() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            final InputStream stream = delivery.rawInputStream();
+            assertNotNull(stream);
+
+            stream.close();
+
+            final byte[] scratch = new byte[10];
+
+            assertThrows(IOException.class, () -> stream.available());
+            assertThrows(IOException.class, () -> stream.skip(1));
+            assertThrows(IOException.class, () -> stream.read());
+            assertThrows(IOException.class, () -> stream.read(scratch));
+            assertThrows(IOException.class, () -> stream.read(scratch, 0, scratch.length));
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testStreamDeliveryRawInputStreamWithCompleteDeliveryReadBytes() throws Exception {
         final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
@@ -890,6 +947,199 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             peer.expectClose().respond();
 
             receiver.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamDeliveryRawInputStreamClosedWithoutReadsConsumesTransfers() throws Exception {
+        final byte[] body1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        final byte[] body2 = new byte[] { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
+        final byte[] payload1 = createEncodedMessage(new Data(body1));
+        final byte[] payload2 = createEncodedMessage(new Data(body2));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withMaxFrameSize(1000).respond();
+            peer.expectBegin().withIncomingWindow(1).respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withIncomingWindow(1).withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload1).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions connectionOptions = new ConnectionOptions().maxFrameSize(1000);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions);
+            StreamReceiverOptions streamOptions = new StreamReceiverOptions().readBufferSize(2000);
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue", streamOptions);
+            StreamDelivery delivery = receiver.receive();
+            assertNotNull(delivery);
+            InputStream rawStream = delivery.rawInputStream();
+            assertNotNull(rawStream);
+
+            // An initial frame has arrived but no reads have been performed and then if closed
+            // the delivery will be consumed to allow the session window to be opened and prevent
+            // a stall due to an un-consumed delivery.  The stream delivery will not auto accept
+            // or auto settle the delivery as the user closed early which should indicate they
+            // are rejecting the message otherwise it is a programming error on their part.
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectFlow().withDeliveryCount(0).withIncomingWindow(1).withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload2).queue();
+            peer.expectFlow().withDeliveryCount(1).withIncomingWindow(1).withLinkCredit(9);
+
+            rawStream.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.openFuture().get();
+            receiver.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamDeliveryRawInputStreamClosedWithoutReadsAllowsUserDisposition() throws Exception {
+        final byte[] body1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        final byte[] body2 = new byte[] { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
+        final byte[] payload1 = createEncodedMessage(new Data(body1));
+        final byte[] payload2 = createEncodedMessage(new Data(body2));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withMaxFrameSize(1000).respond();
+            peer.expectBegin().withIncomingWindow(1).respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withIncomingWindow(1).withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload1).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions connectionOptions = new ConnectionOptions().maxFrameSize(1000);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions);
+            StreamReceiverOptions streamOptions = new StreamReceiverOptions().readBufferSize(2000);
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue", streamOptions);
+            StreamDelivery delivery = receiver.receive();
+            assertNotNull(delivery);
+            InputStream rawStream = delivery.rawInputStream();
+            assertNotNull(rawStream);
+
+            // An initial frame has arrived but no reads have been performed and then if closed
+            // the delivery will be consumed to allow the session window to be opened and prevent
+            // a stall due to an un-consumed delivery.  The stream delivery will not auto accept
+            // or auto settle the delivery as the user closed early which should indicate they
+            // are rejecting the message otherwise it is a programming error on their part.
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectFlow().withDeliveryCount(0).withIncomingWindow(1).withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload2).queue();
+            peer.expectFlow().withDeliveryCount(1).withIncomingWindow(1).withLinkCredit(9);
+
+            rawStream.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDisposition().withState().rejected("invalid-format", "decode error").withSettled(true);
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            delivery.disposition(new ClientDeliveryState.ClientRejected("invalid-format", "decode error"), true);
+
+            receiver.openFuture().get();
+            receiver.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamDeliveryUserAppliedDispositionBeforeStreamRead() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.expectDisposition().withState().accepted().withSettled(true);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            delivery.disposition(ClientDeliveryState.ClientAccepted.getInstance(), true);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            final InputStream stream = delivery.rawInputStream();
+            assertNotNull(stream);
+
+            assertEquals(payload.length, stream.available());
+            final byte[] deliveryBytes = new byte[payload.length];
+            for (int i = 0; i < payload.length; ++i) {
+                deliveryBytes[i] = (byte) stream.read();
+            }
+
+            assertArrayEquals(payload, deliveryBytes);
+            assertEquals(0, stream.available());
+            assertEquals(-1, stream.read());
+
+            stream.close();
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -1726,6 +1976,248 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             peer.expectClose().respond();
 
             receiver.openFuture().get();
+            receiver.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamReadOpensSessionWindowForAdditionalInputAndGrantsCreditOnClose() throws Exception {
+        final byte[] body1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        final byte[] body2 = new byte[] { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
+        final byte[] payload1 = createEncodedMessage(new Data(body1));
+        final byte[] payload2 = createEncodedMessage(new Data(body2));
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withMaxFrameSize(1000).respond();
+            peer.expectBegin().withIncomingWindow(1).respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withIncomingWindow(1).withLinkCredit(1);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload1).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions connectionOptions = new ConnectionOptions().maxFrameSize(1000);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions);
+            StreamReceiverOptions streamOptions = new StreamReceiverOptions().readBufferSize(2000).creditWindow(1);
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue", streamOptions);
+            StreamDelivery delivery = receiver.receive();
+            assertNotNull(delivery);
+            StreamReceiverMessage message = delivery.message();
+            assertNotNull(message);
+
+            // Creating the input stream instance should read the first chunk of data from the incoming
+            // delivery which should result in a new credit being available to expand the session window.
+            // An additional transfer should be placed into the delivery buffer but not yet read since
+            // the user hasn't read anything.
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectFlow().withDeliveryCount(0).withIncomingWindow(1).withLinkCredit(1);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload2).queue();
+
+            InputStream bodyStream = message.body();
+            assertNotNull(bodyStream);
+
+            // Once the read of all data completes the session window should be opened and the
+            // stream should mark the delivery as accepted and settled since we are in auto settle
+            // mode and there is nothing more to read.
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectFlow().withDeliveryCount(1).withIncomingWindow(1).withLinkCredit(0);
+            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
+            peer.expectFlow().withDeliveryCount(1).withIncomingWindow(1).withLinkCredit(1);
+
+            byte[] combinedPayloads = new byte[body1.length + body2.length];
+            bodyStream.read(combinedPayloads);
+
+            assertTrue(Arrays.equals(body1, 0, body1.length, combinedPayloads, 0, body1.length));
+            assertTrue(Arrays.equals(body2, 0, body2.length, combinedPayloads, body1.length, body1.length + body2.length));
+
+            bodyStream.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.openFuture().get();
+            receiver.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamReadOfAllPayloadConsumesTrailingFooterOnClose() throws Exception {
+        final byte[] body1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        final byte[] body2 = new byte[] { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
+        final byte[] payload1 = createEncodedMessage(new Data(body1));
+        final byte[] payload2 = createEncodedMessage(new Data(body2));
+        final Footer footers = new Footer(new HashMap<>());
+        footers.getValue().put(Symbol.valueOf("footer-key"), "test");
+        final byte[] payload3 = createEncodedMessage(footers);
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withMaxFrameSize(1000).respond();
+            peer.expectBegin().withIncomingWindow(1).respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withIncomingWindow(1).withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload1).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions connectionOptions = new ConnectionOptions().maxFrameSize(1000);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions);
+            StreamReceiverOptions streamOptions = new StreamReceiverOptions().readBufferSize(2000);
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue", streamOptions);
+            StreamDelivery delivery = receiver.receive();
+            assertNotNull(delivery);
+            StreamReceiverMessage message = delivery.message();
+            assertNotNull(message);
+
+            // Creating the input stream instance should read the first chunk of data from the incoming
+            // delivery which should result in a new credit being available to expand the session window.
+            // An additional transfer should be placed into the delivery buffer but not yet read since
+            // the user hasn't read anything.
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectFlow().withDeliveryCount(0).withIncomingWindow(1).withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload2).queue();
+
+            InputStream bodyStream = message.body();
+            assertNotNull(bodyStream);
+
+            // Once the read of all data completes the session window should be opened and the
+            // stream should mark the delivery as accepted and settled since we are in auto settle
+            // mode and there is nothing more to read.
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectFlow().withDeliveryCount(0).withIncomingWindow(1).withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload3).queue();
+            peer.expectFlow().withDeliveryCount(1).withIncomingWindow(1).withLinkCredit(9);
+            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
+
+            byte[] combinedPayloads = new byte[body1.length + body2.length];
+            bodyStream.read(combinedPayloads);
+
+            assertTrue(Arrays.equals(body1, 0, body1.length, combinedPayloads, 0, body1.length));
+            assertTrue(Arrays.equals(body2, 0, body2.length, combinedPayloads, body1.length, body1.length + body2.length));
+
+            bodyStream.close();
+
+            Footer footer = message.footer();
+            assertNotNull(footer);
+            assertFalse(footer.getValue().isEmpty());
+            assertTrue(footer.getValue().containsKey(Symbol.valueOf("footer-key")));
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.openFuture().get();
+            receiver.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReadBytesFromBodyInputStreamWithinTransactedSession() throws Exception {
+        final byte[] body = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        final byte[] payload = createEncodedMessage(new Data(body));
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept(txnId);
+            peer.expectDisposition().withSettled(true).withState().transactional().withTxnId(txnId).withAccepted();
+            peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+
+            receiver.session().beginTransaction();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            StreamReceiverMessage message = delivery.message();
+            assertNotNull(message);
+
+            InputStream bodyStream = message.body();
+            assertNotNull(bodyStream);
+
+            assertNull(message.header());
+            assertNull(message.annotations());
+            assertNull(message.properties());
+            assertNull(delivery.annotations());
+
+            final byte[] receivedBody = new byte[body.length];
+            for (int i = 0; i < body.length; ++i) {
+                receivedBody[i] = (byte) bodyStream.read();
+            }
+            assertArrayEquals(body, receivedBody);
+            assertEquals(-1, bodyStream.read());
+
+            receiver.session().commitTransaction();
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
             receiver.closeAsync().get();
             connection.closeAsync().get();
 

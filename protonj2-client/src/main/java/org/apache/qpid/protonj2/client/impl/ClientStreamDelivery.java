@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.StreamDelivery;
-import org.apache.qpid.protonj2.client.StreamReceiverOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryAbortedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
@@ -319,6 +318,8 @@ public final class ClientStreamDelivery implements StreamDelivery {
 
         @Override
         public int read(byte target[], int offset, int length) throws IOException {
+            checkStreamStateIsValid();
+
             Objects.checkFromIndexSize(offset, length, target.length);
 
             int remaining = length;
@@ -352,6 +353,8 @@ public final class ClientStreamDelivery implements StreamDelivery {
 
         @Override
         public long skip(long amount) throws IOException {
+            checkStreamStateIsValid();
+
             long remaining = amount;
 
             if (amount <= 0) {
@@ -379,6 +382,7 @@ public final class ClientStreamDelivery implements StreamDelivery {
 
         @Override
         public long transferTo(OutputStream target) throws IOException {
+            checkStreamStateIsValid();
             // TODO: Implement efficient read and forward without intermediate copies
             //       from the currently available buffer to the output stream.
             return super.transferTo(target);
@@ -458,16 +462,8 @@ public final class ClientStreamDelivery implements StreamDelivery {
                 if (!buffer.isReadable() && protonDelivery.available() == 0 &&
                     (protonDelivery.isAborted() || !protonDelivery.isPartial())) {
 
-                    StreamReceiverOptions options = receiver.receiverOptions();
-
                     try {
-                        if (Accepted.getInstance().equals(protonDelivery.getState())) {
-                            if (options.autoSettle()) {
-                                protonDelivery.settle();
-                            }
-                        } else {
-                            protonDelivery.disposition(Accepted.getInstance(), receiver.receiverOptions().autoSettle());
-                        }
+                        receiver.disposition(protonDelivery, Accepted.getInstance(), receiver.receiverOptions().autoSettle());
                     } catch (Exception error) {
                         LOG.trace("Caught error while attempting to auto accept the fully read delivery.", error);
                     }
@@ -476,6 +472,10 @@ public final class ClientStreamDelivery implements StreamDelivery {
         }
 
         private void checkStreamStateIsValid() throws IOException {
+            if (closed.get()) {
+                throw new IOException("The InputStream has been explicity closed");
+            }
+
             if (receiver.isClosed()) {
                 throw new IOException("Underlying receiver has closed", receiver.getFailureCause());
             }

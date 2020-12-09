@@ -585,15 +585,6 @@ public final class ClientStreamReceiver implements StreamReceiver {
         }
     }
 
-    // TODO: Should we auto accept complete deliveries or force all to be read fully before allowing more
-    @SuppressWarnings("unused")
-    private void asyncReplenishCreditIfNeeded() {
-        int creditWindow = options.creditWindow();
-        if (creditWindow > 0) {
-            executor.execute(() -> replenishCreditIfNeeded());
-        }
-    }
-
     private void waitForOpenToComplete() throws ClientException {
         if (!openFuture.isComplete() || openFuture.isFailed()) {
             try {

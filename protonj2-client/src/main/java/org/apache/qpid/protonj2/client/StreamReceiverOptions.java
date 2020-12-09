@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.client;
 
+import java.util.Map;
+
 /**
  * Options class that controls various aspects of a {@link StreamReceiver} instance and how
  * a streamed message transfer is written.
@@ -90,5 +92,72 @@ public class StreamReceiverOptions extends ReceiverOptions {
     public StreamReceiverOptions readBufferSize(int readBufferSize) {
         this.readBufferSize = readBufferSize;
         return this;
+    }
+
+    //----- Override super methods to customize the return type
+
+    @Override
+    public StreamReceiverOptions autoAccept(boolean autoAccept) {
+        return (StreamReceiverOptions) super.autoAccept(autoAccept);
+    }
+
+    @Override
+    public StreamReceiverOptions autoSettle(boolean autoSettle) {
+        return (StreamReceiverOptions) super.autoSettle(autoSettle);
+    }
+
+    @Override
+    public StreamReceiverOptions deliveryMode(DeliveryMode deliveryMode) {
+        return (StreamReceiverOptions) super.deliveryMode(deliveryMode);
+    }
+
+    @Override
+    public StreamReceiverOptions linkName(String linkName) {
+        return (StreamReceiverOptions) super.linkName(linkName);
+    }
+
+    @Override
+    public StreamReceiverOptions creditWindow(int creditWindow) {
+        return (StreamReceiverOptions) super.creditWindow(creditWindow);
+    }
+
+    @Override
+    public StreamReceiverOptions closeTimeout(long closeTimeout) {
+        return (StreamReceiverOptions) super.closeTimeout(closeTimeout);
+    }
+
+    @Override
+    public StreamReceiverOptions openTimeout(long openTimeout) {
+        return (StreamReceiverOptions) super.openTimeout(openTimeout);
+    }
+
+    @Override
+    public StreamReceiverOptions drainTimeout(long drainTimeout) {
+        return (StreamReceiverOptions) super.drainTimeout(drainTimeout);
+    }
+
+    @Override
+    public StreamReceiverOptions requestTimeout(long requestTimeout) {
+        return (StreamReceiverOptions) super.requestTimeout(requestTimeout);
+    }
+
+    @Override
+    public StreamReceiverOptions offeredCapabilities(String... offeredCapabilities) {
+        return (StreamReceiverOptions) super.offeredCapabilities(offeredCapabilities);
+    }
+
+    @Override
+    public StreamReceiverOptions desiredCapabilities(String... desiredCapabilities) {
+        return (StreamReceiverOptions) super.desiredCapabilities(desiredCapabilities);
+    }
+
+    @Override
+    public StreamReceiverOptions properties(Map<String, Object> properties) {
+        return (StreamReceiverOptions) super.properties(properties);
+    }
+
+    @Override
+    protected StreamReceiverOptions copyInto(ReceiverOptions other) {
+        return (StreamReceiverOptions) super.copyInto(other);
     }
 }

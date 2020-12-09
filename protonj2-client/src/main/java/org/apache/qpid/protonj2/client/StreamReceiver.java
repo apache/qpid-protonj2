@@ -78,4 +78,17 @@ public interface StreamReceiver extends Receiver {
     @Override
     StreamDelivery tryReceive() throws ClientException;
 
+    /**
+     * {@inheritDoc}
+     *
+     * @param credits
+     *      credit The number of credits to add to the {@link StreamReceiver} link.
+     *
+     * @return this {@link StreamReceiver} instance.
+     *
+     * @throws ClientException if an error occurs while attempting to add new {@link StreamReceiver} link credit.
+     */
+    @Override
+    StreamReceiver addCredit(int credits) throws ClientException;
+
 }
