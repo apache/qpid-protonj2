@@ -56,6 +56,16 @@ public class OpenExpectation extends AbstractExpectation<Open> {
         return response;
     }
 
+    public CloseInjectAction reject() {
+        response = new OpenInjectAction(driver);
+        driver.addScriptedElement(response);
+
+        CloseInjectAction closeAction = new CloseInjectAction(driver);
+        driver.addScriptedElement(closeAction);
+
+        return closeAction;
+    }
+
     public CloseInjectAction reject(String condition, String description) {
         return reject(Symbol.valueOf(condition), description);
     }
