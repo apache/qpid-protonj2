@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.client.impl;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -31,6 +32,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.Client;
+import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.ErrorCondition;
@@ -62,6 +64,32 @@ import org.slf4j.LoggerFactory;
 public class ConnectionTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConnectionTest.class);
+
+    @Test
+    public void testConnectFailsDueToServerStopped() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            peer.close();
+
+            Client container = Client.create();
+
+            try {
+                Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+                connection.openFuture().get();
+                fail("Should fail to connect");
+            } catch (ExecutionException ex) {
+                LOG.info("Connection create failed due to: ", ex);
+                assertTrue(ex.getCause() instanceof ClientException);
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 
     @Test
     public void testCreateTwoDistinctConnectionsFromSingleClientInstance() throws Exception {
@@ -144,6 +172,29 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateConnectionWithConfiguredContainerId() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withContainerId("container-id-test").respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            ClientOptions options = new ClientOptions().id("container-id-test");
+            Client container = Client.create(options);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
@@ -239,6 +290,67 @@ public class ConnectionTest extends ImperativeClientTestCase {
             assertTrue(failed.await(10, TimeUnit.SECONDS));
 
             connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateConnectionWithCredentialsChoosesSASLPlainIfOffered() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLPlainConnect("user", "pass");
+            peer.expectOpen().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            final CountDownLatch established = new CountDownLatch(1);
+            final ConnectionOptions options = new ConnectionOptions();
+
+            options.user("user");
+            options.password("pass");
+            options.connectedHandler((connection, location) -> {
+                LOG.info("Connection signaled that it was established");
+                established.countDown();
+            });
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            assertTrue(established.await(10, TimeUnit.SECONDS));
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateConnectionWithSASLDisabledToSASLEnabledHost() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectAMQPHeader().respondWithSASLPHeader();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            final ConnectionOptions options = new ConnectionOptions();
+            options.saslOptions().saslEnabled(false);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            try {
+                connection.openFuture().get(10, TimeUnit.SECONDS);
+                fail("Should not successfully connect to remote");
+            } catch(ExecutionException ex) {
+                assertTrue(ex.getCause() instanceof ClientConnectionRemotelyClosedException);
+            }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -368,6 +480,56 @@ public class ConnectionTest extends ImperativeClientTestCase {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().reject(ConnectionError.CONNECTION_FORCED.toString(), "Not accepting connections");
+            peer.expectClose();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testConnectionRemoteClosedAfterOpenedWithEmptyErrorConditionDescription() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().reject(ConnectionError.CONNECTION_FORCED.toString(), (String) null);
+            peer.expectClose();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testConnectionRemoteClosedAfterOpenedWithNoRemoteErrorCondition() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().reject();
             peer.expectClose();
             peer.start();
 
@@ -815,6 +977,78 @@ public class ConnectionTest extends ImperativeClientTestCase {
                 sender.openFuture().get();
             } catch (ExecutionException ex) {
                 fail("Open of Sender failed waiting for response: " + ex.getCause());
+            }
+
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testConnectionSenderIsSingletion() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond().withOfferedCapabilities("ANONYMOUS-RELAY");
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER.getValue()).withTarget().withAddress(Matchers.nullValue()).and().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Sender sender1 = connection.defaultSender();
+            Sender sender2 = connection.defaultSender();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectClose().respond();
+
+            try {
+                sender1.openFuture().get();
+            } catch (ExecutionException ex) {
+                fail("Open of Sender failed waiting for response: " + ex.getCause());
+            }
+
+            try {
+                sender2.openFuture().get();
+            } catch (ExecutionException ex) {
+                fail("Open of Sender failed waiting for response: " + ex.getCause());
+            }
+
+            assertSame(sender1, sender2);
+
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testConnectionSenderOpenFailsWhenAnonymousRelayNotSupported() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Sender sender = connection.defaultSender();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectClose().respond();
+
+            try {
+                sender.openFuture().get();
+                fail("Open of Sender should have failed waiting for response when anonymous relay not supported");
+            } catch (ExecutionException ex) {
             }
 
             connection.close();
