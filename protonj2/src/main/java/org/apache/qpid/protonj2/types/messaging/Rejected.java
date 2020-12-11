@@ -28,6 +28,12 @@ public final class Rejected implements DeliveryState, Outcome {
 
     private ErrorCondition error;
 
+    public Rejected() {}
+
+    public Rejected(ErrorCondition error) {
+        this.error = error;
+    }
+
     public ErrorCondition getError() {
         return error;
     }

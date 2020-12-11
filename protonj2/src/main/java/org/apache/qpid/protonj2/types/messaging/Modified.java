@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.types.messaging;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.types.Symbol;
@@ -30,6 +31,18 @@ public final class Modified implements DeliveryState, Outcome {
     private boolean deliveryFailed;
     private boolean undeliverableHere;
     private Map<Symbol, Object> messageAnnotations;
+
+    public Modified() {}
+
+    public Modified(boolean deliveryFailed, boolean undeliverableHere) {
+        this(deliveryFailed, undeliverableHere, null);
+    }
+
+    public Modified(boolean deliveryFailed, boolean undeliverableHere, Map<Symbol, Object> annotations) {
+        this.deliveryFailed = deliveryFailed;
+        this.undeliverableHere = undeliverableHere;
+        this.messageAnnotations = new HashMap<>(annotations);
+    }
 
     public boolean isDeliveryFailed() {
         return deliveryFailed;
