@@ -199,6 +199,10 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
             throw new IllegalArgumentException("Cannot discharge a transaction that was created by another controller.");
         }
 
+        if (!senderLink.isSendable()) {
+            throw new IllegalStateException("Cannot discharge transaction due to current capicity restrictions.");
+        }
+
         ProtonTransaction<TransactionController> protonTxn = (ProtonTransaction<TransactionController>) transaction;
 
         protonTxn.setState(TransactionState.DISCHARGING);

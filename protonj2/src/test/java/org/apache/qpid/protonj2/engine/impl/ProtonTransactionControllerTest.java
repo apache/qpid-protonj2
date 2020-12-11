@@ -102,6 +102,8 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         Session session = connection.session().open();
         TransactionController txnController = session.coordinator("test-coordinator");
 
+        assertSame(session, txnController.getParent());
+
         txnController.setSource(source);
         txnController.setCoordinator(coordinator);
 
@@ -140,6 +142,181 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         connection.close();
 
         peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testTransactionControllerSignalsWhenParentSessionClosed() {
+        final byte[] TXN_ID = new byte[] { 1, 2, 3, 4 };
+
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+        Source source = new Source();
+        source.setOutcomes(DEFAULT_OUTCOMES);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
+        peer.remoteFlow().withLinkCredit(1).queue();
+        peer.expectDeclare().accept(TXN_ID);
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        TransactionController txnController = session.coordinator("test-coordinator");
+
+        txnController.setSource(source);
+        txnController.setCoordinator(coordinator);
+
+        final AtomicBoolean openedWithCoordinatorTarget = new AtomicBoolean();
+        txnController.openHandler(result -> {
+            if (result.getRemoteCoordinator() instanceof Coordinator) {
+                openedWithCoordinatorTarget.set(true);
+            }
+        });
+
+        final AtomicReference<byte[]> declaredTxnId = new AtomicReference<>();
+        txnController.declaredHandler(result -> {
+            declaredTxnId.set(result.getTxnId().arrayCopy());
+        });
+
+        final AtomicBoolean parentEndpointClosed = new AtomicBoolean();
+        txnController.parentEndpointClosedHandler((controller) -> {
+            parentEndpointClosed.set(true);
+        });
+
+        txnController.open();
+        txnController.declare();
+
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertTrue(parentEndpointClosed.get());
+        assertNull(failure);
+    }
+
+    @Test
+    public void testTransactionControllerSignalsWhenParentConnectionClosed() {
+        final byte[] TXN_ID = new byte[] { 1, 2, 3, 4 };
+
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+        Source source = new Source();
+        source.setOutcomes(DEFAULT_OUTCOMES);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
+        peer.remoteFlow().withLinkCredit(1).queue();
+        peer.expectDeclare().accept(TXN_ID);
+        peer.expectClose().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        TransactionController txnController = session.coordinator("test-coordinator");
+
+        txnController.setSource(source);
+        txnController.setCoordinator(coordinator);
+
+        final AtomicBoolean openedWithCoordinatorTarget = new AtomicBoolean();
+        txnController.openHandler(result -> {
+            if (result.getRemoteCoordinator() instanceof Coordinator) {
+                openedWithCoordinatorTarget.set(true);
+            }
+        });
+
+        final AtomicReference<byte[]> declaredTxnId = new AtomicReference<>();
+        txnController.declaredHandler(result -> {
+            declaredTxnId.set(result.getTxnId().arrayCopy());
+        });
+
+        final AtomicBoolean parentEndpointClosed = new AtomicBoolean();
+        txnController.parentEndpointClosedHandler((controller) -> {
+            parentEndpointClosed.set(true);
+        });
+
+        txnController.open();
+        txnController.declare();
+
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertTrue(parentEndpointClosed.get());
+        assertNull(failure);
+    }
+
+    @Test
+    public void testTransactionControllerDoesNotSignalsWhenParentConnectionClosedIfAlreadyClosed() {
+        final byte[] TXN_ID = new byte[] { 1, 2, 3, 4 };
+
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+        Source source = new Source();
+        source.setOutcomes(DEFAULT_OUTCOMES);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
+        peer.remoteFlow().withLinkCredit(1).queue();
+        peer.expectDeclare().accept(TXN_ID);
+        peer.expectDetach().respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        TransactionController txnController = session.coordinator("test-coordinator");
+
+        txnController.setSource(source);
+        txnController.setCoordinator(coordinator);
+
+        final AtomicBoolean openedWithCoordinatorTarget = new AtomicBoolean();
+        txnController.openHandler(result -> {
+            if (result.getRemoteCoordinator() instanceof Coordinator) {
+                openedWithCoordinatorTarget.set(true);
+            }
+        });
+
+        final AtomicReference<byte[]> declaredTxnId = new AtomicReference<>();
+        txnController.declaredHandler(result -> {
+            declaredTxnId.set(result.getTxnId().arrayCopy());
+        });
+
+        final AtomicBoolean parentEndpointClosed = new AtomicBoolean();
+        txnController.parentEndpointClosedHandler((controller) -> {
+            parentEndpointClosed.set(true);
+        });
+
+        txnController.open();
+        txnController.declare();
+        txnController.close();
+
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertFalse(parentEndpointClosed.get());
         assertNull(failure);
     }
 
@@ -711,5 +888,170 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         }
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testTransactionControllerSignalsHandlerWhenCreditAvailableDirect() throws Exception {
+        doTestTransactionControllerSignalsHandlerWhenCreditAvailable(false);
+    }
+
+    @Test
+    public void testTransactionControllerSignalsHandlerWhenCreditAvailableInDirect() throws Exception {
+        doTestTransactionControllerSignalsHandlerWhenCreditAvailable(true);
+    }
+
+    private void doTestTransactionControllerSignalsHandlerWhenCreditAvailable(boolean useNewTransactionAPI) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+        Source source = new Source();
+        source.setOutcomes(DEFAULT_OUTCOMES);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        TransactionController txnController = session.coordinator("test-coordinator");
+
+        txnController.setSource(source);
+        txnController.setCoordinator(coordinator);
+
+        final byte[] TXN_ID = new byte[] { 1, 2, 3, 4 };
+
+        final AtomicReference<byte[]> declaredTxnId = new AtomicReference<>();
+        final AtomicReference<byte[]> dischargedTxnId = new AtomicReference<>();
+
+        txnController.declaredHandler(result -> {
+            declaredTxnId.set(result.getTxnId().arrayCopy());
+        });
+        txnController.dischargedHandler(result -> {
+            dischargedTxnId.set(result.getTxnId().arrayCopy());
+        });
+
+        txnController.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectDeclare().accept(TXN_ID);
+
+        final AtomicReference<Transaction<TransactionController>> txn = new AtomicReference<>();
+
+        if (useNewTransactionAPI) {
+            txn.set(txnController.newTransaction());
+            try {
+                txnController.declare(txn.get());
+                fail("Should not be able to declare as there is no link credit to do so.");
+            } catch (IllegalStateException ise) {
+            }
+
+            txnController.addCapacityAvailableHandler((controller) -> {
+                txnController.declare(txn.get());
+            });
+        } else {
+            try {
+                txnController.declare();
+                fail("Should not be able to declare as there is no link credit to do so.");
+            } catch (IllegalStateException ise) {
+            }
+
+            txnController.addCapacityAvailableHandler((controller) -> {
+                txn.set(txnController.declare());
+            });
+        }
+
+        peer.remoteFlow().withNextIncomingId(1).withDeliveryCount(0).withLinkCredit(1).now();
+        peer.waitForScriptToComplete();
+        peer.expectDischarge().withTxnId(TXN_ID).withFail(false).accept();
+
+        assertNotNull(txn.get());
+        assertArrayEquals(TXN_ID, declaredTxnId.get());
+
+        try {
+            txnController.discharge(txn.get(), false);
+            fail("Should not be able to discharge as there is no link credit to do so.");
+        } catch (IllegalStateException ise) {
+        }
+
+        txnController.addCapacityAvailableHandler((controller) -> {
+            txnController.discharge(txn.get(), false);
+        });
+
+        peer.remoteFlow().withNextIncomingId(2).withDeliveryCount(1).withLinkCredit(1).now();
+        peer.waitForScriptToComplete();
+        peer.expectDetach().withClosed(true).respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        assertArrayEquals(TXN_ID, dischargedTxnId.get());
+
+        txnController.close();
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testTransactionControllerDeclareIsIdempotent() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+        Source source = new Source();
+        source.setOutcomes(DEFAULT_OUTCOMES);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().respond();
+        peer.remoteFlow().withLinkCredit(3).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        TransactionController txnController = session.coordinator("test-coordinator");
+
+        txnController.setSource(source);
+        txnController.setCoordinator(coordinator);
+
+        final AtomicReference<byte[]> declaredTxnId = new AtomicReference<>();
+
+        txnController.declaredHandler(result -> {
+            declaredTxnId.set(result.getTxnId().arrayCopy());
+        });
+
+        txnController.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectDeclare();
+
+        final Transaction<TransactionController> txn = txnController.newTransaction();
+
+        txnController.declare(txn);
+
+        try {
+            txnController.declare(txn);
+            fail("Should not be able to declare the same transaction a second time.");
+        } catch (IllegalStateException ise) {
+        }
+
+        try {
+            assertEquals(txn.getState(), TransactionState.DECLARING);
+            txnController.discharge(txn, false);
+            fail("Should not be able to discharge a transaction that is not activated by the remote.");
+        } catch (IllegalStateException ise) {
+        }
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
     }
 }
