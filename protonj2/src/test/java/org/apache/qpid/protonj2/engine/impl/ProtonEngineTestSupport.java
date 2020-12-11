@@ -31,6 +31,8 @@ import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
 import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
+import org.apache.qpid.protonj2.types.messaging.Data;
+import org.apache.qpid.protonj2.types.messaging.Section;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -147,5 +149,36 @@ public abstract class ProtonEngineTestSupport {
 
     protected String getTestName() {
         return getClass().getSimpleName() + "." + testName;
+    }
+
+    protected byte[] createEncodedMessage(Section<Object> body) {
+        Encoder encoder = CodecFactory.getEncoder();
+        ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
+        encoder.writeObject(buffer, encoder.newEncoderState(), body);
+        byte[] result = new byte[buffer.getReadableBytes()];
+        buffer.readBytes(result);
+        return result;
+    }
+
+    protected byte[] createEncodedMessage(Section<?>... body) {
+        Encoder encoder = CodecFactory.getEncoder();
+        ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
+        for (Section<?> section : body) {
+            encoder.writeObject(buffer, encoder.newEncoderState(), section);
+        }
+        byte[] result = new byte[buffer.getReadableBytes()];
+        buffer.readBytes(result);
+        return result;
+    }
+
+    protected byte[] createEncodedMessage(Data... body) {
+        Encoder encoder = CodecFactory.getEncoder();
+        ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
+        for (Data data : body) {
+            encoder.writeObject(buffer, encoder.newEncoderState(), data);
+        }
+        byte[] result = new byte[buffer.getReadableBytes()];
+        buffer.readBytes(result);
+        return result;
     }
 }

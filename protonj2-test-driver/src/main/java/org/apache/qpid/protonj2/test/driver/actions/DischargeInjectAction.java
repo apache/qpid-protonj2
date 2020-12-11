@@ -52,4 +52,9 @@ public class DischargeInjectAction extends TransferInjectAction {
         withBody().withDescribed(discharge);
         return this;
     }
+
+    @Override
+    public DischargeInjectAction withHandle(long handle) {
+        return (DischargeInjectAction) super.withHandle(handle);
+    }
 }

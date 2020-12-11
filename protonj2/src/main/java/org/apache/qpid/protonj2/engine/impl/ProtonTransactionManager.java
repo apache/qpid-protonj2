@@ -42,6 +42,7 @@ import org.apache.qpid.protonj2.types.messaging.Source;
 import org.apache.qpid.protonj2.types.transactions.Coordinator;
 import org.apache.qpid.protonj2.types.transactions.Declare;
 import org.apache.qpid.protonj2.types.transactions.Discharge;
+import org.apache.qpid.protonj2.types.transactions.TransactionErrors;
 import org.apache.qpid.protonj2.types.transactions.TransactionalState;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 
@@ -103,6 +104,10 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
     public TransactionManager declared(Transaction<TransactionManager> transaction, Binary txnId) {
         ProtonManagerTransaction txn = (ProtonManagerTransaction) transaction;
 
+        if (txn.parent() != this) {
+            throw new IllegalArgumentException("Cannot complete declaration of a transaction from another transaction manager.");
+        }
+
         if (txnId == null || txnId.getArray() == null || txnId.getArray().length == 0) {
             throw new IllegalArgumentException("Cannot declare a transaction without a transaction Id");
         }
@@ -129,6 +134,10 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
         // Before sending the disposition remove if from tracking in case the write fails.
         transactions.remove(txn.getTxnId().asProtonBuffer());
 
+        if (txn.parent() != this) {
+            throw new IllegalArgumentException("Cannot complete discharge of a transaction from another transaction manager.");
+        }
+
         txn.setState(TransactionState.DISCHARGED);
         txn.getDischarge().disposition(Accepted.getInstance(), true);
 
@@ -138,6 +147,10 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
     @Override
     public TransactionManager declareFailed(Transaction<TransactionManager> transaction, ErrorCondition condition) {
         ProtonManagerTransaction txn = (ProtonManagerTransaction) transaction;
+
+        if (txn.parent() != this) {
+            throw new IllegalArgumentException("Cannot fail a declared transaction from another transaction manager.");
+        }
 
         txn.setState(TransactionState.DECLARE_FAILED);
         txn.getDeclare().disposition(new Rejected().setError(condition), true);
@@ -149,7 +162,14 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
     public TransactionManager dischargeFailed(Transaction<TransactionManager> transaction, ErrorCondition condition) {
         ProtonManagerTransaction txn = (ProtonManagerTransaction) transaction;
 
+        if (txn.parent() != this) {
+            throw new IllegalArgumentException("Cannot fail a discharge of a transaction from another transaction manager.");
+        }
+
         transactions.remove(txn.getTxnId().asProtonBuffer());
+
+        // TODO: We should be closing the link if the remote did not report that it supports the
+        //       rejected outcome although most don't regardless of what they actually do support.
 
         txn.setState(TransactionState.DISCHARGE_FAILED);
         txn.getDischarge().disposition(new Rejected().setError(condition), true);
@@ -351,14 +371,10 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
         fireParentEndpointClosed();
     }
 
-    // container
-
     private void handleDeliveryRead(IncomingDelivery delivery) {
         if (delivery.isAborted()) {
             delivery.settle();
-        }
-
-        if (!delivery.isPartial()) {
+        } else if (!delivery.isPartial()) {
             ProtonBuffer payload = delivery.readAll();
 
             @SuppressWarnings( "rawtypes" )
@@ -383,7 +399,10 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
 
                     fireDischarge(transaction.setDischarge(delivery));
                 } else {
-                    // TODO: Error handling for bad discharge command.
+                    // TODO: If the remote did not indicate it supports reject we should really close the link.
+                    ErrorCondition rejection = new ErrorCondition(
+                        TransactionErrors.UNKNOWN_ID, "Transaction Manager is not tracking the given transaction ID.");
+                    delivery.disposition(new Rejected(rejection), true);
                 }
             } else {
                 throw new ProtocolViolationException("TXN Coordinator expects Declare and Dishcahrge Delivery payloads only");
@@ -423,12 +442,12 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
         }
 
         public ProtonManagerTransaction setDischarge(IncomingDelivery delivery) {
-            this.declare = delivery;
+            this.discharge = delivery;
             return this;
         }
 
         public IncomingDelivery getDischarge() {
-            return declare;
+            return discharge;
         }
     }
 }
