@@ -20,7 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.security.Principal;
 
@@ -29,6 +31,7 @@ import javax.security.sasl.SaslException;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
+import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.impl.ProtonEngineTestSupport;
 import org.apache.qpid.protonj2.engine.sasl.client.SaslAuthenticator;
 import org.apache.qpid.protonj2.engine.sasl.client.SaslCredentialsProvider;
@@ -54,6 +57,29 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         peer.expectClose().respond();
 
         engine.saslDriver().client().setListener(createSaslPlainAuthenticator(null, null));
+
+        Connection connection = engine.start().open();
+
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testDriverThrowsIfServerStateRequestedAfterClientStateActivated() throws Exception {
+        Engine engine = EngineFactory.PROTON.createEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectSASLAnonymousConnect();
+        peer.expectOpen().respond();
+        peer.expectClose().respond();
+
+        engine.saslDriver().client().setListener(createSaslPlainAuthenticator(null, null));
+
+        assertThrows(IllegalStateException.class, () -> engine.saslDriver().server());
 
         Connection connection = engine.start().open();
 
@@ -142,6 +168,33 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
 
         assertNull(failure);
+    }
+
+    @Test
+    public void testDefaultClientSaslMismatchBetweenClientAndServer() throws Exception {
+        Engine engine = EngineFactory.PROTON.createEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectSASLHeader().respondWithSASLPHeader();
+        peer.remoteSaslMechanisms().withMechanisms("PLAIN").queue();
+
+        // Default client only know about ANONYMOUS
+        engine.saslDriver().client();
+
+        Connection connection = engine.start().open();
+
+        try {
+            connection.close();
+            fail("Engine should have failed");
+        } catch (EngineFailedException efe) {
+            // Expected as engine failed but was not shutdown
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertTrue(engine.isFailed());
+        assertNotNull(failure);
     }
 
     @Test

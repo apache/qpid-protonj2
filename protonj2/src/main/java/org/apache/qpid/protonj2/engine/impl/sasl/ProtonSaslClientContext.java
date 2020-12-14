@@ -325,17 +325,17 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
                context.sendChosenMechanism(ANONYMOUS, null, ProtonByteBufferAllocator.DEFAULT.allocate(0, 0));
            } else {
                ProtonSaslContext sasl = (ProtonSaslContext) context;
-               sasl.done(org.apache.qpid.protonj2.engine.sasl.SaslOutcome.SASL_SYS);
                context.saslFailure(new MechanismMismatchException(
                    "Proton default SASL handler only supports ANONYMOUS exchanges", StringUtils.toStringArray(mechanisms)));
+               sasl.done(org.apache.qpid.protonj2.engine.sasl.SaslOutcome.SASL_SYS);
            }
        }
 
         @Override
         public void handleSaslChallenge(SaslClientContext context, ProtonBuffer challenge) {
             ProtonSaslContext sasl = (ProtonSaslContext) context;
-            sasl.done(org.apache.qpid.protonj2.engine.sasl.SaslOutcome.SASL_SYS);
             context.saslFailure(new SaslSystemException(false, "Proton default SASL handler cannot process challenge steps"));
+            sasl.done(org.apache.qpid.protonj2.engine.sasl.SaslOutcome.SASL_SYS);
         }
 
         @Override

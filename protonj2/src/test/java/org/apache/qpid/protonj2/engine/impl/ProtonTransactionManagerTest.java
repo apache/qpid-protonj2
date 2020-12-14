@@ -17,7 +17,9 @@
 package org.apache.qpid.protonj2.engine.impl;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -45,6 +47,7 @@ import org.apache.qpid.protonj2.types.messaging.Rejected;
 import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.transactions.TransactionErrors;
 import org.apache.qpid.protonj2.types.transactions.TxnCapability;
+import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.junit.jupiter.api.Test;
@@ -101,6 +104,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
 
         TransactionManager manager = transactionManager.get();
 
+        assertFalse(manager.isLocallyClosed());
         assertEquals(TxnCapability.LOCAL_TXN, manager.getRemoteCoordinator().getCapabilities()[0]);
 
         manager.setCoordinator(manager.getRemoteCoordinator().copy());
@@ -112,6 +116,67 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
         connection.close();
 
         peer.waitForScriptToComplete();
+        assertTrue(manager.isLocallyClosed());
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCloseRemotelyInitiatedTxnManagerWithErrorCondition() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.remoteAttach().withName("TXN-Link")
+                           .withHandle(0)
+                           .withRole(Role.SENDER.getValue())
+                           .withSource().withOutcomes(DEFAULT_OUTCOMES_STRINGS).and()
+                           .withInitialDeliveryCount(0)
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString()).and().queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session();
+
+        final ErrorCondition condition = new ErrorCondition(AmqpError.NOT_IMPLEMENTED, "Transactions are not supported");
+        final AtomicReference<TransactionManager> transactionManager = new AtomicReference<>();
+        session.transactionManagerOpenHandler(manager -> {
+            transactionManager.set(manager);
+        });
+
+        session.open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectAttach().withRole(Role.RECEIVER.getValue())
+                           .withSource(nullValue())
+                           .withCoordinator().withCapabilities(TxnCapability.LOCAL_TXN.toString());
+        peer.expectDetach().withError(condition.getCondition().toString(), condition.getDescription()).respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        assertNotNull(transactionManager.get());
+        assertNotNull(transactionManager.get().getRemoteCoordinator());
+        assertSame(transactionManager.get().getParent(), session);
+
+        TransactionManager manager = transactionManager.get();
+
+        assertFalse(manager.isLocallyClosed());
+        assertEquals(TxnCapability.LOCAL_TXN, manager.getRemoteCoordinator().getCapabilities()[0]);
+
+        manager.setCoordinator(manager.getRemoteCoordinator().copy());
+        manager.setSource(null);
+        manager.open();
+        manager.setCondition(condition);
+        manager.close();
+
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNotNull(manager.getCondition());
+        assertTrue(manager.isLocallyClosed());
+        assertTrue(manager.isRemotelyClosed());
         assertNull(failure);
     }
 
@@ -218,6 +283,10 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
 
         manager.setCoordinator(manager.getRemoteCoordinator().copy());
         manager.setSource(manager.getRemoteSource().copy());
+
+        assertNotNull(manager.getSource());
+        assertNotNull(manager.getCoordinator());
+
         manager.open();
 
         connection.close();
@@ -336,7 +405,16 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     }
 
     @Test
-    public void testTransactionManagerSignalsTxnDeclarationAndDischarge() {
+    public void testTransactionManagerSignalsTxnDeclarationAndDischargeSucceeds() {
+        doTestTransactionManagerSignalsTxnDeclarationAndDischarge(false);
+    }
+
+    @Test
+    public void testTransactionManagerSignalsTxnDeclarationAndDischargeFailed() {
+        doTestTransactionManagerSignalsTxnDeclarationAndDischarge(true);
+    }
+
+    private void doTestTransactionManagerSignalsTxnDeclarationAndDischarge(boolean txnFailed) {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
@@ -356,6 +434,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
         Connection connection = engine.start().open();
         Session session = connection.session();
 
+        final AtomicBoolean txnRolledBack = new AtomicBoolean();
         final AtomicReference<TransactionManager> transactionManager = new AtomicReference<>();
         session.transactionManagerOpenHandler(manager -> {
             transactionManager.set(manager);
@@ -383,13 +462,14 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
             manager.declared(declared, new Binary(TXN_ID));
         });
         manager.dischargeHandler(discharged -> {
+            txnRolledBack.set(discharged.getDischargeState().equals(Transaction.DischargeState.ROLLBACK));
             manager.discharged(discharged);
         });
         manager.addCredit(2);
 
         peer.waitForScriptToComplete();
         peer.expectDisposition().withState().transactional().withTxnId(TXN_ID);
-        peer.remoteDischarge().withTxnId(TXN_ID).withFail(false).withDeliveryId(1).withDeliveryTag(new byte[] {1}).queue();
+        peer.remoteDischarge().withTxnId(TXN_ID).withFail(txnFailed).withDeliveryId(1).withDeliveryTag(new byte[] {1}).queue();
         peer.expectDisposition().withState().accepted();
         peer.expectDetach().respond();
         peer.expectEnd().respond();
@@ -403,6 +483,11 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
         connection.close();
 
         peer.waitForScriptToComplete();
+        if (txnFailed) {
+            assertTrue(txnRolledBack.get());
+        } else {
+            assertFalse(txnRolledBack.get());
+        }
         assertNull(failure);
     }
 

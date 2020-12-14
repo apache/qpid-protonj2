@@ -18,6 +18,9 @@ package org.apache.qpid.protonj2.engine.impl.sasl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -32,6 +35,7 @@ import org.apache.qpid.protonj2.engine.Frame;
 import org.apache.qpid.protonj2.engine.HeaderFrame;
 import org.apache.qpid.protonj2.engine.SaslFrame;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
+import org.apache.qpid.protonj2.engine.impl.ProtonConstants;
 import org.apache.qpid.protonj2.engine.impl.ProtonEngine;
 import org.apache.qpid.protonj2.engine.sasl.SaslOutcome;
 import org.apache.qpid.protonj2.engine.sasl.SaslServerContext;
@@ -46,6 +50,7 @@ import org.apache.qpid.protonj2.types.security.SaslMechanisms;
 import org.apache.qpid.protonj2.types.security.SaslPerformative;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -58,6 +63,114 @@ public class ProtonSaslHandlerTest {
     @BeforeEach
     public void setUp() {
         testHandler = new FrameRecordingTransportHandler();
+    }
+
+    @Test
+    public void testCanRemoveSaslClientHandlerBeforeEngineStarted() {
+        doTestCanRemoveSaslHandlerBeforeEngineStarted(false);
+    }
+
+    @Test
+    public void testCanRemoveSaslServerHandlerBeforeEngineStarted() {
+        doTestCanRemoveSaslHandlerBeforeEngineStarted(true);
+    }
+
+    private void doTestCanRemoveSaslHandlerBeforeEngineStarted(boolean server) {
+        final Engine engine;
+
+        if (server) {
+            engine = createSaslServerEngine();
+        } else {
+            engine = createSaslClientEngine();
+        }
+
+        assertNotNull(engine.pipeline().find(ProtonConstants.SASL_PERFORMATIVE_HANDLER));
+
+        engine.pipeline().remove(ProtonConstants.SASL_PERFORMATIVE_HANDLER);
+
+        assertNull(engine.pipeline().find(ProtonConstants.SASL_PERFORMATIVE_HANDLER));
+    }
+
+    @Test
+    public void testCannotInitiateSaslClientHandlerAfterEngineShutdown() {
+        doTestCannotInitiateSaslHandlerAfterEngineShutdown(false);
+    }
+
+    @Test
+    public void testCannotInitiateSaslServerHandlerAfterEngineShutdown() {
+        doTestCannotInitiateSaslHandlerAfterEngineShutdown(true);
+    }
+
+    private void doTestCannotInitiateSaslHandlerAfterEngineShutdown(boolean server) {
+        final Engine engine = createSaslCapableEngine();
+
+        engine.shutdown();
+
+        if (server) {
+            assertThrows(IllegalStateException.class, ()-> engine.saslDriver().server());
+        } else {
+            assertThrows(IllegalStateException.class, ()-> engine.saslDriver().client());
+        }
+    }
+
+    // TODO: Prevent removal from the pipeline.
+
+    @Disabled("Need a mechanism to ensure handler is locked into pipeline")
+    @Test
+    public void testCannotRemoveSaslClientHandlerAfterEngineStarted() {
+        doTestCanRemoveSaslHandlerAfterEngineStarted(false);
+    }
+
+    @Disabled("Need a mechanism to ensure handler is locked into pipeline")
+    @Test
+    public void testCannotRemoveSaslServerHandlerAfterEngineStarted() {
+        doTestCanRemoveSaslHandlerAfterEngineStarted(true);
+    }
+
+    private void doTestCanRemoveSaslHandlerAfterEngineStarted(boolean server) {
+        final Engine engine;
+
+        if (server) {
+            engine = createSaslServerEngine();
+        } else {
+            engine = createSaslClientEngine();
+        }
+
+        assertNotNull(engine.pipeline().find(ProtonConstants.SASL_PERFORMATIVE_HANDLER));
+
+        engine.start();
+        engine.pipeline().remove(ProtonConstants.SASL_PERFORMATIVE_HANDLER);
+
+        assertNotNull(engine.pipeline().find(ProtonConstants.SASL_PERFORMATIVE_HANDLER));
+    }
+
+    @Test
+    public void testCannotSaslDriverChangeMaxFrameSizeAfterSASLAuthBegins() {
+        final Engine engine = createSaslServerEngine();
+
+        engine.start();
+        engine.pipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
+
+        assertThrows(IllegalStateException.class, () -> engine.saslDriver().setMaxFrameSize(1024));
+    }
+
+    @Test
+    public void testCannotSaslDriverChangeMaxFrameSizeSmallerThanSpecMin() {
+        final Engine engine = createSaslServerEngine();
+
+        engine.start();
+
+        assertThrows(IllegalArgumentException.class, () -> engine.saslDriver().setMaxFrameSize(256));
+    }
+
+    @Test
+    public void testCanChangeSaslDriverMaxFrameSizeSmallerThanSpecMin() {
+        final Engine engine = createSaslServerEngine();
+
+        engine.start();
+        engine.saslDriver().setMaxFrameSize(2048);
+
+        assertEquals(2048, engine.saslDriver().getMaxFrameSize());
     }
 
     /**
@@ -142,6 +255,8 @@ public class ProtonSaslHandlerTest {
         });
 
         engine.pipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
+
+        assertThrows(IllegalStateException.class, () -> engine.saslDriver().client());
 
         assertTrue(saslHeaderRead.get(), "Did not receive a SASL Header");
 
@@ -267,6 +382,29 @@ public class ProtonSaslHandlerTest {
 
         // Ensure engine SASL driver is configured for server mode.
         engine.saslDriver().server();
+
+        return engine;
+    }
+
+    private Engine createSaslClientEngine() {
+        ProtonEngine engine = new ProtonEngine();
+
+        engine.pipeline().addLast("sasl", new ProtonSaslHandler());
+        engine.pipeline().addLast("test", testHandler);
+        engine.pipeline().addLast("test", new FrameWriteSinkTransportHandler());
+
+        // Ensure engine SASL driver is configured for client mode.
+        engine.saslDriver().client();
+
+        return engine;
+    }
+
+    private Engine createSaslCapableEngine() {
+        ProtonEngine engine = new ProtonEngine();
+
+        engine.pipeline().addLast("sasl", new ProtonSaslHandler());
+        engine.pipeline().addLast("test", testHandler);
+        engine.pipeline().addLast("test", new FrameWriteSinkTransportHandler());
 
         return engine;
     }
