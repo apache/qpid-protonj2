@@ -30,10 +30,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.Engine;
+import org.apache.qpid.protonj2.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.protonj2.engine.EngineState;
 import org.apache.qpid.protonj2.engine.Frame;
 import org.apache.qpid.protonj2.engine.HeaderFrame;
 import org.apache.qpid.protonj2.engine.SaslFrame;
+import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.impl.ProtonConstants;
 import org.apache.qpid.protonj2.engine.impl.ProtonEngine;
@@ -371,6 +373,76 @@ public class ProtonSaslHandlerTest {
                     fail("Invalid Frame read during exchange: " + frame);
             }
         }
+    }
+
+    @Test
+    public void testEngineFailedIfMoreSaslFramesArriveAfterSaslDone() {
+        final AtomicBoolean saslHeaderRead = new AtomicBoolean();
+
+        final AtomicReference<String> clientHostname = new AtomicReference<>();
+        final AtomicReference<Symbol> clientMechanism = new AtomicReference<>();
+        final AtomicBoolean emptyResponse = new AtomicBoolean();
+
+        Engine engine = createSaslServerEngine();
+
+        engine.saslDriver().server().setListener(new SaslServerListener() {
+
+            @Override
+            public void handleSaslHeader(SaslServerContext context, AMQPHeader header) {
+                if (header.isSaslHeader()) {
+                    saslHeaderRead.set(true);
+                }
+
+                context.sendMechanisms(new Symbol[] { Symbol.valueOf("ANONYMOUS") });
+            }
+
+            @Override
+            public void handleSaslInit(SaslServerContext context, Symbol mechanism, ProtonBuffer initResponse) {
+                clientHostname.set(context.getHostname());
+                clientMechanism.set(mechanism);
+                if (initResponse.getReadableBytes() == 0) {
+                    emptyResponse.set(true);
+                }
+
+                context.sendOutcome(SaslOutcome.SASL_OK, null);
+            }
+
+            @Override
+            public void handleSaslResponse(SaslServerContext context, ProtonBuffer response) {
+
+            }
+        });
+
+        // Check for Header processing
+        engine.start().getEngine().pipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
+
+        assertTrue(saslHeaderRead.get(), "Did not receive a SASL Header");
+
+        SaslInit clientInit = new SaslInit();
+        clientInit.setHostname("HOST-NAME");
+        clientInit.setMechanism(Symbol.valueOf("ANONYMOUS"));
+        clientInit.setInitialResponse(new Binary(new byte[0]));
+
+        // Check for Initial Response processing
+        engine.pipeline().fireRead(new SaslFrame(clientInit, 1, null));
+
+        assertEquals("HOST-NAME", clientHostname.get());
+        assertEquals(Symbol.valueOf("ANONYMOUS"), clientMechanism.get());
+        assertTrue(emptyResponse.get(), "Response should be an empty byte array");
+
+        List<Frame<?>> frames = testHandler.getFramesWritten();
+        assertEquals(3, frames.size(), "SASL Anonymous exchange output not as expected");
+
+        assertEquals(engine.saslDriver().getSaslState(), SaslState.AUTHENTICATED);
+
+        // Fire another SASL frame and the engine should fail
+        try {
+            engine.pipeline().fireRead(new SaslFrame(clientInit, 1, null));
+            fail("Server should fail on unexpected SASL frames");
+        } catch (EngineFailedException efe) {
+        }
+
+        assertTrue(engine.isFailed());
     }
 
     private Engine createSaslServerEngine() {
