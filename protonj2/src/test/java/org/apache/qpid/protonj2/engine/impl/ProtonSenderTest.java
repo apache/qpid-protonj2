@@ -217,6 +217,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.open();
 
+        assertNull(sender.getDeliveryTagGenerator());
+
         if (detach) {
             sender.detach();
         } else {
@@ -284,6 +286,30 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertTrue(senderRemoteClose.get(), "Sender should have reported remote detach");
 
         session.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSenderEnforcesOneActiveDeliveryAtNextAPI() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("test").open();
+
+        assertNotNull(sender.next());
+
+        assertThrows(IllegalStateException.class, () -> sender.next());
 
         peer.waitForScriptToComplete();
 
@@ -2253,42 +2279,49 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSettleTransferWithNullDisposition() throws Exception {
-        doTestSettleTransferWithSpecifiedOutcome(null, nullValue());
+        doTestSettleTransferWithSpecifiedOutcome(null, nullValue(), true);
     }
 
     @Test
     public void testSettleTransferWithAcceptedDisposition() throws Exception {
         DeliveryState state = Accepted.getInstance();
         AcceptedMatcher matcher = new AcceptedMatcher();
-        doTestSettleTransferWithSpecifiedOutcome(state, matcher);
+        doTestSettleTransferWithSpecifiedOutcome(state, matcher, true);
+    }
+
+    @Test
+    public void testUnsttledDispositionOfTransferWithAcceptedOutcome() throws Exception {
+        DeliveryState state = Accepted.getInstance();
+        AcceptedMatcher matcher = new AcceptedMatcher();
+        doTestSettleTransferWithSpecifiedOutcome(state, matcher, false);
     }
 
     @Test
     public void testSettleTransferWithReleasedDisposition() throws Exception {
         DeliveryState state = Released.getInstance();
         ReleasedMatcher matcher = new ReleasedMatcher();
-        doTestSettleTransferWithSpecifiedOutcome(state, matcher);
+        doTestSettleTransferWithSpecifiedOutcome(state, matcher, true);
     }
 
     @Test
     public void testSettleTransferWithRejectedDisposition() throws Exception {
         DeliveryState state = new Rejected();
         RejectedMatcher matcher = new RejectedMatcher();
-        doTestSettleTransferWithSpecifiedOutcome(state, matcher);
+        doTestSettleTransferWithSpecifiedOutcome(state, matcher, true);
     }
 
     @Test
     public void testSettleTransferWithRejectedWithErrorDisposition() throws Exception {
         DeliveryState state = new Rejected().setError(new ErrorCondition(AmqpError.DECODE_ERROR, "test"));
         RejectedMatcher matcher = new RejectedMatcher().withError(AmqpError.DECODE_ERROR.toString(), "test");
-        doTestSettleTransferWithSpecifiedOutcome(state, matcher);
+        doTestSettleTransferWithSpecifiedOutcome(state, matcher, true);
     }
 
     @Test
     public void testSettleTransferWithModifiedDisposition() throws Exception {
         DeliveryState state = new Modified().setDeliveryFailed(true).setUndeliverableHere(true);
         ModifiedMatcher matcher = new ModifiedMatcher().withDeliveryFailed(true).withUndeliverableHere(true);
-        doTestSettleTransferWithSpecifiedOutcome(state, matcher);
+        doTestSettleTransferWithSpecifiedOutcome(state, matcher, true);
     }
 
     @Test
@@ -2296,10 +2329,10 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         DeliveryState state = new TransactionalState().setTxnId(new Binary(new byte[] {1})).setOutcome(Accepted.getInstance());
         TransactionalStateMatcher matcher =
             new TransactionalStateMatcher().withTxnId(new byte[] {1}).withOutcome(new AcceptedMatcher());
-        doTestSettleTransferWithSpecifiedOutcome(state, matcher);
+        doTestSettleTransferWithSpecifiedOutcome(state, matcher, true);
     }
 
-    private void doTestSettleTransferWithSpecifiedOutcome(DeliveryState state, Matcher<?> stateMatcher) throws Exception {
+    private void doTestSettleTransferWithSpecifiedOutcome(DeliveryState state, Matcher<?> stateMatcher, boolean settled) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestPeer peer = createTestPeer(engine);
@@ -2320,7 +2353,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .withDeliveryId(0)
                              .withDeliveryTag(new byte[] {0});
         peer.expectDisposition().withFirst(0)
-                                .withSettled(true)
+                                .withSettled(settled)
                                 .withState(stateMatcher);
         peer.expectDetach().withHandle(0).respond();
 
@@ -2347,7 +2380,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         OutgoingDelivery delivery = sender.current();
         assertNull(delivery);
-        sentDelivery.get().disposition(state, true);
+        sentDelivery.get().disposition(state, settled);
 
         sender.close();
 
@@ -2766,6 +2799,66 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         } else {
             sender.detach();
         }
+
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testSenderDrainedWhenNotDraining() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withDeliveryCount(0).withLinkCredit(10).withDrain(false).queue();
+        peer.expectDetach().respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1");
+
+        sender.creditStateUpdateHandler(link -> link.drained());
+        sender.open();
+
+        assertEquals(10, sender.getCredit());
+
+        sender.close();
+
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testSenderDrainedWhenDrainSignaledButNoCreditGiven() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withDeliveryCount(0).withLinkCredit(0).withDrain(false).queue();
+        peer.expectDetach().respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1");
+
+        sender.creditStateUpdateHandler(link -> link.drained());
+        sender.open();
+
+        assertEquals(0, sender.getCredit());
+
+        sender.close();
 
         connection.close();
 
@@ -3688,5 +3781,90 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
 
         assertNull(failure);
+    }
+
+    @Test
+    public void testDispositionFilterAppliesToOnlySubsetOfUnsttledMapSettledAndAccepted() {
+        testDispositionFilterAppliesToOnlySubsetOfUnsttledMap(true, true);
+    }
+
+    @Test
+    public void testDispositionFilterAppliesToOnlySubsetOfUnsttledMapSettledOnly() {
+        testDispositionFilterAppliesToOnlySubsetOfUnsttledMap(true, false);
+    }
+
+    @Test
+    public void testDispositionFilterAppliesToOnlySubsetOfUnsttledMapAcceptedOnly() {
+        testDispositionFilterAppliesToOnlySubsetOfUnsttledMap(false, true);
+    }
+
+    private void testDispositionFilterAppliesToOnlySubsetOfUnsttledMap(boolean settled, boolean accepted) {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestPeer peer = createTestPeer(engine);
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(10).queue();
+        peer.expectTransfer().withHandle(0)
+                             .withMore(false)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withNonNullPayload();
+        peer.expectTransfer().withHandle(0)
+                             .withMore(false)
+                             .withDeliveryId(1)
+                             .withDeliveryTag(new byte[] {1})
+                             .withNonNullPayload();
+        peer.expectTransfer().withHandle(0)
+                             .withMore(false)
+                             .withDeliveryId(2)
+                             .withDeliveryTag(new byte[] {2})
+                             .withNonNullPayload();
+        if (!accepted) {
+            peer.expectDisposition().withFirst(1).withSettled(settled).withState(nullValue());
+        } else {
+            peer.expectDisposition().withFirst(1).withSettled(settled).withState().accepted();
+        }
+        peer.expectDetach().respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1");
+
+        sender.creditStateUpdateHandler(link -> link.drained());
+        sender.open();
+
+        OutgoingDelivery delivery1 = sender.next();
+        delivery1.setTag(new byte[] { 0 });
+        delivery1.writeBytes(payload.duplicate());
+
+        OutgoingDelivery delivery2 = sender.next();
+        delivery2.setTag(new byte[] { 1 });
+        delivery2.writeBytes(payload.duplicate());
+
+        OutgoingDelivery delivery3 = sender.next();
+        delivery3.setTag(new byte[] { 2 });
+        delivery3.writeBytes(payload.duplicate());
+
+        sender.disposition((delivery) -> {
+            if (delivery.getTag().tagBuffer().equals(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {1}))) {
+                return true;
+            } else {
+                return false;
+            }
+        }, accepted ? Accepted.getInstance() : null, settled);
+
+        assertEquals(7, sender.getCredit());
+
+        sender.close();
+
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 }

@@ -125,7 +125,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
         unsettled.forEach((deliveryId, delivery) -> {
             if (filter.test(delivery)) {
-                if (filter != null) {
+                if (state != null) {
                     delivery.localState(state);
                 }
                 if (settle) {
