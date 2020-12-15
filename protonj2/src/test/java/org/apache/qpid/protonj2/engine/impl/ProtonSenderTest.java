@@ -2294,7 +2294,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     @Test
     public void testSettleTransferWithTransactionalDisposition() throws Exception {
         DeliveryState state = new TransactionalState().setTxnId(new Binary(new byte[] {1})).setOutcome(Accepted.getInstance());
-        TransactionalStateMatcher matcher = new TransactionalStateMatcher().withTxnId(new byte[] {1}); // TODO - outcome
+        TransactionalStateMatcher matcher =
+            new TransactionalStateMatcher().withTxnId(new byte[] {1}).withOutcome(new AcceptedMatcher());
         doTestSettleTransferWithSpecifiedOutcome(state, matcher);
     }
 
