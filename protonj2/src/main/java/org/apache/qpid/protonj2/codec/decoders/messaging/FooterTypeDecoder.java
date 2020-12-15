@@ -88,7 +88,6 @@ public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer
         MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
 
         for (int i = 0; i < count; ++i) {
-            decoder.readValue(buffer, state);
             result[i] = new Footer(mapDecoder.readValue(buffer, state));
         }
 

@@ -41,7 +41,6 @@ import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.messaging.Footer;
 import org.apache.qpid.protonj2.types.messaging.Modified;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class FooterTypeCodecTest extends CodecTestSupport {
@@ -254,8 +253,6 @@ public class FooterTypeCodecTest extends CodecTestSupport {
         }
     }
 
-    // TODO: Investigate failing test
-    @Disabled("Test fails and needs investigation")
     @Test
     public void testEncodeDecodeArray() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
