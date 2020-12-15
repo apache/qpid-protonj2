@@ -24,6 +24,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.Attach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Begin;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Detach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.End;
+import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
 
 import io.netty.buffer.ByteBuf;
@@ -179,6 +180,17 @@ public class DriverSessions {
 
         if (tracker != null) {
             result = tracker.handleDetach(detach);
+        }
+
+        return result;
+    }
+
+    public LinkTracker handleFlow(Flow flow, int channel) {
+        SessionTracker tracker = remoteSessions.get(UnsignedShort.valueOf(channel));
+        LinkTracker result = null;
+
+        if (tracker != null) {
+            result = tracker.handleFlow(flow);
         }
 
         return result;

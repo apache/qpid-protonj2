@@ -28,6 +28,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.Attach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Begin;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Detach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.End;
+import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
 
@@ -159,11 +160,13 @@ public class SessionTracker {
     }
 
     public LinkTracker handleAttach(Attach attach) {
-        LinkTracker linkTracker = new LinkTracker(this, attach);
+        final LinkTracker linkTracker;
 
         if (attach.getRole().equals(Role.SENDER.getValue())) {
+            linkTracker = new ReceiverTracker(this, attach);
             senders.add(linkTracker);
         } else {
+            linkTracker = new SenderTracker(this, attach);
             receivers.add(linkTracker);
         }
 
@@ -193,7 +196,19 @@ public class SessionTracker {
     public LinkTracker handleTransfer(Transfer transfer, ByteBuf payload) {
         LinkTracker tracker = trackerMap.get(transfer.getHandle());
 
+        tracker.handleTransfer(transfer, payload);
         // TODO - Update session state based on transfer
+
+        return tracker;
+    }
+
+    public LinkTracker handleFlow(Flow flow) {
+        LinkTracker tracker = null;
+
+        if (flow.getHandle() != null) {
+            tracker = trackerMap.get(flow.getHandle());
+            tracker.handleFlow(flow);
+        }
 
         return tracker;
     }

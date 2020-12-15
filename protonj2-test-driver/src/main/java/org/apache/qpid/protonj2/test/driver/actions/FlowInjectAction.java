@@ -47,8 +47,18 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
         return this;
     }
 
+    public FlowInjectAction withNextIncomingId(UnsignedInteger nextIncomingId) {
+        flow.setNextIncomingId(nextIncomingId);
+        return this;
+    }
+
     public FlowInjectAction withIncomingWindow(long incomingWindow) {
         flow.setIncomingWindow(UnsignedInteger.valueOf(incomingWindow));
+        return this;
+    }
+
+    public FlowInjectAction withIncomingWindow(UnsignedInteger incomingWindow) {
+        flow.setIncomingWindow(incomingWindow);
         return this;
     }
 
@@ -57,8 +67,18 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
         return this;
     }
 
+    public FlowInjectAction withNextOutgoingId(UnsignedInteger nextOutgoingId) {
+        flow.setNextOutgoingId(nextOutgoingId);
+        return this;
+    }
+
     public FlowInjectAction withOutgoingWindow(long outgoingWindow) {
         flow.setOutgoingWindow(UnsignedInteger.valueOf(outgoingWindow));
+        return this;
+    }
+
+    public FlowInjectAction withOutgoingWindow(UnsignedInteger outgoingWindow) {
+        flow.setOutgoingWindow(outgoingWindow);
         return this;
     }
 
@@ -67,8 +87,18 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
         return this;
     }
 
+    public FlowInjectAction withHandle(UnsignedInteger handle) {
+        flow.setHandle(handle);
+        return this;
+    }
+
     public FlowInjectAction withDeliveryCount(long deliveryCount) {
         flow.setDeliveryCount(UnsignedInteger.valueOf(deliveryCount));
+        return this;
+    }
+
+    public FlowInjectAction withDeliveryCount(UnsignedInteger deliveryCount) {
+        flow.setDeliveryCount(deliveryCount);
         return this;
     }
 
@@ -77,8 +107,18 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
         return this;
     }
 
+    public FlowInjectAction withLinkCredit(UnsignedInteger linkCredit) {
+        flow.setLinkCredit(linkCredit);
+        return this;
+    }
+
     public FlowInjectAction withAvailable(long available) {
         flow.setAvailable(UnsignedInteger.valueOf(available));
+        return this;
+    }
+
+    public FlowInjectAction withAvailable(UnsignedInteger available) {
+        flow.setAvailable(available);
         return this;
     }
 

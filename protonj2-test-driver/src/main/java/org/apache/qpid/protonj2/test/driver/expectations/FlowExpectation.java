@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
+import org.apache.qpid.protonj2.test.driver.LinkTracker;
 import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.FlowInjectAction;
@@ -64,11 +65,12 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
     public void handleFlow(Flow flow, ByteBuf payload, int channel, AMQPTestDriver context) {
         super.handleFlow(flow, payload, channel, context);
 
+        SessionTracker session = driver.getSessions().getSessionFromRemoteChannel(UnsignedShort.valueOf(channel));
+        LinkTracker linkTracker = session.handleFlow(flow);  // Can be null if Flow was session level only.
+
         if (response == null) {
             return;
         }
-
-        SessionTracker session = driver.getSessions().getSessionFromRemoteChannel(UnsignedShort.valueOf(channel));
 
         // Input was validated now populate response with auto values where not configured
         // to say otherwise by the test.
@@ -93,8 +95,8 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
             response.withOutgoingWindow(0); //TODO: shouldnt be hard coded, session might have senders on it as well as receivers
         }
 
-        if (response.getPerformative().getHandle() == null) {
-            response.withHandle(flow.getHandle().longValue()); //TODO: this is wrong, need a lookup for the local link and then get its remote handle.
+        if (response.getPerformative().getHandle() == null && linkTracker != null) {
+            response.withHandle(linkTracker.getHandle()); //TODO: this is wrong, need a lookup for the local link and then get its remote handle.
         }
 
         // TODO: blow up on response if credit not populated?

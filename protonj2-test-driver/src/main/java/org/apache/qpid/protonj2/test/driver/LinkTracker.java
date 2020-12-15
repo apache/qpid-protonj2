@@ -21,14 +21,18 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.Target;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Attach;
+import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.SenderSettleMode;
+import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * Tracks information about links that are opened be the client under test.
  */
-public class LinkTracker {
+public abstract class LinkTracker {
 
     private final SessionTracker session;
     private final Attach attach;
@@ -81,4 +85,9 @@ public class LinkTracker {
     public boolean isReceiver() {
         return Role.SENDER.getValue() == attach.getRole();
     }
+
+    protected abstract void handleTransfer(Transfer transfer, ByteBuf payload);
+
+    protected abstract void handleFlow(Flow flow);
+
 }
