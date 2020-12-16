@@ -66,6 +66,7 @@ import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Header;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -2088,14 +2089,6 @@ public class StreamSenderTest extends ImperativeClientTestCase {
                 assertTrue(ioe.getCause() instanceof ClientException);
             }
 
-            try {
-                stream.close();
-                fail("Should not be able to flush after connection drop");
-            } catch (IOException ioe) {
-                assertTrue(ioe.getCause() instanceof ClientException);
-            }
-
-            sender.closeAsync().get();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -2103,6 +2096,64 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     }
 
     @Test
+    void testStreamMessageCloseThatFlushesFailsAfterConnectionDropped() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamSenderMessage message = sender.beginMessage();
+
+            OutputStream stream = message.body();
+
+            EncodedDataMatcher dataMatcher1 = new EncodedDataMatcher(new byte[] { 0, 1, 2, 3 });
+            TransferPayloadCompositeMatcher payloadMatcher1 = new TransferPayloadCompositeMatcher();
+            payloadMatcher1.setMessageContentMatcher(dataMatcher1);
+
+            EncodedDataMatcher dataMatcher2 = new EncodedDataMatcher(new byte[] { 4, 5, 6, 7 });
+            TransferPayloadCompositeMatcher payloadMatcher2 = new TransferPayloadCompositeMatcher();
+            payloadMatcher2.setMessageContentMatcher(dataMatcher2);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(payloadMatcher1).withMore(true);
+            peer.expectTransfer().withPayload(payloadMatcher2).withMore(true);
+            peer.dropAfterLastHandler();
+
+            // Write two then after connection drops the message should fail on future writes
+            stream.write(new byte[] { 0, 1, 2, 3 });
+            stream.flush();
+            stream.write(new byte[] { 4, 5, 6, 7 });
+            stream.flush();
+
+            peer.waitForScriptToComplete();
+
+            // Next write should fail as connection should have dropped.
+            stream.write(new byte[] { 8, 9, 10, 11 });
+
+            try {
+                stream.close();
+                fail("Should not be able to close after connection drop");
+            } catch (IOException ioe) {
+                assertTrue(ioe.getCause() instanceof ClientException);
+            }
+
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @RepeatedTest(100)
     void testStreamMessageWriteThatFlushesFailsAfterConnectionDropped() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -2136,14 +2187,6 @@ public class StreamSenderTest extends ImperativeClientTestCase {
                 assertTrue(ioe.getCause() instanceof ClientException);
             }
 
-            try {
-                stream.close();
-                fail("Should not be able to flush after connection drop");
-            } catch (IOException ioe) {
-                assertTrue(ioe.getCause() instanceof ClientException);
-            }
-
-            sender.closeAsync().get();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
