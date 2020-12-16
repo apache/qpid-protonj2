@@ -138,7 +138,7 @@ public class ClientConnection implements Connection {
         // This executor can be used for dispatching asynchronous tasks that might block or result
         // in reentrant calls to this Connection that could block.
         notifications = new ThreadPoolExecutor(1, 1, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
-            new TrackableThreadFactory("QpidJMS Connection Executor: " + getId(), true));
+            new TrackableThreadFactory("protonj2 Client Connection Executor: " + getId(), true));
         notifications.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy());
     }
 
