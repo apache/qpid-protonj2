@@ -66,7 +66,6 @@ import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Header;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -2153,7 +2152,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @RepeatedTest(100)
+    @Test
     void testStreamMessageWriteThatFlushesFailsAfterConnectionDropped() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -2170,13 +2169,14 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamSenderOptions options = new StreamSenderOptions().writeBufferSize(1024);
+            StreamSender sender = connection.openStreamSender("test-queue", options);
             StreamSenderMessage message = sender.beginMessage();
 
             byte[] payload = new byte[65535];
             Arrays.fill(payload, (byte) 65);
-            OutputStreamOptions options = new OutputStreamOptions().bodyLength(65535);
-            OutputStream stream = message.body(options);
+            OutputStreamOptions streamOptions = new OutputStreamOptions().bodyLength(65535);
+            OutputStream stream = message.body(streamOptions);
 
             peer.waitForScriptToComplete();
 
