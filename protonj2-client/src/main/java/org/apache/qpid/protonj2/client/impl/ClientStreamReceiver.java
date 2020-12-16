@@ -202,37 +202,38 @@ public final class ClientStreamReceiver implements StreamReceiver {
         final ClientFuture<StreamDelivery> receive = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
-            checkClosedOrFailed(receive);
-            IncomingDelivery delivery = null;
+            if (notClosedOrFailed(receive)) {
+                IncomingDelivery delivery = null;
 
-            // Scan for an unsettled delivery that isn't yet assigned to a client delivery
-            // either it is a complete delivery or the initial stage of the next incoming
-            for (IncomingDelivery unsettled : protonReceiver.unsettled()) {
-                if (unsettled.getLinkedResource() == null) {
-                    delivery = unsettled;
-                    break;
-                }
-            }
-
-            if (delivery == null) {
-                if (timeout == 0) {
-                    receive.complete(null);
-                } else {
-                    final ScheduledFuture<?> timeoutFuture;
-
-                    if (timeout > 0) {
-                        timeoutFuture = session.getScheduler().schedule(() -> {
-                            receiveRequests.remove(receive);
-                            receive.complete(null); // Timed receive returns null on failed wait.
-                        }, timeout, unit);
-                    } else {
-                        timeoutFuture = null;
+                // Scan for an unsettled delivery that isn't yet assigned to a client delivery
+                // either it is a complete delivery or the initial stage of the next incoming
+                for (IncomingDelivery unsettled : protonReceiver.unsettled()) {
+                    if (unsettled.getLinkedResource() == null) {
+                        delivery = unsettled;
+                        break;
                     }
-
-                    receiveRequests.put(receive, timeoutFuture);
                 }
-            } else {
-                receive.complete(new ClientStreamDelivery(this, delivery));
+
+                if (delivery == null) {
+                    if (timeout == 0) {
+                        receive.complete(null);
+                    } else {
+                        final ScheduledFuture<?> timeoutFuture;
+
+                        if (timeout > 0) {
+                            timeoutFuture = session.getScheduler().schedule(() -> {
+                                receiveRequests.remove(receive);
+                                receive.complete(null); // Timed receive returns null on failed wait.
+                            }, timeout, unit);
+                        } else {
+                            timeoutFuture = null;
+                        }
+
+                        receiveRequests.put(receive, timeoutFuture);
+                    }
+                } else {
+                    receive.complete(new ClientStreamDelivery(this, delivery));
+                }
             }
         });
 
@@ -251,18 +252,18 @@ public final class ClientStreamReceiver implements StreamReceiver {
         ClientFuture<StreamReceiver> creditAdded = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
-            checkClosedOrFailed(creditAdded);
-
-            if (options.creditWindow() != 0) {
-                creditAdded.failed(new ClientIllegalStateException("Cannot add credit when a credit window has been configured"));
-            } else if (protonReceiver.isDraining()) {
-                creditAdded.failed(new ClientIllegalStateException("Cannot add credit while a drain is pending"));
-            } else {
-                try {
-                    protonReceiver.addCredit(credits);
-                    creditAdded.complete(this);
-                } catch (Exception ex) {
-                    creditAdded.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+            if (notClosedOrFailed(creditAdded)) {
+                if (options.creditWindow() != 0) {
+                    creditAdded.failed(new ClientIllegalStateException("Cannot add credit when a credit window has been configured"));
+                } else if (protonReceiver.isDraining()) {
+                    creditAdded.failed(new ClientIllegalStateException("Cannot add credit while a drain is pending"));
+                } else {
+                    try {
+                        protonReceiver.addCredit(credits);
+                        creditAdded.complete(this);
+                    } catch (Exception ex) {
+                        creditAdded.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+                    }
                 }
             }
         });
@@ -276,26 +277,26 @@ public final class ClientStreamReceiver implements StreamReceiver {
         final ClientFuture<Receiver> drainComplete = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
-            checkClosedOrFailed(drainComplete);
-
-            if (protonReceiver.isDraining()) {
-                drainComplete.failed(new ClientException("Already draining"));
-                return;
-            }
-
-            if (protonReceiver.getCredit() == 0) {
-                drainComplete.complete(this);
-                return;
-            }
-
-            try {
-                if (protonReceiver.drain()) {
-                    drainingFuture = drainComplete;
-                } else {
-                    drainComplete.complete(this);
+            if (notClosedOrFailed(drainComplete)) {
+                if (protonReceiver.isDraining()) {
+                    drainComplete.failed(new ClientException("Already draining"));
+                    return;
                 }
-            } catch (Exception ex) {
-                drainComplete.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+
+                if (protonReceiver.getCredit() == 0) {
+                    drainComplete.complete(this);
+                    return;
+                }
+
+                try {
+                    if (protonReceiver.drain()) {
+                        drainingFuture = drainComplete;
+                    } else {
+                        drainComplete.complete(this);
+                    }
+                } catch (Exception ex) {
+                    drainComplete.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+                }
             }
         });
 
@@ -348,19 +349,19 @@ public final class ClientStreamReceiver implements StreamReceiver {
         final ClientFuture<Integer> request = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
-            checkClosedOrFailed(request);
+            if (notClosedOrFailed(request)) {
+                int queued = 0;
 
-            int queued = 0;
-
-            // Scan for an unsettled delivery that isn't yet assigned to a client delivery
-            // either it is a complete delivery or the initial stage of the next incoming
-            for (IncomingDelivery unsettled : protonReceiver.unsettled()) {
-                if (unsettled.getLinkedResource() == null) {
-                    queued++;
+                // Scan for an unsettled delivery that isn't yet assigned to a client delivery
+                // either it is a complete delivery or the initial stage of the next incoming
+                for (IncomingDelivery unsettled : protonReceiver.unsettled()) {
+                    if (unsettled.getLinkedResource() == null) {
+                        queued++;
+                    }
                 }
-            }
 
-            request.complete(queued);
+                request.complete(queued);
+            }
         });
 
         return session.request(this, request);
@@ -600,11 +601,15 @@ public final class ClientStreamReceiver implements StreamReceiver {
         }
     }
 
-    private void checkClosedOrFailed(ClientFuture<?> request) {
+    private boolean notClosedOrFailed(ClientFuture<?> request) {
         if (isClosed()) {
             request.failed(new ClientIllegalStateException("The Receiver was explicity closed", failureCause));
+            return false;
         } else if (failureCause != null) {
             request.failed(failureCause);
+            return false;
+        } else {
+            return true;
         }
     }
 

@@ -421,7 +421,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
                     streamBuffer.setIndex(0, 0);
                 }
             } catch (ClientException e) {
-                new IOException(e);
+                throw new IOException(e);
             }
         }
     }

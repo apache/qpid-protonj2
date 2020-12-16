@@ -572,20 +572,20 @@ class ClientSender implements Sender {
         final ProtonBuffer buffer = message.encode(deliveryAnnotations);
 
         executor.execute(() -> {
-            checkClosedOrFailed(operation);
+            if (notClosedOrFailed(operation)) {
+                try {
+                    final ClientOutgoingEnvelope envelope = new ClientOutgoingEnvelope(this, message.messageFormat(), buffer, operation);
 
-            try {
-                final ClientOutgoingEnvelope envelope = new ClientOutgoingEnvelope(this, message.messageFormat(), buffer, operation);
-
-                if (protonSender.isSendable() && protonSender.current() == null) {
-                    session.getTransactionContext().send(envelope, null, protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED);
-                } else if (waitForCredit) {
-                    addToTailOfBlockedQueue(envelope);
-                } else {
-                    operation.complete(null);
+                    if (protonSender.isSendable() && protonSender.current() == null) {
+                        session.getTransactionContext().send(envelope, null, protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED);
+                    } else if (waitForCredit) {
+                        addToTailOfBlockedQueue(envelope);
+                    } else {
+                        operation.complete(null);
+                    }
+                } catch (Exception error) {
+                    operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
                 }
-            } catch (Exception error) {
-                operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
         });
 
@@ -600,11 +600,15 @@ class ClientSender implements Sender {
         return new ClientNoOpTracker(this);
     }
 
-    protected void checkClosedOrFailed(ClientFuture<?> request) {
+    protected boolean notClosedOrFailed(ClientFuture<?> request) {
         if (isClosed()) {
             request.failed(new ClientIllegalStateException("The Sender was explicity closed", failureCause));
+            return false;
         } else if (failureCause != null) {
             request.failed(failureCause);
+            return false;
+        } else {
+            return true;
         }
     }
 

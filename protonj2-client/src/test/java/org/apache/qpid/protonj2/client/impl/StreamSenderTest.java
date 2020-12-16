@@ -47,6 +47,7 @@ import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamSenderMessage;
 import org.apache.qpid.protonj2.client.StreamSenderOptions;
 import org.apache.qpid.protonj2.client.Tracker;
+import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
@@ -2027,6 +2028,120 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(WRITE_COUNT + 1).withLinkCredit(1).now();
 
             stream.close();
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void testStreamMessageFlushFailsAfterConnectionDropped() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamSenderMessage message = sender.beginMessage();
+
+            OutputStream stream = message.body();
+
+            EncodedDataMatcher dataMatcher1 = new EncodedDataMatcher(new byte[] { 0, 1, 2, 3 });
+            TransferPayloadCompositeMatcher payloadMatcher1 = new TransferPayloadCompositeMatcher();
+            payloadMatcher1.setMessageContentMatcher(dataMatcher1);
+
+            EncodedDataMatcher dataMatcher2 = new EncodedDataMatcher(new byte[] { 4, 5, 6, 7 });
+            TransferPayloadCompositeMatcher payloadMatcher2 = new TransferPayloadCompositeMatcher();
+            payloadMatcher2.setMessageContentMatcher(dataMatcher2);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(payloadMatcher1).withMore(true);
+            peer.expectTransfer().withPayload(payloadMatcher2).withMore(true);
+            peer.dropAfterLastHandler();
+
+            // Write two then after connection drops the message should fail on future writes
+            stream.write(new byte[] { 0, 1, 2, 3 });
+            stream.flush();
+            stream.write(new byte[] { 4, 5, 6, 7 });
+            stream.flush();
+
+            peer.waitForScriptToComplete();
+
+            // Next write should fail as connection should have dropped.
+            stream.write(new byte[] { 8, 9, 10, 11 });
+
+            try {
+                stream.flush();
+                fail("Should not be able to flush after connection drop");
+            } catch (IOException ioe) {
+                assertTrue(ioe.getCause() instanceof ClientException);
+            }
+
+            try {
+                stream.close();
+                fail("Should not be able to flush after connection drop");
+            } catch (IOException ioe) {
+                assertTrue(ioe.getCause() instanceof ClientException);
+            }
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void testStreamMessageWriteThatFlushesFailsAfterConnectionDropped() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.dropAfterLastHandler();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamSenderMessage message = sender.beginMessage();
+
+            byte[] payload = new byte[65535];
+            Arrays.fill(payload, (byte) 65);
+            OutputStreamOptions options = new OutputStreamOptions().bodyLength(65535);
+            OutputStream stream = message.body(options);
+
+            peer.waitForScriptToComplete();
+
+            try {
+                stream.write(payload);
+                fail("Should not be able to write section after connection drop");
+            } catch (IOException ioe) {
+                assertTrue(ioe.getCause() instanceof ClientException);
+            }
+
+            try {
+                stream.close();
+                fail("Should not be able to flush after connection drop");
+            } catch (IOException ioe) {
+                assertTrue(ioe.getCause() instanceof ClientException);
+            }
 
             sender.closeAsync().get();
             connection.closeAsync().get();

@@ -122,16 +122,16 @@ public final class ClientStreamSender extends ClientSender implements StreamSend
             this, context.getProtonDelivery(), message.messageFormat(), buffer, context.completed(), operation);
 
         executor.execute(() -> {
-            checkClosedOrFailed(operation);
-
-            try {
-                if (protonSender.isSendable()) {
-                    session.getTransactionContext().send(envelope, null, protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED);
-                } else {
-                    addToHeadOfBlockedQueue(envelope);
+            if (notClosedOrFailed(operation)) {
+                try {
+                    if (protonSender.isSendable()) {
+                        session.getTransactionContext().send(envelope, null, protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED);
+                    } else {
+                        addToHeadOfBlockedQueue(envelope);
+                    }
+                } catch (Exception error) {
+                    operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
                 }
-            } catch (Exception error) {
-                operation.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
         });
 
