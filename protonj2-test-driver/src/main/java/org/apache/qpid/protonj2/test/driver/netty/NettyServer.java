@@ -26,7 +26,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLPeerUnverifiedException;
 
@@ -221,12 +220,7 @@ public abstract class NettyServer implements AutoCloseable {
                     serverChannel.close();
 
                     if (isSecureServer()) {
-                        SSLContext context = ServerSupport.createJdkSslContext(options);
-                        SSLEngine engine = ServerSupport.createJdkSslEngine(null, context, options);
-                        engine.setUseClientMode(false);
-                        engine.setNeedClientAuth(options.isNeedClientAuth());
-                        sslHandler = new SslHandler(engine);
-                        ch.pipeline().addLast(sslHandler);
+                        ch.pipeline().addLast(sslHandler = SslSupport.createServerSslHandler(null, options));
                     }
 
                     if (options.isUseWebSockets()) {

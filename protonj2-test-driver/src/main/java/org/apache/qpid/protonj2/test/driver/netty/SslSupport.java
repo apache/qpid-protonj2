@@ -39,19 +39,18 @@ import javax.net.ssl.X509ExtendedKeyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 /**
  * Static class that provides various utility methods used by Transport implementations.
  */
-public class ServerSupport {
+public class SslSupport {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ServerSupport.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SslSupport.class);
 
     /**
-     * Creates a Netty SslHandler instance for use in Transports that require
+     * Creates a Netty SslHandler instance for use in client instances that require
      * an SSL encoder / decoder.
      *
      * If the given options contain an SSLContext override, this will be used directly
@@ -69,7 +68,7 @@ public class ServerSupport {
      *
      * @throws Exception if an error occurs while creating the SslHandler instance.
      */
-    public static SslHandler createSslHandler(ByteBufAllocator allocator, URI remote, ServerOptions options) throws Exception {
+    public static SslHandler createClientSslHandler(URI remote, ServerOptions options) throws Exception {
         final SSLEngine sslEngine;
 
         SSLContext sslContext = options.getSslContextOverride();
@@ -77,7 +76,39 @@ public class ServerSupport {
             sslContext = createJdkSslContext(options);
         }
 
-        sslEngine = createJdkSslEngine(remote, sslContext, options);
+        sslEngine = createJdkSslEngine(remote, sslContext, options, true);
+
+        return new SslHandler(sslEngine);
+    }
+
+    /**
+     * Creates a Netty SslHandler instance for use in server instances that require
+     * an SSL encoder / decoder.
+     *
+     * If the given options contain an SSLContext override, this will be used directly
+     * when creating the handler. If they do not, an SSLContext will first be created
+     * using the other option values.
+     *
+     * @param allocator
+     *        The Netty Buffer Allocator to use when Netty resources need to be created.
+     * @param remote
+     *        The URI of the remote peer that the SslHandler will be used against.
+     * @param options
+     *        The SSL options object to build the SslHandler instance from.
+     *
+     * @return a new SslHandler that is configured from the given options.
+     *
+     * @throws Exception if an error occurs while creating the SslHandler instance.
+     */
+    public static SslHandler createServerSslHandler(URI remote, ServerOptions options) throws Exception {
+        final SSLEngine sslEngine;
+
+        SSLContext sslContext = options.getSslContextOverride();
+        if (sslContext == null) {
+            sslContext = createJdkSslContext(options);
+        }
+
+        sslEngine = createJdkSslEngine(remote, sslContext, options, false);
 
         return new SslHandler(sslEngine);
     }
@@ -121,6 +152,8 @@ public class ServerSupport {
      *        the URI of the remote peer that will be used to initialize the engine, may be null if none should.
      * @param context
      *        the SSLContext to use when creating the engine.
+     * @param client
+     *        indicates if the context is meant for use with a client or sever
      * @param options
      *        the TransportOptions to use to configure the new SSLEngine.
      *
@@ -128,7 +161,7 @@ public class ServerSupport {
      *
      * @throws Exception if an error occurs while creating the new SSLEngine.
      */
-    public static SSLEngine createJdkSslEngine(URI remote, SSLContext context, ServerOptions options) throws Exception {
+    public static SSLEngine createJdkSslEngine(URI remote, SSLContext context, ServerOptions options, boolean client) throws Exception {
         SSLEngine engine = null;
         if (remote == null) {
             engine = context.createSSLEngine();
@@ -138,7 +171,8 @@ public class ServerSupport {
 
         engine.setEnabledProtocols(buildEnabledProtocols(engine, options));
         engine.setEnabledCipherSuites(buildEnabledCipherSuites(engine, options));
-        engine.setUseClientMode(true);
+        engine.setUseClientMode(client);
+        engine.setNeedClientAuth(options.isNeedClientAuth());
 
         if (options.isVerifyHost()) {
             SSLParameters sslParameters = engine.getSSLParameters();
