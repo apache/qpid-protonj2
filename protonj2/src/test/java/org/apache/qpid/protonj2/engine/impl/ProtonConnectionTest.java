@@ -45,7 +45,7 @@ import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineStateException;
 import org.apache.qpid.protonj2.engine.exceptions.FrameEncodingException;
-import org.apache.qpid.protonj2.test.driver.ProtonInVMTestPeer;
+import org.apache.qpid.protonj2.test.driver.ProtonTestConnector;
 import org.apache.qpid.protonj2.test.driver.matchers.types.UnsignedIntegerMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.UnsignedShortMatcher;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -67,7 +67,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testConnectionSyncStateAfterEngineStarted() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Connection connection = engine.connection();
         Session session = connection.session().open();
@@ -98,7 +98,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testNegotiateSendsAMQPHeader() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
 
@@ -115,7 +115,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testNegotiateSendsAMQPHeaderAndFireRemoteHeaderEvent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
 
@@ -132,7 +132,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testNegotiateSendsAMQPHeaderEnforcesNotNullEventHandler() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Connection connection = engine.start();
 
@@ -152,7 +152,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testNegotiateDoesNotSendAMQPHeaderAfterOpen() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final AtomicInteger headerReceivedCallback = new AtomicInteger();
 
@@ -179,7 +179,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testConnectionEmitsOpenAndCloseEvents() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final AtomicBoolean connectionLocalOpen = new AtomicBoolean();
         final AtomicBoolean connectionLocalClose = new AtomicBoolean();
@@ -214,7 +214,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testConnectionPopulatesRemoteData() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Symbol[] offeredCapabilities = new Symbol[] { Symbol.valueOf("one"), Symbol.valueOf("two") };
         Symbol[] desiredCapabilities = new Symbol[] { Symbol.valueOf("three"), Symbol.valueOf("four") };
@@ -255,7 +255,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testOpenAndCloseConnectionWithNullSetsOnConnectionOptions() throws IOException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -291,7 +291,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testEndpointEmitsEngineShutdownEvent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final AtomicBoolean engineShutdown = new AtomicBoolean();
 
@@ -319,7 +319,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testConnectionOpenAndCloseAreIdempotent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
@@ -349,7 +349,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testConnectionRemoteOpenTriggeredWhenRemoteOpenArrives() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
@@ -377,7 +377,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testConnectionRemoteOpenTriggeredWhenRemoteOpenArrivesBeforeLocalOpen() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final AtomicBoolean remoteOpened = new AtomicBoolean();
 
@@ -407,7 +407,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testConnectionRemoteCloseTriggeredWhenRemoteCloseArrives() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
@@ -535,7 +535,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().withMaxFrameSize(expectedMaxFrameSizeMatcher)
@@ -593,7 +593,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().withOfferedCapabilities(new String[] { clientOfferedSymbol.toString() })
@@ -643,7 +643,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().withProperties(clientPropertiesMap)
@@ -693,7 +693,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -742,7 +742,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen();
@@ -782,7 +782,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().withChannelMax(nullValue()).respond();
@@ -812,7 +812,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final short eventualChannelMax = 255;
 
@@ -866,7 +866,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     private void testCloseConnectionAfterShutdownNoOutputAndNoException(boolean respondToHeader, boolean respondToOpen) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         if (respondToHeader) {
             peer.expectAMQPHeader().respondWithAMQPHeader();
@@ -910,7 +910,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     private void testCloseConnectionAfterEngineFailedThrowsAndNoOutputWritten(boolean respondToHeader, boolean respondToOpen) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         if (respondToHeader) {
             peer.expectAMQPHeader().respondWithAMQPHeader();
@@ -949,7 +949,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testOpenAndCloseWhileWaitingForHeaderResponseDoesNotWriteUntilHeaderArrives() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader();
 
@@ -975,7 +975,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testOpenWhileWaitingForHeaderResponseDoesNotWriteThenWritesFlowAsExpected() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader();
 
@@ -1005,7 +1005,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1034,7 +1034,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     private void testCannotCreateSessionFromClosedConnection(boolean localClose) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1066,7 +1066,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testCannotSetContainerIdOnOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1099,7 +1099,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     private void testCannotSetContainerIdOnClosedConnection(boolean localClose) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1131,7 +1131,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testCannotSetHostnameOnOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1164,7 +1164,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     private void testCannotSetHostnameOnClosedConnection(boolean localClose) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1196,7 +1196,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testCannotSetChannelMaxOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1229,7 +1229,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     private void testCannotSetChannelMaxOnClosedConnection(boolean localClose) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1261,7 +1261,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testCannotSetMaxFrameSizeOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1294,7 +1294,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     private void testCannotSetMaxFrameSizeOnClosedConnection(boolean localClose) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1326,7 +1326,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testCannotSetIdleTimeoutOnOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1377,7 +1377,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     private void testCannotSetIdleTimeoutOnClosedConnection(boolean localClose) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1409,7 +1409,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testCannotSetOfferedCapabilitiesOnOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1442,7 +1442,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     private void testCannotSetOfferedCapabilitiesOnClosedConnection(boolean localClose) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1474,7 +1474,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testCannotSetDesiredCapabilitiesOnOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1507,7 +1507,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     private void testCannotSetDesiredCapabilitiesOnClosedConnection(boolean localClose) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1539,7 +1539,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testCannotSetPropertiesOnOpenConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1572,7 +1572,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     private void testCannotSetPropertiesOnClosedConnection(boolean localClose) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1604,7 +1604,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testIterateAndCloseSessionsFromSessionsAPI() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -1640,7 +1640,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testConnectionClosedWhenChannelMaxExceeded() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final AtomicBoolean closed = new AtomicBoolean();
 
@@ -1671,7 +1671,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testNoOpenWrittenAfterEncodeErrorFromConnectionProperties() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
 
@@ -1703,7 +1703,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testPipelinedResourceOpenAllowsForReturningResponsesAfterCloseOfConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();

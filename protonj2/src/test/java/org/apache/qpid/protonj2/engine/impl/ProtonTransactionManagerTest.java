@@ -38,7 +38,7 @@ import org.apache.qpid.protonj2.engine.EngineFactory;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.Transaction;
 import org.apache.qpid.protonj2.engine.TransactionManager;
-import org.apache.qpid.protonj2.test.driver.ProtonInVMTestPeer;
+import org.apache.qpid.protonj2.test.driver.ProtonTestConnector;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
@@ -68,7 +68,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testRemoteCoordinatorSenderSignalsTransactionManagerFromSessionWhenEnabled() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -124,7 +124,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testCloseRemotelyInitiatedTxnManagerWithErrorCondition() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -184,7 +184,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testTransactionManagerAlertedIfParentSessionClosed() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -242,7 +242,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testTransactionManagerAlertedIfParentConnectionClosed() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -301,7 +301,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testTransactionManagerAlertedIfEngineShutdown() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -355,7 +355,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testRemoteCoordinatorSenderSignalsTransactionManagerFromConnectionWhenEnabled() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -417,7 +417,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     private void doTestTransactionManagerSignalsTxnDeclarationAndDischarge(boolean txnFailed) {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final byte[] TXN_ID = new byte[] {0, 1, 2, 3};
 
@@ -495,7 +495,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testTransactionManagerSignalsTxnDeclarationFailed() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -561,7 +561,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testTransactionManagerSignalsTxnDischargeFailed() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final byte[] TXN_ID = new byte[] {0, 1, 2, 3};
 
@@ -636,7 +636,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testManagerChecksDeclaredArgumentsForSomeCorrectness() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final byte[] TXN_ID = new byte[] {0, 1, 2, 3};
 
@@ -713,7 +713,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testManagerIgnoresAbortedTransfers() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final byte[] TXN_ID = new byte[] {0, 1, 2, 3};
 
@@ -789,7 +789,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testCannotSignalDeclaredFromAnotherTransactionManager() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final byte[] TXN_ID = new byte[] {0, 1, 2, 3};
 
@@ -895,7 +895,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testCannotSignalDeclareFailedFromAnotherTransactionManager() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -997,7 +997,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testCannotSignalDischargedFromAnotherTransactionManager() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final byte[] TXN_ID = new byte[] {0, 1, 2, 3};
 
@@ -1103,7 +1103,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testCannotSignalDischargeFailedFromAnotherTransactionManager() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final byte[] TXN_ID = new byte[] {0, 1, 2, 3};
 
@@ -1212,7 +1212,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testTransactionManagerRejectsAttemptedDischargeOfUnkownTxnId() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final byte[] TXN_ID = new byte[] {0, 1, 2, 3};
         final byte[] TXN_ID_UNKNOWN= new byte[] {3, 2, 1, 0};
@@ -1285,7 +1285,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     public void testEngineFailedIfNonTxnRelatedTransferArrivesAtCoordinator() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         final byte[] payload = createEncodedMessage(new AmqpValue<>("test"));
 

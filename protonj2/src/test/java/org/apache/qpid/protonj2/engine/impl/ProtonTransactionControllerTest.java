@@ -43,7 +43,7 @@ import org.apache.qpid.protonj2.engine.TransactionState;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
-import org.apache.qpid.protonj2.test.driver.ProtonInVMTestPeer;
+import org.apache.qpid.protonj2.test.driver.ProtonTestConnector;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
@@ -84,7 +84,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     public void testTransactionControllerDeclaresTransaction() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -151,7 +151,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -210,7 +210,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -267,7 +267,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -323,7 +323,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -380,7 +380,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     public void testTransactionControllerBeginComiitBeginRollback() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -455,7 +455,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     private void doTestTransactionControllerDeclareAndDischargeOneTransaction(boolean useNewTransactionAPI) {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -530,7 +530,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     public void testTransactionDeclareRejected() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -592,7 +592,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     public void testTransactionDischargeRejected() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -658,7 +658,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     public void testCannotDeclareTransactionFromOneControllerInAnother() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -737,7 +737,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     public void testCannotDischargeTransactionFromOneControllerInAnother() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -817,7 +817,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -902,7 +902,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -959,7 +959,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     private void doTestTransactionControllerSignalsHandlerWhenCreditAvailable(boolean useNewTransactionAPI) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -1058,7 +1058,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     public void testCapacityAvailableHandlersAreQueuedAndNotifiedWhenCreditGranted() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -1132,7 +1132,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     public void testTransactionControllerDeclareIsIdempotent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -1189,7 +1189,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     public void testTransactionDeclareRejectedWithNoHandlerRegistered() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -1238,7 +1238,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     public void testTransactionDischargeRejectedWithNoHandlerRegistered() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonInVMTestPeer peer = createTestPeer(engine);
+        ProtonTestConnector peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);

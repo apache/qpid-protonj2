@@ -25,7 +25,6 @@ import java.util.function.Supplier;
 
 import javax.net.ssl.SSLEngine;
 
-import org.apache.qpid.protonj2.test.driver.actions.ConnectionDropAction;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
 import org.apache.qpid.protonj2.test.driver.netty.NettyServer;
@@ -49,7 +48,7 @@ public class ProtonTestServer extends ProtonTestPeer {
     private static final Logger LOG = LoggerFactory.getLogger(ProtonTestServer.class);
 
     private final AMQPTestDriver driver;
-    private final TestDriverServer server;
+    private final NettyTestDriverServer server;
     private volatile Channel channel;
 
     /**
@@ -67,7 +66,7 @@ public class ProtonTestServer extends ProtonTestPeer {
      */
     public ProtonTestServer(ProtonTestServerOptions options) {
         this.driver = new NettyAwareAMQPTestDriver(this::processDriverOutput, this::processDriverAssertion, this::eventLoop);
-        this.server = new TestDriverServer(options);
+        this.server = new NettyTestDriverServer(options);
     }
 
     public void start() {
@@ -108,39 +107,6 @@ public class ProtonTestServer extends ProtonTestPeer {
         return server.getConnectionSSLEngine();
     }
 
-    //----- Test connection drop scripting API
-
-    /**
-     * Drops the connection to the connected client immediately after the last handler that was
-     * registered before this scripted action is queued.  Adding any additional test scripting to
-     * the test driver will either not be acted on or could cause the wait methods to not return
-     * as they will never be invoked.
-     *
-     * @return this test driver
-     */
-    @Override
-    public ProtonTestServer dropAfterLastHandler() {
-        driver.addScriptedElement(new ConnectionDropAction(this));
-        return this;
-    }
-
-    /**
-     * Drops the connection to the connected client immediately after the last handler that was
-     * registered before this scripted action is queued.  Adding any additional test scripting to
-     * the test driver will either not be acted on or could cause the wait methods to not return
-     * as they will never be invoked.
-     *
-     * @param delay
-     *      The time in milliseconds to wait before running the action after the last handler is run.
-     *
-     * @return this test driver
-     */
-    @Override
-    public ProtonTestServer dropAfterLastHandler(int delay) {
-        driver.addScriptedElement(new ConnectionDropAction(this).afterDelay(delay));
-        return this;
-    }
-
     @Override
     public AMQPTestDriver getDriver() {
         return driver;
@@ -148,9 +114,9 @@ public class ProtonTestServer extends ProtonTestPeer {
 
     //----- Channel handler that drives IO for the test driver
 
-    private final class TestDriverServer extends NettyServer {
+    private final class NettyTestDriverServer extends NettyServer {
 
-        public TestDriverServer(ProtonTestServerOptions options) {
+        public NettyTestDriverServer(ProtonTestServerOptions options) {
             super(options);
         }
 
@@ -160,7 +126,7 @@ public class ProtonTestServer extends ProtonTestPeer {
 
                 @Override
                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf input) throws Exception {
-                    LOG.trace("AMQP Server Channel read: {}", input);
+                    LOG.trace("AMQP Test Server Channel read: {}", input);
 
                     try {
                         // Create a stable copy to avoid issue with retained buffer slices when input is pooled.
@@ -171,9 +137,8 @@ public class ProtonTestServer extends ProtonTestPeer {
                         // Driver processes new data and may produce output based on this.
                         processChannelInput(copy);
                     } catch (Throwable e) {
-                        LOG.error("Close test peer channel due to error: ", e);
+                        LOG.error("Closed AMQP Test server channel due to error: ", e);
                         ctx.channel().close();
-                    } finally {
                     }
                 }
 
