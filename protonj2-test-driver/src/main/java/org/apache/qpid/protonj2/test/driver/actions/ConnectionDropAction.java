@@ -14,32 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.protonj2.test.driver.netty;
+package org.apache.qpid.protonj2.test.driver.actions;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
+import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
 import org.apache.qpid.protonj2.test.driver.ScriptedAction;
-
-import io.netty.channel.Channel;
 
 /**
  * Action that drops the netty connection to the remote once invoked.
  */
-public class NettyConnectionDropAction implements ScriptedAction {
+public class ConnectionDropAction implements ScriptedAction {
 
-    private final NettyTestPeer peer;
+    private final ProtonTestPeer peer;
     private int delay = -1;
 
-    public NettyConnectionDropAction(NettyTestPeer peer) {
+    public ConnectionDropAction(ProtonTestPeer peer) {
         this.peer = peer;
     }
 
     @Override
     public ScriptedAction now() {
-        Channel channel = peer.getChannel();
-        if (channel != null) {
-            channel.close().awaitUninterruptibly();
-        }
-
+        peer.close();
         return this;
     }
 
@@ -67,7 +62,7 @@ public class NettyConnectionDropAction implements ScriptedAction {
 
                 @Override
                 public ScriptedAction perform(AMQPTestDriver driver) {
-                    return NettyConnectionDropAction.this.now();
+                    return ConnectionDropAction.this.now();
                 }
 
                 @Override
@@ -91,7 +86,7 @@ public class NettyConnectionDropAction implements ScriptedAction {
         return delay;
     }
 
-    public NettyConnectionDropAction afterDelay(int delay) {
+    public ConnectionDropAction afterDelay(int delay) {
         this.delay = delay;
         return this;
     }

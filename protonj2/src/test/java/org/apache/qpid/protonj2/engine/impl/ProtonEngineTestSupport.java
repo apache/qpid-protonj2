@@ -30,7 +30,7 @@ import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
-import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
+import org.apache.qpid.protonj2.test.driver.ProtonInVMTestPeer;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Section;
 import org.junit.jupiter.api.AfterEach;
@@ -136,8 +136,8 @@ public abstract class ProtonEngineTestSupport {
         return ProtonByteBufferAllocator.DEFAULT.wrap(payload).setIndex(0, length);
     }
 
-    protected ProtonTestPeer createTestPeer(Engine engine) {
-        ProtonTestPeer peer = new ProtonTestPeer(buffer -> {
+    protected ProtonInVMTestPeer createTestPeer(Engine engine) {
+        ProtonInVMTestPeer peer = new ProtonInVMTestPeer(buffer -> {
             engine.accept(ProtonByteBufferAllocator.DEFAULT.wrap(buffer));
         });
         engine.outputConsumer(buffer -> {

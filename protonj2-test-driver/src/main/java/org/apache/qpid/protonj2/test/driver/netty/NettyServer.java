@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLPeerUnverifiedException;
 
+import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +83,7 @@ public abstract class NettyServer implements AutoCloseable {
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
     private Channel serverChannel;
-    private final ServerOptions options;
+    private final ProtonTestServerOptions options;
     private int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
     private String webSocketPath = WEBSOCKET_PATH;
     private volatile boolean fragmentWrites;
@@ -92,7 +93,7 @@ public abstract class NettyServer implements AutoCloseable {
 
     private final AtomicBoolean started = new AtomicBoolean();
 
-    public NettyServer(ServerOptions options) {
+    public NettyServer(ProtonTestServerOptions options) {
         this.options = options;
     }
 
@@ -168,7 +169,7 @@ public abstract class NettyServer implements AutoCloseable {
         return handshakeComplete;
     }
 
-    protected URI getConnectionURI() throws Exception {
+    public URI getConnectionURI() throws Exception {
         if (!started.get()) {
             throw new IllegalStateException("Cannot get URI of non-started server");
         }

@@ -36,6 +36,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedKeyManager;
 
+import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +69,7 @@ public class SslSupport {
      *
      * @throws Exception if an error occurs while creating the SslHandler instance.
      */
-    public static SslHandler createClientSslHandler(URI remote, ServerOptions options) throws Exception {
+    public static SslHandler createClientSslHandler(URI remote, ProtonTestServerOptions options) throws Exception {
         final SSLEngine sslEngine;
 
         SSLContext sslContext = options.getSslContextOverride();
@@ -100,7 +101,7 @@ public class SslSupport {
      *
      * @throws Exception if an error occurs while creating the SslHandler instance.
      */
-    public static SslHandler createServerSslHandler(URI remote, ServerOptions options) throws Exception {
+    public static SslHandler createServerSslHandler(URI remote, ProtonTestServerOptions options) throws Exception {
         final SSLEngine sslEngine;
 
         SSLContext sslContext = options.getSslContextOverride();
@@ -126,7 +127,7 @@ public class SslSupport {
      *
      * @throws Exception if an error occurs while creating the context.
      */
-    public static SSLContext createJdkSslContext(ServerOptions options) throws Exception {
+    public static SSLContext createJdkSslContext(ProtonTestServerOptions options) throws Exception {
         try {
             String contextProtocol = options.getContextProtocol();
             LOG.trace("Getting SSLContext instance using protocol: {}", contextProtocol);
@@ -161,7 +162,7 @@ public class SslSupport {
      *
      * @throws Exception if an error occurs while creating the new SSLEngine.
      */
-    public static SSLEngine createJdkSslEngine(URI remote, SSLContext context, ServerOptions options, boolean client) throws Exception {
+    public static SSLEngine createJdkSslEngine(URI remote, SSLContext context, ProtonTestServerOptions options, boolean client) throws Exception {
         SSLEngine engine = null;
         if (remote == null) {
             engine = context.createSSLEngine();
@@ -185,7 +186,7 @@ public class SslSupport {
 
     //----- Internal support methods -----------------------------------------//
 
-    private static String[] buildEnabledProtocols(SSLEngine engine, ServerOptions options) {
+    private static String[] buildEnabledProtocols(SSLEngine engine, ProtonTestServerOptions options) {
         List<String> enabledProtocols = new ArrayList<>();
 
         if (options.getEnabledProtocols() != null) {
@@ -210,7 +211,7 @@ public class SslSupport {
         return enabledProtocols.toArray(new String[0]);
     }
 
-    private static String[] buildEnabledCipherSuites(SSLEngine engine, ServerOptions options) {
+    private static String[] buildEnabledCipherSuites(SSLEngine engine, ProtonTestServerOptions options) {
         List<String> enabledCipherSuites = new ArrayList<>();
 
         if (options.getEnabledCipherSuites() != null) {
@@ -235,7 +236,7 @@ public class SslSupport {
         return enabledCipherSuites.toArray(new String[0]);
     }
 
-    private static TrustManager[] loadTrustManagers(ServerOptions options) throws Exception {
+    private static TrustManager[] loadTrustManagers(ProtonTestServerOptions options) throws Exception {
         TrustManagerFactory factory = loadTrustManagerFactory(options);
         if (factory != null) {
             return factory.getTrustManagers();
@@ -244,7 +245,7 @@ public class SslSupport {
         }
     }
 
-    private static TrustManagerFactory loadTrustManagerFactory(ServerOptions options) throws Exception {
+    private static TrustManagerFactory loadTrustManagerFactory(ProtonTestServerOptions options) throws Exception {
         if (options.isTrustAll()) {
             return InsecureTrustManagerFactory.INSTANCE;
         }
@@ -267,7 +268,7 @@ public class SslSupport {
         return fact;
     }
 
-    private static KeyManager[] loadKeyManagers(ServerOptions options) throws Exception {
+    private static KeyManager[] loadKeyManagers(ProtonTestServerOptions options) throws Exception {
         if (options.getKeyStoreLocation() == null) {
             return null;
         }

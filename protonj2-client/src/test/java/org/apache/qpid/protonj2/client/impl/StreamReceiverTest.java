@@ -51,8 +51,8 @@ import org.apache.qpid.protonj2.client.exceptions.ClientLinkRemotelyClosedExcept
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.test.Wait;
+import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
-import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
@@ -93,7 +93,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     }
 
     private void doTestStreamReceiverSessionCapacity(int maxFrameSize, int readBufferSize, int expectedSessionWindow) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().withMaxFrameSize(maxFrameSize).respond();
             peer.expectBegin().withIncomingWindow(expectedSessionWindow).respond();
@@ -124,7 +124,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
     @Test
     public void testOpenStreamReceiverWithLinCapabilities() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -158,7 +158,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateStreamDeliveryWithoutAnyIncomingDeliveryPresent() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -192,7 +192,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
     @Test
     public void testStreamReceiverAwaitTimedCanBePerformedMultipleTimes() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -236,7 +236,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     }
 
     private void doTestReceiveFailsWhenLinkRemotelyClose(boolean timed) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -275,7 +275,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     public void testStreamDeliveryUsesUnsettledDeliveryOnOpen() throws Exception {
         final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -332,7 +332,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     private void doTestStreamDeliveryReceiveWithTransferAlreadyComplete(boolean tryReceive) throws Exception {
         final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -388,7 +388,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     public void testStreamDeliveryReceivedWhileTransferIsIncomplete() throws Exception {
         final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -440,7 +440,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     public void testStreamDeliveryRawInputStreamWithCompleteDeliveryReadByte() throws Exception {
         final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -499,7 +499,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     public void testStreamDeliveryRawInputStreamBehaviorAfterStreamClosed() throws Exception {
         final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -555,7 +555,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     public void testStreamDeliveryRawInputStreamWithCompleteDeliveryReadBytes() throws Exception {
         final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -613,7 +613,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         final byte[] payload1 = createEncodedMessage(new Data(new byte[] { 0, 1, 2, 3, 4, 5 }));
         final byte[] payload2 = createEncodedMessage(new Data(new byte[] { 6, 7, 8, 9, 0 ,1 }));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -685,7 +685,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     public void testStreamDeliveryRawInputStreamReadBytesSignalsEOFOnEmptyCompleteTransfer() throws Exception {
         final byte[] payload1 = createEncodedMessage(new Data(new byte[] { 0, 1, 2, 3, 4, 5 }));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -756,7 +756,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         final byte[] payload1 = createEncodedMessage(new Data(new byte[] { 0, 1, 2, 3, 4, 5 }));
         final byte[] payload2 = createEncodedMessage(new Data(new byte[] { 6, 7, 8, 9, 0 ,1 }));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -825,7 +825,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         final byte[] payload1 = createEncodedMessage(new Data(body1));
         final byte[] payload2 = createEncodedMessage(new Data(body2));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().withMaxFrameSize(1000).respond();
             peer.expectBegin().withIncomingWindow(1).respond();
@@ -892,7 +892,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     public void testStreamDeliveryRawInputStreamBlockedReadBytesAborted() throws Exception {
         final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -960,7 +960,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         final byte[] payload1 = createEncodedMessage(new Data(body1));
         final byte[] payload2 = createEncodedMessage(new Data(body2));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().withMaxFrameSize(1000).respond();
             peer.expectBegin().withIncomingWindow(1).respond();
@@ -1024,7 +1024,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         final byte[] payload1 = createEncodedMessage(new Data(body1));
         final byte[] payload2 = createEncodedMessage(new Data(body2));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().withMaxFrameSize(1000).respond();
             peer.expectBegin().withIncomingWindow(1).respond();
@@ -1088,7 +1088,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     public void testStreamDeliveryUserAppliedDispositionBeforeStreamRead() throws Exception {
         final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1150,7 +1150,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     public void testStreamSupportsMark() throws Exception {
         final byte[] payload = createEncodedMessage(new Data(new byte[] { 0, 1, 2, 3, 4, 5 }));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1217,7 +1217,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     public void testStreamMessageWithHeaderOnly() throws Exception {
         final byte[] payload = createEncodedMessage(new Header().setDurable(true));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1269,7 +1269,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
         final byte[] payload = createEncodedMessage(new MessageAnnotations(annotationsMap));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1324,7 +1324,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
         final byte[] payload = createEncodedMessage(new Header(), new MessageAnnotations(annotationsMap));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1379,7 +1379,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         final byte[] body = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
         final byte[] payload = createEncodedMessage(new Data(body));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1456,7 +1456,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         final byte[] body = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
         final byte[] payload = createEncodedMessage(new Data(body));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1517,7 +1517,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
     @Test
     public void testStreamReceiverSessionCannotCreateNewResources() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1576,7 +1576,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         random.nextBytes(body);
         final byte[] payload = createEncodedMessage(new Data(body));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1653,7 +1653,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         random.nextBytes(body);
         final byte[] payload = createEncodedMessage(new Data(body));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1734,7 +1734,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
         random.setSeed(seed);
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1828,7 +1828,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
         random.setSeed(seed);
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1912,7 +1912,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         final byte[] payload1 = createEncodedMessage(new Data(body1));
         final byte[] payload2 = createEncodedMessage(new Data(body2));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().withMaxFrameSize(1000).respond();
             peer.expectBegin().withIncomingWindow(1).respond();
@@ -1990,7 +1990,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         final byte[] payload1 = createEncodedMessage(new Data(body1));
         final byte[] payload2 = createEncodedMessage(new Data(body2));
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().withMaxFrameSize(1000).respond();
             peer.expectBegin().withIncomingWindow(1).respond();
@@ -2072,7 +2072,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         footers.getValue().put(Symbol.valueOf("footer-key"), "test");
         final byte[] payload3 = createEncodedMessage(footers);
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().withMaxFrameSize(1000).respond();
             peer.expectBegin().withIncomingWindow(1).respond();
@@ -2160,7 +2160,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         final byte[] payload = createEncodedMessage(new Data(body));
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();

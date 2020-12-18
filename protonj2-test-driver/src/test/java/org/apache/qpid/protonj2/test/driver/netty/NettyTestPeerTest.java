@@ -19,13 +19,14 @@ package org.apache.qpid.protonj2.test.driver.netty;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.junit.jupiter.api.Test;
 
 public class NettyTestPeerTest {
 
     @Test
     public void testServerStart() throws Exception {
-        NettyTestPeer peer = new NettyTestPeer();
+        ProtonTestServer peer = new ProtonTestServer();
 
         assertFalse(peer.isClosed());
         peer.start();

@@ -16,46 +16,23 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
+
+import org.apache.qpid.protonj2.test.driver.actions.ConnectionDropAction;
 
 /**
- * An in VM single threaded test driver used for testing Engine implementations
- * where all test operations will take place in a single thread of control.
- *
- * This class in mainly intended for use in JUnit tests of an Engine implementation
- * and not for use by client implementations where a socket based test peer would be
- * a more appropriate choice.
+ * Abstract base class that is implemented by all the AMQP v1.0 test peer
+ * implementations to provide a consistent interface for the test driver
+ * classes to interact with.
  */
-public class ProtonTestPeer extends ScriptWriter implements Consumer<ByteBuffer>, AutoCloseable {
+public abstract class ProtonTestPeer extends ScriptWriter implements AutoCloseable {
 
-    private final AMQPTestDriver driver;
-    private final Consumer<ByteBuffer> inputConsumer;
-    private final AtomicBoolean closed = new AtomicBoolean();
-    private final AtomicBoolean rejecting = new AtomicBoolean();
+    protected final AtomicBoolean closed = new AtomicBoolean();
 
-    public ProtonTestPeer(Consumer<ByteBuffer> frameSink) {
-        this.driver = new AMQPTestDriver((frame) -> {
-            processDriverOutput(frame);
-        }, null);
-
-        this.inputConsumer = frameSink;
-    }
-
-    public int getEmptyFrameCount() {
-        return driver.getEmptyFrameCount();
-    }
-
-    public int getPerformativeCount() {
-        return driver.getPerformativeCount();
-    }
-
-    public int getSaslPerformativeCount() {
-        return driver.getSaslPerformativeCount();
+    public boolean isClosed() {
+        return closed.get();
     }
 
     @Override
@@ -65,81 +42,70 @@ public class ProtonTestPeer extends ScriptWriter implements Consumer<ByteBuffer>
         }
     }
 
-    public boolean isClosed() {
-        return closed.get();
-    }
-
-    @Override
-    public void accept(ByteBuffer frame) {
-        if (rejecting.get()) {
-            throw new UncheckedIOException("Driver is not accepting any new input", new IOException());
-        } else {
-            driver.accept(frame);
-        }
-    }
-
-    //----- Test Completion API
-
     public void waitForScriptToCompleteIgnoreErrors() {
-        driver.waitForScriptToCompleteIgnoreErrors();
+        getDriver().waitForScriptToCompleteIgnoreErrors();
     }
 
     public void waitForScriptToComplete() {
-        driver.waitForScriptToComplete();
+        getDriver().waitForScriptToComplete();
     }
 
     public void waitForScriptToComplete(long timeout) {
-        driver.waitForScriptToComplete(timeout);
+        getDriver().waitForScriptToComplete(timeout);
     }
 
     public void waitForScriptToComplete(long timeout, TimeUnit units) {
-        driver.waitForScriptToComplete(timeout, units);
+        getDriver().waitForScriptToComplete(timeout, units);
     }
 
-    //----- Test scripting specific to this in VM test driver
+    public int getEmptyFrameCount() {
+        return getDriver().getEmptyFrameCount();
+    }
+
+    public int getPerformativeCount() {
+        return getDriver().getPerformativeCount();
+    }
+
+    public int getSaslPerformativeCount() {
+        return getDriver().getSaslPerformativeCount();
+    }
 
     /**
-     * After all scripted elements of the test are complete this will place the driver into
-     * a mode where any new data is rejected with an exception.
+     * Drops the connection to the connected client immediately after the last handler that was
+     * registered before this scripted action is queued.  Adding any additional test scripting to
+     * the test driver will either not be acted on or could cause the wait methods to not return
+     * as they will never be invoked.
+     *
+     * @return this test peer instance.
      */
-    public void rejectIncomingIOAfterLastScriptedElement() {
-        driver.addScriptedElement(new ScriptedAction() {
-
-            @Override
-            public ScriptedAction queue() {
-                return this;
-            }
-
-            @Override
-            public ScriptedAction perform(AMQPTestDriver driver) {
-                rejecting.set(true);
-                return this;
-            }
-
-            @Override
-            public ScriptedAction now() {
-                return this;
-            }
-
-            @Override
-            public ScriptedAction later(int waitTime) {
-                return this;
-            }
-        });
+    public ProtonTestPeer dropAfterLastHandler() {
+        getDriver().addScriptedElement(new ConnectionDropAction(this));
+        return this;
     }
 
-    //----- Internal implementation which can be overridden
-
-    protected void processCloseRequest() {
-        // nothing to do in this peer implementation.
+    /**
+     * Drops the connection to the connected client immediately after the last handler that was
+     * registered before this scripted action is queued.  Adding any additional test scripting to
+     * the test driver will either not be acted on or could cause the wait methods to not return
+     * as they will never be invoked.
+     *
+     * @param delay
+     *      The time in milliseconds to wait before running the action after the last handler is run.
+     *
+     * @return this test peer instance.
+     */
+    public ProtonTestPeer dropAfterLastHandler(int delay) {
+        getDriver().addScriptedElement(new ConnectionDropAction(this).afterDelay(delay));
+        return this;
     }
 
-    protected void processDriverOutput(ByteBuffer frame) {
-        inputConsumer.accept(frame);
-    }
+    protected abstract void processCloseRequest();
 
-    @Override
-    protected AMQPTestDriver getDriver() {
-        return driver;
+    protected abstract void processDriverOutput(ByteBuffer frame);
+
+    protected void checkClosed() {
+        if (closed.get()) {
+            throw new IllegalStateException("The test peer is closed");
+        }
     }
 }

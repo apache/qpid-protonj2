@@ -31,7 +31,7 @@ import org.apache.qpid.protonj2.engine.EngineFactory;
 import org.apache.qpid.protonj2.engine.Receiver;
 import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
-import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
+import org.apache.qpid.protonj2.test.driver.ProtonInVMTestPeer;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.Modified;
@@ -64,7 +64,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testCreateDefaultCoordinatorSender() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonTestPeer peer = createTestPeer(engine);
+        ProtonInVMTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         Source source = new Source();
@@ -97,7 +97,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testCreateCoordinatorSender() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonTestPeer peer = createTestPeer(engine);
+        ProtonInVMTestPeer peer = createTestPeer(engine);
 
         Coordinator coordinator = new Coordinator();
         coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
@@ -148,7 +148,7 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     public void testRemoteCoordinatorTriggersSenderCreateWhenManagerHandlerNotSet() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonTestPeer peer = createTestPeer(engine);
+        ProtonInVMTestPeer peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();

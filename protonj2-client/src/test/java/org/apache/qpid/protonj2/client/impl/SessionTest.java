@@ -36,7 +36,7 @@ import org.apache.qpid.protonj2.client.SessionOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
+import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -62,7 +62,7 @@ public class SessionTest extends ImperativeClientTestCase {
     }
 
     private void doTestSessionOpenTimeoutWhenNoRemoteBeginArrives(boolean timeout) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin();
@@ -109,7 +109,7 @@ public class SessionTest extends ImperativeClientTestCase {
     }
 
     private void doTestSessionOpenWaitCanceledWhenConnectionDrops(boolean timeout) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin();
@@ -154,7 +154,7 @@ public class SessionTest extends ImperativeClientTestCase {
     }
 
     private void doTestSessionCloseTimeoutWhenNoRemoteEndArrives(boolean timeout) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -201,7 +201,7 @@ public class SessionTest extends ImperativeClientTestCase {
     }
 
     private void doTestSessionCloseWaitCanceledWhenConnectionDrops(boolean timeout) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -246,7 +246,7 @@ public class SessionTest extends ImperativeClientTestCase {
     }
 
     protected void doTestSessionCloseGetsResponseWithErrorThrows(boolean tiemout) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -287,7 +287,7 @@ public class SessionTest extends ImperativeClientTestCase {
     }
 
     private void tryReadSessionRemoteProperties(boolean beginResponse) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin();
@@ -351,7 +351,7 @@ public class SessionTest extends ImperativeClientTestCase {
     }
 
     private void tryReadSessionRemoteOfferedCapabilities(boolean beginResponse) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin();
@@ -415,7 +415,7 @@ public class SessionTest extends ImperativeClientTestCase {
     }
 
     private void tryReadSessionRemoteDesiredCapabilities(boolean beginResponse) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin();
@@ -468,7 +468,7 @@ public class SessionTest extends ImperativeClientTestCase {
 
     @Test
     public void testQuickOpenCloseWhenNoBeginResponseFailsFastOnOpenTimeout() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin();
@@ -505,7 +505,7 @@ public class SessionTest extends ImperativeClientTestCase {
         final String condition = "amqp:precondition-failed";
         final String description = "something bad happened.";
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();

@@ -14,22 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.protonj2.test.driver.netty;
+package org.apache.qpid.protonj2.test.driver;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.net.ssl.SSLEngine;
 
-import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
-import org.apache.qpid.protonj2.test.driver.ScriptWriter;
+import org.apache.qpid.protonj2.test.driver.actions.ConnectionDropAction;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
+import org.apache.qpid.protonj2.test.driver.netty.NettyServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,22 +41,22 @@ import io.netty.channel.EventLoop;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 /**
- * Netty based Test Peer implementation.
+ * Netty based AMQP Test Server implementation that can handle inbound connections
+ * and script the expected AMQP frame interchange that should occur for a given test.
  */
-public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
+public class ProtonTestServer extends ProtonTestPeer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(NettyTestPeer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProtonTestServer.class);
 
     private final AMQPTestDriver driver;
     private final TestDriverServer server;
-    private final AtomicBoolean closed = new AtomicBoolean();
     private volatile Channel channel;
 
     /**
      * Creates a Socket Test Peer using all default Server options.
      */
-    public NettyTestPeer() {
-        this(new ServerOptions());
+    public ProtonTestServer() {
+        this(new ProtonTestServerOptions());
     }
 
     /**
@@ -66,7 +65,7 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
      * @param options
      *      The options that control the behavior of the deployed server.
      */
-    public NettyTestPeer(ServerOptions options) {
+    public ProtonTestServer(ProtonTestServerOptions options) {
         this.driver = new NettyAwareAMQPTestDriver(this::processDriverOutput, this::processDriverAssertion, this::eventLoop);
         this.server = new TestDriverServer(options);
     }
@@ -78,22 +77,6 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
         } catch (Exception e) {
             throw new RuntimeException("Failed to start server", e);
         }
-    }
-
-    @Override
-    public void close() {
-        if (closed.compareAndSet(false, true)) {
-            processCloseRequest();
-            try {
-                server.stop();
-            } catch (Throwable e) {
-                LOG.info("Error suppressed on server stop: ", e);
-            }
-        }
-    }
-
-    public boolean isClosed() {
-        return closed.get();
     }
 
     public URI getServerURI() {
@@ -135,8 +118,9 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
      *
      * @return this test driver
      */
-    public NettyTestPeer dropAfterLastHandler() {
-        driver.addScriptedElement(new NettyConnectionDropAction(this));
+    @Override
+    public ProtonTestServer dropAfterLastHandler() {
+        driver.addScriptedElement(new ConnectionDropAction(this));
         return this;
     }
 
@@ -151,34 +135,22 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
      *
      * @return this test driver
      */
-    public NettyTestPeer dropAfterLastHandler(int delay) {
-        driver.addScriptedElement(new NettyConnectionDropAction(this).afterDelay(delay));
+    @Override
+    public ProtonTestServer dropAfterLastHandler(int delay) {
+        driver.addScriptedElement(new ConnectionDropAction(this).afterDelay(delay));
         return this;
     }
 
-    //----- Test Completion API
-
-    public void waitForScriptToCompleteIgnoreErrors() {
-        driver.waitForScriptToCompleteIgnoreErrors();
-    }
-
-    public void waitForScriptToComplete() {
-        driver.waitForScriptToComplete();
-    }
-
-    public void waitForScriptToComplete(long timeout) {
-        driver.waitForScriptToComplete(timeout);
-    }
-
-    public void waitForScriptToComplete(long timeout, TimeUnit units) {
-        driver.waitForScriptToComplete(timeout, units);
+    @Override
+    public AMQPTestDriver getDriver() {
+        return driver;
     }
 
     //----- Channel handler that drives IO for the test driver
 
     private final class TestDriverServer extends NettyServer {
 
-        public TestDriverServer(ServerOptions options) {
+        public TestDriverServer(ProtonTestServerOptions options) {
             super(options);
         }
 
@@ -230,7 +202,7 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
 
         @Override
         public void sendAMQPFrame(int channel, DescribedType performative, ByteBuf payload) {
-            EventLoop loop = NettyTestPeer.this.channel.eventLoop();
+            EventLoop loop = ProtonTestServer.this.channel.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendAMQPFrame(channel, performative, payload);
             } else {
@@ -242,7 +214,7 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
 
         @Override
         public void sendSaslFrame(int channel, DescribedType performative) {
-            EventLoop loop = NettyTestPeer.this.channel.eventLoop();
+            EventLoop loop = ProtonTestServer.this.channel.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendSaslFrame(channel, performative);
             } else {
@@ -254,7 +226,7 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
 
         @Override
         public void sendHeader(AMQPHeader header) {
-            EventLoop loop = NettyTestPeer.this.channel.eventLoop();
+            EventLoop loop = ProtonTestServer.this.channel.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendHeader(header);
             } else {
@@ -266,7 +238,7 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
 
         @Override
         public void sendEmptyFrame(int channel) {
-            EventLoop loop = NettyTestPeer.this.channel.eventLoop();
+            EventLoop loop = ProtonTestServer.this.channel.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendEmptyFrame(channel);
             } else {
@@ -283,12 +255,7 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
         return channel;
     }
 
-    private void checkClosed() {
-        if (closed.get()) {
-            throw new IllegalStateException("The test peer is closed");
-        }
-    }
-
+    @Override
     protected void processCloseRequest() {
         if (channel != null) {
             try {
@@ -300,8 +267,15 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
                 LOG.debug("Close of channel interrupted while awaiting result");
             }
         }
+
+        try {
+            server.stop();
+        } catch (Throwable e) {
+            LOG.info("Error suppressed on server stop: ", e);
+        }
     }
 
+    @Override
     protected void processDriverOutput(ByteBuffer frame) {
         LOG.trace("AMQP Server Channel writing: {}", frame);
         // TODO - Error handling for failed write
@@ -324,10 +298,5 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
         }
 
         return channel.eventLoop();
-    }
-
-    @Override
-    protected AMQPTestDriver getDriver() {
-        return driver;
     }
 }

@@ -41,7 +41,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedEx
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
+import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.LinkError;
 import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
@@ -69,7 +69,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     private void doTestCreateSenderAndCloseOrDeatch(boolean close) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -116,7 +116,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     private void doTestCreateSenderAndCloseOrDeatchSync(boolean close) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -154,7 +154,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testSenderOpenRejectedByRemote() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -217,7 +217,7 @@ public class SenderTest extends ImperativeClientTestCase {
         errorInfo.put(ClientConstants.PATH.toString(), redirectPath);
         errorInfo.put(ClientConstants.ADDRESS.toString(), redirectAddress);
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -279,7 +279,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     private void doTestOpenSenderTimesOutWhenNoAttachResponseReceived(boolean timeout) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -329,7 +329,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     private void doTestOpenSenderWaitFailsWhenConnectionDrops(boolean timeout) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -389,7 +389,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     private void doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(boolean close, boolean timeout) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -439,7 +439,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendTimesOutWhenNoCreditIssued() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -478,7 +478,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendCompletesWhenCreditEventuallyOffered() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -538,7 +538,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     private void doTestSendWhenCreditIsAvailable(boolean trySend) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -591,7 +591,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testTrySendWhenNoCreditAvailable() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -635,7 +635,7 @@ public class SenderTest extends ImperativeClientTestCase {
     private void doTestCreateSenderWithConfiguredQoS(DeliveryMode qos) throws Exception {
         byte sndMode = qos == DeliveryMode.AT_MOST_ONCE ? SenderSettleMode.SETTLED.byteValue() : SenderSettleMode.UNSETTLED.byteValue();
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -682,7 +682,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     private void doTestSentMessageGetsAutoSettledAfterRemtoeSettles(boolean trySend) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -752,7 +752,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     private void doTestSentMessageNotAutoSettledAfterRemtoeSettles(boolean trySend) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -821,7 +821,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     private void doTestSenderSendingSettledCompletesTrackerAcknowledgeFuture(boolean trySend) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -877,7 +877,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testSenderIncrementsTransferTagOnEachSend() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -928,7 +928,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testSenderSendsSettledInAtLeastOnceMode() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -979,7 +979,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateAnonymousSenderWhenRemoteDoesNotOfferSupportForIt() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1009,7 +1009,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateAnonymousSenderBeforeKnowingRemoteDoesNotOfferSupportForIt() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen();
             peer.expectBegin();
@@ -1045,7 +1045,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testAnonymousSenderOpenHeldUntilConnectionOpenedAndSupportConfirmed() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen();
             peer.expectBegin();
@@ -1093,7 +1093,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     private void tryReadSenderRemoteProperties(boolean attachResponse) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1165,7 +1165,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     private void tryReadRemoteOfferedCapabilities(boolean attachResponse) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1233,7 +1233,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     private void tryReadRemoteDesiredCapabilities(boolean attachResponse) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1292,7 +1292,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testOpenSenderWithLinCapabilities() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1337,7 +1337,7 @@ public class SenderTest extends ImperativeClientTestCase {
         final String condition = "amqp:link:detach-forced";
         final String description = "something bad happened.";
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1372,7 +1372,7 @@ public class SenderTest extends ImperativeClientTestCase {
     public void testSendMultipleMessages() throws Exception {
         final int CREDIT = 20;
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1428,7 +1428,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendBlockedForCreditFailsWhenLinkRemotelyClosed() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1465,7 +1465,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendBlockedForCreditFailsWhenSessionRemotelyClosed() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1502,7 +1502,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendBlockedForCreditFailsWhenConnectionRemotelyClosed() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1538,7 +1538,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendBlockedForCreditFailsWhenConnectionDrops() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1573,7 +1573,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendAfterConnectionDropsThrowsConnectionRemotelyClosedError() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1620,7 +1620,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testAwaitSettlementFutureFailedAfterConnectionDropped() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1664,7 +1664,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testAwaitSettlementFailedOnConnectionDropped() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1703,7 +1703,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testBlockedSendThrowsConnectionRemotelyClosedError() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1734,7 +1734,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     void testAutoFlushDuringWriteThatExceedConfiguredBufferLimitSessionCreditLimitOnTransfer() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1790,7 +1790,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     void testConcurrentSendOnlyBlocksForInitialSendInProgress() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1856,7 +1856,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     void testConcurrentSendBlocksBehindSendWaitingForCredit() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1925,7 +1925,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     void testConcurrentSendWaitingOnSplitFramedSendToCompleteIsSentAfterCreditUpdated() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();

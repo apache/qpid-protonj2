@@ -49,10 +49,10 @@ import org.apache.qpid.protonj2.client.exceptions.ClientTransactionNotActiveExce
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionRolledBackException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.test.Wait;
+import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.HeaderMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferPayloadCompositeMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedDataMatcher;
-import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Header;
@@ -75,7 +75,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     public void testCoordinatorLinkSupportedOutcomes() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -110,7 +110,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
     @Test
     public void testTimedOutExceptionOnBeginWithNoResponse() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -161,7 +161,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
     @Test
     public void testTimedOutExceptionOnBeginWithNoResponseThenRecoverWithNextBegin() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -222,7 +222,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     public void testExceptionOnBeginWhenCoordinatorLinkRefused() throws Exception {
         final String errorMessage = "CoordinatorLinkRefusal-breadcrumb";
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -274,7 +274,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     public void testExceptionOnBeginWhenCoordinatorLinkClosedAfterDeclare() throws Exception {
         final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -330,7 +330,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     public void testExceptionOnBeginWhenCoordinatorLinkClosedAfterDeclareAllowsNewTransactionDeclaration() throws Exception {
         final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -380,7 +380,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     public void testExceptionOnCommitWhenCoordinatorLinkClosedAfterDischargeSent() throws Exception {
         final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -441,7 +441,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     private void doTestExceptionOnDischargeWhenCoordinatorLinkClosedAfterTxnDeclaration(boolean commit) throws Exception {
         final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -497,7 +497,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         final byte[] txnId1 = new byte[] { 0, 1, 2, 3 };
         final byte[] txnId2 = new byte[] { 1, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -548,7 +548,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         final byte[] txnId1 = new byte[] { 0, 1, 2, 3 };
         final byte[] txnId2 = new byte[] { 1, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -601,7 +601,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
      */
     @Test
     public void testBeginTransactionAndClose() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -633,7 +633,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     public void testBeginAndCommitTransaction() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -667,7 +667,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     public void testBeginAndRollbackTransaction() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -699,7 +699,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
     @Test
     public void testTransactionDeclaredDispositionWithoutTxnId() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -738,7 +738,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
         final byte[] txnId4 = new byte[] { 3, 1, 2, 3 };
         final byte[] txnId5 = new byte[] { 4, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -781,7 +781,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
     @Test
     public void testCannotBeginSecondTransactionWhileFirstIsActive() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -820,7 +820,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     public void testSendMessageInsideOfTransaction() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -880,7 +880,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
         final byte[][] txns = new byte[][] { txnId1, txnId2, txnId3, txnId4 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -938,7 +938,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     public void testReceiveMessageInsideOfTransaction() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1002,7 +1002,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     private void doTestReceiveMessageInsideOfTransactionNoAutoSettle(boolean settle) throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1064,7 +1064,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     public void testReceiveMessageInsideOfTransactionButAcceptAndSettleOutside() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1129,7 +1129,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     public void testTransactionCommitFailWithEmptyRejectedDisposition() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1180,7 +1180,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
     @Test
     public void testDeclareTransactionAfterConnectionDrops() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1224,7 +1224,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     public void dischargeTransactionAfterConnectionDropsFollowingTxnDeclared(boolean commit) throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1277,7 +1277,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     public void testSendMessagesNoOpWhenTransactionInDoubt() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1337,7 +1337,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     void testStreamSenderMessageCanOperatesWithinTransaction() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();

@@ -39,6 +39,7 @@ import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.util.ExternalMessage;
+import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.ApplicationPropertiesMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.DeliveryAnnotationsMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.FooterMatcher;
@@ -49,7 +50,6 @@ import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferPayloadCo
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAmqpSequenceMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAmqpValueMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedDataMatcher;
-import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
@@ -71,7 +71,7 @@ class MessageSendTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendMessageWithHeaderValuesPopulated() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -136,7 +136,7 @@ class MessageSendTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendMessageWithPropertiesValuesPopulated() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -217,7 +217,7 @@ class MessageSendTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendMessageWithDeliveryAnnotationsPopulated() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -279,7 +279,7 @@ class MessageSendTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendMessageWithMessageAnnotationsPopulated() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -340,7 +340,7 @@ class MessageSendTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendMessageWithApplicationPropertiesPopulated() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -401,7 +401,7 @@ class MessageSendTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendMessageWithFootersPopulated() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -462,7 +462,7 @@ class MessageSendTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendMessageWithMultipleSectionsPopulated() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -603,7 +603,7 @@ class MessageSendTest extends ImperativeClientTestCase {
     }
 
     private void doTestSemdMessageWithUUIDPayloadArrivesWithAMQPValueBody(boolean useSetter) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -670,7 +670,7 @@ class MessageSendTest extends ImperativeClientTestCase {
     }
 
     private void doTestSemdMessageWithByteArrayPayloadArrivesWithDataSection(boolean useSetter) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -737,7 +737,7 @@ class MessageSendTest extends ImperativeClientTestCase {
     }
 
     private void doTestSemdMessageWithListPayloadArrivesWithAMQPSequenceBody(boolean useSetter) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -807,7 +807,7 @@ class MessageSendTest extends ImperativeClientTestCase {
     }
 
     private void doTestSemdMessageWithMapPayloadArrivesWithAMQPValueBody(boolean useSetter) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -868,7 +868,7 @@ class MessageSendTest extends ImperativeClientTestCase {
 
     @Test
     public void testConvertMessageToAdvancedAndSendAMQPHeader() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -954,7 +954,7 @@ class MessageSendTest extends ImperativeClientTestCase {
     }
 
     private void doTestSendOfExternalMessage(boolean allowAdvancedConversion, boolean trySend) throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1099,7 +1099,7 @@ class MessageSendTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendMessageWithMultipleAmqpValueSections() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1161,7 +1161,7 @@ class MessageSendTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendMessageWithMultipleAmqpSequenceSections() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1230,7 +1230,7 @@ class MessageSendTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendMessageWithMultipleDataSections() throws Exception {
-        try (NettyTestPeer peer = new NettyTestPeer()) {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();

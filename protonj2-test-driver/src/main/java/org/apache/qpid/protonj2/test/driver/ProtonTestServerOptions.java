@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.protonj2.test.driver.netty;
+package org.apache.qpid.protonj2.test.driver;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,7 +27,7 @@ import javax.net.ssl.SSLContext;
 /**
  * Encapsulates all the Transport options in one configuration object.
  */
-public class ServerOptions implements Cloneable {
+public class ProtonTestServerOptions implements Cloneable {
 
     private static final int SERVER_CHOOSES_PORT = 0;
 
@@ -91,7 +91,7 @@ public class ServerOptions implements Cloneable {
 
     private final Map<String, String> httpHeaders = new HashMap<>();
 
-    public ServerOptions() {
+    public ProtonTestServerOptions() {
         setKeyStoreLocation(System.getProperty(JAVAX_NET_SSL_KEY_STORE));
         setKeyStoreType(System.getProperty(JAVAX_NET_SSL_KEY_STORE_TYPE, DEFAULT_STORE_TYPE));
         setKeyStorePassword(System.getProperty(JAVAX_NET_SSL_KEY_STORE_PASSWORD));
@@ -101,8 +101,8 @@ public class ServerOptions implements Cloneable {
     }
 
     @Override
-    public ServerOptions clone() {
-        return copyOptions(new ServerOptions());
+    public ProtonTestServerOptions clone() {
+        return copyOptions(new ProtonTestServerOptions());
     }
 
     /**
@@ -524,7 +524,7 @@ public class ServerOptions implements Cloneable {
         this.useWebSockets = useWebSockets;
     }
 
-    protected ServerOptions copyOptions(ServerOptions copy) {
+    protected ProtonTestServerOptions copyOptions(ProtonTestServerOptions copy) {
         copy.setReceiveBufferSize(getReceiveBufferSize());
         copy.setSendBufferSize(getSendBufferSize());
         copy.setSoLinger(getSoLinger());

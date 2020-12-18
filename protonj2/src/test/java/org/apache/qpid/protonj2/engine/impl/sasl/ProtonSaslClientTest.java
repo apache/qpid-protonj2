@@ -35,7 +35,7 @@ import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.impl.ProtonEngineTestSupport;
 import org.apache.qpid.protonj2.engine.sasl.client.SaslAuthenticator;
 import org.apache.qpid.protonj2.engine.sasl.client.SaslCredentialsProvider;
-import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
+import org.apache.qpid.protonj2.test.driver.ProtonInVMTestPeer;
 import org.apache.qpid.protonj2.types.security.SaslCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -50,7 +50,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
     public void testSaslAnonymousConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonTestPeer peer = createTestPeer(engine);
+        ProtonInVMTestPeer peer = createTestPeer(engine);
 
         peer.expectSASLAnonymousConnect();
         peer.expectOpen().respond();
@@ -71,7 +71,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
     public void testDriverThrowsIfServerStateRequestedAfterClientStateActivated() throws Exception {
         Engine engine = EngineFactory.PROTON.createEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonTestPeer peer = createTestPeer(engine);
+        ProtonInVMTestPeer peer = createTestPeer(engine);
 
         peer.expectSASLAnonymousConnect();
         peer.expectOpen().respond();
@@ -94,7 +94,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
     public void testSaslAnonymousConnectionWhenPlainAlsoOfferedButNoCredentialsGiven() throws Exception {
         Engine engine = EngineFactory.PROTON.createEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonTestPeer peer = createTestPeer(engine);
+        ProtonInVMTestPeer peer = createTestPeer(engine);
 
         peer.expectSASLHeader().respondWithSASLPHeader();
         peer.remoteSaslMechanisms().withMechanisms("PLAIN", "ANONYMOUS").queue();
@@ -119,7 +119,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
     public void testSaslPlainConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonTestPeer peer = createTestPeer(engine);
+        ProtonInVMTestPeer peer = createTestPeer(engine);
 
         // Expect a PLAIN connection
         String user = "user";
@@ -144,7 +144,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
     public void testSaslPlainConnectionWhenUnknownMechanismsOfferedBeforeIt() throws Exception {
         Engine engine = EngineFactory.PROTON.createEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonTestPeer peer = createTestPeer(engine);
+        ProtonInVMTestPeer peer = createTestPeer(engine);
 
         // Expect a PLAIN connection
         String user = "user";
@@ -174,7 +174,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
     public void testDefaultClientSaslMismatchBetweenClientAndServer() throws Exception {
         Engine engine = EngineFactory.PROTON.createEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonTestPeer peer = createTestPeer(engine);
+        ProtonInVMTestPeer peer = createTestPeer(engine);
 
         peer.expectSASLHeader().respondWithSASLPHeader();
         peer.remoteSaslMechanisms().withMechanisms("PLAIN").queue();
@@ -201,7 +201,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
     public void testSaslXOauth2Connection() throws Exception {
         Engine engine = EngineFactory.PROTON.createEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonTestPeer peer = createTestPeer(engine);
+        ProtonInVMTestPeer peer = createTestPeer(engine);
 
         // Expect a XOAUTH2 connection
         String user = "user";
@@ -233,7 +233,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
     private void doSaslFailureCodesTestImpl(SaslCode saslFailureCode) throws Exception {
         Engine engine = EngineFactory.PROTON.createEngine();
         engine.errorHandler(result -> failure = result.failureCause());
-        ProtonTestPeer peer = createTestPeer(engine);
+        ProtonInVMTestPeer peer = createTestPeer(engine);
 
         peer.expectSASLHeader().respondWithSASLPHeader();
         peer.remoteSaslMechanisms().withMechanisms("PLAIN", "ANONYMOUS").queue();

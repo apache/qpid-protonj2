@@ -32,7 +32,7 @@ import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
+import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -114,8 +114,8 @@ public class ClientTest extends ImperativeClientTestCase {
 
     @Test
     public void testCloseAllConnectionAndWait() throws Exception {
-        try (NettyTestPeer firstPeer = new NettyTestPeer();
-             NettyTestPeer secondPeer = new NettyTestPeer()) {
+        try (ProtonTestServer firstPeer = new ProtonTestServer();
+             ProtonTestServer secondPeer = new ProtonTestServer()) {
 
             firstPeer.expectSASLAnonymousConnect();
             firstPeer.expectOpen().respond();

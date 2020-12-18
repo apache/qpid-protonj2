@@ -83,7 +83,7 @@ public abstract class ScriptWriter {
      *
      * @return the {@link AMQPTestDriver} to use for building a test script.
      */
-    protected abstract AMQPTestDriver getDriver();
+    public abstract AMQPTestDriver getDriver();
 
     //----- AMQP Performative expectations
 

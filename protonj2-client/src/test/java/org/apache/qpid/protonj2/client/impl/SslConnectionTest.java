@@ -40,8 +40,8 @@ import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.SslOptions;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.transport.SslSupport;
-import org.apache.qpid.protonj2.test.driver.netty.NettyTestPeer;
-import org.apache.qpid.protonj2.test.driver.netty.ServerOptions;
+import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
+import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
 import org.apache.qpid.protonj2.types.security.SaslCode;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.junit.jupiter.api.Disabled;
@@ -104,13 +104,13 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void testCreateAndCloseSslConnection(boolean openSSL) throws Exception {
-        ServerOptions serverOpts = new ServerOptions();
+        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
         serverOpts.setSecure(true);
         serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
         serverOpts.setKeyStorePassword(PASSWORD);
         serverOpts.setVerifyHost(false);
 
-        try (NettyTestPeer peer = new NettyTestPeer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -152,13 +152,13 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void testCreateAndCloseSslConnectionWithDefaultPort(boolean openSSL) throws Exception {
-        ServerOptions serverOpts = new ServerOptions();
+        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
         serverOpts.setSecure(true);
         serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
         serverOpts.setKeyStorePassword(PASSWORD);
         serverOpts.setVerifyHost(false);
 
-        try (NettyTestPeer peer = new NettyTestPeer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -203,13 +203,13 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doTestCreateSslConnectionWithServerSendingPreemptiveData(boolean openSSL) throws Exception {
-        ServerOptions serverOpts = new ServerOptions();
+        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
         serverOpts.setSecure(true);
         serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
         serverOpts.setKeyStorePassword(PASSWORD);
         serverOpts.setVerifyHost(false);
 
-        try (NettyTestPeer peer = new NettyTestPeer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
 
             peer.remoteHeader(AMQPHeader.getSASLHeader().toArray()).queue();
             peer.expectSASLHeader();
@@ -256,7 +256,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doTestCreateAndCloseSslConnectionWithClientAuth(boolean openSSL) throws Exception {
-        ServerOptions serverOpts = new ServerOptions();
+        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
         serverOpts.setSecure(true);
         serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
         serverOpts.setKeyStorePassword(PASSWORD);
@@ -265,7 +265,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
         serverOpts.setNeedClientAuth(true);
         serverOpts.setVerifyHost(false);
 
-        try (NettyTestPeer peer = new NettyTestPeer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -311,7 +311,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doConnectionWithAliasTestImpl(String alias, String expectedDN, boolean requestOpenSSL) throws Exception, SSLPeerUnverifiedException, IOException {
-        ServerOptions serverOpts = new ServerOptions();
+        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
         serverOpts.setSecure(true);
         serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
         serverOpts.setTrustStoreLocation(BROKER_JKS_TRUSTSTORE);
@@ -320,7 +320,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
         serverOpts.setVerifyHost(false);
         serverOpts.setNeedClientAuth(true);
 
-        try (NettyTestPeer peer = new NettyTestPeer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -372,7 +372,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doCreateConnectionWithInvalidAliasTestImpl(String alias) throws Exception, IOException {
-        ServerOptions serverOpts = new ServerOptions();
+        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
         serverOpts.setSecure(true);
         serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
         serverOpts.setTrustStoreLocation(BROKER_JKS_TRUSTSTORE);
@@ -381,7 +381,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
         serverOpts.setVerifyHost(false);
         serverOpts.setNeedClientAuth(true);
 
-        try (NettyTestPeer peer = new NettyTestPeer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -428,7 +428,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doConnectionWithSslContextOverride(String clientKeyStorePath, String expectedDN) throws Exception {
-        ServerOptions serverOpts = new ServerOptions();
+        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
         serverOpts.setSecure(true);
         serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
         serverOpts.setTrustStoreLocation(BROKER_JKS_TRUSTSTORE);
@@ -444,7 +444,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
                         .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
                         .trustStorePassword(PASSWORD);
 
-        try (NettyTestPeer peer = new NettyTestPeer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
             peer.expectSASLPlainConnect("guest", "guest");
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -549,7 +549,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doConfigureStoresWithSslSystemPropertiesTestImpl(String expectedDN, boolean usePkcs12Store) throws Exception {
-        ServerOptions serverOptions = new ServerOptions();
+        ProtonTestServerOptions serverOptions = new ProtonTestServerOptions();
         serverOptions.setSecure(true);
         serverOptions.setNeedClientAuth(true);
 
@@ -569,7 +569,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             serverOptions.setVerifyHost(false);
         }
 
-        try (NettyTestPeer peer = new NettyTestPeer(serverOptions)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond();
