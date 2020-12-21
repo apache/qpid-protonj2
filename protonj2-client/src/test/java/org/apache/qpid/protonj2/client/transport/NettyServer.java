@@ -87,7 +87,7 @@ public abstract class NettyServer implements AutoCloseable {
     private final SslOptions sslOptions;
     private int serverPort;
     private final boolean needClientAuth;
-    private int maxFrameSize = TcpTransport.DEFAULT_MAX_FRAME_SIZE;
+    private int maxFrameSize = TransportOptions.DEFAULT_WEBSOCKET_MAX_FRAME_SIZE;
     private String webSocketPath = WEBSOCKET_PATH;
     private volatile boolean fragmentWrites;
     private volatile SslHandler sslHandler;
@@ -196,7 +196,7 @@ public abstract class NettyServer implements AutoCloseable {
             server.channel(NioServerSocketChannel.class);
             server.option(ChannelOption.SO_BACKLOG, 100);
             server.handler(new LoggingHandler(LogLevel.INFO));
-            server.childHandler(new ChannelInitializer<Channel>() {
+            server.childHandler(new ChannelInitializer<>() {
 
                 @Override
                 public void initChannel(Channel ch) throws Exception {

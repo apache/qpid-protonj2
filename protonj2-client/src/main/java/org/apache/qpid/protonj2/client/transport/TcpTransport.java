@@ -59,8 +59,6 @@ public class TcpTransport implements Transport {
 
     private static final Logger LOG = LoggerFactory.getLogger(TcpTransport.class);
 
-    public static final int DEFAULT_MAX_FRAME_SIZE = 65535;
-
     protected final AtomicBoolean connected = new AtomicBoolean();
     protected final AtomicBoolean closed = new AtomicBoolean();
     protected final CountDownLatch connectedLatch = new CountDownLatch(1);
@@ -69,7 +67,6 @@ public class TcpTransport implements Transport {
     protected final Bootstrap bootstrap;
 
     protected Channel channel;
-    protected int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
     protected volatile IOException failureCause;
     protected String host;
     protected int port;
@@ -134,7 +131,7 @@ public class TcpTransport implements Transport {
             }
         }
 
-        bootstrap.handler(new ChannelInitializer<Channel>() {
+        bootstrap.handler(new ChannelInitializer<>() {
             @Override
             public void initChannel(Channel transportChannel) throws Exception {
                 channel = transportChannel;
@@ -274,15 +271,6 @@ public class TcpTransport implements Transport {
         return result;
     }
 
-    TcpTransport setMaxFrameSize(int maxFrameSize) {
-        if (connected.get()) {
-            throw new IllegalStateException("Cannot change Max Frame Size while connected.");
-        }
-
-        this.maxFrameSize = maxFrameSize;
-        return this;
-    }
-
     protected final void writeComposite(final ProtonCompositeBuffer composite, boolean flushAtEnd) throws IOException {
         try {
             composite.foreachInternalBuffer(this::writeBufferDelegate);
@@ -395,7 +383,7 @@ public class TcpTransport implements Transport {
         }
 
         if (options.localAddress() != null || options.localPort() != 0) {
-            if(options.localAddress() != null) {
+            if (options.localAddress() != null) {
                 bootstrap.localAddress(options.localAddress(), options.localPort());
             } else {
                 bootstrap.localAddress(options.localPort());
