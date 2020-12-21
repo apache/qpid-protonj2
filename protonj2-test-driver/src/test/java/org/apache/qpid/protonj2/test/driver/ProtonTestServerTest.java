@@ -14,15 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.protonj2.test.driver.netty;
+package org.apache.qpid.protonj2.test.driver;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.junit.jupiter.api.Test;
 
-public class NettyTestPeerTest {
+public class ProtonTestServerTest {
 
     @Test
     public void testServerStart() throws Exception {

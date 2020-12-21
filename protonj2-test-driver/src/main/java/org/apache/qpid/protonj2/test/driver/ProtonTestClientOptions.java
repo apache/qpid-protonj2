@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.protonj2.test.driver.netty;
+package org.apache.qpid.protonj2.test.driver;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,9 +25,9 @@ import java.util.Map;
 import javax.net.ssl.SSLContext;
 
 /**
- * Encapsulates all the Transport options in one configuration object.
+ * Encapsulates all the Test Client options in one configuration object.
  */
-public class ClientOptions implements Cloneable {
+public class ProtonTestClientOptions implements Cloneable {
 
     public static final int DEFAULT_SEND_BUFFER_SIZE = 64 * 1024;
     public static final int DEFAULT_RECEIVE_BUFFER_SIZE = DEFAULT_SEND_BUFFER_SIZE;
@@ -36,7 +36,9 @@ public class ClientOptions implements Cloneable {
     public static final boolean DEFAULT_TCP_KEEP_ALIVE = false;
     public static final int DEFAULT_SO_LINGER = Integer.MIN_VALUE;
     public static final int DEFAULT_SO_TIMEOUT = -1;
-    public static final int DEFAULT_CLIENT_PORT = 5672;
+    public static final int DEFAULT_CONNECT_TIMEOUT = 60000;
+    public static final int DEFAULT_TCP_PORT = 5672;
+    public static final int DEFAULT_SSL_PORT = 5671;
     public static final boolean DEFAULT_TRACE_BYTES = false;
     public static final String DEFAULT_STORE_TYPE = "jks";
     public static final String DEFAULT_CONTEXT_PROTOCOL = "TLS";
@@ -45,6 +47,9 @@ public class ClientOptions implements Cloneable {
     public static final List<String> DEFAULT_DISABLED_PROTOCOLS = Collections.unmodifiableList(Arrays.asList(new String[]{"SSLv2Hello", "SSLv3"}));
     public static final int DEFAULT_LOCAL_PORT = 0;
     public static final boolean DEFAULT_USE_WEBSOCKETS = false;
+    public static final boolean DEFAULT_FRAGMENT_WEBSOCKET_WRITES = false;
+    public static final String DEFAULT_WEBSOCKET_PATH = "/";
+    public static final int DEFAULT_WEBSOCKET_MAX_FRAME_SIZE = 65535;
     public static final boolean DEFAULT_SECURE_SERVER = false;
     public static final boolean DEFAULT_NEEDS_CLIENT_AUTH = false;
 
@@ -58,15 +63,18 @@ public class ClientOptions implements Cloneable {
     private int sendBufferSize = DEFAULT_SEND_BUFFER_SIZE;
     private int receiveBufferSize = DEFAULT_RECEIVE_BUFFER_SIZE;
     private int trafficClass = DEFAULT_TRAFFIC_CLASS;
+    private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private int soTimeout = DEFAULT_SO_TIMEOUT;
     private int soLinger = DEFAULT_SO_LINGER;
     private boolean tcpKeepAlive = DEFAULT_TCP_KEEP_ALIVE;
     private boolean tcpNoDelay = DEFAULT_TCP_NO_DELAY;
-    private int clientPort = DEFAULT_CLIENT_PORT;
     private String localAddress;
     private int localPort = DEFAULT_LOCAL_PORT;
     private boolean traceBytes = DEFAULT_TRACE_BYTES;
     private boolean useWebSockets = DEFAULT_USE_WEBSOCKETS;
+    private boolean fragmentWebSocketWrites = DEFAULT_FRAGMENT_WEBSOCKET_WRITES;
+    private String webSocketPath = DEFAULT_WEBSOCKET_PATH;
+    private int webSocketMaxFrameSize = DEFAULT_WEBSOCKET_MAX_FRAME_SIZE;
 
     private boolean secure = DEFAULT_SECURE_SERVER;
     private boolean needClientAuth = DEFAULT_NEEDS_CLIENT_AUTH;
@@ -89,7 +97,7 @@ public class ClientOptions implements Cloneable {
 
     private final Map<String, String> httpHeaders = new HashMap<>();
 
-    public ClientOptions() {
+    public ProtonTestClientOptions() {
         setKeyStoreLocation(System.getProperty(JAVAX_NET_SSL_KEY_STORE));
         setKeyStoreType(System.getProperty(JAVAX_NET_SSL_KEY_STORE_TYPE, DEFAULT_STORE_TYPE));
         setKeyStorePassword(System.getProperty(JAVAX_NET_SSL_KEY_STORE_PASSWORD));
@@ -99,8 +107,8 @@ public class ClientOptions implements Cloneable {
     }
 
     @Override
-    public ClientOptions clone() {
-        return copyOptions(new ClientOptions());
+    public ProtonTestClientOptions clone() {
+        return copyOptions(new ProtonTestClientOptions());
     }
 
     /**
@@ -183,6 +191,14 @@ public class ClientOptions implements Cloneable {
         this.soTimeout = soTimeout;
     }
 
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(int connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
     public boolean isTcpNoDelay() {
         return tcpNoDelay;
     }
@@ -205,14 +221,6 @@ public class ClientOptions implements Cloneable {
 
     public void setTcpKeepAlive(boolean keepAlive) {
         this.tcpKeepAlive = keepAlive;
-    }
-
-    public int getClientPort() {
-        return clientPort;
-    }
-
-    public void setClientPort(int clientPort) {
-        this.clientPort = clientPort;
     }
 
     public String getLocalAddress() {
@@ -522,15 +530,39 @@ public class ClientOptions implements Cloneable {
         this.useWebSockets = useWebSockets;
     }
 
-    protected ClientOptions copyOptions(ClientOptions copy) {
+    public void setFragmentWrites(boolean fragmentWrites) {
+        this.fragmentWebSocketWrites = fragmentWrites;
+    }
+
+    public boolean isFragmentWrites() {
+        return fragmentWebSocketWrites;
+    }
+
+    public String getWebSocketPath() {
+        return webSocketPath;
+    }
+
+    public void setWebSocketPath(String webSocketPath) {
+        this.webSocketPath = webSocketPath;
+    }
+
+    public int getWebSocketMaxFrameSize() {
+        return webSocketMaxFrameSize;
+    }
+
+    public void setWebSocketMaxFrameSize(int webSocketMaxFrameSize) {
+        this.webSocketMaxFrameSize = webSocketMaxFrameSize;
+    }
+
+    protected ProtonTestClientOptions copyOptions(ProtonTestClientOptions copy) {
         copy.setReceiveBufferSize(getReceiveBufferSize());
         copy.setSendBufferSize(getSendBufferSize());
         copy.setSoLinger(getSoLinger());
         copy.setSoTimeout(getSoTimeout());
+        copy.setConnectTimeout(getConnectTimeout());
         copy.setTcpKeepAlive(isTcpKeepAlive());
         copy.setTcpNoDelay(isTcpNoDelay());
         copy.setTrafficClass(getTrafficClass());
-        copy.setClientPort(getClientPort());
         copy.setTraceBytes(isTraceBytes());
         copy.setKeyStoreLocation(getKeyStoreLocation());
         copy.setKeyStorePassword(getKeyStorePassword());
@@ -552,6 +584,9 @@ public class ClientOptions implements Cloneable {
         copy.setSecure(isSecure());
         copy.setNeedClientAuth(isNeedClientAuth());
         copy.setUseWebSockets(isUseWebSockets());
+        copy.setFragmentWrites(isFragmentWrites());
+        copy.setWebSocketPath(getWebSocketPath());
+        copy.setWebSocketMaxFrameSize(getWebSocketMaxFrameSize());
 
         return copy;
     }

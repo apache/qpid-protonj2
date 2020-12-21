@@ -21,6 +21,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +47,7 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
+import io.netty.channel.EventLoop;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -69,8 +71,6 @@ import io.netty.util.concurrent.GenericFutureListener;
 /**
  * Base Server implementation used to create Netty based server implementations for
  * unit testing aspects of the client code.
- *
- * TODO - Server should be a one-shot server and close the sever channel after a connect.
  */
 public abstract class NettyServer implements AutoCloseable {
 
@@ -83,10 +83,10 @@ public abstract class NettyServer implements AutoCloseable {
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
     private Channel serverChannel;
+    private Channel clientChannel;
     private final ProtonTestServerOptions options;
     private int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
     private String webSocketPath = WEBSOCKET_PATH;
-    private volatile boolean fragmentWrites;
     private volatile SslHandler sslHandler;
     private volatile HandshakeComplete handshakeComplete;
     private final CountDownLatch handshakeCompletion = new CountDownLatch(1);
@@ -149,18 +149,6 @@ public abstract class NettyServer implements AutoCloseable {
         this.maxFrameSize = maxFrameSize;
     }
 
-    public void setFragmentWrites(boolean fragmentWrites) {
-        if(!isWebSocketServer()) {
-            throw new IllegalStateException("Only applicable to WebSocket servers");
-        }
-
-        this.fragmentWrites = fragmentWrites;
-    }
-
-    public boolean isFragmentWrites() {
-        return fragmentWrites;
-    }
-
     public boolean awaitHandshakeCompletion(long delayMs) throws InterruptedException {
         return handshakeCompletion.await(delayMs, TimeUnit.MILLISECONDS);
     }
@@ -219,6 +207,8 @@ public abstract class NettyServer implements AutoCloseable {
                 public void initChannel(Channel ch) throws Exception {
                     // Don't accept any new connections.
                     serverChannel.close();
+                    // Now we know who the client is
+                    clientChannel = ch;
 
                     if (isSecureServer()) {
                         ch.pipeline().addLast(sslHandler = SslSupport.createServerSslHandler(null, options));
@@ -245,10 +235,37 @@ public abstract class NettyServer implements AutoCloseable {
 
     protected abstract ChannelHandler getServerHandler();
 
+    public void write(ByteBuffer frame) {
+        if (clientChannel == null || !clientChannel.isActive()) {
+            throw new IllegalStateException("Channel is not connected or has closed");
+        }
+
+        clientChannel.writeAndFlush(Unpooled.wrappedBuffer(frame), clientChannel.voidPromise());
+    }
+
+    public EventLoop eventLoop() {
+        if (clientChannel == null || !clientChannel.isActive()) {
+            throw new IllegalStateException("Channel is not connected or has closed");
+        }
+
+        return clientChannel.eventLoop();
+    }
+
     public void stop() throws InterruptedException {
         if (started.compareAndSet(true, false)) {
             LOG.info("Syncing channel close");
             serverChannel.close().syncUninterruptibly();
+
+            if (clientChannel != null) {
+                try {
+                    if (!clientChannel.close().await(10, TimeUnit.SECONDS)) {
+                        LOG.info("Connected Client channel close timed out wiating for result");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.interrupted();
+                    LOG.debug("Close of connected client channel interrupted while awaiting result");
+                }
+            }
 
             // Shut down all event loops to terminate all threads.
             int timeout = 100;
@@ -281,7 +298,7 @@ public abstract class NettyServer implements AutoCloseable {
         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
             LOG.trace("NettyServerHandler: Channel write: {}", msg);
             if (isWebSocketServer() && msg instanceof ByteBuf) {
-                if (isFragmentWrites()) {
+                if (options.isFragmentWrites()) {
                     ByteBuf orig = (ByteBuf) msg;
                     int origIndex = orig.readerIndex();
                     int split = orig.readableBytes()/2;

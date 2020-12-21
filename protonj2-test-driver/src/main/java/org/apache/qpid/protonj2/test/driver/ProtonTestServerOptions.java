@@ -47,6 +47,7 @@ public class ProtonTestServerOptions implements Cloneable {
     public static final List<String> DEFAULT_DISABLED_PROTOCOLS = Collections.unmodifiableList(Arrays.asList(new String[]{"SSLv2Hello", "SSLv3"}));
     public static final int DEFAULT_LOCAL_PORT = 0;
     public static final boolean DEFAULT_USE_WEBSOCKETS = false;
+    public static final boolean DEFAULT_FRAGMENT_WEBSOCKET_WRITES = false;
     public static final boolean DEFAULT_SECURE_SERVER = false;
     public static final boolean DEFAULT_NEEDS_CLIENT_AUTH = false;
 
@@ -69,6 +70,7 @@ public class ProtonTestServerOptions implements Cloneable {
     private int localPort = DEFAULT_LOCAL_PORT;
     private boolean traceBytes = DEFAULT_TRACE_BYTES;
     private boolean useWebSockets = DEFAULT_USE_WEBSOCKETS;
+    private boolean fragmentWebSocketWrites = DEFAULT_FRAGMENT_WEBSOCKET_WRITES;
 
     private boolean secure = DEFAULT_SECURE_SERVER;
     private boolean needClientAuth = DEFAULT_NEEDS_CLIENT_AUTH;
@@ -524,6 +526,14 @@ public class ProtonTestServerOptions implements Cloneable {
         this.useWebSockets = useWebSockets;
     }
 
+    public void setFragmentWrites(boolean fragmentWrites) {
+        this.fragmentWebSocketWrites = fragmentWrites;
+    }
+
+    public boolean isFragmentWrites() {
+        return fragmentWebSocketWrites;
+    }
+
     protected ProtonTestServerOptions copyOptions(ProtonTestServerOptions copy) {
         copy.setReceiveBufferSize(getReceiveBufferSize());
         copy.setSendBufferSize(getSendBufferSize());
@@ -554,6 +564,7 @@ public class ProtonTestServerOptions implements Cloneable {
         copy.setSecure(isSecure());
         copy.setNeedClientAuth(isNeedClientAuth());
         copy.setUseWebSockets(isUseWebSockets());
+        copy.setFragmentWrites(isFragmentWrites());
 
         return copy;
     }

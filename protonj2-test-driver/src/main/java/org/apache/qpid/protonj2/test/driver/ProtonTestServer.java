@@ -19,7 +19,6 @@ package org.apache.qpid.protonj2.test.driver;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -33,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoop;
@@ -49,7 +47,6 @@ public class ProtonTestServer extends ProtonTestPeer {
 
     private final AMQPTestDriver driver;
     private final NettyTestDriverServer server;
-    private volatile Channel channel;
 
     /**
      * Creates a Socket Test Peer using all default Server options.
@@ -141,12 +138,6 @@ public class ProtonTestServer extends ProtonTestPeer {
                         ctx.channel().close();
                     }
                 }
-
-                @Override
-                public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                    channel = ctx.channel();
-                    ctx.fireChannelActive();
-                }
             };
         }
     }
@@ -167,7 +158,7 @@ public class ProtonTestServer extends ProtonTestPeer {
 
         @Override
         public void sendAMQPFrame(int channel, DescribedType performative, ByteBuf payload) {
-            EventLoop loop = ProtonTestServer.this.channel.eventLoop();
+            EventLoop loop = server.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendAMQPFrame(channel, performative, payload);
             } else {
@@ -179,7 +170,7 @@ public class ProtonTestServer extends ProtonTestPeer {
 
         @Override
         public void sendSaslFrame(int channel, DescribedType performative) {
-            EventLoop loop = ProtonTestServer.this.channel.eventLoop();
+            EventLoop loop = server.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendSaslFrame(channel, performative);
             } else {
@@ -191,7 +182,7 @@ public class ProtonTestServer extends ProtonTestPeer {
 
         @Override
         public void sendHeader(AMQPHeader header) {
-            EventLoop loop = ProtonTestServer.this.channel.eventLoop();
+            EventLoop loop = server.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendHeader(header);
             } else {
@@ -203,7 +194,7 @@ public class ProtonTestServer extends ProtonTestPeer {
 
         @Override
         public void sendEmptyFrame(int channel) {
-            EventLoop loop = ProtonTestServer.this.channel.eventLoop();
+            EventLoop loop = server.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendEmptyFrame(channel);
             } else {
@@ -216,23 +207,8 @@ public class ProtonTestServer extends ProtonTestPeer {
 
     //----- Internal implementation which can be overridden
 
-    Channel getChannel() {
-        return channel;
-    }
-
     @Override
     protected void processCloseRequest() {
-        if (channel != null) {
-            try {
-                if (!channel.close().await(10, TimeUnit.SECONDS)) {
-                    LOG.info("Channel close timed out wiating for result");
-                }
-            } catch (InterruptedException e) {
-                Thread.interrupted();
-                LOG.debug("Close of channel interrupted while awaiting result");
-            }
-        }
-
         try {
             server.stop();
         } catch (Throwable e) {
@@ -243,8 +219,7 @@ public class ProtonTestServer extends ProtonTestPeer {
     @Override
     protected void processDriverOutput(ByteBuffer frame) {
         LOG.trace("AMQP Server Channel writing: {}", frame);
-        // TODO - Error handling for failed write
-        channel.writeAndFlush(Unpooled.wrappedBuffer(frame), channel.voidPromise());
+        server.write(frame);
     }
 
     protected void processDriverAssertion(AssertionError error) {
@@ -258,10 +233,6 @@ public class ProtonTestServer extends ProtonTestPeer {
     }
 
     protected ScheduledExecutorService eventLoop() {
-        if (channel == null || !channel.isActive()) {
-            throw new IllegalStateException("Channel is not connected or has closed");
-        }
-
-        return channel.eventLoop();
+        return server.eventLoop();
     }
 }

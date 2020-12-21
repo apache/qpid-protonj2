@@ -36,6 +36,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedKeyManager;
 
+import org.apache.qpid.protonj2.test.driver.ProtonTestClientOptions;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,15 +70,15 @@ public class SslSupport {
      *
      * @throws Exception if an error occurs while creating the SslHandler instance.
      */
-    public static SslHandler createClientSslHandler(URI remote, ProtonTestServerOptions options) throws Exception {
+    public static SslHandler createClientSslHandler(URI remote, ProtonTestClientOptions options) throws Exception {
         final SSLEngine sslEngine;
 
         SSLContext sslContext = options.getSslContextOverride();
         if (sslContext == null) {
-            sslContext = createJdkSslContext(options);
+            sslContext = createClientJdkSslContext(options);
         }
 
-        sslEngine = createJdkSslEngine(remote, sslContext, options, true);
+        sslEngine = createClientJdkSslEngine(remote, sslContext, options);
 
         return new SslHandler(sslEngine);
     }
@@ -106,10 +107,10 @@ public class SslSupport {
 
         SSLContext sslContext = options.getSslContextOverride();
         if (sslContext == null) {
-            sslContext = createJdkSslContext(options);
+            sslContext = createServerJdkSslContext(options);
         }
 
-        sslEngine = createJdkSslEngine(remote, sslContext, options, false);
+        sslEngine = createServerJdkSslEngine(remote, sslContext, options);
 
         return new SslHandler(sslEngine);
     }
@@ -127,7 +128,36 @@ public class SslSupport {
      *
      * @throws Exception if an error occurs while creating the context.
      */
-    public static SSLContext createJdkSslContext(ProtonTestServerOptions options) throws Exception {
+    public static SSLContext createClientJdkSslContext(ProtonTestClientOptions options) throws Exception {
+        try {
+            String contextProtocol = options.getContextProtocol();
+            LOG.trace("Getting SSLContext instance using protocol: {}", contextProtocol);
+
+            SSLContext context = SSLContext.getInstance(contextProtocol);
+
+            KeyManager[] keyMgrs = loadKeyManagers(options);
+            TrustManager[] trustManagers = loadTrustManagers(options);
+
+            context.init(keyMgrs, trustManagers, new SecureRandom());
+            return context;
+        } catch (Exception e) {
+            LOG.error("Failed to create SSLContext: {}", e, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Create a new SSLContext using the options specific in the given TransportOptions
+     * instance.
+     *
+     * @param options
+     *        the configured options used to create the SSLContext.
+     *
+     * @return a new SSLContext instance.
+     *
+     * @throws Exception if an error occurs while creating the context.
+     */
+    public static SSLContext createServerJdkSslContext(ProtonTestServerOptions options) throws Exception {
         try {
             String contextProtocol = options.getContextProtocol();
             LOG.trace("Getting SSLContext instance using protocol: {}", contextProtocol);
@@ -162,7 +192,7 @@ public class SslSupport {
      *
      * @throws Exception if an error occurs while creating the new SSLEngine.
      */
-    public static SSLEngine createJdkSslEngine(URI remote, SSLContext context, ProtonTestServerOptions options, boolean client) throws Exception {
+    public static SSLEngine createClientJdkSslEngine(URI remote, SSLContext context, ProtonTestClientOptions options) throws Exception {
         SSLEngine engine = null;
         if (remote == null) {
             engine = context.createSSLEngine();
@@ -172,7 +202,44 @@ public class SslSupport {
 
         engine.setEnabledProtocols(buildEnabledProtocols(engine, options));
         engine.setEnabledCipherSuites(buildEnabledCipherSuites(engine, options));
-        engine.setUseClientMode(client);
+        engine.setUseClientMode(true);
+        engine.setNeedClientAuth(options.isNeedClientAuth());
+
+        if (options.isVerifyHost()) {
+            SSLParameters sslParameters = engine.getSSLParameters();
+            sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+            engine.setSSLParameters(sslParameters);
+        }
+
+        return engine;
+    }
+
+    /**
+     * Create a new JDK SSLEngine instance in client mode from the given SSLContext and
+     * TransportOptions instances.
+     *
+     * @param remote
+     *        the URI of the remote peer that will be used to initialize the engine, may be null if none should.
+     * @param context
+     *        the SSLContext to use when creating the engine.
+     * @param options
+     *        the TransportOptions to use to configure the new SSLEngine.
+     *
+     * @return a new SSLEngine instance in client mode.
+     *
+     * @throws Exception if an error occurs while creating the new SSLEngine.
+     */
+    public static SSLEngine createServerJdkSslEngine(URI remote, SSLContext context, ProtonTestServerOptions options) throws Exception {
+        SSLEngine engine = null;
+        if (remote == null) {
+            engine = context.createSSLEngine();
+        } else {
+            engine = context.createSSLEngine(remote.getHost(), remote.getPort());
+        }
+
+        engine.setEnabledProtocols(buildEnabledProtocols(engine, options));
+        engine.setEnabledCipherSuites(buildEnabledCipherSuites(engine, options));
+        engine.setUseClientMode(false);
         engine.setNeedClientAuth(options.isNeedClientAuth());
 
         if (options.isVerifyHost()) {
@@ -185,6 +252,31 @@ public class SslSupport {
     }
 
     //----- Internal support methods -----------------------------------------//
+
+    private static String[] buildEnabledProtocols(SSLEngine engine, ProtonTestClientOptions options) {
+        List<String> enabledProtocols = new ArrayList<>();
+
+        if (options.getEnabledProtocols() != null) {
+            List<String> configuredProtocols = Arrays.asList(options.getEnabledProtocols());
+            LOG.trace("Configured protocols from transport options: {}", configuredProtocols);
+            enabledProtocols.addAll(configuredProtocols);
+        } else {
+            List<String> engineProtocols = Arrays.asList(engine.getEnabledProtocols());
+            LOG.trace("Default protocols from the SSLEngine: {}", engineProtocols);
+            enabledProtocols.addAll(engineProtocols);
+        }
+
+        String[] disabledProtocols = options.getDisabledProtocols();
+        if (disabledProtocols != null) {
+            List<String> disabled = Arrays.asList(disabledProtocols);
+            LOG.trace("Disabled protocols: {}", disabled);
+            enabledProtocols.removeAll(disabled);
+        }
+
+        LOG.trace("Enabled protocols: {}", enabledProtocols);
+
+        return enabledProtocols.toArray(new String[0]);
+    }
 
     private static String[] buildEnabledProtocols(SSLEngine engine, ProtonTestServerOptions options) {
         List<String> enabledProtocols = new ArrayList<>();
@@ -236,6 +328,40 @@ public class SslSupport {
         return enabledCipherSuites.toArray(new String[0]);
     }
 
+    private static String[] buildEnabledCipherSuites(SSLEngine engine, ProtonTestClientOptions options) {
+        List<String> enabledCipherSuites = new ArrayList<>();
+
+        if (options.getEnabledCipherSuites() != null) {
+            List<String> configuredCipherSuites = Arrays.asList(options.getEnabledCipherSuites());
+            LOG.trace("Configured cipher suites from transport options: {}", configuredCipherSuites);
+            enabledCipherSuites.addAll(configuredCipherSuites);
+        } else {
+            List<String> engineCipherSuites = Arrays.asList(engine.getEnabledCipherSuites());
+            LOG.trace("Default cipher suites from the SSLEngine: {}", engineCipherSuites);
+            enabledCipherSuites.addAll(engineCipherSuites);
+        }
+
+        String[] disabledCipherSuites = options.getDisabledCipherSuites();
+        if (disabledCipherSuites != null) {
+            List<String> disabled = Arrays.asList(disabledCipherSuites);
+            LOG.trace("Disabled cipher suites: {}", disabled);
+            enabledCipherSuites.removeAll(disabled);
+        }
+
+        LOG.trace("Enabled cipher suites: {}", enabledCipherSuites);
+
+        return enabledCipherSuites.toArray(new String[0]);
+    }
+
+    private static TrustManager[] loadTrustManagers(ProtonTestClientOptions options) throws Exception {
+        TrustManagerFactory factory = loadTrustManagerFactory(options);
+        if (factory != null) {
+            return factory.getTrustManagers();
+        } else {
+            return null;
+        }
+    }
+
     private static TrustManager[] loadTrustManagers(ProtonTestServerOptions options) throws Exception {
         TrustManagerFactory factory = loadTrustManagerFactory(options);
         if (factory != null) {
@@ -243,6 +369,29 @@ public class SslSupport {
         } else {
             return null;
         }
+    }
+
+    private static TrustManagerFactory loadTrustManagerFactory(ProtonTestClientOptions options) throws Exception {
+        if (options.isTrustAll()) {
+            return InsecureTrustManagerFactory.INSTANCE;
+        }
+
+        if (options.getTrustStoreLocation() == null) {
+            return null;
+        }
+
+        TrustManagerFactory fact = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+
+        String storeLocation = options.getTrustStoreLocation();
+        String storePassword = options.getTrustStorePassword();
+        String storeType = options.getTrustStoreType();
+
+        LOG.trace("Attempt to load TrustStore from location {} of type {}", storeLocation, storeType);
+
+        KeyStore trustStore = loadStore(storeLocation, storePassword, storeType);
+        fact.init(trustStore);
+
+        return fact;
     }
 
     private static TrustManagerFactory loadTrustManagerFactory(ProtonTestServerOptions options) throws Exception {
@@ -266,6 +415,31 @@ public class SslSupport {
         fact.init(trustStore);
 
         return fact;
+    }
+
+    private static KeyManager[] loadKeyManagers(ProtonTestClientOptions options) throws Exception {
+        if (options.getKeyStoreLocation() == null) {
+            return null;
+        }
+
+        KeyManagerFactory fact = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+
+        String storeLocation = options.getKeyStoreLocation();
+        String storePassword = options.getKeyStorePassword();
+        String storeType = options.getKeyStoreType();
+        String alias = options.getKeyAlias();
+
+        LOG.trace("Attempt to load KeyStore from location {} of type {}", storeLocation, storeType);
+
+        KeyStore keyStore = loadStore(storeLocation, storePassword, storeType);
+        fact.init(keyStore, storePassword != null ? storePassword.toCharArray() : null);
+
+        if (alias == null) {
+            return fact.getKeyManagers();
+        } else {
+            validateAlias(keyStore, alias);
+            return wrapKeyManagers(alias, fact.getKeyManagers());
+        }
     }
 
     private static KeyManager[] loadKeyManagers(ProtonTestServerOptions options) throws Exception {
