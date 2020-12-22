@@ -302,7 +302,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
 
-            StreamSender sender = connection.openStreamSender("test-qos");
+            StreamSender sender = (StreamSender) connection.openStreamSender("test-qos").openFuture().get();
             StreamSenderMessage message = sender.beginMessage();
 
             message.durable(true);
