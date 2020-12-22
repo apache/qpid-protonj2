@@ -90,6 +90,14 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     private static final String JAVAX_NET_SSL_TRUST_STORE_TYPE = "javax.net.ssl.trustStoreType";
     private static final String JAVAX_NET_SSL_TRUST_STORE_PASSWORD = "javax.net.ssl.trustStorePassword";
 
+    protected ProtonTestServerOptions serverOptions() {
+        return new ProtonTestServerOptions();
+    }
+
+    protected ConnectionOptions connectionOptions() {
+        return new ConnectionOptions().sslEnabled(true);
+    }
+
     @Test
     public void testCreateAndCloseSslConnectionJDK() throws Exception {
         testCreateAndCloseSslConnection(false);
@@ -104,13 +112,13 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void testCreateAndCloseSslConnection(boolean openSSL) throws Exception {
-        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
-        serverOpts.setSecure(true);
-        serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
-        serverOpts.setKeyStorePassword(PASSWORD);
-        serverOpts.setVerifyHost(false);
+        ProtonTestServerOptions serverOptions = serverOptions();
+        serverOptions.setSecure(true);
+        serverOptions.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
+        serverOptions.setKeyStorePassword(PASSWORD);
+        serverOptions.setVerifyHost(false);
 
-        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -118,11 +126,11 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.sslEnabled(true).sslOptions()
-                                          .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                          .trustStorePassword(PASSWORD)
-                                          .allowNativeSSL(openSSL);
+            ConnectionOptions clientOptions = connectionOptions();
+            clientOptions.sslOptions()
+                         .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                         .trustStorePassword(PASSWORD)
+                         .allowNativeSSL(openSSL);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -152,13 +160,13 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void testCreateAndCloseSslConnectionWithDefaultPort(boolean openSSL) throws Exception {
-        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
-        serverOpts.setSecure(true);
-        serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
-        serverOpts.setKeyStorePassword(PASSWORD);
-        serverOpts.setVerifyHost(false);
+        ProtonTestServerOptions serverOptions = serverOptions();
+        serverOptions.setSecure(true);
+        serverOptions.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
+        serverOptions.setKeyStorePassword(PASSWORD);
+        serverOptions.setVerifyHost(false);
 
-        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -166,12 +174,12 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.sslEnabled(true).sslOptions()
-                                          .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                          .trustStorePassword(PASSWORD)
-                                          .allowNativeSSL(openSSL)
-                                          .defaultSslPort(peer.getServerURI().getPort());
+            ConnectionOptions clientOptions = connectionOptions();
+            clientOptions.sslOptions()
+                         .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                         .trustStorePassword(PASSWORD)
+                         .allowNativeSSL(openSSL)
+                         .defaultSslPort(peer.getServerURI().getPort());
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), clientOptions);
@@ -203,13 +211,13 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doTestCreateSslConnectionWithServerSendingPreemptiveData(boolean openSSL) throws Exception {
-        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
-        serverOpts.setSecure(true);
-        serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
-        serverOpts.setKeyStorePassword(PASSWORD);
-        serverOpts.setVerifyHost(false);
+        ProtonTestServerOptions serverOptions = serverOptions();
+        serverOptions.setSecure(true);
+        serverOptions.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
+        serverOptions.setKeyStorePassword(PASSWORD);
+        serverOptions.setVerifyHost(false);
 
-        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
 
             peer.remoteHeader(AMQPHeader.getSASLHeader().toArray()).queue();
             peer.expectSASLHeader();
@@ -223,11 +231,11 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.sslEnabled(true).sslOptions()
-                                          .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                          .trustStorePassword(PASSWORD)
-                                          .allowNativeSSL(openSSL);
+            ConnectionOptions clientOptions = connectionOptions();
+            clientOptions.sslOptions()
+                         .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                         .trustStorePassword(PASSWORD)
+                         .allowNativeSSL(openSSL);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -256,16 +264,16 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doTestCreateAndCloseSslConnectionWithClientAuth(boolean openSSL) throws Exception {
-        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
-        serverOpts.setSecure(true);
-        serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
-        serverOpts.setKeyStorePassword(PASSWORD);
-        serverOpts.setTrustStoreLocation(BROKER_JKS_TRUSTSTORE);
-        serverOpts.setTrustStorePassword(PASSWORD);
-        serverOpts.setNeedClientAuth(true);
-        serverOpts.setVerifyHost(false);
+        ProtonTestServerOptions serverOptions = serverOptions();
+        serverOptions.setSecure(true);
+        serverOptions.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
+        serverOptions.setKeyStorePassword(PASSWORD);
+        serverOptions.setTrustStoreLocation(BROKER_JKS_TRUSTSTORE);
+        serverOptions.setTrustStorePassword(PASSWORD);
+        serverOptions.setNeedClientAuth(true);
+        serverOptions.setVerifyHost(false);
 
-        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -273,13 +281,13 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.sslEnabled(true).sslOptions()
-                                          .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
-                                          .keyStorePassword(PASSWORD)
-                                          .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                          .trustStorePassword(PASSWORD)
-                                          .allowNativeSSL(openSSL);
+            ConnectionOptions clientOptions = connectionOptions();
+            clientOptions.sslOptions()
+                         .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
+                         .keyStorePassword(PASSWORD)
+                         .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                         .trustStorePassword(PASSWORD)
+                         .allowNativeSSL(openSSL);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -311,16 +319,16 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doConnectionWithAliasTestImpl(String alias, String expectedDN, boolean requestOpenSSL) throws Exception, SSLPeerUnverifiedException, IOException {
-        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
-        serverOpts.setSecure(true);
-        serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
-        serverOpts.setTrustStoreLocation(BROKER_JKS_TRUSTSTORE);
-        serverOpts.setKeyStorePassword(PASSWORD);
-        serverOpts.setTrustStorePassword(PASSWORD);
-        serverOpts.setVerifyHost(false);
-        serverOpts.setNeedClientAuth(true);
+        ProtonTestServerOptions serverOptions = serverOptions();
+        serverOptions.setSecure(true);
+        serverOptions.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
+        serverOptions.setTrustStoreLocation(BROKER_JKS_TRUSTSTORE);
+        serverOptions.setKeyStorePassword(PASSWORD);
+        serverOptions.setTrustStorePassword(PASSWORD);
+        serverOptions.setVerifyHost(false);
+        serverOptions.setNeedClientAuth(true);
 
-        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -328,14 +336,14 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.sslEnabled(true).sslOptions()
-                                          .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
-                                          .keyStorePassword(PASSWORD)
-                                          .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                          .trustStorePassword(PASSWORD)
-                                          .keyAlias(alias)
-                                          .allowNativeSSL(requestOpenSSL);
+            ConnectionOptions clientOptions = connectionOptions();
+            clientOptions.sslOptions()
+                         .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
+                         .keyStorePassword(PASSWORD)
+                         .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                         .trustStorePassword(PASSWORD)
+                         .keyAlias(alias)
+                         .allowNativeSSL(requestOpenSSL);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -372,27 +380,27 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doCreateConnectionWithInvalidAliasTestImpl(String alias) throws Exception, IOException {
-        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
-        serverOpts.setSecure(true);
-        serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
-        serverOpts.setTrustStoreLocation(BROKER_JKS_TRUSTSTORE);
-        serverOpts.setKeyStorePassword(PASSWORD);
-        serverOpts.setTrustStorePassword(PASSWORD);
-        serverOpts.setVerifyHost(false);
-        serverOpts.setNeedClientAuth(true);
+        ProtonTestServerOptions serverOptions = serverOptions();
+        serverOptions.setSecure(true);
+        serverOptions.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
+        serverOptions.setTrustStoreLocation(BROKER_JKS_TRUSTSTORE);
+        serverOptions.setKeyStorePassword(PASSWORD);
+        serverOptions.setTrustStorePassword(PASSWORD);
+        serverOptions.setVerifyHost(false);
+        serverOptions.setNeedClientAuth(true);
 
-        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
             peer.start();
 
             URI remoteURI = peer.getServerURI();
 
-            ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.sslEnabled(true).sslOptions()
-                                          .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
-                                          .keyStorePassword(PASSWORD)
-                                          .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                          .trustStorePassword(PASSWORD)
-                                          .keyAlias(alias);
+            ConnectionOptions clientOptions = connectionOptions();
+            clientOptions.sslOptions()
+                         .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
+                         .keyStorePassword(PASSWORD)
+                         .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                         .trustStorePassword(PASSWORD)
+                         .keyAlias(alias);
 
             Client container = Client.create();
 
@@ -428,14 +436,14 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doConnectionWithSslContextOverride(String clientKeyStorePath, String expectedDN) throws Exception {
-        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
-        serverOpts.setSecure(true);
-        serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
-        serverOpts.setTrustStoreLocation(BROKER_JKS_TRUSTSTORE);
-        serverOpts.setKeyStorePassword(PASSWORD);
-        serverOpts.setTrustStorePassword(PASSWORD);
-        serverOpts.setNeedClientAuth(true);
-        serverOpts.setVerifyHost(false);
+        ProtonTestServerOptions serverOptions = serverOptions();
+        serverOptions.setSecure(true);
+        serverOptions.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
+        serverOptions.setTrustStoreLocation(BROKER_JKS_TRUSTSTORE);
+        serverOptions.setKeyStorePassword(PASSWORD);
+        serverOptions.setTrustStorePassword(PASSWORD);
+        serverOptions.setNeedClientAuth(true);
+        serverOptions.setVerifyHost(false);
 
         SslOptions clientSslOptions = new SslOptions();
         clientSslOptions.sslEnabled(true)
@@ -444,7 +452,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
                         .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
                         .trustStorePassword(PASSWORD);
 
-        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
             peer.expectSASLPlainConnect("guest", "guest");
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -453,11 +461,11 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             URI remoteURI = peer.getServerURI();
 
             SSLContext sslContext = SslSupport.createJdkSslContext(clientSslOptions);
-            ConnectionOptions clientOptions = new ConnectionOptions();
+            ConnectionOptions clientOptions = connectionOptions();
             clientOptions.user("guest")
                          .password("guest")
-                         .sslOptions().sslEnabled(true)
-                                      .sslContextOverride(sslContext);
+                         .sslOptions()
+                         .sslContextOverride(sslContext);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -549,7 +557,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doConfigureStoresWithSslSystemPropertiesTestImpl(String expectedDN, boolean usePkcs12Store) throws Exception {
-        ProtonTestServerOptions serverOptions = new ProtonTestServerOptions();
+        ProtonTestServerOptions serverOptions = serverOptions();
         serverOptions.setSecure(true);
         serverOptions.setNeedClientAuth(true);
 
@@ -578,8 +586,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             URI remoteURI = peer.getServerURI();
 
             Client container = Client.create();
-            ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.sslOptions().sslEnabled(true);
+            ConnectionOptions clientOptions = connectionOptions();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
