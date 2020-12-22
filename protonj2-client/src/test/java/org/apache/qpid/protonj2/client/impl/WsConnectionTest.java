@@ -21,13 +21,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.URI;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
-import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
 import org.junit.jupiter.api.Test;
@@ -41,47 +39,36 @@ import org.slf4j.LoggerFactory;
  * TODO: Have this just extend the ConnectionTest and make both client and server use WS
  */
 @Timeout(20)
-public class WsConnectionTest extends ImperativeClientTestCase {
+public class WsConnectionTest extends ConnectionTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(WsConnectionTest.class);
 
-    @Test
-    public void testConnectFailsDueToServerStopped() throws Exception {
-        ProtonTestServerOptions serverOptions = new ProtonTestServerOptions();
-        serverOptions.setUseWebSockets(true);
+    @Override
+    protected ProtonTestServerOptions testServerOptions() {
+        return new ProtonTestServerOptions().setUseWebSockets(true);
+    }
 
-        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
-            peer.start();
+    @Override
+    protected ConnectionOptions connectionOptions() {
+        ConnectionOptions options = new ConnectionOptions();
+        options.transportOptions().useWebSockets(true);
 
-            URI remoteURI = peer.getServerURI();
+        return options;
+    }
 
-            LOG.info("WebSocket Connect test started, peer listening on: {}", remoteURI);
+    @Override
+    protected ConnectionOptions connectionOptions(String user, String password) {
+        ConnectionOptions options = new ConnectionOptions();
+        options.transportOptions().useWebSockets(true);
+        options.user(user);
+        options.password(password);
 
-            peer.close();
-
-            Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions();
-            options.transportOptions().useWebSockets(true);
-
-            try {
-                Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
-                connection.openFuture().get();
-                fail("Should fail to connect");
-            } catch (ExecutionException ex) {
-                LOG.info("Connection create failed due to: ", ex);
-                assertTrue(ex.getCause() instanceof ClientException);
-            }
-
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-        }
+        return options;
     }
 
     @Test
     public void testWSConnectFailsDueToServerListeningOverTCP() throws Exception {
-        ProtonTestServerOptions serverOptions = new ProtonTestServerOptions();
-        serverOptions.setUseWebSockets(false);
-
-        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -89,8 +76,7 @@ public class WsConnectionTest extends ImperativeClientTestCase {
             LOG.info("WebSocket Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions();
-            options.transportOptions().useWebSockets(true);
+            ConnectionOptions options = connectionOptions();
 
             try {
                 Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
@@ -102,33 +88,6 @@ public class WsConnectionTest extends ImperativeClientTestCase {
             }
 
             peer.waitForScriptToCompleteIgnoreErrors();
-        }
-    }
-
-    @Test
-    public void testCreateConnectionString() throws Exception {
-        ProtonTestServerOptions serverOptions = new ProtonTestServerOptions();
-        serverOptions.setUseWebSockets(true);
-
-        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
-            peer.expectSASLAnonymousConnect();
-            peer.expectOpen().respond();
-            peer.expectClose().respond();
-            peer.start();
-
-            URI remoteURI = peer.getServerURI();
-
-            LOG.info("WebSocket Connect test started, peer listening on: {}", remoteURI);
-
-            Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions();
-            options.transportOptions().useWebSockets(true);
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
-
-            connection.openFuture().get(10, TimeUnit.SECONDS);
-            connection.closeAsync().get(10, TimeUnit.SECONDS);
-
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
 }

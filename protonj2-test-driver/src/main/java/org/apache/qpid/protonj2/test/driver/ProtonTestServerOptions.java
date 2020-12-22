@@ -121,14 +121,18 @@ public class ProtonTestServerOptions implements Cloneable {
      * @param sendBufferSize
      *        the new send buffer size for the TCP Transport.
      *
+     * @return this options instance.
+     *
      * @throws IllegalArgumentException if the value given is not in the valid range.
      */
-    public void setSendBufferSize(int sendBufferSize) {
+    public ProtonTestServerOptions setSendBufferSize(int sendBufferSize) {
         if (sendBufferSize <= 0) {
             throw new IllegalArgumentException("The send buffer size must be > 0");
         }
 
         this.sendBufferSize = sendBufferSize;
+
+        return this;
     }
 
     /**
@@ -145,14 +149,18 @@ public class ProtonTestServerOptions implements Cloneable {
      * @param receiveBufferSize
      *        the new receive buffer size for the TCP Transport.
      *
+     * @return this options instance.
+     *
      * @throws IllegalArgumentException if the value given is not in the valid range.
      */
-    public void setReceiveBufferSize(int receiveBufferSize) {
+    public ProtonTestServerOptions setReceiveBufferSize(int receiveBufferSize) {
         if (receiveBufferSize <= 0) {
             throw new IllegalArgumentException("The send buffer size must be > 0");
         }
 
         this.receiveBufferSize = receiveBufferSize;
+
+        return this;
     }
 
     /**
@@ -169,70 +177,81 @@ public class ProtonTestServerOptions implements Cloneable {
      * @param trafficClass
      *        the new traffic class value.
      *
+     * @return this options instance.
+     *
      * @throws IllegalArgumentException if the value given is not in the valid range.
      */
-    public void setTrafficClass(int trafficClass) {
+    public ProtonTestServerOptions setTrafficClass(int trafficClass) {
         if (trafficClass < 0 || trafficClass > 255) {
             throw new IllegalArgumentException("Traffic class must be in the range [0..255]");
         }
 
         this.trafficClass = trafficClass;
+
+        return this;
     }
 
     public int getSoTimeout() {
         return soTimeout;
     }
 
-    public void setSoTimeout(int soTimeout) {
+    public ProtonTestServerOptions setSoTimeout(int soTimeout) {
         this.soTimeout = soTimeout;
+        return this;
     }
 
     public boolean isTcpNoDelay() {
         return tcpNoDelay;
     }
 
-    public void setTcpNoDelay(boolean tcpNoDelay) {
+    public ProtonTestServerOptions setTcpNoDelay(boolean tcpNoDelay) {
         this.tcpNoDelay = tcpNoDelay;
+        return this;
     }
 
     public int getSoLinger() {
         return soLinger;
     }
 
-    public void setSoLinger(int soLinger) {
+    public ProtonTestServerOptions setSoLinger(int soLinger) {
         this.soLinger = soLinger;
+        return this;
     }
 
     public boolean isTcpKeepAlive() {
         return tcpKeepAlive;
     }
 
-    public void setTcpKeepAlive(boolean keepAlive) {
+    public ProtonTestServerOptions setTcpKeepAlive(boolean keepAlive) {
         this.tcpKeepAlive = keepAlive;
+        return this;
     }
 
     public int getServerPort() {
         return serverPort;
     }
 
-    public void setServerPort(int serverPort) {
+    public ProtonTestServerOptions setServerPort(int serverPort) {
         this.serverPort = serverPort;
+        return this;
     }
 
     public String getLocalAddress() {
         return localAddress;
     }
 
-    public void setLocalAddress(String localAddress) {
+    public ProtonTestServerOptions setLocalAddress(String localAddress) {
         this.localAddress = localAddress;
+        return this;
     }
 
     public int getLocalPort() {
         return localPort;
     }
 
-    public void setLocalPort(int localPort) {
+    public ProtonTestServerOptions setLocalPort(int localPort) {
         this.localPort = localPort;
+        return this;
     }
 
     /**
@@ -247,9 +266,12 @@ public class ProtonTestServerOptions implements Cloneable {
      *
      * @param traceBytes
      * 		should the transport log the bytes in and out.
+     *
+     * @return this options instance.
      */
-    public void setTraceBytes(boolean traceBytes) {
+    public ProtonTestServerOptions setTraceBytes(boolean traceBytes) {
         this.traceBytes = traceBytes;
+        return this;
     }
 
     /**
@@ -264,9 +286,12 @@ public class ProtonTestServerOptions implements Cloneable {
      *
      * @param keyStoreLocation
      *        the keyStoreLocation to use to create the key manager.
+     *
+     * @return this options instance.
      */
-    public void setKeyStoreLocation(String keyStoreLocation) {
+    public ProtonTestServerOptions setKeyStoreLocation(String keyStoreLocation) {
         this.keyStoreLocation = keyStoreLocation;
+        return this;
     }
 
     /**
@@ -278,9 +303,12 @@ public class ProtonTestServerOptions implements Cloneable {
 
     /**
      * @param keyStorePassword the keyStorePassword to set
+     *
+     * @return this options instance.
      */
-    public void setKeyStorePassword(String keyStorePassword) {
+    public ProtonTestServerOptions setKeyStorePassword(String keyStorePassword) {
         this.keyStorePassword = keyStorePassword;
+        return this;
     }
 
     /**
@@ -292,9 +320,12 @@ public class ProtonTestServerOptions implements Cloneable {
 
     /**
      * @param trustStoreLocation the trustStoreLocation to set
+     *
+     * @return this options instance.
      */
-    public void setTrustStoreLocation(String trustStoreLocation) {
+    public ProtonTestServerOptions setTrustStoreLocation(String trustStoreLocation) {
         this.trustStoreLocation = trustStoreLocation;
+        return this;
     }
 
     /**
@@ -306,18 +337,24 @@ public class ProtonTestServerOptions implements Cloneable {
 
     /**
      * @param trustStorePassword the trustStorePassword to set
+     *
+     * @return this options instance.
      */
-    public void setTrustStorePassword(String trustStorePassword) {
+    public ProtonTestServerOptions setTrustStorePassword(String trustStorePassword) {
         this.trustStorePassword = trustStorePassword;
+        return this;
     }
 
     /**
      * @param storeType
      *        the format that the store files are encoded in.
+     *
+     * @return this options instance.
      */
-    public void setStoreType(String storeType) {
+    public ProtonTestServerOptions setStoreType(String storeType) {
         setKeyStoreType(storeType);
         setTrustStoreType(storeType);
+        return this;
     }
 
     /**
@@ -330,9 +367,12 @@ public class ProtonTestServerOptions implements Cloneable {
     /**
      * @param keyStoreType
      *        the format that the keyStore file is encoded in
+     *
+     * @return this options instance.
      */
-    public void setKeyStoreType(String keyStoreType) {
+    public ProtonTestServerOptions setKeyStoreType(String keyStoreType) {
         this.keyStoreType = keyStoreType;
+        return this;
     }
 
     /**
@@ -345,9 +385,12 @@ public class ProtonTestServerOptions implements Cloneable {
     /**
      * @param trustStoreType
      *        the format that the trustStore file is encoded in
+     *
+     * @return this options instance.
      */
-    public void setTrustStoreType(String trustStoreType) {
+    public ProtonTestServerOptions setTrustStoreType(String trustStoreType) {
         this.trustStoreType = trustStoreType;
+        return this;
     }
 
     /**
@@ -359,9 +402,12 @@ public class ProtonTestServerOptions implements Cloneable {
 
     /**
      * @param enabledCipherSuites the enabledCipherSuites to set
+     *
+     * @return this options instance.
      */
-    public void setEnabledCipherSuites(String[] enabledCipherSuites) {
+    public ProtonTestServerOptions setEnabledCipherSuites(String[] enabledCipherSuites) {
         this.enabledCipherSuites = enabledCipherSuites;
+        return this;
     }
 
     /**
@@ -373,9 +419,12 @@ public class ProtonTestServerOptions implements Cloneable {
 
     /**
      * @param disabledCipherSuites the disabledCipherSuites to set
+     *
+     * @return this options instance.
      */
-    public void setDisabledCipherSuites(String[] disabledCipherSuites) {
+    public ProtonTestServerOptions setDisabledCipherSuites(String[] disabledCipherSuites) {
         this.disabledCipherSuites = disabledCipherSuites;
+        return this;
     }
 
     /**
@@ -389,9 +438,12 @@ public class ProtonTestServerOptions implements Cloneable {
      * The protocols to be set as enabled.
      *
      * @param enabledProtocols the enabled protocols to set, or null if the defaults should be used.
+     *
+     * @return this options instance.
      */
-    public void setEnabledProtocols(String[] enabledProtocols) {
+    public ProtonTestServerOptions setEnabledProtocols(String[] enabledProtocols) {
         this.enabledProtocols = enabledProtocols;
+        return this;
     }
 
     /**
@@ -405,9 +457,12 @@ public class ProtonTestServerOptions implements Cloneable {
      * The protocols to be disable.
      *
      * @param disabledProtocols the protocols to disable, or null if none should be.
+     *
+     * @return this options instance.
      */
-    public void setDisabledProtocols(String[] disabledProtocols) {
+    public ProtonTestServerOptions setDisabledProtocols(String[] disabledProtocols) {
         this.disabledProtocols = disabledProtocols;
+        return this;
     }
 
     /**
@@ -422,9 +477,12 @@ public class ProtonTestServerOptions implements Cloneable {
      * SSLContext.getInstance(protocol).
      *
      * @param contextProtocol the context protocol to use.
+     *
+     * @return this options instance.
      */
-    public void setContextProtocol(String contextProtocol) {
+    public ProtonTestServerOptions setContextProtocol(String contextProtocol) {
         this.contextProtocol = contextProtocol;
+        return this;
     }
 
     /**
@@ -436,9 +494,12 @@ public class ProtonTestServerOptions implements Cloneable {
 
     /**
      * @param trustAll the trustAll to set
+     *
+     * @return this options instance.
      */
-    public void setTrustAll(boolean trustAll) {
+    public ProtonTestServerOptions setTrustAll(boolean trustAll) {
         this.trustAll = trustAll;
+        return this;
     }
 
     /**
@@ -450,9 +511,12 @@ public class ProtonTestServerOptions implements Cloneable {
 
     /**
      * @param verifyHost the verifyHost to set
+     *
+     * @return this options instance.
      */
-    public void setVerifyHost(boolean verifyHost) {
+    public ProtonTestServerOptions setVerifyHost(boolean verifyHost) {
         this.verifyHost = verifyHost;
+        return this;
     }
 
     /**
@@ -464,17 +528,21 @@ public class ProtonTestServerOptions implements Cloneable {
 
     /**
      * @param keyAlias the key alias to use
+     *
+     * @return this options instance.
      */
-    public void setKeyAlias(String keyAlias) {
+    public ProtonTestServerOptions setKeyAlias(String keyAlias) {
         this.keyAlias = keyAlias;
-    }
-
-    public void setSslContextOverride(SSLContext sslContextOverride) {
-        this.sslContextOverride = sslContextOverride;
+        return this;
     }
 
     public SSLContext getSslContextOverride() {
         return sslContextOverride;
+    }
+
+    public ProtonTestServerOptions setSslContextOverride(SSLContext sslContextOverride) {
+        this.sslContextOverride = sslContextOverride;
+        return this;
     }
 
     public Map<String, String> getHttpHeaders() {
@@ -491,9 +559,12 @@ public class ProtonTestServerOptions implements Cloneable {
     /**
      * @param needClientAuth
      *      the needClientAuth should the server require client authentication.
+     *
+     * @return this options instance.
      */
-    public void setNeedClientAuth(boolean needClientAuth) {
+    public ProtonTestServerOptions setNeedClientAuth(boolean needClientAuth) {
         this.needClientAuth = needClientAuth;
+        return this;
     }
 
     /**
@@ -506,9 +577,12 @@ public class ProtonTestServerOptions implements Cloneable {
     /**
      * @param secure
      *      should the sever require SSL connections.
+     *
+     * @return this options instance.
      */
-    public void setSecure(boolean secure) {
+    public ProtonTestServerOptions setSecure(boolean secure) {
         this.secure = secure;
+        return this;
     }
 
     /**
@@ -521,17 +595,21 @@ public class ProtonTestServerOptions implements Cloneable {
     /**
      * @param useWebSockets
      *      Is this a WebSocket based server.
+     *
+     * @return this options instance.
      */
-    public void setUseWebSockets(boolean useWebSockets) {
+    public ProtonTestServerOptions setUseWebSockets(boolean useWebSockets) {
         this.useWebSockets = useWebSockets;
-    }
-
-    public void setFragmentWrites(boolean fragmentWrites) {
-        this.fragmentWebSocketWrites = fragmentWrites;
+        return this;
     }
 
     public boolean isFragmentWrites() {
         return fragmentWebSocketWrites;
+    }
+
+    public ProtonTestServerOptions setFragmentWrites(boolean fragmentWrites) {
+        this.fragmentWebSocketWrites = fragmentWrites;
+        return this;
     }
 
     protected ProtonTestServerOptions copyOptions(ProtonTestServerOptions copy) {

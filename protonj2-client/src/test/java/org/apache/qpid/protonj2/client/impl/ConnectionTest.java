@@ -46,6 +46,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
+import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
@@ -67,7 +68,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testConnectFailsDueToServerStopped() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -79,7 +80,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             Client container = Client.create();
 
             try {
-                Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+                Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
                 connection.openFuture().get();
                 fail("Should fail to connect");
             } catch (ExecutionException ex) {
@@ -93,8 +94,8 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateTwoDistinctConnectionsFromSingleClientInstance() throws Exception {
-        try (ProtonTestServer firstPeer = new ProtonTestServer();
-             ProtonTestServer secondPeer = new ProtonTestServer()) {
+        try (ProtonTestServer firstPeer = new ProtonTestServer(testServerOptions());
+             ProtonTestServer secondPeer = new ProtonTestServer(testServerOptions())) {
 
             firstPeer.expectSASLAnonymousConnect();
             firstPeer.expectOpen().respond();
@@ -110,8 +111,8 @@ public class ConnectionTest extends ImperativeClientTestCase {
             final URI secondURI = secondPeer.getServerURI();
 
             Client container = Client.create();
-            Connection connection1 = container.connect(firstURI.getHost(), firstURI.getPort());
-            Connection connection2 = container.connect(secondURI.getHost(), secondURI.getPort());
+            Connection connection1 = container.connect(firstURI.getHost(), firstURI.getPort(), connectionOptions());
+            Connection connection2 = container.connect(secondURI.getHost(), secondURI.getPort(), connectionOptions());
 
             connection1.openFuture().get();
             connection2.openFuture().get();
@@ -135,7 +136,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doConnectionWithUnexpectedHeaderTestImpl(byte[] responseHeader) throws Exception, IOException {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLHeader().respondWithBytes(responseHeader);
             peer.start();
 
@@ -144,9 +145,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions();
-            options.user("guest");
-            options.password("guest");
+            ConnectionOptions options = connectionOptions("guest", "guest");
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
 
             try {
@@ -161,7 +160,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateConnectionString() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -172,7 +171,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
             connection.closeAsync().get(10, TimeUnit.SECONDS);
@@ -183,7 +182,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateConnectionWithConfiguredContainerId() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().withContainerId("container-id-test").respond();
             peer.expectClose().respond();
@@ -195,7 +194,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
             ClientOptions options = new ClientOptions().id("container-id-test");
             Client container = Client.create(options);
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
             connection.closeAsync().get(10, TimeUnit.SECONDS);
@@ -206,7 +205,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateConnectionStringWithDefaultTcpPort() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -217,7 +216,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions();
+            ConnectionOptions options = connectionOptions();
             options.transportOptions().defaultTcpPort(remoteURI.getPort());
             Connection connection = container.connect(remoteURI.getHost(), options);
 
@@ -230,7 +229,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateConnectionEstablishedHandlerGetsCalled() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -241,7 +240,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             final CountDownLatch established = new CountDownLatch(1);
-            final ConnectionOptions options = new ConnectionOptions();
+            ConnectionOptions options = connectionOptions();
 
             options.connectedHandler((connection, location) -> {
                 LOG.info("Connection signaled that it was established");
@@ -262,7 +261,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateConnectionFailedHandlerGetsCalled() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin();
@@ -274,7 +273,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             final CountDownLatch failed = new CountDownLatch(1);
-            final ConnectionOptions options = new ConnectionOptions();
+            ConnectionOptions options = connectionOptions();
 
             options.failedHandler((connection, location) -> {
                 LOG.info("Connection signaled that it has failed");
@@ -297,7 +296,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateConnectionWithCredentialsChoosesSASLPlainIfOffered() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLPlainConnect("user", "pass");
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -308,10 +307,8 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             final CountDownLatch established = new CountDownLatch(1);
-            final ConnectionOptions options = new ConnectionOptions();
+            ConnectionOptions options = connectionOptions("user", "pass");
 
-            options.user("user");
-            options.password("pass");
             options.connectedHandler((connection, location) -> {
                 LOG.info("Connection signaled that it was established");
                 established.countDown();
@@ -331,7 +328,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateConnectionWithSASLDisabledToSASLEnabledHost() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectAMQPHeader().respondWithSASLPHeader();
             peer.start();
 
@@ -339,7 +336,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
-            final ConnectionOptions options = new ConnectionOptions();
+            final ConnectionOptions options = connectionOptions();
             options.saslOptions().saslEnabled(false);
 
             final Client container = Client.create();
@@ -367,7 +364,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     protected void doTestConnectionCloseGetsResponseWithErrorDoesNotThrow(boolean tiemout) throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond().withErrorCondition(ConnectionError.CONNECTION_FORCED.toString(), "Not accepting connections");
@@ -378,7 +375,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
 
             if (tiemout) {
                 connection.openFuture().get(10, TimeUnit.SECONDS);
@@ -410,7 +407,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
         errorInfo.put(ClientConstants.SCHEME.toString(), redirectScheme);
         errorInfo.put(ClientConstants.PATH.toString(), redirectPath);
 
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().reject(ConnectionError.REDIRECT.toString(), "Not accepting connections", errorInfo);
             peer.expectBegin().optional();
@@ -422,7 +419,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
 
             try {
                 connection.defaultSession().openFuture().get();
@@ -454,7 +451,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testConnectionBlockingCloseGetsResponseWithErrorDoesNotThrow() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond().withErrorCondition(ConnectionError.CONNECTION_FORCED.toString(), "Not accepting connections");
@@ -465,7 +462,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
 
             connection.openFuture().get();
             // Should close normally and not throw error as we initiated the close.
@@ -477,7 +474,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testConnectionRemoteClosedAfterOpened() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().reject(ConnectionError.CONNECTION_FORCED.toString(), "Not accepting connections");
             peer.expectClose();
@@ -488,7 +485,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
 
@@ -502,7 +499,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testConnectionRemoteClosedAfterOpenedWithEmptyErrorConditionDescription() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().reject(ConnectionError.CONNECTION_FORCED.toString(), (String) null);
             peer.expectClose();
@@ -513,7 +510,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
 
@@ -527,7 +524,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testConnectionRemoteClosedAfterOpenedWithNoRemoteErrorCondition() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().reject();
             peer.expectClose();
@@ -538,7 +535,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
 
@@ -561,7 +558,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     protected void doTestConnectionOpenFutureWaitCancelledOnConnectionDrop(boolean timeout) throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen();
             peer.start();
@@ -571,7 +568,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.close();
@@ -606,7 +603,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     public void testRemotelyCloseConnectionDuringSessionCreation() throws Exception {
         final String BREAD_CRUMB = "ErrorMessageBreadCrumb";
 
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin();
@@ -619,7 +616,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
             connection.openFuture().get();
 
             Session session = connection.openSession();
@@ -656,7 +653,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doTestConnectionOpenTimeoutWhenNoRemoteOpenArrives(boolean timeout) throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen();
             peer.expectClose();
@@ -666,8 +663,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
-            ConnectionOptions options = new ConnectionOptions();
-            options.openTimeout(75);
+            final ConnectionOptions options = connectionOptions().openTimeout(75);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
@@ -699,7 +695,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doTestConnectionOpenWaitCanceledWhenConnectionDrops(boolean timeout) throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen();
             peer.dropAfterLastHandler(10);
@@ -709,7 +705,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
 
             try {
                 if (timeout) {
@@ -741,7 +737,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doTestConnectionCloseTimeoutWhenNoRemoteCloseArrives(boolean timeout) throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose();
@@ -751,8 +747,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
-            ConnectionOptions options = new ConnectionOptions();
-            options.closeTimeout(75);
+            final ConnectionOptions options = connectionOptions().closeTimeout(75);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
@@ -786,7 +781,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     private void doTestConnectionCloseWaitCompletesAfterRemoteConnectionDrops(boolean timeout) throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose();
@@ -798,7 +793,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
 
@@ -820,7 +815,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateDefaultSenderFailsOnConnectionWithoutSupportForAnonymousRelay() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond();
@@ -831,7 +826,8 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+            Connection connection = container.connect(
+                remoteURI.getHost(), remoteURI.getPort(), connectionOptions()).openFuture().get();
 
             try {
                 connection.defaultSender();
@@ -848,7 +844,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateDefaultSenderOnConnectionWithSupportForAnonymousRelay() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().withDesiredCapabilities(ClientConstants.ANONYMOUS_RELAY.toString())
                              .respond()
@@ -863,7 +859,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
             connection.openFuture().get(10, TimeUnit.SECONDS);
 
             Sender defaultSender = connection.defaultSender().openFuture().get(5, TimeUnit.SECONDS);
@@ -877,7 +873,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testConnectionRecreatesAnonymousRelaySenderAfterRemoteCloseOfSender() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().withDesiredCapabilities(ClientConstants.ANONYMOUS_RELAY.toString())
                              .respond()
@@ -893,7 +889,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
             connection.openFuture().get(10, TimeUnit.SECONDS);
 
             Sender defaultSender = connection.defaultSender().openFuture().get(5, TimeUnit.SECONDS);
@@ -914,7 +910,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateDynamicReceiver() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -931,7 +927,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
             connection.openFuture().get(10, TimeUnit.SECONDS);
 
             Receiver receiver = connection.openDynamicReceiver();
@@ -949,7 +945,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testConnectionSenderOpenHeldUntilConnectionOpenedAndRelaySupportConfirmed() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen();
             peer.expectBegin();
@@ -960,7 +956,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
             Sender sender = connection.defaultSender();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -987,7 +983,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testConnectionSenderIsSingletion() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond().withOfferedCapabilities("ANONYMOUS-RELAY");
             peer.expectBegin().respond();
@@ -999,7 +995,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
             Sender sender1 = connection.defaultSender();
             Sender sender2 = connection.defaultSender();
 
@@ -1028,7 +1024,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testConnectionSenderOpenFailsWhenAnonymousRelayNotSupported() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
@@ -1039,7 +1035,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
             Sender sender = connection.defaultSender();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -1068,7 +1064,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     private void tryReadConnectionRemoteProperties(boolean openResponse) throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen();
             peer.start();
@@ -1078,7 +1074,8 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+
+            ConnectionOptions options = connectionOptions().openTimeout(100);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -1122,7 +1119,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     private void tryReadConnectionRemoteOfferedCapabilities(boolean openResponse) throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen();
             peer.start();
@@ -1132,7 +1129,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            ConnectionOptions options = connectionOptions().openTimeout(100);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -1174,7 +1171,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     private void tryReadConnectionRemoteDesiredCapabilities(boolean openResponse) throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen();
             peer.start();
@@ -1184,7 +1181,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            ConnectionOptions options = connectionOptions().openTimeout(100);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -1220,7 +1217,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
         final String condition = "amqp:precondition-failed";
         final String description = "something bad happened.";
 
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().withError(condition, description).respond();
@@ -1231,11 +1228,24 @@ public class ConnectionTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+            Connection connection = container.connect(
+                remoteURI.getHost(), remoteURI.getPort(), connectionOptions()).openFuture().get();
 
             connection.close(ErrorCondition.create(condition, description, null));
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
+    }
+
+    protected ProtonTestServerOptions testServerOptions() {
+        return new ProtonTestServerOptions();
+    }
+
+    protected ConnectionOptions connectionOptions() {
+        return new ConnectionOptions();
+    }
+
+    protected ConnectionOptions connectionOptions(String user, String password) {
+        return new ConnectionOptions().user(user).password(password);
     }
 }
