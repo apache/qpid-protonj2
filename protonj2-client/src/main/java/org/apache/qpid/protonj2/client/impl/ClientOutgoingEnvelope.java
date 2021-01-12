@@ -138,6 +138,10 @@ public class ClientOutgoingEnvelope {
         return this;
     }
 
+    public ClientSender sender() {
+        return sender;
+    }
+
     public boolean aborted() {
         return aborted;
     }

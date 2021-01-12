@@ -87,8 +87,6 @@ final class ClientLocalTransactionContext implements ClientTransactionContext {
         checkCanCommitTransaction();
 
         if (txnController.isLocallyOpen()) {
-            TransactionController txnController = getOrCreateNewTxnController();
-
             currentTxn.getAttachments().set(DISCHARGE_FUTURE_NAME, commitFuture);
             currentTxn.getAttachments().set(START_TRANSACTION_MARKER, startNew);
 
@@ -125,8 +123,6 @@ final class ClientLocalTransactionContext implements ClientTransactionContext {
         checkCanRollbackTransaction();
 
         if (txnController.isLocallyOpen()) {
-            TransactionController txnController = getOrCreateNewTxnController();
-
             currentTxn.getAttachments().set(DISCHARGE_FUTURE_NAME, rollbackFuture);
             currentTxn.getAttachments().set(START_TRANSACTION_MARKER, startNew);
 
