@@ -179,10 +179,12 @@ final class ClientLocalTransactionContext implements ClientTransactionContext {
         if (isInTransaction()) {
             if (isRollbackOnly()) {
                 envelope.discard();
-            } else {
-                DeliveryState txnOutcome =  cachedSenderOutcome != null ?
+            } else if (outcome == null) {
+                DeliveryState txnOutcome = cachedSenderOutcome != null ?
                     cachedSenderOutcome : (cachedSenderOutcome = new TransactionalState().setTxnId(currentTxn.getTxnId()));
                 envelope.sendPayload(txnOutcome, settled);
+            } else {
+                envelope.sendPayload(new TransactionalState().setTxnId(currentTxn.getTxnId()).setOutcome((Outcome) outcome), settled);
             }
         } else {
             envelope.sendPayload(outcome, settled);

@@ -92,7 +92,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -124,7 +124,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions().requestTimeout(50);
@@ -173,7 +173,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions().requestTimeout(50);
@@ -234,7 +234,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -290,7 +290,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -350,7 +350,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -401,7 +401,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -458,7 +458,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -515,7 +515,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -566,7 +566,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -614,7 +614,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -647,7 +647,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -681,7 +681,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -711,7 +711,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -760,7 +760,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -794,7 +794,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -842,7 +842,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -904,7 +904,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -1151,7 +1151,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -1189,7 +1189,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -1236,7 +1236,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -1291,7 +1291,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
