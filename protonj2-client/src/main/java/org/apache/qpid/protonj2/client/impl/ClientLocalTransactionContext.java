@@ -194,8 +194,14 @@ final class ClientLocalTransactionContext implements ClientTransactionContext {
     @Override
     public ClientTransactionContext disposition(IncomingDelivery delivery, DeliveryState outcome, boolean settled) {
         if (isInTransaction()) {
-            DeliveryState txnOutcome = cachedReceiverOutcome != null ? cachedReceiverOutcome :
-                (cachedReceiverOutcome = new TransactionalState().setTxnId(currentTxn.getTxnId()).setOutcome((Outcome) outcome));
+            final DeliveryState txnOutcome;
+            if (outcome instanceof Accepted) {
+                txnOutcome = cachedReceiverOutcome != null ? cachedReceiverOutcome :
+                    (cachedReceiverOutcome = new TransactionalState().setTxnId(currentTxn.getTxnId()).setOutcome(Accepted.getInstance()));
+            } else {
+                txnOutcome = new TransactionalState().setTxnId(currentTxn.getTxnId()).setOutcome((Outcome) outcome);
+            }
+
             delivery.disposition(txnOutcome, true);
         } else {
             delivery.disposition(outcome, settled);
