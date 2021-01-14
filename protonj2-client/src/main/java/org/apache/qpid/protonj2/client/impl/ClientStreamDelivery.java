@@ -436,7 +436,7 @@ public final class ClientStreamDelivery implements StreamDelivery {
 
             try {
                 executor.execute(() -> {
-                    if (closed.get()) {
+                    if (protonDelivery.getLink().isLocallyClosed()) {
                         request.complete(-1);
                     } else if (protonDelivery.available() > 0) {
                         buffer.append(protonDelivery.readAll());
