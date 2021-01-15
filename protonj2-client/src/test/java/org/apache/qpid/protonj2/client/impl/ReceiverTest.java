@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,8 +35,6 @@ import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.SessionOptions;
-import org.apache.qpid.protonj2.client.StreamDelivery;
-import org.apache.qpid.protonj2.client.StreamReceiver;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
@@ -2095,7 +2094,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testCannotReceiveFromStreamDeliveredBeforeConnectionDrop() throws Exception {
+    public void testCannotReadFromStreamDeliveredBeforeConnectionDrop() throws Exception {
         final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
 
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -2119,18 +2118,17 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
-            final StreamDelivery delivery = receiver.receive();
+            final Receiver receiver = connection.openReceiver("test-queue");
+            final Delivery delivery = receiver.receive();
 
             peer.waitForScriptToComplete();
 
             assertNotNull(delivery);
-            assertTrue(delivery.completed());
-            assertFalse(delivery.aborted());
 
-            assertEquals(-1, delivery.rawInputStream().read());
+            // Data already read so it will be already available for read.
+            assertNotEquals(-1, delivery.rawInputStream().read());
 
-            connection.closeAsync().get();
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
