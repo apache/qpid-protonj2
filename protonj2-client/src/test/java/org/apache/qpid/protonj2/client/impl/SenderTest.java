@@ -1584,7 +1584,7 @@ public class SenderTest extends ImperativeClientTestCase {
             final CountDownLatch dropped = new CountDownLatch(1);
 
             ConnectionOptions options = new ConnectionOptions();
-            options.failedHandler((connection, event) -> {
+            options.disconnectedHandler((connection, event) -> {
                 dropped.countDown();
             });
 

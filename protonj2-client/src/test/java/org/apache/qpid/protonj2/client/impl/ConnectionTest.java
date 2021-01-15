@@ -181,6 +181,33 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testCreateConnectionSignalsEvent() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            final URI remoteURI = peer.getServerURI();
+            final CountDownLatch connected = new CountDownLatch(1);
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(
+                remoteURI.getHost(), remoteURI.getPort(), connectionOptions().connectedHandler((conn, event) -> connected.countDown()));
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertTrue(connected.await(5, TimeUnit.SECONDS));
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testCreateConnectionWithConfiguredContainerId() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
@@ -275,7 +302,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             final CountDownLatch failed = new CountDownLatch(1);
             ConnectionOptions options = connectionOptions();
 
-            options.failedHandler((connection, location) -> {
+            options.disconnectedHandler((connection, location) -> {
                 LOG.info("Connection signaled that it has failed");
                 failed.countDown();
             });

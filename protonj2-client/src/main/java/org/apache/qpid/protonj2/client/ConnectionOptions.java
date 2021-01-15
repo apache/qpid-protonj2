@@ -64,7 +64,7 @@ public class ConnectionOptions {
     private boolean traceFrames;
 
     private BiConsumer<Connection, ConnectionEvent> connectedhedHandler;
-    private BiConsumer<Connection, ConnectionEvent> failedHandler;
+    private BiConsumer<Connection, DisconnectionEvent> disconnectedHandler;
 
     /**
      * Create a new {@link ConnectionOptions} instance configured with default configuration settings.
@@ -107,7 +107,7 @@ public class ConnectionOptions {
         other.password(password);
         other.traceFrames(traceFrames);
         other.connectedHandler(connectedhedHandler);
-        other.failedHandler(failedHandler);
+        other.disconnectedHandler(disconnectedHandler);
 
         if (offeredCapabilities != null) {
             other.offeredCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
@@ -498,8 +498,8 @@ public class ConnectionOptions {
     /**
      * @return the connection failed handler currently registered.
      */
-    public BiConsumer<Connection, ConnectionEvent> failedHandler() {
-        return failedHandler;
+    public BiConsumer<Connection, DisconnectionEvent> disconnectedHandler() {
+        return disconnectedHandler;
     }
 
     /**
@@ -509,15 +509,15 @@ public class ConnectionOptions {
      * has failed.  The client application should close a failed {@link Connection} once it becomes
      * aware of the failure to ensure all connection resources are cleaned up properly.
      *
-     * @param failedHandler
+     * @param disconnectedHandler
      *      the connection failed handler to notify when the connection fails for any reason.
      *
      * @return this {@link ConnectionOptions} instance.
      *
      * @see #connectedHandler()
      */
-    public ConnectionOptions failedHandler(BiConsumer<Connection, ConnectionEvent> failedHandler) {
-        this.failedHandler = failedHandler;
+    public ConnectionOptions disconnectedHandler(BiConsumer<Connection, DisconnectionEvent> disconnectedHandler) {
+        this.disconnectedHandler = disconnectedHandler;
         return this;
     }
 
@@ -539,7 +539,7 @@ public class ConnectionOptions {
      *
      * @return this {@link ConnectionOptions} instance.
      *
-     * @see #failedHandler()
+     * @see #disconnectedHandler()
      */
     public ConnectionOptions connectedHandler(BiConsumer<Connection, ConnectionEvent> connectedHandler) {
         this.connectedhedHandler = connectedHandler;

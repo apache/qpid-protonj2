@@ -38,6 +38,7 @@ import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionEvent;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
+import org.apache.qpid.protonj2.client.DisconnectionEvent;
 import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
@@ -625,9 +626,25 @@ public class ClientConnection implements Connection {
             try {
                 notifications.submit(() -> {
                     try {
-                        handler.accept(this, new ConnectionEvent(host, port, cause));
+                        handler.accept(this, new ConnectionEvent(host, port));
                     } catch (Exception ex) {
                         LOG.trace("User supplied connection life-cycle event handler threw: ", ex);
+                    }
+                });
+            } catch (Exception ex) {
+                LOG.trace("Error thrown while attempting to submit event notification ", ex);
+            }
+        }
+    }
+
+    private void submitDisconnectionEvent(BiConsumer<Connection, DisconnectionEvent> handler, String host, int port, ClientIOException cause) {
+        if (handler != null) {
+            try {
+                notifications.submit(() -> {
+                    try {
+                        handler.accept(this, new DisconnectionEvent(host, port, cause));
+                    } catch (Exception ex) {
+                        LOG.trace("User supplied disconnection life-cycle event handler threw: ", ex);
                     }
                 });
             } catch (Exception ex) {
@@ -717,7 +734,7 @@ public class ClientConnection implements Connection {
         openFuture.failed(failureCause);
         closeFuture.complete(this);
 
-        submitConnectionEvent(options.failedHandler(), transport.getHost(), transport.getPort(), failureCause);
+        submitDisconnectionEvent(options.disconnectedHandler(), transport.getHost(), transport.getPort(), failureCause);
     }
 
     private Engine configureEngineSaslSupport() {

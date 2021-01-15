@@ -16,27 +16,33 @@
  */
 package org.apache.qpid.protonj2.client;
 
+import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
+
 /**
  * An event object that accompanies events fired to handlers configured in the
  * {@link ConnectionOptions} which are signaled during specific {@link Connection}
- * event points.
+ * life-cycle stages.
  */
-public class ConnectionEvent {
+public class DisconnectionEvent {
 
     private final String host;
     private final int port;
+    private final ClientIOException failureCause;
 
     /**
      * Creates the event object with all immutable data provided.
      *
      * @param host
-     *      the host that is associated with this {@link ConnectionEvent}
+     *      the host that is associated with this {@link DisconnectionEvent}
      * @param port
-     *      the port that is associated with this {@link ConnectionEvent}
+     *      the port that is associated with this {@link DisconnectionEvent}
+     * @param failureCause
+     *      the failure cause that is associated with this {@link DisconnectionEvent}
      */
-    public ConnectionEvent(String host, int port) {
+    public DisconnectionEvent(String host, int port, ClientIOException failureCause) {
         this.host = host;
         this.port = port;
+        this.failureCause = failureCause;
     }
 
     /**
@@ -45,7 +51,7 @@ public class ConnectionEvent {
      * interrupted or failed Connection this host would indicate the host where
      * the {@link Connection} had previously been established.
      *
-     * @return the host that is associated with this {@link ConnectionEvent}
+     * @return the host that is associated with this {@link DisconnectionEvent}
      */
     public String host() {
         return host;
@@ -57,9 +63,21 @@ public class ConnectionEvent {
      * interrupted or failed Connection this port would indicate the host where
      * the {@link Connection} had previously been established.
      *
-     * @return the port that is associated with this {@link ConnectionEvent}
+     * @return the port that is associated with this {@link DisconnectionEvent}
      */
     public int port() {
         return port;
+    }
+
+    /**
+     * Gets the failure cause that is associated with this event if the event indicates
+     * an error stage in the {@link Connection} life-cycle such as a connection being
+     * interrupted which might later be recovered or a failure to establish or reconnect
+     * a previously established {@link Connection}.
+     *
+     * @return the failureCause that is associated with this {@link DisconnectionEvent}
+     */
+    public ClientIOException failureCause() {
+        return failureCause;
     }
 }
