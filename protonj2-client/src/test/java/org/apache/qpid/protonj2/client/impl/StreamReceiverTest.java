@@ -47,10 +47,12 @@ import org.apache.qpid.protonj2.client.StreamReceiver;
 import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.StreamReceiverOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryAbortedException;
+import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientLinkRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.test.Wait;
+import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -2223,5 +2225,64 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
+    }
+
+    @Test
+    public void testStreamDeliveryHandlesInvalidHeaderEncoding() throws Exception {
+        final byte[] payload = createInvalidHeaderEncoding();
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDisposition().withState().rejected("decode-error", "failed reading message header");
+
+            final StreamDelivery delivery = receiver.receive();
+
+            assertThrows(ClientException.class, () -> delivery.message().header());
+
+            // TODO: Test that getting the body stream now fails and doesn't auto settle.
+
+            delivery.reject("decode-error", "failed reading message header");
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    private byte[] createInvalidHeaderEncoding() {
+        final byte[] buffer = new byte[12];
+
+        buffer[0] = 0; // Described Type Indicator
+        buffer[1] = EncodingCodes.SMALLULONG;
+        buffer[2] = Header.DESCRIPTOR_CODE.byteValue();
+        buffer[3] = EncodingCodes.MAP32; // Should be list based
+
+        return buffer;
     }
 }
