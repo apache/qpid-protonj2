@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.Client;
@@ -2512,6 +2513,75 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             receiver.close();
             connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testConnectionDropsDuringStreamedBodyRead() throws Exception {
+        final byte[] body1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        final byte[] body2 = new byte[] { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
+        final byte[] payload1 = createEncodedMessage(new Data(body1));
+        final byte[] payload2 = createEncodedMessage(new Data(body2));
+
+        final CountDownLatch disconnected = new CountDownLatch(1);
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withMaxFrameSize(1000).respond();
+            peer.expectBegin().withIncomingWindow(1).respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withIncomingWindow(1).withLinkCredit(1);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload1).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions connectionOptions = new ConnectionOptions().maxFrameSize(1000);
+            connectionOptions.disconnectedHandler((conn, event) -> disconnected.countDown());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions);
+            StreamReceiverOptions streamOptions = new StreamReceiverOptions().readBufferSize(2000).creditWindow(1);
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue", streamOptions);
+            StreamDelivery delivery = receiver.receive();
+            StreamReceiverMessage message = delivery.message();
+
+            // Creating the input stream instance should read the first chunk of data from the incoming
+            // delivery which should result in a new credit being available to expand the session window.
+            // An additional transfer should be placed into the delivery buffer but not yet read since
+            // the user hasn't read anything.
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectFlow().withDeliveryCount(0).withIncomingWindow(1).withLinkCredit(1);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload2).queue();
+            peer.dropAfterLastHandler();
+
+            InputStream bodyStream = message.body();
+            assertNotNull(bodyStream);
+
+            assertTrue(disconnected.await(5, TimeUnit.SECONDS));
+
+            byte[] readPayload = new byte[body1.length + body2.length];
+
+            try {
+                bodyStream.read(readPayload);
+                fail("Should not be able to read from closed connection stream");
+            } catch (IOException ioe) {
+                // Connection should be down now.
+            }
+
+            bodyStream.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

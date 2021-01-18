@@ -33,6 +33,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
+import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.Modified;
@@ -227,7 +228,11 @@ public final class ClientStreamDelivery implements StreamDelivery {
                         // bytes locally we need to discard those to aid in retention avoidance.
                         // and to potentially open the session window to allow for fully reading
                         // and discarding any inbound bytes that remain.
-                        protonDelivery.readAll();
+                        try {
+                            protonDelivery.readAll();
+                        } catch (EngineFailedException efe) {
+                            // Ignore as engine is down and we cannot read any more
+                        }
 
                         // Clear anything that wasn't yet read and then clear any pending read request as EOF
                         buffer.setIndex(buffer.capacity(), buffer.capacity());
@@ -436,8 +441,8 @@ public final class ClientStreamDelivery implements StreamDelivery {
 
             try {
                 executor.execute(() -> {
-                    if (protonDelivery.getLink().isLocallyClosed()) {
-                        request.complete(-1);
+                    if (protonDelivery.getLink().isLocallyClosedOrDetached()) {
+                        request.failed(new ClientException("Cannot read from delivery due to link having been closed"));
                     } else if (protonDelivery.available() > 0) {
                         buffer.append(protonDelivery.readAll());
                         request.complete(buffer.getReadableBytes());
