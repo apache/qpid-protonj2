@@ -55,6 +55,8 @@ import org.apache.qpid.protonj2.client.test.Wait;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.ApplicationProperties;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
@@ -2257,10 +2259,249 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             peer.expectDisposition().withState().rejected("decode-error", "failed reading message header");
 
             final StreamDelivery delivery = receiver.receive();
+            final StreamReceiverMessage message = delivery.message();
+
+            assertThrows(ClientException.class, () -> message.header());
+            assertThrows(ClientException.class, () -> message.body());
+
+            delivery.reject("decode-error", "failed reading message header");
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamDeliveryHandlesInvalidDeliveryAnnotationsEncoding() throws Exception {
+        final byte[] payload = createInvalidDeliveryAnnotationsEncoding();
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDisposition().withState().rejected("decode-error", "failed reading message header");
+
+            final StreamDelivery delivery = receiver.receive();
+            final StreamReceiverMessage message = delivery.message();
+
+            assertThrows(ClientException.class, () -> delivery.annotations());
+            assertThrows(ClientException.class, () -> message.body());
+
+            delivery.reject("decode-error", "failed reading message header");
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamDeliveryHandlesInvalidMessageAnnotationsEncoding() throws Exception {
+        final byte[] payload = createInvalidMessageAnnotationsEncoding();
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDisposition().withState().rejected("decode-error", "failed reading message header");
+
+            final StreamDelivery delivery = receiver.receive();
+            final StreamReceiverMessage message = delivery.message();
+
+            assertThrows(ClientException.class, () -> message.annotations());
+            assertThrows(ClientException.class, () -> message.body());
+
+            delivery.reject("decode-error", "failed reading message header");
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamDeliveryHandlesInvalidPropertiesEncoding() throws Exception {
+        final byte[] payload = createInvalidPropertiesEncoding();
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDisposition().withState().rejected("decode-error", "failed reading message header");
+
+            final StreamDelivery delivery = receiver.receive();
+            final StreamReceiverMessage message = delivery.message();
+
+            assertThrows(ClientException.class, () -> message.properties());
+            assertThrows(ClientException.class, () -> message.body());
+
+            delivery.reject("decode-error", "failed reading message header");
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamDeliveryHandlesInvalidApplicationPropertiesEncoding() throws Exception {
+        final byte[] payload = createInvalidApplicationPropertiesEncoding();
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDisposition().withState().rejected("decode-error", "failed reading message header");
+
+            final StreamDelivery delivery = receiver.receive();
+            final StreamReceiverMessage message = delivery.message();
+
+            assertThrows(ClientException.class, () -> message.applicationProperties());
+            assertThrows(ClientException.class, () -> message.body());
+
+            delivery.reject("decode-error", "failed reading message header");
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamDeliveryHandlesInvalidHeaderEncodingDuringBodyStreamOpen() throws Exception {
+        final byte[] payload = createInvalidHeaderEncoding();
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDisposition().withState().rejected("decode-error", "failed reading message header");
+
+            final StreamDelivery delivery = receiver.receive();
 
             StreamReceiverMessage message = delivery.message();
 
-            assertThrows(ClientException.class, () -> message.header());
             assertThrows(ClientException.class, () -> message.body());
 
             delivery.reject("decode-error", "failed reading message header");
@@ -2283,6 +2524,50 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         buffer[1] = EncodingCodes.SMALLULONG;
         buffer[2] = Header.DESCRIPTOR_CODE.byteValue();
         buffer[3] = EncodingCodes.MAP32; // Should be list based
+
+        return buffer;
+    }
+
+    private byte[] createInvalidDeliveryAnnotationsEncoding() {
+        final byte[] buffer = new byte[12];
+
+        buffer[0] = 0; // Described Type Indicator
+        buffer[1] = EncodingCodes.SMALLULONG;
+        buffer[2] = DeliveryAnnotations.DESCRIPTOR_CODE.byteValue();
+        buffer[3] = EncodingCodes.LIST32; // Should be Map based
+
+        return buffer;
+    }
+
+    private byte[] createInvalidMessageAnnotationsEncoding() {
+        final byte[] buffer = new byte[12];
+
+        buffer[0] = 0; // Described Type Indicator
+        buffer[1] = EncodingCodes.SMALLULONG;
+        buffer[2] = MessageAnnotations.DESCRIPTOR_CODE.byteValue();
+        buffer[3] = EncodingCodes.LIST32; // Should be Map based
+
+        return buffer;
+    }
+
+    private byte[] createInvalidPropertiesEncoding() {
+        final byte[] buffer = new byte[12];
+
+        buffer[0] = 0; // Described Type Indicator
+        buffer[1] = EncodingCodes.SMALLULONG;
+        buffer[2] = Properties.DESCRIPTOR_CODE.byteValue();
+        buffer[3] = EncodingCodes.MAP32; // Should be list based
+
+        return buffer;
+    }
+
+    private byte[] createInvalidApplicationPropertiesEncoding() {
+        final byte[] buffer = new byte[12];
+
+        buffer[0] = 0; // Described Type Indicator
+        buffer[1] = EncodingCodes.SMALLULONG;
+        buffer[2] = ApplicationProperties.DESCRIPTOR_CODE.byteValue();
+        buffer[3] = EncodingCodes.LIST32; // Should be map based
 
         return buffer;
     }
