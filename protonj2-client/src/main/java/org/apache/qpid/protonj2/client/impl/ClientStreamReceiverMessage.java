@@ -30,6 +30,7 @@ import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
+import org.apache.qpid.protonj2.client.exceptions.ClientMessageFormatViolationException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.codec.DecodeEOFException;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -73,7 +74,8 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
         APPLICATION_PROPERTIES_READ,
         BODY_PENDING,
         BODY_READABLE,
-        FOOTER_READ
+        FOOTER_READ,
+        DECODE_ERROR
     }
 
     private final ClientStreamReceiver receiver;
@@ -556,8 +558,13 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
     @Override
     public boolean hasFooters() throws ClientException {
         ensureStreamDecodedTo(StreamState.BODY_READABLE);
+
         if (currentState != StreamState.FOOTER_READ) {
-            throw new ClientIllegalStateException("Cannot read message Footer until message body fully read");
+            if (currentState == StreamState.DECODE_ERROR) {
+                throw new ClientException("Cannot read Footer due to decoding error in message payload");
+            } else {
+                throw new ClientIllegalStateException("Cannot read message Footer until message body fully read");
+            }
         }
 
         return footer != null && footer.getValue() != null && footer.getValue().size() > 0;
@@ -628,7 +635,11 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
     @Override
     public InputStream body() throws ClientException {
         if (currentState.ordinal() > StreamState.BODY_READABLE.ordinal()) {
-            throw new ClientIllegalStateException("Cannot read body from message whose body has already been read.");
+            if (currentState == StreamState.DECODE_ERROR) {
+                throw new ClientException("Cannot read body due to decoding error in message payload");
+            } else {
+                throw new ClientIllegalStateException("Cannot read body from message whose body has already been read.");
+            }
         }
 
         ensureStreamDecodedTo(StreamState.BODY_READABLE);
@@ -709,14 +720,23 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
                     footer = (Footer) decoder.readValue(deliveryStream, decoderState);
                     currentState = StreamState.FOOTER_READ;
                 } else {
-                    break; // TODO: Unknown or unexpected section in message
+                    throw new ClientMessageFormatViolationException("Incoming message carries unknown Section");
                 }
-            } catch (DecodeException dex) {
+            } catch (ClientMessageFormatViolationException | DecodeException ex) {
+                currentState = StreamState.DECODE_ERROR;
+                if (deliveryStream != null) {
+                    try {
+                        deliveryStream.close();
+                    } catch (IOException e) {
+                    }
+                }
+
                 // TODO: Handle inability to decode stream chunk by setting some configured
                 //       disposition and closing the stream plus ensuring that the remaining
                 //       transfers get their incoming bytes read and discarded to ensure that
                 //       session credit is expanded.
-                throw new ClientException("Failed reading incoming message data");
+
+                throw ClientExceptionSupport.createNonFatalOrPassthrough(ex);
             }
         }
     }

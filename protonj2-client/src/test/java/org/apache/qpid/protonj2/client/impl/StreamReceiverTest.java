@@ -2258,9 +2258,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             final StreamDelivery delivery = receiver.receive();
 
-            assertThrows(ClientException.class, () -> delivery.message().header());
+            StreamReceiverMessage message = delivery.message();
 
-            // TODO: Test that getting the body stream now fails and doesn't auto settle.
+            assertThrows(ClientException.class, () -> message.header());
+            assertThrows(ClientException.class, () -> message.body());
 
             delivery.reject("decode-error", "failed reading message header");
 
