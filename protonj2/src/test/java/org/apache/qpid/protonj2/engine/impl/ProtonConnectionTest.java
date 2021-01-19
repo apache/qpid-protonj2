@@ -1698,7 +1698,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNotNull(failure);
     }
 
-    @Disabled("Disabled until solution to pipelined close allows for remote begin to arrive late")
+    @Disabled("Fix need for half closed session.")
     @Test
     public void testPipelinedResourceOpenAllowsForReturningResponsesAfterCloseOfConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
@@ -1708,15 +1708,11 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
         peer.expectBegin();
-        peer.expectAttach().ofSender();
-        peer.expectDetach();
         peer.expectEnd();
 
         Connection connection = engine.start().open();
         Session session = connection.session().open();
-        Sender sender = session.sender("test").open();
 
-        sender.close();
         session.close();
 
         peer.waitForScriptToComplete();

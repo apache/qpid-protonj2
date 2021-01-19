@@ -57,6 +57,7 @@ import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.hamcrest.Matcher;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -1579,6 +1580,37 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         assertTrue(senderRemotelyOpened.get(), "Sender should have reported remote sender open");
         assertTrue(receiverRemotelyOpened.get(), "Receiver should have reported remote sender open");
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Disabled("Fix need for half closed session.")
+    @Test
+    public void testBeginAndEndSessionBeforeRemoteBeginArrives() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin();
+        peer.expectEnd();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+
+        session.open();
+        session.close();
+
+        peer.waitForScriptToComplete();
+
+        // Trigger error state.
+        peer.remoteBegin().withRemoteChannel(0).withNextOutgoingId(1).now();
+        peer.remoteEnd().now();
 
         peer.waitForScriptToComplete();
 
