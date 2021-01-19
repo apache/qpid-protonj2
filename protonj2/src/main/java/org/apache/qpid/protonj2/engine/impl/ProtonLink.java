@@ -28,6 +28,7 @@ import org.apache.qpid.protonj2.engine.LinkState;
 import org.apache.qpid.protonj2.engine.Receiver;
 import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
+import org.apache.qpid.protonj2.engine.exceptions.EngineShutdownException;
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -783,19 +784,21 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
         switch (operability) {
             case OK:
                 break;
+            case ENGINE_SHUTDOWN:
+                throw new EngineShutdownException(failurePrefix + ": " + operability.toString());
             default:
                 throw new IllegalStateException(failurePrefix + ": " + operability.toString());
         }
     }
 
-    protected void checkLinkOperableOrLocallyClosed(String failurePrefix) {
+    protected boolean areDeliveriesStillActive() {
         switch (operability) {
             case OK:
-            case LINK_LOCALLY_CLOSED:
+            case LINK_REMOTELY_DETACHED:
             case LINK_LOCALLY_DETACHED:
-                break;
+                return true;
             default:
-                throw new IllegalStateException(failurePrefix + ": " + operability.toString());
+                return false;
         }
     }
 

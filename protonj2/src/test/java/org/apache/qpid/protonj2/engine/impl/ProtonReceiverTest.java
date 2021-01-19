@@ -53,6 +53,7 @@ import org.apache.qpid.protonj2.engine.LinkState;
 import org.apache.qpid.protonj2.engine.Receiver;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
+import org.apache.qpid.protonj2.engine.exceptions.EngineShutdownException;
 import org.apache.qpid.protonj2.engine.util.SimplePojo;
 import org.apache.qpid.protonj2.test.driver.ProtonTestConnector;
 import org.apache.qpid.protonj2.types.Binary;
@@ -75,7 +76,6 @@ import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.hamcrest.Matcher;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -3905,10 +3905,77 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    // TODO: Prevent link from writing flow if link, session or connection were closed or engine shutdown
-    @Disabled("Disabled until a fix is ready")
+    @Test
+    public void testSettleDeliveryAfterEngineShutdown() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
+        final byte[] payload = new byte[] { 1 };
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(1);
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("receiver");
+        receiver.addCredit(1);
+
+        // Receiver 1 handlers for delivery processing.
+        receiver.deliveryReadHandler(delivery -> {
+            receivedDelivery.set(delivery);
+        });
+
+        receiver.open();
+
+        peer.waitForScriptToComplete();
+
+        engine.shutdown();
+
+        try {
+            receivedDelivery.get().settle();
+            fail("Should not allow for settlement since engine was manually shut down");
+        } catch (EngineShutdownException ese) {}
+
+        receiver.close();
+        session.close();
+        connection.close();
+
+        // Check post conditions and done.
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReadAllDeliveryDataWhenSessionWindowInForceAndLinkIsClosed() throws Exception {
+        testReadAllDeliveryDataWhenSessionWindowInForceButLinkCannotWrite(true, false, false, false);
+    }
+
+    @Test
+    public void testReadAllDeliveryDataWhenSessionWindowInForceAndSessionIsClosed() throws Exception {
+        testReadAllDeliveryDataWhenSessionWindowInForceButLinkCannotWrite(false, true, false, false);
+    }
+
     @Test
     public void testReadAllDeliveryDataWhenSessionWindowInForceAndConnectionIsClosed() throws Exception {
+        testReadAllDeliveryDataWhenSessionWindowInForceButLinkCannotWrite(false, false, true, false);
+    }
+
+    @Test
+    public void testReadAllDeliveryDataWhenSessionWindowInForceAndEngineIsShutdown() throws Exception {
+        testReadAllDeliveryDataWhenSessionWindowInForceButLinkCannotWrite(false, false, false, true);
+    }
+
+    private void testReadAllDeliveryDataWhenSessionWindowInForceButLinkCannotWrite(boolean closeLink, boolean closeSession, boolean closeConnection, boolean shutdown) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -3950,12 +4017,25 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.addCredit(2);
 
         peer.waitForScriptToComplete();
-        peer.expectClose().respond();
+
+        if (closeLink) {
+            peer.expectDetach().withClosed(true).respond();
+            receiver.close();
+        }
+        if (closeSession) {
+            peer.expectEnd().respond();
+            session.close();
+        }
+        if (closeConnection) {
+            peer.expectClose().respond();
+            connection.close();
+        }
+        if (shutdown) {
+            engine.shutdown();
+        }
 
         assertNotNull(delivery.get());
         assertEquals(2, deliveryCounter.get(), "Should only be one initial delivery");
-
-        connection.close();
 
         delivery.get().readAll();
 

@@ -240,7 +240,9 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {
-        sessionWindow.deliveryRead(delivery, bytesRead);
+        if (areDeliveriesStillActive()) {
+            sessionWindow.deliveryRead(delivery, bytesRead);
+        }
     }
 
     //----- Receiver event handlers
