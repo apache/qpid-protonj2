@@ -75,6 +75,7 @@ import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.hamcrest.Matcher;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -3794,6 +3795,67 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testSessionWindowOpenedAfterDeliveryReadFromSplitFramedTransfer() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().withIncomingWindow(1).respond();
+        peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+        peer.expectFlow().withLinkCredit(2).withIncomingWindow(1);
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(true)
+                             .withPayload(payload)
+                             .withMessageFormat(0).queue();
+        peer.expectFlow().withLinkCredit(2).withIncomingWindow(1);
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(true)
+                             .withPayload(payload)
+                             .withMessageFormat(0).queue();
+        peer.expectFlow().withLinkCredit(3).withIncomingWindow(0);
+        peer.expectFlow().withLinkCredit(3).withIncomingWindow(1);
+        peer.expectDetach().respond();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().setIncomingCapacity(1024).open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicInteger deliveryCounter = new AtomicInteger();
+        final AtomicReference<IncomingDelivery> delivery = new AtomicReference<>();
+
+        receiver.deliveryReadHandler(incoming -> {
+            if (deliveryCounter.getAndIncrement() == 0) {
+                delivery.set(incoming);
+                delivery.get().readAll();
+            }
+        });
+
+        receiver.open();
+        receiver.addCredit(2);
+
+        assertEquals(2, deliveryCounter.get(), "Should only be one initial delivery");
+        assertTrue(delivery.get().available() > 0);
+
+        receiver.addCredit(1);
+
+        delivery.get().readAll();
+
+        receiver.close();
+
+        assertEquals(2, deliveryCounter.get(), "Should only be one initial delivery");
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testIncomingDeliveryTracksTransferInCount() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -3837,6 +3899,65 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertEquals(2, received.get().getTransferCount());
 
         receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    // TODO: Prevent link from writing flow if link, session or connection were closed or engine shutdown
+    @Disabled("Disabled until a fix is ready")
+    @Test
+    public void testReadAllDeliveryDataWhenSessionWindowInForceAndConnectionIsClosed() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().withIncomingWindow(1).respond();
+        peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+        peer.expectFlow().withLinkCredit(2).withIncomingWindow(1);
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(true)
+                             .withPayload(payload)
+                             .withMessageFormat(0).queue();
+        peer.expectFlow().withLinkCredit(2).withIncomingWindow(1);
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(false)
+                             .withPayload(payload)
+                             .withMessageFormat(0).queue();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().setIncomingCapacity(1024).open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicInteger deliveryCounter = new AtomicInteger();
+        final AtomicReference<IncomingDelivery> delivery = new AtomicReference<>();
+
+        receiver.deliveryReadHandler(incoming -> {
+            if (deliveryCounter.getAndAdd(1) == 0) {
+                delivery.set(incoming);
+                incoming.readAll();
+            }
+        });
+
+        receiver.open();
+        receiver.addCredit(2);
+
+        peer.waitForScriptToComplete();
+        peer.expectClose().respond();
+
+        assertNotNull(delivery.get());
+        assertEquals(2, deliveryCounter.get(), "Should only be one initial delivery");
+
+        connection.close();
+
+        delivery.get().readAll();
 
         peer.waitForScriptToComplete();
 

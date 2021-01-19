@@ -68,8 +68,10 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     private final Map<String, ProtonSender> senderByNameMap = new HashMap<>();
     private final Map<String, ProtonReceiver> receiverByNameMap = new HashMap<>();
 
-    private SplayMap<ProtonLink<?>> localLinks = new SplayMap<>();
-    private SplayMap<ProtonLink<?>> remoteLinks = new SplayMap<>();
+    private final SplayMap<ProtonLink<?>> localLinks = new SplayMap<>();
+    private final SplayMap<ProtonLink<?>> remoteLinks = new SplayMap<>();
+
+    private final Flow cachedFlow = new Flow();
 
     private final ProtonConnection connection;
 
@@ -566,8 +568,6 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
             }
         }
     }
-
-    private final Flow cachedFlow = new Flow();
 
     void writeFlow(ProtonLink<?> link) {
         cachedFlow.reset();

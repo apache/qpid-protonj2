@@ -28,7 +28,6 @@ import org.apache.qpid.protonj2.engine.LinkState;
 import org.apache.qpid.protonj2.engine.Receiver;
 import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
-import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -57,15 +56,15 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
 
     private enum LinkOperabilityState {
         OK,
-        ENGINE_FAILED,
-        CONNECTION_REMOTELY_CLOSED,
-        CONNECTION_LOCALLY_CLOSED,
+        LINK_REMOTELY_DETACHED,
+        LINK_LOCALLY_DETACHED,
+        LINK_REMOTELY_CLOSED,
+        LINK_LOCALLY_CLOSED,
         SESSION_REMOTELY_CLOSED,
         SESSION_LOCALLY_CLOSED,
-        LINK_REMOTELY_CLOSED,
-        LINK_REMOTELY_DETACHED,
-        LINK_LOCALLY_CLOSED,
-        LINK_LOCALLY_DETACHED
+        CONNECTION_REMOTELY_CLOSED,
+        CONNECTION_LOCALLY_CLOSED,
+        ENGINE_SHUTDOWN
     }
 
     protected final ProtonConnection connection;
@@ -177,7 +176,9 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
     public L detach() {
         if (getState() == LinkState.ACTIVE) {
             localState = LinkState.DETACHED;
-            operability = LinkOperabilityState.LINK_LOCALLY_DETACHED;
+            if (operability.ordinal() < LinkOperabilityState.LINK_LOCALLY_DETACHED.ordinal()) {
+                operability = LinkOperabilityState.LINK_LOCALLY_DETACHED;
+            }
             getCreditState().clearCredit();
             transitionedToLocallyDetached();
             try {
@@ -195,7 +196,9 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
     public L close() {
         if (getState() == LinkState.ACTIVE) {
             localState = LinkState.CLOSED;
-            operability = LinkOperabilityState.LINK_LOCALLY_CLOSED;
+            if (operability.ordinal() < LinkOperabilityState.LINK_LOCALLY_CLOSED.ordinal()) {
+                operability = LinkOperabilityState.LINK_LOCALLY_CLOSED;
+            }
             getCreditState().clearCredit();
             transitionedToLocallyClosed();
             try {
@@ -603,8 +606,8 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
             getCreditState().clearCredit();
         }
 
-        if (operability.ordinal() < LinkOperabilityState.ENGINE_FAILED.ordinal()) {
-            operability = LinkOperabilityState.ENGINE_FAILED;
+        if (operability.ordinal() < LinkOperabilityState.ENGINE_SHUTDOWN.ordinal()) {
+            operability = LinkOperabilityState.ENGINE_SHUTDOWN;
         }
 
         try {
@@ -780,8 +783,6 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
         switch (operability) {
             case OK:
                 break;
-            case ENGINE_FAILED:
-                throw new EngineFailedException(failurePrefix + ": Engine Failed", engine.failureCause());
             default:
                 throw new IllegalStateException(failurePrefix + ": " + operability.toString());
         }
@@ -793,8 +794,6 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
             case LINK_LOCALLY_CLOSED:
             case LINK_LOCALLY_DETACHED:
                 break;
-            case ENGINE_FAILED:
-                throw new EngineFailedException(failurePrefix + ": Engine Failed", engine.failureCause());
             default:
                 throw new IllegalStateException(failurePrefix + ": " + operability.toString());
         }
