@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.engine.impl;
 
+import java.lang.ref.SoftReference;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,6 +71,11 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     private Map<Integer, ProtonSession> localSessions = new HashMap<>();
     private Map<Integer, ProtonSession> remoteSessions = new HashMap<>();
+
+    // These would be sessions that were begun and ended before the remote ever
+    // responded with a matching being and end.  The remote is required to complete
+    // these before answering a new begin sequence on the same local channel.
+    private Map<Integer, SoftReference<ProtonSession>> zombieSessions = new LinkedHashMap<>();
 
     private ConnectionState localState = ConnectionState.IDLE;
     private ConnectionState remoteState = ConnectionState.IDLE;
@@ -450,12 +456,31 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
             // the remote is requesting a new session and we need to create one and signal that a remote
             // session was opened.
             if (begin.hasRemoteChannel()) {
-                int remoteChannel = begin.getRemoteChannel();
-                session = localSessions.get(begin.getRemoteChannel());
+                final int remoteChannel = begin.getRemoteChannel();
+                session = localSessions.get(remoteChannel);
                 if (session == null) {
-                    setCondition(new ErrorCondition(AmqpError.PRECONDITION_FAILED, "No matching session found for remote channel given")).close();
-                    engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Begin from remote: " + remoteChannel));
-                    return;
+                    // If there is a session that was begun and ended before remote responded we
+                    // expect that this exchange refers to that session and proceed as though the
+                    // remote is going to begin and end it now (as it should).  The alternative is
+                    // that the remote is doing something not compliant with the specification and
+                    // we fail the engine to indicate this.
+                    if (zombieSessions.containsKey(remoteChannel)) {
+                        session = zombieSessions.get(remoteChannel).get();
+                        if (session != null) {
+                            // The session will now get tracked as a remote session and the next
+                            // end will take care of normal remote session cleanup.
+                            zombieSessions.remove(remoteChannel);
+                        } else {
+                            // The session was reclaimed by GC and we retain the fact that it was
+                            // here so that the end that should be following doesn't result in an
+                            // engine failure.
+                            return;
+                        }
+                    } else {
+                        setCondition(new ErrorCondition(AmqpError.PRECONDITION_FAILED, "No matching session found for remote channel given")).close();
+                        engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Begin from remote: " + remoteChannel));
+                        return;
+                    }
                 }
             } else {
                 session = session();
@@ -478,7 +503,12 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     public void handleEnd(End end, ProtonBuffer payload, int channel, ProtonEngine context) {
         final ProtonSession session = remoteSessions.remove(channel);
         if (session == null) {
-            engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on End from remote: " + channel));
+            // Check that we don't have a lingering session that was opened and closed locally for
+            // which the remote is finally getting round to ending but we lost the session instance
+            // due to it being cleaned up by GC,
+            if (zombieSessions.remove(channel) == null) {
+                engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on End from remote: " + channel));
+            }
         } else {
             session.remoteEnd(end, channel);
         }
@@ -663,16 +693,6 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         return new ErrorCondition(condition, description);
     }
 
-    private int findFreeLocalChannel() {
-        for (int i = 0; i < ProtonConstants.CHANNEL_MAX; ++i) {
-            if (!localSessions.containsKey(i)) {
-                return i;
-            }
-        }
-
-        throw new IllegalStateException("no local channel available for allocation");
-    }
-
     @SuppressWarnings("unchecked")
     private Set<ProtonSession> allSessions() {
         final Set<ProtonSession> result;
@@ -688,12 +708,36 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         return result;
     }
 
+    private int findFreeLocalChannel() {
+        for (int i = 0; i < ProtonConstants.CHANNEL_MAX; ++i) {
+            if (!localSessions.containsKey(i) && !zombieSessions.containsKey(i)) {
+                return i;
+            }
+        }
+
+        // We didn't find one that isn't free and also not awaiting remote being / end
+        // so just use an overlap as it should complete in order unles the remote has
+        // completely ignored the specification and or gone of the rails.
+        for (int i = 0; i < ProtonConstants.CHANNEL_MAX; ++i) {
+            if (!localSessions.containsKey(i)) {
+                return i;
+            }
+        }
+
+        throw new IllegalStateException("no local channel available for allocation");
+    }
+
     void freeLocalChannel(int localChannel) {
         if (localChannel > ProtonConstants.CHANNEL_MAX) {
             throw new IllegalArgumentException("Specified local channel is out of range: " + localChannel);
         }
 
-        localSessions.remove(localChannel);
+        ProtonSession session = localSessions.remove(localChannel);
+        if (session.getRemoteState() == SessionState.IDLE) {
+            // The remote hasn't answered our begin yet so we need to hold onto this information
+            // and process the eventual begin that must be provided per specification.
+            zombieSessions.put(localChannel, new SoftReference<>(session));
+        }
     }
 
     boolean wasHeaderSent() {

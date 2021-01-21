@@ -1586,9 +1586,17 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Disabled("Fix need for half closed session.")
     @Test
     public void testBeginAndEndSessionBeforeRemoteBeginArrives() throws Exception {
+        doTestBeginAndEndSessionBeforeRemoteBeginArrives(false);
+    }
+
+    @Test
+    public void testBeginAndEndSessionBeforeRemoteBeginArrivesForceGC() throws Exception {
+        doTestBeginAndEndSessionBeforeRemoteBeginArrives(true);
+    }
+
+    private void doTestBeginAndEndSessionBeforeRemoteBeginArrives(boolean trgForceGC) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -1606,11 +1614,95 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         session.open();
         session.close();
 
-        peer.waitForScriptToComplete();
+        // Make an "effort" to test the what happens after GC removes references to old sessions
+        // this likely won't work but we at least tried.
+        if (trgForceGC) {
+            System.gc();
+        }
 
-        // Trigger error state.
+        peer.waitForScriptToComplete();
         peer.remoteBegin().withRemoteChannel(0).withNextOutgoingId(1).now();
         peer.remoteEnd().now();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testHalfClosedSessionChannelNotImmediatelyRecycled() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().onChannel(0);
+        peer.expectEnd();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        connection.session().open().close();
+
+        // Channel 0 should be skipped since we are still waiting for the being / end and
+        // we have a free slot that can be used instead.
+        peer.waitForScriptToComplete();
+        peer.expectBegin().onChannel(1).respond();
+        peer.expectEnd().onChannel(1).respond();
+
+        connection.session().open().close();
+
+        // Now channel 1 should reused since it was opened and closed properly
+        peer.waitForScriptToComplete();
+        peer.expectBegin().onChannel(1).respond();
+        peer.expectBegin().onChannel(0).respond();
+        peer.expectEnd().onChannel(0).respond();
+
+        connection.session().open();
+
+        // Close the original session now and its slot should be free to be reused.
+        peer.remoteBegin().withRemoteChannel(0).withNextOutgoingId(1).now();
+        peer.remoteEnd().now();
+
+        connection.session().open().close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Disabled("Connection not enforcing channel max yet")
+    @Test
+    public void testHalfClosedSessionChannelRecycledIfNoOtherAvailableChannels() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withChannelMax(2).respond().withContainerId("driver");
+        peer.expectBegin().onChannel(0);
+        peer.expectEnd().onChannel(0);
+        peer.expectBegin().onChannel(1).respond();
+        peer.expectBegin().onChannel(0);
+        peer.expectEnd().onChannel(0);
+        peer.expectEnd();
+
+        Connection connection = engine.start();
+
+        connection.setChannelMax(2);
+        connection.open();
+        connection.session().open().close(); // Ch: 0
+        connection.session().open(); // Ch: 1
+        connection.session().open().close(); // Ch: 0 (recycled)
+
+        peer.waitForScriptToComplete();
+        peer.remoteBegin().withRemoteChannel(0).withNextOutgoingId(1).now();
+        peer.remoteEnd().now();
+        peer.remoteBegin().withRemoteChannel(0).withNextOutgoingId(1).now();
+        peer.remoteEnd().now();
+
+        connection.session().open().close();
 
         peer.waitForScriptToComplete();
 

@@ -53,7 +53,6 @@ import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.ConnectionError;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.hamcrest.Matcher;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -1698,7 +1697,6 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNotNull(failure);
     }
 
-    @Disabled("Fix need for half closed session.")
     @Test
     public void testPipelinedResourceOpenAllowsForReturningResponsesAfterCloseOfConnection() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
