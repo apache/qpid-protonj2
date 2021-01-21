@@ -47,29 +47,23 @@ import org.apache.qpid.protonj2.types.UnsignedInteger;
  *
  * @param <E> The type stored in the map entries
  */
-public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
+public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     private static final UnsignedComparator COMPARATOR = new UnsignedComparator();
 
-    /**
-     * Cache of reusable entries filled when values are removed from the Map
-     */
-    private final RingQueue<SplayedEntry<E>> entryPool = new RingQueue<>(64);
+    protected final RingQueue<SplayedEntry<E>> entryPool = new RingQueue<>(64);
 
     /**
      * Root node which can be null if the tree has no elements (size == 0)
      */
-    private SplayedEntry<E> root;
+    protected SplayedEntry<E> root;
 
     /**
      * Current size of the splayed map tree.
      */
-    private int size;
+    protected int size;
 
-    /**
-     * Modification tracker for use in detecting concurrent modifications
-     */
-    private int modCount;
+    protected int modCount;
 
     @Override
     public int size() {
@@ -91,7 +85,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      * immediately without modifying the {@link Map}.
      *
      * @param key
-     *      the integer key value to search for in the {@link SplayMap}.
+     *      the integer key value to search for in the {@link BottomUpSplayMap}.
      *
      * @return the value stored for the given key if found or null if not in the {@link Map}.
      */
@@ -121,7 +115,6 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
             if (root.key == key) {
                 oldValue = root.value;
                 root.value = value;
-                size--;
             } else {
                 final SplayedEntry<E> node = entryPool.poll(SplayMap::createEmtry).initialize(key, value);
 
@@ -133,7 +126,10 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
             }
         }
 
-        size++;
+        if (oldValue == null) {
+            entryAdded(root);
+            size++;
+        }
         modCount++;
 
         return oldValue;
@@ -162,6 +158,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
             }
         }
 
+        entryAdded(root);
         size++;
         modCount++;
 
@@ -278,9 +275,9 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     // types are stateless the trivial race on create is not important to the
     // eventual outcome of having a cached instance.
 
-    private Set<UnsignedInteger> keySet;
-    private Collection<E> values;
-    private Set<Entry<UnsignedInteger, E>> entrySet;
+    protected Set<UnsignedInteger> keySet;
+    protected Collection<E> values;
+    protected Set<Entry<UnsignedInteger, E>> entrySet;
 
     @Override
     public Set<UnsignedInteger> keySet() {
@@ -317,13 +314,13 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     /**
      * A specialized forEach implementation that accepts a {@link Consumer} function that will
-     * be called for each value in the {@link SplayMap}.  This method can save overhead as it does not
+     * be called for each value in the {@link BottomUpSplayMap}.  This method can save overhead as it does not
      * need to box the primitive key values into an object for the call to the provided function.
      * Unless otherwise specified by the implementing class, actions are performed in the order of entry
      * set iteration (if an iteration order is specified.)
      *
      * @param action
-     *      The action to be performed for each of the values in the {@link SplayMap}.
+     *      The action to be performed for each of the values in the {@link BottomUpSplayMap}.
      */
     public void forEach(Consumer<? super E> action) {
         Objects.requireNonNull(action);
@@ -346,6 +343,61 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         if (modCount != initialModCount) {
             throw new ConcurrentModificationException();
         }
+    }
+
+    @Override
+    public boolean remove(Object key, Object value) {
+        Number numericKey = (Number) key;
+        return remove(numericKey.intValue(), value);
+    }
+
+    public boolean remove(int key, Object value) {
+        root = splay(root, key);
+        if (root == null || root.key != key || !Objects.equals(root.value, value)) {
+            return false;
+        } else {
+            delete(root);
+            return true;
+        }
+    }
+
+    @Override
+    public boolean replace(UnsignedInteger key, E oldValue, E newValue) {
+        return replace(key.intValue(), oldValue, newValue);
+    }
+
+    public boolean replace(int key, E oldValue, E newValue) {
+        root = splay(root, key);
+        if (root == null || root.key != key || !Objects.equals(root.value, oldValue)) {
+            return false;
+        } else {
+            root.setValue(newValue);
+            return true;
+        }
+    }
+
+    @Override
+    public E replace(UnsignedInteger key, E value) {
+        return replace(key.intValue(), value);
+    }
+
+    public E replace(int key, E value) {
+        root = splay(root, key);
+        if (root == null || root.key != key || root.value == null) {
+            return null;
+        } else {
+            return root.setValue(value);
+        }
+    }
+
+    //----- Extension points
+
+    protected void entryAdded(SplayedEntry<E> newEntry) {
+        // Nothing to do in the base class implementation.
+    }
+
+    protected void entryDeleted(SplayedEntry<E> deletedEntry) {
+        // Nothing to do in the base class implementation.
     }
 
     //----- Internal Implementation
@@ -497,7 +549,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return root;
     }
 
-    private void delete(SplayedEntry<E> node) {
+    protected void delete(SplayedEntry<E> node) {
         final SplayedEntry<E> grandparent = node.parent;
         SplayedEntry<E> replacement = node.right;
 
@@ -523,6 +575,8 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         // Clear node before moving to cache
         node.left = node.right = node.parent = null;
         entryPool.offer(node);
+
+        entryDeleted(node);
 
         size--;
         modCount++;
@@ -830,7 +884,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     //----- Map Entry node for the Splay Map
 
-    private static final class SplayedEntry<E> implements Map.Entry<UnsignedInteger, E>{
+    protected static final class SplayedEntry<E> implements Map.Entry<UnsignedInteger, E>{
 
         SplayedEntry<E> left;
         SplayedEntry<E> right;
@@ -839,6 +893,10 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         int key;
         E value;
 
+        // Insertion order chain used by LinkedSplayMap
+        SplayedEntry<E> linkNext;
+        SplayedEntry<E> linkPrev;
+
         public SplayedEntry() {
             initialize(key, value);
         }
@@ -846,6 +904,9 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         public SplayedEntry<E> initialize(int key, E value) {
             this.key = key;
             this.value = value;
+            // Node is circular list to start.
+            this.linkNext = this;
+            this.linkPrev = this;
 
             return this;
         }
@@ -933,7 +994,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         }
     }
 
-    private ImmutableSplayMapEntry export(SplayedEntry<E> entry) {
+    protected ImmutableSplayMapEntry export(SplayedEntry<E> entry) {
         return entry == null ? null : new ImmutableSplayMapEntry(entry);
     }
 

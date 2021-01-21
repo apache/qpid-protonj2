@@ -41,7 +41,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test SplayMap type
+ * Test {@link SplayMap} type
  */
 public class SplayMapTest {
 
@@ -57,9 +57,13 @@ public class SplayMapTest {
         random.setSeed(seed);
     }
 
+    protected <E> SplayMap<E> createMap() {
+        return new SplayMap<>();
+    }
+
     @Test
     public void testComparator() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         assertNotNull(map.comparator());
         assertSame(map.comparator(), map.comparator());
@@ -67,7 +71,7 @@ public class SplayMapTest {
 
     @Test
     public void testClear() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         assertEquals(0, map.size());
         assertTrue(map.isEmpty());
@@ -103,7 +107,7 @@ public class SplayMapTest {
 
     @Test
     public void testSize() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         assertEquals(0, map.size());
         map.put(0, "zero");
@@ -120,7 +124,7 @@ public class SplayMapTest {
 
     @Test
     public void testInsert() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -136,7 +140,7 @@ public class SplayMapTest {
 
     @Test
     public void testInsertUnsignedInteger() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(UnsignedInteger.valueOf(0), "zero");
         map.put(UnsignedInteger.valueOf(1), "one");
@@ -152,7 +156,7 @@ public class SplayMapTest {
 
     @Test
     public void testInsertAndReplace() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -168,7 +172,7 @@ public class SplayMapTest {
 
     @Test
     public void testInsertAndRemove() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -185,7 +189,7 @@ public class SplayMapTest {
 
     @Test
     public void testPutAll() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         Map<UnsignedInteger, String> hashmap = new HashMap<>();
 
@@ -214,7 +218,7 @@ public class SplayMapTest {
 
     @Test
     public void testPutIfAbsent() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         assertNull(map.putIfAbsent(UnsignedInteger.valueOf(0), "zero"));
         assertNull(map.putIfAbsent(UnsignedInteger.valueOf(1), "one"));
@@ -259,14 +263,14 @@ public class SplayMapTest {
 
     @Test
     public void testGetWhenEmpty() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         assertNull(map.get(0));
     }
 
     @Test
     public void testGet() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -283,7 +287,7 @@ public class SplayMapTest {
 
     @Test
     public void testGetUnsignedInteger() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -300,7 +304,7 @@ public class SplayMapTest {
 
     @Test
     public void testContainsKeyOnEmptyMap() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         assertFalse(map.containsKey(0));
         assertFalse(map.containsKey(UnsignedInteger.ZERO));
@@ -308,7 +312,7 @@ public class SplayMapTest {
 
     @Test
     public void testContainsKey() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -322,7 +326,7 @@ public class SplayMapTest {
 
     @Test
     public void testContainsKeyUnsignedInteger() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(UnsignedInteger.valueOf(0), "zero");
         map.put(UnsignedInteger.valueOf(1), "one");
@@ -336,7 +340,7 @@ public class SplayMapTest {
 
     @Test
     public void testContainsValue() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -350,14 +354,14 @@ public class SplayMapTest {
 
     @Test
     public void testContainsValueOnEmptyMap() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         assertFalse(map.containsValue("0"));
     }
 
     @Test
     public void testRemove() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -374,7 +378,7 @@ public class SplayMapTest {
 
     @Test
     public void testRemoveIsIdempotent() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -400,7 +404,7 @@ public class SplayMapTest {
 
     @Test
     public void testRemoveValueNotInMap() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -413,7 +417,7 @@ public class SplayMapTest {
 
     @Test
     public void testRemoveFirstEntryTwice() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(16, "sixteen");
@@ -424,7 +428,7 @@ public class SplayMapTest {
 
     @Test
     public void testRemoveWithInvalidType() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
 
@@ -436,7 +440,7 @@ public class SplayMapTest {
 
     @Test
     public void testRemoveUnsignedInteger() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -453,7 +457,7 @@ public class SplayMapTest {
 
     @Test
     public void testRemoveInteger() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -469,8 +473,91 @@ public class SplayMapTest {
     }
 
     @Test
+    public void testRemoveEntryWithValue() {
+        SplayMap<String> map = createMap();
+
+        assertFalse(map.remove(1, "zero"));
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(UnsignedInteger.valueOf(9), "nine");
+        map.put(7, "seven");
+        map.put(UnsignedInteger.valueOf(-1), "minus one");
+
+        assertEquals(5, map.size());
+        assertFalse(map.remove(1, "zero"));
+        assertEquals(5, map.size());
+        assertTrue(map.remove(1, "one"));
+        assertEquals(4, map.size());
+        assertFalse(map.remove(42, "forty-two"));
+        assertEquals(4, map.size());
+
+        assertEquals("zero", map.get(0));
+        assertEquals("nine", map.get(UnsignedInteger.valueOf(9)));
+        assertEquals("seven", map.get(7));
+        assertEquals("minus one", map.get(-1));
+    }
+
+    @Test
+    public void testReplaceOldValueWithNew() {
+        SplayMap<String> map = createMap();
+
+        assertFalse(map.replace(1, "two", "zero-zero"));
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(UnsignedInteger.valueOf(9), "nine");
+        map.put(7, "seven");
+        map.put(UnsignedInteger.valueOf(-1), "minus one");
+
+        assertEquals(5, map.size());
+        assertFalse(map.replace(1, "two", "zero-zero"));
+        assertEquals(5, map.size());
+        assertTrue(map.replace(1, "one", "one-one"));
+        assertEquals(5, map.size());
+        assertFalse(map.replace(42, null, "forty-two"));
+        assertEquals(5, map.size());
+        assertEquals("one-one", map.get(1));
+
+        assertTrue(map.replace(UnsignedInteger.valueOf(1), "one-one", "one"));
+        assertEquals(5, map.size());
+        assertEquals("zero", map.get(0));
+        assertEquals("one", map.get(1));
+        assertEquals("nine", map.get(UnsignedInteger.valueOf(9)));
+        assertEquals("seven", map.get(7));
+        assertEquals("minus one", map.get(-1));    }
+
+    @Test
+    public void testReplaceValue() {
+        SplayMap<String> map = createMap();
+
+        assertNull(map.replace(1, "zero-zero"));
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(UnsignedInteger.valueOf(9), "nine");
+        map.put(7, "seven");
+        map.put(UnsignedInteger.valueOf(-1), "minus one");
+
+        assertEquals(5, map.size());
+        assertEquals("one", map.replace(1, "one-one"));
+        assertEquals(5, map.size());
+        assertNull(map.replace(42, "forty-two"));
+        assertEquals(5, map.size());
+        assertEquals("one-one", map.get(1));
+
+        assertEquals("one-one", map.replace(UnsignedInteger.valueOf(1), "one"));
+        assertEquals(5, map.size());
+        assertEquals("zero", map.get(0));
+        assertEquals("one", map.get(1));
+        assertEquals("nine", map.get(UnsignedInteger.valueOf(9)));
+        assertEquals("seven", map.get(7));
+        assertEquals("minus one", map.get(-1));
+    }
+
+    @Test
     public void testValuesCollection() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -486,7 +573,7 @@ public class SplayMapTest {
 
     @Test
     public void testValuesIteration() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] intValues = {0, 1, 2, 3};
 
@@ -510,7 +597,7 @@ public class SplayMapTest {
 
     @Test
     public void testValuesIterationRemove() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] intValues = {0, 1, 2, 3};
 
@@ -537,7 +624,7 @@ public class SplayMapTest {
 
     @Test
     public void testValuesIterationFollowUnsignedOrderingExpectations() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
         final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
@@ -562,7 +649,7 @@ public class SplayMapTest {
 
     @Test
     public void testValuesIterationFailsWhenConcurrentlyModified() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
 
@@ -585,7 +672,7 @@ public class SplayMapTest {
 
     @Test
     public void testValuesIterationOnEmptyTree() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
         Collection<String> values = map.values();
         Iterator<String> iterator = values.iterator();
 
@@ -599,7 +686,7 @@ public class SplayMapTest {
 
     @Test
     public void testKeySetReturned() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -615,7 +702,7 @@ public class SplayMapTest {
 
     @Test
     public void testKeysIterationRemove() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] intValues = {0, 1, 2, 3};
 
@@ -639,7 +726,7 @@ public class SplayMapTest {
 
     @Test
     public void testKeysIteration() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] intValues = {0, 1, 2, 3};
 
@@ -666,7 +753,7 @@ public class SplayMapTest {
 
     @Test
     public void testKeysIterationFollowsUnsignedOrderingExpectations() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
         final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
@@ -691,7 +778,7 @@ public class SplayMapTest {
 
     @Test
     public void testKeysIterationFailsWhenConcurrentlyModified() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
 
@@ -714,7 +801,7 @@ public class SplayMapTest {
 
     @Test
     public void testKeysIterationOnEmptyTree() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
         Collection<UnsignedInteger> keys = map.keySet();
         Iterator<UnsignedInteger> iterator = keys.iterator();
 
@@ -728,7 +815,7 @@ public class SplayMapTest {
 
     @Test
     public void tesEntrySetReturned() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -744,7 +831,7 @@ public class SplayMapTest {
 
     @Test
     public void tesEntrySetContains() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         map.put(0, "zero");
         map.put(1, "one");
@@ -766,7 +853,7 @@ public class SplayMapTest {
 
     @Test
     public void testEntryIteration() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] intValues = {0, 1, 2, 3};
 
@@ -793,7 +880,7 @@ public class SplayMapTest {
 
     @Test
     public void testEntryIterationRemove() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] intValues = {0, 1, 2, 3};
 
@@ -823,7 +910,7 @@ public class SplayMapTest {
 
     @Test
     public void testEntryIterationFollowsUnsignedOrderingExpectations() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
         final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
@@ -851,7 +938,7 @@ public class SplayMapTest {
 
     @Test
     public void testEntryIterationFailsWhenConcurrentlyModified() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
 
@@ -874,7 +961,7 @@ public class SplayMapTest {
 
     @Test
     public void testEntrySetIterationOnEmptyTree() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
         Set<Entry<UnsignedInteger, String>> entries= map.entrySet();
         Iterator<Entry<UnsignedInteger, String>> iterator = entries.iterator();
 
@@ -894,7 +981,7 @@ public class SplayMapTest {
 
     @Test
     public void testFirstKey() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
         final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
@@ -913,13 +1000,13 @@ public class SplayMapTest {
 
     @Test
     public void testFirstEntryOnEmptyMap() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
         assertNull(map.firstEntry());
     }
 
     @Test
     public void testFirstEntry() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
         final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
@@ -938,13 +1025,13 @@ public class SplayMapTest {
 
     @Test
     public void testPollFirstEntryEmptyMap() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
         assertNull(map.pollFirstEntry());
     }
 
     @Test
     public void testPollFirstEntry() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
         final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
@@ -962,13 +1049,13 @@ public class SplayMapTest {
 
     @Test
     public void testLastKeyOnEmptyMap() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
         assertNull(map.lastKey());
     }
 
     @Test
     public void testLastKey() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
         final int[] expectedOrder = {-1, -2, 3, 2, 1, 0};
@@ -987,13 +1074,13 @@ public class SplayMapTest {
 
     @Test
     public void testLastEntryOnEmptyMap() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
         assertNull(map.lastEntry());
     }
 
     @Test
     public void testLastEntry() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
         final int[] expectedOrder = {-1, -2, 3, 2, 1, 0};
@@ -1012,13 +1099,13 @@ public class SplayMapTest {
 
     @Test
     public void testPollLastEntryEmptyMap() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
         assertNull(map.pollLastEntry());
     }
 
     @Test
     public void testPollLastEntry() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
         final int[] expectedOrder = {-1, -2, 3, 2, 1, 0};
@@ -1036,7 +1123,7 @@ public class SplayMapTest {
 
     @Test
     public void testForEach() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
         final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
@@ -1056,7 +1143,7 @@ public class SplayMapTest {
 
     @Test
     public void testForEachEntry() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
         final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
@@ -1076,7 +1163,7 @@ public class SplayMapTest {
 
     @Test
     public void testRandomProduceAndConsumeWithBacklog() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int ITERATIONS = 8192;
         final String DUMMY_STRING = "test";
@@ -1101,7 +1188,7 @@ public class SplayMapTest {
 
     @Test
     public void testRandomPutAndGetIntoEmptyMap() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int ITERATIONS = 8192;
         final String DUMMY_STRING = "test";
@@ -1122,7 +1209,7 @@ public class SplayMapTest {
 
     @Test
     public void testPutRandomValueIntoMapThenRemoveInSameOrder() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int ITERATIONS = 8192;
 
@@ -1157,7 +1244,7 @@ public class SplayMapTest {
 
     @Test
     public void testLowerEntry() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
 
@@ -1176,7 +1263,7 @@ public class SplayMapTest {
 
     @Test
     public void testLowerKey() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
 
@@ -1195,7 +1282,7 @@ public class SplayMapTest {
 
     @Test
     public void testHigherEntry() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
 
@@ -1215,7 +1302,7 @@ public class SplayMapTest {
 
     @Test
     public void testHigherKey() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
 
@@ -1235,7 +1322,7 @@ public class SplayMapTest {
 
     @Test
     public void testFloorEntry() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
 
@@ -1256,7 +1343,7 @@ public class SplayMapTest {
 
     @Test
     public void testFloorKey() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
 
@@ -1277,7 +1364,7 @@ public class SplayMapTest {
 
     @Test
     public void testCeilingEntry() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
 
@@ -1298,7 +1385,7 @@ public class SplayMapTest {
 
     @Test
     public void testCeilingKey() {
-        SplayMap<String> map = new SplayMap<>();
+        SplayMap<String> map = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
 
@@ -1317,7 +1404,7 @@ public class SplayMapTest {
         assertEquals(UnsignedInteger.valueOf(-1), map.ceilingKey(UnsignedInteger.valueOf(-1)));
     }
 
-    private void dumpRandomDataSet(int iterations, boolean bounded) {
+    protected void dumpRandomDataSet(int iterations, boolean bounded) {
         final int[] dataSet = new int[iterations];
 
         random.setSeed(seed);
@@ -1334,7 +1421,7 @@ public class SplayMapTest {
         LOG.info("Entries in data set: {}", dataSet);
     }
 
-    private static class OutsideEntry<K, V> implements Map.Entry<K, V> {
+    protected static class OutsideEntry<K, V> implements Map.Entry<K, V> {
 
         private final K key;
         private V value;

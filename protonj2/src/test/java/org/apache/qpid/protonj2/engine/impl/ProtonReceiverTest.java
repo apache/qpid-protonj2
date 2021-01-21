@@ -4043,4 +4043,244 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         assertNull(failure);
     }
+
+    @Test
+    public void testWalkUnsettledAfterReceivingTransfersThatCrossSignedIntDeliveryIdRange() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        final byte[] payload = new byte[] { 1 };
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond().withNextOutgoingId(Integer.MAX_VALUE);
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(2);
+        peer.remoteTransfer().withDeliveryId(Integer.MAX_VALUE)
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+        peer.remoteTransfer().withDeliveryId(Integer.MAX_VALUE + 1)
+                             .withDeliveryTag(new byte[] {2})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("receiver");
+
+        receiver.addCredit(2);
+        receiver.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectDisposition().withFirst(Integer.MAX_VALUE)
+                                .withSettled(true)
+                                .withState().accepted();
+        peer.expectDisposition().withFirst(Integer.MAX_VALUE + 1)
+                                .withSettled(true)
+                                .withState().accepted();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        assertTrue(receiver.hasUnsettled());
+        assertEquals(2, receiver.unsettled().size());
+        receiver.disposition((delivery) -> true, Accepted.getInstance(), true);
+
+        receiver.close();
+        session.close();
+        connection.close();
+
+        // Check post conditions and done.
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testUnsettledCollectionDispositionsAfterReceivingTransfersThatCrossSignedIntDeliveryIdRange() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        final byte[] payload = new byte[] { 1 };
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond().withNextOutgoingId(Integer.MAX_VALUE);
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(2);
+        peer.remoteTransfer().withDeliveryId(Integer.MAX_VALUE)
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+        peer.remoteTransfer().withDeliveryId(Integer.MAX_VALUE + 1)
+                             .withDeliveryTag(new byte[] {2})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("receiver");
+
+        receiver.addCredit(2);
+        receiver.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectDisposition().withFirst(Integer.MAX_VALUE)
+                                .withSettled(true)
+                                .withState().accepted();
+        peer.expectDisposition().withFirst(Integer.MAX_VALUE + 1)
+                                .withSettled(true)
+                                .withState().accepted();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        assertTrue(receiver.hasUnsettled());
+        assertEquals(2, receiver.unsettled().size());
+        receiver.unsettled().forEach((delivery) -> {
+            delivery.disposition(Accepted.getInstance(), true);
+        });
+
+        receiver.close();
+        session.close();
+        connection.close();
+
+        // Check post conditions and done.
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testWalkUnsettledAfterReceivingTransfersThatCrossUnsignedIntDeliveryIdRange() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        final byte[] payload = new byte[] { 1 };
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond().withNextOutgoingId(UnsignedInteger.MAX_VALUE.intValue());
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(3);
+        peer.remoteTransfer().withDeliveryId(UnsignedInteger.MAX_VALUE.intValue())
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {2})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+        peer.remoteTransfer().withDeliveryId(1)
+                             .withDeliveryTag(new byte[] {2})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("receiver");
+
+        receiver.addCredit(3);
+        receiver.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectDisposition().withFirst(UnsignedInteger.MAX_VALUE.intValue())
+                                .withSettled(true)
+                                .withState().accepted();
+        peer.expectDisposition().withFirst(0)
+                                .withSettled(true)
+                                .withState().accepted();
+        peer.expectDisposition().withFirst(1)
+                                .withSettled(true)
+                                .withState().accepted();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        assertTrue(receiver.hasUnsettled());
+        assertEquals(3, receiver.unsettled().size());
+        receiver.disposition((delivery) -> true, Accepted.getInstance(), true);
+
+        receiver.close();
+        session.close();
+        connection.close();
+
+        // Check post conditions and done.
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testUnsettledCollectionDispositionAfterReceivingTransfersThatCrossUnsignedIntDeliveryIdRange() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        final byte[] payload = new byte[] { 1 };
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond().withNextOutgoingId(UnsignedInteger.MAX_VALUE.intValue());
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(3);
+        peer.remoteTransfer().withDeliveryId(UnsignedInteger.MAX_VALUE.intValue())
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {2})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+        peer.remoteTransfer().withDeliveryId(1)
+                             .withDeliveryTag(new byte[] {2})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("receiver");
+
+        receiver.addCredit(3);
+        receiver.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectDisposition().withFirst(UnsignedInteger.MAX_VALUE.intValue())
+                                .withSettled(true)
+                                .withState().accepted();
+        peer.expectDisposition().withFirst(0)
+                                .withSettled(true)
+                                .withState().accepted();
+        peer.expectDisposition().withFirst(1)
+                                .withSettled(true)
+                                .withState().accepted();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        assertTrue(receiver.hasUnsettled());
+        assertEquals(3, receiver.unsettled().size());
+        receiver.unsettled().forEach((delivery) -> {
+            delivery.disposition(Accepted.getInstance(), true);
+        });
+
+        receiver.close();
+        session.close();
+        connection.close();
+
+        // Check post conditions and done.
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
 }
