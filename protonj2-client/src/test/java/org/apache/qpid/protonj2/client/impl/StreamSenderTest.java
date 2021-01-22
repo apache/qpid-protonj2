@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
@@ -29,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
@@ -2188,6 +2190,61 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             }
 
             connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void testStreamMessageSendFromByteArrayInputStream() throws Exception {
+        final Random random = new Random(System.nanoTime());
+        final byte[] array = new byte[8192];
+        final ByteArrayInputStream bytesIn = new ByteArrayInputStream(array);
+
+        // Populate the array with something other than zeros.
+        random.nextBytes(array);
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(100).queue();
+            for (int i = 0; i < (array.length / 1024); ++i) {
+                peer.expectTransfer().withDeliveryId(0)
+                                     .withMore(true)
+                                     .withNonNullPayload();
+            }
+            peer.expectTransfer().withDeliveryId(0)
+                                 .withMore(false)
+                                 .withNullPayload();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSenderOptions options = new StreamSenderOptions().writeBufferSize(1024);
+            StreamSender sender = connection.openStreamSender("test-queue", options);
+            StreamSenderMessage tracker = sender.beginMessage();
+            OutputStream stream = tracker.body();
+
+            try {
+                bytesIn.transferTo(stream);
+            } finally {
+                // Ensure any trailing bytes get written and transfer marked as done.
+                stream.close();
+            }
+
+            peer.waitForScriptToComplete();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            sender.close();
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
