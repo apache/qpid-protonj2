@@ -49,8 +49,9 @@ public class StreamingFileReceiver {
 
         Client client = Client.create();
 
-        try (Connection connection = client.connect(serverHost, serverPort)) {
-            StreamReceiver receiver = connection.openStreamReceiver(address);
+        try (Connection connection = client.connect(serverHost, serverPort);
+             StreamReceiver receiver = connection.openStreamReceiver(address)) {
+
             StreamDelivery delivery = receiver.receive();
             StreamReceiverMessage message = delivery.message();
 
