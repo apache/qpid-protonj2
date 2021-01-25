@@ -33,11 +33,13 @@ public class StreamingFileSender {
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             System.out.println("Example requires a valid file name to transfer");
+            System.exit(1);
         }
 
         final File inputFile = new File(args[0]);
         if (!inputFile.exists() || !inputFile.canRead()) {
             System.out.println("Example requires a valid / readable file to transfer");
+            System.exit(1);
         }
 
         String fileNameKey = "filename";
