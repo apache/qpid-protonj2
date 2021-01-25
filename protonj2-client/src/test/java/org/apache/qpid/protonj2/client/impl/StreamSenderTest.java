@@ -2198,7 +2198,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     @Test
     void testStreamMessageSendFromByteArrayInputStream() throws Exception {
         final Random random = new Random(System.nanoTime());
-        final byte[] array = new byte[8192];
+        final byte[] array = new byte[4096];
         final ByteArrayInputStream bytesIn = new ByteArrayInputStream(array);
 
         // Populate the array with something other than zeros.
@@ -2210,14 +2210,15 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.expectBegin().respond();
             peer.expectAttach().ofSender().respond();
             peer.remoteFlow().withLinkCredit(100).queue();
-            for (int i = 0; i < (array.length / 1024); ++i) {
+            for (int i = 0; i < (array.length / 1023); ++i) {
                 peer.expectTransfer().withDeliveryId(0)
                                      .withMore(true)
                                      .withNonNullPayload();
             }
+            // A small number of trailing bytes will be transmitted in the final frame.
             peer.expectTransfer().withDeliveryId(0)
                                  .withMore(false)
-                                 .withNullPayload();
+                                 .withNonNullPayload();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -2226,7 +2227,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            StreamSenderOptions options = new StreamSenderOptions().writeBufferSize(1024);
+            StreamSenderOptions options = new StreamSenderOptions().writeBufferSize(1023);
             StreamSender sender = connection.openStreamSender("test-queue", options);
             StreamSenderMessage tracker = sender.beginMessage();
             OutputStream stream = tracker.body();

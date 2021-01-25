@@ -342,7 +342,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
                 int remaining = length;
 
                 while (remaining > 0) {
-                    int toWrite = Math.min(length, streamBuffer.getWritableBytes());
+                    int toWrite = Math.min(remaining, streamBuffer.getWritableBytes());
                     bytesWritten += toWrite;
                     streamBuffer.writeBytes(bytes, offset + (length - remaining), toWrite);
                     if (!streamBuffer.isWritable()) {

@@ -40,7 +40,7 @@ public class ConnectionOptions {
     public static final long DEFAULT_IDLE_TIMEOUT = 60000;
     public static final long DEFAULT_DRAIN_TIMEOUT = 60000;
     public static final int DEFAULT_CHANNEL_MAX = 65535;
-    public static final int DEFAULT_MAX_FRAME_SIZE = 65535;
+    public static final int DEFAULT_MAX_FRAME_SIZE = 65536;
 
     private long sendTimeout = DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
