@@ -43,9 +43,9 @@ public class StreamingFileSender {
         }
 
         String fileNameKey = "filename";
-        String serverHost = "localhost";
-        int serverPort = 5672;
-        String address = "file-transfer";
+        String serverHost = System.getProperty("server_host", "localhost");
+        int serverPort = Integer.getInteger("server_port", 5672);
+        String address = System.getProperty("address", "file-transfer");
 
         Client client = Client.create();
 
