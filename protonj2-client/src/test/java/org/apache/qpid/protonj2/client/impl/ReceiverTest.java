@@ -76,7 +76,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().ofReceiver().respond();
+            peer.expectAttach().ofReceiver().withSource().withDistributionMode(nullValue()).and().respond();
             peer.expectFlow().withLinkCredit(10);
             peer.expectDetach().withClosed(close).respond();
             peer.expectClose().respond();

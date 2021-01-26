@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -134,8 +135,9 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER.getValue())
-                               .withSource().withCapabilities("queue").and()
-                               .respond();
+                               .withSource().withCapabilities("queue")
+                               .withDistributionMode(nullValue())
+                               .and().respond();
             peer.expectFlow();
             peer.expectDetach().respond();
             peer.expectEnd().respond();
