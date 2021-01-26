@@ -50,9 +50,9 @@ public class StreamingFileSender {
         Client client = Client.create();
 
         try (Connection connection = client.connect(serverHost, serverPort);
+             StreamSender sender = connection.openStreamSender(address);
              FileInputStream inputStream = new FileInputStream(inputFile)) {
 
-            StreamSender sender = connection.openStreamSender(address);
             StreamSenderMessage message = sender.beginMessage();
 
             // Inform the other side what the original file name was.
