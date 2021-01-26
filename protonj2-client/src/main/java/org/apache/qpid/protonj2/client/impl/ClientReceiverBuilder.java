@@ -27,6 +27,7 @@ import org.apache.qpid.protonj2.client.TargetOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.engine.Receiver;
 import org.apache.qpid.protonj2.types.Symbol;
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.messaging.Outcome;
 import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.messaging.Source;
@@ -145,13 +146,21 @@ final class ClientReceiverBuilder {
         source.setAddress(address);
         if (sourceOptions.durabilityMode() != null) {
             source.setDurable(TerminusDurability.valueOf(sourceOptions.durabilityMode().name()));
+        } else {
+            source.setDurable(TerminusDurability.NONE);
         }
         if (sourceOptions.expiryPolicy() != null) {
             source.setExpiryPolicy(TerminusExpiryPolicy.valueOf(sourceOptions.expiryPolicy().name()));
+        } else {
+            source.setExpiryPolicy(TerminusExpiryPolicy.LINK_DETACH);
         }
         if (sourceOptions.distributionMode() != null) {
             source.setDistributionMode(Symbol.valueOf(sourceOptions.distributionMode().name()));
         }
+        if (sourceOptions.timeout() >= 0) {
+            source.setTimeout(UnsignedInteger.valueOf(sourceOptions.timeout()));
+        }
+
         source.setOutcomes(ClientConversionSupport.outcomesToSymbols(sourceOptions.outcomes()));
         source.setDefaultOutcome((Outcome) ClientDeliveryState.asProtonType(sourceOptions.defaultOutcome()));
         source.setCapabilities(ClientConversionSupport.toSymbolArray(sourceOptions.capabilities()));
@@ -170,6 +179,9 @@ final class ClientReceiverBuilder {
         source.setOutcomes(ClientConversionSupport.outcomesToSymbols(sourceOptions.outcomes()));
         source.setDefaultOutcome((Outcome) ClientDeliveryState.asProtonType(sourceOptions.defaultOutcome()));
         source.setCapabilities(ClientConversionSupport.toSymbolArray(sourceOptions.capabilities()));
+        if (sourceOptions.timeout() >= 0) {
+            source.setTimeout(UnsignedInteger.valueOf(sourceOptions.timeout()));
+        }
 
         return source;
     }
@@ -181,6 +193,10 @@ final class ClientReceiverBuilder {
         Target target = new Target();
 
         target.setCapabilities(ClientConversionSupport.toSymbolArray(targetOptions.capabilities()));
+
+        if (targetOptions.timeout() >= 0) {
+            target.setTimeout(UnsignedInteger.valueOf(targetOptions.timeout()));
+        }
 
         return target;
     }

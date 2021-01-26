@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.client;
 
 import java.util.Arrays;
 
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.messaging.Source;
 import org.apache.qpid.protonj2.types.messaging.Target;
 
@@ -36,7 +37,7 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
     //        not apply to much corrective logic.
 
     private DurabilityMode durabilityMode;
-    private long timeout;
+    private long timeout = -1;
     private ExpiryPolicy expiryPolicy;
     private String[] capabilities;
 
@@ -72,6 +73,9 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
      * @return this options instance.
      */
     public E timeout(long timeout) {
+        if (timeout < 0 || timeout > UnsignedInteger.MAX_VALUE.longValue()) {
+            throw new IllegalArgumentException("Timeout value must be in the range of an unsigned intenger");
+        }
         this.timeout = timeout;
         return self();
     }
@@ -112,8 +116,10 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
 
     protected void copyInto(TerminusOptions<E> other) {
         other.durabilityMode(durabilityMode);
-        other.timeout(timeout);
         other.expiryPolicy(expiryPolicy);
+        if (timeout > 0) {
+            other.timeout(timeout);
+        }
         if (capabilities != null) {
             other.capabilities(Arrays.copyOf(capabilities, capabilities.length));
         }

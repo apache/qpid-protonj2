@@ -27,8 +27,11 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.impl.ProtonDeliveryTagGenerator;
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.messaging.Source;
 import org.apache.qpid.protonj2.types.messaging.Target;
+import org.apache.qpid.protonj2.types.messaging.TerminusDurability;
+import org.apache.qpid.protonj2.types.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 
@@ -99,7 +102,7 @@ final class ClientSenderBuilder {
         protonSender.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
         protonSender.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
         protonSender.setTarget(createTarget(address, options));
-        protonSender.setSource(createSource(address, options));
+        protonSender.setSource(createSource(senderId, options));
 
         // Use a tag generator that will reuse old tags.  Later we might make this configurable.
         if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
@@ -116,7 +119,14 @@ final class ClientSenderBuilder {
 
         // TODO: fully configure source from the options
         final Source source = new Source();
+
+        source.setAddress(address);
         source.setOutcomes(ClientConversionSupport.outcomesToSymbols(sourceOptions.outcomes()));
+        source.setCapabilities(ClientConversionSupport.toSymbolArray(sourceOptions.capabilities()));
+
+        if (sourceOptions.timeout() >= 0) {
+            source.setTimeout(UnsignedInteger.valueOf(sourceOptions.timeout()));
+        }
 
         return source;
     }
@@ -129,6 +139,15 @@ final class ClientSenderBuilder {
 
         target.setAddress(address);
         target.setCapabilities(ClientConversionSupport.toSymbolArray(targetOptions.capabilities()));
+        if (targetOptions.durabilityMode() != null) {
+            target.setDurable(TerminusDurability.valueOf(targetOptions.durabilityMode().name()));
+        }
+        if (targetOptions.expiryPolicy() != null) {
+            target.setExpiryPolicy(TerminusExpiryPolicy.valueOf(targetOptions.expiryPolicy().name()));
+        }
+        if (targetOptions.timeout() >= 0) {
+            target.setTimeout(UnsignedInteger.valueOf(targetOptions.timeout()));
+        }
 
         return target;
     }
