@@ -63,10 +63,10 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
         if (traceFrames) {
-            trace(AMQP_IN_PREFIX, header.getBody(), null);
+            trace(AMQP_IN_PREFIX, 0, header.getBody(), null);
         }
 
-        log(AMQP_IN_PREFIX, header.getBody(), null);
+        log(AMQP_IN_PREFIX, 0, header.getBody(), null);
 
         context.fireRead(header);
     }
@@ -74,10 +74,10 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleRead(EngineHandlerContext context, SaslFrame frame) {
         if (traceFrames) {
-            trace(SASL_IN_PREFIX, frame.getBody(), null);
+            trace(SASL_IN_PREFIX, 0, frame.getBody(), null);
         }
 
-        log(SASL_IN_PREFIX, frame.getBody(), frame.getPayload());
+        log(SASL_IN_PREFIX, 0, frame.getBody(), frame.getPayload());
 
         context.fireRead(frame);
     }
@@ -85,11 +85,11 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
         if (traceFrames) {
-            trace(AMQP_IN_PREFIX, frame.getBody(), frame.getPayload());
+            trace(AMQP_IN_PREFIX, frame.getChannel(), frame.getBody(), frame.getPayload());
         }
 
         if (LOG.isTraceEnabled()) {
-            log(AMQP_IN_PREFIX, frame.getBody(), frame.getPayload());
+            log(AMQP_IN_PREFIX, frame.getChannel(), frame.getBody(), frame.getPayload());
         }
 
         context.fireRead(frame);
@@ -98,10 +98,10 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
         if (traceFrames) {
-            trace(AMQP_OUT_PREFIX, header, null);
+            trace(AMQP_OUT_PREFIX, 0, header, null);
         }
 
-        log(AMQP_OUT_PREFIX, header, null);
+        log(AMQP_OUT_PREFIX, 0, header, null);
 
         context.fireWrite(header);
     }
@@ -109,11 +109,11 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
         if (traceFrames) {
-            trace(AMQP_OUT_PREFIX, performative, payload);
+            trace(AMQP_OUT_PREFIX, channel, performative, payload);
         }
 
         if (LOG.isTraceEnabled()) {
-            log(AMQP_OUT_PREFIX, performative, payload);
+            log(AMQP_OUT_PREFIX, channel, performative, payload);
         }
 
         context.fireWrite(performative, channel, payload, payloadToLarge);
@@ -122,27 +122,27 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
         if (traceFrames) {
-            trace(SASL_OUT_PREFIX, performative, null);
+            trace(SASL_OUT_PREFIX, 0, performative, null);
         }
 
-        log(SASL_OUT_PREFIX, performative, null);
+        log(SASL_OUT_PREFIX, 0, performative, null);
 
         context.fireWrite(performative);
     }
 
-    private static final void log(String prefix, Object performative, ProtonBuffer payload) {
+    private static final void log(String prefix, int channel, Object performative, ProtonBuffer payload) {
         if (payload == null) {
-            LOG.trace("{}: {}", prefix, performative);
+            LOG.trace("{}: [{}] {}", prefix, channel, performative);
         } else {
-            LOG.trace("{}: {} - {}", prefix, performative, StringUtils.toQuotedString(payload, PAYLOAD_STRING_LIMIT, true));
+            LOG.trace("{}: [{}] {} - {}", prefix, performative, StringUtils.toQuotedString(payload, PAYLOAD_STRING_LIMIT, true));
         }
     }
 
-    private static final void trace(String prefix, Object performative, ProtonBuffer payload) {
+    private static final void trace(String prefix, int channel, Object performative, ProtonBuffer payload) {
         if (payload == null) {
-            System.out.println(prefix + ": " + performative);
+            System.out.println(String.format("%s: [%d] %s", prefix, channel, performative));
         } else {
-            System.out.println(prefix + ": " + performative + " - " + StringUtils.toQuotedString(payload, PAYLOAD_STRING_LIMIT, true));
+            System.out.println(String.format("%s: [%d] %s - %s", prefix, channel, performative, StringUtils.toQuotedString(payload, PAYLOAD_STRING_LIMIT, true)));
         }
     }
 }
