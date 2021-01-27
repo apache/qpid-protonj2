@@ -248,14 +248,15 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         }
 
         private void validateFrameSize() throws FrameDecodingException {
-            if (frameSize < 8) {
+            if (Integer.compareUnsigned(frameSize, 8) < 0) {
                throw new FrameDecodingException(String.format(
                     "specified frame size %d smaller than minimum frame header size 8", frameSize));
             }
 
-            if (frameSize > configuration.getInboundMaxFrameSize()) {
+            if (Integer.compareUnsigned(frameSize, configuration.getInboundMaxFrameSize()) > 0) {
                 throw new FrameDecodingException(String.format(
-                    "specified frame size %d larger than maximum frame size %d", frameSize, configuration.getInboundMaxFrameSize()));
+                    "specified frame size %s larger than maximum frame size %d",
+                    Integer.toUnsignedString(frameSize), configuration.getInboundMaxFrameSize()));
             }
         }
 

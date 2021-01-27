@@ -398,6 +398,33 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.verifyNoMoreInteractions(context);
     }
 
+    /*
+     * Test that frame size above limit triggers error before attempting to decode the frame
+     */
+    @Test
+    public void testFrameSizeThatExceedsMaximumFrameSizeLimitTriggersError() throws Exception {
+        byte[] overFrameSizeLimitFrameHeader = new byte[] { (byte) 0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00 };
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+
+        handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
+        Mockito.verifyNoMoreInteractions(context);
+
+        try {
+            handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(overFrameSizeLimitFrameHeader));
+            fail("Should indicate frame limit has been violated.");
+        } catch (ProtocolViolationException pve) {
+            // Expected 2684354560 frame size is to big
+            assertThat(pve.getMessage(), containsString("2684354560"));
+            assertThat(pve.getMessage(), containsString("larger than maximum frame size"));
+        }
+
+        Mockito.verifyNoMoreInteractions(context);
+    }
+
     private ProtonFrameDecodingHandler createFrameDecoder() {
         ProtonEngineConfiguration configuration = Mockito.mock(ProtonEngineConfiguration.class);
         Mockito.when(configuration.getInboundMaxFrameSize()).thenReturn(Integer.valueOf(65535));

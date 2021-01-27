@@ -69,6 +69,8 @@ public class StreamingFileReceiver {
             message.body().transferTo(outputStream);
 
             outputStream.close();
+
+            System.out.println("Received file written to: " + new File(outputPath, filename));
         }
     }
 }
