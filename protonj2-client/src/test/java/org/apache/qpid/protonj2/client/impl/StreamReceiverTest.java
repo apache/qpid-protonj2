@@ -2589,6 +2589,57 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
+    @Test
+    public void testFrameSizeViolationWhileWaitingForIncomingStreamReceiverContent() throws Exception {
+        byte[] overFrameSizeLimitFrameHeader = new byte[] { 0x00, (byte) 0xA0, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00 };
+
+        final byte[] body = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        final byte[] payload = createEncodedMessage(new Data(body));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withMaxFrameSize(65535).respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(1);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions connectionOptions = new ConnectionOptions().maxFrameSize(65535);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions);
+            StreamReceiverOptions streamOptions = new StreamReceiverOptions().creditWindow(1);
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue", streamOptions);
+            StreamDelivery delivery = receiver.receive();
+            StreamReceiverMessage message = delivery.message();
+            InputStream stream = message.body();
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+            peer.remoteBytes().withBytes(overFrameSizeLimitFrameHeader).later(10);
+
+            byte[] bytesToRead = new byte[body.length * 2];
+
+            try {
+                stream.read(bytesToRead);
+                fail("Should throw an error indicating issue with read of payload");
+            } catch (IOException ioe) {
+                // Expected
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
     private byte[] createInvalidHeaderEncoding() {
         final byte[] buffer = new byte[12];
 
