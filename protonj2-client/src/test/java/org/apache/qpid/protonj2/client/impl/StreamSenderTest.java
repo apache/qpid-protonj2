@@ -62,6 +62,7 @@ import org.apache.qpid.protonj2.test.driver.matchers.messaging.MessageAnnotation
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.PropertiesMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferPayloadCompositeMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAmqpValueMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedCompositingDataSectionMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedDataMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedPartialDataSectionMatcher;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
@@ -2196,13 +2197,24 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testStreamMessageSendFromByteArrayInputStream() throws Exception {
+    void testStreamMessageSendFromByteArrayInputStreamWithoutBodySizeSet() throws Exception {
+        doTestStreamMessageSendFromByteArrayInputStream(false);
+    }
+
+    @Test
+    void testStreamMessageSendFromByteArrayInputStreamWithBodySizeSet() throws Exception {
+        doTestStreamMessageSendFromByteArrayInputStream(false);
+    }
+
+    private void doTestStreamMessageSendFromByteArrayInputStream(boolean setBodySize) throws Exception {
         final Random random = new Random(System.nanoTime());
         final byte[] array = new byte[4096];
         final ByteArrayInputStream bytesIn = new ByteArrayInputStream(array);
 
         // Populate the array with something other than zeros.
         random.nextBytes(array);
+
+        EncodedCompositingDataSectionMatcher matcher = new EncodedCompositingDataSectionMatcher(array);
 
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
@@ -2213,12 +2225,12 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             for (int i = 0; i < (array.length / 1023); ++i) {
                 peer.expectTransfer().withDeliveryId(0)
                                      .withMore(true)
-                                     .withNonNullPayload();
+                                     .withPayload(matcher);
             }
             // A small number of trailing bytes will be transmitted in the final frame.
             peer.expectTransfer().withDeliveryId(0)
                                  .withMore(false)
-                                 .withNonNullPayload();
+                                 .withPayload(matcher);
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -2230,7 +2242,14 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             StreamSenderOptions options = new StreamSenderOptions().writeBufferSize(1023);
             StreamSender sender = connection.openStreamSender("test-queue", options);
             StreamSenderMessage tracker = sender.beginMessage();
-            OutputStream stream = tracker.body();
+
+            final OutputStream stream;
+
+            if (setBodySize) {
+                stream = tracker.body(new OutputStreamOptions().bodyLength(array.length));
+            } else {
+                stream = tracker.body();
+            }
 
             try {
                 bytesIn.transferTo(stream);
