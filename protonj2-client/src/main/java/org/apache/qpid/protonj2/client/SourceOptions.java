@@ -31,10 +31,10 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> {
         DeliveryState.Type.ACCEPTED, DeliveryState.Type.REJECTED, DeliveryState.Type.RELEASED, DeliveryState.Type.MODIFIED
     };
 
-    private static final ClientDeliveryState DEFAULT_OUTCOME = new ClientDeliveryState.ClientModified(true, false);
+    public static final ClientDeliveryState DEFAULT_RECEIVER_OUTCOME = new ClientDeliveryState.ClientModified(true, false);
 
     private DistributionMode distributionMode;
-    private DeliveryState defaultOutcome = DEFAULT_OUTCOME;
+    private DeliveryState defaultOutcome;
     private DeliveryState.Type[] outcomes = DEFAULT_OUTCOMES;
     private Map<String, String> filters;
 
@@ -113,7 +113,7 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> {
      *
      * @return this {@link SourceOptions} instance.
      */
-    public SourceOptions outcomes(DeliveryState.Type[] outcomes) {
+    public SourceOptions outcomes(DeliveryState.Type... outcomes) {
         this.outcomes = outcomes != null ? Arrays.copyOf(outcomes, outcomes.length) : null;
         return self();
     }

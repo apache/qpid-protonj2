@@ -28,6 +28,7 @@ import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.impl.ProtonDeliveryTagGenerator;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
+import org.apache.qpid.protonj2.types.messaging.Outcome;
 import org.apache.qpid.protonj2.types.messaging.Source;
 import org.apache.qpid.protonj2.types.messaging.Target;
 import org.apache.qpid.protonj2.types.messaging.TerminusDurability;
@@ -116,16 +117,34 @@ final class ClientSenderBuilder {
 
     private static Source createSource(String address, SenderOptions options) {
         final SourceOptions sourceOptions = options.sourceOptions();
-
-        // TODO: fully configure source from the options
         final Source source = new Source();
 
         source.setAddress(address);
         source.setOutcomes(ClientConversionSupport.outcomesToSymbols(sourceOptions.outcomes()));
+        source.setDefaultOutcome((Outcome) ClientDeliveryState.asProtonType(sourceOptions.defaultOutcome()));
         source.setCapabilities(ClientConversionSupport.toSymbolArray(sourceOptions.capabilities()));
 
         if (sourceOptions.timeout() >= 0) {
             source.setTimeout(UnsignedInteger.valueOf(sourceOptions.timeout()));
+        }
+        if (sourceOptions.durabilityMode() != null) {
+            source.setDurable(ClientConversionSupport.asProtonType(sourceOptions.durabilityMode()));
+        } else {
+            source.setDurable(TerminusDurability.NONE);
+        }
+        if (sourceOptions.expiryPolicy() != null) {
+            source.setExpiryPolicy(ClientConversionSupport.asProtonType(sourceOptions.expiryPolicy()));
+        } else {
+            source.setExpiryPolicy(TerminusExpiryPolicy.LINK_DETACH);
+        }
+        if (sourceOptions.distributionMode() != null) {
+            source.setDistributionMode(ClientConversionSupport.asProtonType(sourceOptions.distributionMode()));
+        }
+        if (sourceOptions.timeout() >= 0) {
+            source.setTimeout(UnsignedInteger.valueOf(sourceOptions.timeout()));
+        }
+        if (sourceOptions.filters() != null) {
+            source.setFilter(ClientConversionSupport.toSymbolKeyedMap(sourceOptions.filters()));
         }
 
         return source;
@@ -133,17 +152,16 @@ final class ClientSenderBuilder {
 
     private static Target createTarget(String address, SenderOptions options) {
         final TargetOptions targetOptions = options.targetOptions();
-
-        // TODO: fully configure target from the options
         final Target target = new Target();
 
         target.setAddress(address);
         target.setCapabilities(ClientConversionSupport.toSymbolArray(targetOptions.capabilities()));
+
         if (targetOptions.durabilityMode() != null) {
-            target.setDurable(TerminusDurability.valueOf(targetOptions.durabilityMode().name()));
+            target.setDurable(ClientConversionSupport.asProtonType(targetOptions.durabilityMode()));
         }
         if (targetOptions.expiryPolicy() != null) {
-            target.setExpiryPolicy(TerminusExpiryPolicy.valueOf(targetOptions.expiryPolicy().name()));
+            target.setExpiryPolicy(ClientConversionSupport.asProtonType(targetOptions.expiryPolicy()));
         }
         if (targetOptions.timeout() >= 0) {
             target.setTimeout(UnsignedInteger.valueOf(targetOptions.timeout()));

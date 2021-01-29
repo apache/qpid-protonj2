@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 
@@ -578,6 +579,12 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         }
 
         @Override
+        public AttachSourceMatcher withDefaultTimeout() {
+            super.withTimeout(anyOf(nullValue(), equalTo(UnsignedInteger.ZERO)));
+            return this;
+        }
+
+        @Override
         public AttachSourceMatcher withDynamic(Matcher<?> m) {
             super.withDynamic(m);
             return this;
@@ -669,6 +676,12 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         @Override
         public AttachTargetMatcher withTimeout(UnsignedInteger timeout) {
             super.withTimeout(timeout);
+            return this;
+        }
+
+        @Override
+        public AttachTargetMatcher withDefaultTimeout() {
+            super.withDefaultTimeout();
             return this;
         }
 

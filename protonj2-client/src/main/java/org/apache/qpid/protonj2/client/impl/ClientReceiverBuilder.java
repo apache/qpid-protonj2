@@ -26,7 +26,6 @@ import org.apache.qpid.protonj2.client.StreamReceiverOptions;
 import org.apache.qpid.protonj2.client.TargetOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.engine.Receiver;
-import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.messaging.Outcome;
 import org.apache.qpid.protonj2.types.messaging.Released;
@@ -145,24 +144,31 @@ final class ClientReceiverBuilder {
         Source source = new Source();
         source.setAddress(address);
         if (sourceOptions.durabilityMode() != null) {
-            source.setDurable(TerminusDurability.valueOf(sourceOptions.durabilityMode().name()));
+            source.setDurable(ClientConversionSupport.asProtonType(sourceOptions.durabilityMode()));
         } else {
             source.setDurable(TerminusDurability.NONE);
         }
         if (sourceOptions.expiryPolicy() != null) {
-            source.setExpiryPolicy(TerminusExpiryPolicy.valueOf(sourceOptions.expiryPolicy().name()));
+            source.setExpiryPolicy(ClientConversionSupport.asProtonType(sourceOptions.expiryPolicy()));
         } else {
             source.setExpiryPolicy(TerminusExpiryPolicy.LINK_DETACH);
         }
         if (sourceOptions.distributionMode() != null) {
-            source.setDistributionMode(Symbol.valueOf(sourceOptions.distributionMode().name()));
+            source.setDistributionMode(ClientConversionSupport.asProtonType(sourceOptions.distributionMode()));
         }
         if (sourceOptions.timeout() >= 0) {
             source.setTimeout(UnsignedInteger.valueOf(sourceOptions.timeout()));
         }
+        if (sourceOptions.filters() != null) {
+            source.setFilter(ClientConversionSupport.toSymbolKeyedMap(sourceOptions.filters()));
+        }
+        if (sourceOptions.defaultOutcome() != null) {
+            source.setDefaultOutcome((Outcome) ClientDeliveryState.asProtonType(sourceOptions.defaultOutcome()));
+        } else {
+            source.setDefaultOutcome((Outcome) ClientDeliveryState.asProtonType(SourceOptions.DEFAULT_RECEIVER_OUTCOME));
+        }
 
         source.setOutcomes(ClientConversionSupport.outcomesToSymbols(sourceOptions.outcomes()));
-        source.setDefaultOutcome((Outcome) ClientDeliveryState.asProtonType(sourceOptions.defaultOutcome()));
         source.setCapabilities(ClientConversionSupport.toSymbolArray(sourceOptions.capabilities()));
 
         return source;
@@ -170,8 +176,8 @@ final class ClientReceiverBuilder {
 
     private Source createDurableSource(String address, ReceiverOptions options) {
         final SourceOptions sourceOptions = options.sourceOptions();
+        final Source source = new Source();
 
-        Source source = new Source();
         source.setAddress(address);
         source.setDurable(TerminusDurability.UNSETTLED_STATE);
         source.setExpiryPolicy(TerminusExpiryPolicy.NEVER);
@@ -179,8 +185,12 @@ final class ClientReceiverBuilder {
         source.setOutcomes(ClientConversionSupport.outcomesToSymbols(sourceOptions.outcomes()));
         source.setDefaultOutcome((Outcome) ClientDeliveryState.asProtonType(sourceOptions.defaultOutcome()));
         source.setCapabilities(ClientConversionSupport.toSymbolArray(sourceOptions.capabilities()));
+
         if (sourceOptions.timeout() >= 0) {
             source.setTimeout(UnsignedInteger.valueOf(sourceOptions.timeout()));
+        }
+        if (sourceOptions.filters() != null) {
+            source.setFilter(ClientConversionSupport.toSymbolKeyedMap(sourceOptions.filters()));
         }
 
         return source;
@@ -188,12 +198,17 @@ final class ClientReceiverBuilder {
 
     private Target createTarget(String address, ReceiverOptions options) {
         final TargetOptions targetOptions = options.targetOptions();
+        final Target target = new Target();
 
-        // TODO: fully configure target from the options
-        Target target = new Target();
-
+        target.setAddress(address);
         target.setCapabilities(ClientConversionSupport.toSymbolArray(targetOptions.capabilities()));
 
+        if (targetOptions.durabilityMode() != null) {
+            target.setDurable(ClientConversionSupport.asProtonType(targetOptions.durabilityMode()));
+        }
+        if (targetOptions.expiryPolicy() != null) {
+            target.setExpiryPolicy(ClientConversionSupport.asProtonType(targetOptions.expiryPolicy()));
+        }
         if (targetOptions.timeout() >= 0) {
             target.setTimeout(UnsignedInteger.valueOf(targetOptions.timeout()));
         }

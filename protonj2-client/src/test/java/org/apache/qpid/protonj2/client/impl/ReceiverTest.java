@@ -1,5 +1,6 @@
 package org.apache.qpid.protonj2.client.impl;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
@@ -29,7 +30,11 @@ import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.DeliveryMode;
+import org.apache.qpid.protonj2.client.DeliveryState;
+import org.apache.qpid.protonj2.client.DistributionMode;
+import org.apache.qpid.protonj2.client.DurabilityMode;
 import org.apache.qpid.protonj2.client.ErrorCondition;
+import org.apache.qpid.protonj2.client.ExpiryPolicy;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
@@ -43,6 +48,10 @@ import org.apache.qpid.protonj2.client.exceptions.ClientLinkRemotelyClosedExcept
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.Modified;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.Released;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusDurability;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Section;
@@ -2128,6 +2137,124 @@ public class ReceiverTest extends ImperativeClientTestCase {
             // Data already read so it will be already available for read.
             assertNotEquals(-1, delivery.rawInputStream().read());
 
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateReceiverWithDefaultSourceAndTargetOptions() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver()
+                               .withSource().withAddress("test-queue")
+                                            .withDistributionMode(nullValue())
+                                            .withDefaultTimeout()
+                                            .withDurable(TerminusDurability.NONE)
+                                            .withExpiryPolicy(TerminusExpiryPolicy.LINK_DETACH)
+                                            .withDefaultOutcome(new Modified().setDeliveryFailed(true))
+                                            .withCapabilities(nullValue())
+                                            .withFilter(nullValue())
+                                            .withOutcomes("amqp:accepted:list", "amqp:rejected:list", "amqp:released:list", "amqp:modified:list")
+                                            .also()
+                               .withTarget().withAddress(notNullValue())
+                                            .withCapabilities(nullValue())
+                                            .withDurable(nullValue())
+                                            .withExpiryPolicy(nullValue())
+                                            .withDefaultTimeout()
+                                            .withDynamic(anyOf(nullValue(), equalTo(false)))
+                                            .withDynamicNodeProperties(nullValue())
+                               .and().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue").openFuture().get();
+
+            receiver.close();
+            session.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateReceiverWithUserConfiguredSourceAndTargetOptions() throws Exception {
+        final Map<String, Object> filtersToObject = new HashMap<>();
+        filtersToObject.put("x-opt-filter", "a = b");
+
+        final Map<String, String> filters = new HashMap<>();
+        filters.put("x-opt-filter", "a = b");
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver()
+                               .withSource().withAddress("test-queue")
+                                            .withDistributionMode("COPY")
+                                            .withTimeout(128)
+                                            .withDurable(TerminusDurability.UNSETTLED_STATE)
+                                            .withExpiryPolicy(TerminusExpiryPolicy.CONNECTION_CLOSE)
+                                            .withDefaultOutcome(new Released())
+                                            .withCapabilities("QUEUE")
+                                            .withFilter(filtersToObject)
+                                            .withOutcomes("amqp:accepted:list", "amqp:rejected:list")
+                                            .also()
+                               .withTarget().withAddress(notNullValue())
+                                            .withCapabilities("QUEUE")
+                                            .withDurable(TerminusDurability.CONFIGURATION)
+                                            .withExpiryPolicy(TerminusExpiryPolicy.SESSION_END)
+                                            .withTimeout(42)
+                                            .withDynamic(anyOf(nullValue(), equalTo(false)))
+                                            .withDynamicNodeProperties(nullValue())
+                               .and().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            ReceiverOptions receiverOptions = new ReceiverOptions();
+
+            receiverOptions.sourceOptions().capabilities("QUEUE");
+            receiverOptions.sourceOptions().distributionMode(DistributionMode.COPY);
+            receiverOptions.sourceOptions().timeout(128);
+            receiverOptions.sourceOptions().durabilityMode(DurabilityMode.UNSETTLED_STATE);
+            receiverOptions.sourceOptions().expiryPolicy(ExpiryPolicy.CONNECTION_CLOSE);
+            receiverOptions.sourceOptions().defaultOutcome(DeliveryState.released());
+            receiverOptions.sourceOptions().filters(filters);
+            receiverOptions.sourceOptions().outcomes(DeliveryState.Type.ACCEPTED, DeliveryState.Type.REJECTED);
+
+            receiverOptions.targetOptions().capabilities("QUEUE");
+            receiverOptions.targetOptions().durabilityMode(DurabilityMode.CONFIGURATION);
+            receiverOptions.targetOptions().expiryPolicy(ExpiryPolicy.SESSION_CLOSE);
+            receiverOptions.targetOptions().timeout(42);
+
+            Receiver receiver = session.openReceiver("test-queue", receiverOptions).openFuture().get();
+
+            receiver.close();
+            session.close();
             connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);

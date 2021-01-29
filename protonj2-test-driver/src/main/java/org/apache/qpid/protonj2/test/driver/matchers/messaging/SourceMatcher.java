@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.matchers.messaging;
 
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 
@@ -72,6 +73,10 @@ public class SourceMatcher extends ListDescribedTypeMatcher {
 
     public SourceMatcher withTimeout(UnsignedInteger timeout) {
         return withTimeout(equalTo(timeout));
+    }
+
+    public SourceMatcher withDefaultTimeout() {
+        return withTimeout(anyOf(nullValue(), equalTo(UnsignedInteger.ZERO)));
     }
 
     public SourceMatcher withDynamic(boolean dynamic) {

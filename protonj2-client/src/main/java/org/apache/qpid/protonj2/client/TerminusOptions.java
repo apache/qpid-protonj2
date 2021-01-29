@@ -30,12 +30,6 @@ import org.apache.qpid.protonj2.types.messaging.Target;
  */
 public abstract class TerminusOptions<E extends TerminusOptions<E>> {
 
-    // TODO - Consider ease of use options vs exposing every possible AMQP
-    //        configuration here to make the general users life simpler and
-    //        expose some more low level proton / AMQP specific configuration
-    //        that we can then assume the user knows what they are doing and
-    //        not apply to much corrective logic.
-
     private DurabilityMode durabilityMode;
     private long timeout = -1;
     private ExpiryPolicy expiryPolicy;

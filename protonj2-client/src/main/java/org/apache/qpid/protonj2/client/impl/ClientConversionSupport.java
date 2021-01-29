@@ -23,11 +23,16 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.qpid.protonj2.client.DeliveryState;
+import org.apache.qpid.protonj2.client.DistributionMode;
+import org.apache.qpid.protonj2.client.DurabilityMode;
+import org.apache.qpid.protonj2.client.ExpiryPolicy;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.Modified;
 import org.apache.qpid.protonj2.types.messaging.Rejected;
 import org.apache.qpid.protonj2.types.messaging.Released;
+import org.apache.qpid.protonj2.types.messaging.TerminusDurability;
+import org.apache.qpid.protonj2.types.messaging.TerminusExpiryPolicy;
 
 /**
  * Utilities used by various classes in the Client core
@@ -60,7 +65,7 @@ abstract class ClientConversionSupport {
         return result;
     }
 
-    public static Map<Symbol, Object> toSymbolKeyedMap(Map<String, Object> stringsMap) {
+    public static Map<Symbol, Object> toSymbolKeyedMap(Map<String, ?> stringsMap) {
         final Map<Symbol, Object> result;
 
         if (stringsMap != null) {
@@ -75,7 +80,7 @@ abstract class ClientConversionSupport {
         return result;
     }
 
-    public static Map<String, Object> toStringKeyedMap(Map<Symbol, Object> symbolMap) {
+    public static Map<String, Object> toStringKeyedMap(Map<Symbol, ?> symbolMap) {
         Map<String, Object> result;
 
         if (symbolMap != null) {
@@ -195,5 +200,71 @@ abstract class ClientConversionSupport {
         } else {
             throw new IllegalArgumentException("Cannot convert Symbol: " + outcome + " to a DeliveryState.Type outcome");
         }
+    }
+
+    public static Symbol asProtonType(DistributionMode mode) {
+        Symbol result = null;
+
+        if (mode != null) {
+            switch (mode) {
+                case COPY:
+                    result = Symbol.valueOf("COPY");
+                    break;
+                case MOVE:
+                    result = Symbol.valueOf("MOVE");
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return result;
+    }
+
+    public static TerminusDurability asProtonType(DurabilityMode mode) {
+        TerminusDurability result = null;
+
+        if (mode != null) {
+            switch (mode) {
+                case CONFIGURATION:
+                    result = TerminusDurability.CONFIGURATION;
+                    break;
+                case NONE:
+                    result = TerminusDurability.NONE;
+                    break;
+                case UNSETTLED_STATE:
+                    result = TerminusDurability.UNSETTLED_STATE;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return result;
+    }
+
+    public static TerminusExpiryPolicy asProtonType(ExpiryPolicy policy) {
+        TerminusExpiryPolicy result = null;
+
+        if (policy != null) {
+            switch (policy) {
+                case CONNECTION_CLOSE:
+                    result = TerminusExpiryPolicy.CONNECTION_CLOSE;
+                    break;
+                case LINK_CLOSE:
+                    result = TerminusExpiryPolicy.LINK_DETACH;
+                    break;
+                case NEVER:
+                    result = TerminusExpiryPolicy.NEVER;
+                    break;
+                case SESSION_CLOSE:
+                    result = TerminusExpiryPolicy.SESSION_END;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return result;
     }
 }
