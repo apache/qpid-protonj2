@@ -2205,7 +2205,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.expectBegin().respond();
             peer.expectAttach().ofReceiver()
                                .withSource().withAddress("test-queue")
-                                            .withDistributionMode("COPY")
+                                            .withDistributionMode("copy")
                                             .withTimeout(128)
                                             .withDurable(TerminusDurability.UNSETTLED_STATE)
                                             .withExpiryPolicy(TerminusExpiryPolicy.CONNECTION_CLOSE)

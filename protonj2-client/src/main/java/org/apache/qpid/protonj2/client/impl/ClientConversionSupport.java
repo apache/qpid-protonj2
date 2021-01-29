@@ -208,10 +208,10 @@ abstract class ClientConversionSupport {
         if (mode != null) {
             switch (mode) {
                 case COPY:
-                    result = Symbol.valueOf("COPY");
+                    result = ClientConstants.COPY;
                     break;
                 case MOVE:
-                    result = Symbol.valueOf("MOVE");
+                    result = ClientConstants.MOVE;
                     break;
                 default:
                     break;

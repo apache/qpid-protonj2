@@ -44,6 +44,7 @@ public class ClientConstants {
 
     // Symbols used for receivers.
     public static final Symbol COPY = Symbol.getSymbol("copy");
+    public static final Symbol MOVE = Symbol.getSymbol("move");
     public static final Symbol SHARED = Symbol.valueOf("shared");
     public static final Symbol GLOBAL = Symbol.valueOf("global");
 
