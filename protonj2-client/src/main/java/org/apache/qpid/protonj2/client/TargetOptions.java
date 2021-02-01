@@ -27,6 +27,11 @@ public final class TargetOptions extends TerminusOptions<TargetOptions> {
     }
 
     @Override
+    public TargetOptions clone() {
+        return copyInto(new TargetOptions());
+    }
+
+    @Override
     TargetOptions self() {
         return this;
     }

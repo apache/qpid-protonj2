@@ -314,6 +314,11 @@ public class ReceiverOptions {
         return target;
     }
 
+    @Override
+    public ReceiverOptions clone() {
+        return copyInto(new ReceiverOptions());
+    }
+
     /**
      * Copy all options from this {@link ReceiverOptions} instance into the instance
      * provided.

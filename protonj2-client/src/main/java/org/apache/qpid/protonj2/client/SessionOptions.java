@@ -50,6 +50,11 @@ public class SessionOptions {
         }
     }
 
+    @Override
+    public SessionOptions clone() {
+        return copyInto(new SessionOptions());
+    }
+
     /**
      * Copy all options from this {@link SessionOptions} instance into the instance
      * provided.

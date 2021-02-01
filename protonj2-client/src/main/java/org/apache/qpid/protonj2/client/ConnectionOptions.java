@@ -85,6 +85,11 @@ public class ConnectionOptions {
         }
     }
 
+    @Override
+    public ConnectionOptions clone() {
+        return copyInto(new ConnectionOptions());
+    }
+
     /**
      * Copy all options from this {@link ConnectionOptions} instance into the instance
      * provided.

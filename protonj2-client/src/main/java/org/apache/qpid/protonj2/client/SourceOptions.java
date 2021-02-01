@@ -38,6 +38,11 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> {
     private DeliveryState.Type[] outcomes = DEFAULT_OUTCOMES;
     private Map<String, String> filters;
 
+    @Override
+    public SourceOptions clone() {
+        return copyInto(new SourceOptions());
+    }
+
     public SourceOptions copyInto(SourceOptions other) {
         super.copyInto(other);
         other.distributionMode(distributionMode);

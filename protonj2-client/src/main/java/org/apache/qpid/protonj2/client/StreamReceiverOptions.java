@@ -52,6 +52,11 @@ public class StreamReceiverOptions extends ReceiverOptions {
         }
     }
 
+    @Override
+    public StreamReceiverOptions clone() {
+        return copyInto(new StreamReceiverOptions());
+    }
+
     /**
      * Copy all options from this {@link StreamReceiverOptions} instance into the instance
      * provided.

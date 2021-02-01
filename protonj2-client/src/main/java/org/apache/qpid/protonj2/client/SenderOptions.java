@@ -278,6 +278,11 @@ public class SenderOptions {
         return target;
     }
 
+    @Override
+    public SenderOptions clone() {
+        return copyInto(new SenderOptions());
+    }
+
     /**
      * Copy all options from this {@link SenderOptions} instance into the instance
      * provided.

@@ -74,6 +74,11 @@ public class ClientOptions {
         return this;
     }
 
+    @Override
+    public ClientOptions clone() {
+        return copyInto(new ClientOptions());
+    }
+
     /**
      * Copy all options from this {@link ClientOptions} instance into the instance
      * provided.

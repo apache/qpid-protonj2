@@ -38,6 +38,11 @@ public class StreamSenderOptions extends SenderOptions {
     public StreamSenderOptions() {
     }
 
+    @Override
+    public StreamSenderOptions clone() {
+        return copyInto(new StreamSenderOptions());
+    }
+
     /**
      * Create a {@link StreamSenderOptions} instance that copies all configuration from the given
      * {@link StreamSenderOptions} instance.

@@ -53,6 +53,11 @@ public class OutputStreamOptions {
         }
     }
 
+    @Override
+    public OutputStreamOptions clone() {
+        return copyInto(new OutputStreamOptions());
+    }
+
     /**
      * Copy all options from this {@link OutputStreamOptions} instance into the instance
      * provided.
