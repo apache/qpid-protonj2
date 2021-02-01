@@ -95,6 +95,10 @@ public class OutputStreamOptions {
      * @return this {@link OutputStreamOptions} instance.
      */
     public OutputStreamOptions bodyLength(int streamSize) {
+        if (streamSize < 0) {
+            throw new IllegalArgumentException("Cannot set a stream body size that is negative");
+        }
+
         this.streamSize = streamSize;
         return this;
     }

@@ -391,6 +391,16 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     }
 
     @Test
+    void testOutputStreamOptionsEnforcesValidBodySizeValues() throws Exception {
+        OutputStreamOptions options = new OutputStreamOptions();
+
+        options.bodyLength(1024);
+        options.bodyLength(Integer.MAX_VALUE);
+
+        assertThrows(IllegalArgumentException.class, () -> options.bodyLength(-1));
+    }
+
+    @Test
     public void testFlushWithSetNonBodySectionsThenClose() throws Exception {
         doTestNonBodySectionWrittenWhenNoWritesToStream(true);
     }
