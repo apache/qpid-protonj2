@@ -387,8 +387,6 @@ public final class Transfer implements Performative {
 
     @Override
     public String toString() {
-        // TODO - Possibly make the toString method omit null elements for compactness.
-
         return "Transfer{" +
                "handle=" + (hasHandle() ? handle : "null") +
                ", deliveryId=" + (hasDeliveryId() ? deliveryId : "null") +

@@ -319,8 +319,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     @Override
     protected final ProtonReceiver handleRemoteAttach(Attach attach) {
         if (!attach.hasInitialDeliveryCount()) {
-            //TODO: nicer handling of the error
-            throw new IllegalArgumentException("Sending peer attach had no initial delivery count");
+            throw new ProtocolViolationException("Sending peer attach had no initial delivery count");
         }
 
         getCreditState().initialiseDeliveryCount((int) attach.getInitialDeliveryCount());
