@@ -21,6 +21,7 @@ import java.util.concurrent.Future;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionNotActiveException;
+import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 
 /**
  * Session object used to create {@link Sender} and {@link Receiver} instances.
@@ -222,6 +223,7 @@ public interface Session extends AutoCloseable {
      * @return the newly created {@link Sender}.
      *
      * @throws ClientException if an internal error occurs.
+     * @throws ClientUnsupportedOperationException if the remote did not signal support for anonymous relays.
      */
     Sender openAnonymousSender() throws ClientException;
 
@@ -236,6 +238,7 @@ public interface Session extends AutoCloseable {
      * @return the newly created {@link Sender}.
      *
      * @throws ClientException if an internal error occurs.
+     * @throws ClientUnsupportedOperationException if the remote did not signal support for anonymous relays.
      */
     Sender openAnonymousSender(SenderOptions senderOptions) throws ClientException;
 

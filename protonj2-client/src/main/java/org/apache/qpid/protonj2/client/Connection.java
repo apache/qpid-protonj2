@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 
 /**
  * Top level {@link Connection} object that can be used as a stand alone API for sending
@@ -267,7 +268,8 @@ public interface Connection extends AutoCloseable {
      *
      * @return the sender.
      *
-     * @throws ClientException if an internal error occurs.
+     * @throws ClientException if an internal error occurs opening the default sender.
+     * @throws ClientUnsupportedOperationException if the remote did not signal support for anonymous relays.
      */
     Sender defaultSender() throws ClientException;
 
@@ -361,6 +363,7 @@ public interface Connection extends AutoCloseable {
      * @return the sender.
      *
      * @throws ClientException if an internal error occurs.
+     * @throws ClientUnsupportedOperationException if the remote did not signal support for anonymous relays.
      */
     Sender openAnonymousSender() throws ClientException;
 
@@ -380,6 +383,7 @@ public interface Connection extends AutoCloseable {
      * @return the sender.
      *
      * @throws ClientException if an internal error occurs.
+     * @throws ClientUnsupportedOperationException if the remote did not signal support for anonymous relays.
      */
     Sender openAnonymousSender(SenderOptions senderOptions) throws ClientException;
 
