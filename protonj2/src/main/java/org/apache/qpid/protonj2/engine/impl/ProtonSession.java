@@ -571,7 +571,12 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
 
     void writeFlow(ProtonLink<?> link) {
         cachedFlow.reset();
-        cachedFlow.setNextIncomingId(getIncomingWindow().getNextIncomingId());
+
+        // (AmqpSpec:Section 2.7.4) This value must not be set if the remote begin has not been received.
+        if (remoteBegin != null) {
+            cachedFlow.setNextIncomingId(getIncomingWindow().getNextIncomingId());
+        }
+
         cachedFlow.setNextOutgoingId(getOutgoingWindow().getNextOutgoingId());
         cachedFlow.setIncomingWindow(getIncomingWindow().getIncomingWindow());
         cachedFlow.setOutgoingWindow(getOutgoingWindow().getOutgoingWindow());

@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1142,9 +1143,9 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
-        peer.expectBegin().respond();
+        peer.expectBegin().respond().withNextOutgoingId(42);
         peer.expectAttach().respond();
-        peer.expectFlow().withLinkCredit(100);
+        peer.expectFlow().withLinkCredit(100).withNextIncomingId(42);
         peer.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -1158,6 +1159,51 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         Receiver receiver = session.receiver("test");
         receiver.open();
         receiver.addCredit(100);
+        receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverSendsFlowWithNoIncomingIdWhenRemoteBeginHasNotArrivedYet() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin();
+        peer.expectAttach();
+        peer.expectFlow().withLinkCredit(100).withNextIncomingId(nullValue());
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("test").open();
+
+        receiver.addCredit(100);
+
+        final CountDownLatch opened = new CountDownLatch(1);
+        receiver.openHandler((self) -> {
+            opened.countDown();
+        });
+
+        peer.waitForScriptToComplete();
+        peer.respondToLastBegin().withNextOutgoingId(42).now();
+        peer.respondToLastAttach().now();
+        peer.expectFlow().withLinkCredit(101).withNextIncomingId(42);
+        peer.expectDetach().respond();
+
+        assertTrue(opened.await(10, TimeUnit.SECONDS));
+
+        receiver.addCredit(1);
+
         receiver.close();
 
         peer.waitForScriptToComplete();

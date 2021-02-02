@@ -27,9 +27,10 @@ import org.apache.qpid.protonj2.types.transport.Role;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
- * Holds Session level credit window information.
+ * Holds Session level credit window information for outgoing transfers from this
+ * Session.  The window is constrained by the remote incoming capacity restrictions
+ * or if present outgoing restrictions on pending transfers.
  */
-@SuppressWarnings("unused")
 public class ProtonSessionOutgoingWindow {
 
     private static final int DEFAULT_WINDOW_SIZE = Integer.MAX_VALUE; // biggest legal value
@@ -50,10 +51,6 @@ public class ProtonSessionOutgoingWindow {
 
     private int outgoingBytes;
 
-    // Obtained from the connection after the session is opened as that point in time
-    // marks when this value is set in stone.
-    private long maxFrameSize;
-
     private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
     public ProtonSessionOutgoingWindow(ProtonSession session) {
@@ -70,8 +67,6 @@ public class ProtonSessionOutgoingWindow {
      * @return the configured performative
      */
     Begin configureOutbound(Begin begin) {
-        maxFrameSize = session.getConnection().getMaxFrameSize();
-
         begin.setNextOutgoingId(nextOutgoingId);
         begin.setOutgoingWindow(outgoingWindow);
 

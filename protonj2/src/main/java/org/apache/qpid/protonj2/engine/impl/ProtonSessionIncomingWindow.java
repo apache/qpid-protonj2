@@ -40,20 +40,14 @@ public class ProtonSessionIncomingWindow {
     // User configured incoming capacity for the session used to compute the incoming window
     private int incomingCapacity = 0;
 
+    // Computed incoming window based on the incoming capacity minus bytes not yet read from deliveries.
     private long incomingWindow = 0;
 
-    /**
-     * Tracks the next expected incoming transfer ID from the remote
-     */
-    private long nextIncomingId = 1;
+    // Tracks the next expected incoming transfer ID from the remote
+    private long nextIncomingId = 0;
 
-    /**
-     * Tracks the most recent delivery Id for validation against the next incoming delivery
-     */
+    // Tracks the most recent delivery Id for validation against the next incoming delivery
     private SequenceNumber lastDeliveryid;
-
-    private long remoteOutgoingWindow;
-    private long remoteNextOutgoingId;
 
     private long incomingBytes;
 
@@ -105,8 +99,9 @@ public class ProtonSessionIncomingWindow {
      * @return the given performative for chaining
      */
     Begin handleBegin(Begin begin) {
-        this.remoteNextOutgoingId = begin.getNextOutgoingId();
-        this.remoteOutgoingWindow = begin.getOutgoingWindow();
+        if (begin.hasNextOutgoingId()) {
+            this.nextIncomingId = begin.getNextOutgoingId();
+        }
 
         return begin;
     }
@@ -118,9 +113,6 @@ public class ProtonSessionIncomingWindow {
      *      the incoming {@link Flow} performative to process.
      */
     Flow handleFlow(Flow flow) {
-        this.remoteNextOutgoingId = flow.getNextOutgoingId();
-        this.remoteOutgoingWindow = flow.getOutgoingWindow();
-
         return flow;
     }
 
@@ -217,14 +209,6 @@ public class ProtonSessionIncomingWindow {
 
     public long getIncomingWindow() {
         return incomingWindow;
-    }
-
-    public long getRemoteNextOutgoingId() {
-        return remoteNextOutgoingId;
-    }
-
-    public long getRemoteOutgoingWindow() {
-        return remoteOutgoingWindow;
     }
 
     //----- Handle sender link actions in the session window context
