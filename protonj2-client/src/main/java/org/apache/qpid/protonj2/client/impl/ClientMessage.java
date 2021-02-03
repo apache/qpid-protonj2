@@ -382,8 +382,8 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     //----- Application Properties Access
 
     @Override
-    public Object applicationProperty(String key) {
-        if (hasApplicationProperties()) {
+    public Object property(String key) {
+        if (hasProperties()) {
             return applicationProperties.getValue().get(key);
         } else {
             return null;
@@ -391,8 +391,8 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public boolean hasApplicationProperty(String key) {
-        if (hasApplicationProperties()) {
+    public boolean hasProperty(String key) {
+        if (hasProperties()) {
             return applicationProperties.getValue().containsKey(key);
         } else {
             return false;
@@ -400,15 +400,15 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public boolean hasApplicationProperties() {
+    public boolean hasProperties() {
         return applicationProperties != null &&
                applicationProperties.getValue() != null &&
                applicationProperties.getValue().size() > 0;
     }
 
     @Override
-    public Object removeApplicationProperty(String key) {
-        if (hasApplicationProperties()) {
+    public Object removeProperty(String key) {
+        if (hasProperties()) {
             return applicationProperties.getValue().remove(key);
         } else {
             return null;
@@ -416,8 +416,8 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
      }
 
     @Override
-    public Message<E> forEachApplicationProperty(BiConsumer<String, Object> action) {
-        if (hasApplicationProperties()) {
+    public Message<E> forEachProperty(BiConsumer<String, Object> action) {
+        if (hasProperties()) {
             applicationProperties.getValue().forEach(action);
         }
 
@@ -425,7 +425,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     }
 
     @Override
-    public ClientMessage<E> applicationProperty(String key, Object value) {
+    public ClientMessage<E> property(String key, Object value) {
         lazyCreateApplicationProperties().getValue().put(key,value);
         return this;
     }

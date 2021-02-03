@@ -62,7 +62,7 @@ class ClientMessageTest {
         assertNotNull(message.bodySections());
         assertTrue(message.bodySections().isEmpty());
 
-        assertFalse(message.hasApplicationProperties());
+        assertFalse(message.hasProperties());
         assertFalse(message.hasFooters());
         assertFalse(message.hasAnnotations());
     }
@@ -75,7 +75,7 @@ class ClientMessageTest {
         assertNotNull(message.bodySections());
         assertTrue(message.bodySections().isEmpty());
 
-        assertFalse(message.hasApplicationProperties());
+        assertFalse(message.hasProperties());
         assertFalse(message.hasFooters());
         assertFalse(message.hasAnnotations());
 
@@ -245,7 +245,7 @@ class ClientMessageTest {
     public void testForEachMethodsOnEmptyMessage() {
         ClientMessage<String> message = ClientMessage.create();
 
-        assertFalse(message.hasApplicationProperties());
+        assertFalse(message.hasProperties());
         assertFalse(message.hasFooters());
         assertFalse(message.hasAnnotations());
 
@@ -257,7 +257,7 @@ class ClientMessageTest {
             fail("Should not invoke any consumers since Message is empty");
         });
 
-        message.forEachApplicationProperty((key, value) -> {
+        message.forEachProperty((key, value) -> {
             fail("Should not invoke any consumers since Message is empty");
         });
 
@@ -561,21 +561,21 @@ class ClientMessageTest {
         expectations.put("test1", "1");
         expectations.put("test2", "2");
 
-        assertFalse(message.hasApplicationProperties());
-        assertFalse(message.hasApplicationProperty("test1"));
+        assertFalse(message.hasProperties());
+        assertFalse(message.hasProperty("test1"));
 
-        assertNotNull(message.applicationProperty("test1", "1"));
-        assertNotNull(message.applicationProperty("test1"));
+        assertNotNull(message.property("test1", "1"));
+        assertNotNull(message.property("test1"));
 
-        assertTrue(message.hasApplicationProperties());
-        assertTrue(message.hasApplicationProperty("test1"));
+        assertTrue(message.hasProperties());
+        assertTrue(message.hasProperty("test1"));
 
-        assertNotNull(message.applicationProperty("test2", "2"));
-        assertNotNull(message.applicationProperty("test2"));
+        assertNotNull(message.property("test2", "2"));
+        assertNotNull(message.property("test2"));
 
         final AtomicInteger count = new AtomicInteger();
 
-        message.forEachApplicationProperty((k, v) -> {
+        message.forEachProperty((k, v) -> {
             assertTrue(expectations.containsKey(k));
             assertEquals(v, expectations.get(k));
             count.incrementAndGet();
@@ -583,16 +583,16 @@ class ClientMessageTest {
 
         assertEquals(expectations.size(), count.get());
 
-        assertEquals("1", message.removeApplicationProperty("test1"));
-        assertEquals("2", message.removeApplicationProperty("test2"));
-        assertNull(message.removeApplicationProperty("test1"));
-        assertNull(message.removeApplicationProperty("test2"));
-        assertNull(message.removeApplicationProperty("test3"));
-        assertFalse(message.hasApplicationProperties());
-        assertFalse(message.hasApplicationProperty("test1"));
-        assertFalse(message.hasApplicationProperty("test2"));
+        assertEquals("1", message.removeProperty("test1"));
+        assertEquals("2", message.removeProperty("test2"));
+        assertNull(message.removeProperty("test1"));
+        assertNull(message.removeProperty("test2"));
+        assertNull(message.removeProperty("test3"));
+        assertFalse(message.hasProperties());
+        assertFalse(message.hasProperty("test1"));
+        assertFalse(message.hasProperty("test2"));
 
-        message.forEachApplicationProperty((k, v) -> {
+        message.forEachProperty((k, v) -> {
             fail("Should not be any remaining Application Properties");
         });
     }

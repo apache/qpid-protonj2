@@ -241,10 +241,10 @@ public abstract class ClientMessageSupport {
         }
 
         final ApplicationProperties applicationProperties;
-        if (source.hasApplicationProperties()) {
+        if (source.hasProperties()) {
             applicationProperties = new ApplicationProperties(new LinkedHashMap<>());
 
-            source.forEachApplicationProperty((key, value) -> {
+            source.forEachProperty((key, value) -> {
                 applicationProperties.getValue().put(key, value);
             });
         } else {

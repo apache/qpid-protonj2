@@ -311,7 +311,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             message.durable(true);
             message.messageId("test");
             message.annotation("key", "value");
-            message.applicationProperty("key", "value");
+            message.property("key", "value");
             message.body();
 
             try {
@@ -336,7 +336,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             }
 
             try {
-                message.applicationProperty("key", "value");
+                message.property("key", "value");
                 fail("Should not be able to modify message preamble after body writes started");
             } catch (ClientIllegalStateException ex) {
                 // Expected
@@ -1106,9 +1106,9 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             tracker.header(header);
 
             // Populate message application properties
-            tracker.applicationProperty("ap1", 1);
-            tracker.applicationProperty("ap2", 2);
-            tracker.applicationProperty("ap3", 3);
+            tracker.property("ap1", 1);
+            tracker.property("ap2", 2);
+            tracker.property("ap3", 3);
 
             OutputStreamOptions options = new OutputStreamOptions().bodyLength(payloadSize);
             OutputStream stream = tracker.body(options);
@@ -1300,9 +1300,9 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             message.groupSequence(8192);
             message.replyToGroupId("/dev/null");
             // Populate message application properties
-            message.applicationProperty("ap1", 1);
-            message.applicationProperty("ap2", 2);
-            message.applicationProperty("ap3", 3);
+            message.property("ap1", 1);
+            message.property("ap2", 2);
+            message.property("ap3", 3);
 
             OutputStream stream = message.body();
 
@@ -1379,9 +1379,9 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             message.firstAcquirer(true);
             message.deliveryCount(2);
             // Populate message application properties
-            message.applicationProperty("ap1", 1);
-            message.applicationProperty("ap2", 2);
-            message.applicationProperty("ap3", 3);
+            message.property("ap1", 1);
+            message.property("ap2", 2);
+            message.property("ap3", 3);
             // Populate message footers
             message.footer("f1", 1);
             message.footer("f2", 2);
@@ -1467,9 +1467,9 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             message.firstAcquirer(true);
             message.deliveryCount(2);
             // Populate message application properties
-            message.applicationProperty("ap1", 1);
-            message.applicationProperty("ap2", 2);
-            message.applicationProperty("ap3", 3);
+            message.property("ap1", 1);
+            message.property("ap2", 2);
+            message.property("ap3", 3);
 
             OutputStreamOptions bodyOptions = new OutputStreamOptions().completeSendOnClose(false);
             OutputStream stream = message.body(bodyOptions);

@@ -478,8 +478,8 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
     //----- Application Properties API
 
     @Override
-    public Object applicationProperty(String key) throws ClientException {
-        if (hasApplicationProperties()) {
+    public Object property(String key) throws ClientException {
+        if (hasProperties()) {
             return applicationProperties.getValue().get(key);
         } else {
             return null;
@@ -487,8 +487,8 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
     }
 
     @Override
-    public boolean hasApplicationProperty(String key) throws ClientException {
-        if (hasApplicationProperties()) {
+    public boolean hasProperty(String key) throws ClientException {
+        if (hasProperties()) {
             return applicationProperties.getValue().containsKey(key);
         } else {
             return false;
@@ -496,7 +496,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
     }
 
     @Override
-    public boolean hasApplicationProperties() throws ClientException {
+    public boolean hasProperties() throws ClientException {
         ensureStreamDecodedTo(StreamState.APPLICATION_PROPERTIES_READ);
         return applicationProperties != null &&
                applicationProperties.getValue() != null &&
@@ -504,26 +504,26 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
     }
 
     @Override
-    public Object removeApplicationProperty(String key) throws ClientUnsupportedOperationException {
+    public Object removeProperty(String key) throws ClientUnsupportedOperationException {
         throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
     }
 
     @Override
-    public StreamReceiverMessage forEachApplicationProperty(BiConsumer<String, Object> action) throws ClientException {
-        if (hasApplicationProperties()) {
+    public StreamReceiverMessage forEachProperty(BiConsumer<String, Object> action) throws ClientException {
+        if (hasProperties()) {
             applicationProperties.getValue().forEach(action);
         }
         return this;
     }
 
     @Override
-    public StreamReceiverMessage applicationProperty(String key, Object value) throws ClientUnsupportedOperationException {
+    public StreamReceiverMessage property(String key, Object value) throws ClientUnsupportedOperationException {
         throw new ClientUnsupportedOperationException("Cannot write to a StreamReceiveMessage");
     }
 
     @Override
     public ApplicationProperties applicationProperties() throws ClientException {
-        if (hasApplicationProperties()) {
+        if (hasProperties()) {
             return applicationProperties;
         } else {
             return null;

@@ -743,9 +743,9 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
     //----- Application Properties Access
 
     @Override
-    public Object applicationProperty(String key) {
+    public Object property(String key) {
         Object value = null;
-        if (hasApplicationProperties()) {
+        if (hasProperties()) {
             value = applicationProperties.getValue().get(key);
         }
 
@@ -753,8 +753,8 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     @Override
-    public boolean hasApplicationProperty(String key) {
-        if (hasApplicationProperties()) {
+    public boolean hasProperty(String key) {
+        if (hasProperties()) {
             return applicationProperties.getValue().containsKey(key);
         } else {
             return false;
@@ -762,15 +762,15 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     @Override
-    public boolean hasApplicationProperties() {
+    public boolean hasProperties() {
         return applicationProperties != null &&
                applicationProperties.getValue() != null &&
                applicationProperties.getValue().size() > 0;
     }
 
     @Override
-    public Object removeApplicationProperty(String key) {
-        if (hasApplicationProperties()) {
+    public Object removeProperty(String key) {
+        if (hasProperties()) {
             return applicationProperties.getValue().remove(key);
         } else {
             return null;
@@ -778,8 +778,8 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
      }
 
     @Override
-    public StreamSenderMessage forEachApplicationProperty(BiConsumer<String, Object> action) {
-        if (hasApplicationProperties()) {
+    public StreamSenderMessage forEachProperty(BiConsumer<String, Object> action) {
+        if (hasProperties()) {
             applicationProperties.getValue().forEach(action);
         }
 
@@ -787,7 +787,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     @Override
-    public ClientStreamSenderMessage applicationProperty(String key, Object value) throws ClientIllegalStateException {
+    public ClientStreamSenderMessage property(String key, Object value) throws ClientIllegalStateException {
         lazyCreateApplicationProperties().getValue().put(key,value);
         return this;
     }

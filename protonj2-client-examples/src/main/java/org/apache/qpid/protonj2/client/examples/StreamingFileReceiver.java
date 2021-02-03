@@ -56,7 +56,7 @@ public class StreamingFileReceiver {
             StreamReceiverMessage message = delivery.message();
 
             // The remote should have told us the filename of the original file it sent.
-            String filename = (String) message.applicationProperty(fileNameKey);
+            String filename = (String) message.property(fileNameKey);
             if (filename == null || filename.isBlank()) {
                 System.out.println("Remote did not include the source filename in the incoming message");
                 System.exit(1);
@@ -64,11 +64,9 @@ public class StreamingFileReceiver {
                 System.out.println("Starting receive of incoming file named: " + filename);
             }
 
-            FileOutputStream outputStream = new FileOutputStream(new File(outputPath, filename));
-
-            message.body().transferTo(outputStream);
-
-            outputStream.close();
+            try (FileOutputStream outputStream = new FileOutputStream(new File(outputPath, filename))) {
+                message.body().transferTo(outputStream);
+            }
 
             System.out.println("Received file written to: " + new File(outputPath, filename));
         }

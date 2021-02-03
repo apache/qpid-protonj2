@@ -640,53 +640,7 @@ public interface Message<E> {
      *
      * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
      */
-    Object applicationProperty(String key) throws ClientException;
-
-    /**
-     * Query the {@link Message} to determine if it carries the given application property key.
-     *
-     * @param key
-     *      The key of the application property to query for.
-     *
-     * @return <code>true</code> if the Message carries the given application property.
-     *
-     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
-     */
-    boolean hasApplicationProperty(String key) throws ClientException;
-
-    /**
-     * Query the {@link Message} to determine if it carries any application properties.
-     *
-     * @return <code>true</code> if the Message carries any application properties.
-     *
-     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
-     */
-    boolean hasApplicationProperties() throws ClientException;
-
-    /**
-     * Removes the given application property from the values carried in the message currently, if none
-     * was present than this method returns <code>null</code>.
-     *
-     * @param key
-     *      The key of the application property to query for removal.
-     *
-     * @return the application property value that was previously assigned to that key.
-     *
-     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
-     */
-    Object removeApplicationProperty(String key) throws ClientException;
-
-    /**
-     * Invokes the given {@link BiConsumer} on each application property entry carried in this {@link Message}.
-     *
-     * @param action
-     *      The action that will be invoked on each application property entry.
-     *
-     * @return this {@link Message} instance.
-     *
-     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
-     */
-    Message<E> forEachApplicationProperty(BiConsumer<String, Object> action) throws ClientException;
+    Object property(String key) throws ClientException;
 
     /**
      * Sets the given application property value at the given key, replacing any previous value
@@ -701,7 +655,53 @@ public interface Message<E> {
      *
      * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
      */
-    Message<E> applicationProperty(String key, Object value) throws ClientException;
+    Message<E> property(String key, Object value) throws ClientException;
+
+    /**
+     * Query the {@link Message} to determine if it carries the given application property key.
+     *
+     * @param key
+     *      The key of the application property to query for.
+     *
+     * @return <code>true</code> if the Message carries the given application property.
+     *
+     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
+     */
+    boolean hasProperty(String key) throws ClientException;
+
+    /**
+     * Query the {@link Message} to determine if it carries any application properties.
+     *
+     * @return <code>true</code> if the Message carries any application properties.
+     *
+     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
+     */
+    boolean hasProperties() throws ClientException;
+
+    /**
+     * Removes the given application property from the values carried in the message currently, if none
+     * was present than this method returns <code>null</code>.
+     *
+     * @param key
+     *      The key of the application property to query for removal.
+     *
+     * @return the application property value that was previously assigned to that key.
+     *
+     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
+     */
+    Object removeProperty(String key) throws ClientException;
+
+    /**
+     * Invokes the given {@link BiConsumer} on each application property entry carried in this {@link Message}.
+     *
+     * @param action
+     *      The action that will be invoked on each application property entry.
+     *
+     * @return this {@link Message} instance.
+     *
+     * @throws ClientException if an error occurs accessing the application properties in this {@link Message}.
+     */
+    Message<E> forEachProperty(BiConsumer<String, Object> action) throws ClientException;
 
     //----- Footer
 

@@ -381,9 +381,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             final Message<String> message = Message.create("Hello World");
 
             // Populate message application properties
-            message.applicationProperty("one", 1);
-            message.applicationProperty("two", 2);
-            message.applicationProperty("three", 3);
+            message.property("one", 1);
+            message.property("two", 2);
+            message.property("three", 3);
 
             final Tracker tracker = sender.send(message);
 
@@ -570,9 +570,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             message.groupSequence(8192);
             message.replyToGroupId("/dev/null");
             // Populate message application properties
-            message.applicationProperty("ap1", 1);
-            message.applicationProperty("ap2", 2);
-            message.applicationProperty("ap3", 3);
+            message.property("ap1", 1);
+            message.property("ap2", 2);
+            message.property("ap3", 3);
             // Populate message footers
             message.footer("f1", 1);
             message.footer("f2", 2);
@@ -1063,9 +1063,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             message.groupSequence(8192);
             message.replyToGroupId("/dev/null");
             // Populate message application properties
-            message.applicationProperty("ap1", 1);
-            message.applicationProperty("ap2", 2);
-            message.applicationProperty("ap3", 3);
+            message.property("ap1", 1);
+            message.property("ap2", 2);
+            message.property("ap3", 3);
             // Populate message footers
             message.footer("f1", 1);
             message.footer("f2", 2);

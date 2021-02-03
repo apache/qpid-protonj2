@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.client.examples;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 
 import org.apache.qpid.protonj2.client.Client;
@@ -56,16 +57,20 @@ public class StreamingFileSender {
             StreamSenderMessage message = sender.beginMessage();
 
             // Inform the other side what the original file name was.
-            message.applicationProperty(fileNameKey, inputFile.getName());
+            message.property(fileNameKey, inputFile.getName());
 
             // Creates an OutputStream that writes the file in smaller data sections which allows for
             // larger file sizes than the single AMQP Data section bounded configuration might allow.
-            OutputStream output = message.body();
-
-            // Let the streams handle the actual transfer which will block until complete.
-            inputStream.transferTo(output);
-
-            output.close();  // This completes the message send.
+            // When not specifying a body size the application will need to close the output to indicate
+            // the transfer is complete, here we use a try with resources approach to accomplish that.
+            try (OutputStream output = message.body()) {
+                // Let the streams handle the actual transfer which will block until the full transfer
+                // is complete, or if an error occurs either in the file reader or the stream sender
+                // the message send should be aborted.
+                inputStream.transferTo(output);
+            } catch (IOException ioe) {
+                message.abort();
+            }
 
             message.tracker().awaitSettlement();
         }

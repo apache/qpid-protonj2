@@ -348,7 +348,7 @@ public class ExternalMessage<E> implements Message<E> {
     //----- Application Properties Access
 
     @Override
-    public Object applicationProperty(String key) {
+    public Object property(String key) {
         Object value = null;
         if (applicationProperties != null) {
             value = applicationProperties.getValue().get(key);
@@ -358,7 +358,7 @@ public class ExternalMessage<E> implements Message<E> {
     }
 
     @Override
-    public boolean hasApplicationProperty(String key) {
+    public boolean hasProperty(String key) {
         if (applicationProperties != null && applicationProperties.getValue() != null) {
             return applicationProperties.getValue().containsKey(key);
         } else {
@@ -367,15 +367,15 @@ public class ExternalMessage<E> implements Message<E> {
     }
 
     @Override
-    public boolean hasApplicationProperties() {
+    public boolean hasProperties() {
         return applicationProperties != null &&
                applicationProperties.getValue() != null &&
                applicationProperties.getValue().size() > 0;
     }
 
     @Override
-    public Object removeApplicationProperty(String key) {
-        if (hasApplicationProperties()) {
+    public Object removeProperty(String key) {
+        if (hasProperties()) {
             return applicationProperties.getValue().remove(key);
         } else {
             return null;
@@ -383,8 +383,8 @@ public class ExternalMessage<E> implements Message<E> {
      }
 
     @Override
-    public Message<E> forEachApplicationProperty(BiConsumer<String, Object> action) {
-        if (hasApplicationProperties()) {
+    public Message<E> forEachProperty(BiConsumer<String, Object> action) {
+        if (hasProperties()) {
             applicationProperties.getValue().forEach(action);
         }
 
@@ -392,7 +392,7 @@ public class ExternalMessage<E> implements Message<E> {
     }
 
     @Override
-    public ExternalMessage<E> applicationProperty(String key, Object value) {
+    public ExternalMessage<E> property(String key, Object value) {
         lazyCreateApplicationProperties().getValue().put(key,value);
         return this;
     }
