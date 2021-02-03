@@ -28,7 +28,12 @@ import org.apache.qpid.protonj2.types.transport.Role;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
- * Tracks the incoming window and provides management of that window in relation to receiver links
+ * Tracks the incoming window and provides management of that window in relation to receiver links.
+ * <p>
+ * The incoming window decreases as {@link Transfer} frames arrive and is replenished when the user reads the
+ * bytes received in the accumulated payload of a delivery.  The window is expanded by sending a {@link Flow}
+ * frame to the remote with an updated incoming window value at configured intervals based on reads from the
+ * pending deliveries.
  */
 public class ProtonSessionIncomingWindow {
 

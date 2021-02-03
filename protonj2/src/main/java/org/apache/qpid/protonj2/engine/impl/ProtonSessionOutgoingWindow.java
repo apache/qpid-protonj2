@@ -44,7 +44,7 @@ public class ProtonSessionOutgoingWindow {
     // These are used for the session windows communicated via Begin/Flow frames
     // and the conceptual transfer-id relating to updating them.
     private long outgoingWindow = DEFAULT_WINDOW_SIZE;
-    private int nextOutgoingId = 1;
+    private int nextOutgoingId = 0;
 
     private long remoteIncomingWindow;
     private int remoteNextIncomingId = nextOutgoingId;

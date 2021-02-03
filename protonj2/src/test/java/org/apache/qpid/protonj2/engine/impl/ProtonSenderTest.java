@@ -3488,7 +3488,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                          .withLinkCredit(10)
                          .withIncomingWindow(0)
                          .withOutgoingWindow(10)
-                         .withNextIncomingId(1)
+                         .withNextIncomingId(0)
                          .withNextOutgoingId(1).queue();
         peer.expectDetach().withHandle(0).respond();
 
@@ -3527,7 +3527,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                          .withLinkCredit(10)
                          .withIncomingWindow(0)
                          .withOutgoingWindow(10)
-                         .withNextIncomingId(1)
+                         .withNextIncomingId(0)
                          .withNextOutgoingId(1).queue();
 
         Connection connection = engine.start().open();
@@ -3563,8 +3563,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .withLinkCredit(10)
                              .withIncomingWindow(1)
                              .withOutgoingWindow(10)
-                             .withNextIncomingId(1)
-                             .withNextOutgoingId(1).now();
+                             .withNextIncomingId(0)
+                             .withNextOutgoingId(0).now();
 
             assertTrue(senderCreditUpdated.await(10, TimeUnit.SECONDS));
             assertTrue(sender.isSendable());
@@ -3613,7 +3613,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond().withContainerId("driver").withMaxFrameSize(1024);
         peer.expectBegin().respond().withIncomingWindow(1);
         peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
-        peer.remoteFlow().withLinkCredit(10).queue();
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(1)
+                         .withIncomingWindow(1)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(0).queue();
         peer.expectTransfer().withHandle(0)
                              .withMore(true)
                              .withSettled(false)
@@ -3640,7 +3645,9 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNotEquals(payload.length, payloadBuffer.getReadableBytes());
         assertFalse(sender.isSendable());
 
-        peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(2).withLinkCredit(10).now();
+        peer.remoteFlow().withIncomingWindow(1)
+                         .withNextIncomingId(1)
+                         .withLinkCredit(10).now();
 
         assertTrue(sender.isSendable());
 
