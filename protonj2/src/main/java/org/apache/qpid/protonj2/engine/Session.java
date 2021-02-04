@@ -112,7 +112,7 @@ public interface Session extends Endpoint<Session> {
      * @param incomingCapacity
      *      maximum number of incoming bytes this session will allow
      *
-     * @return this Session
+     * @return this {@link Session} instance.
      *
      * @throws IllegalStateException if the {@link Session} has already been closed.
      */
@@ -122,6 +122,27 @@ public interface Session extends Endpoint<Session> {
      * @return the current incoming capacity of this session.
      */
     int getIncomingCapacity();
+
+    /**
+     * Set the handle max value for this Session.
+     *
+     * The handle max value can only be modified prior to a call to {@link Session#open()},
+     * once the session has been opened locally an error will be thrown if this method
+     * is called.
+     *
+     * @param handleMax
+     *      The value to set for handle max when opening the session.
+     *
+     * @return this {@link Session} instance.
+     *
+     * @throws IllegalStateException if the Session has already been opened.
+     */
+    Session setHandleMax(long handleMax) throws IllegalStateException;
+
+    /**
+     * @return the currently configured handle max for this {@link Session}
+     */
+    long getHandleMax();
 
     //----- View the remote end of the Session configuration
 

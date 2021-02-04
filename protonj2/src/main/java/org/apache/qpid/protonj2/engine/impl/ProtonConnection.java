@@ -456,20 +456,20 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
             // the remote is requesting a new session and we need to create one and signal that a remote
             // session was opened.
             if (begin.hasRemoteChannel()) {
-                final int remoteChannel = begin.getRemoteChannel();
-                session = localSessions.get(remoteChannel);
+                final int localSessionChannel = begin.getRemoteChannel();
+                session = localSessions.get(localSessionChannel);
                 if (session == null) {
                     // If there is a session that was begun and ended before remote responded we
                     // expect that this exchange refers to that session and proceed as though the
                     // remote is going to begin and end it now (as it should).  The alternative is
                     // that the remote is doing something not compliant with the specification and
                     // we fail the engine to indicate this.
-                    if (zombieSessions.containsKey(remoteChannel)) {
-                        session = zombieSessions.get(remoteChannel).get();
+                    if (zombieSessions.containsKey(localSessionChannel)) {
+                        session = zombieSessions.get(localSessionChannel).get();
                         if (session != null) {
                             // The session will now get tracked as a remote session and the next
                             // end will take care of normal remote session cleanup.
-                            zombieSessions.remove(remoteChannel);
+                            zombieSessions.remove(localSessionChannel);
                         } else {
                             // The session was reclaimed by GC and we retain the fact that it was
                             // here so that the end that should be following doesn't result in an
@@ -478,7 +478,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
                         }
                     } else {
                         setCondition(new ErrorCondition(AmqpError.PRECONDITION_FAILED, "No matching session found for remote channel given")).close();
-                        engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Begin from remote: " + remoteChannel));
+                        engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Begin from remote: " + localSessionChannel));
                         return;
                     }
                 }
@@ -709,7 +709,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     }
 
     private int findFreeLocalChannel() {
-        for (int i = 0; i < ProtonConstants.CHANNEL_MAX; ++i) {
+        for (int i = 0; i <= localOpen.getChannelMax(); ++i) {
             if (!localSessions.containsKey(i) && !zombieSessions.containsKey(i)) {
                 return i;
             }
@@ -718,7 +718,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         // We didn't find one that isn't free and also not awaiting remote being / end
         // so just use an overlap as it should complete in order unles the remote has
         // completely ignored the specification and or gone of the rails.
-        for (int i = 0; i < ProtonConstants.CHANNEL_MAX; ++i) {
+        for (int i = 0; i <= localOpen.getChannelMax(); ++i) {
             if (!localSessions.containsKey(i)) {
                 return i;
             }

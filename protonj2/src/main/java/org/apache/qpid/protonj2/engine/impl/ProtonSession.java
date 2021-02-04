@@ -40,6 +40,7 @@ import org.apache.qpid.protonj2.engine.exceptions.EngineStateException;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.util.SplayMap;
 import org.apache.qpid.protonj2.types.Symbol;
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.transport.Attach;
 import org.apache.qpid.protonj2.types.transport.Begin;
 import org.apache.qpid.protonj2.types.transport.ConnectionError;
@@ -190,6 +191,26 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     @Override
     public int getRemainingIncomingCapacity() {
         return incomingWindow.getRemainingIncomingCapacity();
+    }
+
+    @Override
+    public Session setHandleMax(long handleMax) throws IllegalStateException {
+        checkNotOpened("Cannot set handle max on already opened Session");
+
+        if (handleMax < 0L || handleMax > UnsignedInteger.MAX_VALUE.longValue()) {
+            throw new IllegalArgumentException(
+                String.format("Given Handle Max Value \"%d\" lies outside the range [%d] to [%d]",
+                              handleMax, 0, UnsignedInteger.MAX_VALUE.longValue()));
+        }
+
+        this.localBegin.setHandleMax(handleMax);
+
+        return this;
+    }
+
+    @Override
+    public long getHandleMax() {
+        return localBegin.getHandleMax();
     }
 
     @Override
@@ -455,7 +476,6 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
                 return;
             }
 
-            //TODO: nicer handling of the error
             if (!attach.hasInitialDeliveryCount() && attach.getRole() == Role.SENDER) {
                 throw new ProtocolViolationException("Sending peer attach had no initial delivery count");
             }
@@ -690,7 +710,7 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     }
 
     long findFreeLocalHandle(ProtonLink<?> link) {
-        for (long i = 0; i < ProtonConstants.HANDLE_MAX; ++i) {
+        for (long i = 0; i <= localBegin.getHandleMax(); ++i) {
             if (!localLinks.containsKey((int) i)) {
                 localLinks.put((int) i, link);
                 return i;

@@ -1667,6 +1667,50 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testConnectionThrowsWhenLocalChannelMaxExceeded() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withChannelMax(1).respond();
+        peer.expectBegin().onChannel(0).respond().onChannel(1);
+        peer.expectBegin().onChannel(1).respond().onChannel(0);
+        peer.expectEnd().onChannel(1).respond().onChannel(0);
+
+        Connection connection = engine.start();
+
+        connection.setChannelMax(1);
+        connection.open();
+
+        Session session1 = connection.session().open();
+        Session session2 = connection.session().open();
+
+        try {
+            connection.session().open();
+            fail("Should not be able to exceed local channel max");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        session2.close();
+
+        peer.waitForScriptToComplete();
+        peer.expectBegin().onChannel(1).respond().onChannel(0);
+        peer.expectEnd().onChannel(0).respond().onChannel(1);
+        peer.expectEnd().onChannel(1).respond().onChannel(0);
+        peer.expectClose().respond();
+
+        session2 = connection.session().open();
+        session1.close();
+        session2.close();
+
+        connection.close();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testNoOpenWrittenAfterEncodeErrorFromConnectionProperties() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());

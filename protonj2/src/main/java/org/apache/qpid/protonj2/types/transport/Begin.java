@@ -197,8 +197,6 @@ public final class Begin implements Performative {
     public Begin setHandleMax(long handleMax) {
         if (handleMax < 0 || handleMax > UINT_MAX) {
             throw new IllegalArgumentException("Handle Max value given is out of range: " + handleMax);
-        } else if (handleMax == 0) {
-            modified &= ~HANDLE_MAX;
         } else {
             modified |= HANDLE_MAX;
         }

@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.junit.jupiter.api.Test;
 
 public class BeginTest {
@@ -34,6 +35,19 @@ public class BeginTest {
     @Test
     public void testToStringOnFreshInstance() {
         assertNotNull(new Begin().toString());
+    }
+
+    @Test
+    public void testHandleMaxIfSetIsAlwaysPresent() {
+        Begin begin = new Begin();
+
+        assertFalse(begin.hasHandleMax());
+        begin.setHandleMax(0);
+        assertTrue(begin.hasHandleMax());
+        begin.setHandleMax(65535);
+        assertTrue(begin.hasHandleMax());
+        begin.setHandleMax(UnsignedInteger.MAX_VALUE.longValue());
+        assertTrue(begin.hasHandleMax());
     }
 
     @Test

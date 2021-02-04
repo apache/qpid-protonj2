@@ -54,10 +54,10 @@ import org.apache.qpid.protonj2.test.driver.matchers.types.UnsignedIntegerMatche
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
+import org.apache.qpid.protonj2.types.transport.ConnectionError;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.hamcrest.Matcher;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -1672,7 +1672,6 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Disabled("Connection not enforcing channel max yet")
     @Test
     public void testHalfClosedSessionChannelRecycledIfNoOtherAvailableChannels() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
@@ -1680,29 +1679,123 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         ProtonTestConnector peer = createTestPeer(engine);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
-        peer.expectOpen().withChannelMax(2).respond().withContainerId("driver");
+        peer.expectOpen().withChannelMax(1).respond().withContainerId("driver");
         peer.expectBegin().onChannel(0);
         peer.expectEnd().onChannel(0);
-        peer.expectBegin().onChannel(1).respond();
+        peer.expectBegin().onChannel(1);
         peer.expectBegin().onChannel(0);
-        peer.expectEnd().onChannel(0);
-        peer.expectEnd();
 
         Connection connection = engine.start();
 
-        connection.setChannelMax(2);
+        connection.setChannelMax(1); // at most two channels
         connection.open();
         connection.session().open().close(); // Ch: 0
         connection.session().open(); // Ch: 1
-        connection.session().open().close(); // Ch: 0 (recycled)
+        connection.session().open(); // Ch: 0 (recycled)
 
         peer.waitForScriptToComplete();
-        peer.remoteBegin().withRemoteChannel(0).withNextOutgoingId(1).now();
-        peer.remoteEnd().now();
-        peer.remoteBegin().withRemoteChannel(0).withNextOutgoingId(1).now();
-        peer.remoteEnd().now();
+        // Answer to initial Begin / End of session on Ch: 0
+        peer.remoteBegin().withRemoteChannel(0).onChannel(1).now();
+        peer.remoteEnd().onChannel(1).now();
+        // Answer to second session which should have begun on Ch: 1
+        peer.remoteBegin().withRemoteChannel(1).onChannel(0).now();
+        // Answer to third session which should have begun on Ch: 0 recycled
+        peer.remoteBegin().withRemoteChannel(0).onChannel(1).now();
 
-        connection.session().open().close();
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSessionEnforcesHandleMaxForLocalSenders() throws Exception {
+        doTestSessionEnforcesHandleMaxForLocalEndpoints(false);
+    }
+
+    @Test
+    public void testSessionEnforcesHandleMaxForLocalReceivers() throws Exception {
+        doTestSessionEnforcesHandleMaxForLocalEndpoints(true);
+    }
+
+    private void doTestSessionEnforcesHandleMaxForLocalEndpoints(boolean receiver) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().withHandleMax(0).respond();
+        peer.expectAttach().respond();
+        peer.expectEnd().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().setHandleMax(0).open();
+
+        if (receiver) {
+            session.receiver("receiver1").open();
+            try {
+                session.receiver("receiver2").open();
+                fail("Should not allow receiver create on session with one handle maximum");
+            } catch (IllegalStateException ise) {
+                // Expected
+            }
+            try {
+                session.sender("sender1").open();
+                fail("Should not allow additional sender create on session with one handle maximum");
+            } catch (IllegalStateException ise) {
+                // Expected
+            }
+        } else {
+            session.sender("sender1").open();
+            try {
+                session.sender("sender2").open();
+                fail("Should not allow second sender create on session with one handle maximum");
+            } catch (IllegalStateException ise) {
+                // Expected
+            }
+            try {
+                session.receiver("receiver1").open();
+                fail("Should not allow additional receiver create on session with one handle maximum");
+            } catch (IllegalStateException ise) {
+                // Expected
+            }
+        }
+
+        session.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSessionEnforcesHandleMaxFromRemoteAttachOfSender() throws Exception {
+        doTestSessionEnforcesHandleMaxFromRemoteAttach(true);
+    }
+
+    @Test
+    public void testSessionEnforcesHandleMaxFromRemoteAttachOfReceiver() throws Exception {
+        doTestSessionEnforcesHandleMaxFromRemoteAttach(false);
+    }
+
+    public void doTestSessionEnforcesHandleMaxFromRemoteAttach(boolean sender) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().withHandleMax(0).respond().withHandleMax(42);
+        if (sender) {
+            peer.remoteAttach().ofSender().withHandle(1).withName("link-name").queue();
+        } else {
+            peer.remoteAttach().ofReceiver().withHandle(1).withName("link-name").queue();
+        }
+        peer.expectClose().withError(ConnectionError.FRAMING_ERROR.toString(), "Session handle-max exceeded").respond();
+
+        Connection connection = engine.start().open();
+
+        // Remote should attempt to attach a link and violate local handle max restrictions
+        connection.session().setHandleMax(0).open();
 
         peer.waitForScriptToComplete();
 
