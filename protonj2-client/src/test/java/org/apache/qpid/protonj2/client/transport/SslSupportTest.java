@@ -114,7 +114,7 @@ public class SslSupportTest extends ImperativeClientTestCase {
         assertFalse(engineProtocols.contains("SSLv3"), "SSLv3 should not be enabled by default");
 
         // TODO - Netty is currently unable to disable OpenSSL SSLv2Hello so we are stuck with it for now.
-        // assertFalse("SSLv2Hello should not be enabled by default", engineProtocols.contains("SSLv2Hello"));
+        // assertFalse(engineProtocols.contains("SSLv2Hello"), "SSLv2Hello should not be enabled by default");
     }
 
     @Test
