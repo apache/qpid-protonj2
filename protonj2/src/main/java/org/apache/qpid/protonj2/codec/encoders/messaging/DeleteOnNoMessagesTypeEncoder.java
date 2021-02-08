@@ -45,7 +45,7 @@ public final class DeleteOnNoMessagesTypeEncoder extends AbstractDescribedListTy
     }
 
     @Override
-    public int getListEncoding(DeleteOnNoMessages value) {
+    public byte getListEncoding(DeleteOnNoMessages value) {
         return EncodingCodes.LIST0 & 0xff;
     }
 

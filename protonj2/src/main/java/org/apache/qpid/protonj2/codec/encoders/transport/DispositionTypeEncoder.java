@@ -105,7 +105,7 @@ public final class DispositionTypeEncoder extends AbstractDescribedListTypeEncod
     }
 
     @Override
-    public int getListEncoding(Disposition value) {
+    public byte getListEncoding(Disposition value) {
         if (value.getState() == null) {
             return EncodingCodes.LIST8;
         } else if (value.getState() == Accepted.getInstance() || value.getState() == Released.getInstance()) {
@@ -118,5 +118,10 @@ public final class DispositionTypeEncoder extends AbstractDescribedListTypeEncod
     @Override
     public int getElementCount(Disposition disposition) {
         return disposition.getElementCount();
+    }
+
+    @Override
+    public int getMinElementCount() {
+        return 2;
     }
 }

@@ -59,7 +59,7 @@ public final class DischargeTypeEncoder extends AbstractDescribedListTypeEncoder
     }
 
     @Override
-    public int getListEncoding(Discharge value) {
+    public byte getListEncoding(Discharge value) {
         if (value.getTxnId() != null && value.getTxnId().getLength() > 240) {
             return EncodingCodes.LIST32;
         } else {
@@ -70,5 +70,10 @@ public final class DischargeTypeEncoder extends AbstractDescribedListTypeEncoder
     @Override
     public int getElementCount(Discharge discharge) {
         return 2;
+    }
+
+    @Override
+    public int getMinElementCount() {
+        return 1;
     }
 }

@@ -32,6 +32,7 @@ import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.EncodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
@@ -63,6 +64,19 @@ public class AttachTypeCodecTest extends CodecTestSupport {
         assertEquals(Attach.DESCRIPTOR_CODE, new AttachTypeEncoder().getDescriptorCode());
         assertEquals(Attach.DESCRIPTOR_SYMBOL, new AttachTypeDecoder().getDescriptorSymbol());
         assertEquals(Attach.DESCRIPTOR_SYMBOL, new AttachTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
+    public void testCannotEncodeEmptyPerformative() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Attach input = new Attach();
+
+        try {
+            encoder.writeObject(buffer, encoderState, input);
+            fail("Cannot omit required fields.");
+        } catch (EncodeException encEx) {
+        }
     }
 
     @Test

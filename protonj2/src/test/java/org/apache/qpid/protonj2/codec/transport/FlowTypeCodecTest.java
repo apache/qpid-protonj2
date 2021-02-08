@@ -28,6 +28,7 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.EncodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.transport.FlowTypeDecoder;
@@ -50,6 +51,19 @@ public class FlowTypeCodecTest extends CodecTestSupport {
         assertEquals(Flow.DESCRIPTOR_CODE, new FlowTypeEncoder().getDescriptorCode());
         assertEquals(Flow.DESCRIPTOR_SYMBOL, new FlowTypeDecoder().getDescriptorSymbol());
         assertEquals(Flow.DESCRIPTOR_SYMBOL, new FlowTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
+    public void testCannotEncodeEmptyPerformative() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Flow input = new Flow();
+
+        try {
+            encoder.writeObject(buffer, encoderState, input);
+            fail("Cannot omit required fields.");
+        } catch (EncodeException encEx) {
+        }
     }
 
     @Test

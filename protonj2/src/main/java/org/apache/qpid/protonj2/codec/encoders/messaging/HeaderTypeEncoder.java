@@ -45,7 +45,7 @@ public final class HeaderTypeEncoder extends AbstractDescribedListTypeEncoder<He
     }
 
     @Override
-    public int getListEncoding(Header value) {
+    public byte getListEncoding(Header value) {
         return EncodingCodes.LIST8;
     }
 

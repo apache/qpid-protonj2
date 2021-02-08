@@ -104,7 +104,7 @@ public final class PropertiesTypeEncoder extends AbstractDescribedListTypeEncode
     }
 
     @Override
-    public int getListEncoding(Properties value) {
+    public byte getListEncoding(Properties value) {
         return EncodingCodes.LIST32;
     }
 

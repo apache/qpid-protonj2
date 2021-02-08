@@ -66,12 +66,17 @@ public final class DetachTypeEncoder extends AbstractDescribedListTypeEncoder<De
     }
 
     @Override
-    public int getListEncoding(Detach value) {
+    public byte getListEncoding(Detach value) {
         return value.getError() == null ? EncodingCodes.LIST8 : EncodingCodes.LIST32;
     }
 
     @Override
     public int getElementCount(Detach detach) {
         return detach.getElementCount();
+    }
+
+    @Override
+    public int getMinElementCount() {
+        return 1;
     }
 }

@@ -126,7 +126,7 @@ public final class FlowTypeEncoder extends AbstractDescribedListTypeEncoder<Flow
     }
 
     @Override
-    public int getListEncoding(Flow value) {
+    public byte getListEncoding(Flow value) {
         if (value.getProperties() == null) {
             return EncodingCodes.LIST8;
         } else {
@@ -137,5 +137,10 @@ public final class FlowTypeEncoder extends AbstractDescribedListTypeEncoder<Flow
     @Override
     public int getElementCount(Flow flow) {
         return flow.getElementCount();
+    }
+
+    @Override
+    public int getMinElementCount() {
+        return 4;
     }
 }

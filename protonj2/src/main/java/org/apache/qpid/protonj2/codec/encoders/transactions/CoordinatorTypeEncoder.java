@@ -56,7 +56,7 @@ public final class CoordinatorTypeEncoder extends AbstractDescribedListTypeEncod
     }
 
     @Override
-    public int getListEncoding(Coordinator value) {
+    public byte getListEncoding(Coordinator value) {
         if (value.getCapabilities() != null) {
             return EncodingCodes.LIST32;
         } else {

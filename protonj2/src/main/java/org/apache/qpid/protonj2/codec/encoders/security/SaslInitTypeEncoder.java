@@ -70,4 +70,9 @@ public final class SaslInitTypeEncoder extends AbstractDescribedListTypeEncoder<
             return 1;
         }
     }
+
+    @Override
+    public int getMinElementCount() {
+        return 1;
+    }
 }

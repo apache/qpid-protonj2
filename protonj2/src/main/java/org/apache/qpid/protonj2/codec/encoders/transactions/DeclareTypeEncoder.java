@@ -56,7 +56,7 @@ public final class DeclareTypeEncoder extends AbstractDescribedListTypeEncoder<D
     }
 
     @Override
-    public int getListEncoding(Declare value) {
+    public byte getListEncoding(Declare value) {
         if (value.getGlobalId() != null) {
             return EncodingCodes.LIST32;
         } else {

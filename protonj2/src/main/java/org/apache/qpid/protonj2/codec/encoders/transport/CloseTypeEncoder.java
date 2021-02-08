@@ -56,8 +56,8 @@ public final class CloseTypeEncoder extends AbstractDescribedListTypeEncoder<Clo
     }
 
     @Override
-    public int getListEncoding(Close value) {
-        return value.getError() == null ? EncodingCodes.LIST0 & 0xff : EncodingCodes.LIST32 & 0xff;
+    public byte getListEncoding(Close value) {
+        return value.getError() == null ? EncodingCodes.LIST0 : EncodingCodes.LIST32;
     }
 
     @Override

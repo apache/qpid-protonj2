@@ -45,7 +45,7 @@ public final class DeleteOnNoLinksTypeEncoder extends AbstractDescribedListTypeE
     }
 
     @Override
-    public int getListEncoding(DeleteOnNoLinks value) {
+    public byte getListEncoding(DeleteOnNoLinks value) {
         return EncodingCodes.LIST0 & 0xff;
     }
 

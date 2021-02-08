@@ -59,7 +59,7 @@ public final class ReceivedTypeEncoder extends AbstractDescribedListTypeEncoder<
     }
 
     @Override
-    public int getListEncoding(Received value) {
+    public byte getListEncoding(Received value) {
         return EncodingCodes.LIST8;
     }
 
@@ -72,5 +72,10 @@ public final class ReceivedTypeEncoder extends AbstractDescribedListTypeEncoder<
         } else {
             return 0;
         }
+    }
+
+    @Override
+    public int getMinElementCount() {
+        return 2;
     }
 }

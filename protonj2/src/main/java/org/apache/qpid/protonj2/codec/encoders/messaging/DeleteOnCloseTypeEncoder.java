@@ -45,7 +45,7 @@ public final class DeleteOnCloseTypeEncoder extends AbstractDescribedListTypeEnc
     }
 
     @Override
-    public int getListEncoding(DeleteOnClose value) {
+    public byte getListEncoding(DeleteOnClose value) {
         return EncodingCodes.LIST0 & 0xff;
     }
 

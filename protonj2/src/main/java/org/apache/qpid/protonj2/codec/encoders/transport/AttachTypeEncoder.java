@@ -151,12 +151,17 @@ public final class AttachTypeEncoder extends AbstractDescribedListTypeEncoder<At
     }
 
     @Override
-    public int getListEncoding(Attach value) {
+    public byte getListEncoding(Attach value) {
         return EncodingCodes.LIST32;
     }
 
     @Override
     public int getElementCount(Attach attach) {
         return attach.getElementCount();
+    }
+
+    @Override
+    public int getMinElementCount() {
+        return 3;
     }
 }

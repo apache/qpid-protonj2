@@ -89,7 +89,7 @@ public final class SourceTypeEncoder extends AbstractDescribedListTypeEncoder<So
     }
 
     @Override
-    public int getListEncoding(Source value) {
+    public byte getListEncoding(Source value) {
         return EncodingCodes.LIST32;
     }
 

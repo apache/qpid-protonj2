@@ -62,7 +62,7 @@ public final class ModifiedTypeEncoder extends AbstractDescribedListTypeEncoder<
     }
 
     @Override
-    public int getListEncoding(Modified value) {
+    public byte getListEncoding(Modified value) {
         if (value.getMessageAnnotations() != null) {
             return EncodingCodes.LIST32;
         } else {

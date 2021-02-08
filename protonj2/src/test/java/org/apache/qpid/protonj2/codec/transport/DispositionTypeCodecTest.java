@@ -29,6 +29,7 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.EncodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.transport.DispositionTypeDecoder;
@@ -53,6 +54,19 @@ public class DispositionTypeCodecTest extends CodecTestSupport {
         assertEquals(Disposition.DESCRIPTOR_CODE, new DispositionTypeEncoder().getDescriptorCode());
         assertEquals(Disposition.DESCRIPTOR_SYMBOL, new DispositionTypeDecoder().getDescriptorSymbol());
         assertEquals(Disposition.DESCRIPTOR_SYMBOL, new DispositionTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
+    public void testCannotEncodeEmptyPerformative() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Disposition input = new Disposition();
+
+        try {
+            encoder.writeObject(buffer, encoderState, input);
+            fail("Cannot omit required fields.");
+        } catch (EncodeException encEx) {
+        }
     }
 
     @Test

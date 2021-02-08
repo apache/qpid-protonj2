@@ -62,7 +62,7 @@ public final class ErrorConditionTypeEncoder extends AbstractDescribedListTypeEn
     }
 
     @Override
-    public int getListEncoding(ErrorCondition value) {
+    public byte getListEncoding(ErrorCondition value) {
         return EncodingCodes.LIST32;
     }
 

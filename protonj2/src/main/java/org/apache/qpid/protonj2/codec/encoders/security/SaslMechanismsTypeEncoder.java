@@ -58,4 +58,9 @@ public final class SaslMechanismsTypeEncoder extends AbstractDescribedListTypeEn
     public int getElementCount(SaslMechanisms challenge) {
         return 1;
     }
+
+    @Override
+    public int getMinElementCount() {
+        return 1;
+    }
 }

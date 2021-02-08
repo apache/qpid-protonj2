@@ -56,7 +56,7 @@ public final class SaslChallengeTypeEncoder extends AbstractDescribedListTypeEnc
     }
 
     @Override
-    public int getListEncoding(SaslChallenge value) {
+    public byte getListEncoding(SaslChallenge value) {
         if (value.getChallenge().getReadableBytes() < 255) {
             return EncodingCodes.LIST8;
         } else {
@@ -66,6 +66,11 @@ public final class SaslChallengeTypeEncoder extends AbstractDescribedListTypeEnc
 
     @Override
     public int getElementCount(SaslChallenge challenge) {
+        return 1;
+    }
+
+    @Override
+    public int getMinElementCount() {
         return 1;
     }
 }

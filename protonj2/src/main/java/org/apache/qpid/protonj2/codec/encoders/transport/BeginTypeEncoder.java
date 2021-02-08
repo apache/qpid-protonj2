@@ -109,12 +109,17 @@ public final class BeginTypeEncoder extends AbstractDescribedListTypeEncoder<Beg
     }
 
     @Override
-    public int getListEncoding(Begin value) {
+    public byte getListEncoding(Begin value) {
         return EncodingCodes.LIST32;
     }
 
     @Override
     public int getElementCount(Begin begin) {
         return begin.getElementCount();
+    }
+
+    @Override
+    public int getMinElementCount() {
+        return 4;
     }
 }

@@ -45,7 +45,7 @@ public final class ReleasedTypeEncoder extends AbstractDescribedListTypeEncoder<
     }
 
     @Override
-    public int getListEncoding(Released value) {
+    public byte getListEncoding(Released value) {
         return EncodingCodes.LIST0;
     }
 

@@ -59,7 +59,7 @@ public final class TransactionStateTypeEncoder extends AbstractDescribedListType
     }
 
     @Override
-    public int getListEncoding(TransactionalState value) {
+    public byte getListEncoding(TransactionalState value) {
         return EncodingCodes.LIST32;
     }
 
@@ -70,5 +70,10 @@ public final class TransactionStateTypeEncoder extends AbstractDescribedListType
         } else {
             return 1;
         }
+    }
+
+    @Override
+    public int getMinElementCount() {
+        return 1;
     }
 }

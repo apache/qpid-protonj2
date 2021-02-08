@@ -123,12 +123,17 @@ public final class OpenTypeEncoder extends AbstractDescribedListTypeEncoder<Open
     }
 
     @Override
-    public int getListEncoding(Open value) {
+    public byte getListEncoding(Open value) {
         return EncodingCodes.LIST32;
     }
 
     @Override
     public int getElementCount(Open open) {
         return open.getElementCount();
+    }
+
+    @Override
+    public int getMinElementCount() {
+        return 1;
     }
 }

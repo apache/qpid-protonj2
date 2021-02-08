@@ -77,7 +77,7 @@ public final class TargetTypeEncoder extends AbstractDescribedListTypeEncoder<Ta
     }
 
     @Override
-    public int getListEncoding(Target value) {
+    public byte getListEncoding(Target value) {
         return EncodingCodes.LIST32;
     }
 

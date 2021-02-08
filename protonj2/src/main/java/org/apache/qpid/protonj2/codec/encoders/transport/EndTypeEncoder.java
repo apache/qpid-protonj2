@@ -56,8 +56,8 @@ public final class EndTypeEncoder extends AbstractDescribedListTypeEncoder<End> 
     }
 
     @Override
-    public int getListEncoding(End value) {
-        return value.getError() == null ? EncodingCodes.LIST0 & 0xff : EncodingCodes.LIST32 & 0xff;
+    public byte getListEncoding(End value) {
+        return value.getError() == null ? EncodingCodes.LIST0 : EncodingCodes.LIST32;
     }
 
     @Override

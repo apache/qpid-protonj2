@@ -45,7 +45,7 @@ public final class AcceptedTypeEncoder extends AbstractDescribedListTypeEncoder<
     }
 
     @Override
-    public int getListEncoding(Accepted value) {
+    public byte getListEncoding(Accepted value) {
         return EncodingCodes.LIST0 & 0xff;
     }
 

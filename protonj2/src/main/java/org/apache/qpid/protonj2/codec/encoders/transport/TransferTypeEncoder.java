@@ -126,7 +126,7 @@ public final class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<
     }
 
     @Override
-    public int getListEncoding(Transfer value) {
+    public byte getListEncoding(Transfer value) {
         if (value.getState() != null) {
             return EncodingCodes.LIST32;
         } else if (value.getDeliveryTag() != null && value.getDeliveryTag().tagLength() > 200) {
@@ -141,10 +141,8 @@ public final class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<
         return transfer.getElementCount();
     }
 
-    // TODO - Possible correctness checking
-
-//    @Override
-//    public int getMinElementCount() {
-//        return 1;  // Handle required
-//    }
+    @Override
+    public int getMinElementCount() {
+        return 1;
+    }
 }

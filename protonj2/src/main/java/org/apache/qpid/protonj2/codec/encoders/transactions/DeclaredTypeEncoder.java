@@ -56,7 +56,7 @@ public final class DeclaredTypeEncoder extends AbstractDescribedListTypeEncoder<
     }
 
     @Override
-    public int getListEncoding(Declared value) {
+    public byte getListEncoding(Declared value) {
         if (value.getTxnId() != null && value.getTxnId().getLength() > 255) {
             return EncodingCodes.LIST32;
         } else {
@@ -66,6 +66,11 @@ public final class DeclaredTypeEncoder extends AbstractDescribedListTypeEncoder<
 
     @Override
     public int getElementCount(Declared declared) {
+        return 1;
+    }
+
+    @Override
+    public int getMinElementCount() {
         return 1;
     }
 }

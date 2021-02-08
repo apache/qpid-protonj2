@@ -56,7 +56,7 @@ public final class RejectedTypeEncoder extends AbstractDescribedListTypeEncoder<
     }
 
     @Override
-    public int getListEncoding(Rejected value) {
+    public byte getListEncoding(Rejected value) {
         if (value.getError() != null) {
             return EncodingCodes.LIST32;
         } else {

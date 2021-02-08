@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.EncodeException;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 
@@ -41,7 +42,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
      *
      * @return the encoding code of the list type encoding needed for this object.
      */
-    public int getListEncoding(V value) {
+    public byte getListEncoding(V value) {
         return EncodingCodes.LIST32;
     }
 
@@ -70,70 +71,74 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
      */
     public abstract int getElementCount(V value);
 
-    // TODO - Possible correctness checking
-
-//    /**
-//     * Return the minimum number of elements that this AMQP type must provide
-//     * in order to be considered a valid type.
-//     *
-//     * @return the minimum number of elements this type must provide.
-//     */
-//    public abstract int getMinElementCount();
+    /**
+     * Return the minimum number of elements that this AMQP type must provide
+     * in order to be considered a valid type.
+     *
+     * @return the minimum number of elements this type must provide.
+     */
+    public int getMinElementCount() {
+        return 0;
+    }
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, V value) {
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode().byteValue());
 
-        int count = getElementCount(value);
-        int encodingCode = getListEncoding(value);
+        final int count = getElementCount(value);
+        final byte encodingCode = getListEncoding(value);
 
-        // TODO - Possible correctness checking
-
-//        if (count < getMinElementCount()) {
-//            throw new EncodingException("Incomplete Type cannot be encoded");
-//        }
+        if (count < getMinElementCount()) {
+            throw new EncodeException("Incomplete Type cannot be encoded");
+        }
 
         buffer.writeByte(encodingCode);
 
-        // Optimized step, no other data to be written.
-        if (encodingCode == EncodingCodes.LIST0) {
-            return;
+        switch (encodingCode) {
+            case EncodingCodes.LIST8:
+                writeSmallType(buffer, state, value, count);
+                break;
+            case EncodingCodes.LIST32:
+                writeLargeType(buffer, state, value, count);
+                break;
         }
+    }
 
-        final int fieldWidth;
-
-        if (encodingCode == (EncodingCodes.LIST8)) {
-            fieldWidth = 1;
-        } else {
-            fieldWidth = 4;
-        }
-
-        int startIndex = buffer.getWriteIndex();
+    private void writeSmallType(ProtonBuffer buffer, EncoderState state, V value, int elementCount) {
+        final int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size and write the count of list elements.
-        if (fieldWidth == 1) {
-            buffer.writeByte((byte) 0);
-            buffer.writeByte((byte) count);
-        } else {
-            buffer.writeInt(0);
-            buffer.writeInt(count);
-        }
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) elementCount);
 
         // Write the list elements and then compute total size written.
-        for (int i = 0; i < count; ++i) {
+        for (int i = 0; i < elementCount; ++i) {
             writeElement(value, i, buffer, state);
         }
 
         // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
-        int writeSize = endIndex - startIndex - fieldWidth;
+        final int writeSize = buffer.getWriteIndex() - startIndex - Byte.BYTES;
 
-        if (fieldWidth == 1) {
-            buffer.setByte(startIndex, writeSize);
-        } else {
-            buffer.setInt(startIndex, writeSize);
+        buffer.setByte(startIndex, writeSize);
+    }
+
+    private void writeLargeType(ProtonBuffer buffer, EncoderState state, V value, int elementCount) {
+        final int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(elementCount);
+
+        // Write the list elements and then compute total size written.
+        for (int i = 0; i < elementCount; ++i) {
+            writeElement(value, i, buffer, state);
         }
+
+        // Move back and write the size
+        final int writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
+
+        buffer.setInt(startIndex, writeSize);
     }
 
     @Override
@@ -141,7 +146,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
 
-        int startIndex = buffer.getWriteIndex();
+        final int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size and write the count of list elements.
         buffer.writeInt(0);
@@ -153,13 +158,13 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
         writeRawArray(buffer, state, values);
 
         // Move back and write the size
-        long writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
+        final int writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
 
         if (writeSize > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
         }
 
-        buffer.setInt(startIndex, (int) writeSize);
+        buffer.setInt(startIndex, writeSize);
     }
 
     @SuppressWarnings("unchecked")
@@ -168,11 +173,9 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
         buffer.writeByte(EncodingCodes.LIST32);
 
         for (int i = 0; i < values.length; ++i) {
-            V listType = (V) values[i];
-
-            int count = getElementCount(listType);
-
-            int elementStartIndex = buffer.getWriteIndex();
+            final V listType = (V) values[i];
+            final int count = getElementCount(listType);
+            final int elementStartIndex = buffer.getWriteIndex();
 
             // Reserve space for the size and write the count of list elements.
             buffer.writeInt(0);
@@ -184,7 +187,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
             }
 
             // Move back and write the size
-            int listWriteSize = buffer.getWriteIndex() - elementStartIndex - Integer.BYTES;
+            final int listWriteSize = buffer.getWriteIndex() - elementStartIndex - Integer.BYTES;
 
             buffer.setInt(elementStartIndex, listWriteSize);
         }
