@@ -30,8 +30,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
@@ -60,6 +62,7 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.ApplicationProperties;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.Symbol;
+import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Footer;
@@ -2635,6 +2638,68 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             } catch (IOException ioe) {
                 // Expected
             }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamReceiverTryReadAmqpSequenceBytes() throws Exception {
+        final List<String> stringList = new ArrayList<>();
+        stringList.add("Hello World");
+        final byte[] payload = createEncodedMessage(new AmqpSequence<>(stringList));
+
+        doTestStreamReceiverReadsNonDataSectionBody(payload);
+    }
+
+    @Test
+    public void testStreamReceiverTryReadAmqpValueBytes() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
+        doTestStreamReceiverReadsNonDataSectionBody(payload);
+    }
+
+    private void doTestStreamReceiverReadsNonDataSectionBody(byte[] payload) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withSettled(true)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            final StreamDelivery delivery = receiver.receive();
+            final StreamReceiverMessage message = delivery.message();
+            try {
+                message.body();
+                fail("Should not return a stream since we cannot readl this type");
+            } catch (ClientException cliEx) {
+                // Expected
+            }
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

@@ -39,7 +39,6 @@ import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.ProtonStreamDecoderFactory;
 import org.apache.qpid.protonj2.codec.decoders.primitives.BinaryTypeDecoder;
-import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -907,15 +906,10 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
 
         @Override
         protected void validateAndScanNextSection() throws ClientException {
-            final ListTypeDecoder listDecoder =
-                (ListTypeDecoder) protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
-            remainingSectionBytes = listDecoder.readSize(deliveryStream);
-            int count = listDecoder.readCount(deliveryStream);
-            LOG.trace("Body Section of AmqpSequence type with size {} and element count {} ready for read.", remainingSectionBytes, count);
+            throw new DecodeException("Cannot read the payload of an AMQP Sequence payload.");
         }
     }
 
-    // TODO: This doesn't currently read anything as we need to figure out how to inspect the payload bytes.
     private class AmqpValueInputStream extends MessageBodyInputStream {
 
         private Class<?> bodyTypeClass = Void.class;
@@ -931,11 +925,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
 
         @Override
         protected void validateAndScanNextSection() throws ClientException {
-            final StreamTypeDecoder<?> decoder = protonDecoder.readNextTypeDecoder(deliveryStream, decoderState);
-
-            bodyTypeClass = decoder.getTypeClass();
-            remainingSectionBytes = 0;  // TODO: Peek ahead to size of first body Section
-            LOG.trace("Body Section of AmqpValue type with size {} ready for read.", remainingSectionBytes);
+            throw new DecodeException("Cannot read the payload of an AMQP Sequence payload.");
         }
     }
 }
