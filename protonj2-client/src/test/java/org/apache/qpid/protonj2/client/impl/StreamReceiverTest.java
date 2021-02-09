@@ -101,6 +101,24 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         doTestStreamReceiverSessionCapacity(100_000, 600_000, 3);
     }
 
+    @Test
+    public void testStreamReceiverConfiguresSessionCapacityIdenticalToMaxFrameSize() throws Exception {
+        // Read buffer is always halved by connection when creating new session for the stream
+        // unless it falls at the max frame size value which means only one is possible, in this
+        // case the user configured session window the same as than max frame size so only one
+        // frame is possible.
+        doTestStreamReceiverSessionCapacity(100_000, 100_000, 1);
+    }
+
+    @Test
+    public void testStreamReceiverConfiguresSessionCapacityLowerThanMaxFrameSize() throws Exception {
+        // Read buffer is always halved by connection when creating new session for the stream
+        // unless it falls at the max frame size value which means only one is possible, in this
+        // case the user configured session window lower than max frame size and the client auto
+        // adjusts that to one frame.
+        doTestStreamReceiverSessionCapacity(100_000, 50_000, 1);
+    }
+
     private void doTestStreamReceiverSessionCapacity(int maxFrameSize, int readBufferSize, int expectedSessionWindow) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();

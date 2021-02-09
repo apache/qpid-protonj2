@@ -350,11 +350,13 @@ public class ClientConnection implements Connection {
 
         executor.execute(() -> {
             try {
-                // TODO: How to handle session capacity less than max frame size configuration ?
                 int sessionCapacity = StreamReceiverOptions.DEFAULT_READ_BUFFER_SIZE;
                 if (receiverOptions != null) {
                     sessionCapacity = receiverOptions.readBufferSize() / 2;
                 }
+
+                // Session capacity cannot be smaller than one frame size so we adjust to the lower bound
+                sessionCapacity = (int) Math.max(sessionCapacity, protonConnection.getMaxFrameSize());
 
                 checkClosedOrFailed();
                 SessionOptions sessionOptions = new SessionOptions(sessionBuilder.getDefaultSessionOptions());
