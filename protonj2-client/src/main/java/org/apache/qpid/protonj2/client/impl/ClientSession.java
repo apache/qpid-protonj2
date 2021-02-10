@@ -65,7 +65,6 @@ public class ClientSession implements Session {
 
     private final SessionOptions options;
     private final ClientConnection connection;
-    private final org.apache.qpid.protonj2.engine.Session protonSession;
     private final ScheduledExecutorService serializer;
     private final String sessionId;
     private final ClientSenderBuilder senderBuilder;
@@ -75,10 +74,12 @@ public class ClientSession implements Session {
     private volatile ClientException failureCause;
     private ClientTransactionContext txnContext = NO_OP_TXN_CONTEXT;
 
+    private org.apache.qpid.protonj2.engine.Session protonSession;
+
     public ClientSession(ClientConnection connection, SessionOptions options, String sessionId, org.apache.qpid.protonj2.engine.Session session) {
         this.options = new SessionOptions(options);
         this.connection = connection;
-        this.protonSession = session;
+        this.protonSession = session.setLinkedResource(this);
         this.sessionId = sessionId;
         this.serializer = connection.getScheduler();
         this.openFuture = connection.getFutureFactory().createFuture();
@@ -86,7 +87,7 @@ public class ClientSession implements Session {
         this.senderBuilder = new ClientSenderBuilder(this);
         this.receiverBuilder = new ClientReceiverBuilder(this);
 
-        configureSession();
+        configureSession(protonSession);
     }
 
     @Override
@@ -135,16 +136,19 @@ public class ClientSession implements Session {
 
     private Future<Session> doClose(ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
-            serializer.execute(() -> {
-                if (protonSession.isLocallyOpen()) {
-                    try {
-                        protonSession.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
-                        protonSession.close();
-                    } catch (Throwable ignore) {
-                        // Allow engine error handler to deal with this
+            // Already closed by failure or shutdown so no need to
+            if (!closeFuture.isDone()) {
+                serializer.execute(() -> {
+                    if (protonSession.isLocallyOpen()) {
+                        try {
+                            protonSession.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+                            protonSession.close();
+                        } catch (Throwable ignore) {
+                            // Allow engine error handler to deal with this
+                        }
                     }
-                }
-            });
+                });
+            }
         }
 
         return closeFuture;
@@ -446,13 +450,19 @@ public class ClientSession implements Session {
         return txnContext;
     }
 
+    ClientConnection getConnection() {
+        return connection;
+    }
+
     //----- Private implementation methods
 
-    private void configureSession() {
+    private org.apache.qpid.protonj2.engine.Session configureSession(org.apache.qpid.protonj2.engine.Session protonSession) {
         protonSession.setLinkedResource(this);
         protonSession.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
         protonSession.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
         protonSession.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
+
+        return protonSession;
     }
 
     protected void checkClosedOrFailed() throws ClientException {
@@ -530,21 +540,34 @@ public class ClientSession implements Session {
     }
 
     private void handleEngineShutdown(Engine engine) {
-        final Connection connection = engine.connection();
+        // If the connection has an engine that is running then it is going to attempt
+        // reconnection and we want to recover by creating a new Session that will be
+        // opened once the remote has been recovered.
+        if (!connection.getEngine().isShutdown()) {
+            // No local close processing needed but we should try and let the session
+            // clean up any resources it can by closing it.
+            protonSession.localCloseHandler(null);
+            protonSession.close();
+            protonSession = configureSession(ClientSessionBuilder.recreateSession(connection, protonSession, options));
 
-        final ClientException failureCause;
-
-        if (connection.getRemoteCondition() != null) {
-            failureCause = ClientExceptionSupport.convertToConnectionClosedException(connection.getRemoteCondition());
-        } else if (engine.failureCause() != null) {
-            failureCause = ClientExceptionSupport.convertToConnectionClosedException(engine.failureCause());
-        } else if (!isClosed()) {
-            failureCause = new ClientConnectionRemotelyClosedException("Remote closed without a specific error condition");
+            open();
         } else {
-            failureCause = null;
-        }
+            final Connection connection = engine.connection();
 
-        immediateSessionShutdown(failureCause);
+            final ClientException failureCause;
+
+            if (connection.getRemoteCondition() != null) {
+                failureCause = ClientExceptionSupport.convertToConnectionClosedException(connection.getRemoteCondition());
+            } else if (engine.failureCause() != null) {
+                failureCause = ClientExceptionSupport.convertToConnectionClosedException(engine.failureCause());
+            } else if (!isClosed()) {
+                failureCause = new ClientConnectionRemotelyClosedException("Remote closed without a specific error condition");
+            } else {
+                failureCause = null;
+            }
+
+            immediateSessionShutdown(failureCause);
+        }
     }
 
     private void immediateSessionShutdown(ClientException failureCause) {

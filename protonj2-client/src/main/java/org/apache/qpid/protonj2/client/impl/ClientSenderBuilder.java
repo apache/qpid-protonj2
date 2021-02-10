@@ -33,6 +33,7 @@ import org.apache.qpid.protonj2.types.messaging.Source;
 import org.apache.qpid.protonj2.types.messaging.Target;
 import org.apache.qpid.protonj2.types.messaging.TerminusDurability;
 import org.apache.qpid.protonj2.types.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.protonj2.types.transactions.Coordinator;
 import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 
@@ -168,6 +169,26 @@ final class ClientSenderBuilder {
         }
 
         return target;
+    }
+
+    public static Sender recreateSender(ClientSession session, Sender previousSender, SenderOptions options) {
+        final Sender protonSender = session.getProtonSession().sender(previousSender.getName());
+
+        protonSender.setSource(previousSender.getSource());
+        if (previousSender.getTarget() instanceof Coordinator) {
+            protonSender.setTarget((Coordinator) previousSender.getTarget());
+        } else {
+            protonSender.setTarget((Target) previousSender.getTarget());
+        }
+
+        protonSender.setDeliveryTagGenerator(previousSender.getDeliveryTagGenerator());
+        protonSender.setSenderSettleMode(previousSender.getSenderSettleMode());
+        protonSender.setReceiverSettleMode(previousSender.getReceiverSettleMode());
+        protonSender.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
+        protonSender.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
+        protonSender.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
+
+        return protonSender;
     }
 
     private String nextSenderId() {

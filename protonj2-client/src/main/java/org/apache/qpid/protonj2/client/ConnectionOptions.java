@@ -50,6 +50,7 @@ public class ConnectionOptions {
     private long drainTimeout = DEFAULT_DRAIN_TIMEOUT;
 
     private final TransportOptions transport = new TransportOptions();
+    private final ReconnectOptions reconnect = new ReconnectOptions();
     private final SslOptions ssl = new SslOptions();
     private final SaslOptions sasl = new SaslOptions();
 
@@ -65,6 +66,8 @@ public class ConnectionOptions {
 
     private BiConsumer<Connection, ConnectionEvent> connectedhedHandler;
     private BiConsumer<Connection, DisconnectionEvent> disconnectedHandler;
+    private BiConsumer<Connection, DisconnectionEvent> interruptedHandler;
+    private BiConsumer<Connection, ConnectionEvent> reconnectedHandler;
 
     /**
      * Create a new {@link ConnectionOptions} instance configured with default configuration settings.
@@ -112,6 +115,8 @@ public class ConnectionOptions {
         other.password(password);
         other.traceFrames(traceFrames);
         other.connectedHandler(connectedhedHandler);
+        other.interruptedHandler(interruptedHandler);
+        other.reconnectedHandler(reconnectedHandler);
         other.disconnectedHandler(disconnectedHandler);
 
         if (offeredCapabilities != null) {
@@ -127,6 +132,7 @@ public class ConnectionOptions {
         transport.copyInto(other.transportOptions());
         ssl.copyInto(other.sslOptions());
         sasl.copyInto(other.saslOptions());
+        reconnect.copyInto(other.reconnectOptions());
 
         return this;
     }
@@ -456,6 +462,39 @@ public class ConnectionOptions {
     }
 
     /**
+     * @return true if reconnection support has been enabled for this connection.
+     */
+    public boolean reconnectEnabled() {
+        return reconnect.reconnectEnabled();
+    }
+
+    /**
+     * Controls if the connection will attempt to reconnect if unable to connect immediately
+     * or if an existing connection fails.
+     * <p>
+     * This option enables or disables reconnection to a remote remote peer after IO errors.
+     * To control specifics of the reconnection configuration for the {@link Connection} the
+     * values must be updated in the {@link ReconnectOptions} configuration prior to creating
+     * the connection.
+     *
+     * @param reconnectEnabled
+     *      Controls if reconnection is enabled or not for the associated {@link Connection}.
+     *
+     * @return this options instance.
+     */
+    public ConnectionOptions reconnectEnabled(boolean reconnectEnabled) {
+        reconnect.reconnectEnabled(reconnectEnabled);
+        return this;
+    }
+
+    /**
+     * @return the reconnection options that will be used for the {@link Connection}.
+     */
+    public ReconnectOptions reconnectOptions() {
+        return reconnect;
+    }
+
+    /**
      * Configure if the newly created connection should enabled AMQP frame tracing to the
      * system output.
      *
@@ -519,7 +558,9 @@ public class ConnectionOptions {
      *
      * @return this {@link ConnectionOptions} instance.
      *
-     * @see #connectedHandler()
+     * @see #connectionInterrupted
+     * @see #connectionRestored
+     * @see #connectionFailed
      */
     public ConnectionOptions disconnectedHandler(BiConsumer<Connection, DisconnectionEvent> disconnectedHandler) {
         this.disconnectedHandler = disconnectedHandler;
@@ -545,9 +586,65 @@ public class ConnectionOptions {
      * @return this {@link ConnectionOptions} instance.
      *
      * @see #disconnectedHandler()
+     * @see #interruptedHandler
+     * @see #reconnectedHandler
      */
     public ConnectionOptions connectedHandler(BiConsumer<Connection, ConnectionEvent> connectedHandler) {
         this.connectedhedHandler = connectedHandler;
+        return this;
+    }
+
+    /**
+     * @return the connection interrupted handler that is currently registered
+     */
+    public BiConsumer<Connection, DisconnectionEvent> interruptedHandler() {
+        return interruptedHandler;
+    }
+
+    /**
+     * Configures a handler that will be notified when the current {@link Connection} experiences an
+     * interruption.  The {@link Connection} will only signal this handler when the reconnection feature
+     * is enabled and will follow this event either with a notification that the connection has been
+     * restored (if a handler is registered), or with a notification that the connection has failed
+     * if the reconnection configuration places limits on the the number of reconnection attempts.
+     *
+     * @param interruptedHandler
+     *      the connection interrupted handler to assign to these {@link ConnectionOptions}.
+     *
+     * @return this {@link ReconnectOptions} instance.
+     *
+     * @see #connectedhedHandler
+     * @see #reconnectedHandler
+     * @see #failedHandler
+     */
+    public ConnectionOptions interruptedHandler(BiConsumer<Connection, DisconnectionEvent> interruptedHandler) {
+        this.interruptedHandler = interruptedHandler;
+        return this;
+    }
+
+    /**
+     * @return the connection restored handler that is currently registered
+     */
+    public BiConsumer<Connection, ConnectionEvent> reconnectedHandler() {
+        return reconnectedHandler;
+    }
+
+    /**
+     * Configures a handler that will be notified when a {@link Connection} that has previously
+     * experienced and interruption has been reconnected to a remote based on the reconnection
+     * configuration.
+     *
+     * @param reconnectedHandler
+     *      the connection restored handler to assign to these {@link ConnectionOptions}.
+     *
+     * @return this {@link ReconnectOptions} instance.
+     *
+     * @see #connectedhedHandler
+     * @see #interruptedHandler
+     * @see #failedHandler
+     */
+    public ConnectionOptions reconnectedHandler(BiConsumer<Connection, ConnectionEvent> reconnectedHandler) {
+        this.reconnectedHandler = reconnectedHandler;
         return this;
     }
 }

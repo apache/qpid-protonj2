@@ -18,6 +18,8 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.Map;
 import java.util.Objects;
@@ -53,6 +55,8 @@ import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamSenderOptions;
 import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
+import org.apache.qpid.protonj2.client.exceptions.ClientConnectionSecurityException;
+import org.apache.qpid.protonj2.client.exceptions.ClientConnectionSecuritySaslException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
@@ -62,6 +66,7 @@ import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.client.futures.ClientFutureFactory;
 import org.apache.qpid.protonj2.client.transport.NettyIOContext;
 import org.apache.qpid.protonj2.client.transport.Transport;
+import org.apache.qpid.protonj2.client.util.ReconnectionURIPool;
 import org.apache.qpid.protonj2.client.util.TrackableThreadFactory;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
@@ -78,6 +83,9 @@ public class ClientConnection implements Connection {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientConnection.class);
 
+    private static final int UNLIMITED = -1;
+    private static final int UNDEFINED = -1;
+
     // Future tracking of Closing. Closed. Failed state vs just simple boolean is intended here
     // later on we may decide this is overly optimized.
     private static final AtomicIntegerFieldUpdater<ClientConnection> CLOSED_UPDATER =
@@ -90,6 +98,7 @@ public class ClientConnection implements Connection {
     private final ClientConnectionCapabilities capabilities = new ClientConnectionCapabilities();
     private final ClientFutureFactory futureFactory;
     private final ClientSessionBuilder sessionBuilder;
+    private final ReconnectionURIPool reconnectPool = new ReconnectionURIPool();
     private final NettyIOContext ioContext;
     private final String connectionId;
     private final ScheduledExecutorService executor;
@@ -105,8 +114,9 @@ public class ClientConnection implements Connection {
     private ClientFuture<Connection> closeFuture;
     private volatile int closed;
     private volatile ClientException failureCause;
-    private final String host;
-    private final int port;
+    private long totalConnections;
+    private long reconnectAttempts;
+    private long nextReconnectDelay = -1;
 
     /**
      * Create a connection and define the initial configuration used to manage the
@@ -133,14 +143,22 @@ public class ClientConnection implements Connection {
                                             options.sslOptions(),
                                             "ClientConnection :(" + connectionId + "): I/O Thread");
         this.executor = ioContext.eventLoop();
-        this.host = host;
-        this.port = port;
 
         // This executor can be used for dispatching asynchronous tasks that might block or result
         // in reentrant calls to this Connection that could block.
         notifications = new ThreadPoolExecutor(1, 1, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
             new TrackableThreadFactory("protonj2 Client Connection Executor: " + getId(), true));
         notifications.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy());
+
+        try {
+            this.reconnectPool.add(new URI(null, null, host, port, null, null, null));
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid client remote host configured: " + host + ":" + port);
+        }
+
+        for (URI secondary : options.reconnectOptions().reconnectHosts()) {
+            this.reconnectPool.add(secondary);
+        }
     }
 
     @Override
@@ -186,21 +204,23 @@ public class ClientConnection implements Connection {
     private Future<Connection> doClose(ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             try {
-                executor.execute(() -> {
-                    LOG.trace("Close requested for connection: {}", this);
+                if (!closeFuture.isDone()) {
+                    executor.execute(() -> {
+                        LOG.trace("Close requested for connection: {}", this);
 
-                    if (protonConnection.isLocallyOpen()) {
-                        protonConnection.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+                        if (protonConnection.isLocallyOpen()) {
+                            protonConnection.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
 
-                        try {
-                            protonConnection.close();
-                        } catch (Throwable ignored) {
-                            // Engine error handler will kick in if the write of Close fails
+                            try {
+                                protonConnection.close();
+                            } catch (Throwable ignored) {
+                                // Engine error handler will kick in if the write of Close fails
+                            }
+                        } else {
+                            engine.shutdown();
                         }
-                    } else {
-                        engine.shutdown();
-                    }
-                });
+                    });
+                }
             } catch (RejectedExecutionException rje) {
                 LOG.trace("Close task rejected from the event loop", rje);
             } finally {
@@ -503,13 +523,19 @@ public class ClientConnection implements Connection {
         return connectionId;
     }
 
+    Engine getEngine() {
+        return engine;
+    }
+
     ClientConnection connect() throws ClientException {
         try {
+            final URI remoteHost = reconnectPool.getNext();
+
             // Initial configuration validation happens here, if this step fails then the
             // user most likely configured something incorrect or that violates some constraint
             // like an invalid SASL mechanism etc.
-            initializeProtonResources(host);
-            scheduleConnect(host, port);
+            initializeProtonResources(remoteHost.getHost());
+            scheduleReconnect(remoteHost.getHost(), remoteHost.getPort());
 
             return this;
         } catch (Exception ex) {
@@ -618,8 +644,15 @@ public class ClientConnection implements Connection {
     }
 
     private void handleRemoteOpen(org.apache.qpid.protonj2.engine.Connection connection) {
+        connectionEstablished();
         capabilities.determineCapabilities(connection);
-        submitConnectionEvent(options.connectedHandler(), transport.getHost(), transport.getPort(), null);
+
+        if (totalConnections == 1) {
+            submitConnectionEvent(options.connectedHandler(), transport.getHost(), transport.getPort(), null);
+        } else {
+            submitConnectionEvent(options.reconnectedHandler(), transport.getHost(), transport.getPort(), null);
+        }
+
         openFuture.complete(this);
     }
 
@@ -700,7 +733,25 @@ public class ClientConnection implements Connection {
 
         LOG.trace("Engine reports failure with error: {}", failureCause.getMessage());
 
-        failConnection(failureCause);
+        if (isReconnectAllowed(failureCause)) {
+            submitDisconnectionEvent(options.interruptedHandler(), transport.getHost(), transport.getPort(), failureCause);
+
+            // Initial configuration validation happens here, if this step fails then the
+            // user most likely configured something incorrect or that violates some constraint
+            // like an invalid SASL mechanism etc.
+            try {
+                final URI remoteHost = reconnectPool.getNext();
+
+                initializeProtonResources(remoteHost.getHost());
+                scheduleReconnect(remoteHost.getHost(), remoteHost.getPort());
+            } catch (ClientException initError) {
+                failConnection(ClientExceptionSupport.createOrPassthroughFatal(initError));
+            } finally {
+                engine.shutdown();
+            }
+        } else {
+            failConnection(failureCause);
+        }
     }
 
     /*
@@ -709,6 +760,8 @@ public class ClientConnection implements Connection {
      * with reconnect cases and avoid this event unless reconnect cannot proceed.
      */
     private void handleEngineShutdown(Engine engine) {
+        // Only handle this on normal shutdown failure will perform its own controlled shutdown
+        // and or reconnection logic which this method should avoid interfering with.
         if (engine.failureCause() == null) {
             try {
                 protonConnection.close();
@@ -728,6 +781,10 @@ public class ClientConnection implements Connection {
 
     private void failConnection(ClientIOException failureCause) {
         FAILURE_CAUSE_UPDATER.compareAndSet(this, null, failureCause);
+
+        try {
+            protonConnection.close();
+        } catch (Exception ignore) {}
 
         try {
             engine.shutdown();
@@ -872,6 +929,7 @@ public class ClientConnection implements Connection {
 
     private void attemptConnection(String host, Integer port) {
         try {
+            reconnectAttempts++;
             transport = ioContext.newTransport();
             LOG.trace("Attempting connection to remote {}:{}", host, port);
             transport.connect(host, port, new ClientTransportListener(engine));
@@ -880,8 +938,100 @@ public class ClientConnection implements Connection {
         }
     }
 
-    private void scheduleConnect(String host, int port) {
-        LOG.trace("Initial connect attempt will be performed immediately");
-        executor.execute(() -> attemptConnection(host, port));
+    private void scheduleReconnect(String host, int port) {
+        // Warn of ongoing connection attempts if configured.
+        int warnInterval = options.reconnectOptions().warnAfterReconnectAttempts();
+        if (reconnectAttempts > 0 && warnInterval > 0 && (reconnectAttempts % warnInterval) == 0) {
+            LOG.warn("Failed to connect after: {} attempt(s) continuing to retry.", reconnectAttempts);
+        }
+
+        // If no connection recovery required then we have never fully connected to a remote
+        // so we proceed down the connect with one immediate connection attempt and then follow
+        // on delayed attempts based on configuration.
+        if (totalConnections == 0) {
+            if (reconnectAttempts == 0) {
+                LOG.trace("Initial connect attempt will be performed immediately");
+                executor.execute(() -> attemptConnection(host, port));
+            } else {
+                long delay = nextReconnectDelay();
+                LOG.trace("Next connect attempt will be in {} milliseconds", delay);
+                executor.schedule(() -> attemptConnection(host, port), delay, TimeUnit.MILLISECONDS);
+            }
+        } else if (reconnectAttempts == 0) {
+            LOG.trace("Initial reconnect attempt will be performed immediately");
+            executor.execute(() -> attemptConnection(host, port));
+        } else {
+            long delay = nextReconnectDelay();
+            LOG.trace("Next reconnect attempt will be in {} milliseconds", delay);
+            executor.schedule(() -> attemptConnection(host, port), delay, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private void connectionEstablished() {
+        totalConnections++;
+        nextReconnectDelay = -1;
+        reconnectAttempts = 0;
+    }
+
+    private boolean isLimitExceeded() {
+        int reconnectLimit = reconnectAttemptLimit();
+        if (reconnectLimit != UNLIMITED && reconnectAttempts >= reconnectLimit) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isReconnectAllowed(ClientException cause) {
+        if (options.reconnectOptions().reconnectEnabled() && !isClosed()) {
+            // If a connection attempts fail due to Security errors than we abort
+            // reconnection as there is a configuration issue and we want to avoid
+            // a spinning reconnect cycle that can never complete.
+            if (isStoppageCause(cause)) {
+                return false;
+            }
+
+            return !isLimitExceeded();
+        } else {
+            return false;
+        }
+    }
+
+    private boolean isStoppageCause(ClientException cause) {
+        if (cause instanceof ClientConnectionSecuritySaslException) {
+            ClientConnectionSecuritySaslException saslFailure = (ClientConnectionSecuritySaslException) cause;
+            return !saslFailure.isSysTempFailure();
+        } else if (cause instanceof ClientConnectionSecurityException ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private int reconnectAttemptLimit() {
+        int maxReconnectValue = options.reconnectOptions().maxReconnectAttempts();
+        if (totalConnections == 0 && options.reconnectOptions().maxInitialConnectionAttempts() != UNDEFINED) {
+            // If this is the first connection attempt and a specific startup retry limit
+            // is configured then use it, otherwise use the main reconnect limit
+            maxReconnectValue = options.reconnectOptions().maxInitialConnectionAttempts();
+        }
+
+        return maxReconnectValue;
+    }
+
+    private long nextReconnectDelay() {
+        if (nextReconnectDelay == UNDEFINED) {
+            nextReconnectDelay = options.reconnectOptions().reconnectDelay();
+        }
+
+        if (options.reconnectOptions().useReconnectBackOff() && reconnectAttempts > 1) {
+            // Exponential increment of reconnect delay.
+            nextReconnectDelay *= options.reconnectOptions().reconnectBackOffMultiplier();
+            if (nextReconnectDelay > options.reconnectOptions().maxReconnectDelay()) {
+                nextReconnectDelay = options.reconnectOptions().maxReconnectDelay();
+            }
+        }
+
+        return nextReconnectDelay;
     }
 }

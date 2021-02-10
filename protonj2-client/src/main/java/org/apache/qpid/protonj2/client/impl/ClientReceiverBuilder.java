@@ -33,6 +33,7 @@ import org.apache.qpid.protonj2.types.messaging.Source;
 import org.apache.qpid.protonj2.types.messaging.Target;
 import org.apache.qpid.protonj2.types.messaging.TerminusDurability;
 import org.apache.qpid.protonj2.types.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.protonj2.types.transactions.Coordinator;
 import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 
@@ -102,6 +103,26 @@ final class ClientReceiverBuilder {
         protonReceiver.setTarget(createTarget(address, options));
 
         return new ClientStreamReceiver(session, options, receiverId, protonReceiver);
+    }
+
+    public static Receiver recreateReceiver(ClientSession session, Receiver previousReceiver, ReceiverOptions options) {
+        final Receiver protonReceiver = session.getProtonSession().receiver(previousReceiver.getName());
+
+        protonReceiver.setSource(previousReceiver.getSource());
+        if (previousReceiver.getTarget() instanceof Coordinator) {
+            protonReceiver.setTarget((Coordinator) previousReceiver.getTarget());
+        } else {
+            protonReceiver.setTarget((Target) previousReceiver.getTarget());
+        }
+
+        protonReceiver.setSenderSettleMode(previousReceiver.getSenderSettleMode());
+        protonReceiver.setReceiverSettleMode(previousReceiver.getReceiverSettleMode());
+        protonReceiver.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
+        protonReceiver.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
+        protonReceiver.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
+        protonReceiver.setDefaultDeliveryState(Released.getInstance());
+
+        return protonReceiver;
     }
 
     private String nextReceiverId() {

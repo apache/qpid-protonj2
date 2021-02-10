@@ -57,6 +57,10 @@ final class ClientSessionBuilder {
         return connection.session().setIncomingCapacity(options.incomingCapacity());
     }
 
+    public static Session recreateSession(ClientConnection connection, Session previousSession, SessionOptions options) {
+        return connection.getProtonConnection().session().setIncomingCapacity(options.incomingCapacity());
+    }
+
     /*
      * Session options used when none specified by the caller creating a new session.
      */

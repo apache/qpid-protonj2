@@ -24,7 +24,6 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
-import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
 
 /**
@@ -38,7 +37,6 @@ public class ClientOutgoingEnvelope {
     private final ProtonBuffer payload;
     private final ClientFuture<Tracker> request;
     private final ClientSender sender;
-    private final Sender protonSender;
     private final boolean complete;
     private final int messageFormat;
 
@@ -64,7 +62,6 @@ public class ClientOutgoingEnvelope {
         this.payload = payload;
         this.request = request;
         this.sender = sender;
-        this.protonSender = sender.getProtonSender();
         this.complete = true;
     }
 
@@ -86,7 +83,6 @@ public class ClientOutgoingEnvelope {
         this.payload = payload;
         this.request = request;
         this.sender = sender;
-        this.protonSender = sender.getProtonSender();
         this.complete = complete;
         this.messageFormat = messageFormat;
     }
@@ -111,7 +107,6 @@ public class ClientOutgoingEnvelope {
         this.payload = payload;
         this.request = request;
         this.sender = sender;
-        this.protonSender = sender.getProtonSender();
         this.complete = complete;
         this.messageFormat = messageFormat;
         this.delivery = delivery;
@@ -187,7 +182,7 @@ public class ClientOutgoingEnvelope {
 
     public void sendPayload(DeliveryState state, boolean settled) {
         if (delivery == null) {
-            delivery = protonSender.next();
+            delivery = sender.getProtonSender().next();
             delivery.setLinkedResource(sender.createTracker(delivery));
         }
 

@@ -41,6 +41,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
+import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.types.messaging.Released;
@@ -58,14 +59,13 @@ public final class ClientStreamReceiver implements StreamReceiver {
     private final ClientFuture<Receiver> openFuture;
     private final ClientFuture<Receiver> closeFuture;
     private ClientFuture<Receiver> drainingFuture;
-
     private final StreamReceiverOptions options;
     private final ClientSession session;
-    private final org.apache.qpid.protonj2.engine.Receiver protonReceiver;
     private final ScheduledExecutorService executor;
     private final String receiverId;
     private final Map<ClientFuture<StreamDelivery>, ScheduledFuture<?>> receiveRequests = new LinkedHashMap<>();
 
+    private org.apache.qpid.protonj2.engine.Receiver protonReceiver;
     private volatile int closed;
     private ClientException failureCause;
     private volatile Source remoteSource;
@@ -470,39 +470,60 @@ public final class ClientStreamReceiver implements StreamReceiver {
     }
 
     private void handleParentEndpointClosed(org.apache.qpid.protonj2.engine.Receiver receiver) {
-        final ClientException failureCause;
+        // Don't react if engine was shutdown and parent closed as a result instead wait to get the
+        // shutdown notification and respond to that change.
+        if (receiver.getEngine().isRunning()) {
+            final ClientException failureCause;
 
-        if (receiver.getConnection().getRemoteCondition() != null) {
-            failureCause = ClientExceptionSupport.convertToConnectionClosedException(receiver.getConnection().getRemoteCondition());
-        } else if (receiver.getSession().getRemoteCondition() != null) {
-            failureCause = ClientExceptionSupport.convertToSessionClosedException(receiver.getSession().getRemoteCondition());
-        } else if (receiver.getEngine().failureCause() != null) {
-            failureCause = ClientExceptionSupport.convertToConnectionClosedException(receiver.getEngine().failureCause());
-        } else if (!isClosed()) {
-            failureCause = new ClientResourceRemotelyClosedException("Remote closed without a specific error condition");
-        } else {
-            failureCause = null;
+            if (receiver.getConnection().getRemoteCondition() != null) {
+                failureCause = ClientExceptionSupport.convertToConnectionClosedException(receiver.getConnection().getRemoteCondition());
+            } else if (receiver.getSession().getRemoteCondition() != null) {
+                failureCause = ClientExceptionSupport.convertToSessionClosedException(receiver.getSession().getRemoteCondition());
+            } else if (receiver.getEngine().failureCause() != null) {
+                failureCause = ClientExceptionSupport.convertToConnectionClosedException(receiver.getEngine().failureCause());
+            } else if (!isClosed()) {
+                failureCause = new ClientResourceRemotelyClosedException("Remote closed without a specific error condition");
+            } else {
+                failureCause = null;
+            }
+
+            immediateLinkShutdown(failureCause);
         }
-
-        immediateLinkShutdown(failureCause);
     }
 
     private void handleEngineShutdown(Engine engine) {
-        final org.apache.qpid.protonj2.engine.Connection connection = engine.connection();
+        if (!isDynamic() && !session.getConnection().getEngine().isShutdown()) {
+            int previousCredit = protonReceiver.getCredit() + protonReceiver.unsettled().size();
 
-        final ClientException failureCause;
+            if (drainingFuture != null) {
+                drainingFuture.complete(this);
+            }
 
-        if (connection.getRemoteCondition() != null) {
-            failureCause = ClientExceptionSupport.convertToConnectionClosedException(connection.getRemoteCondition());
-        } else if (engine.failureCause() != null) {
-            failureCause = ClientExceptionSupport.convertToConnectionClosedException(engine.failureCause());
-        } else if (!isClosed()) {
-            failureCause = new ClientConnectionRemotelyClosedException("Remote closed without a specific error condition");
+            protonReceiver.localCloseHandler(null);
+            protonReceiver.localDetachHandler(null);
+            protonReceiver.close();
+            protonReceiver = ClientReceiverBuilder.recreateReceiver(session, protonReceiver, options);
+            protonReceiver.setLinkedResource(this);
+            protonReceiver.addCredit(previousCredit);
+
+            open();
         } else {
-            failureCause = null;
-        }
+            final Connection connection = engine.connection();
 
-        immediateLinkShutdown(failureCause);
+            final ClientException failureCause;
+
+            if (connection.getRemoteCondition() != null) {
+                failureCause = ClientExceptionSupport.convertToConnectionClosedException(connection.getRemoteCondition());
+            } else if (engine.failureCause() != null) {
+                failureCause = ClientExceptionSupport.convertToConnectionClosedException(engine.failureCause());
+            } else if (!isClosed()) {
+                failureCause = new ClientConnectionRemotelyClosedException("Remote closed without a specific error condition");
+            } else {
+                failureCause = null;
+            }
+
+            immediateLinkShutdown(failureCause);
+        }
     }
 
     private void handleDeliveryRead(IncomingDelivery delivery) {

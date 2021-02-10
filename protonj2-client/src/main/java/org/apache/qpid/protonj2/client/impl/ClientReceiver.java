@@ -58,12 +58,13 @@ public final class ClientReceiver implements Receiver {
 
     private final ReceiverOptions options;
     private final ClientSession session;
-    private final org.apache.qpid.protonj2.engine.Receiver protonReceiver;
     private final ScheduledExecutorService executor;
     private final String receiverId;
     private final FifoDeliveryQueue messageQueue;
     private volatile int closed;
     private ClientException failureCause;
+
+    private org.apache.qpid.protonj2.engine.Receiver protonReceiver;
 
     private volatile Source remoteSource;
     private volatile Target remoteTarget;
@@ -144,11 +145,13 @@ public final class ClientReceiver implements Receiver {
                 } else {
                     asyncReplenishCreditIfNeeded();
                 }
-            } else {
-                checkClosedOrFailed();
+
+                return delivery;
             }
 
-            return delivery;
+            checkClosedOrFailed();
+
+            return null;
         } catch (InterruptedException e) {
             Thread.interrupted();
             throw new ClientException("Receive wait interrupted", e);
@@ -239,21 +242,23 @@ public final class ClientReceiver implements Receiver {
 
     private ClientFuture<Receiver> doCloseOrDetach(boolean close, ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
-            executor.execute(() -> {
-                if (protonReceiver.isLocallyOpen()) {
-                    try {
-                        protonReceiver.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+            if (!closeFuture.isDone()) {
+                executor.execute(() -> {
+                    if (protonReceiver.isLocallyOpen()) {
+                        try {
+                            protonReceiver.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
 
-                        if (close) {
-                            protonReceiver.close();
-                        } else {
-                            protonReceiver.detach();
+                            if (close) {
+                                protonReceiver.close();
+                            } else {
+                                protonReceiver.detach();
+                            }
+                        } catch (Throwable ignore) {
+                            closeFuture.complete(this);
                         }
-                    } catch (Throwable ignore) {
-                        closeFuture.complete(this);
                     }
-                }
-            });
+                });
+            }
         }
 
         return closeFuture;
@@ -445,39 +450,62 @@ public final class ClientReceiver implements Receiver {
     }
 
     private void handleParentEndpointClosed(org.apache.qpid.protonj2.engine.Receiver receiver) {
-        final ClientException failureCause;
+        // Don't react if engine was shutdown and parent closed as a result instead wait to get the
+        // shutdown notification and respond to that change.
+        if (receiver.getEngine().isRunning()) {
+            final ClientException failureCause;
 
-        if (receiver.getConnection().getRemoteCondition() != null) {
-            failureCause = ClientExceptionSupport.convertToConnectionClosedException(receiver.getConnection().getRemoteCondition());
-        } else if (receiver.getSession().getRemoteCondition() != null) {
-            failureCause = ClientExceptionSupport.convertToSessionClosedException(receiver.getSession().getRemoteCondition());
-        } else if (receiver.getEngine().failureCause() != null) {
-            failureCause = ClientExceptionSupport.convertToConnectionClosedException(receiver.getEngine().failureCause());
-        } else if (!isClosed()) {
-            failureCause = new ClientResourceRemotelyClosedException("Remote closed without a specific error condition");
-        } else {
-            failureCause = null;
+            if (receiver.getConnection().getRemoteCondition() != null) {
+                failureCause = ClientExceptionSupport.convertToConnectionClosedException(receiver.getConnection().getRemoteCondition());
+            } else if (receiver.getSession().getRemoteCondition() != null) {
+                failureCause = ClientExceptionSupport.convertToSessionClosedException(receiver.getSession().getRemoteCondition());
+            } else if (receiver.getEngine().failureCause() != null) {
+                failureCause = ClientExceptionSupport.convertToConnectionClosedException(receiver.getEngine().failureCause());
+            } else if (!isClosed()) {
+                failureCause = new ClientResourceRemotelyClosedException("Remote closed without a specific error condition");
+            } else {
+                failureCause = null;
+            }
+
+            immediateLinkShutdown(failureCause);
         }
-
-        immediateLinkShutdown(failureCause);
     }
 
     private void handleEngineShutdown(Engine engine) {
-        final Connection connection = engine.connection();
+        if (!isDynamic() && !session.getConnection().getEngine().isShutdown()) {
+            int previousCredit = protonReceiver.getCredit() + messageQueue.size();
 
-        final ClientException failureCause;
+            messageQueue.clear();  // Prefetched messages should be discarded.
 
-        if (connection.getRemoteCondition() != null) {
-            failureCause = ClientExceptionSupport.convertToConnectionClosedException(connection.getRemoteCondition());
-        } else if (engine.failureCause() != null) {
-            failureCause = ClientExceptionSupport.convertToConnectionClosedException(engine.failureCause());
-        } else if (!isClosed()) {
-            failureCause = new ClientConnectionRemotelyClosedException("Remote closed without a specific error condition");
+            if (drainingFuture != null) {
+                drainingFuture.complete(this);
+            }
+
+            protonReceiver.localCloseHandler(null);
+            protonReceiver.localDetachHandler(null);
+            protonReceiver.close();
+            protonReceiver = ClientReceiverBuilder.recreateReceiver(session, protonReceiver, options);
+            protonReceiver.setLinkedResource(this);
+            protonReceiver.addCredit(previousCredit);
+
+            open();
         } else {
-            failureCause = null;
-        }
+            final Connection connection = engine.connection();
 
-        immediateLinkShutdown(failureCause);
+            final ClientException failureCause;
+
+            if (connection.getRemoteCondition() != null) {
+                failureCause = ClientExceptionSupport.convertToConnectionClosedException(connection.getRemoteCondition());
+            } else if (engine.failureCause() != null) {
+                failureCause = ClientExceptionSupport.convertToConnectionClosedException(engine.failureCause());
+            } else if (!isClosed()) {
+                failureCause = new ClientConnectionRemotelyClosedException("Remote closed without a specific error condition");
+            } else {
+                failureCause = null;
+            }
+
+            immediateLinkShutdown(failureCause);
+        }
     }
 
     private void handleDeliveryReceived(IncomingDelivery delivery) {
