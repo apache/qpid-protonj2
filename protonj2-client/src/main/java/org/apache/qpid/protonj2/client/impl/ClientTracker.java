@@ -23,6 +23,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Tracker;
+import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
@@ -154,6 +155,50 @@ class ClientTracker implements Tracker {
             throw ClientExceptionSupport.createNonFatalOrPassthrough(exe.getCause());
         } catch (TimeoutException te) {
             throw new ClientOperationTimedOutException("Timed out waiting for remote settlement", te);
+        }
+    }
+
+    @Override
+    public Tracker awaitAccepted() throws ClientException {
+        try {
+            if (settled() && !remoteSettled()) {
+                return this;
+            } else {
+                settlementFuture().get();
+                if (remoteState() != null && remoteState().isAccepted()) {
+                    return this;
+                } else {
+                    throw new ClientDeliveryStateException("Remote did not accept the sent message", remoteState());
+                }
+            }
+        } catch (ExecutionException exe) {
+            throw ClientExceptionSupport.createNonFatalOrPassthrough(exe.getCause());
+        } catch (InterruptedException ie) {
+            Thread.interrupted();
+            throw new ClientException("Wait for Accepted outcome was interrupted", ie);
+        }
+    }
+
+    @Override
+    public Tracker awaitAccepted(long timeout, TimeUnit unit) throws ClientException {
+        try {
+            if (settled() && !remoteSettled()) {
+                return this;
+            } else {
+                settlementFuture().get(timeout, unit);
+                if (remoteState() != null && remoteState().isAccepted()) {
+                    return this;
+                } else {
+                    throw new ClientDeliveryStateException("Remote did not accept the sent message", remoteState());
+                }
+            }
+        } catch (InterruptedException ie) {
+            Thread.interrupted();
+            throw new ClientException("Wait for Accepted outcome was interrupted", ie);
+        } catch (ExecutionException exe) {
+            throw ClientExceptionSupport.createNonFatalOrPassthrough(exe.getCause());
+        } catch (TimeoutException te) {
+            throw new ClientOperationTimedOutException("Timed out waiting for remote Accepted outcome", te);
         }
     }
 

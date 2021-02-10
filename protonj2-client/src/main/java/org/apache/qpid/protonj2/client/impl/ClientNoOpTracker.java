@@ -93,4 +93,14 @@ public class ClientNoOpTracker implements Tracker {
     public Tracker awaitSettlement(long timeout, TimeUnit unit) throws ClientException {
         return this;
     }
+
+    @Override
+    public Tracker awaitAccepted() throws ClientException {
+        return this;
+    }
+
+    @Override
+    public Tracker awaitAccepted(long timeout, TimeUnit unit) throws ClientException {
+        return this;
+    }
 }

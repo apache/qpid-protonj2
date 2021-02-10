@@ -19,7 +19,9 @@ package org.apache.qpid.protonj2.client;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.transport.Disposition;
 
 /**
@@ -116,5 +118,34 @@ public interface Tracker {
      * @throws ClientException if an error occurs while awaiting the remote settlement.
      */
     Tracker awaitSettlement(long timeout, TimeUnit unit) throws ClientException;
+
+    /**
+     * Waits if necessary for the remote to settle the sent delivery with an {@link Accepted}
+     * disposition unless it has either already been settled and accepted or the original delivery
+     * was sent settled in which case the remote will not send a {@link Disposition} back.
+     *
+     * @return this {@link Tracker} instance.
+     *
+     * @throws ClientDeliveryStateException if the remote sends a disposition other than Accepted.
+     * @throws ClientException if an error occurs while awaiting the remote settlement.
+     */
+    Tracker awaitAccepted() throws ClientException;
+
+    /**
+     * Waits if necessary for the remote to settle the sent delivery with an {@link Accepted}
+     * disposition unless it has either already been settled and accepted or the original delivery
+     * was sent settled in which case the remote will not send a {@link Disposition} back.
+     *
+     * @param timeout
+     *      the maximum time to wait for the remote to settle.
+     * @param unit
+     *      the time unit of the timeout argument.
+     *
+     * @return this {@link Tracker} instance.
+     *
+     * @throws ClientDeliveryStateException if the remote sends a disposition other than Accepted.
+     * @throws ClientException if an error occurs while awaiting the remote settlement.
+     */
+    Tracker awaitAccepted(long timeout, TimeUnit unit) throws ClientException;
 
 }

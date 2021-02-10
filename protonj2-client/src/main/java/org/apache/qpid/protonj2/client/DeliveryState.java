@@ -38,29 +38,36 @@ public interface DeliveryState {
 
     Type getType();
 
+    /**
+     * @return true if the {@link DeliveryState} represents an Accepted outcome.
+     */
+    default boolean isAccepted() {
+        return getType() == Type.ACCEPTED;
+    }
+
     //----- Factory methods for default DeliveryState types
 
-    public static DeliveryState accepted() {
+    static DeliveryState accepted() {
         return ClientAccepted.getInstance();
     }
 
-    public static DeliveryState released() {
+    static DeliveryState released() {
         return ClientReleased.getInstance();
     }
 
-    public static DeliveryState rejected(String condition, String description) {
+    static DeliveryState rejected(String condition, String description) {
         return new ClientRejected(condition, description);
     }
 
-    public static DeliveryState rejected(String condition, String description, Map<String, Object> info) {
+    static DeliveryState rejected(String condition, String description, Map<String, Object> info) {
         return new ClientRejected(condition, description, info);
     }
 
-    public static DeliveryState modified(boolean failed, boolean undeliverable) {
+    static DeliveryState modified(boolean failed, boolean undeliverable) {
         return new ClientModified(failed, undeliverable);
     }
 
-    public static DeliveryState modified(boolean failed, boolean undeliverable, Map<String, Object> annotations) {
+    static DeliveryState modified(boolean failed, boolean undeliverable, Map<String, Object> annotations) {
         return new ClientModified(failed, undeliverable, annotations);
     }
 }

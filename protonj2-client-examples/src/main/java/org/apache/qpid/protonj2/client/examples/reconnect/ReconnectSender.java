@@ -49,7 +49,7 @@ public class ReconnectSender {
 
             for (int sentCount = 1; sentCount <= MESSAGE_COUNT; ) {
                 try {
-                    sender.send(Message.create("Hello World: #" + sentCount)).awaitSettlement();
+                    sender.send(Message.create("Hello World: #" + sentCount)).awaitAccepted();
                     sentCount++;
                 } catch (Exception ex) {
                     System.out.println("Caught exception during send, will retry on next connect");

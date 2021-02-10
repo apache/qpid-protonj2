@@ -18,10 +18,15 @@ package org.apache.qpid.protonj2.client.exceptions;
 
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.DeliveryState;
+import org.apache.qpid.protonj2.client.Tracker;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
+import org.apache.qpid.protonj2.types.messaging.Rejected;
 
 /**
- * Thrown from client API that deal with a {@link Delivery} where the state of that
- * can decide if the API call succeeds or fails.
+ * Thrown from client API that deal with a {@link Delivery} or {@link Tracker} where the outcome
+ * that results from that API can affect whether the API call succeeded or failed.  Such a case might
+ * be that a sent message is awaiting a remote {@link Accepted} outcome but instead the remote sends
+ * a {@link Rejected} outcome.
  */
 public class ClientDeliveryStateException extends ClientIllegalStateException {
 
