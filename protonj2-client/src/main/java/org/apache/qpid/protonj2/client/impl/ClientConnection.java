@@ -110,6 +110,7 @@ public class ClientConnection implements Connection {
     private ClientSession connectionSession;
     private ClientSender connectionSender;
     private Transport transport;
+    private boolean autoFlush = true;
     private ClientFuture<Connection> openFuture;
     private ClientFuture<Connection> closeFuture;
     private volatile int closed;
@@ -708,9 +709,30 @@ public class ClientConnection implements Connection {
         }
     }
 
+    void autoFlushOff() {
+        autoFlush = false;
+    }
+
+    void autoFlushOn() {
+        autoFlush = true;
+    }
+
+    void flush() {
+        try {
+            transport.flush();
+        } catch (IOException e) {
+            LOG.debug("Error while flushing engine output to transport: ", e.getMessage());
+            throw new UncheckedIOException(e);
+        }
+    }
+
     private void handleEngineOutput(ProtonBuffer output) {
         try {
-            transport.writeAndFlush(output);
+            if (autoFlush) {
+                transport.writeAndFlush(output);
+            } else {
+                transport.write(output);
+            }
         } catch (IOException e) {
             LOG.debug("Error while writing engine output to transport: ", e.getMessage());
             throw new UncheckedIOException(e);

@@ -200,11 +200,17 @@ public class ClientOutgoingEnvelope {
             delivery.abort();
             succeeded();
         } else {
-            delivery.streamBytes(payload, complete);
-            if (payload != null && payload.isReadable()) {
-                sender.addToHeadOfBlockedQueue(this);
-            } else {
-                succeeded();
+            sender.connection().autoFlushOff();
+            try {
+                delivery.streamBytes(payload, complete);
+                if (payload != null && payload.isReadable()) {
+                    sender.addToHeadOfBlockedQueue(this);
+                } else {
+                    succeeded();
+                }
+                sender.connection().flush();
+            } finally {
+                sender.connection().autoFlushOn();
             }
         }
     }
