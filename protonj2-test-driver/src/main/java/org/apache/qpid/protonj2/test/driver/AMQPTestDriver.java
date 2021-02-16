@@ -176,7 +176,6 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
             }
         } catch (AssertionError e) {
             signalFailure(e);
-            searchForScriptioCompletionAndTrigger();
         }
     }
 
@@ -198,7 +197,6 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
                 } else {
                     LOG.warn(t.getMessage());
                     signalFailure(t);
-                    searchForScriptioCompletionAndTrigger();
                     throw t;
                 }
             }
@@ -221,13 +219,11 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
                     handleSaslPerformative(sasl, channel, payload);
                 } else {
                     signalFailure(e);
-                    searchForScriptioCompletionAndTrigger();
                     throw e;
                 }
             } catch (AssertionError assertion) {
                 LOG.warn(assertion.getMessage());
                 signalFailure(assertion);
-                searchForScriptioCompletionAndTrigger();
                 throw assertion;
             }
 
@@ -255,13 +251,11 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
                     handlePerformative(amqp, channel, payload);
                 } else {
                     signalFailure(e);
-                    searchForScriptioCompletionAndTrigger();
                     throw e;
                 }
             } catch (AssertionError assertion) {
                 LOG.warn(assertion.getMessage());
                 signalFailure(assertion);
-                searchForScriptioCompletionAndTrigger();
                 throw assertion;
             }
 
@@ -492,6 +486,8 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
                 LOG.trace("Test Driver sending failure assertion due to: ", ex);
                 this.failureCause = new AssertionError(ex);
             }
+
+            searchForScriptioCompletionAndTrigger();
 
             if (assertionConsumer != null) {
                 assertionConsumer.accept(failureCause);
