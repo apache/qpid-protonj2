@@ -19,9 +19,12 @@ package org.apache.qpid.protonj2.test.driver;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.apache.qpid.protonj2.test.driver.utils.TestPeerTestsBase;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
-public class ProtonTestServerTest {
+@Timeout(20)
+public class ProtonTestServerTest extends TestPeerTestsBase {
 
     @Test
     public void testServerStart() throws Exception {

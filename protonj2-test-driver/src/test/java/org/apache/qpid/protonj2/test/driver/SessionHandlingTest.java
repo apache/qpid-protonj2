@@ -27,66 +27,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Tests the basics of the Proton Test Client implementation
+ * Tests for the test driver session handling from both client and server perspectives.
  */
 @Timeout(20)
-class ProtonTestWSClientTest extends TestPeerTestsBase {
+class SessionHandlingTest extends TestPeerTestsBase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProtonTestWSClientTest.class);
-
-    @Test
-    public void testClientCanConnectAndExchangeAMQPHeaders() throws Exception {
-        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
-        serverOpts.setUseWebSockets(true);
-
-        ProtonTestClientOptions clientOpts = new ProtonTestClientOptions();
-        clientOpts.setUseWebSockets(true);
-
-        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
-            peer.expectAMQPHeader().respondWithAMQPHeader();
-            peer.start();
-
-            URI remoteURI = peer.getServerURI();
-
-            ProtonTestClient client = new ProtonTestClient(clientOpts);
-
-            client.connect(remoteURI.getHost(), remoteURI.getPort());
-            client.expectAMQPHeader();
-            client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
-            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            client.close();
-
-            LOG.info("Test started, peer listening on: {}", remoteURI);
-
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-        }
-    }
+    private static final Logger LOG = LoggerFactory.getLogger(SessionHandlingTest.class);
 
     @Test
-    public void testClientCanConnectAndOpenExchanged() throws Exception {
-        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
-        serverOpts.setUseWebSockets(true);
-
-        ProtonTestClientOptions clientOpts = new ProtonTestClientOptions();
-        clientOpts.setUseWebSockets(true);
-
-        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
+    public void testSessionTrackingWithClientOpensSession() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
-            peer.expectClose().respond();
+            peer.expectBegin().onChannel(0).respond();
+            peer.expectEnd().onChannel(0).respond();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
 
-            ProtonTestClient client = new ProtonTestClient(clientOpts);
+            ProtonTestClient client = new ProtonTestClient();
 
             client.connect(remoteURI.getHost(), remoteURI.getPort());
             client.expectAMQPHeader();
             client.expectOpen();
-            client.expectClose();
+            client.expectBegin().onChannel(0);
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
             client.remoteOpen().now();
-            client.remoteClose().now();
+            client.remoteBegin().now();
+            client.remoteEnd().now();
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             client.close();
 

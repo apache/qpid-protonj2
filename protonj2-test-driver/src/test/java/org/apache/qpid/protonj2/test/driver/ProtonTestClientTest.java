@@ -20,6 +20,7 @@ import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
+import org.apache.qpid.protonj2.test.driver.utils.TestPeerTestsBase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -29,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * Tests the basics of the Proton Test Client implementation
  */
 @Timeout(20)
-class ProtonTestClientTest {
+class ProtonTestClientTest extends TestPeerTestsBase {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProtonTestClientTest.class);
 
