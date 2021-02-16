@@ -176,6 +176,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
             }
         } catch (AssertionError e) {
             signalFailure(e);
+            searchForScriptioCompletionAndTrigger();
         }
     }
 
@@ -196,6 +197,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
                     handleHeader(header);
                 } else {
                     LOG.warn(t.getMessage());
+                    signalFailure(t);
                     searchForScriptioCompletionAndTrigger();
                     throw t;
                 }
@@ -218,10 +220,13 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
                 if (scriptEntry.isOptional()) {
                     handleSaslPerformative(sasl, channel, payload);
                 } else {
+                    signalFailure(e);
+                    searchForScriptioCompletionAndTrigger();
                     throw e;
                 }
             } catch (AssertionError assertion) {
                 LOG.warn(assertion.getMessage());
+                signalFailure(assertion);
                 searchForScriptioCompletionAndTrigger();
                 throw assertion;
             }
@@ -249,10 +254,13 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
                 if (scriptEntry.isOptional()) {
                     handlePerformative(amqp, channel, payload);
                 } else {
+                    signalFailure(e);
+                    searchForScriptioCompletionAndTrigger();
                     throw e;
                 }
             } catch (AssertionError assertion) {
                 LOG.warn(assertion.getMessage());
+                signalFailure(assertion);
                 searchForScriptioCompletionAndTrigger();
                 throw assertion;
             }
@@ -299,6 +307,8 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
                 signalFailure("Interrupted while waiting for script to complete");
             }
         }
+
+        checkFailed();
     }
 
     public void waitForScriptToCompleteIgnoreErrors() {
@@ -344,6 +354,8 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
                 signalFailure("Interrupted while waiting for script to complete");
             }
         }
+
+        checkFailed();
     }
 
     public void addScriptedElement(ScriptedElement element) {

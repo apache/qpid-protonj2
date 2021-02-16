@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
@@ -48,6 +50,59 @@ class ProtonTestClientTest extends TestPeerTestsBase {
             client.expectAMQPHeader();
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testClientDetectsUnexpectedPerformativeResponseToAMQPHeader() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectAMQPHeader();
+            peer.remoteOpen().queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient();
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+
+            assertThrows(AssertionError.class, () -> client.waitForScriptToComplete(5, TimeUnit.SECONDS));
+
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testClientDetactsUnexpectedPerformativeAndFailsTest() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen();
+            peer.remoteBegin().queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient();
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+            client.remoteOpen().now();
+
+            assertThrows(AssertionError.class, () -> client.waitForScriptToComplete(5, TimeUnit.SECONDS));
+
             client.close();
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
