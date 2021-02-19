@@ -38,7 +38,9 @@ class SessionHandlingTest extends TestPeerTestsBase {
 
     @Test
     public void testSessionTrackingWithClientOpensSession() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
             peer.expectBegin().onChannel(0).respond();
@@ -47,12 +49,11 @@ class SessionHandlingTest extends TestPeerTestsBase {
 
             URI remoteURI = peer.getServerURI();
 
-            ProtonTestClient client = new ProtonTestClient();
-
             client.connect(remoteURI.getHost(), remoteURI.getPort());
             client.expectAMQPHeader();
             client.expectOpen();
             client.expectBegin().onChannel(0);
+            client.expectEnd().onChannel(0);
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
             client.remoteOpen().now();
             client.remoteBegin().now();
@@ -68,7 +69,9 @@ class SessionHandlingTest extends TestPeerTestsBase {
 
     @Test
     public void testSessionBeginResponseUsesScriptedChannel() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
             peer.expectBegin().onChannel(0).respond().onChannel(42);
@@ -77,7 +80,7 @@ class SessionHandlingTest extends TestPeerTestsBase {
 
             URI remoteURI = peer.getServerURI();
 
-            ProtonTestClient client = new ProtonTestClient();
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             client.connect(remoteURI.getHost(), remoteURI.getPort());
             client.expectAMQPHeader();
@@ -88,18 +91,17 @@ class SessionHandlingTest extends TestPeerTestsBase {
             client.remoteOpen().now();
             client.remoteBegin().now();
             client.remoteEnd().now();
+
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            client.close();
-
-            LOG.info("Test started, peer listening on: {}", remoteURI);
-
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
 
     @Test
     public void testWaitForCompletionFailsWhenRemoteSendEndOnWrongChannel() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
             peer.expectBegin().onChannel(0).respond().onChannel(42);
@@ -108,7 +110,7 @@ class SessionHandlingTest extends TestPeerTestsBase {
 
             URI remoteURI = peer.getServerURI();
 
-            ProtonTestClient client = new ProtonTestClient();
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             client.connect(remoteURI.getHost(), remoteURI.getPort());
             client.expectAMQPHeader();
@@ -122,17 +124,15 @@ class SessionHandlingTest extends TestPeerTestsBase {
 
             assertThrows(AssertionError.class, () -> client.waitForScriptToComplete(5, TimeUnit.SECONDS));
 
-            client.close();
-
-            LOG.info("Test started, peer listening on: {}", remoteURI);
-
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
 
     @Test
     public void testServerEndResponseFillsChannelsAutomaticallyIfNoneSpecified() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
             peer.expectBegin().onChannel(0).respond().onChannel(42);
@@ -141,7 +141,7 @@ class SessionHandlingTest extends TestPeerTestsBase {
 
             URI remoteURI = peer.getServerURI();
 
-            ProtonTestClient client = new ProtonTestClient();
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             client.connect(remoteURI.getHost(), remoteURI.getPort());
             client.expectAMQPHeader();
@@ -152,18 +152,17 @@ class SessionHandlingTest extends TestPeerTestsBase {
             client.remoteOpen().now();
             client.remoteBegin().now();
             client.remoteEnd().now();
+
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            client.close();
-
-            LOG.info("Test started, peer listening on: {}", remoteURI);
-
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
 
     @Test
     public void testServerRespondToLastBeginFeature() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
             peer.expectBegin().onChannel(0);
@@ -171,7 +170,7 @@ class SessionHandlingTest extends TestPeerTestsBase {
 
             URI remoteURI = peer.getServerURI();
 
-            ProtonTestClient client = new ProtonTestClient();
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             client.connect(remoteURI.getHost(), remoteURI.getPort());
             client.expectAMQPHeader();
@@ -193,19 +192,16 @@ class SessionHandlingTest extends TestPeerTestsBase {
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             client.expectEnd().onChannel(42);
             client.remoteEnd().now();
+
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
-
-            client.close();
-
-            LOG.info("Test started, peer listening on: {}", remoteURI);
-
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
 
     @Test
     public void testOpenAndCloseMultipleSessionsWithAutoChannelHandlingExpected() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
 
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
@@ -220,7 +216,7 @@ class SessionHandlingTest extends TestPeerTestsBase {
 
             URI remoteURI = peer.getServerURI();
 
-            ProtonTestClient client = new ProtonTestClient();
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             client.expectAMQPHeader();
             client.expectOpen();
@@ -246,11 +242,8 @@ class SessionHandlingTest extends TestPeerTestsBase {
             client.expectClose();
 
             client.remoteClose().now();
+
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            client.close();
-
-            LOG.info("Test started, peer listening on: {}", remoteURI);
-
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
