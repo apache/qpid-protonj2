@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.test.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
@@ -45,6 +46,10 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
 
     public DispositionExpectation(AMQPTestDriver driver) {
         super(driver);
+
+        // Default mandatory field validation
+        withRole(notNullValue());
+        withFirst(notNullValue());
     }
 
     @Override

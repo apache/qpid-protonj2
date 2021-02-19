@@ -60,6 +60,9 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
 
     public TransferExpectation(AMQPTestDriver driver) {
         super(driver);
+
+        // Default mandatory field validation.
+        withHandle(notNullValue());
     }
 
     public DispositionInjectAction respond() {

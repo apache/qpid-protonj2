@@ -16,7 +16,10 @@
  */
 package org.apache.qpid.protonj2.test.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 
 import java.util.Map;
 
@@ -45,6 +48,12 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
 
     public FlowExpectation(AMQPTestDriver driver) {
         super(driver);
+
+        // Default expectations for mandatory performative fields.
+        withNextIncomingId(anyOf(nullValue(), notNullValue()));
+        withIncomingWindow(notNullValue());
+        withNextOutgoingId(notNullValue());
+        withOutgoingWindow(notNullValue());
     }
 
     @Override
