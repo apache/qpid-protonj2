@@ -16,7 +16,10 @@
  */
 package org.apache.qpid.protonj2.test.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 
 import java.util.Map;
 
@@ -45,6 +48,12 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
 
     public BeginExpectation(AMQPTestDriver driver) {
         super(driver);
+
+        // Configure default expectations for mandatory fields
+        withRemoteChannel(anyOf(nullValue(), notNullValue()));
+        withNextOutgoingId(notNullValue());
+        withIncomingWindow(notNullValue());
+        withOutgoingWindow(notNullValue());
     }
 
     @Override

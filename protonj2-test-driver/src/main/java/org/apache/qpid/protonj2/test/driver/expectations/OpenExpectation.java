@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.test.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 
 import java.util.Map;
 
@@ -43,9 +44,13 @@ public class OpenExpectation extends AbstractExpectation<Open> {
     private final OpenMatcher matcher = new OpenMatcher();
 
     private OpenInjectAction response;
+    private boolean explicitlyNullContainerId;
 
     public OpenExpectation(AMQPTestDriver driver) {
         super(driver);
+
+        // Validate mandatory field by default
+        withContainerId(notNullValue());
 
         onChannel(0);  // Open must used channel zero.
     }
@@ -94,26 +99,23 @@ public class OpenExpectation extends AbstractExpectation<Open> {
     public void handleOpen(Open open, ByteBuf payload, int channel, AMQPTestDriver context) {
         super.handleOpen(open, payload, channel, context);
 
-        if (response == null) {
-            return;
-        }
+        if (response != null) {
+            // Input was validated now populate response with auto values where not configured
+            // to say otherwise by the test.
+            if (response.getPerformative().getContainerId() == null && !explicitlyNullContainerId) {
+                response.getPerformative().setContainerId("driver");
+            }
 
-        // Input was validated now populate response with auto values where not configured
-        // to say otherwise by the test.
-        if (response.getPerformative().getContainerId() == null) {
-            response.getPerformative().setContainerId("driver");
-        }
-        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
-            // TODO - We could track session in the driver and therefore allocate
-            //        free channels based on activity during the test.  For now we
-            //        are simply mirroring the channels back.
-            response.onChannel(channel);
+            if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
+                response.onChannel(channel);
+            }
         }
     }
 
     //----- Type specific with methods that perform simple equals checks
 
     public OpenExpectation withContainerId(String container) {
+        explicitlyNullContainerId = container == null;
         return withContainerId(equalTo(container));
     }
 
