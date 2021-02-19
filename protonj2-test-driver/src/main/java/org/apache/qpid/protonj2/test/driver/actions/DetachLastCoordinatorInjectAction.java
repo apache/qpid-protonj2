@@ -34,7 +34,7 @@ public class DetachLastCoordinatorInjectAction extends DetachInjectAction {
 
     @Override
     protected void beforeActionPerformed(AMQPTestDriver driver) {
-        LinkTracker tracker = driver.getSessions().getLastOpenedCoordinator();
+        LinkTracker tracker = driver.sessions().getLastOpenedCoordinator();
 
         onChannel(tracker.getSession().getLocalChannel().intValue());
         getPerformative().setHandle(tracker.getHandle());

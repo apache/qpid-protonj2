@@ -22,6 +22,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.LinkTracker;
+import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.DispositionInjectAction;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
@@ -32,6 +33,7 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.Released;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
@@ -128,28 +130,34 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     public void handleTransfer(Transfer transfer, ByteBuf payload, int channel, AMQPTestDriver driver) {
         super.handleTransfer(transfer, payload, channel, driver);
 
-        if (response == null) {
-            return;
+        final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);
+        final SessionTracker session = driver.sessions().getSessionFromRemoteChannel(remoteChannel);
+
+        if (session == null) {
+            throw new AssertionError(String.format(
+                "Received Detach on channel [%d] that has no matching Session for that remote channel. ", remoteChannel));
         }
 
-        LinkTracker link = driver.getSessions().handleTransfer(transfer, payload, channel);
+        final LinkTracker link = session.handleTransfer(transfer, payload);
 
-        // Input was validated now populate response with auto values where not configured
-        // to say otherwise by the test.
-        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
-            response.onChannel(link.getSession().getLocalChannel());
+        if (response != null) {
+            // Input was validated now populate response with auto values where not configured
+            // to say otherwise by the test.
+            if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
+                response.onChannel(link.getSession().getLocalChannel());
+            }
+
+            // Populate the fields of the response with defaults if non set by the test script
+            if (response.getPerformative().getFirst() == null) {
+                response.withFirst(transfer.getDeliveryId());
+            }
+
+            if (response.getPerformative().getRole() == null) {
+                response.withRole(link.getRole());
+            }
+
+            // Remaining response fields should be set by the test script as they can't be inferred.
         }
-
-        // Populate the fields of the response with defaults if non set by the test script
-        if (response.getPerformative().getFirst() == null) {
-            response.withFirst(transfer.getDeliveryId());
-        }
-
-        if (response.getPerformative().getRole() == null) {
-            response.withRole(link.getRole());
-        }
-
-        // Remaining response fields should be set by the test script as they can't be inferred.
     }
 
     //----- Type specific with methods that perform simple equals checks

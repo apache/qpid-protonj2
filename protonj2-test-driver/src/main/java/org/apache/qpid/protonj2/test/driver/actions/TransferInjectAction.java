@@ -88,13 +88,13 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
         // We fill in a channel using the next available channel id if one isn't set, then
         // report the outbound begin to the session so it can track this new session.
         if (onChannel() == CHANNEL_UNSET) {
-            onChannel(driver.getSessions().getLastOpenedSession().getLocalChannel().intValue());
+            onChannel(driver.sessions().getLastLocallyOpenedSession().getLocalChannel().intValue());
         }
 
         // Auto select last opened receiver on last opened session.  Later an option could
         // be added to allow forcing the handle to be null for testing specification requirements.
         if (transfer.getHandle() == null) {
-            transfer.setHandle(driver.getSessions().getLastOpenedSession().getLastOpenedReceiver().getHandle());
+            transfer.setHandle(driver.sessions().getLastLocallyOpenedSession().getLastOpenedRemoteReceiver().getHandle());
         }
 
         // Here we could check if the delivery Id is set and if not grab a valid

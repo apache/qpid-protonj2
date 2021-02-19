@@ -27,7 +27,7 @@ import java.util.function.Consumer;
  *
  * This class in mainly intended for use in JUnit tests of an Engine implementation
  * and not for use by client implementations where a socket based test peer would be
- * a more appropriate choice.  
+ * a more appropriate choice.
  */
 public class ProtonTestConnector extends ProtonTestPeer implements Consumer<ByteBuffer> {
 
@@ -35,11 +35,16 @@ public class ProtonTestConnector extends ProtonTestPeer implements Consumer<Byte
     private final Consumer<ByteBuffer> inputConsumer;
 
     public ProtonTestConnector(Consumer<ByteBuffer> frameSink) {
-        this.driver = new AMQPTestDriver((frame) -> {
+        this.driver = new AMQPTestDriver(getPeerName(), (frame) -> {
             processDriverOutput(frame);
         }, null);
 
         this.inputConsumer = frameSink;
+    }
+
+    @Override
+    public String getPeerName() {
+        return "InVMConnector";
     }
 
     @Override

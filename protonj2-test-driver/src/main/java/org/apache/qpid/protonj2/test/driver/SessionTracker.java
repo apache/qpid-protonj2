@@ -39,34 +39,25 @@ import io.netty.buffer.ByteBuf;
  */
 public class SessionTracker {
 
-    private static final UnsignedInteger DEFAULT_WINDOW_SIZE = UnsignedInteger.valueOf(Integer.MAX_VALUE);
-
-    private final Deque<LinkTracker> senders = new ArrayDeque<>();
-    private final Deque<LinkTracker> receivers = new ArrayDeque<>();
+    private final Deque<LinkTracker> remoteSenders = new ArrayDeque<>();
+    private final Deque<LinkTracker> remoteReceivers = new ArrayDeque<>();
 
     private final Map<UnsignedInteger, LinkTracker> trackerMap = new LinkedHashMap<>();
 
-    private final Begin begin;
-    private final UnsignedShort localChannel;
-    private final UnsignedShort remoteChannel;
-
-    private UnsignedInteger nextOutgoingId = UnsignedInteger.ONE;
-    private UnsignedInteger nextIncomingId = UnsignedInteger.ONE;
-    private UnsignedInteger incomingWindow = DEFAULT_WINDOW_SIZE;
-    private UnsignedInteger outgoingWindow = DEFAULT_WINDOW_SIZE;
-    private UnsignedInteger handleMax;
-    private End end;
+    private UnsignedShort localChannel;
+    private UnsignedShort remoteChannel;
+    private UnsignedInteger nextIncomingId;
+    private Begin remoteBegin;
+    private Begin localBegin;
+    private End remoteEnd;
+    private End localEnd;
     private LinkTracker lastOpenedLink;
     private LinkTracker lastOpenedCoordinatorLink;
 
     private final AMQPTestDriver driver;
 
-    public SessionTracker(AMQPTestDriver driver, Begin begin, UnsignedShort localChannel, UnsignedShort remoteChannel) {
+    public SessionTracker(AMQPTestDriver driver) {
         this.driver = driver;
-        this.begin = begin;
-        this.localChannel = localChannel;
-        this.remoteChannel = remoteChannel;
-        this.nextIncomingId = begin.getNextOutgoingId();
     }
 
     public AMQPTestDriver getDriver() {
@@ -81,22 +72,30 @@ public class SessionTracker {
         return lastOpenedCoordinatorLink;
     }
 
-    public LinkTracker getLastOpenedSender() {
-        return senders.getLast();
+    public LinkTracker getLastOpenedRemoteSender() {
+        return remoteSenders.getLast();
     }
 
-    public LinkTracker getLastOpenedReceiver() {
-        return receivers.getLast();
+    public LinkTracker getLastOpenedRemoteReceiver() {
+        return remoteReceivers.getLast();
     }
 
-    public End getEnd() {
-        return end;
+    public End getRemoteEnd() {
+        return remoteEnd;
+    }
+
+    public End getLocalEnd() {
+        return localEnd;
     }
 
     //----- Session specific access which can provide details for expectations
 
     public Begin getRemoteBegin() {
-        return begin;
+        return remoteBegin;
+    }
+
+    public Begin getLocalBegin() {
+        return localBegin;
     }
 
     public UnsignedShort getRemoteChannel() {
@@ -107,88 +106,102 @@ public class SessionTracker {
         return localChannel;
     }
 
-    public UnsignedInteger getNextOutgoingId() {
-        return nextOutgoingId;
-    }
-
-    public UnsignedInteger setNextOutgoingId(UnsignedInteger nextOutgoingId) {
-        this.nextOutgoingId = nextOutgoingId;
-        return nextOutgoingId;
-    }
-
     public UnsignedInteger getNextIncomingId() {
         return nextIncomingId;
     }
 
-    public UnsignedInteger setNextIncomingId(UnsignedInteger nextIncomingId) {
-        this.nextIncomingId = nextIncomingId;
-        return nextIncomingId;
-    }
-
-    public UnsignedInteger getIncomingWindow() {
-        return incomingWindow;
-    }
-
-    public UnsignedInteger setIncomingWindow(UnsignedInteger incomingWindow) {
-        this.incomingWindow = incomingWindow;
-        return incomingWindow;
-    }
-
-    public UnsignedInteger getOutgoingWindow() {
-        return outgoingWindow;
-    }
-
-    public UnsignedInteger setOutgoingWindow(UnsignedInteger outgoingWindow) {
-        this.outgoingWindow = outgoingWindow;
-        return outgoingWindow;
-    }
-
-    public UnsignedInteger getHandleMax() {
-        return handleMax;
-    }
-
-    public UnsignedInteger setHandleMax(UnsignedInteger handleMax) {
-        this.handleMax = handleMax;
-        return handleMax;
-    }
-
     //----- Handle performatives and update session state
 
-    public SessionTracker handleEnd(End end) {
-        this.end = end;
+    public SessionTracker handleBegin(Begin remoteBegin, UnsignedShort remoteChannel) {
+        this.remoteBegin = remoteBegin;
+        this.remoteChannel = remoteChannel;
+        this.nextIncomingId = remoteBegin.getNextOutgoingId();
+
         return this;
     }
 
-    public LinkTracker handleAttach(Attach attach) {
-        final LinkTracker linkTracker;
+    public SessionTracker handleLocalBegin(Begin localBegin, UnsignedShort localChannel) {
+        this.localBegin = localBegin;
+        this.localChannel = localChannel;
 
+        return this;
+    }
+
+    public SessionTracker handleEnd(End end) {
+        this.remoteEnd = end;
+        return this;
+    }
+
+    public SessionTracker handleLocalEnd(End end) {
+        this.localEnd = end;
+        return this;
+    }
+
+    public LinkTracker handleRemoteAttach(Attach attach) {
+        LinkTracker linkTracker = trackerMap.get(attach.getHandle());
+
+        // We only populate these remote value here, never in the local side processing
+        // this implies that we need to check if this was remotely initiated and create
+        // the link tracker if none exists yet
+        // TODO: These SenderTracker and ReceiverTracker inversions are confusing and probably
+        //       not going to work for future enhancements.
         if (attach.getRole().equals(Role.SENDER.getValue())) {
-            linkTracker = new ReceiverTracker(this, attach);
-            senders.add(linkTracker);
+            if (linkTracker == null) {
+                linkTracker = new ReceiverTracker(this, attach);
+            }
+            remoteSenders.add(linkTracker);
         } else {
-            linkTracker = new SenderTracker(this, attach);
-            receivers.add(linkTracker);
+            if (linkTracker == null) {
+                linkTracker = new SenderTracker(this, attach);
+            }
+            remoteReceivers.add(linkTracker);
         }
 
         if (attach.getTarget() instanceof Coordinator) {
             lastOpenedCoordinatorLink = linkTracker;
-            driver.getSessions().setLastOpenedCoordinator(lastOpenedCoordinatorLink);
+            driver.sessions().setLastOpenedCoordinator(lastOpenedCoordinatorLink);
         }
 
         lastOpenedLink = linkTracker;
-
         trackerMap.put(attach.getHandle(), linkTracker);
 
         return linkTracker;
     }
 
-    public LinkTracker handleDetach(Detach detach) {
+    public LinkTracker handleLocalAttach(Attach attach) {
+        LinkTracker linkTracker = trackerMap.get(attach.getHandle());
+
+        // Create a tracker for the local side to use to respond to remote
+        // performative or to use when invoking local actions.
+        if (linkTracker == null) {
+            if (attach.getRole().equals(Role.SENDER.getValue())) {
+                linkTracker = new SenderTracker(this, attach);
+            } else {
+                linkTracker = new ReceiverTracker(this, attach);
+            }
+        }
+
+        lastOpenedLink = linkTracker;
+        trackerMap.put(attach.getHandle(), linkTracker);
+
+        return linkTracker;
+    }
+
+    public LinkTracker handleRemoteDetach(Detach detach) {
         LinkTracker tracker = trackerMap.get(detach.getHandle());
 
         if (tracker != null) {
-            senders.remove(tracker);
-            receivers.remove(tracker);
+            remoteSenders.remove(tracker);
+            remoteReceivers.remove(tracker);
         }
+
+        return tracker;
+    }
+
+    public LinkTracker handleLocalDetach(Detach detach) {
+        LinkTracker tracker = trackerMap.get(detach.getHandle());
+
+        // TODO: Cleanup local state when we start tracking both sides.
 
         return tracker;
     }
@@ -211,5 +224,18 @@ public class SessionTracker {
         }
 
         return tracker;
+    }
+
+    public UnsignedInteger findFreeLocalHandle() {
+        final UnsignedInteger HANDLE_MAX = localBegin.getHandleMax() != null ? localBegin.getHandleMax() : UnsignedInteger.MAX_VALUE;
+
+        for (long i = 0; i <= HANDLE_MAX.longValue(); ++i) {
+            final UnsignedInteger handle = UnsignedInteger.valueOf(i);
+            if (!trackerMap.containsKey(handle)) {
+                return handle;
+            }
+        }
+
+        throw new IllegalStateException("no local handle available for allocation");
     }
 }

@@ -53,6 +53,11 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
         this(new ProtonTestClientOptions());
     }
 
+    @Override
+    public String getPeerName() {
+        return "Client";
+    }
+
     /**
      * Creates a Test Client using the options to configure the client connection.
      *
@@ -107,7 +112,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
     private final class NettyAwareAMQPTestDriver extends AMQPTestDriver {
 
         public NettyAwareAMQPTestDriver(Consumer<ByteBuffer> frameConsumer, Consumer<AssertionError> assertionConsumer, Supplier<ScheduledExecutorService> scheduler) {
-            super(frameConsumer, assertionConsumer, scheduler);
+            super(getPeerName(), frameConsumer, assertionConsumer, scheduler);
         }
 
         // If the send call occurs from a reaction to processing incoming data the

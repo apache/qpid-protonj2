@@ -25,6 +25,7 @@ import java.util.UUID;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.LinkTracker;
+import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.actions.AttachInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.DetachInjectAction;
@@ -38,6 +39,7 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedByte;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Attach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.DeliveryState;
@@ -101,76 +103,82 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     public void handleAttach(Attach attach, ByteBuf payload, int channel, AMQPTestDriver context) {
         super.handleAttach(attach, payload, channel, context);
 
-        LinkTracker link = driver.getSessions().handleAttach(attach, channel);
+        final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);
+        final SessionTracker session = driver.sessions().getSessionFromRemoteChannel(remoteChannel);
 
-        if (response == null) {
-            return;
-        }
-
-        // Input was validated now populate response with auto values where not configured
-        // to say otherwise by the test.
-        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
-            response.onChannel(link.getSession().getLocalChannel());
+        if (session == null) {
+            throw new AssertionError(String.format(
+                "Received Attach on channel [%d] that has no matching Session for that remote channel. ", remoteChannel));
         }
 
-        // Populate the fields of the response with defaults if non set by the test script
-        if (response.getPerformative().getHandle() == null) {
-            response.withHandle(attach.getHandle());
-        }
-        if (response.getPerformative().getName() == null) {
-            response.withName(attach.getName());
-        }
-        if (response.getPerformative().getRole() == null) {
-            response.withRole(Boolean.TRUE.equals(attach.getRole()) ? Role.SENDER : Role.RECEIVER);
-        }
-        if (response.getPerformative().getSenderSettleMode() == null) {
-            response.withSndSettleMode(SenderSettleMode.valueOf(attach.getSenderSettleMode()));
-        }
-        if (response.getPerformative().getReceiverSettleMode() == null) {
-            response.withRcvSettleMode(ReceiverSettleMode.valueOf(attach.getReceiverSettleMode()));
-        }
-        if (response.getPerformative().getSource() == null && !response.isNullSourceRequired()) {
-            response.withSource(attach.getSource());
-            if (attach.getSource() != null && Boolean.TRUE.equals(attach.getSource().getDynamic())) {
-                attach.getSource().setAddress(UUID.randomUUID().toString());
+        final LinkTracker link = session.handleRemoteAttach(attach);
+
+        if (response != null) {
+            // Input was validated now populate response with auto values where not configured
+            // to say otherwise by the test.
+            if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
+                response.onChannel(link.getSession().getLocalChannel());
             }
-        }
 
-        if (rejecting) {
-            if (Boolean.FALSE.equals(attach.getRole())) {
-                // Sender attach so response should have null target
-                response.withNullTarget();
-            } else {
-                // Receiver attach so response should have null source
-                response.withNullSource();
+            // Populate the fields of the response with defaults if non set by the test script
+            if (response.getPerformative().getHandle() == null) {
+                response.withHandle(attach.getHandle());
             }
-        }
-
-        if (response.getPerformative().getTarget() == null && !response.isNullTargetRequired()) {
-            if (attach.getTarget() != null) {
-                if (attach.getTarget() instanceof org.apache.qpid.protonj2.test.driver.codec.messaging.Target) {
-                    org.apache.qpid.protonj2.test.driver.codec.messaging.Target target =
-                        (org.apache.qpid.protonj2.test.driver.codec.messaging.Target) attach.getTarget();
-                    response.withTarget(target);
-                    if (target != null && Boolean.TRUE.equals(target.getDynamic())) {
-                        target.setAddress(UUID.randomUUID().toString());
-                    }
-                } else {
-                    org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator coordinator =
-                        (org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator) attach.getTarget();
-                    response.withTarget(coordinator);
+            if (response.getPerformative().getName() == null) {
+                response.withName(attach.getName());
+            }
+            if (response.getPerformative().getRole() == null) {
+                response.withRole(Boolean.TRUE.equals(attach.getRole()) ? Role.SENDER : Role.RECEIVER);
+            }
+            if (response.getPerformative().getSenderSettleMode() == null) {
+                response.withSndSettleMode(SenderSettleMode.valueOf(attach.getSenderSettleMode()));
+            }
+            if (response.getPerformative().getReceiverSettleMode() == null) {
+                response.withRcvSettleMode(ReceiverSettleMode.valueOf(attach.getReceiverSettleMode()));
+            }
+            if (response.getPerformative().getSource() == null && !response.isNullSourceRequired()) {
+                response.withSource(attach.getSource());
+                if (attach.getSource() != null && Boolean.TRUE.equals(attach.getSource().getDynamic())) {
+                    attach.getSource().setAddress(UUID.randomUUID().toString());
                 }
             }
-        }
 
-        if (response.getPerformative().getInitialDeliveryCount() == null) {
-            Role role = Role.valueOf(response.getPerformative().getRole());
-            if (role == Role.SENDER) {
-                response.withInitialDeliveryCount(0);
+            if (rejecting) {
+                if (Boolean.FALSE.equals(attach.getRole())) {
+                    // Sender attach so response should have null target
+                    response.withNullTarget();
+                } else {
+                    // Receiver attach so response should have null source
+                    response.withNullSource();
+                }
             }
-        }
 
-        // Other fields are left not set for now unless test script configured
+            if (response.getPerformative().getTarget() == null && !response.isNullTargetRequired()) {
+                if (attach.getTarget() != null) {
+                    if (attach.getTarget() instanceof org.apache.qpid.protonj2.test.driver.codec.messaging.Target) {
+                        org.apache.qpid.protonj2.test.driver.codec.messaging.Target target =
+                            (org.apache.qpid.protonj2.test.driver.codec.messaging.Target) attach.getTarget();
+                        response.withTarget(target);
+                        if (target != null && Boolean.TRUE.equals(target.getDynamic())) {
+                            target.setAddress(UUID.randomUUID().toString());
+                        }
+                    } else {
+                        org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator coordinator =
+                            (org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator) attach.getTarget();
+                        response.withTarget(coordinator);
+                    }
+                }
+            }
+
+            if (response.getPerformative().getInitialDeliveryCount() == null) {
+                Role role = Role.valueOf(response.getPerformative().getRole());
+                if (role == Role.SENDER) {
+                    response.withInitialDeliveryCount(0);
+                }
+            }
+
+            // Other fields are left not set for now unless test script configured
+        }
     }
 
     //----- Type specific with methods that perform simple equals checks

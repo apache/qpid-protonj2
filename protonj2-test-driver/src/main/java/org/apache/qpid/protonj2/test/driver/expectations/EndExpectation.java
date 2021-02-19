@@ -26,6 +26,7 @@ import org.apache.qpid.protonj2.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.EndInjectAction;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transport.End;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
@@ -65,16 +66,13 @@ public class EndExpectation extends AbstractExpectation<End> {
     public void handleEnd(End end, ByteBuf payload, int channel, AMQPTestDriver context) {
         super.handleEnd(end, payload, channel, context);
 
-        SessionTracker session = context.getSessions().handleEnd(end, channel);
+        // Ensure that local session tracking knows that remote ended a Session.
+        final SessionTracker session = context.sessions().handleEnd(end, UnsignedShort.valueOf(channel));
 
-        if (response == null) {
-            return;
-        }
-
-        // Input was validated now populate response with auto values where not configured
-        // to say otherwise by the test.
-        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
-            response.onChannel(session.getLocalChannel());
+        if (response != null) {
+            if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
+                response.onChannel(session.getLocalChannel());
+            }
         }
     }
 

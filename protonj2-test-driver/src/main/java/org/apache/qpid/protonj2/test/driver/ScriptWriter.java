@@ -452,18 +452,13 @@ public abstract class ScriptWriter {
     public BeginInjectAction respondToLastBegin() {
         BeginInjectAction response = new BeginInjectAction(getDriver());
 
-        SessionTracker session = getDriver().getSessions().getLastOpenedSession();
+        SessionTracker session = getDriver().sessions().getLastRemotelyOpenedSession();
         if (session == null) {
             throw new IllegalStateException("Cannot create response to Begin before one has been received.");
         }
 
         // Populate the response using data in the locally opened session, script can override this after return.
-        response.onChannel(session.getLocalChannel());
-        response.withRemoteChannel(getDriver().getSessions().getLastOpenedSession().getRemoteChannel());
-        response.withNextOutgoingId(session.getNextOutgoingId());
-        response.withIncomingWindow(session.getIncomingWindow());
-        response.withOutgoingWindow(session.getOutgoingWindow());
-        response.withHandleMax(session.getHandleMax());
+        response.withRemoteChannel(session.getRemoteChannel());
 
         return response;
     }
@@ -480,7 +475,7 @@ public abstract class ScriptWriter {
     public AttachInjectAction respondToLastAttach() {
         AttachInjectAction response = new AttachInjectAction(getDriver());
 
-        LinkTracker link = getDriver().getSessions().getLastOpenedSession().getLastOpenedLink();
+        LinkTracker link = getDriver().sessions().getLastRemotelyOpenedSession().getLastOpenedLink();
         if (link == null) {
             throw new IllegalStateException("Cannot create response to Attach before one has been received.");
         }

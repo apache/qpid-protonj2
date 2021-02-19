@@ -129,4 +129,128 @@ class SessionHandlingTest extends TestPeerTestsBase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    public void testServerEndResponseFillsChannelsAutomaticallyIfNoneSpecified() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().onChannel(0).respond().onChannel(42);
+            peer.expectEnd().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient();
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.expectBegin().withRemoteChannel(0).onChannel(42);
+            client.expectEnd().onChannel(42);
+            client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+            client.remoteOpen().now();
+            client.remoteBegin().now();
+            client.remoteEnd().now();
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testServerRespondToLastBeginFeature() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().onChannel(0);
+            peer.expectEnd().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient();
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+            client.remoteOpen().now();
+            client.remoteBegin().now();
+
+            // Wait for the above and then script next steps
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.expectBegin().withRemoteChannel(0).onChannel(42);
+
+            // Now we respond to the last begin we saw at the server side.
+            peer.respondToLastBegin().onChannel(42).now();
+
+            // Wait for the above and then script next steps
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.expectEnd().onChannel(42);
+            client.remoteEnd().now();
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testOpenAndCloseMultipleSessionsWithAutoChannelHandlingExpected() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().onChannel(0).respond();
+            peer.expectBegin().onChannel(1).respond();
+            peer.expectBegin().onChannel(2).respond();
+            peer.expectEnd().onChannel(2).respond();
+            peer.expectEnd().onChannel(1).respond();
+            peer.expectEnd().onChannel(0).respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient();
+
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.expectBegin().onChannel(0);
+            client.expectBegin().onChannel(1);
+            client.expectBegin().onChannel(2);
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+            client.remoteOpen().now();
+            client.remoteBegin().now();
+            client.remoteBegin().now();
+            client.remoteBegin().now();
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.expectEnd().onChannel(2);
+            client.expectEnd().onChannel(1);
+            client.expectEnd().onChannel(0);
+
+            client.remoteEnd().onChannel(2).now();
+            client.remoteEnd().onChannel(1).now();
+            client.remoteEnd().onChannel(0).now();
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.expectClose();
+
+            client.remoteClose().now();
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

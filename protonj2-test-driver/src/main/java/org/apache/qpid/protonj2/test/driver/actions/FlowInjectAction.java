@@ -139,8 +139,8 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
 
     @Override
     protected void beforeActionPerformed(AMQPTestDriver driver) {
-        final SessionTracker session = driver.getSessions().getLastOpenedSession();
-        final LinkTracker link = driver.getSessions().getLastOpenedSession().getLastOpenedLink();
+        final SessionTracker session = driver.sessions().getLastLocallyOpenedSession();
+        final LinkTracker link = session.getLastOpenedLink();
 
         // We fill in a channel using the next available channel id if one isn't set, then
         // report the outbound begin to the session so it can track this new session.
@@ -154,16 +154,16 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
             flow.setHandle(link.getHandle());
         }
         if (flow.getIncomingWindow() == null) {
-            flow.setIncomingWindow(session.getIncomingWindow());
+            flow.setIncomingWindow(session.getLocalBegin().getIncomingWindow());
         }
         if (flow.getNextIncomingId() == null) {
             flow.setNextIncomingId(session.getNextIncomingId());
         }
         if (flow.getNextOutgoingId() == null) {
-            flow.setNextOutgoingId(session.getNextOutgoingId());
+            flow.setNextOutgoingId(session.getLocalBegin().getNextOutgoingId());
         }
         if (flow.getOutgoingWindow() == null) {
-            flow.setOutgoingWindow(session.getOutgoingWindow());
+            flow.setOutgoingWindow(session.getLocalBegin().getOutgoingWindow());
         }
     }
 }

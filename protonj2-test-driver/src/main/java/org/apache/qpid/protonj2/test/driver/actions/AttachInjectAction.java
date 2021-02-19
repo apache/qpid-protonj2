@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
+import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Outcome;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Source;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Target;
@@ -32,6 +33,7 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedByte;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Attach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.DeliveryState;
@@ -48,6 +50,7 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     private final Attach attach = new Attach();
 
+    private boolean explicitlyNullHandle;
     private boolean nullSourceRequired;
     private boolean nullTargetRequired;
 
@@ -65,12 +68,18 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         return this;
     }
 
+    public AttachInjectAction withHandle(int handle) {
+        attach.setHandle(UnsignedInteger.valueOf(handle));
+        return this;
+    }
+
     public AttachInjectAction withHandle(long handle) {
         attach.setHandle(UnsignedInteger.valueOf(handle));
         return this;
     }
 
     public AttachInjectAction withHandle(UnsignedInteger handle) {
+        explicitlyNullHandle = handle == null;
         attach.setHandle(handle);
         return this;
     }
@@ -262,10 +271,37 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     @Override
     protected void beforeActionPerformed(AMQPTestDriver driver) {
-        // We fill in a channel using the next available channel id if one isn't set, then
-        // report the outbound begin to the session so it can track this new session.
+        // A test that is trying to send an unsolicited attach must provide a channel as we
+        // won't attempt to make up one since we aren't sure what the intent here is.
         if (onChannel() == CHANNEL_UNSET) {
-            onChannel(driver.getSessions().getLastOpenedSession().getLocalChannel().intValue());
+            if (driver.sessions().getLastLocallyOpenedSession() == null) {
+                throw new AssertionError("Scripted Action cannot run without a configured channel: " +
+                                         "No locally opened session exists to auto select a channel.");
+            }
+
+            onChannel(driver.sessions().getLastLocallyOpenedSession().getLocalChannel().intValue());
+        }
+
+        final UnsignedShort localChannel = UnsignedShort.valueOf(onChannel());
+        final SessionTracker session = driver.sessions().getSessionFromLocalChannel(localChannel);
+
+        // A test might be trying to send Attach outside of session scope to check for error handling
+        // of unexpected performatives so we just allow no session cases and send what we are told.
+        if (session != null) {
+            if (attach.getHandle() == null && !explicitlyNullHandle) {
+                attach.setHandle(session.findFreeLocalHandle());
+            }
+
+            // Do not signal the session that we created a link if it carries an invalid null handle
+            // as that would trigger other exceptions, just pass it on as the test is likely trying
+            // to validate something specific.
+            if (attach.getHandle() != null) {
+                session.handleLocalAttach(attach);
+            }
+        } else {
+            if (attach.getHandle() == null && !explicitlyNullHandle) {
+                throw new AssertionError("Attach must carry a handle or have an explicity set null handle.");
+            }
         }
     }
 

@@ -107,7 +107,7 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
         // We fill in a channel using the next available channel id if one isn't set, then
         // report the outbound begin to the session so it can track this new session.
         if (onChannel() == CHANNEL_UNSET) {
-            onChannel(driver.getSessions().getLastOpenedSession().getLocalChannel().intValue());
+            onChannel(driver.sessions().getLastLocallyOpenedSession().getLocalChannel().intValue());
         }
 
         // TODO - Process disposition in the local side of the link when needed for added validation

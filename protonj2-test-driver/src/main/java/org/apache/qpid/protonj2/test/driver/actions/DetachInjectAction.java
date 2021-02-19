@@ -19,8 +19,10 @@ package org.apache.qpid.protonj2.test.driver.actions;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
+import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Detach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
@@ -62,6 +64,11 @@ public class DetachInjectAction extends AbstractPerformativeInjectAction<Detach>
         return this;
     }
 
+    public DetachInjectAction withClosed(Boolean closed) {
+        detach.setClosed(closed);
+        return this;
+    }
+
     public DetachInjectAction withErrorCondition(ErrorCondition error) {
         detach.setError(error);
         return this;
@@ -89,18 +96,30 @@ public class DetachInjectAction extends AbstractPerformativeInjectAction<Detach>
 
     @Override
     protected void beforeActionPerformed(AMQPTestDriver driver) {
-        // We fill in a channel using the next available channel id if one isn't set, then
-        // report the outbound begin to the session so it can track this new session.
+        // A test that is trying to send an unsolicited detach must provide a channel as we
+        // won't attempt to make up one since we aren't sure what the intent here is.
         if (onChannel() == CHANNEL_UNSET) {
-            onChannel(driver.getSessions().getLastOpenedSession().getLocalChannel().intValue());
+            if (driver.sessions().getLastLocallyOpenedSession() == null) {
+                throw new AssertionError("Scripted Action cannot run without a configured channel: " +
+                                         "No locally opened session exists to auto select a channel.");
+            }
+
+            onChannel(driver.sessions().getLastLocallyOpenedSession().getLocalChannel().intValue());
         }
 
-        // Auto select last opened sender on last opened session.  Later an option could
-        // be added to allow forcing the handle to be null for testing specification requirements.
-        if (detach.getHandle() == null) {
-            detach.setHandle(driver.getSessions().getLastOpenedSession().getLastOpenedLink().getHandle());
-        }
+        final UnsignedShort localChannel = UnsignedShort.valueOf(onChannel());
+        final SessionTracker session = driver.sessions().getSessionFromLocalChannel(localChannel);
 
-        // TODO - Process detach in the local side of the link when needed for added validation
+        // A test might be trying to send Attach outside of session scope to check for error handling
+        // of unexpected performatives so we just allow no session cases and send what we are told.
+        if (session != null) {
+            // Auto select last opened sender on last opened session.  Later an option could
+            // be added to allow forcing the handle to be null for testing specification requirements.
+            if (detach.getHandle() == null) {
+                detach.setHandle(session.getLastOpenedLink().getHandle());
+            }
+
+            session.handleLocalDetach(detach);
+        }
     }
 }

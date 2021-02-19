@@ -21,7 +21,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
-import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.EndInjectAction;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
@@ -80,46 +79,11 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
     public void handleBegin(Begin begin, ByteBuf payload, int channel, AMQPTestDriver context) {
         super.handleBegin(begin, payload, channel, context);
 
-        SessionTracker session = context.getSessions().handleBegin(begin, channel);
+        context.sessions().handleBegin(begin, UnsignedShort.valueOf(channel));
 
-        if (response == null) {
-            return;
-        }
-
-        // Input was validated now populate response with auto values where not configured
-        // to say otherwise by the test.
-        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
-            response.onChannel(session.getLocalChannel());
-        }
-
-        // Populate the remote channel with that of the incoming begin unless scripted to send
-        // otherwise which can indicate error handling test.
-        if (response.getPerformative().getRemoteChannel() == null) {
+        if (response != null) {
             response.withRemoteChannel(channel);
         }
-
-        if (response.getPerformative().getNextOutgoingId() == null) {
-            response.withNextOutgoingId(session.getNextOutgoingId());
-        } else {
-            session.setNextOutgoingId(response.getPerformative().getNextOutgoingId());
-        }
-        if (response.getPerformative().getIncomingWindow() == null) {
-            response.withIncomingWindow(session.getIncomingWindow());
-        } else {
-            session.setIncomingWindow(response.getPerformative().getIncomingWindow());
-        }
-        if (response.getPerformative().getOutgoingWindow() == null) {
-            response.withOutgoingWindow(begin.getOutgoingWindow());
-        } else {
-            session.setOutgoingWindow(response.getPerformative().getOutgoingWindow());
-        }
-        if (response.getPerformative().getHandleMax() == null) {
-            response.withHandleMax(session.getHandleMax());
-        } else {
-            session.setHandleMax(response.getPerformative().getHandleMax());
-        }
-
-        // The remainder of the values are left not set unless set in the test script
     }
 
     //----- Type specific with methods that perform simple equals checks

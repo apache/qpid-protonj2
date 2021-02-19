@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transport.End;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
@@ -71,9 +72,9 @@ public class EndInjectAction extends AbstractPerformativeInjectAction<End> {
         // We fill in a channel using the next available channel id if one isn't set, then
         // report the outbound begin to the session so it can track this new session.
         if (onChannel() == CHANNEL_UNSET) {
-            onChannel(driver.getSessions().getLastOpenedSession().getLocalChannel().intValue());
+            onChannel(driver.sessions().getLastLocallyOpenedSession().getLocalChannel().intValue());
         }
 
-        // TODO - Process end in the session tracker ?
+        driver.sessions().handleLocalEnd(end, UnsignedShort.valueOf(onChannel()));
     }
 }

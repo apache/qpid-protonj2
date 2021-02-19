@@ -99,6 +99,8 @@ public abstract class ProtonTestPeer extends ScriptWriter implements AutoCloseab
         return this;
     }
 
+    protected abstract String getPeerName();
+
     protected abstract void processCloseRequest();
 
     protected abstract void processDriverOutput(ByteBuffer frame);

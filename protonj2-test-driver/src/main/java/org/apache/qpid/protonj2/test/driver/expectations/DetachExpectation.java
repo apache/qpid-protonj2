@@ -22,11 +22,13 @@ import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.LinkTracker;
+import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.actions.BeginInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.DetachInjectAction;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Detach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
@@ -66,24 +68,30 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
     public void handleDetach(Detach detach, ByteBuf payload, int channel, AMQPTestDriver context) {
         super.handleDetach(detach, payload, channel, context);
 
-        LinkTracker link = driver.getSessions().handleDetach(detach, channel);
+        final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);
+        final SessionTracker session = driver.sessions().getSessionFromRemoteChannel(remoteChannel);
 
-        if (response == null) {
-            return;
+        if (session == null) {
+            throw new AssertionError(String.format(
+                "Received Detach on channel [%d] that has no matching Session for that remote channel. ", remoteChannel));
         }
 
-        // Input was validated now populate response with auto values where not configured
-        // to say otherwise by the test.
-        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
-            response.onChannel(link.getSession().getLocalChannel());
-        }
+        final LinkTracker link = session.handleRemoteDetach(detach);
 
-        if (response.getPerformative().getHandle() == null) {
-            response.withHandle(detach.getHandle());
-        }
+        if (response != null) {
+            // Input was validated now populate response with auto values where not configured
+            // to say otherwise by the test.
+            if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
+                response.onChannel(link.getSession().getLocalChannel());
+            }
 
-        if (response.getPerformative().getClosed() == null) {
-            response.withClosed(detach.getClosed());
+            if (response.getPerformative().getHandle() == null) {
+                response.withHandle(detach.getHandle());
+            }
+
+            if (response.getPerformative().getClosed() == null) {
+                response.withClosed(detach.getClosed());
+            }
         }
     }
 

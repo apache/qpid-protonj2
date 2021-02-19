@@ -292,7 +292,7 @@ class FrameDecoder {
                     }
                 }
             } else {
-                LOG.trace("Driver Read: CH[{}] : {} [{}]", channel, HeartBeat.INSTANCE, payload);
+                LOG.trace("{} Read: CH[{}] : {} [{}]", driver.getName(), channel, HeartBeat.INSTANCE, payload);
                 transitionToFrameSizeParsingStage();
                 driver.handleHeartbeat(channel);
                 return;
@@ -300,12 +300,12 @@ class FrameDecoder {
 
             if (type == AMQP_FRAME_TYPE) {
                 PerformativeDescribedType performative = (PerformativeDescribedType) val;
-                LOG.trace("Driver Read: CH[{}] : {} [{}]", channel, performative, payload);
+                LOG.trace("{} Read: CH[{}] : {} [{}]", driver.getName(), channel, performative, payload);
                 transitionToFrameSizeParsingStage();
                 driver.handlePerformative(performative, channel, payload);
             } else if (type == SASL_FRAME_TYPE) {
                 SaslDescribedType performative = (SaslDescribedType) val;
-                LOG.trace("Driver Read: {} [{}]", performative, payload);
+                LOG.trace("{} Read: {} [{}]", driver.getName(), performative, payload);
                 transitionToFrameSizeParsingStage();
                 driver.handleSaslPerformative(performative, channel, payload);
             } else {

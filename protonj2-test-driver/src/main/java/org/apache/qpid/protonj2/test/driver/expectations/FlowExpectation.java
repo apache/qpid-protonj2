@@ -65,43 +65,48 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
     public void handleFlow(Flow flow, ByteBuf payload, int channel, AMQPTestDriver context) {
         super.handleFlow(flow, payload, channel, context);
 
-        SessionTracker session = driver.getSessions().getSessionFromRemoteChannel(UnsignedShort.valueOf(channel));
-        LinkTracker linkTracker = session.handleFlow(flow);  // Can be null if Flow was session level only.
+        final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);
+        final SessionTracker session = driver.sessions().getSessionFromRemoteChannel(remoteChannel);
 
-        if (response == null) {
-            return;
+        if (session == null) {
+            throw new AssertionError(String.format(
+                "Received Detach on channel [%d] that has no matching Session for that remote channel. ", remoteChannel));
         }
 
-        // Input was validated now populate response with auto values where not configured
-        // to say otherwise by the test.
-        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
-            response.onChannel(session.getLocalChannel());
+        final LinkTracker linkTracker = session.handleFlow(flow);  // Can be null if Flow was session level only.
+
+        if (response != null) {
+            // Input was validated now populate response with auto values where not configured
+            // to say otherwise by the test.
+            if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
+                response.onChannel(session.getLocalChannel());
+            }
+
+            // Populate the fields of the response with defaults if non set by the test script
+            if (response.getPerformative().getNextIncomingId() == null) {
+                response.withNextIncomingId(flow.getNextOutgoingId().longValue()); //TODO: this could be wrong, need to know about the transfers received (and sent by peer).
+            }
+
+            if (response.getPerformative().getIncomingWindow() == null) {
+                response.withIncomingWindow(Integer.MAX_VALUE); //TODO: shouldnt be hard coded
+            }
+
+            if (response.getPerformative().getNextOutgoingId() == null) {
+                response.withNextOutgoingId(flow.getNextIncomingId().longValue()); //TODO: this could be wrong, need to know about the transfers sent (and received at recipient peer).
+            }
+
+            if (response.getPerformative().getOutgoingWindow() == null) {
+                response.withOutgoingWindow(0); //TODO: shouldnt be hard coded, session might have senders on it as well as receivers
+            }
+
+            if (response.getPerformative().getHandle() == null && linkTracker != null) {
+                response.withHandle(linkTracker.getHandle()); //TODO: this is wrong, need a lookup for the local link and then get its remote handle.
+            }
+
+            // TODO: blow up on response if credit not populated?
+
+            // Other fields are left not set for now unless test script configured
         }
-
-        // Populate the fields of the response with defaults if non set by the test script
-        if (response.getPerformative().getNextIncomingId() == null) {
-            response.withNextIncomingId(flow.getNextOutgoingId().longValue()); //TODO: this could be wrong, need to know about the transfers received (and sent by peer).
-        }
-
-        if (response.getPerformative().getIncomingWindow() == null) {
-            response.withIncomingWindow(Integer.MAX_VALUE); //TODO: shouldnt be hard coded
-        }
-
-        if (response.getPerformative().getNextOutgoingId() == null) {
-            response.withNextOutgoingId(flow.getNextIncomingId().longValue()); //TODO: this could be wrong, need to know about the transfers sent (and received at recipient peer).
-        }
-
-        if (response.getPerformative().getOutgoingWindow() == null) {
-            response.withOutgoingWindow(0); //TODO: shouldnt be hard coded, session might have senders on it as well as receivers
-        }
-
-        if (response.getPerformative().getHandle() == null && linkTracker != null) {
-            response.withHandle(linkTracker.getHandle()); //TODO: this is wrong, need a lookup for the local link and then get its remote handle.
-        }
-
-        // TODO: blow up on response if credit not populated?
-
-        // Other fields are left not set for now unless test script configured
     }
 
     //----- Type specific with methods that perform simple equals checks

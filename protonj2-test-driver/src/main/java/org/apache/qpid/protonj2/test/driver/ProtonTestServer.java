@@ -55,6 +55,11 @@ public class ProtonTestServer extends ProtonTestPeer {
         this(new ProtonTestServerOptions());
     }
 
+    @Override
+    public String getPeerName() {
+        return "Server";
+    }
+
     /**
      * Creates a Socket Test Peer using the options to configure the deployed server.
      *
@@ -147,7 +152,7 @@ public class ProtonTestServer extends ProtonTestPeer {
     private final class NettyAwareAMQPTestDriver extends AMQPTestDriver {
 
         public NettyAwareAMQPTestDriver(Consumer<ByteBuffer> frameConsumer, Consumer<AssertionError> assertionConsumer, Supplier<ScheduledExecutorService> scheduler) {
-            super(frameConsumer, assertionConsumer, scheduler);
+            super(getPeerName(), frameConsumer, assertionConsumer, scheduler);
         }
 
         // If the send call occurs from a reaction to processing incoming data the

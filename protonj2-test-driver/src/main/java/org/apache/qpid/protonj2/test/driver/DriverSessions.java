@@ -20,40 +20,35 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
-import org.apache.qpid.protonj2.test.driver.codec.transport.Attach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Begin;
-import org.apache.qpid.protonj2.test.driver.codec.transport.Detach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.End;
-import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
-import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Tracks all sessions opened by the remote or initiated from the driver.
  */
 public class DriverSessions {
 
+    public static final int DRIVER_DEFAULT_CHANNEL_MAX = 65535;
+
     private final Map<UnsignedShort, SessionTracker> localSessions = new LinkedHashMap<>();
     private final Map<UnsignedShort, SessionTracker> remoteSessions = new LinkedHashMap<>();
 
     private final AMQPTestDriver driver;
 
-    private short nextChannelId = 0;
-    private int lastOpenedSession = -1;
-
+    private UnsignedShort lastRemotelyOpenedSession = null;
+    private UnsignedShort lastLocallyOpenedSession = null;
     private LinkTracker lastCoordinator;
 
     public DriverSessions(AMQPTestDriver driver) {
         this.driver = driver;
     }
 
-    public SessionTracker getLastOpenedSession() {
-        SessionTracker tracker = null;
-        if (lastOpenedSession >= 0) {
-            tracker = localSessions.get(UnsignedShort.valueOf(lastOpenedSession));
-        }
-        return tracker;
+    public SessionTracker getLastRemotelyOpenedSession() {
+        return localSessions.get(lastRemotelyOpenedSession);
+    }
+
+    public SessionTracker getLastLocallyOpenedSession() {
+        return localSessions.get(lastLocallyOpenedSession);
     }
 
     public LinkTracker getLastOpenedCoordinator() {
@@ -68,10 +63,6 @@ public class DriverSessions {
         return driver;
     }
 
-    public UnsignedShort getNextChannelId() {
-        return UnsignedShort.valueOf(nextChannelId++);
-    }
-
     public SessionTracker getSessionFromLocalChannel(UnsignedShort localChannel) {
         return localSessions.get(localChannel);
     }
@@ -80,119 +71,100 @@ public class DriverSessions {
         return remoteSessions.get(remoteChannel);
     }
 
-    //----- Process Session started from the driver end
+    //----- Process performatives that require session level tracking
 
-    public SessionTracker processBegin(Begin begin, int localChannel) {
-        final UnsignedShort localChannelValue;
-        if (localChannel < 0) {
-            localChannelValue = getNextChannelId();
+    public SessionTracker handleBegin(Begin remoteBegin, UnsignedShort remoteChannel) {
+        if (remoteSessions.containsKey(remoteChannel)) {
+            throw new AssertionError("Received duplicate Begin for already opened session on channel: " + remoteChannel);
+        }
+
+        final SessionTracker sessionTracker;  // Result that we need to update here once validation is complete.
+
+        if (remoteBegin.getRemoteChannel() != null) {
+            // This should be a response to previous Begin that this test driver sent if there
+            // is a remote channel set in which case a local session should already have been
+            // created and if not that is an error
+            sessionTracker = localSessions.get(remoteBegin.getRemoteChannel());
+            if (sessionTracker == null) {
+                throw new AssertionError(String.format(
+                    "Received Begin on channel [%d] that indicated it was a response to a Begin this driver never sent to channel [%d]: ",
+                    remoteChannel, remoteBegin.getRemoteChannel()));
+            }
         } else {
-            localChannelValue = UnsignedShort.valueOf(localChannel);
+            // Remote has requested that the driver create a new session which will require a scripted
+            // response in order to complete the begin cycle.  Start tracking now for future
+            sessionTracker = new SessionTracker(driver);
+
+            localSessions.put(sessionTracker.getLocalChannel(), sessionTracker);
         }
 
-        SessionTracker tracker = localSessions.get(localChannelValue);
-        if (tracker == null) {
-            tracker = new SessionTracker(driver, begin, localChannelValue, null);
-            localSessions.put(tracker.getLocalChannel(), tracker);
-            lastOpenedSession = localChannel;
+        sessionTracker.handleBegin(remoteBegin, remoteChannel);
+
+        remoteSessions.put(remoteChannel, sessionTracker);
+        lastRemotelyOpenedSession = sessionTracker.getLocalChannel();
+
+        return sessionTracker;
+    }
+
+    public SessionTracker handleEnd(End remoteEnd, UnsignedShort remoteChannel) {
+        SessionTracker sessionTracker = remoteSessions.get(remoteChannel);
+
+        if (sessionTracker == null) {
+            throw new AssertionError(String.format(
+                "Received End on channel [%d] that has no matching Session for that remote channel. ", remoteChannel));
         } else {
-            // TODO - End the session with an error as we already saw this
-            //        session begin and it wasn't ended yet.  End processing
-            //        must be complete before doing this though.
-        }
+            sessionTracker.handleEnd(remoteEnd);
+            remoteSessions.remove(remoteChannel);
 
-        return tracker;
+            return sessionTracker;
+        }
     }
 
-    public SessionTracker processLocalBegin(Begin begin, int localChannel) {
-        final UnsignedShort localChannelValue;
-        if (localChannel < 0) {
-            localChannelValue = getNextChannelId();
+    //----- Process Session Begin and End from their injection actions and update state
+
+    public SessionTracker handleLocalBegin(Begin localBegin, UnsignedShort localChannel) {
+        // Are we responding to a remote Begin?  If so then we already have a SessionTracker
+        // that should be correlated with the local tracker stored now that we are responding
+        // to, although a test might be fiddling with unexpected Begin commands so we don't
+        // assume there absolutely must be a remote session in the tracking map.
+        if (localBegin.getRemoteChannel() != null && remoteSessions.containsKey(localBegin.getRemoteChannel())) {
+            localSessions.put(localChannel, remoteSessions.get(localBegin.getRemoteChannel()));
+        }
+
+        if (!localSessions.containsKey(localChannel)) {
+            localSessions.put(localChannel, new SessionTracker(driver));
+        }
+
+        lastLocallyOpenedSession = localChannel;
+
+        return localSessions.get(localChannel).handleLocalBegin(localBegin, localChannel);
+    }
+
+    public SessionTracker handleLocalEnd(End localEnd, UnsignedShort localChannel) {
+        // A test script might trigger multiple end calls or otherwise mess with normal
+        // AMQP processing no in case we can't find it, just return a dummy that the
+        // script can use.
+        if (localSessions.containsKey(localChannel)) {
+            return localSessions.get(localChannel).handleLocalEnd(localEnd);
         } else {
-            localChannelValue = UnsignedShort.valueOf(localChannel);
+            return new SessionTracker(driver).handleLocalEnd(localEnd);
         }
-
-        // This could be a response to an inbound begin so check before
-        // creating a duplicate session tracker.
-        SessionTracker tracker = localSessions.get(localChannelValue);
-        if (tracker == null) {
-            tracker = new SessionTracker(driver, begin, localChannelValue, null);
-            localSessions.put(tracker.getLocalChannel(), tracker);
-            lastOpenedSession = localChannel;
-        }
-
-        return tracker;
     }
 
-    //----- Process Session begin and end performatives
+    //----- Driver Session Management API
 
-    public SessionTracker handleBegin(Begin begin, int channel) {
-        final SessionTracker tracker;
-        if (begin.getRemoteChannel() != null) {
-            tracker = localSessions.get(begin.getRemoteChannel());
-        } else {
-            tracker = new SessionTracker(driver, begin, getNextChannelId(), UnsignedShort.valueOf(channel));
+    public int findFreeLocalChannel() {
+        // TODO: Respect local channel max if one was set on open.
+        for (int i = 0; i <= DRIVER_DEFAULT_CHANNEL_MAX; ++i) {
+            if (!localSessions.containsKey(UnsignedShort.valueOf(i))) {
+                return i;
+            }
         }
 
-        localSessions.put(tracker.getLocalChannel(), tracker);
-        remoteSessions.put(tracker.getRemoteChannel(), tracker);
-        lastOpenedSession = tracker.getLocalChannel().intValue();
-
-        return tracker;
+        throw new IllegalStateException("no local channel available for allocation");
     }
 
-    public SessionTracker handleEnd(End end, int channel) {
-        SessionTracker tracker = remoteSessions.get(UnsignedShort.valueOf(channel));
-
-        if (tracker != null) {
-            localSessions.remove(tracker.getLocalChannel());
-            remoteSessions.remove(tracker.getRemoteChannel());
-        }
-
-        return tracker;
-    }
-
-    public LinkTracker handleAttach(Attach attach, int channel) {
-        SessionTracker tracker = remoteSessions.get(UnsignedShort.valueOf(channel));
-        LinkTracker result = null;
-
-        if (tracker != null) {
-            result = tracker.handleAttach(attach);
-        }
-
-        return result;
-    }
-
-    public LinkTracker handleTransfer(Transfer transfer, ByteBuf payload, int channel) {
-        SessionTracker tracker = remoteSessions.get(UnsignedShort.valueOf(channel));
-        LinkTracker result = null;
-
-        if (tracker != null) {
-            result = tracker.handleTransfer(transfer, payload);
-        }
-
-        return result;
-    }
-
-    public LinkTracker handleDetach(Detach detach, int channel) {
-        SessionTracker tracker = remoteSessions.get(UnsignedShort.valueOf(channel));
-        LinkTracker result = null;
-
-        if (tracker != null) {
-            result = tracker.handleDetach(detach);
-        }
-
-        return result;
-    }
-
-    public LinkTracker handleFlow(Flow flow, int channel) {
-        SessionTracker tracker = remoteSessions.get(UnsignedShort.valueOf(channel));
-        LinkTracker result = null;
-
-        if (tracker != null) {
-            result = tracker.handleFlow(flow);
-        }
-
-        return result;
+    void freeLocalChannel(UnsignedShort localChannel) {
+        localSessions.remove(localChannel);
     }
 }
