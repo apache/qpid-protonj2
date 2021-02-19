@@ -167,7 +167,6 @@ class SessionHandlingTest extends TestPeerTestsBase {
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
             peer.expectBegin().onChannel(0);
-            peer.expectEnd().respond();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -186,6 +185,8 @@ class SessionHandlingTest extends TestPeerTestsBase {
             client.expectBegin().withRemoteChannel(0).onChannel(42);
 
             // Now we respond to the last begin we saw at the server side.
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectEnd().respond();
             peer.respondToLastBegin().onChannel(42).now();
 
             // Wait for the above and then script next steps
