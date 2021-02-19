@@ -102,6 +102,23 @@ public interface Transport {
     Transport write(ProtonBuffer output) throws IOException;
 
     /**
+     * Writes a chunk of data over the Transport connection without performing an
+     * explicit flush on the transport.  This method allows for a completion callback
+     * that is signaled when the actual low level IO operation is completed which could
+     * be after this method has returned.
+     *
+     * @param output
+     *        The buffer of data that is to be transmitted.
+     * @param ioComplete
+     *        A {@link Runnable} that is invoked when the IO operation completes successfully.
+     *
+     * @return this {@link Transport} instance.
+     *
+     * @throws IOException if an error occurs during the write operation.
+     */
+    Transport write(ProtonBuffer output, Runnable ioComplete) throws IOException;
+
+    /**
      * Writes a chunk of data over the Transport connection and requests a flush of
      * all pending queued write operations
      *
@@ -113,6 +130,21 @@ public interface Transport {
      * @throws IOException if an error occurs during the write operation.
      */
     Transport writeAndFlush(ProtonBuffer output) throws IOException;
+
+    /**
+     * Writes a chunk of data over the Transport connection and requests a flush of
+     * all pending queued write operations
+     *
+     * @param output
+     *        The buffer of data that is to be transmitted.
+     * @param ioComplete
+     *        A {@link Runnable} that is invoked when the IO operation completes successfully.
+     *
+     * @return this {@link Transport} instance.
+     *
+     * @throws IOException if an error occurs during the write operation.
+     */
+    Transport writeAndFlush(ProtonBuffer output, Runnable ioComplete) throws IOException;
 
     /**
      * Request a flush of all pending writes to the underlying connection.

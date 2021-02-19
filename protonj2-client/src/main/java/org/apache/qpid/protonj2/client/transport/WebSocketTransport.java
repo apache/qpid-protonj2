@@ -48,6 +48,8 @@ import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.ScheduledFuture;
 
 /**
@@ -76,7 +78,7 @@ public class WebSocketTransport extends TcpTransport {
     }
 
     @Override
-    public WebSocketTransport write(ProtonBuffer output) throws IOException {
+    public WebSocketTransport write(ProtonBuffer output, Runnable onComplete) throws IOException {
         checkConnected();
         int length = output.getReadableBytes();
         if (length == 0) {
@@ -85,13 +87,25 @@ public class WebSocketTransport extends TcpTransport {
 
         LOG.trace("Attempted write of: {} bytes", length);
 
-        channel.write(new BinaryWebSocketFrame(toOutputBuffer(output)), channel.voidPromise());
+        if (onComplete == null) {
+            channel.write(new BinaryWebSocketFrame(toOutputBuffer(output)), channel.voidPromise());
+        } else {
+            channel.write(new BinaryWebSocketFrame(toOutputBuffer(output)), channel.newPromise().addListener(new GenericFutureListener<Future<? super Void>>() {
+
+                @Override
+                public void operationComplete(Future<? super Void> future) throws Exception {
+                    if (future.isSuccess()) {
+                        onComplete.run();
+                    }
+                }
+            }));
+        }
 
         return this;
     }
 
     @Override
-    public WebSocketTransport writeAndFlush(ProtonBuffer output) throws IOException {
+    public WebSocketTransport writeAndFlush(ProtonBuffer output, Runnable onComplete) throws IOException {
         checkConnected();
         int length = output.getReadableBytes();
         if (length == 0) {
@@ -100,7 +114,19 @@ public class WebSocketTransport extends TcpTransport {
 
         LOG.trace("Attempted write and flush of: {} bytes", length);
 
-        channel.writeAndFlush(new BinaryWebSocketFrame(toOutputBuffer(output)), channel.voidPromise());
+        if (onComplete == null) {
+            channel.writeAndFlush(new BinaryWebSocketFrame(toOutputBuffer(output)), channel.voidPromise());
+        } else {
+            channel.writeAndFlush(new BinaryWebSocketFrame(toOutputBuffer(output)), channel.newPromise().addListener(new GenericFutureListener<Future<? super Void>>() {
+
+                @Override
+                public void operationComplete(Future<? super Void> future) throws Exception {
+                    if (future.isSuccess()) {
+                        onComplete.run();
+                    }
+                }
+            }));
+        }
 
         return this;
     }

@@ -17,7 +17,6 @@
 package org.apache.qpid.protonj2.client.transport;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -26,7 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
-import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonNettyByteBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonNettyByteBufferAllocator;
 import org.apache.qpid.protonj2.client.SslOptions;
@@ -214,24 +212,50 @@ public class TcpTransport implements Transport {
 
     @Override
     public TcpTransport write(ProtonBuffer output) throws IOException {
+        return write(output, null);
+    }
+
+    @Override
+    public TcpTransport write(ProtonBuffer output, Runnable onComplete) throws IOException {
         checkConnected(output);
         LOG.trace("Attempted write of buffer: {}", output);
-        if (output instanceof ProtonCompositeBuffer) {
-            writeComposite((ProtonCompositeBuffer) output, false);
-        } else {
+        if (onComplete == null) {
             channel.write(toOutputBuffer(output), channel.voidPromise());
+        } else {
+            channel.write(toOutputBuffer(output), channel.newPromise().addListener(new GenericFutureListener<Future<? super Void>>() {
+
+                @Override
+                public void operationComplete(Future<? super Void> future) throws Exception {
+                    if (future.isSuccess()) {
+                        onComplete.run();
+                    }
+                }
+            }));
         }
         return this;
     }
 
     @Override
     public TcpTransport writeAndFlush(ProtonBuffer output) throws IOException {
+        return writeAndFlush(output, null);
+    }
+
+    @Override
+    public TcpTransport writeAndFlush(ProtonBuffer output, Runnable onComplete) throws IOException {
         checkConnected(output);
         LOG.trace("Attempted write and flush of buffer: {}", output);
-        if (output instanceof ProtonCompositeBuffer) {
-            writeComposite((ProtonCompositeBuffer) output, true);
-        } else {
+        if (onComplete == null) {
             channel.writeAndFlush(toOutputBuffer(output), channel.voidPromise());
+        } else {
+            channel.writeAndFlush(toOutputBuffer(output), channel.newPromise().addListener(new GenericFutureListener<Future<? super Void>>() {
+
+                @Override
+                public void operationComplete(Future<? super Void> future) throws Exception {
+                    if (future.isSuccess()) {
+                        onComplete.run();
+                    }
+                }
+            }));
         }
         return this;
     }
@@ -269,26 +293,6 @@ public class TcpTransport implements Transport {
         }
 
         return result;
-    }
-
-    protected final void writeComposite(final ProtonCompositeBuffer composite, boolean flushAtEnd) throws IOException {
-        try {
-            composite.foreachInternalBuffer(this::writeBufferDelegate);
-        } catch (UncheckedIOException uioe) {
-            throw uioe.getCause();
-        }
-
-        if (flushAtEnd) {
-            channel.flush();
-        }
-    }
-
-    private final void writeBufferDelegate(ProtonBuffer buffer) {
-        try {
-            channel.write(toOutputBuffer(buffer), channel.voidPromise());
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
     }
 
     protected final ByteBuf toOutputBuffer(final ProtonBuffer output) throws IOException {

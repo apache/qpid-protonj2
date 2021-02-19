@@ -255,7 +255,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             final int port = server.getServerPort();
 
-            List<Transport> transports = new ArrayList<Transport>();
+            List<Transport> transports = new ArrayList<>();
 
             NettyIOContext context = createContext(createTransportOptions(), createSSLOptions());
 
@@ -297,7 +297,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             final int port = server.getServerPort();
 
-            List<Transport> transports = new ArrayList<Transport>();
+            List<Transport> transports = new ArrayList<>();
 
             NettyIOContext context = createContext(createTransportOptions(), createSSLOptions());
 
@@ -395,7 +395,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testDataSentIsReceived() throws Exception {
+    public void testDataSentWithWriteAndThenFlushedIsReceived() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
@@ -416,7 +416,49 @@ public class TcpTransportTest extends ImperativeClientTestCase {
                 sendBuffer.writeByte('A');
             }
 
-            transport.writeAndFlush(sendBuffer);
+            transport.write(sendBuffer, () -> LOG.debug("Netty repprts write complete"));
+            LOG.trace("Flush of Transport happens now");
+            transport.flush();
+
+            assertTrue(Wait.waitFor(new Wait.Condition() {
+                @Override
+                public boolean isSatisfied() throws Exception {
+                    return !data.isEmpty();
+                }
+            }, 10000, 50));
+
+            assertEquals(SEND_BYTE_COUNT, data.get(0).getReadableBytes());
+
+            transport.close();
+        }
+
+        assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
+        assertTrue(exceptions.isEmpty());
+    }
+
+    @Test
+    public void testDataSentWithWriteAndFlushIsReceived() throws Exception {
+        try (NettyEchoServer server = createEchoServer()) {
+            server.start();
+
+            int port = server.getServerPort();
+
+            Transport transport = createTransport(createTransportOptions(), createSSLOptions());
+            try {
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
+            } catch (Exception e) {
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
+            }
+
+            assertTrue(transport.isConnected());
+
+            ProtonBuffer sendBuffer = transport.getBufferAllocator().outputBuffer(SEND_BYTE_COUNT);
+            for (int i = 0; i < SEND_BYTE_COUNT; ++i) {
+                sendBuffer.writeByte('A');
+            }
+
+            transport.writeAndFlush(sendBuffer, () -> LOG.debug("Netty repprts write complete"));
 
             assertTrue(Wait.waitFor(new Wait.Condition() {
                 @Override
