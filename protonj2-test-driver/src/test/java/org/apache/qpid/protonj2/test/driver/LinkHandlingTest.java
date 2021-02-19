@@ -31,7 +31,9 @@ class LinkHandlingTest extends TestPeerTestsBase {
 
     @Test
     public void testClientToServerSenderAttach() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer()) {
+        try (ProtonTestServer peer = new ProtonTestServer();
+            ProtonTestClient client = new ProtonTestClient()) {
+
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
             peer.expectBegin().onChannel(0).respond();
@@ -42,17 +44,16 @@ class LinkHandlingTest extends TestPeerTestsBase {
             peer.start();
 
             URI remoteURI = peer.getServerURI();
-
-            ProtonTestClient client = new ProtonTestClient();
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             client.expectAMQPHeader();
             client.expectOpen();
             client.expectBegin().onChannel(0);
             client.expectAttach().ofReceiver().withHandle(0);
             client.expectDetach().withHandle(0);
+            client.expectEnd();
+            client.expectClose();
             client.connect(remoteURI.getHost(), remoteURI.getPort());
-
-            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             // This initiates the tests and waits for proper completion.
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
@@ -62,10 +63,10 @@ class LinkHandlingTest extends TestPeerTestsBase {
             client.remoteDetach().now();
             client.remoteEnd().now();
             client.remoteClose().now();
-            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            client.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
 }

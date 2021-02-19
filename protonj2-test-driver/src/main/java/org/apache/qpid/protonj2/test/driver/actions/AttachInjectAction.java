@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.test.driver.actions;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.SessionTracker;
@@ -50,6 +51,7 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     private final Attach attach = new Attach();
 
+    private boolean explicitlyNullName;
     private boolean explicitlyNullHandle;
     private boolean nullSourceRequired;
     private boolean nullTargetRequired;
@@ -64,6 +66,7 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
     }
 
     public AttachInjectAction withName(String name) {
+        explicitlyNullName = name == null;
         attach.setName(name);
         return this;
     }
@@ -288,6 +291,10 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         // A test might be trying to send Attach outside of session scope to check for error handling
         // of unexpected performatives so we just allow no session cases and send what we are told.
         if (session != null) {
+            if (attach.getName() == null && !explicitlyNullName) {
+                attach.setName(UUID.randomUUID().toString());
+            }
+
             if (attach.getHandle() == null && !explicitlyNullHandle) {
                 attach.setHandle(session.findFreeLocalHandle());
             }

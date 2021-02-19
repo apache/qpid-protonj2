@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.test.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 
 import java.util.Map;
@@ -67,6 +68,11 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
 
     public AttachExpectation(AMQPTestDriver driver) {
         super(driver);
+
+        // Configure default expectations for a valid Attach
+        withName(notNullValue());
+        withHandle(notNullValue());
+        withRole(notNullValue());
     }
 
     @Override
