@@ -36,11 +36,13 @@ public abstract class Frame<V> {
         this.type = type;
     }
 
-    void initialize(V body, int channel, int frameSize, ProtonBuffer payload) {
+    Frame<V> initialize(V body, int channel, int frameSize, ProtonBuffer payload) {
         this.body = body;
         this.channel = channel;
         this.frameSize = frameSize;
         this.payload = payload;
+
+        return this;
     }
 
     /**

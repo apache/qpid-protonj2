@@ -16,10 +16,8 @@
  */
 package org.apache.qpid.protonj2.engine;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.engine.util.RingQueue;
 import org.apache.qpid.protonj2.types.transport.Performative;
 
 /**
@@ -31,14 +29,14 @@ public class ProtocolFramePool {
 
     private int maxPoolSize = DEFAULT_MAX_POOL_SIZE;
 
-    private Deque<ProtocolFrame> pool;
+    private RingQueue<ProtocolFrame> pool;
 
     public ProtocolFramePool() {
         this(ProtocolFramePool.DEFAULT_MAX_POOL_SIZE);
     }
 
     public ProtocolFramePool(int maxPoolSize) {
-        this.pool = new ArrayDeque<>(getMaxPoolSize());
+        this.pool = new RingQueue<>(getMaxPoolSize());
     }
 
     public final int getMaxPoolSize() {
@@ -46,24 +44,14 @@ public class ProtocolFramePool {
     }
 
     public ProtocolFrame take(Performative body, int channel, int frameSize, ProtonBuffer payload) {
-        ProtocolFrame element = pool.poll();
+        return (ProtocolFrame) pool.poll(this::newProtocolFrame).initialize(body, channel, frameSize, payload);
+    }
 
-        if (element == null) {
-            element = createNewFrame(this);
-        }
-
-        element.initialize(body, channel, frameSize, payload);
-
-        return element;
+    private ProtocolFrame newProtocolFrame() {
+        return new ProtocolFrame(this);
     }
 
     void release(ProtocolFrame pooledFrame) {
-        if (pool.size() < getMaxPoolSize()) {
-            pool.addLast(pooledFrame);
-        }
-    }
-
-    protected ProtocolFrame createNewFrame(ProtocolFramePool pool) {
-        return new ProtocolFrame(pool);
+        pool.offer(pooledFrame);
     }
 }
