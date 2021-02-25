@@ -333,7 +333,7 @@ public class ProtonSaslHandlerTest {
         clientInit.setInitialResponse(new Binary(new byte[0]));
 
         // Check for Initial Response processing
-        engine.pipeline().fireRead(new SaslFrame(clientInit, 1, null));
+        engine.pipeline().fireRead(new SaslFrame(clientInit));
 
         assertEquals("HOST-NAME", clientHostname.get());
         assertEquals(Symbol.valueOf("ANONYMOUS"), clientMechanism.get());
@@ -424,7 +424,7 @@ public class ProtonSaslHandlerTest {
         clientInit.setInitialResponse(new Binary(new byte[0]));
 
         // Check for Initial Response processing
-        engine.pipeline().fireRead(new SaslFrame(clientInit, 1, null));
+        engine.pipeline().fireRead(new SaslFrame(clientInit));
 
         assertEquals("HOST-NAME", clientHostname.get());
         assertEquals(Symbol.valueOf("ANONYMOUS"), clientMechanism.get());
@@ -437,7 +437,7 @@ public class ProtonSaslHandlerTest {
 
         // Fire another SASL frame and the engine should fail
         try {
-            engine.pipeline().fireRead(new SaslFrame(clientInit, 1, null));
+            engine.pipeline().fireRead(new SaslFrame(clientInit));
             fail("Server should fail on unexpected SASL frames");
         } catch (EngineFailedException efe) {
         }

@@ -20,10 +20,11 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.ProtocolFrame;
+import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
+import org.apache.qpid.protonj2.types.transport.AMQPHeader.HeaderHandler;
 import org.apache.qpid.protonj2.types.transport.Attach;
 import org.apache.qpid.protonj2.types.transport.Begin;
 import org.apache.qpid.protonj2.types.transport.Close;
@@ -32,9 +33,8 @@ import org.apache.qpid.protonj2.types.transport.Disposition;
 import org.apache.qpid.protonj2.types.transport.End;
 import org.apache.qpid.protonj2.types.transport.Flow;
 import org.apache.qpid.protonj2.types.transport.Open;
-import org.apache.qpid.protonj2.types.transport.Transfer;
-import org.apache.qpid.protonj2.types.transport.AMQPHeader.HeaderHandler;
 import org.apache.qpid.protonj2.types.transport.Performative.PerformativeHandler;
+import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
  * Transport Handler that forwards the incoming Performatives to the associated Connection
@@ -61,7 +61,7 @@ public class ProtonPerformativeHandler implements EngineHandler, HeaderHandler<E
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
+    public void handleRead(EngineHandlerContext context, IncomingProtocolFrame frame) {
         try {
             frame.invoke(this, context);
         } finally {
@@ -99,7 +99,7 @@ public class ProtonPerformativeHandler implements EngineHandler, HeaderHandler<E
     @Override
     public void handleSASLHeader(AMQPHeader header, EngineHandlerContext context) {
         // Respond with Raw AMQP Header and then fail the engine.
-        context.fireWrite(AMQPHeader.getAMQPHeader());
+        context.fireWrite(HeaderFrame.AMQP_HEADER_FRAME);
 
         throw new ProtocolViolationException("Received SASL Header but no SASL support configured");
     }

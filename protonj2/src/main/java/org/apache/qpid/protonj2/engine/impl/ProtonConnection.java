@@ -31,6 +31,7 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.ConnectionState;
 import org.apache.qpid.protonj2.engine.EventHandler;
+import org.apache.qpid.protonj2.engine.HeaderFrame;
 import org.apache.qpid.protonj2.engine.Receiver;
 import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
@@ -629,7 +630,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
                     boolean resourceSyncNeeded = false;
 
                     if (!localOpenSent && !engine.isShutdown()) {
-                        engine.fireWrite(localOpen, 0, null, null);
+                        engine.fireWrite(localOpen, 0);
                         engine.configuration().recomputeEffectiveFrameSizeLimits();
                         localOpenSent = true;
                         resourceSyncNeeded = true;
@@ -637,7 +638,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
                     if (isLocallyClosed() && !localCloseSent && !engine.isShutdown()) {
                         Close localClose = new Close().setError(getCondition());
-                        engine.fireWrite(localClose, 0, null, null);
+                        engine.fireWrite(localClose, 0);
                         localCloseSent = true;
                         resourceSyncNeeded = false;  // Session resources can't write anything now
                     }
@@ -648,7 +649,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
                 }
             } else if (remoteHeader != null || getState() == ConnectionState.ACTIVE || remoteHeaderHandler != null) {
                 headerSent = true;
-                engine.fireWrite(AMQPHeader.getAMQPHeader());
+                engine.fireWrite(HeaderFrame.AMQP_HEADER_FRAME);
             }
         }
     }
@@ -674,7 +675,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
                     setCondition(errorConditionFromFailureCause(cause));
                 }
 
-                engine.fireWrite(new Close().setError(getCondition()), 0, null, null);
+                engine.fireWrite(new Close().setError(getCondition()), 0);
             } catch (Exception ignore) {}
         }
     }

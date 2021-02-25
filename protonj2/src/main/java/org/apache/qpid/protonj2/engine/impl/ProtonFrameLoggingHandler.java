@@ -20,14 +20,12 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.ProtocolFrame;
+import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
+import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
 import org.apache.qpid.protonj2.engine.SaslFrame;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
-import org.apache.qpid.protonj2.types.security.SaslPerformative;
-import org.apache.qpid.protonj2.types.transport.AMQPHeader;
-import org.apache.qpid.protonj2.types.transport.Performative;
 
 /**
  * Handler that will log incoming and outgoing Frames
@@ -83,7 +81,7 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
+    public void handleRead(EngineHandlerContext context, IncomingProtocolFrame frame) {
         if (traceFrames) {
             trace(AMQP_IN_PREFIX, frame.getChannel(), frame.getBody(), frame.getPayload());
         }
@@ -96,38 +94,38 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
+    public void handleWrite(EngineHandlerContext context, HeaderFrame frame) {
         if (traceFrames) {
-            trace(AMQP_OUT_PREFIX, 0, header, null);
+            trace(AMQP_OUT_PREFIX, 0, frame.getBody(), null);
         }
 
-        log(AMQP_OUT_PREFIX, 0, header, null);
+        log(AMQP_OUT_PREFIX, 0, frame.getBody(), null);
 
-        context.fireWrite(header);
+        context.fireWrite(frame);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
+    public void handleWrite(EngineHandlerContext context, OutgoingProtocolFrame frame) {
         if (traceFrames) {
-            trace(AMQP_OUT_PREFIX, channel, performative, payload);
+            trace(AMQP_OUT_PREFIX, frame.getChannel(), frame.getBody(), frame.getPayload());
         }
 
         if (LOG.isTraceEnabled()) {
-            log(AMQP_OUT_PREFIX, channel, performative, payload);
+            log(AMQP_OUT_PREFIX, frame.getChannel(), frame.getBody(), frame.getPayload());
         }
 
-        context.fireWrite(performative, channel, payload, payloadToLarge);
+        context.fireWrite(frame);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
+    public void handleWrite(EngineHandlerContext context, SaslFrame frame) {
         if (traceFrames) {
-            trace(SASL_OUT_PREFIX, 0, performative, null);
+            trace(SASL_OUT_PREFIX, 0, frame.getBody(), null);
         }
 
-        log(SASL_OUT_PREFIX, 0, performative, null);
+        log(SASL_OUT_PREFIX, 0, frame.getBody(), null);
 
-        context.fireWrite(performative);
+        context.fireWrite(frame);
     }
 
     private static final void log(String prefix, int channel, Object performative, ProtonBuffer payload) {

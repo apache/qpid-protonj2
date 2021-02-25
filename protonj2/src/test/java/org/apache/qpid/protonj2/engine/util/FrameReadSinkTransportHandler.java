@@ -16,15 +16,12 @@
  */
 package org.apache.qpid.protonj2.engine.util;
 
-import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.ProtocolFrame;
+import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
+import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
 import org.apache.qpid.protonj2.engine.SaslFrame;
-import org.apache.qpid.protonj2.types.security.SaslPerformative;
-import org.apache.qpid.protonj2.types.transport.AMQPHeader;
-import org.apache.qpid.protonj2.types.transport.Performative;
 
 /**
  * Drops all read frames in tests where no inbound frame handling is needed.
@@ -43,21 +40,21 @@ public class FrameReadSinkTransportHandler implements EngineHandler {
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
+    public void handleRead(EngineHandlerContext context, IncomingProtocolFrame frame) {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
-        context.fireWrite(header);
+    public void handleWrite(EngineHandlerContext context, HeaderFrame frame) {
+        context.fireWrite(frame);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        context.fireWrite(performative, channel, payload, payloadToLarge);
+    public void handleWrite(EngineHandlerContext context, OutgoingProtocolFrame frame) {
+        context.fireWrite(frame);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
-        context.fireWrite(performative);
+    public void handleWrite(EngineHandlerContext context, SaslFrame frame) {
+        context.fireWrite(frame);
     }
 }

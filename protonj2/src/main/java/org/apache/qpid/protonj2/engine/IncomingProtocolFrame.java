@@ -22,17 +22,17 @@ import org.apache.qpid.protonj2.types.transport.Performative.PerformativeHandler
 /**
  * Frame object that carries an AMQP Performative
  */
-public class ProtocolFrame extends Frame<Performative> {
+public class IncomingProtocolFrame extends Frame<Performative> {
 
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
 
-    private ProtocolFramePool pool;
+    private ProtocolFramePool<IncomingProtocolFrame> pool;
 
-    ProtocolFrame() {
+    IncomingProtocolFrame() {
         this(null);
     }
 
-    ProtocolFrame(ProtocolFramePool pool) {
+    IncomingProtocolFrame(ProtocolFramePool<IncomingProtocolFrame> pool) {
         super(AMQP_FRAME_TYPE);
 
         this.pool = pool;
@@ -45,7 +45,7 @@ public class ProtocolFrame extends Frame<Performative> {
      * same context.
      */
     public void release() {
-        initialize(null, -1, -1, null);
+        initialize(null, -1, null);
 
         if (pool != null) {
             pool.release(this);

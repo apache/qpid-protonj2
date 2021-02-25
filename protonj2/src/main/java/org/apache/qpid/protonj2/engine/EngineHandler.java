@@ -19,7 +19,6 @@ package org.apache.qpid.protonj2.engine;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.types.security.SaslPerformative;
-import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.Performative;
 
 /**
@@ -80,38 +79,110 @@ public interface EngineHandler {
         context.fireFailed(failure);
     }
 
-    // Read events
-
+    /**
+     * Handle the read of new incoming bytes from a remote sender.  The handler should generally
+     * decode these bytes into an AMQP Performative or SASL Performative based on the current state
+     * of the connection and the handler in question.
+     *
+     * @param context
+     *      The context for this handler which can be used to forward the event to the next handler
+     * @param buffer
+     *      The buffer containing the bytes that the engine handler should decode.
+     */
     default void handleRead(EngineHandlerContext context, ProtonBuffer buffer) {
         context.fireRead(buffer);
     }
 
+    /**
+     * Handle the receipt of an incoming AMQP Header or SASL Header based on the current state
+     * of this handler.
+     *
+     * @param context
+     *      The context for this handler which can be used to forward the event to the next handler
+     * @param header
+     *      The AMQP Header frame that wraps the received header instance.
+     */
     default void handleRead(EngineHandlerContext context, HeaderFrame header) {
         context.fireRead(header);
     }
 
+    /**
+     * Handle the receipt of an incoming SASL frame based on the current state of this handler.
+     *
+     * @param context
+     *      The context for this handler which can be used to forward the event to the next handler
+     * @param frame
+     *      The SASL frame that wraps the received {@link SaslPerformative}.
+     */
     default void handleRead(EngineHandlerContext context, SaslFrame frame) {
         context.fireRead(frame);
     }
 
-    default void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
+    /**
+     * Handle the receipt of an incoming AMQP frame based on the current state of this handler.
+     *
+     * @param context
+     *      The context for this handler which can be used to forward the event to the next handler
+     * @param frame
+     *      The AMQP frame that wraps the received {@link Performative}.
+     */
+    default void handleRead(EngineHandlerContext context, IncomingProtocolFrame frame) {
         context.fireRead(frame);
     }
 
-    // Write events
-
-    default void handleWrite(EngineHandlerContext context, AMQPHeader header) {
-        context.fireWrite(header);
+    /**
+     * Handles write of AMQPHeader either by directly writing it to the output target or by
+     * converting it to bytes and firing a write using the {@link ProtonBuffer} based API
+     * in {@link EngineHandlerContext#fireWrite(ProtonBuffer)}
+     *
+     * @param context
+     *      The {@link EngineHandlerContext} associated with this {@link EngineWriteHandler} instance.
+     * @param frame
+     *      The {@link HeaderFrame} instance to write.
+     */
+    default void handleWrite(EngineHandlerContext context, HeaderFrame frame) {
+        context.fireWrite(frame);
     }
 
-    default void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        context.fireWrite(performative, channel, payload, payloadToLarge);
+    /**
+     * Handles write of AMQP performative frame either by directly writing it to the output target or
+     * by converting it to bytes and firing a write using the {@link ProtonBuffer} based API in
+     * {@link EngineHandlerContext#fireWrite(ProtonBuffer)}
+     *
+     * @param context
+     *      The {@link EngineHandlerContext} associated with this {@link EngineWriteHandler} instance.
+     * @param frame
+     *      The {@link OutgoingProtocolFrame} instance to write.
+     */
+    default void handleWrite(EngineHandlerContext context, OutgoingProtocolFrame frame) {
+        context.fireWrite(frame);
     }
 
-    default void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
-        context.fireWrite(performative);
+    /**
+     * Handles write of SaslPerformative either by directly writing it to the output target or by
+     * converting it to bytes and firing a write using the {@link ProtonBuffer} based API
+     * in {@link EngineHandlerContext#fireWrite(ProtonBuffer)}
+     *
+     * @param context
+     *      The {@link EngineHandlerContext} associated with this {@link EngineWriteHandler} instance.
+     * @param frame
+     *      The {@link SaslFrame} instance to write.
+     */
+    default void handleWrite(EngineHandlerContext context, SaslFrame frame) {
+        context.fireWrite(frame);
     }
 
+    /**
+     * Writes the given bytes to the output target or if no handler in the pipeline handles this
+     * calls the registered output handler of the parent Engine instance.  If not output handler
+     * is found or not handler in the output chain consumes this write the Engine will be failed
+     * as an output sink is required for all low level engine writes.
+     *
+     * @param context
+     *      The {@link EngineHandlerContext} associated with this {@link EngineWriteHandler} instance.
+     * @param buffer
+     *      The {@link ProtonBuffer} whose payload is to be written to the output target.
+     */
     default void handleWrite(EngineHandlerContext context, ProtonBuffer buffer) {
         context.fireWrite(buffer);
     }

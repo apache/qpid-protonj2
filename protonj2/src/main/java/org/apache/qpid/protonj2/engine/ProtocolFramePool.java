@@ -16,42 +16,59 @@
  */
 package org.apache.qpid.protonj2.engine;
 
+import java.util.function.Supplier;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.util.RingQueue;
 import org.apache.qpid.protonj2.types.transport.Performative;
 
 /**
  * Pooled of ProtocolFrame instances used to reduce allocations on incoming frames.
+ *
+ * @param <E> The type of Protocol Frame to pool incoming or outgoing.
  */
-public class ProtocolFramePool {
+public class ProtocolFramePool<E extends Frame<Performative>> {
 
     public static final int DEFAULT_MAX_POOL_SIZE = 10;
 
     private int maxPoolSize = DEFAULT_MAX_POOL_SIZE;
 
-    private RingQueue<ProtocolFrame> pool;
+    private final RingQueue<E> pool;
+    private final Supplier<E> frameSupplier;
 
-    public ProtocolFramePool() {
-        this(ProtocolFramePool.DEFAULT_MAX_POOL_SIZE);
+    public ProtocolFramePool(Supplier<E> frameSupplier) {
+        this(frameSupplier, ProtocolFramePool.DEFAULT_MAX_POOL_SIZE);
     }
 
-    public ProtocolFramePool(int maxPoolSize) {
+    public ProtocolFramePool(Supplier<E> frameSupplier, int maxPoolSize) {
         this.pool = new RingQueue<>(getMaxPoolSize());
+        this.frameSupplier = frameSupplier;
     }
 
     public final int getMaxPoolSize() {
         return maxPoolSize;
     }
 
-    public ProtocolFrame take(Performative body, int channel, int frameSize, ProtonBuffer payload) {
-        return (ProtocolFrame) pool.poll(this::newProtocolFrame).initialize(body, channel, frameSize, payload);
+    @SuppressWarnings("unchecked")
+    public E take(Performative body, int channel, ProtonBuffer payload) {
+        return (E) pool.poll(frameSupplier).initialize(body, channel, payload);
     }
 
-    private ProtocolFrame newProtocolFrame() {
-        return new ProtocolFrame(this);
-    }
-
-    void release(ProtocolFrame pooledFrame) {
+    void release(E pooledFrame) {
         pool.offer(pooledFrame);
+    }
+
+    /**
+     * @return a new {@link ProtocolFramePool} that pools incoming AMQP frames
+     */
+    public static ProtocolFramePool<IncomingProtocolFrame> incomingFramePool() {
+        return new ProtocolFramePool<>(() -> new IncomingProtocolFrame());
+    }
+
+    /**
+     * @return a new {@link ProtocolFramePool} that pools outgoing AMQP frames
+     */
+    public static ProtocolFramePool<OutgoingProtocolFrame> outgoingFramePool() {
+        return new ProtocolFramePool<>(() -> new OutgoingProtocolFrame());
     }
 }

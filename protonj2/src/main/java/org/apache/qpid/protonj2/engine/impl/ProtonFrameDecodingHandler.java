@@ -26,7 +26,7 @@ import org.apache.qpid.protonj2.engine.EmptyFrame;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.ProtocolFrame;
+import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
 import org.apache.qpid.protonj2.engine.ProtocolFramePool;
 import org.apache.qpid.protonj2.engine.SaslFrame;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
@@ -52,7 +52,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
     public static final int FRAME_SIZE_BYTES = 4;
 
-    private final ProtocolFramePool framePool = new ProtocolFramePool();
+    private final ProtocolFramePool<IncomingProtocolFrame> framePool = ProtocolFramePool.incomingFramePool();
 
     private Decoder decoder;
     private DecoderState decoderState;
@@ -106,9 +106,9 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
-        performative.invoke(this, context);
-        context.fireWrite(performative);
+    public void handleWrite(EngineHandlerContext context, SaslFrame frame) {
+        frame.invoke(this, context);
+        context.fireWrite(frame);
     }
 
     //----- Sasl Performative Handler to check for change to non-SASL state
@@ -345,12 +345,12 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
             if (type == AMQP_FRAME_TYPE) {
                 Performative performative = (Performative) val;
-                ProtocolFrame frame = framePool.take(performative, channel, frameSize, payload);
+                IncomingProtocolFrame frame = framePool.take(performative, channel, payload);
                 transitionToFrameSizeParsingStage();
                 context.fireRead(frame);
             } else if (type == SASL_FRAME_TYPE) {
                 SaslPerformative performative = (SaslPerformative) val;
-                SaslFrame saslFrame = new SaslFrame(performative, frameSize, payload);
+                SaslFrame saslFrame = new SaslFrame(performative);
                 transitionToFrameSizeParsingStage();
                 // Ensure we process transition from SASL to AMQP header state
                 handleRead(context, saslFrame);

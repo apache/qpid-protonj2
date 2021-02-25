@@ -21,7 +21,7 @@ import org.apache.qpid.protonj2.types.transport.Performative.PerformativeHandler
 /**
  * An empty frame which can be used to drive transport activity when idle.
  */
-public final class EmptyFrame extends ProtocolFrame {
+public final class EmptyFrame extends IncomingProtocolFrame {
 
     public static final EmptyFrame INSTANCE = new EmptyFrame();
 

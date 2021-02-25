@@ -234,7 +234,7 @@ public class ProtonSessionIncomingWindow {
             cachedDisposition.setSettled(delivery.isSettled());
             cachedDisposition.setState(delivery.getState());
 
-            engine.fireWrite(cachedDisposition, session.getLocalChannel(), null, null);
+            engine.fireWrite(cachedDisposition, session.getLocalChannel());
         }
     }
 

@@ -48,7 +48,6 @@ import org.apache.qpid.protonj2.engine.exceptions.MalformedAMQPHeaderException;
 import org.apache.qpid.protonj2.test.driver.ProtonTestConnector;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.security.SaslInit;
-import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.Open;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -76,21 +75,21 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         }
 
         try {
-            engine.pipeline().fireWrite(AMQPHeader.getAMQPHeader());
+            engine.pipeline().fireWrite(HeaderFrame.AMQP_HEADER_FRAME);
             fail("Should not be able to write until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected
         }
 
         try {
-            engine.pipeline().fireWrite(new SaslInit());
+            engine.pipeline().fireWrite(new SaslFrame(new SaslInit()));
             fail("Should not be able to write until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected
         }
 
         try {
-            engine.pipeline().fireWrite(new Open(), 1, null, null);
+            engine.pipeline().fireWrite(ProtocolFramePool.outgoingFramePool().take(new Open(), 0, null));
             fail("Should not be able to write until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected
@@ -115,14 +114,14 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         }
 
         try {
-            engine.pipeline().fireRead(new SaslFrame(new SaslInit(), 64, new ProtonByteBuffer(0)));
+            engine.pipeline().fireRead(new SaslFrame(new SaslInit()));
             fail("Should not be able to read data until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected
         }
 
         try {
-            engine.pipeline().fireRead(new ProtocolFramePool().take(new Open(), 1, 64, new ProtonByteBuffer(0)));
+            engine.pipeline().fireRead(ProtocolFramePool.incomingFramePool().take(new Open(), 0, new ProtonByteBuffer(0)));
             fail("Should not be able to read data until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected

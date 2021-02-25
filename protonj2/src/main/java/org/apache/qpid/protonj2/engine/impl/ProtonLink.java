@@ -753,7 +753,7 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
             if ((session.isLocallyOpen() && session.wasLocalBeginSent()) &&
                 (connection.isLocallyOpen() && connection.wasLocalOpenSent())) {
 
-                session.getEngine().fireWrite(localAttach, session.getLocalChannel(), null, null);
+                session.getEngine().fireWrite(localAttach, session.getLocalChannel());
                 localAttachSent = true;
 
                 if (isLocallyOpen() && isReceiver() && getCreditState().hasCredit()) {
@@ -773,7 +773,7 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
                 detach.setClosed(closed);
                 detach.setError(getCondition());
 
-                session.getEngine().fireWrite(detach, session.getLocalChannel(), null, null);
+                session.getEngine().fireWrite(detach, session.getLocalChannel());
                 session.freeLink(this);
                 localDetachSent = true;
             }

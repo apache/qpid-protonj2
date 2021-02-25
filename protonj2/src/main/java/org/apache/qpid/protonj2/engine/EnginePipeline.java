@@ -18,9 +18,6 @@ package org.apache.qpid.protonj2.engine;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
-import org.apache.qpid.protonj2.types.security.SaslPerformative;
-import org.apache.qpid.protonj2.types.transport.AMQPHeader;
-import org.apache.qpid.protonj2.types.transport.Performative;
 
 /**
  * Pipeline of handlers for Engine work.
@@ -31,8 +28,6 @@ public interface EnginePipeline {
      * @return the {@link Engine} that this pipeline is linked to.
      */
     Engine engine();
-
-    //----- Pipeline management ----------------------------------------------//
 
     /**
      * Adds the given handler to the front of the pipeline with the given name stored for
@@ -132,8 +127,6 @@ public interface EnginePipeline {
      */
     EngineHandlerContext lastContext();
 
-    //----- Event triggers ---------------------------------------------------//
-
     /**
      * Fires an engine starting event to each handler in the pipeline.  Should be used
      * by the engine implementation to signal its handlers that they should initialize.
@@ -191,75 +184,69 @@ public interface EnginePipeline {
     EnginePipeline fireRead(SaslFrame frame);
 
     /**
-     * Fires a read event consisting of the given {@link ProtocolFrame} into the pipeline starting
+     * Fires a read event consisting of the given {@link IncomingProtocolFrame} into the pipeline starting
      * from the last {@link EngineHandler} in the pipeline and moving through each until the incoming
      * work is fully processed.  If the read events reaches the head of the pipeline and is not handled
      * by any handler an error is thrown and the engine should enter the failed state.
      *
      * @param frame
-     *      The {@link ProtocolFrame} to inject into the engine pipeline.
+     *      The {@link IncomingProtocolFrame} to inject into the engine pipeline.
      *
      * @return this {@link EnginePipeline}.
      */
-    EnginePipeline fireRead(ProtocolFrame frame);
+    EnginePipeline fireRead(IncomingProtocolFrame frame);
 
     /**
-     * Fires a write event consisting of the given {@link AMQPHeader} into the pipeline starting
+     * Fires a write event consisting of the given {@link HeaderFrame} into the pipeline starting
      * from the first {@link EngineHandler} in the pipeline and moving through each until the outgoing
      * work is fully processed.  If the write events reaches the tail of the pipeline and is not handled
      * by any handler an error is thrown and the engine should enter the failed state.
      *
-     * It is expected that after the fire write method returns the given {@link AMQPHeader} will have been
+     * It is expected that after the fire write method returns the given {@link HeaderFrame} will have been
      * written or if held for later the object must be copied.
      *
-     * @param header
-     *      The {@link AMQPHeader} to inject into the engine pipeline.
+     * @param frame
+     *      The {@link HeaderFrame} to inject into the engine pipeline.
      *
      * @return this {@link EnginePipeline}.
      */
-    EnginePipeline fireWrite(AMQPHeader header);
+    EnginePipeline fireWrite(HeaderFrame frame);
 
     /**
-     * Fires a write event consisting of the given {@link Performative} into the pipeline starting
+     * Fires a write event consisting of the given {@link OutgoingProtocolFrame} into the pipeline starting
      * from the first {@link EngineHandler} in the pipeline and moving through each until the outgoing
      * work is fully processed.  If the write events reaches the tail of the pipeline and is not handled
      * by any handler an error is thrown and the engine should enter the failed state.
      *
-     * It is expected that after the fire write method returns the given {@link Performative} will have been
-     * written or if held for later the object must be copied.
+     * It is expected that after the fire write method returns the given {@link OutgoingProtocolFrame} will have
+     * been written or if held for later the object must be copied.
      *
      * When the payload given exceeds the maximum allowed frame size when encoded into an outbound frame the
      * amount written will only be the allowable portion and the payload to large callback will be invoked and
      * the frame re-encoded to allow for updates to the given performative.
      *
-     * @param performative
-     *      The {@link Performative} to inject into the engine pipeline
-     * @param channel
-     *      The channel that should be assigned to the output frame.
-     * @param payload
-     *      The payload that should be encoded into the output frame.
-     * @param payloadToLarge
-     *      A handler that should be invoked if the payload given would exceed the max frame size limit.
+     * @param frame
+     *      The {@link OutgoingProtocolFrame} to inject into the engine pipeline.
      *
      * @return this {@link EnginePipeline}.
      */
-    EnginePipeline fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge);
+    EnginePipeline fireWrite(OutgoingProtocolFrame frame);
 
     /**
-     * Fires a write event consisting of the given {@link SaslPerformative} into the pipeline starting
+     * Fires a write event consisting of the given {@link SaslFrame} into the pipeline starting
      * from the first {@link EngineHandler} in the pipeline and moving through each until the outgoing
      * work is fully processed.  If the write events reaches the tail of the pipeline and is not handled
      * by any handler an error is thrown and the engine should enter the failed state.
      *
-     * It is expected that after the fire write method returns the given {@link SaslPerformative} will have been
+     * It is expected that after the fire write method returns the given {@link SaslFrame} will have been
      * written or if held for later the object must be copied.
      *
-     * @param performative
-     *      The {@link SaslPerformative} to inject into the engine pipeline.
+     * @param frame
+     *      The {@link SaslFrame} to inject into the engine pipeline.
      *
      * @return this {@link EnginePipeline}.
      */
-    EnginePipeline fireWrite(SaslPerformative performative);
+    EnginePipeline fireWrite(SaslFrame frame);
 
     /**
      * Fires a write event consisting of the given {@link ProtonBuffer} into the pipeline starting

@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.engine.impl;
 
+import java.util.function.Consumer;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.util.SplayMap;
@@ -23,6 +25,7 @@ import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.apache.qpid.protonj2.types.transport.Begin;
 import org.apache.qpid.protonj2.types.transport.Disposition;
 import org.apache.qpid.protonj2.types.transport.Flow;
+import org.apache.qpid.protonj2.types.transport.Performative;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
@@ -166,13 +169,7 @@ public class ProtonSessionOutgoingWindow {
 
     private final Disposition cachedDisposition = new Disposition();
     private final Transfer cachedTransfer = new Transfer();
-    private final Runnable cachedTransferUpdater = new Runnable() {
-
-        @Override
-        public void run() {
-            cachedTransfer.setMore(true);
-        }
-    };
+    private final Consumer<Performative> cachedTransferUpdater = (performative) -> cachedTransfer.setMore(true);
 
     void processSend(ProtonSender sender, ProtonOutgoingDelivery delivery, ProtonBuffer payload, boolean complete) {
         // For a transfer that hasn't completed but has no bytes in the final transfer write we want
@@ -207,7 +204,7 @@ public class ProtonSessionOutgoingWindow {
                 cachedTransfer.setMore(wasThereMore);
 
                 try {
-                    engine.fireWrite(cachedTransfer, session.getLocalChannel(), payload, cachedTransferUpdater);
+                    engine.fireWrite(engine.wrap(cachedTransfer, session.getLocalChannel(), payload).setPayloadToLargeHandler(cachedTransferUpdater));
                 } finally {
                     delivery.afterTransferWritten();
                 }
@@ -235,7 +232,7 @@ public class ProtonSessionOutgoingWindow {
             cachedDisposition.setState(delivery.getState());
 
             try {
-                engine.fireWrite(cachedDisposition, session.getLocalChannel(), null, null);
+                engine.fireWrite(cachedDisposition, session.getLocalChannel());
             } finally {
                 cachedDisposition.reset();
             }
@@ -253,7 +250,7 @@ public class ProtonSessionOutgoingWindow {
         unsettled.remove((int) delivery.getDeliveryId());
 
         try {
-            engine.fireWrite(cachedTransfer, session.getLocalChannel(), null, null);
+            engine.fireWrite(cachedTransfer, session.getLocalChannel());
         } finally {
             cachedTransfer.reset();
         }

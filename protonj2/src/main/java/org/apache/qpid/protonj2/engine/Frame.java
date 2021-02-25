@@ -29,17 +29,15 @@ public abstract class Frame<V> {
 
     private V body;
     private int channel;
-    private int frameSize;
     private ProtonBuffer payload;
 
     protected Frame(byte type) {
         this.type = type;
     }
 
-    Frame<V> initialize(V body, int channel, int frameSize, ProtonBuffer payload) {
+    Frame<V> initialize(V body, int channel, ProtonBuffer payload) {
         this.body = body;
         this.channel = channel;
-        this.frameSize = frameSize;
         this.payload = payload;
 
         return this;
@@ -60,13 +58,6 @@ public abstract class Frame<V> {
     }
 
     /**
-     * @return the encoded size that this frame occupied
-     */
-    public int getFrameSize() {
-        return frameSize;
-    }
-
-    /**
      * @return the type that is assigned to this frame
      */
     public byte getType() {
@@ -82,6 +73,6 @@ public abstract class Frame<V> {
 
     @Override
     public String toString() {
-        return "Frame:[" + body + ", " + channel + ", " + frameSize + ", " + payload + "]";
+        return "Frame:[" + body + ", " + channel + ", " + ", " + payload + "]";
     }
 }

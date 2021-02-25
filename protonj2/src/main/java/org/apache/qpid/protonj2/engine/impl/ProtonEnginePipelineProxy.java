@@ -24,13 +24,11 @@ import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.EnginePipeline;
 import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.ProtocolFrame;
+import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
+import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
 import org.apache.qpid.protonj2.engine.SaslFrame;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineNotWritableException;
-import org.apache.qpid.protonj2.types.security.SaslPerformative;
-import org.apache.qpid.protonj2.types.transport.AMQPHeader;
-import org.apache.qpid.protonj2.types.transport.Performative;
 
 /**
  * Wrapper around the internal {@link ProtonEnginePipeline} used to present a guarded
@@ -169,7 +167,7 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
     }
 
     @Override
-    public ProtonEnginePipelineProxy fireRead(ProtocolFrame frame) {
+    public ProtonEnginePipelineProxy fireRead(IncomingProtocolFrame frame) {
         engine().checkEngineNotStarted("Cannot inject new data into an unstarted Engine");
         engine().checkShutdownOrFailed("Cannot inject new data into an Engine that is shutdown or failed");
         pipeline.fireRead(frame);
@@ -177,7 +175,7 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
     }
 
     @Override
-    public ProtonEnginePipelineProxy fireWrite(AMQPHeader header) {
+    public ProtonEnginePipelineProxy fireWrite(HeaderFrame frame) {
         engine().checkEngineNotStarted("Cannot write from an unstarted Engine");
         engine().checkShutdownOrFailed("Cannot write form an Engine that is shutdown or failed");
 
@@ -185,12 +183,12 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
             throw new EngineNotWritableException("Cannot write through Engine pipeline when Engine is not writable");
         }
 
-        pipeline.fireWrite(header);
+        pipeline.fireWrite(frame);
         return this;
     }
 
     @Override
-    public ProtonEnginePipelineProxy fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
+    public ProtonEnginePipelineProxy fireWrite(OutgoingProtocolFrame frame) {
         engine().checkEngineNotStarted("Cannot write from an unstarted Engine");
         engine().checkShutdownOrFailed("Cannot write form an Engine that is shutdown or failed");
 
@@ -198,12 +196,12 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
             throw new EngineNotWritableException("Cannot write through Engine pipeline when Engine is not writable");
         }
 
-        pipeline.fireWrite(performative, channel, payload, payloadToLarge);
+        pipeline.fireWrite(frame);
         return this;
     }
 
     @Override
-    public ProtonEnginePipelineProxy fireWrite(SaslPerformative performative) {
+    public ProtonEnginePipelineProxy fireWrite(SaslFrame frame) {
         engine().checkEngineNotStarted("Cannot write from an unstarted Engine");
         engine().checkShutdownOrFailed("Cannot write form an Engine that is shutdown or failed");
 
@@ -211,7 +209,7 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
             throw new EngineNotWritableException("Cannot write through Engine pipeline when Engine is not writable");
         }
 
-        pipeline.fireWrite(performative);
+        pipeline.fireWrite(frame);
         return this;
     }
 

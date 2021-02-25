@@ -19,24 +19,18 @@ package org.apache.qpid.protonj2.engine.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.Frame;
 import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.ProtocolFrame;
-import org.apache.qpid.protonj2.engine.ProtocolFramePool;
+import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
+import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
 import org.apache.qpid.protonj2.engine.SaslFrame;
-import org.apache.qpid.protonj2.types.security.SaslPerformative;
-import org.apache.qpid.protonj2.types.transport.AMQPHeader;
-import org.apache.qpid.protonj2.types.transport.Performative;
 
 public class FrameRecordingTransportHandler implements EngineHandler {
 
     private List<Frame<?>> framesRead = new ArrayList<>();
     private List<Frame<?>> framesWritten = new ArrayList<>();
-
-    private final ProtocolFramePool framePool = new ProtocolFramePool();
 
     public FrameRecordingTransportHandler() {
     }
@@ -62,26 +56,26 @@ public class FrameRecordingTransportHandler implements EngineHandler {
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
+    public void handleRead(EngineHandlerContext context, IncomingProtocolFrame frame) {
         framesRead.add(frame);
         context.fireRead(frame);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
-        framesWritten.add(new HeaderFrame(header));
-        context.fireWrite(header);
+    public void handleWrite(EngineHandlerContext context, HeaderFrame frame) {
+        framesWritten.add(frame);
+        context.fireWrite(frame);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        framesWritten.add(framePool.take(performative, channel, 1, payload));
-        context.fireWrite(performative, channel, payload, payloadToLarge);
+    public void handleWrite(EngineHandlerContext context, OutgoingProtocolFrame frame) {
+        framesWritten.add(frame);
+        context.fireWrite(frame);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
-        framesWritten.add(new SaslFrame(performative, 1, null));
-        context.fireWrite(performative);
+    public void handleWrite(EngineHandlerContext context, SaslFrame frame) {
+        framesWritten.add(frame);
+        context.fireWrite(frame);
     }
 }

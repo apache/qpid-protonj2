@@ -605,7 +605,7 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
             link.decorateOutgoingFlow(cachedFlow);
         }
 
-        getEngine().fireWrite(cachedFlow, localChannel, null, null);
+        getEngine().fireWrite(cachedFlow, localChannel);
     }
 
     private void checkNotOpened(String errorMessage) {
@@ -698,13 +698,13 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     }
 
     private void fireSessionBegin() {
-        connection.getEngine().fireWrite(localBegin, localChannel, null, null);
+        connection.getEngine().fireWrite(localBegin, localChannel);
         localBeginSent = true;
         allLinks().forEach(link -> link.trySyncLocalStateWithRemote());
     }
 
     private void fireSessionEnd() {
-        connection.getEngine().fireWrite(new End().setError(getCondition()), localChannel, null, null);
+        connection.getEngine().fireWrite(new End().setError(getCondition()), localChannel);
         localEndSent = true;
         connection.freeLocalChannel(localChannel);
     }

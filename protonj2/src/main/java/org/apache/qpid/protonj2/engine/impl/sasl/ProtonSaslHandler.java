@@ -21,14 +21,12 @@ import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.EngineState;
 import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.ProtocolFrame;
+import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
+import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
 import org.apache.qpid.protonj2.engine.SaslFrame;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.impl.ProtonEngine;
 import org.apache.qpid.protonj2.engine.impl.ProtonEngineNoOpSaslDriver;
-import org.apache.qpid.protonj2.types.security.SaslPerformative;
-import org.apache.qpid.protonj2.types.transport.AMQPHeader;
-import org.apache.qpid.protonj2.types.transport.Performative;
 
 /**
  * Base class used for common portions of the SASL processing pipeline.
@@ -98,7 +96,7 @@ public final class ProtonSaslHandler implements EngineHandler {
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
+    public void handleRead(EngineHandlerContext context, IncomingProtocolFrame frame) {
         if (isDone()) {
             context.fireRead(frame);
         } else {
@@ -107,9 +105,9 @@ public final class ProtonSaslHandler implements EngineHandler {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
+    public void handleWrite(EngineHandlerContext context, HeaderFrame frame) {
         if (isDone()) {
-            context.fireWrite(header);
+            context.fireWrite(frame);
         } else {
             // Default to client if application has not configured one way or the other.
             saslContext = driver.context();
@@ -118,26 +116,26 @@ public final class ProtonSaslHandler implements EngineHandler {
             }
 
             // Delegate write to the SASL Context in use to allow for state updates.
-            header.invoke(saslContext.headerWriteContext(), context);
+            frame.invoke(saslContext.headerWriteContext(), context);
         }
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
+    public void handleWrite(EngineHandlerContext context, OutgoingProtocolFrame frame) {
         if (isDone()) {
-            context.fireWrite(performative, channel, payload, payloadToLarge);
+            context.fireWrite(frame);
         } else {
             throw new ProtocolViolationException("Unexpected AMQP Performative: SASL processing not yet completed");
         }
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
+    public void handleWrite(EngineHandlerContext context, SaslFrame frame) {
         if (isDone()) {
             throw new ProtocolViolationException("Unexpected SASL Performative: SASL processing has yet completed");
         } else {
             // Delegate to the SASL Context to allow state tracking to be maintained.
-            performative.invoke(safeGetSaslContext().saslWriteContext(), context);
+            frame.invoke(safeGetSaslContext().saslWriteContext(), context);
         }
     }
 

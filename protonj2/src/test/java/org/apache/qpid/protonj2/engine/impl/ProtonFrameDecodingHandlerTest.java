@@ -31,7 +31,7 @@ import org.apache.qpid.protonj2.engine.EmptyFrame;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.ProtocolFrame;
+import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.util.FrameReadSinkTransportHandler;
 import org.apache.qpid.protonj2.engine.util.FrameRecordingTransportHandler;
@@ -142,7 +142,7 @@ public class ProtonFrameDecodingHandlerTest {
         //         desiredCapabilities=null, properties=null}
         final byte[] emptyOpen = new byte[] {0, 0, 0, 16, 2, 0, 0, 0, 0, 83, 16, -64, 3, 1, -95, 0};
 
-        ArgumentCaptor<ProtocolFrame> argument = ArgumentCaptor.forClass(ProtocolFrame.class);
+        ArgumentCaptor<IncomingProtocolFrame> argument = ArgumentCaptor.forClass(IncomingProtocolFrame.class);
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
         EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
@@ -180,7 +180,7 @@ public class ProtonFrameDecodingHandlerTest {
         final byte[] basicOpen = new byte[] {0, 0, 0, 49, 2, 0, 0, 0, 0, 83, 16, -64, 36, 5, -95, 9, 99, 111,
                                              110, 116, 97, 105, 110, 101, 114, -95, 9, 108, 111, 99, 97, 108,
                                              104, 111, 115, 116, 112, 0, 0, 64, 0, 96, -1, -1, 112, 0, 0, 117, 48};
-        ArgumentCaptor<ProtocolFrame> argument = ArgumentCaptor.forClass(ProtocolFrame.class);
+        ArgumentCaptor<IncomingProtocolFrame> argument = ArgumentCaptor.forClass(IncomingProtocolFrame.class);
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
         EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
@@ -223,7 +223,7 @@ public class ProtonFrameDecodingHandlerTest {
                                              0, 0, 0, 49, 2, 0, 0, 0, 0, 83, 16, -64, 36, 5, -95, 9, 99, 111,
                                              110, 116, 97, 105, 110, 101, 114, -95, 9, 108, 111, 99, 97, 108,
                                              104, 111, 115, 116, 112, 0, 0, 64, 0, 96, -1, -1, 112, 0, 0, 117, 48};
-        ArgumentCaptor<ProtocolFrame> argument = ArgumentCaptor.forClass(ProtocolFrame.class);
+        ArgumentCaptor<IncomingProtocolFrame> argument = ArgumentCaptor.forClass(IncomingProtocolFrame.class);
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
         EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
@@ -274,7 +274,7 @@ public class ProtonFrameDecodingHandlerTest {
 
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(emptyFrame));
 
-        ArgumentCaptor<ProtocolFrame> argument = ArgumentCaptor.forClass(ProtocolFrame.class);
+        ArgumentCaptor<IncomingProtocolFrame> argument = ArgumentCaptor.forClass(IncomingProtocolFrame.class);
         Mockito.verify(context).fireRead(argument.capture());
         Mockito.verifyNoMoreInteractions(context);
 
@@ -302,10 +302,10 @@ public class ProtonFrameDecodingHandlerTest {
 
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(emptyFrames));
 
-        ArgumentCaptor<ProtocolFrame> argument = ArgumentCaptor.forClass(ProtocolFrame.class);
+        ArgumentCaptor<IncomingProtocolFrame> argument = ArgumentCaptor.forClass(IncomingProtocolFrame.class);
         Mockito.verify(context, Mockito.times(2)).fireRead(argument.capture());
 
-        List<ProtocolFrame> frames = argument.getAllValues();
+        List<IncomingProtocolFrame> frames = argument.getAllValues();
         assertNotNull(frames);
         assertEquals(2, frames.size());
         assertTrue(frames.get(0) instanceof EmptyFrame);
@@ -441,13 +441,13 @@ public class ProtonFrameDecodingHandlerTest {
     }
 
     private Engine createEngine() {
-        ProtonEngine transport = new ProtonEngine();
+        ProtonEngine engine = new ProtonEngine();
 
-        transport.pipeline().addLast("read-sink", new FrameReadSinkTransportHandler());
-        transport.pipeline().addLast("test", testHandler);
-        transport.pipeline().addLast("frames", new ProtonFrameDecodingHandler());
-        transport.pipeline().addLast("write-sink", new FrameWriteSinkTransportHandler());
+        engine.pipeline().addLast("read-sink", new FrameReadSinkTransportHandler());
+        engine.pipeline().addLast("test", testHandler);
+        engine.pipeline().addLast("frames", new ProtonFrameDecodingHandler());
+        engine.pipeline().addLast("write-sink", new FrameWriteSinkTransportHandler());
 
-        return transport;
+        return engine;
     }
 }

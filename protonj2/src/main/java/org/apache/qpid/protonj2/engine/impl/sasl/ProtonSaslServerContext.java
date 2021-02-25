@@ -24,6 +24,8 @@ import javax.security.sasl.SaslException;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.EngineSaslDriver.SaslState;
+import org.apache.qpid.protonj2.engine.HeaderFrame;
+import org.apache.qpid.protonj2.engine.SaslFrame;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.impl.ProtonEngine;
 import org.apache.qpid.protonj2.engine.sasl.SaslServerContext;
@@ -33,8 +35,8 @@ import org.apache.qpid.protonj2.types.security.SaslChallenge;
 import org.apache.qpid.protonj2.types.security.SaslInit;
 import org.apache.qpid.protonj2.types.security.SaslMechanisms;
 import org.apache.qpid.protonj2.types.security.SaslOutcome;
-import org.apache.qpid.protonj2.types.security.SaslResponse;
 import org.apache.qpid.protonj2.types.security.SaslPerformative.SaslPerformativeHandler;
+import org.apache.qpid.protonj2.types.security.SaslResponse;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader.HeaderHandler;
 
@@ -75,21 +77,21 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
     @Override
     public SaslServerContext sendMechanisms(Symbol[] mechanisms) {
         Objects.requireNonNull(mechanisms);
-        saslHandler.engine().pipeline().fireWrite(new SaslMechanisms().setSaslServerMechanisms(mechanisms));
+        saslHandler.engine().pipeline().fireWrite(new SaslFrame(new SaslMechanisms().setSaslServerMechanisms(mechanisms)));
         return this;
     }
 
     @Override
     public SaslServerContext sendChallenge(ProtonBuffer challenge) {
         Objects.requireNonNull(challenge);
-        saslHandler.engine().pipeline().fireWrite(new SaslChallenge().setChallenge(challenge));
+        saslHandler.engine().pipeline().fireWrite(new SaslFrame(new SaslChallenge().setChallenge(challenge)));
         return this;
     }
 
     @Override
     public SaslServerContext sendOutcome(org.apache.qpid.protonj2.engine.sasl.SaslOutcome outcome, ProtonBuffer additional) {
         Objects.requireNonNull(outcome);
-        saslHandler.engine().pipeline().fireWrite(new SaslOutcome().setCode(outcome.saslCode()).setAdditionalData(additional));
+        saslHandler.engine().pipeline().fireWrite(new SaslFrame(new SaslOutcome().setCode(outcome.saslCode()).setAdditionalData(additional)));
         return this;
     }
 
@@ -142,7 +144,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
         @Override
         public void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context) {
             // Raw AMQP Header shouldn't arrive before the SASL negotiations are done.
-            context.fireWrite(AMQPHeader.getSASLHeader());
+            context.fireWrite(HeaderFrame.SASL_HEADER_FRAME);
             throw new ProtocolViolationException("Unexpected AMQP Header before SASL Authentication completed.");
         }
 
@@ -155,7 +157,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
             }
 
             if (!headerWritten) {
-                context.fireWrite(header);
+                context.fireWrite(HeaderFrame.SASL_HEADER_FRAME);
                 headerWritten = true;
                 state = SaslState.AUTHENTICATING;
             }
@@ -177,7 +179,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
                 throw new ProtocolViolationException("Unexpected SASL write following a previous header send.");
             }
             headerWritten = true;
-            context.fireWrite(AMQPHeader.getSASLHeader());
+            context.fireWrite(HeaderFrame.SASL_HEADER_FRAME);
         }
     }
 
@@ -226,7 +228,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
         @Override
         public void handleMechanisms(SaslMechanisms saslMechanisms, EngineHandlerContext context) {
             if (!mechanismsSent) {
-                context.fireWrite(saslMechanisms);
+                context.fireWrite(new SaslFrame(saslMechanisms));
                 serverMechanisms = Arrays.copyOf(saslMechanisms.getSaslServerMechanisms(), saslMechanisms.getSaslServerMechanisms().length);
                 mechanismsSent = true;
             } else {
@@ -242,7 +244,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
         @Override
         public void handleChallenge(SaslChallenge saslChallenge, EngineHandlerContext context) {
             if (headerWritten && mechanismsSent && !responseRequired) {
-                context.fireWrite(saslChallenge);
+                context.fireWrite(new SaslFrame(saslChallenge));
                 responseRequired = true;
             } else {
                 throw new ProtocolViolationException("SASL Challenge sent when state does not allow it");
@@ -258,7 +260,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
         public void handleOutcome(SaslOutcome saslOutcome, EngineHandlerContext context) {
             if (headerWritten && mechanismsSent && !responseRequired) {
                 done(org.apache.qpid.protonj2.engine.sasl.SaslOutcome.valueOf(saslOutcome.getCode().getValue().byteValue()));
-                context.fireWrite(saslOutcome);
+                context.fireWrite(new SaslFrame(saslOutcome));
                 // Request that the SASL handler be removed from the chain now that we are done with the SASL
                 // exchange, the engine driver will remain in place holding the state for later examination.
                 context.engine().pipeline().remove(saslHandler);

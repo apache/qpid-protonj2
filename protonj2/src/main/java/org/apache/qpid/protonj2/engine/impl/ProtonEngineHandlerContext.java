@@ -21,12 +21,10 @@ import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.ProtocolFrame;
+import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
+import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
 import org.apache.qpid.protonj2.engine.SaslFrame;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
-import org.apache.qpid.protonj2.types.security.SaslPerformative;
-import org.apache.qpid.protonj2.types.transport.AMQPHeader;
-import org.apache.qpid.protonj2.types.transport.Performative;
 
 /**
  * Context for a registered EngineHandler
@@ -72,6 +70,11 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     }
 
     @Override
+    public void fireFailed(EngineFailedException failure) {
+        next.handler().engineFailed(previous, failure);
+    }
+
+    @Override
     public void fireRead(ProtonBuffer buffer) {
         previous.handler().handleRead(previous, buffer);
     }
@@ -87,28 +90,23 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     }
 
     @Override
-    public void fireRead(ProtocolFrame frame) {
+    public void fireRead(IncomingProtocolFrame frame) {
         previous.handler().handleRead(previous, frame);
     }
 
     @Override
-    public void fireFailed(EngineFailedException failure) {
-        next.handler().engineFailed(previous, failure);
+    public void fireWrite(OutgoingProtocolFrame frame) {
+        next.handler().handleWrite(next, frame);
     }
 
     @Override
-    public void fireWrite(AMQPHeader header) {
-        next.handler().handleWrite(next, header);
+    public void fireWrite(SaslFrame frame) {
+        next.handler().handleWrite(next, frame);
     }
 
     @Override
-    public void fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        next.handler().handleWrite(next, performative, channel, payload, payloadToLarge);
-    }
-
-    @Override
-    public void fireWrite(SaslPerformative performative) {
-        next.handler().handleWrite(next, performative);
+    public void fireWrite(HeaderFrame frame) {
+        next.handler().handleWrite(next, frame);
     }
 
     @Override

@@ -29,6 +29,9 @@ import org.apache.qpid.protonj2.engine.EnginePipeline;
 import org.apache.qpid.protonj2.engine.EngineSaslDriver;
 import org.apache.qpid.protonj2.engine.EngineState;
 import org.apache.qpid.protonj2.engine.EventHandler;
+import org.apache.qpid.protonj2.engine.HeaderFrame;
+import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
+import org.apache.qpid.protonj2.engine.ProtocolFramePool;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineNotStartedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineNotWritableException;
@@ -40,7 +43,6 @@ import org.apache.qpid.protonj2.engine.exceptions.ProtonExceptionSupport;
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
 import org.apache.qpid.protonj2.types.Symbol;
-import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.apache.qpid.protonj2.types.transport.Performative;
 
@@ -58,6 +60,7 @@ public class ProtonEngine implements Engine {
     private final ProtonEnginePipelineProxy pipelineProxy = new ProtonEnginePipelineProxy(pipeline);
     private final ProtonEngineConfiguration configuration = new ProtonEngineConfiguration(this);
     private final ProtonConnection connection = new ProtonConnection(this);
+    private final ProtocolFramePool<OutgoingProtocolFrame> framePool = ProtocolFramePool.outgoingFramePool();
 
     private EngineSaslDriver saslDriver = new ProtonEngineNoOpSaslDriver();
 
@@ -337,14 +340,28 @@ public class ProtonEngine implements Engine {
 
     //----- Internal proton engine implementation
 
-    ProtonEngine fireWrite(AMQPHeader header) {
-        pipeline.fireWrite(header);
+    ProtonEngine fireWrite(HeaderFrame frame) {
+        pipeline.fireWrite(frame);
         return this;
     }
 
-    ProtonEngine fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        pipeline.fireWrite(performative, channel, payload, payloadToLarge);
+    ProtonEngine fireWrite(OutgoingProtocolFrame frame) {
+        pipeline.fireWrite(frame);
         return this;
+    }
+
+    ProtonEngine fireWrite(Performative performative, int channel) {
+        pipeline.fireWrite(framePool.take(performative, channel, null));
+        return this;
+    }
+
+    ProtonEngine fireWrite(Performative performative, int channel, ProtonBuffer payload) {
+        pipeline.fireWrite(framePool.take(performative, channel, payload));
+        return this;
+    }
+
+    OutgoingProtocolFrame wrap(Performative performative, int channel, ProtonBuffer payload) {
+        return framePool.take(performative, channel, payload);
     }
 
     void checkEngineNotStarted(String message) {
