@@ -153,7 +153,8 @@ class ReconnectReceiverTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
             Session session = connection.openSession();
-            Receiver receiver = session.openDynamicReceiver();
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(0);
+            Receiver receiver = session.openDynamicReceiver(receiverOptions);
 
             firstPeer.waitForScriptToComplete();
             finalPeer.waitForScriptToComplete();
