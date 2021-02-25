@@ -395,6 +395,70 @@ public class TcpTransportTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testUseAllocatorToCreateFixedSizeOutputBuffer() throws Exception {
+        try (NettyEchoServer server = createEchoServer()) {
+            server.start();
+
+            int port = server.getServerPort();
+
+            Transport transport = createTransport(createTransportOptions(), createSSLOptions());
+            try {
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
+            } catch (Exception e) {
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
+            }
+
+            assertTrue(transport.isConnected());
+
+            ProtonBuffer buffer = transport.getBufferAllocator().outputBuffer(64, 512);
+
+            assertEquals(64, buffer.capacity());
+            assertEquals(512, buffer.maxCapacity());
+
+            transport.writeAndFlush(buffer);
+
+            transport.close();
+        }
+
+        assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
+        assertTrue(exceptions.isEmpty());
+        assertTrue(data.isEmpty());
+    }
+
+    @Test
+    public void testUseAllocatorToCreateFixedSizeHeapBuffer() throws Exception {
+        try (NettyEchoServer server = createEchoServer()) {
+            server.start();
+
+            int port = server.getServerPort();
+
+            Transport transport = createTransport(createTransportOptions(), createSSLOptions());
+            try {
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
+            } catch (Exception e) {
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
+            }
+
+            assertTrue(transport.isConnected());
+
+            ProtonBuffer buffer = transport.getBufferAllocator().allocate(64, 512);
+
+            assertEquals(64, buffer.capacity());
+            assertEquals(512, buffer.maxCapacity());
+
+            transport.writeAndFlush(buffer);
+
+            transport.close();
+        }
+
+        assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
+        assertTrue(exceptions.isEmpty());
+        assertTrue(data.isEmpty());
+    }
+
+    @Test
     public void testDataSentWithWriteAndThenFlushedIsReceived() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();

@@ -205,7 +205,7 @@ public class TcpTransport implements Transport {
 
             @Override
             public ProtonBuffer outputBuffer(int initialCapacity, int maximumCapacity) {
-                return new ProtonNettyByteBuffer(channel.alloc().ioBuffer(initialCapacity, initialCapacity));
+                return new ProtonNettyByteBuffer(channel.alloc().ioBuffer(initialCapacity, maximumCapacity));
             }
         };
      }
