@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -1250,9 +1251,9 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testEngineConfiguresSpecifiedMaxFrameSizeLimitsGreaterThanImposedGlobalLimit() {
+    public void testEngineConfiguresRemoteMaxFrameSizeSetToMaxUnsignedLong() {
         doTestEngineConfiguresSpecifiedFrameSizeLimits(
-            UnsignedInteger.MAX_VALUE.intValue(), UnsignedInteger.MAX_VALUE.intValue());
+            Integer.MAX_VALUE, UnsignedInteger.MAX_VALUE.intValue());
     }
 
     private void doTestEngineConfiguresSpecifiedFrameSizeLimits(int localValue, int remoteResponse) {
@@ -1287,7 +1288,20 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
             }
         }
 
+        assertEquals(UnsignedInteger.toUnsignedLong(localValue), connection.getMaxFrameSize());
+        assertEquals(UnsignedInteger.toUnsignedLong(remoteResponse), connection.getRemoteMaxFrameSize());
+
         // Default engine should start and return a connection immediately
         assertNull(failure);
+    }
+
+    @Test
+    public void testEngineErrorsOnLocalMaxFrameSizeLargerThanImposedLimit() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        assertThrows(IllegalArgumentException.class, () -> connection.setMaxFrameSize(UnsignedInteger.MAX_VALUE.longValue()));
     }
 }

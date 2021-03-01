@@ -223,6 +223,12 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     @Override
     public Connection setMaxFrameSize(long maxFrameSize) {
         checkNotOpened("Cannot set Max Frame Size on already opened Connection");
+        if (maxFrameSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(String.format(
+                "Given max frame size value %d larger than this implementations limit of %d",
+                maxFrameSize, Integer.MAX_VALUE));
+        }
+
         localOpen.setMaxFrameSize(maxFrameSize);
         return this;
     }

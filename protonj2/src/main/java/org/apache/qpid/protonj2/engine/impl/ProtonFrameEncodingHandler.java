@@ -72,7 +72,7 @@ public class ProtonFrameEncodingHandler implements EngineHandler {
 
     @Override
     public void handleWrite(EngineHandlerContext context, SaslFrame frame) {
-        ProtonBuffer output = configuration.getBufferAllocator().outputBuffer(AMQP_PERFORMATIVE_PAD, configuration.getOutboundMaxFrameSize());
+        ProtonBuffer output = configuration.getBufferAllocator().outputBuffer(AMQP_PERFORMATIVE_PAD, (int) configuration.getOutboundMaxFrameSize());
 
         output.setWriteIndex(FRAME_HEADER_SIZE);
         output.setBytes(FRAME_START_BYTE, SASL_FRAME_HEADER);
@@ -91,10 +91,8 @@ public class ProtonFrameEncodingHandler implements EngineHandler {
     @Override
     public void handleWrite(EngineHandlerContext context, OutgoingProtocolFrame frame) {
         try {
-            // TODO: Ensure no numeric overflows in size calculations
-
             final ProtonBuffer payload = frame.getPayload() == null ? EMPTY_BUFFER : frame.getPayload();
-            final int maxFrameSize = configuration.getOutboundMaxFrameSize();
+            final int maxFrameSize = (int) configuration.getOutboundMaxFrameSize();
             final int outputBufferSize = Math.min(maxFrameSize, AMQP_PERFORMATIVE_PAD + payload.getReadableBytes());
             final ProtonBuffer output = configuration.getBufferAllocator().outputBuffer(outputBufferSize, maxFrameSize);
 

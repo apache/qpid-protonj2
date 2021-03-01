@@ -36,8 +36,8 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
 
     private ProtonBufferAllocator allocator = ProtonByteBufferAllocator.DEFAULT;
 
-    private int effectiveMaxInboundFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
-    private int effectiveMaxOutboundFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
+    private long effectiveMaxInboundFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
+    private long effectiveMaxOutboundFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
 
     ProtonEngineConfiguration(ProtonEngine engine) {
         this.engine = engine;
@@ -81,8 +81,6 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
 
     //---- proton specific APIs
 
-    private static final long LONG_INT_MAX_VALUE = UnsignedInteger.valueOf(Integer.MAX_VALUE).longValue();
-
     void recomputeEffectiveFrameSizeLimits() {
         // Based on engine state compute what the max in and out frame size should
         // be at this time.  Considerations to take into account are SASL state and
@@ -95,20 +93,22 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
             final long localMaxFrameSize = engine.connection().getMaxFrameSize();
             final long remoteMaxFrameSize = engine.connection().getRemoteMaxFrameSize();
 
-            // TODO: Ignoring local set values over 4GB not that 2GB would work either.
-            effectiveMaxInboundFrameSize = (int) Math.min(LONG_INT_MAX_VALUE, localMaxFrameSize);
-
+            // We limit outbound max frame size to our own set max frame size unless the remote has actually
+            // requested something smaller as opposed to just using a default like 2GB or something similarly
+            // large which we could never support in practice.
             final long intermediateMaxOutboundFrameSize = Math.min(localMaxFrameSize, remoteMaxFrameSize);
 
-            effectiveMaxOutboundFrameSize = (int) Math.min(LONG_INT_MAX_VALUE, intermediateMaxOutboundFrameSize);
+            effectiveMaxInboundFrameSize = Math.min(UnsignedInteger.MAX_VALUE.longValue(), engine.connection().getMaxFrameSize());
+
+            effectiveMaxOutboundFrameSize = Math.min(UnsignedInteger.MAX_VALUE.longValue(), intermediateMaxOutboundFrameSize);
         }
     }
 
-    int getOutboundMaxFrameSize() {
+    long getOutboundMaxFrameSize() {
         return effectiveMaxOutboundFrameSize;
     }
 
-    int getInboundMaxFrameSize() {
+    long getInboundMaxFrameSize() {
         return effectiveMaxInboundFrameSize;
     }
 }

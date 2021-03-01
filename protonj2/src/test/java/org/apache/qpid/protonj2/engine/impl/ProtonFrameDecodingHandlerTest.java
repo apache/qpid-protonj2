@@ -427,7 +427,7 @@ public class ProtonFrameDecodingHandlerTest {
 
     private ProtonFrameDecodingHandler createFrameDecoder() {
         ProtonEngineConfiguration configuration = Mockito.mock(ProtonEngineConfiguration.class);
-        Mockito.when(configuration.getInboundMaxFrameSize()).thenReturn(Integer.valueOf(65535));
+        Mockito.when(configuration.getInboundMaxFrameSize()).thenReturn(Long.valueOf(65535));
         ProtonEngine engine = Mockito.mock(ProtonEngine.class);
         Mockito.when(engine.configuration()).thenReturn(configuration);
         Mockito.when(engine.isWritable()).thenReturn(Boolean.TRUE);

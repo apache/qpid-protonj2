@@ -58,8 +58,8 @@ class ProtonFrameEncodingHandlerTest {
         framePool = ProtocolFramePool.outgoingFramePool();
 
         configuration = Mockito.mock(ProtonEngineConfiguration.class);
-        Mockito.when(configuration.getInboundMaxFrameSize()).thenReturn(Integer.valueOf(65535));
-        Mockito.when(configuration.getOutboundMaxFrameSize()).thenReturn(Integer.valueOf(65535));
+        Mockito.when(configuration.getInboundMaxFrameSize()).thenReturn(Long.valueOf(65535));
+        Mockito.when(configuration.getOutboundMaxFrameSize()).thenReturn(Long.valueOf(65535));
         Mockito.when(configuration.getBufferAllocator()).thenReturn(ProtonByteBufferAllocator.DEFAULT);
 
         engine = Mockito.mock(ProtonEngine.class);
@@ -156,7 +156,7 @@ class ProtonFrameEncodingHandlerTest {
         transfer.setDeliveryId(0);
         transfer.setDeliveryTag(new byte[] {0});
 
-        final byte[] payload = new byte[configuration.getOutboundMaxFrameSize() * 2];
+        final byte[] payload = new byte[(int) (configuration.getOutboundMaxFrameSize() * 2)];
         final AtomicBoolean toLargeHandlerCalled = new AtomicBoolean();
 
         random.nextBytes(payload);
@@ -181,6 +181,47 @@ class ProtonFrameEncodingHandlerTest {
         final int bufferSize = output.getReadableBytes();
 
         assertEquals(configuration.getOutboundMaxFrameSize(), output.maxCapacity());
+        assertEquals(bufferSize, output.readInt());
+        assertEquals(FRAME_DOFF_SIZE, output.readByte());
+        assertEquals(AMQP_FRAME_TYPE, output.readByte());
+        assertEquals(32, output.readShort());
+
+        final Transfer decodedTransfer = decode(output);
+        assertEquals(transfer.getHandle(), decodedTransfer.getHandle());
+        assertEquals(transfer.getDeliveryId(), decodedTransfer.getDeliveryId());
+        assertEquals(transfer.getDeliveryTag(), decodedTransfer.getDeliveryTag());
+        assertEquals(transfer.getMore(), decodedTransfer.getMore());
+    }
+
+    @Test
+    void testOutgoingFrameIsReleasedAfterWriteFinishes() {
+        ProtonFrameEncodingHandler handler = new ProtonFrameEncodingHandler();
+        handler.handlerAdded(context);
+
+        Transfer transfer = new Transfer();
+        transfer.setHandle(0);
+        transfer.setDeliveryId(0);
+        transfer.setDeliveryTag(new byte[] {0});
+
+        final byte[] payload = new byte[64];
+
+        random.nextBytes(payload);
+
+        OutgoingProtocolFrame frame = Mockito.spy(framePool.take(transfer, 32, ProtonByteBufferAllocator.DEFAULT.wrap(payload)));
+
+        handler.handleWrite(context, frame);
+
+        ArgumentCaptor<ProtonBuffer> argument = ArgumentCaptor.forClass(ProtonBuffer.class);
+        Mockito.verify(context).fireWrite(argument.capture());
+        Mockito.verify(frame).release();
+
+        ProtonBuffer output = argument.getValue();
+
+        assertNotNull(output);
+        assertTrue(output.getWriteIndex() > 0);
+
+        final int bufferSize = output.getReadableBytes();
+
         assertEquals(bufferSize, output.readInt());
         assertEquals(FRAME_DOFF_SIZE, output.readByte());
         assertEquals(AMQP_FRAME_TYPE, output.readByte());
