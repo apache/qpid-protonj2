@@ -4329,4 +4329,71 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
         assertNull(failure);
     }
+
+    @Test
+    public void testIncomingWindowRefilledWithBytesPreviouslyReadOnAbortedTransfer() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        byte[] payload = new byte[256];
+        Arrays.fill(payload, (byte) 127);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().withIncomingWindow(2).respond();
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(2).withNextIncomingId(1);
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(true)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session();
+        session.setIncomingCapacity((int) (connection.getMaxFrameSize() * 2));
+        session.open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicInteger deliveryCounter = new AtomicInteger();
+        final AtomicInteger deliveryAbortedCounter = new AtomicInteger();
+
+        receiver.deliveryReadHandler(delivery -> {
+            deliveryCounter.incrementAndGet();
+            if (delivery.isAborted()) {
+                deliveryAbortedCounter.incrementAndGet();
+            }
+        });
+
+        receiver.deliveryStateUpdatedHandler((delivery) -> {
+            fail("Should not have updated this handler.");
+        });
+
+        receiver.open();
+        receiver.addCredit(2);
+
+        peer.waitForScriptToComplete();
+        peer.expectFlow().withLinkCredit(1).withIncomingWindow(2).withNextIncomingId(3);
+        peer.expectDetach().respond();
+
+        assertEquals((connection.getMaxFrameSize() * 2) - payload.length, session.getRemainingIncomingCapacity());
+
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withAborted(true)
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).now();
+
+        assertEquals(connection.getMaxFrameSize() * 2, session.getRemainingIncomingCapacity());
+
+        receiver.close();
+
+        assertEquals(2, deliveryCounter.get(), "Should have received two delivery read events");
+        assertEquals(1, deliveryAbortedCounter.get(), "Should only be one aborted delivery event");
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 }

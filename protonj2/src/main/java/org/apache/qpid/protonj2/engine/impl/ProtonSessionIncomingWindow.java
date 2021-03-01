@@ -130,10 +130,7 @@ public class ProtonSessionIncomingWindow {
      *      the payload that was transmitted with the incoming {@link Transfer}
      */
     Transfer handleTransfer(ProtonLink<?> link, Transfer transfer, ProtonBuffer payload) {
-        if (payload != null && !transfer.getAborted()) {
-            incomingBytes += payload.getReadableBytes();
-        }
-
+        incomingBytes += payload != null ? payload.getReadableBytes() : 0;
         incomingWindow--;
         nextIncomingId++;
 

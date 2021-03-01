@@ -409,15 +409,15 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
         final boolean done = transfer.getAborted() || !transfer.getMore();
         if (done) {
+            getCreditState().decrementCredit();
+            getCreditState().incrementDeliveryCount();
+            currentDeliveryId.reset();
+
             if (transfer.getAborted()) {
                 delivery.aborted();
             } else {
                 delivery.completed();
             }
-
-            getCreditState().decrementCredit();
-            getCreditState().incrementDeliveryCount();
-            currentDeliveryId.reset();
         }
 
         if (transfer.getAborted()) {
