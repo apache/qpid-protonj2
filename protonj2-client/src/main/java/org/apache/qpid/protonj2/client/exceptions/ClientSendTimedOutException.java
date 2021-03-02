@@ -23,8 +23,6 @@ public class ClientSendTimedOutException extends ClientOperationTimedOutExceptio
 
     private static final long serialVersionUID = 222325890763309867L;
 
-    // private final Tracker tracker;  // TODO if sent on wire add the Tracker ?
-
     public ClientSendTimedOutException(String reason) {
         super(reason);
     }

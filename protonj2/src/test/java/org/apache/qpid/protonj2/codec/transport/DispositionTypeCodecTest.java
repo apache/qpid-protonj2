@@ -37,7 +37,6 @@ import org.apache.qpid.protonj2.codec.encoders.transport.DispositionTypeEncoder;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.transport.Disposition;
 import org.apache.qpid.protonj2.types.transport.Role;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class DispositionTypeCodecTest extends CodecTestSupport {
@@ -115,7 +114,6 @@ public class DispositionTypeCodecTest extends CodecTestSupport {
         assertSame(Accepted.getInstance(), result.getState());
     }
 
-    @Disabled("Need to decide how and when to validate mandatory fields")
     @Test
     public void testDecodeEnforcesFirstValueRequired() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
@@ -126,7 +124,6 @@ public class DispositionTypeCodecTest extends CodecTestSupport {
         input.setSettled(true);
         input.setState(Accepted.getInstance());
 
-        // TODO - Probably should throw here too
         encoder.writeObject(buffer, encoderState, input);
 
         try {

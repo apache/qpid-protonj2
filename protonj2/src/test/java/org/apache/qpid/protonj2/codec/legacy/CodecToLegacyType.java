@@ -16,7 +16,9 @@
  */
 package org.apache.qpid.protonj2.codec.legacy;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -92,7 +94,9 @@ public abstract class CodecToLegacyType {
         // Arrays, Maps and Lists
         if (newType instanceof Map) {
             return convertToLegacyType((Map<?, ?>) newType);
-        } // TODO - List conversions from new types to legacy
+        } else if (newType instanceof List) {
+            return convertToLegacyType((List<?>) newType);
+        }
 
         // Enumerations
         if (newType instanceof Role) {
@@ -460,6 +464,24 @@ public abstract class CodecToLegacyType {
         }
 
         return legacySafeMap;
+    }
+
+    /**
+     * convert a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param list
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public static List<?> convertToLegacyType(List<?> list) {
+        List<Object> legacySafeList = new ArrayList<>();
+
+        for (Object entry : list) {
+            legacySafeList.add(convertToLegacyType(entry));
+        }
+
+        return legacySafeList;
     }
 
     /**

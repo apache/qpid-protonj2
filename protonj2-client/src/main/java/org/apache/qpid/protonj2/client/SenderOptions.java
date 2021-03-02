@@ -28,8 +28,6 @@ import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
  */
 public class SenderOptions {
 
-    // TODO: simplify configuration options for things like durable subs, shared subs? Or add a helper to create the options?
-
     private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = ConnectionOptions.DEFAULT_REQUEST_TIMEOUT;
     private long openTimeout = ConnectionOptions.DEFAULT_OPEN_TIMEOUT;
