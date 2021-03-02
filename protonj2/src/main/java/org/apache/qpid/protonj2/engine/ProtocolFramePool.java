@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.protonj2.engine;
 
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.util.RingQueue;
@@ -34,15 +34,16 @@ public class ProtocolFramePool<E extends Frame<Performative>> {
     private int maxPoolSize = DEFAULT_MAX_POOL_SIZE;
 
     private final RingQueue<E> pool;
-    private final Supplier<E> frameSupplier;
+    private final Function<ProtocolFramePool<E>, E> frameBuilder;
 
-    public ProtocolFramePool(Supplier<E> frameSupplier) {
-        this(frameSupplier, ProtocolFramePool.DEFAULT_MAX_POOL_SIZE);
+    public ProtocolFramePool(Function<ProtocolFramePool<E>, E> frameBuilder) {
+        this(frameBuilder, ProtocolFramePool.DEFAULT_MAX_POOL_SIZE);
     }
 
-    public ProtocolFramePool(Supplier<E> frameSupplier, int maxPoolSize) {
+    public ProtocolFramePool(Function<ProtocolFramePool<E>, E> frameBuilder, int maxPoolSize) {
         this.pool = new RingQueue<>(getMaxPoolSize());
-        this.frameSupplier = frameSupplier;
+        this.maxPoolSize = maxPoolSize;
+        this.frameBuilder = frameBuilder;
     }
 
     public final int getMaxPoolSize() {
@@ -51,24 +52,48 @@ public class ProtocolFramePool<E extends Frame<Performative>> {
 
     @SuppressWarnings("unchecked")
     public E take(Performative body, int channel, ProtonBuffer payload) {
-        return (E) pool.poll(frameSupplier).initialize(body, channel, payload);
+        return (E) pool.poll(this::supplyPooledResource).initialize(body, channel, payload);
     }
 
     void release(E pooledFrame) {
         pool.offer(pooledFrame);
     }
 
+    private E supplyPooledResource() {
+        return frameBuilder.apply(this);
+    }
+
+    /**
+     * @param maxPoolSize
+     *      The maximum number of protocol frames to store in the pool.
+     *
+     * @return a new {@link ProtocolFramePool} that pools incoming AMQP frames
+     */
+    public static ProtocolFramePool<IncomingProtocolFrame> incomingFramePool(int maxPoolSize) {
+        return new ProtocolFramePool<>((pool) -> new IncomingProtocolFrame(pool), maxPoolSize);
+    }
+
     /**
      * @return a new {@link ProtocolFramePool} that pools incoming AMQP frames
      */
     public static ProtocolFramePool<IncomingProtocolFrame> incomingFramePool() {
-        return new ProtocolFramePool<>(() -> new IncomingProtocolFrame());
+        return new ProtocolFramePool<>((pool) -> new IncomingProtocolFrame(pool));
+    }
+
+    /**
+     * @param maxPoolSize
+     *      The maximum number of protocol frames to store in the pool.
+     *
+     * @return a new {@link ProtocolFramePool} that pools outgoing AMQP frames
+     */
+    public static ProtocolFramePool<OutgoingProtocolFrame> outgoingFramePool(int maxPoolSize) {
+        return new ProtocolFramePool<>((pool) -> new OutgoingProtocolFrame(pool), maxPoolSize);
     }
 
     /**
      * @return a new {@link ProtocolFramePool} that pools outgoing AMQP frames
      */
     public static ProtocolFramePool<OutgoingProtocolFrame> outgoingFramePool() {
-        return new ProtocolFramePool<>(() -> new OutgoingProtocolFrame());
+        return new ProtocolFramePool<>((pool) -> new OutgoingProtocolFrame(pool));
     }
 }
