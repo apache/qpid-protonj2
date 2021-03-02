@@ -60,6 +60,12 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
 
     private static final int DATA_SECTION_HEADER_ENCODING_SIZE = 8;
 
+    // Standard encoding data for a Data Section (Requires four byte size written before writing the actual data)
+    private static final byte[] DATA_SECTION_PREAMBLE = { EncodingCodes.DESCRIBED_TYPE_INDICATOR,
+                                                          EncodingCodes.SMALLULONG,
+                                                          Data.DESCRIPTOR_CODE.byteValue(),
+                                                          EncodingCodes.VBIN32 };
+
     private enum StreamState {
         PREAMBLE,
         BODY_WRITABLE,
@@ -440,10 +446,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
 
             ProtonBuffer preamble = ProtonByteBufferAllocator.DEFAULT.allocate(DATA_SECTION_HEADER_ENCODING_SIZE, DATA_SECTION_HEADER_ENCODING_SIZE);
 
-            preamble.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-            preamble.writeByte(EncodingCodes.SMALLULONG);
-            preamble.writeByte(Data.DESCRIPTOR_CODE.byteValue());
-            preamble.writeByte(EncodingCodes.VBIN32);
+            preamble.writeBytes(DATA_SECTION_PREAMBLE);
             preamble.writeInt(options.bodyLength());
 
             appenedDataToBuffer(preamble);
@@ -462,10 +465,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
 
                 ProtonBuffer preamble = ProtonByteBufferAllocator.DEFAULT.allocate(DATA_SECTION_HEADER_ENCODING_SIZE, DATA_SECTION_HEADER_ENCODING_SIZE);
 
-                preamble.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-                preamble.writeByte(EncodingCodes.SMALLULONG);
-                preamble.writeByte(Data.DESCRIPTOR_CODE.byteValue());
-                preamble.writeByte(EncodingCodes.VBIN32);
+                preamble.writeBytes(DATA_SECTION_PREAMBLE);
                 preamble.writeInt(streamBuffer.getReadableBytes());
 
                 try {
