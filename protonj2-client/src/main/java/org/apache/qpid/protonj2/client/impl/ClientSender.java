@@ -73,6 +73,7 @@ class ClientSender implements Sender {
     protected final ClientSession session;
     protected final ScheduledExecutorService executor;
     protected final String senderId;
+    protected final boolean sendsSettled;
     protected org.apache.qpid.protonj2.engine.Sender protonSender;
     protected Consumer<Sender> senderRemotelyClosedHandler;
 
@@ -87,6 +88,7 @@ class ClientSender implements Sender {
         this.openFuture = session.getFutureFactory().createFuture();
         this.closeFuture = session.getFutureFactory().createFuture();
         this.protonSender = protonSender.setLinkedResource(this);
+        this.sendsSettled = protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED;
     }
 
     @Override
@@ -405,6 +407,10 @@ class ClientSender implements Sender {
         return protonSender.getTarget() != null && protonSender.<org.apache.qpid.protonj2.types.messaging.Target>getTarget().isDynamic();
     }
 
+    boolean isSendingSettled() {
+        return sendsSettled;
+    }
+
     //----- Handlers for proton receiver events
 
     private void handleLocalOpen(org.apache.qpid.protonj2.engine.Sender sender) {
@@ -493,7 +499,7 @@ class ClientSender implements Sender {
                         // We don't currently allow a sender to define any outcome so we pass null for
                         // now, however a transaction context will apply its TransactionalState outcome
                         // and would wrap anything we passed in the future.
-                        session.getTransactionContext().send(held, null, protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED);
+                        session.getTransactionContext().send(held, null, isSendingSettled());
                     } catch (Exception error) {
                         held.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
                     } finally {

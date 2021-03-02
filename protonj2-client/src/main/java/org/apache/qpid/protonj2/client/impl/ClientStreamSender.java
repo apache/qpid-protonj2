@@ -31,7 +31,6 @@ import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
-import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 
 public final class ClientStreamSender extends ClientSender implements StreamSender {
 
@@ -125,7 +124,7 @@ public final class ClientStreamSender extends ClientSender implements StreamSend
             if (notClosedOrFailed(operation)) {
                 try {
                     if (protonSender.isSendable()) {
-                        session.getTransactionContext().send(envelope, null, protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED);
+                        session.getTransactionContext().send(envelope, null, isSendingSettled());
                     } else {
                         addToHeadOfBlockedQueue(envelope);
                     }
