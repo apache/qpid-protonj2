@@ -29,9 +29,9 @@ import org.apache.qpid.protonj2.engine.EnginePipeline;
 import org.apache.qpid.protonj2.engine.EngineSaslDriver;
 import org.apache.qpid.protonj2.engine.EngineState;
 import org.apache.qpid.protonj2.engine.EventHandler;
-import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
-import org.apache.qpid.protonj2.engine.ProtocolFramePool;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
+import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.AMQPPerformativeEnvelopePool;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineNotStartedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineNotWritableException;
@@ -60,7 +60,7 @@ public class ProtonEngine implements Engine {
     private final ProtonEnginePipelineProxy pipelineProxy = new ProtonEnginePipelineProxy(pipeline);
     private final ProtonEngineConfiguration configuration = new ProtonEngineConfiguration(this);
     private final ProtonConnection connection = new ProtonConnection(this);
-    private final ProtocolFramePool<OutgoingProtocolFrame> framePool = ProtocolFramePool.outgoingFramePool();
+    private final AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> framePool = AMQPPerformativeEnvelopePool.outgoingEnvelopePool();
 
     private EngineSaslDriver saslDriver = new ProtonEngineNoOpSaslDriver();
 
@@ -340,12 +340,12 @@ public class ProtonEngine implements Engine {
 
     //----- Internal proton engine implementation
 
-    ProtonEngine fireWrite(HeaderFrame frame) {
+    ProtonEngine fireWrite(HeaderEnvelope frame) {
         pipeline.fireWrite(frame);
         return this;
     }
 
-    ProtonEngine fireWrite(OutgoingProtocolFrame frame) {
+    ProtonEngine fireWrite(OutgoingAMQPEnvelope frame) {
         pipeline.fireWrite(frame);
         return this;
     }
@@ -360,7 +360,7 @@ public class ProtonEngine implements Engine {
         return this;
     }
 
-    OutgoingProtocolFrame wrap(Performative performative, int channel, ProtonBuffer payload) {
+    OutgoingAMQPEnvelope wrap(Performative performative, int channel, ProtonBuffer payload) {
         return framePool.take(performative, channel, payload);
     }
 

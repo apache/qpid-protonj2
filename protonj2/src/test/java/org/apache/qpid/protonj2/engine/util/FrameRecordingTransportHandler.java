@@ -21,60 +21,60 @@ import java.util.List;
 
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
-import org.apache.qpid.protonj2.engine.Frame;
-import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
-import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
-import org.apache.qpid.protonj2.engine.SaslFrame;
+import org.apache.qpid.protonj2.engine.PerformativeEnvelope;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
+import org.apache.qpid.protonj2.engine.IncomingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.SASLEnvelope;
 
 public class FrameRecordingTransportHandler implements EngineHandler {
 
-    private List<Frame<?>> framesRead = new ArrayList<>();
-    private List<Frame<?>> framesWritten = new ArrayList<>();
+    private List<PerformativeEnvelope<?>> framesRead = new ArrayList<>();
+    private List<PerformativeEnvelope<?>> framesWritten = new ArrayList<>();
 
     public FrameRecordingTransportHandler() {
     }
 
-    public List<Frame<?>> getFramesWritten() {
+    public List<PerformativeEnvelope<?>> getFramesWritten() {
         return framesWritten;
     }
 
-    public List<Frame<?>> getFramesRead() {
+    public List<PerformativeEnvelope<?>> getFramesRead() {
         return framesRead;
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, HeaderFrame header) {
+    public void handleRead(EngineHandlerContext context, HeaderEnvelope header) {
         framesRead.add(header);
         context.fireRead(header);
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, SaslFrame frame) {
+    public void handleRead(EngineHandlerContext context, SASLEnvelope frame) {
         framesRead.add(frame);
         context.fireRead(frame);
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, IncomingProtocolFrame frame) {
+    public void handleRead(EngineHandlerContext context, IncomingAMQPEnvelope frame) {
         framesRead.add(frame);
         context.fireRead(frame);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, HeaderFrame frame) {
+    public void handleWrite(EngineHandlerContext context, HeaderEnvelope frame) {
         framesWritten.add(frame);
         context.fireWrite(frame);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, OutgoingProtocolFrame frame) {
+    public void handleWrite(EngineHandlerContext context, OutgoingAMQPEnvelope frame) {
         framesWritten.add(frame);
         context.fireWrite(frame);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, SaslFrame frame) {
+    public void handleWrite(EngineHandlerContext context, SASLEnvelope frame) {
         framesWritten.add(frame);
         context.fireWrite(frame);
     }

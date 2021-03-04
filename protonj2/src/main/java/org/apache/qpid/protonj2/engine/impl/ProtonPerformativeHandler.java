@@ -19,8 +19,8 @@ package org.apache.qpid.protonj2.engine.impl;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
-import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
+import org.apache.qpid.protonj2.engine.IncomingAMQPEnvelope;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
@@ -56,16 +56,16 @@ public class ProtonPerformativeHandler implements EngineHandler, HeaderHandler<E
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, HeaderFrame header) {
+    public void handleRead(EngineHandlerContext context, HeaderEnvelope header) {
         header.invoke(this, context);
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, IncomingProtocolFrame frame) {
+    public void handleRead(EngineHandlerContext context, IncomingAMQPEnvelope envelope) {
         try {
-            frame.invoke(this, context);
+            envelope.invoke(this, context);
         } finally {
-            frame.release();
+            envelope.release();
         }
     }
 
@@ -99,7 +99,7 @@ public class ProtonPerformativeHandler implements EngineHandler, HeaderHandler<E
     @Override
     public void handleSASLHeader(AMQPHeader header, EngineHandlerContext context) {
         // Respond with Raw AMQP Header and then fail the engine.
-        context.fireWrite(HeaderFrame.AMQP_HEADER_FRAME);
+        context.fireWrite(HeaderEnvelope.AMQP_HEADER_ENVELOPE);
 
         throw new ProtocolViolationException("Received SASL Header but no SASL support configured");
     }

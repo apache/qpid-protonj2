@@ -31,14 +31,14 @@ class ProtocolFramePoolTest {
 
     @Test
     void testCreateIncomingFramePool() {
-        ProtocolFramePool<IncomingProtocolFrame> pool = ProtocolFramePool.incomingFramePool();
+        AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> pool = AMQPPerformativeEnvelopePool.incomingEnvelopePool();
 
         assertNotNull(pool);
-        assertEquals(ProtocolFramePool.DEFAULT_MAX_POOL_SIZE, pool.getMaxPoolSize());
+        assertEquals(AMQPPerformativeEnvelopePool.DEFAULT_MAX_POOL_SIZE, pool.getMaxPoolSize());
 
-        IncomingProtocolFrame frame1 = pool.take(new Transfer(), 0, null);
+        IncomingAMQPEnvelope frame1 = pool.take(new Transfer(), 0, null);
         assertNotNull(frame1);
-        IncomingProtocolFrame frame2 = pool.take(new Transfer(), 0, null);
+        IncomingAMQPEnvelope frame2 = pool.take(new Transfer(), 0, null);
         assertNotNull(frame2);
 
         assertNotSame(frame1, frame2);
@@ -46,27 +46,27 @@ class ProtocolFramePoolTest {
 
     @Test
     void testCreateIncomingFramePoolWithConfiguredMaxSize() {
-        ProtocolFramePool<IncomingProtocolFrame> pool = ProtocolFramePool.incomingFramePool(ProtocolFramePool.DEFAULT_MAX_POOL_SIZE + 10);
+        AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> pool = AMQPPerformativeEnvelopePool.incomingEnvelopePool(AMQPPerformativeEnvelopePool.DEFAULT_MAX_POOL_SIZE + 10);
 
-        assertEquals(ProtocolFramePool.DEFAULT_MAX_POOL_SIZE + 10, pool.getMaxPoolSize());
+        assertEquals(AMQPPerformativeEnvelopePool.DEFAULT_MAX_POOL_SIZE + 10, pool.getMaxPoolSize());
     }
 
     @Test
     void testIncomingPoolRecyclesReleasedFrames() {
-        ProtocolFramePool<IncomingProtocolFrame> pool = ProtocolFramePool.incomingFramePool();
-        IncomingProtocolFrame frame1 = pool.take(new Transfer(), 0, null);
+        AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> pool = AMQPPerformativeEnvelopePool.incomingEnvelopePool();
+        IncomingAMQPEnvelope frame1 = pool.take(new Transfer(), 0, null);
 
         frame1.release();
 
-        IncomingProtocolFrame frame2 = pool.take(new Transfer(), 0, null);
+        IncomingAMQPEnvelope frame2 = pool.take(new Transfer(), 0, null);
 
         assertSame(frame1, frame2);
     }
 
     @Test
     void testInomingPoolClearsReleasedFramePayloads() {
-        ProtocolFramePool<IncomingProtocolFrame> pool = ProtocolFramePool.incomingFramePool();
-        IncomingProtocolFrame frame1 = pool.take(new Transfer(), 2, ProtonByteBufferAllocator.DEFAULT.allocate());
+        AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> pool = AMQPPerformativeEnvelopePool.incomingEnvelopePool();
+        IncomingAMQPEnvelope frame1 = pool.take(new Transfer(), 2, ProtonByteBufferAllocator.DEFAULT.allocate());
 
         frame1.release();
 
@@ -77,14 +77,14 @@ class ProtocolFramePoolTest {
 
     @Test
     void testCreateOutgoingFramePool() {
-        ProtocolFramePool<OutgoingProtocolFrame> pool = ProtocolFramePool.outgoingFramePool();
+        AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> pool = AMQPPerformativeEnvelopePool.outgoingEnvelopePool();
 
         assertNotNull(pool);
-        assertEquals(ProtocolFramePool.DEFAULT_MAX_POOL_SIZE, pool.getMaxPoolSize());
+        assertEquals(AMQPPerformativeEnvelopePool.DEFAULT_MAX_POOL_SIZE, pool.getMaxPoolSize());
 
-        OutgoingProtocolFrame frame1 = pool.take(new Transfer(), 0, null);
+        OutgoingAMQPEnvelope frame1 = pool.take(new Transfer(), 0, null);
         assertNotNull(frame1);
-        OutgoingProtocolFrame frame2 = pool.take(new Transfer(), 0, null);
+        OutgoingAMQPEnvelope frame2 = pool.take(new Transfer(), 0, null);
         assertNotNull(frame2);
 
         assertNotEquals(frame1, frame2);
@@ -92,27 +92,27 @@ class ProtocolFramePoolTest {
 
     @Test
     void testCreateOutgoingFramePoolWithConfiguredMaxSize() {
-        ProtocolFramePool<OutgoingProtocolFrame> pool = ProtocolFramePool.outgoingFramePool(ProtocolFramePool.DEFAULT_MAX_POOL_SIZE + 10);
+        AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> pool = AMQPPerformativeEnvelopePool.outgoingEnvelopePool(AMQPPerformativeEnvelopePool.DEFAULT_MAX_POOL_SIZE + 10);
 
-        assertEquals(ProtocolFramePool.DEFAULT_MAX_POOL_SIZE + 10, pool.getMaxPoolSize());
+        assertEquals(AMQPPerformativeEnvelopePool.DEFAULT_MAX_POOL_SIZE + 10, pool.getMaxPoolSize());
     }
 
     @Test
     void testOutgoingPoolRecyclesReleasedFrames() {
-        ProtocolFramePool<OutgoingProtocolFrame> pool = ProtocolFramePool.outgoingFramePool();
-        OutgoingProtocolFrame frame1 = pool.take(new Transfer(), 0, null);
+        AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> pool = AMQPPerformativeEnvelopePool.outgoingEnvelopePool();
+        OutgoingAMQPEnvelope frame1 = pool.take(new Transfer(), 0, null);
 
         frame1.release();
 
-        OutgoingProtocolFrame frame2 = pool.take(new Transfer(), 0, null);
+        OutgoingAMQPEnvelope frame2 = pool.take(new Transfer(), 0, null);
 
         assertSame(frame1, frame2);
     }
 
     @Test
     void testOutgoingPoolClearsReleasedFramePayloads() {
-        ProtocolFramePool<OutgoingProtocolFrame> pool = ProtocolFramePool.outgoingFramePool();
-        OutgoingProtocolFrame frame1 = pool.take(new Transfer(), 2, ProtonByteBufferAllocator.DEFAULT.allocate());
+        AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> pool = AMQPPerformativeEnvelopePool.outgoingEnvelopePool();
+        OutgoingAMQPEnvelope frame1 = pool.take(new Transfer(), 2, ProtonByteBufferAllocator.DEFAULT.allocate());
 
         frame1.release();
 

@@ -24,9 +24,9 @@ import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
-import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
-import org.apache.qpid.protonj2.engine.SaslFrame;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
+import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.SASLEnvelope;
 import org.apache.qpid.protonj2.engine.exceptions.FrameEncodingException;
 import org.apache.qpid.protonj2.types.transport.Performative;
 
@@ -66,12 +66,12 @@ public class ProtonFrameEncodingHandler implements EngineHandler {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, HeaderFrame frame) {
+    public void handleWrite(EngineHandlerContext context, HeaderEnvelope frame) {
         context.fireWrite(frame.getBody().getBuffer());
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, SaslFrame frame) {
+    public void handleWrite(EngineHandlerContext context, SASLEnvelope frame) {
         ProtonBuffer output = configuration.getBufferAllocator().outputBuffer(AMQP_PERFORMATIVE_PAD, (int) configuration.getOutboundMaxFrameSize());
 
         output.setWriteIndex(FRAME_HEADER_SIZE);
@@ -89,7 +89,7 @@ public class ProtonFrameEncodingHandler implements EngineHandler {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, OutgoingProtocolFrame frame) {
+    public void handleWrite(EngineHandlerContext context, OutgoingAMQPEnvelope frame) {
         try {
             final ProtonBuffer payload = frame.getPayload() == null ? EMPTY_BUFFER : frame.getPayload();
             final int maxFrameSize = (int) configuration.getOutboundMaxFrameSize();

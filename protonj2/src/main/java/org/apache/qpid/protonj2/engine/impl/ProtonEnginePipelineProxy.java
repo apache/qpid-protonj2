@@ -23,10 +23,10 @@ import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.EnginePipeline;
-import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
-import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
-import org.apache.qpid.protonj2.engine.SaslFrame;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
+import org.apache.qpid.protonj2.engine.IncomingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.SASLEnvelope;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineNotWritableException;
 
@@ -151,7 +151,7 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
     }
 
     @Override
-    public ProtonEnginePipelineProxy fireRead(HeaderFrame header) {
+    public ProtonEnginePipelineProxy fireRead(HeaderEnvelope header) {
         engine().checkEngineNotStarted("Cannot inject new data into an unstarted Engine");
         engine().checkShutdownOrFailed("Cannot inject new data into an Engine that is shutdown or failed");
         pipeline.fireRead(header);
@@ -159,23 +159,23 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
     }
 
     @Override
-    public ProtonEnginePipelineProxy fireRead(SaslFrame frame) {
+    public ProtonEnginePipelineProxy fireRead(SASLEnvelope envelope) {
         engine().checkEngineNotStarted("Cannot inject new data into an unstarted Engine");
         engine().checkShutdownOrFailed("Cannot inject new data into an Engine that is shutdown or failed");
-        pipeline.fireRead(frame);
+        pipeline.fireRead(envelope);
         return this;
     }
 
     @Override
-    public ProtonEnginePipelineProxy fireRead(IncomingProtocolFrame frame) {
+    public ProtonEnginePipelineProxy fireRead(IncomingAMQPEnvelope envelope) {
         engine().checkEngineNotStarted("Cannot inject new data into an unstarted Engine");
         engine().checkShutdownOrFailed("Cannot inject new data into an Engine that is shutdown or failed");
-        pipeline.fireRead(frame);
+        pipeline.fireRead(envelope);
         return this;
     }
 
     @Override
-    public ProtonEnginePipelineProxy fireWrite(HeaderFrame frame) {
+    public ProtonEnginePipelineProxy fireWrite(HeaderEnvelope envelope) {
         engine().checkEngineNotStarted("Cannot write from an unstarted Engine");
         engine().checkShutdownOrFailed("Cannot write form an Engine that is shutdown or failed");
 
@@ -183,12 +183,12 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
             throw new EngineNotWritableException("Cannot write through Engine pipeline when Engine is not writable");
         }
 
-        pipeline.fireWrite(frame);
+        pipeline.fireWrite(envelope);
         return this;
     }
 
     @Override
-    public ProtonEnginePipelineProxy fireWrite(OutgoingProtocolFrame frame) {
+    public ProtonEnginePipelineProxy fireWrite(OutgoingAMQPEnvelope envelope) {
         engine().checkEngineNotStarted("Cannot write from an unstarted Engine");
         engine().checkShutdownOrFailed("Cannot write form an Engine that is shutdown or failed");
 
@@ -196,12 +196,12 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
             throw new EngineNotWritableException("Cannot write through Engine pipeline when Engine is not writable");
         }
 
-        pipeline.fireWrite(frame);
+        pipeline.fireWrite(envelope);
         return this;
     }
 
     @Override
-    public ProtonEnginePipelineProxy fireWrite(SaslFrame frame) {
+    public ProtonEnginePipelineProxy fireWrite(SASLEnvelope envelope) {
         engine().checkEngineNotStarted("Cannot write from an unstarted Engine");
         engine().checkShutdownOrFailed("Cannot write form an Engine that is shutdown or failed");
 
@@ -209,7 +209,7 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
             throw new EngineNotWritableException("Cannot write through Engine pipeline when Engine is not writable");
         }
 
-        pipeline.fireWrite(frame);
+        pipeline.fireWrite(envelope);
         return this;
     }
 

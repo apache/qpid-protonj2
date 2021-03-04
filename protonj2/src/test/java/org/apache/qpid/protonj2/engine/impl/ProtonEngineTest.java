@@ -38,9 +38,9 @@ import org.apache.qpid.protonj2.engine.ConnectionState;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
 import org.apache.qpid.protonj2.engine.EngineState;
-import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.ProtocolFramePool;
-import org.apache.qpid.protonj2.engine.SaslFrame;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
+import org.apache.qpid.protonj2.engine.AMQPPerformativeEnvelopePool;
+import org.apache.qpid.protonj2.engine.SASLEnvelope;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.exceptions.EngineNotStartedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineShutdownException;
@@ -76,21 +76,21 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         }
 
         try {
-            engine.pipeline().fireWrite(HeaderFrame.AMQP_HEADER_FRAME);
+            engine.pipeline().fireWrite(HeaderEnvelope.AMQP_HEADER_ENVELOPE);
             fail("Should not be able to write until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected
         }
 
         try {
-            engine.pipeline().fireWrite(new SaslFrame(new SaslInit()));
+            engine.pipeline().fireWrite(new SASLEnvelope(new SaslInit()));
             fail("Should not be able to write until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected
         }
 
         try {
-            engine.pipeline().fireWrite(ProtocolFramePool.outgoingFramePool().take(new Open(), 0, null));
+            engine.pipeline().fireWrite(AMQPPerformativeEnvelopePool.outgoingEnvelopePool().take(new Open(), 0, null));
             fail("Should not be able to write until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected
@@ -108,21 +108,21 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertFalse(engine.isWritable());
 
         try {
-            engine.pipeline().fireRead(HeaderFrame.AMQP_HEADER_FRAME);
+            engine.pipeline().fireRead(HeaderEnvelope.AMQP_HEADER_ENVELOPE);
             fail("Should not be able to read data until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected
         }
 
         try {
-            engine.pipeline().fireRead(new SaslFrame(new SaslInit()));
+            engine.pipeline().fireRead(new SASLEnvelope(new SaslInit()));
             fail("Should not be able to read data until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected
         }
 
         try {
-            engine.pipeline().fireRead(ProtocolFramePool.incomingFramePool().take(new Open(), 0, new ProtonByteBuffer(0)));
+            engine.pipeline().fireRead(AMQPPerformativeEnvelopePool.incomingEnvelopePool().take(new Open(), 0, new ProtonByteBuffer(0)));
             fail("Should not be able to read data until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected

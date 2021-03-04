@@ -18,10 +18,10 @@ package org.apache.qpid.protonj2.engine.util;
 
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
-import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
-import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
-import org.apache.qpid.protonj2.engine.SaslFrame;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
+import org.apache.qpid.protonj2.engine.IncomingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.SASLEnvelope;
 
 /**
  * Drops all read frames in tests where no inbound frame handling is needed.
@@ -32,29 +32,29 @@ public class FrameReadSinkTransportHandler implements EngineHandler {
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, HeaderFrame header) {
+    public void handleRead(EngineHandlerContext context, HeaderEnvelope header) {
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, SaslFrame frame) {
+    public void handleRead(EngineHandlerContext context, SASLEnvelope frame) {
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, IncomingProtocolFrame frame) {
+    public void handleRead(EngineHandlerContext context, IncomingAMQPEnvelope frame) {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, HeaderFrame frame) {
+    public void handleWrite(EngineHandlerContext context, HeaderEnvelope frame) {
         context.fireWrite(frame);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, OutgoingProtocolFrame frame) {
+    public void handleWrite(EngineHandlerContext context, OutgoingAMQPEnvelope frame) {
         context.fireWrite(frame);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, SaslFrame frame) {
+    public void handleWrite(EngineHandlerContext context, SASLEnvelope frame) {
         context.fireWrite(frame);
     }
 }

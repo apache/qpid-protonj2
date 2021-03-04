@@ -100,34 +100,34 @@ public interface EngineHandler {
      * @param context
      *      The context for this handler which can be used to forward the event to the next handler
      * @param header
-     *      The AMQP Header frame that wraps the received header instance.
+     *      The AMQP Header envelope that wraps the received header instance.
      */
-    default void handleRead(EngineHandlerContext context, HeaderFrame header) {
+    default void handleRead(EngineHandlerContext context, HeaderEnvelope header) {
         context.fireRead(header);
     }
 
     /**
-     * Handle the receipt of an incoming SASL frame based on the current state of this handler.
+     * Handle the receipt of an incoming SASL performative based on the current state of this handler.
      *
      * @param context
      *      The context for this handler which can be used to forward the event to the next handler
-     * @param frame
-     *      The SASL frame that wraps the received {@link SaslPerformative}.
+     * @param envelope
+     *      The SASL envelope that wraps the received {@link SaslPerformative}.
      */
-    default void handleRead(EngineHandlerContext context, SaslFrame frame) {
-        context.fireRead(frame);
+    default void handleRead(EngineHandlerContext context, SASLEnvelope envelope) {
+        context.fireRead(envelope);
     }
 
     /**
-     * Handle the receipt of an incoming AMQP frame based on the current state of this handler.
+     * Handle the receipt of an incoming AMQP envelope based on the current state of this handler.
      *
      * @param context
      *      The context for this handler which can be used to forward the event to the next handler
-     * @param frame
-     *      The AMQP frame that wraps the received {@link Performative}.
+     * @param envelope
+     *      The AMQP envelope that wraps the received {@link Performative}.
      */
-    default void handleRead(EngineHandlerContext context, IncomingProtocolFrame frame) {
-        context.fireRead(frame);
+    default void handleRead(EngineHandlerContext context, IncomingAMQPEnvelope envelope) {
+        context.fireRead(envelope);
     }
 
     /**
@@ -137,25 +137,25 @@ public interface EngineHandler {
      *
      * @param context
      *      The {@link EngineHandlerContext} associated with this {@link EngineWriteHandler} instance.
-     * @param frame
-     *      The {@link HeaderFrame} instance to write.
+     * @param envelope
+     *      The {@link HeaderEnvelope} instance to write.
      */
-    default void handleWrite(EngineHandlerContext context, HeaderFrame frame) {
-        context.fireWrite(frame);
+    default void handleWrite(EngineHandlerContext context, HeaderEnvelope envelope) {
+        context.fireWrite(envelope);
     }
 
     /**
-     * Handles write of AMQP performative frame either by directly writing it to the output target or
+     * Handles write of AMQP performative envelope either by directly writing it to the output target or
      * by converting it to bytes and firing a write using the {@link ProtonBuffer} based API in
      * {@link EngineHandlerContext#fireWrite(ProtonBuffer)}
      *
      * @param context
      *      The {@link EngineHandlerContext} associated with this {@link EngineWriteHandler} instance.
-     * @param frame
-     *      The {@link OutgoingProtocolFrame} instance to write.
+     * @param envelope
+     *      The {@link OutgoingAMQPEnvelope} instance to write.
      */
-    default void handleWrite(EngineHandlerContext context, OutgoingProtocolFrame frame) {
-        context.fireWrite(frame);
+    default void handleWrite(EngineHandlerContext context, OutgoingAMQPEnvelope envelope) {
+        context.fireWrite(envelope);
     }
 
     /**
@@ -165,11 +165,11 @@ public interface EngineHandler {
      *
      * @param context
      *      The {@link EngineHandlerContext} associated with this {@link EngineWriteHandler} instance.
-     * @param frame
-     *      The {@link SaslFrame} instance to write.
+     * @param envelope
+     *      The {@link SASLEnvelope} instance to write.
      */
-    default void handleWrite(EngineHandlerContext context, SaslFrame frame) {
-        context.fireWrite(frame);
+    default void handleWrite(EngineHandlerContext context, SASLEnvelope envelope) {
+        context.fireWrite(envelope);
     }
 
     /**

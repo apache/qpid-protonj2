@@ -32,9 +32,9 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.protonj2.engine.EngineState;
-import org.apache.qpid.protonj2.engine.Frame;
-import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.SaslFrame;
+import org.apache.qpid.protonj2.engine.PerformativeEnvelope;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
+import org.apache.qpid.protonj2.engine.SASLEnvelope;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.impl.ProtonConstants;
@@ -151,7 +151,7 @@ public class ProtonSaslHandlerTest {
         final Engine engine = createSaslServerEngine();
 
         engine.start();
-        engine.pipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
+        engine.pipeline().fireRead(new HeaderEnvelope(AMQPHeader.getSASLHeader()));
 
         assertThrows(IllegalStateException.class, () -> engine.saslDriver().setMaxFrameSize(1024));
     }
@@ -204,7 +204,7 @@ public class ProtonSaslHandlerTest {
         engine.start();
 
         try {
-            engine.pipeline().fireRead(new HeaderFrame(AMQPHeader.getAMQPHeader()));
+            engine.pipeline().fireRead(new HeaderEnvelope(AMQPHeader.getAMQPHeader()));
             fail("SASL handler should reject a non-SASL AMQP Header read.");
         } catch (ProtocolViolationException pve) {
             // Expected
@@ -212,16 +212,16 @@ public class ProtonSaslHandlerTest {
 
         assertFalse(headerRead.get(), "Should not receive a Header");
 
-        List<Frame<?>> frames = testHandler.getFramesWritten();
+        List<PerformativeEnvelope<?>> frames = testHandler.getFramesWritten();
 
         assertEquals(1, frames.size(), "Sasl Anonymous exchange output not as expected");
 
         for (int i = 0; i < frames.size(); ++i) {
-            Frame<?> frame = frames.get(i);
+            PerformativeEnvelope<?> frame = frames.get(i);
             switch (i) {
                 case 0:
-                    assertTrue(frame.getType() == HeaderFrame.HEADER_FRAME_TYPE);
-                    HeaderFrame header = (HeaderFrame) frame;
+                    assertTrue(frame.getFrameType() == HeaderEnvelope.HEADER_FRAME_TYPE);
+                    HeaderEnvelope header = (HeaderEnvelope) frame;
                     assertTrue(header.getBody().isSaslHeader(), "Should have written a SASL Header in response");
                     break;
                 default:
@@ -256,27 +256,27 @@ public class ProtonSaslHandlerTest {
             }
         });
 
-        engine.pipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
+        engine.pipeline().fireRead(new HeaderEnvelope(AMQPHeader.getSASLHeader()));
 
         assertThrows(IllegalStateException.class, () -> engine.saslDriver().client());
 
         assertTrue(saslHeaderRead.get(), "Did not receive a SASL Header");
 
-        List<Frame<?>> frames = testHandler.getFramesWritten();
+        List<PerformativeEnvelope<?>> frames = testHandler.getFramesWritten();
 
         // We should get a SASL header indicating that the server accepted SASL
         assertEquals(1, frames.size(), "Sasl Anonymous exchange output not as expected");
 
         for (int i = 0; i < frames.size(); ++i) {
-            Frame<?> frame = frames.get(i);
+            PerformativeEnvelope<?> frame = frames.get(i);
             switch (i) {
                 case 0:
-                    assertTrue(frame.getType() == HeaderFrame.HEADER_FRAME_TYPE);
-                    HeaderFrame header = (HeaderFrame) frame;
+                    assertTrue(frame.getFrameType() == HeaderEnvelope.HEADER_FRAME_TYPE);
+                    HeaderEnvelope header = (HeaderEnvelope) frame;
                     assertTrue(header.getBody().isSaslHeader());
                     break;
                 case 1:
-                    assertTrue(frame.getType() == SaslFrame.SASL_FRAME_TYPE);
+                    assertTrue(frame.getFrameType() == SASLEnvelope.SASL_FRAME_TYPE);
                     break;
                 default:
                     fail("Invalid Frame read during exchange: " + frame);
@@ -323,7 +323,7 @@ public class ProtonSaslHandlerTest {
         });
 
         // Check for Header processing
-        engine.start().getEngine().pipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
+        engine.start().getEngine().pipeline().fireRead(new HeaderEnvelope(AMQPHeader.getSASLHeader()));
 
         assertTrue(saslHeaderRead.get(), "Did not receive a SASL Header");
 
@@ -333,37 +333,37 @@ public class ProtonSaslHandlerTest {
         clientInit.setInitialResponse(new Binary(new byte[0]));
 
         // Check for Initial Response processing
-        engine.pipeline().fireRead(new SaslFrame(clientInit));
+        engine.pipeline().fireRead(new SASLEnvelope(clientInit));
 
         assertEquals("HOST-NAME", clientHostname.get());
         assertEquals(Symbol.valueOf("ANONYMOUS"), clientMechanism.get());
         assertTrue(emptyResponse.get(), "Response should be an empty byte array");
 
-        List<Frame<?>> frames = testHandler.getFramesWritten();
+        List<PerformativeEnvelope<?>> frames = testHandler.getFramesWritten();
 
         assertEquals(3, frames.size(), "SASL Anonymous exchange output not as expected");
 
         for (int i = 0; i < frames.size(); ++i) {
-            Frame<?> frame = frames.get(i);
-            SaslFrame saslFrame = null;
+            PerformativeEnvelope<?> frame = frames.get(i);
+            SASLEnvelope saslFrame = null;
 
             switch (i) {
                 case 0:
-                    assertTrue(frame.getType() == HeaderFrame.HEADER_FRAME_TYPE);
-                    HeaderFrame header = (HeaderFrame) frame;
+                    assertTrue(frame.getFrameType() == HeaderEnvelope.HEADER_FRAME_TYPE);
+                    HeaderEnvelope header = (HeaderEnvelope) frame;
                     assertTrue(header.getBody().isSaslHeader());
                     break;
                 case 1:
-                    assertTrue(frame.getType() == SaslFrame.SASL_FRAME_TYPE);
-                    saslFrame = (SaslFrame) frame;
+                    assertTrue(frame.getFrameType() == SASLEnvelope.SASL_FRAME_TYPE);
+                    saslFrame = (SASLEnvelope) frame;
                     assertEquals(SaslPerformative.SaslPerformativeType.MECHANISMS, saslFrame.getBody().getPerformativeType());
                     SaslMechanisms mechanisms = (SaslMechanisms) saslFrame.getBody();
                     assertEquals(1, mechanisms.getSaslServerMechanisms().length);
                     assertEquals(Symbol.valueOf("ANONYMOUS"), mechanisms.getSaslServerMechanisms()[0]);
                     break;
                 case 2:
-                    assertTrue(frame.getType() == SaslFrame.SASL_FRAME_TYPE);
-                    saslFrame = (SaslFrame) frame;
+                    assertTrue(frame.getFrameType() == SASLEnvelope.SASL_FRAME_TYPE);
+                    saslFrame = (SASLEnvelope) frame;
                     assertEquals(SaslPerformative.SaslPerformativeType.OUTCOME, saslFrame.getBody().getPerformativeType());
                     org.apache.qpid.protonj2.types.security.SaslOutcome outcome =
                         (org.apache.qpid.protonj2.types.security.SaslOutcome) saslFrame.getBody();
@@ -414,7 +414,7 @@ public class ProtonSaslHandlerTest {
         });
 
         // Check for Header processing
-        engine.start().getEngine().pipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
+        engine.start().getEngine().pipeline().fireRead(new HeaderEnvelope(AMQPHeader.getSASLHeader()));
 
         assertTrue(saslHeaderRead.get(), "Did not receive a SASL Header");
 
@@ -424,20 +424,20 @@ public class ProtonSaslHandlerTest {
         clientInit.setInitialResponse(new Binary(new byte[0]));
 
         // Check for Initial Response processing
-        engine.pipeline().fireRead(new SaslFrame(clientInit));
+        engine.pipeline().fireRead(new SASLEnvelope(clientInit));
 
         assertEquals("HOST-NAME", clientHostname.get());
         assertEquals(Symbol.valueOf("ANONYMOUS"), clientMechanism.get());
         assertTrue(emptyResponse.get(), "Response should be an empty byte array");
 
-        List<Frame<?>> frames = testHandler.getFramesWritten();
+        List<PerformativeEnvelope<?>> frames = testHandler.getFramesWritten();
         assertEquals(3, frames.size(), "SASL Anonymous exchange output not as expected");
 
         assertEquals(engine.saslDriver().getSaslState(), SaslState.AUTHENTICATED);
 
         // Fire another SASL frame and the engine should fail
         try {
-            engine.pipeline().fireRead(new SaslFrame(clientInit));
+            engine.pipeline().fireRead(new SASLEnvelope(clientInit));
             fail("Server should fail on unexpected SASL frames");
         } catch (EngineFailedException efe) {
         }

@@ -31,7 +31,7 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.ConnectionState;
 import org.apache.qpid.protonj2.engine.EventHandler;
-import org.apache.qpid.protonj2.engine.HeaderFrame;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
 import org.apache.qpid.protonj2.engine.Receiver;
 import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
@@ -655,7 +655,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
                 }
             } else if (remoteHeader != null || getState() == ConnectionState.ACTIVE || remoteHeaderHandler != null) {
                 headerSent = true;
-                engine.fireWrite(HeaderFrame.AMQP_HEADER_FRAME);
+                engine.fireWrite(HeaderEnvelope.AMQP_HEADER_ENVELOPE);
             }
         }
     }

@@ -16,26 +16,54 @@
  */
 package org.apache.qpid.protonj2.engine;
 
+import java.util.function.Consumer;
+
 import org.apache.qpid.protonj2.types.transport.Performative;
 import org.apache.qpid.protonj2.types.transport.Performative.PerformativeHandler;
 
 /**
  * Frame object that carries an AMQP Performative
  */
-public class IncomingProtocolFrame extends Frame<Performative> {
+public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
 
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
 
-    private ProtocolFramePool<IncomingProtocolFrame> pool;
+    private AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> pool;
 
-    IncomingProtocolFrame() {
+    private Consumer<Performative> payloadToLargeHandler = this::defaultPayloadToLargeHandler;
+
+    OutgoingAMQPEnvelope() {
         this(null);
     }
 
-    IncomingProtocolFrame(ProtocolFramePool<IncomingProtocolFrame> pool) {
+    OutgoingAMQPEnvelope(AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> pool) {
         super(AMQP_FRAME_TYPE);
 
         this.pool = pool;
+    }
+
+    /**
+     * Configures a handler to be invoked if the payload that is being transmitted with this
+     * performative is to large to allow encoding the frame within the maximum configured AMQP
+     * frame size limit.
+     *
+     * @param payloadToLargeHandler
+     *
+     * @return this {@link OutgoingAMQPEnvelope} instance.
+     */
+    public OutgoingAMQPEnvelope setPayloadToLargeHandler(Consumer<Performative> payloadToLargeHandler) {
+        if (payloadToLargeHandler != null) {
+            this.payloadToLargeHandler = payloadToLargeHandler;
+        } else {
+            this.payloadToLargeHandler = this::defaultPayloadToLargeHandler;
+        }
+
+        return this;
+    }
+
+    public OutgoingAMQPEnvelope handlePayloadToLarge() {
+        payloadToLargeHandler.accept(getBody());
+        return this;
     }
 
     /**
@@ -47,6 +75,8 @@ public class IncomingProtocolFrame extends Frame<Performative> {
     public void release() {
         initialize(null, -1, null);
 
+        payloadToLargeHandler = this::defaultPayloadToLargeHandler;
+
         if (pool != null) {
             pool.release(this);
         }
@@ -54,5 +84,10 @@ public class IncomingProtocolFrame extends Frame<Performative> {
 
     public <E> void invoke(PerformativeHandler<E> handler, E context) {
         getBody().invoke(handler, getPayload(), getChannel(), context);
+    }
+
+    private void defaultPayloadToLargeHandler(Performative performative) {
+        throw new IllegalArgumentException(String.format(
+            "Cannot transmit performative %s with payload larger than max frame size limit", performative));
     }
 }

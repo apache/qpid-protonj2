@@ -20,10 +20,10 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
-import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
-import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
-import org.apache.qpid.protonj2.engine.SaslFrame;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
+import org.apache.qpid.protonj2.engine.IncomingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.SASLEnvelope;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 
 /**
@@ -80,33 +80,33 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     }
 
     @Override
-    public void fireRead(HeaderFrame header) {
+    public void fireRead(HeaderEnvelope header) {
         previous.handler().handleRead(previous, header);
     }
 
     @Override
-    public void fireRead(SaslFrame frame) {
-        previous.handler().handleRead(previous, frame);
+    public void fireRead(SASLEnvelope envelope) {
+        previous.handler().handleRead(previous, envelope);
     }
 
     @Override
-    public void fireRead(IncomingProtocolFrame frame) {
-        previous.handler().handleRead(previous, frame);
+    public void fireRead(IncomingAMQPEnvelope envelope) {
+        previous.handler().handleRead(previous, envelope);
     }
 
     @Override
-    public void fireWrite(OutgoingProtocolFrame frame) {
-        next.handler().handleWrite(next, frame);
+    public void fireWrite(OutgoingAMQPEnvelope envelope) {
+        next.handler().handleWrite(next, envelope);
     }
 
     @Override
-    public void fireWrite(SaslFrame frame) {
-        next.handler().handleWrite(next, frame);
+    public void fireWrite(SASLEnvelope envelope) {
+        next.handler().handleWrite(next, envelope);
     }
 
     @Override
-    public void fireWrite(HeaderFrame frame) {
-        next.handler().handleWrite(next, frame);
+    public void fireWrite(HeaderEnvelope envelope) {
+        next.handler().handleWrite(next, envelope);
     }
 
     @Override

@@ -19,23 +19,23 @@ package org.apache.qpid.protonj2.engine;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 
 /**
- * Base class for Frames that travel through the engine.
+ * Base class for envelope types that travel through the engine.
  *
- * @param <V> The type of frame body that this {@link Frame} will carry.
+ * @param <V> The type of body that this {@link PerformativeEnvelope} will carry.
  */
-public abstract class Frame<V> {
+public abstract class PerformativeEnvelope<V> {
 
-    private final byte type;
+    private final byte frameType;
 
     private V body;
     private int channel;
     private ProtonBuffer payload;
 
-    protected Frame(byte type) {
-        this.type = type;
+    protected PerformativeEnvelope(byte frameType) {
+        this.frameType = frameType;
     }
 
-    Frame<V> initialize(V body, int channel, ProtonBuffer payload) {
+    PerformativeEnvelope<V> initialize(V body, int channel, ProtonBuffer payload) {
         this.body = body;
         this.channel = channel;
         this.payload = payload;
@@ -44,28 +44,28 @@ public abstract class Frame<V> {
     }
 
     /**
-     * @return the decoded body of the frame.
+     * @return the decoded body of the performative that this envelope carries..
      */
     public V getBody() {
         return body;
     }
 
     /**
-     * @return the channel that the frame was sent on
+     * @return the channel that the wrapped body and payload was sent on
      */
     public int getChannel() {
         return channel;
     }
 
     /**
-     * @return the type that is assigned to this frame
+     * @return the frame type that is assigned to this envelope
      */
-    public byte getType() {
-        return type;
+    public byte getFrameType() {
+        return frameType;
     }
 
     /**
-     * @return the binary payload that was delivered with this frame
+     * @return the binary payload that was delivered with this envelope
      */
     public ProtonBuffer getPayload() {
         return payload;
@@ -73,6 +73,6 @@ public abstract class Frame<V> {
 
     @Override
     public String toString() {
-        return "Frame:[" + body + ", " + channel + ", " + ", " + payload + "]";
+        return "PerformativeEnvelope:[" + body + ", " + channel + ", " + ", " + payload + "]";
     }
 }

@@ -20,10 +20,10 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.EngineState;
-import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
-import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
-import org.apache.qpid.protonj2.engine.SaslFrame;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
+import org.apache.qpid.protonj2.engine.IncomingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.SASLEnvelope;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.impl.ProtonEngine;
 import org.apache.qpid.protonj2.engine.impl.ProtonEngineNoOpSaslDriver;
@@ -72,7 +72,7 @@ public final class ProtonSaslHandler implements EngineHandler {
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, HeaderFrame header) {
+    public void handleRead(EngineHandlerContext context, HeaderEnvelope header) {
         if (isDone()) {
             context.fireRead(header);
         } else {
@@ -87,7 +87,7 @@ public final class ProtonSaslHandler implements EngineHandler {
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, SaslFrame frame) {
+    public void handleRead(EngineHandlerContext context, SASLEnvelope frame) {
         if (isDone()) {
             throw new ProtocolViolationException("Unexpected SASL Frame: SASL processing has already completed");
         } else {
@@ -96,7 +96,7 @@ public final class ProtonSaslHandler implements EngineHandler {
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, IncomingProtocolFrame frame) {
+    public void handleRead(EngineHandlerContext context, IncomingAMQPEnvelope frame) {
         if (isDone()) {
             context.fireRead(frame);
         } else {
@@ -105,7 +105,7 @@ public final class ProtonSaslHandler implements EngineHandler {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, HeaderFrame frame) {
+    public void handleWrite(EngineHandlerContext context, HeaderEnvelope frame) {
         if (isDone()) {
             context.fireWrite(frame);
         } else {
@@ -121,7 +121,7 @@ public final class ProtonSaslHandler implements EngineHandler {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, OutgoingProtocolFrame frame) {
+    public void handleWrite(EngineHandlerContext context, OutgoingAMQPEnvelope frame) {
         if (isDone()) {
             context.fireWrite(frame);
         } else {
@@ -130,7 +130,7 @@ public final class ProtonSaslHandler implements EngineHandler {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, SaslFrame frame) {
+    public void handleWrite(EngineHandlerContext context, SASLEnvelope frame) {
         if (isDone()) {
             throw new ProtocolViolationException("Unexpected SASL Performative: SASL processing has yet completed");
         } else {

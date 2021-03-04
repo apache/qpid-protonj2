@@ -73,54 +73,54 @@ public interface EngineHandlerContext {
      * processing.
      *
      * @param header
-     *      The {@link HeaderFrame} that carries the header bytes read.
+     *      The {@link HeaderEnvelope} that carries the header bytes read.
      */
-    void fireRead(HeaderFrame header);
+    void fireRead(HeaderEnvelope header);
 
     /**
-     * Fires a read of SaslFrame events into the previous handler in the {@link EnginePipeline} for further
+     * Fires a read of SASL events into the previous handler in the {@link EnginePipeline} for further
      * processing.
      *
-     * @param frame
-     *      The {@link SaslFrame} that carries the SASL performative read.
+     * @param envelope
+     *      The {@link SASLEnvelope} that carries the SASL performative read.
      */
-    void fireRead(SaslFrame frame);
+    void fireRead(SASLEnvelope envelope);
 
     /**
      * Fires a read of IncomingProtocolFrame events into the previous handler in the {@link EnginePipeline} for further
      * processing.
      *
-     * @param frame
-     *      The {@link IncomingProtocolFrame} that carries the AMQP performative read.
+     * @param envelope
+     *      The {@link IncomingAMQPEnvelope} that carries the AMQP performative read.
      */
-    void fireRead(IncomingProtocolFrame frame);
+    void fireRead(IncomingAMQPEnvelope envelope);
 
     /**
-     * Fires a write of {@link OutgoingProtocolFrame} events into the next handler in the {@link EnginePipeline} for further
+     * Fires a write of {@link OutgoingAMQPEnvelope} events into the next handler in the {@link EnginePipeline} for further
      * processing.
      *
-     * @param frame
-     *      The {@link OutgoingProtocolFrame} that carries the AMQP performative being written.
+     * @param envelope
+     *      The {@link OutgoingAMQPEnvelope} that carries the AMQP performative being written.
      */
-    void fireWrite(OutgoingProtocolFrame frame);
+    void fireWrite(OutgoingAMQPEnvelope envelope);
 
     /**
-     * Fires a write of {@link SaslFrame} events into the next handler in the {@link EnginePipeline} for further
+     * Fires a write of {@link SASLEnvelope} events into the next handler in the {@link EnginePipeline} for further
      * processing.
      *
-     * @param frame
-     *      The {@link SaslFrame} that carries the SASL performative being written.
+     * @param envelope
+     *      The {@link SASLEnvelope} that carries the SASL performative being written.
      */
-    void fireWrite(SaslFrame frame);
+    void fireWrite(SASLEnvelope envelope);
 
     /**
      * Fires a write of HeaderFrame events into the next handler in the {@link EnginePipeline} for further
      * processing.
      *
-     * @param frame
-     *      The {@link HeaderFrame} that carries the AMQP Header being written.
+     * @param envelope
+     *      The {@link HeaderEnvelope} that carries the AMQP Header being written.
      */
-    void fireWrite(HeaderFrame frame);
+    void fireWrite(HeaderEnvelope envelope);
 
     /**
      * Fires a write of ProtonBuffer events into the next handler in the {@link EnginePipeline} for further

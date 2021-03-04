@@ -29,8 +29,8 @@ import org.apache.qpid.protonj2.codec.CodecFactory;
 import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
-import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
-import org.apache.qpid.protonj2.engine.ProtocolFramePool;
+import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.AMQPPerformativeEnvelopePool;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ class ProtonFrameEncodingHandlerTest {
     private static final int FRAME_DOFF_SIZE = 2;
     private static final byte AMQP_FRAME_TYPE = (byte) 0;
 
-    private ProtocolFramePool<OutgoingProtocolFrame> framePool;
+    private AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> framePool;
 
     private ProtonEngineConfiguration configuration;
     private ProtonEngine engine;
@@ -55,7 +55,7 @@ class ProtonFrameEncodingHandlerTest {
     void setUp() {
         random.setSeed(randomSeed);
 
-        framePool = ProtocolFramePool.outgoingFramePool();
+        framePool = AMQPPerformativeEnvelopePool.outgoingEnvelopePool();
 
         configuration = Mockito.mock(ProtonEngineConfiguration.class);
         Mockito.when(configuration.getInboundMaxFrameSize()).thenReturn(Long.valueOf(65535));
@@ -80,7 +80,7 @@ class ProtonFrameEncodingHandlerTest {
         transfer.setDeliveryId(0);
         transfer.setDeliveryTag(new byte[] {0});
 
-        OutgoingProtocolFrame frame = framePool.take(transfer, 32, null);
+        OutgoingAMQPEnvelope frame = framePool.take(transfer, 32, null);
 
         handler.handleWrite(context, frame);
 
@@ -120,7 +120,7 @@ class ProtonFrameEncodingHandlerTest {
 
         random.nextBytes(payload);
 
-        OutgoingProtocolFrame frame = framePool.take(transfer, 32, ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        OutgoingAMQPEnvelope frame = framePool.take(transfer, 32, ProtonByteBufferAllocator.DEFAULT.wrap(payload));
 
         handler.handleWrite(context, frame);
 
@@ -161,7 +161,7 @@ class ProtonFrameEncodingHandlerTest {
 
         random.nextBytes(payload);
 
-        OutgoingProtocolFrame frame = framePool.take(transfer, 32, ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        OutgoingAMQPEnvelope frame = framePool.take(transfer, 32, ProtonByteBufferAllocator.DEFAULT.wrap(payload));
         frame.setPayloadToLargeHandler((performative) -> {
             transfer.setMore(true);
             toLargeHandlerCalled.set(true);
@@ -207,7 +207,7 @@ class ProtonFrameEncodingHandlerTest {
 
         random.nextBytes(payload);
 
-        OutgoingProtocolFrame frame = Mockito.spy(framePool.take(transfer, 32, ProtonByteBufferAllocator.DEFAULT.wrap(payload)));
+        OutgoingAMQPEnvelope frame = Mockito.spy(framePool.take(transfer, 32, ProtonByteBufferAllocator.DEFAULT.wrap(payload)));
 
         handler.handleWrite(context, frame);
 

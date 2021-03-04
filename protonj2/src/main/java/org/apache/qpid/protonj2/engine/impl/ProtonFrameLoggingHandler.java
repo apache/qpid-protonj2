@@ -19,10 +19,10 @@ package org.apache.qpid.protonj2.engine.impl;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
-import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
-import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
-import org.apache.qpid.protonj2.engine.SaslFrame;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
+import org.apache.qpid.protonj2.engine.IncomingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.SASLEnvelope;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
@@ -59,7 +59,7 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, HeaderFrame header) {
+    public void handleRead(EngineHandlerContext context, HeaderEnvelope header) {
         if (traceFrames) {
             trace(AMQP_IN_PREFIX, 0, header.getBody(), null);
         }
@@ -70,62 +70,62 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, SaslFrame frame) {
+    public void handleRead(EngineHandlerContext context, SASLEnvelope envelope) {
         if (traceFrames) {
-            trace(SASL_IN_PREFIX, 0, frame.getBody(), null);
+            trace(SASL_IN_PREFIX, 0, envelope.getBody(), null);
         }
 
-        log(SASL_IN_PREFIX, 0, frame.getBody(), frame.getPayload());
+        log(SASL_IN_PREFIX, 0, envelope.getBody(), envelope.getPayload());
 
-        context.fireRead(frame);
+        context.fireRead(envelope);
     }
 
     @Override
-    public void handleRead(EngineHandlerContext context, IncomingProtocolFrame frame) {
+    public void handleRead(EngineHandlerContext context, IncomingAMQPEnvelope envelope) {
         if (traceFrames) {
-            trace(AMQP_IN_PREFIX, frame.getChannel(), frame.getBody(), frame.getPayload());
+            trace(AMQP_IN_PREFIX, envelope.getChannel(), envelope.getBody(), envelope.getPayload());
         }
 
         if (LOG.isTraceEnabled()) {
-            log(AMQP_IN_PREFIX, frame.getChannel(), frame.getBody(), frame.getPayload());
+            log(AMQP_IN_PREFIX, envelope.getChannel(), envelope.getBody(), envelope.getPayload());
         }
 
-        context.fireRead(frame);
+        context.fireRead(envelope);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, HeaderFrame frame) {
+    public void handleWrite(EngineHandlerContext context, HeaderEnvelope envelope) {
         if (traceFrames) {
-            trace(AMQP_OUT_PREFIX, 0, frame.getBody(), null);
+            trace(AMQP_OUT_PREFIX, 0, envelope.getBody(), null);
         }
 
-        log(AMQP_OUT_PREFIX, 0, frame.getBody(), null);
+        log(AMQP_OUT_PREFIX, 0, envelope.getBody(), null);
 
-        context.fireWrite(frame);
+        context.fireWrite(envelope);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, OutgoingProtocolFrame frame) {
+    public void handleWrite(EngineHandlerContext context, OutgoingAMQPEnvelope envelope) {
         if (traceFrames) {
-            trace(AMQP_OUT_PREFIX, frame.getChannel(), frame.getBody(), frame.getPayload());
+            trace(AMQP_OUT_PREFIX, envelope.getChannel(), envelope.getBody(), envelope.getPayload());
         }
 
         if (LOG.isTraceEnabled()) {
-            log(AMQP_OUT_PREFIX, frame.getChannel(), frame.getBody(), frame.getPayload());
+            log(AMQP_OUT_PREFIX, envelope.getChannel(), envelope.getBody(), envelope.getPayload());
         }
 
-        context.fireWrite(frame);
+        context.fireWrite(envelope);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, SaslFrame frame) {
+    public void handleWrite(EngineHandlerContext context, SASLEnvelope envelope) {
         if (traceFrames) {
-            trace(SASL_OUT_PREFIX, 0, frame.getBody(), null);
+            trace(SASL_OUT_PREFIX, 0, envelope.getBody(), null);
         }
 
-        log(SASL_OUT_PREFIX, 0, frame.getBody(), null);
+        log(SASL_OUT_PREFIX, 0, envelope.getBody(), null);
 
-        context.fireWrite(frame);
+        context.fireWrite(envelope);
     }
 
     private static final void log(String prefix, int channel, Object performative, ProtonBuffer payload) {

@@ -16,26 +16,43 @@
  */
 package org.apache.qpid.protonj2.engine;
 
+import org.apache.qpid.protonj2.types.transport.Performative;
 import org.apache.qpid.protonj2.types.transport.Performative.PerformativeHandler;
 
 /**
- * An empty frame which can be used to drive transport activity when idle.
+ * Frame object that carries an AMQP Performative
  */
-public final class EmptyFrame extends IncomingProtocolFrame {
+public class IncomingAMQPEnvelope extends PerformativeEnvelope<Performative> {
 
-    public static final EmptyFrame INSTANCE = new EmptyFrame();
+    public static final byte AMQP_FRAME_TYPE = (byte) 0;
 
-    public EmptyFrame() {
-        super();
+    private AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> pool;
+
+    IncomingAMQPEnvelope() {
+        this(null);
     }
 
-    @Override
-    public String toString() {
-        return "Empty Frame";
+    IncomingAMQPEnvelope(AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> pool) {
+        super(AMQP_FRAME_TYPE);
+
+        this.pool = pool;
     }
 
-    @Override
+    /**
+     * Used to release a Frame that was taken from a Frame pool in order
+     * to make it available for the next input operations.  Once called the
+     * contents of the Frame are invalid and cannot be used again inside the
+     * same context.
+     */
+    public void release() {
+        initialize(null, -1, null);
+
+        if (pool != null) {
+            pool.release(this);
+        }
+    }
+
     public <E> void invoke(PerformativeHandler<E> handler, E context) {
-        // Nothing to do for empty frame.
+        getBody().invoke(handler, getPayload(), getChannel(), context);
     }
 }

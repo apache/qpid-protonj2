@@ -20,17 +20,17 @@ import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader.HeaderHandler;
 
 /**
- * Frame type that carries AMQPHeader instances
+ * Envelope type that carries AMQPHeader instances
  */
-public class HeaderFrame extends Frame<AMQPHeader> {
+public class HeaderEnvelope extends PerformativeEnvelope<AMQPHeader> {
 
     public static final byte HEADER_FRAME_TYPE = (byte) 1;
 
-    public static final HeaderFrame SASL_HEADER_FRAME = new HeaderFrame(AMQPHeader.getSASLHeader());
+    public static final HeaderEnvelope SASL_HEADER_ENVELOPE = new HeaderEnvelope(AMQPHeader.getSASLHeader());
 
-    public static final HeaderFrame AMQP_HEADER_FRAME = new HeaderFrame(AMQPHeader.getAMQPHeader());
+    public static final HeaderEnvelope AMQP_HEADER_ENVELOPE = new HeaderEnvelope(AMQPHeader.getAMQPHeader());
 
-    public HeaderFrame(AMQPHeader body) {
+    public HeaderEnvelope(AMQPHeader body) {
         super(HEADER_FRAME_TYPE);
 
         initialize(body, 0, null);

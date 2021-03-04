@@ -21,10 +21,10 @@ import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.EnginePipeline;
 import org.apache.qpid.protonj2.engine.EngineState;
-import org.apache.qpid.protonj2.engine.HeaderFrame;
-import org.apache.qpid.protonj2.engine.IncomingProtocolFrame;
-import org.apache.qpid.protonj2.engine.OutgoingProtocolFrame;
-import org.apache.qpid.protonj2.engine.SaslFrame;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
+import org.apache.qpid.protonj2.engine.IncomingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.SASLEnvelope;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.ProtonException;
 
@@ -307,7 +307,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
-    public ProtonEnginePipeline fireRead(HeaderFrame header) {
+    public ProtonEnginePipeline fireRead(HeaderEnvelope header) {
         try {
             tail.fireRead(header);
         } catch (Throwable error) {
@@ -318,9 +318,9 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
-    public ProtonEnginePipeline fireRead(SaslFrame frame) {
+    public ProtonEnginePipeline fireRead(SASLEnvelope envelope) {
         try {
-            tail.fireRead(frame);
+            tail.fireRead(envelope);
         } catch (Throwable error) {
             engine.engineFailed(error);
             throw error;
@@ -329,9 +329,9 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
-    public ProtonEnginePipeline fireRead(IncomingProtocolFrame frame) {
+    public ProtonEnginePipeline fireRead(IncomingAMQPEnvelope envelope) {
         try {
-            tail.fireRead(frame);
+            tail.fireRead(envelope);
         } catch (Throwable error) {
             engine.engineFailed(error);
             throw error;
@@ -340,9 +340,9 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
-    public ProtonEnginePipeline fireWrite(HeaderFrame frame) {
+    public ProtonEnginePipeline fireWrite(HeaderEnvelope envelope) {
         try {
-            head.fireWrite(frame);
+            head.fireWrite(envelope);
         } catch (Throwable error) {
             engine.engineFailed(error);
             throw error;
@@ -351,9 +351,9 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
-    public ProtonEnginePipeline fireWrite(OutgoingProtocolFrame frame) {
+    public ProtonEnginePipeline fireWrite(OutgoingAMQPEnvelope envelope) {
         try {
-            head.fireWrite(frame);
+            head.fireWrite(envelope);
         } catch (Throwable error) {
             engine.engineFailed(error);
             throw error;
@@ -362,9 +362,9 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
-    public ProtonEnginePipeline fireWrite(SaslFrame frame) {
+    public ProtonEnginePipeline fireWrite(SASLEnvelope envelope) {
         try {
-            head.fireWrite(frame);
+            head.fireWrite(envelope);
         } catch (Throwable error) {
             engine.engineFailed(error);
             throw error;
@@ -403,18 +403,18 @@ public class ProtonEnginePipeline implements EnginePipeline {
         }
 
         @Override
-        public void fireRead(HeaderFrame header) {
+        public void fireRead(HeaderEnvelope header) {
             throw engine.engineFailed(new ProtonException("No handler processed AMQP Header event."));
         }
 
         @Override
-        public void fireRead(SaslFrame frame) {
-            throw engine.engineFailed(new ProtonException("No handler processed SASL frame event."));
+        public void fireRead(SASLEnvelope envelope) {
+            throw engine.engineFailed(new ProtonException("No handler processed SASL performative event."));
         }
 
         @Override
-        public void fireRead(IncomingProtocolFrame frame) {
-            throw engine.engineFailed(new ProtonException("No handler processed protocol frame event."));
+        public void fireRead(IncomingAMQPEnvelope envelope) {
+            throw engine.engineFailed(new ProtonException("No handler processed protocol performative event."));
         }
     }
 
@@ -425,17 +425,17 @@ public class ProtonEnginePipeline implements EnginePipeline {
         }
 
         @Override
-        public void fireWrite(HeaderFrame frame) {
+        public void fireWrite(HeaderEnvelope envelope) {
             throw engine.engineFailed(new ProtonException("No handler processed write AMQP Header event."));
         }
 
         @Override
-        public void fireWrite(OutgoingProtocolFrame frame) {
+        public void fireWrite(OutgoingAMQPEnvelope envelope) {
             throw engine.engineFailed(new ProtonException("No handler processed write AMQP performative event."));
         }
 
         @Override
-        public void fireWrite(SaslFrame frame) {
+        public void fireWrite(SASLEnvelope envelope) {
             throw engine.engineFailed(new ProtonException("No handler processed write SASL performative event."));
         }
 
@@ -467,32 +467,32 @@ public class ProtonEnginePipeline implements EnginePipeline {
         }
 
         @Override
-        public void handleRead(EngineHandlerContext context, HeaderFrame header) {
+        public void handleRead(EngineHandlerContext context, HeaderEnvelope header) {
             throw engine.engineFailed(new ProtonException("No handler processed AMQP Header event."));
         }
 
         @Override
-        public void handleRead(EngineHandlerContext context, SaslFrame frame) {
-            throw engine.engineFailed(new ProtonException("No handler processed SASL frame event."));
+        public void handleRead(EngineHandlerContext context, SASLEnvelope envelope) {
+            throw engine.engineFailed(new ProtonException("No handler processed SASL performative read event."));
         }
 
         @Override
-        public void handleRead(EngineHandlerContext context, IncomingProtocolFrame frame) {
-            throw engine.engineFailed(new ProtonException("No handler processed protocol frame event."));
+        public void handleRead(EngineHandlerContext context, IncomingAMQPEnvelope envelope) {
+            throw engine.engineFailed(new ProtonException("No handler processed protocol performative read event."));
         }
 
         @Override
-        public void handleWrite(EngineHandlerContext context, HeaderFrame frame) {
+        public void handleWrite(EngineHandlerContext context, HeaderEnvelope envelope) {
             throw engine.engineFailed(new ProtonException("No handler processed write AMQP Header event."));
         }
 
         @Override
-        public void handleWrite(EngineHandlerContext context, OutgoingProtocolFrame frame) {
+        public void handleWrite(EngineHandlerContext context, OutgoingAMQPEnvelope envelope) {
             throw engine.engineFailed(new ProtonException("No handler processed write AMQP performative event."));
         }
 
         @Override
-        public void handleWrite(EngineHandlerContext context, SaslFrame frame) {
+        public void handleWrite(EngineHandlerContext context, SASLEnvelope envelope) {
             throw engine.engineFailed(new ProtonException("No handler processed write SASL performative event."));
         }
     }

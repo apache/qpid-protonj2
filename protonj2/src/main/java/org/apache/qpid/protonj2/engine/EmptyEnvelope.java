@@ -16,28 +16,26 @@
  */
 package org.apache.qpid.protonj2.engine;
 
-import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.types.security.SaslPerformative;
-import org.apache.qpid.protonj2.types.security.SaslPerformative.SaslPerformativeHandler;
+import org.apache.qpid.protonj2.types.transport.Performative.PerformativeHandler;
 
 /**
- * Frame object containing a SASL performative
+ * An empty envelope which can be used to drive transport activity when idle.
  */
-public class SaslFrame extends Frame<SaslPerformative>{
+public final class EmptyEnvelope extends IncomingAMQPEnvelope {
 
-    public static final byte SASL_FRAME_TYPE = (byte) 1;
+    public static final EmptyEnvelope INSTANCE = new EmptyEnvelope();
 
-    public SaslFrame(SaslPerformative performative) {
-        this(performative, null);
+    public EmptyEnvelope() {
+        super();
     }
 
-    public SaslFrame(SaslPerformative performative, ProtonBuffer payload) {
-        super(SASL_FRAME_TYPE);
-
-        initialize(performative, 0, payload);
+    @Override
+    public String toString() {
+        return "Empty Frame";
     }
 
-    public <E> void invoke(SaslPerformativeHandler<E> handler, E context) {
-        getBody().invoke(handler, context);
+    @Override
+    public <E> void invoke(PerformativeHandler<E> handler, E context) {
+        // Nothing to do for empty frame.
     }
 }
