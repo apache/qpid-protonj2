@@ -70,8 +70,8 @@ public class ProtonSessionOutgoingWindow {
      * @return the configured performative
      */
     Begin configureOutbound(Begin begin) {
-        begin.setNextOutgoingId(nextOutgoingId);
-        begin.setOutgoingWindow(outgoingWindow);
+        begin.setNextOutgoingId(getNextOutgoingId());
+        begin.setOutgoingWindow(getOutgoingWindow());
 
         return begin;
     }
@@ -175,8 +175,6 @@ public class ProtonSessionOutgoingWindow {
         // For a transfer that hasn't completed but has no bytes in the final transfer write we want
         // to allow a transfer to go out with the more flag as false.
 
-        boolean wasThereMore = !complete;
-
         if (!delivery.isSettled()) {
             // TODO - Casting is ugly
             unsettled.put((int) delivery.getDeliveryId(), delivery);
@@ -184,7 +182,6 @@ public class ProtonSessionOutgoingWindow {
 
         try {
             cachedTransfer.setDeliveryId(delivery.getDeliveryId());
-            cachedTransfer.setMore(wasThereMore);
             if (delivery.getMessageFormat() != 0) {
                 cachedTransfer.setMessageFormat(delivery.getMessageFormat());
             } else {
@@ -201,7 +198,7 @@ public class ProtonSessionOutgoingWindow {
                 } else {
                     cachedTransfer.setDeliveryTag((DeliveryTag) null);
                 }
-                cachedTransfer.setMore(wasThereMore);
+                cachedTransfer.setMore(!complete);
 
                 try {
                     engine.fireWrite(engine.wrap(cachedTransfer, session.getLocalChannel(), payload).setPayloadToLargeHandler(cachedTransferUpdater));
