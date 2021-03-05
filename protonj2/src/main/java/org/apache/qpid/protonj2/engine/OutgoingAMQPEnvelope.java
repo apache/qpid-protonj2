@@ -31,6 +31,7 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
     private AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> pool;
 
     private Consumer<Performative> payloadToLargeHandler = this::defaultPayloadToLargeHandler;
+    private Runnable frameWriteCompleteHandler;
 
     OutgoingAMQPEnvelope() {
         this(null);
@@ -48,6 +49,7 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
      * frame size limit.
      *
      * @param payloadToLargeHandler
+     *      Handler that will update the Performative to reflect that more than one frame is required.
      *
      * @return this {@link OutgoingAMQPEnvelope} instance.
      */
@@ -67,6 +69,30 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
     }
 
     /**
+     * Configures a handler to be invoked when a write operation that was handed off to the I/O layer
+     * has completed indicated that a single frame portion of the payload has been fully written.
+     *
+     * @param frameWriteCompleteHandler
+     *      Runnable handler that will update state or otherwise respond to the write of a frame.
+     *
+     * @return this {@link OutgoingProtocolFrame} instance.
+     */
+    public OutgoingAMQPEnvelope setFrameWriteCompletionHandler(Runnable frameWriteCompleteHandler) {
+        this.frameWriteCompleteHandler = frameWriteCompleteHandler;
+        return this;
+    }
+
+    public OutgoingAMQPEnvelope handleOutgoingFrameWriteComplete() {
+        if (frameWriteCompleteHandler != null) {
+            frameWriteCompleteHandler.run();
+        }
+
+        release();
+
+        return this;
+    }
+
+    /**
      * Used to release a Frame that was taken from a Frame pool in order
      * to make it available for the next input operations.  Once called the
      * contents of the Frame are invalid and cannot be used again inside the
@@ -76,6 +102,7 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
         initialize(null, -1, null);
 
         payloadToLargeHandler = this::defaultPayloadToLargeHandler;
+        frameWriteCompleteHandler = null;
 
         if (pool != null) {
             pool.release(this);

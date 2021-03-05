@@ -33,13 +33,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonByteBuffer;
+import org.apache.qpid.protonj2.engine.AMQPPerformativeEnvelopePool;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.ConnectionState;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
 import org.apache.qpid.protonj2.engine.EngineState;
 import org.apache.qpid.protonj2.engine.HeaderEnvelope;
-import org.apache.qpid.protonj2.engine.AMQPPerformativeEnvelopePool;
 import org.apache.qpid.protonj2.engine.SASLEnvelope;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.exceptions.EngineNotStartedException;
@@ -69,7 +69,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertFalse(engine.isWritable());
 
         try {
-            engine.pipeline().fireWrite(new ProtonByteBuffer(0));
+            engine.pipeline().fireWrite(new ProtonByteBuffer(0), null);
             fail("Should not be able to write until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected

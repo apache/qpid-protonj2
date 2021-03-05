@@ -85,7 +85,7 @@ class ProtonFrameEncodingHandlerTest {
         handler.handleWrite(context, frame);
 
         ArgumentCaptor<ProtonBuffer> argument = ArgumentCaptor.forClass(ProtonBuffer.class);
-        Mockito.verify(context).fireWrite(argument.capture());
+        Mockito.verify(context).fireWrite(argument.capture(), Mockito.any(Runnable.class));
 
         ProtonBuffer output = argument.getValue();
 
@@ -125,7 +125,7 @@ class ProtonFrameEncodingHandlerTest {
         handler.handleWrite(context, frame);
 
         ArgumentCaptor<ProtonBuffer> argument = ArgumentCaptor.forClass(ProtonBuffer.class);
-        Mockito.verify(context).fireWrite(argument.capture());
+        Mockito.verify(context).fireWrite(argument.capture(), Mockito.any(Runnable.class));
 
         ProtonBuffer output = argument.getValue();
 
@@ -170,7 +170,7 @@ class ProtonFrameEncodingHandlerTest {
         handler.handleWrite(context, frame);
 
         ArgumentCaptor<ProtonBuffer> argument = ArgumentCaptor.forClass(ProtonBuffer.class);
-        Mockito.verify(context).fireWrite(argument.capture());
+        Mockito.verify(context).fireWrite(argument.capture(), Mockito.any(Runnable.class));
 
         ProtonBuffer output = argument.getValue();
 
@@ -212,8 +212,8 @@ class ProtonFrameEncodingHandlerTest {
         handler.handleWrite(context, frame);
 
         ArgumentCaptor<ProtonBuffer> argument = ArgumentCaptor.forClass(ProtonBuffer.class);
-        Mockito.verify(context).fireWrite(argument.capture());
-        Mockito.verify(frame).release();
+        Mockito.verify(context).fireWrite(argument.capture(), Mockito.any(Runnable.class));
+        Mockito.verify(frame, Mockito.never()).release();
 
         ProtonBuffer output = argument.getValue();
 

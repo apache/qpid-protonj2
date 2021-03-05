@@ -133,8 +133,8 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     }
 
     @Override
-    public void fireWrite(ProtonBuffer buffer) {
-        findNextWriteHandler().invokeHandlerWrite(buffer);
+    public void fireWrite(ProtonBuffer buffer, Runnable ioComplete) {
+        findNextWriteHandler().invokeHandlerWrite(buffer, ioComplete);
     }
 
     //----- Internal invoke of Engine and Handler state methods
@@ -183,8 +183,8 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
         handler.handleWrite(this, envelope);
     }
 
-    void invokeHandlerWrite(ProtonBuffer buffer) {
-        handler.handleWrite(this, buffer);
+    void invokeHandlerWrite(ProtonBuffer buffer, Runnable ioComplete) {
+        next.handler().handleWrite(next, buffer, ioComplete);
     }
 
     private ProtonEngineHandlerContext findNextReadHandler() {

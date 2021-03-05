@@ -182,8 +182,10 @@ public interface EngineHandler {
      *      The {@link EngineHandlerContext} associated with this {@link EngineWriteHandler} instance.
      * @param buffer
      *      The {@link ProtonBuffer} whose payload is to be written to the output target.
+     * @param ioComplete
+     *      A {@link Runnable} callback that indicates that the I/O operation is complete
      */
-    default void handleWrite(EngineHandlerContext context, ProtonBuffer buffer) {
-        context.fireWrite(buffer);
+    default void handleWrite(EngineHandlerContext context, ProtonBuffer buffer, Runnable ioComplete) {
+        context.fireWrite(buffer, ioComplete);
     }
 }

@@ -214,7 +214,7 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
     }
 
     @Override
-    public ProtonEnginePipelineProxy fireWrite(ProtonBuffer buffer) {
+    public ProtonEnginePipelineProxy fireWrite(ProtonBuffer buffer, Runnable ioComplete) {
         engine().checkEngineNotStarted("Cannot write from an unstarted Engine");
         engine().checkShutdownOrFailed("Cannot write form an Engine that is shutdown or failed");
 
@@ -222,7 +222,7 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
             throw new EngineNotWritableException("Cannot write through Engine pipeline when Engine is not writable");
         }
 
-        pipeline.fireWrite(buffer);
+        pipeline.fireWrite(buffer, ioComplete);
         return this;
     }
 }

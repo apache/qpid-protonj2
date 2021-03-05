@@ -128,7 +128,9 @@ public interface EngineHandlerContext {
      *
      * @param buffer
      *      The {@link ProtonBuffer} that carries the bytes being written.
+     * @param ioComplete
+     *      An optional {@link Runnable} callback that is signaled when the I/O completes successfully.
      */
-    void fireWrite(ProtonBuffer buffer);
+    void fireWrite(ProtonBuffer buffer, Runnable ioComplete);
 
 }

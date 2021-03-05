@@ -726,12 +726,12 @@ public class ClientConnection implements Connection {
         }
     }
 
-    private void handleEngineOutput(ProtonBuffer output) {
+    private void handleEngineOutput(ProtonBuffer output, Runnable ioComplete) {
         try {
             if (autoFlush) {
-                transport.writeAndFlush(output);
+                transport.writeAndFlush(output, ioComplete);
             } else {
-                transport.write(output);
+                transport.write(output, ioComplete);
             }
         } catch (IOException e) {
             LOG.debug("Error while writing engine output to transport: ", e.getMessage());

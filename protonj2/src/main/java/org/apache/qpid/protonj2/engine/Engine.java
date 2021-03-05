@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.engine;
 
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
@@ -233,7 +234,14 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @return this {@link Engine}
      */
-    Engine outputHandler(EventHandler<ProtonBuffer> output);
+    default Engine outputHandler(EventHandler<ProtonBuffer> output) {
+        return outputHandler((buffer, ioComplete) -> {
+            output.handle(buffer);
+            if (ioComplete != null) {
+                ioComplete.run();
+            }
+        });
+    }
 
     /**
      * Sets a {@link Consumer} instance that will be notified when data from the engine is ready to
@@ -245,12 +253,27 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * @return this {@link Engine}
      */
     default Engine outputConsumer(Consumer<ProtonBuffer> consumer) {
-        outputHandler((output) -> {
-            consumer.accept(output);
+        return outputHandler((buffer, ioComplete) -> {
+            consumer.accept(buffer);
+            if (ioComplete != null) {
+                ioComplete.run();
+            }
         });
-
-        return this;
     }
+
+    /**
+     * Sets a {@link BiConsumer} instance that will be notified when data from the engine is ready to
+     * be written to some output sink (socket etc).  The {@link Runnable} value provided (if non-null)
+     * should be invoked once the I/O operation has completely successfully.  If the event of an error
+     * writing the data the handler should throw an error or if performed asynchronously the {@link Engine}
+     * should be marked failed via a call to {@link Engine#engineFailed(Throwable)}.
+     *
+     * @param output
+     *      The {@link ProtonBuffer} handler instance that performs IO for the engine output.
+     *
+     * @return this {@link Engine}
+     */
+    Engine outputHandler(BiConsumer<ProtonBuffer, Runnable> output);
 
     /**
      * Sets a handler instance that will be notified when the engine encounters a fatal error.

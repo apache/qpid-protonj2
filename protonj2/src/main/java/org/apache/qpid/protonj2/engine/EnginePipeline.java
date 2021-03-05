@@ -257,10 +257,12 @@ public interface EnginePipeline {
      *
      * @param buffer
      *      The {@link ProtonBuffer} to inject into the engine pipeline.
+     * @param ioComplete
+     *      An optional callback that should be signaled when the underlying transport complete the I/O write
      *
      * @return this {@link EnginePipeline}.
      */
-    EnginePipeline fireWrite(ProtonBuffer buffer);
+    EnginePipeline fireWrite(ProtonBuffer buffer, Runnable ioComplete);
 
     /**
      * Fires an engine failed event into each {@link EngineHandler} in the pipeline indicating

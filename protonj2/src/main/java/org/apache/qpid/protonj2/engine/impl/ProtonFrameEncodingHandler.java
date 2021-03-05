@@ -68,58 +68,54 @@ public class ProtonFrameEncodingHandler implements EngineHandler {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, HeaderEnvelope frame) {
-        context.fireWrite(frame.getBody().getBuffer());
+    public void handleWrite(EngineHandlerContext context, HeaderEnvelope envelope) {
+        context.fireWrite(envelope.getBody().getBuffer(), null);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, SASLEnvelope frame) {
+    public void handleWrite(EngineHandlerContext context, SASLEnvelope envelope) {
         ProtonBuffer output = configuration.getBufferAllocator().outputBuffer(AMQP_PERFORMATIVE_PAD, (int) configuration.getOutboundMaxFrameSize());
 
         output.setWriteIndex(FRAME_HEADER_SIZE);
         output.setBytes(FRAME_START_BYTE, SASL_FRAME_HEADER);
 
         try {
-            saslEncoder.writeObject(output, saslEncoderState, frame.getBody());
+            saslEncoder.writeObject(output, saslEncoderState, envelope.getBody());
         } catch (EncodeException ex) {
             throw new FrameEncodingException(ex);
         } finally {
             saslEncoderState.reset();
         }
 
-        context.fireWrite(output.setInt(FRAME_START_BYTE, output.getReadableBytes()));
+        context.fireWrite(output.setInt(FRAME_START_BYTE, output.getReadableBytes()), null);
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, OutgoingAMQPEnvelope frame) {
-        try {
-            final ProtonBuffer payload = frame.getPayload() == null ? EMPTY_BUFFER : frame.getPayload();
-            final int maxFrameSize = (int) configuration.getOutboundMaxFrameSize();
-            final int outputBufferSize = Math.min(maxFrameSize, AMQP_PERFORMATIVE_PAD + payload.getReadableBytes());
-            final ProtonBuffer output = configuration.getBufferAllocator().outputBuffer(outputBufferSize, maxFrameSize);
+    public void handleWrite(EngineHandlerContext context, OutgoingAMQPEnvelope envelope) {
+        final ProtonBuffer payload = envelope.getPayload() == null ? EMPTY_BUFFER : envelope.getPayload();
+        final int maxFrameSize = (int) configuration.getOutboundMaxFrameSize();
+        final int outputBufferSize = Math.min(maxFrameSize, AMQP_PERFORMATIVE_PAD + payload.getReadableBytes());
+        final ProtonBuffer output = configuration.getBufferAllocator().outputBuffer(outputBufferSize, maxFrameSize);
 
-            writePerformative(output, amqpEncoder, amqpEncoderState, frame.getBody());
+        writePerformative(output, amqpEncoder, amqpEncoderState, envelope.getBody());
 
-            if (payload.getReadableBytes() > output.getMaxWritableBytes()) {
-                frame.handlePayloadToLarge();
+        if (payload.getReadableBytes() > output.getMaxWritableBytes()) {
+            envelope.handlePayloadToLarge();
 
-                writePerformative(output, amqpEncoder, amqpEncoderState, frame.getBody());
+            writePerformative(output, amqpEncoder, amqpEncoderState, envelope.getBody());
 
-                output.writeBytes(payload, output.getMaxWritableBytes());
-            } else {
-                output.writeBytes(payload);
-            }
-
-            // Now fill in the frame header with the specified information
-            output.setInt(FRAME_START_BYTE, output.getReadableBytes());
-            output.setByte(FRAME_DOFF_BYTE, FRAME_DOFF_SIZE);
-            output.setByte(FRAME_TYPE_BYTE, AMQP_FRAME_TYPE);
-            output.setShort(FRAME_CHANNEL_BYTE, (short) frame.getChannel());
-
-            context.fireWrite(output);
-        } finally {
-            frame.release();
+            output.writeBytes(payload, output.getMaxWritableBytes());
+        } else {
+            output.writeBytes(payload);
         }
+
+        // Now fill in the frame header with the specified information
+        output.setInt(FRAME_START_BYTE, output.getReadableBytes());
+        output.setByte(FRAME_DOFF_BYTE, FRAME_DOFF_SIZE);
+        output.setByte(FRAME_TYPE_BYTE, AMQP_FRAME_TYPE);
+        output.setShort(FRAME_CHANNEL_BYTE, (short) envelope.getChannel());
+
+        context.fireWrite(output, envelope::handleOutgoingFrameWriteComplete);
     }
 
     private static void writePerformative(ProtonBuffer target, Encoder encoder, EncoderState state, Performative performative) {

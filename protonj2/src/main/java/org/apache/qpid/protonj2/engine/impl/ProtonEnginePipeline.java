@@ -373,9 +373,9 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
-    public ProtonEnginePipeline fireWrite(ProtonBuffer buffer) {
+    public ProtonEnginePipeline fireWrite(ProtonBuffer buffer, Runnable ioComplete) {
         try {
-            head.fireWrite(buffer);
+            head.fireWrite(buffer, ioComplete);
         } catch (Throwable error) {
             engine.engineFailed(error);
             throw error;
@@ -440,13 +440,13 @@ public class ProtonEnginePipeline implements EnginePipeline {
         }
 
         @Override
-        public void fireWrite(ProtonBuffer buffer) {
+        public void fireWrite(ProtonBuffer buffer, Runnable ioComplete) {
             // When not handled in the handler chain the buffer write propagates to the
             // engine to be handed to any registered output handler.  The engine is then
             // responsible for error handling if nothing is registered there to handle the
             // output of frame data.
             try {
-                engine.dispatchWriteToEventHandler(buffer);
+                engine.dispatchWriteToEventHandler(buffer, ioComplete);
             } catch (Throwable error) {
                 throw engine.engineFailed(error);
             }

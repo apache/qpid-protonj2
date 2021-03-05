@@ -20,9 +20,11 @@ import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.engine.AMQPPerformativeEnvelopePool;
 import org.apache.qpid.protonj2.engine.ConnectionState;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EnginePipeline;
@@ -31,7 +33,6 @@ import org.apache.qpid.protonj2.engine.EngineState;
 import org.apache.qpid.protonj2.engine.EventHandler;
 import org.apache.qpid.protonj2.engine.HeaderEnvelope;
 import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
-import org.apache.qpid.protonj2.engine.AMQPPerformativeEnvelopePool;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineNotStartedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineNotWritableException;
@@ -79,7 +80,7 @@ public class ProtonEngine implements Engine {
     private long remoteIdleDeadline = 0;
 
     // Engine event points
-    private EventHandler<ProtonBuffer> outputHandler;
+    private BiConsumer<ProtonBuffer, Runnable> outputHandler;
     private EventHandler<Engine> engineShutdownHandler;
     private EventHandler<Engine> engineFailureHandler = (engine) -> {
         LOG.warn("Engine encounted error and will become inoperable: ", engine.failureCause());
@@ -275,12 +276,12 @@ public class ProtonEngine implements Engine {
     //----- Engine configuration
 
     @Override
-    public ProtonEngine outputHandler(EventHandler<ProtonBuffer> handler) {
+    public ProtonEngine outputHandler(BiConsumer<ProtonBuffer, Runnable> handler) {
         this.outputHandler = handler;
         return this;
     }
 
-    EventHandler<ProtonBuffer> outputHandler() {
+    BiConsumer<ProtonBuffer, Runnable> outputHandler() {
         return outputHandler;
     }
 
@@ -386,11 +387,11 @@ public class ProtonEngine implements Engine {
         }
     }
 
-    void dispatchWriteToEventHandler(ProtonBuffer buffer) {
+    void dispatchWriteToEventHandler(ProtonBuffer buffer, Runnable ioComplete) {
         if (outputHandler != null) {
             outputSequence++;
             try {
-                outputHandler.handle(buffer);
+                outputHandler.accept(buffer, ioComplete);
             } catch (Throwable error) {
                 throw engineFailed(error);
             }
@@ -431,7 +432,7 @@ public class ProtonEngine implements Engine {
                 lastOutputSequence = outputSequence;
             } else if (remoteIdleDeadline - currentTime <= 0) {
                 remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
-                pipeline.fireWrite(EMPTY_FRAME_BUFFER.duplicate());
+                pipeline.fireWrite(EMPTY_FRAME_BUFFER.duplicate(), null);
                 lastOutputSequence++;
             }
         }
