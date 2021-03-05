@@ -61,56 +61,106 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
 
     @Override
     public void fireEngineStarting() {
-        next.handler().engineStarting(next);
+        next.invokeEngineStarting();
     }
 
     @Override
     public void fireEngineStateChanged() {
-        next.handler().handleEngineStateChanged(next);
+        next.invokeEngineStateChanged();
     }
 
     @Override
     public void fireFailed(EngineFailedException failure) {
-        next.handler().engineFailed(previous, failure);
+        next.invokeEngineFailed(failure);
     }
 
     @Override
     public void fireRead(ProtonBuffer buffer) {
-        previous.handler().handleRead(previous, buffer);
+        previous.invokeHandlerRead(buffer);
     }
 
     @Override
     public void fireRead(HeaderEnvelope header) {
-        previous.handler().handleRead(previous, header);
+        previous.invokeHandlerRead(header);
     }
 
     @Override
     public void fireRead(SASLEnvelope envelope) {
-        previous.handler().handleRead(previous, envelope);
+        previous.invokeHandlerRead(envelope);
     }
 
     @Override
     public void fireRead(IncomingAMQPEnvelope envelope) {
-        previous.handler().handleRead(previous, envelope);
+        previous.invokeHandlerRead(envelope);
     }
 
     @Override
     public void fireWrite(OutgoingAMQPEnvelope envelope) {
-        next.handler().handleWrite(next, envelope);
+        next.invokeHandlerWrite(envelope);
     }
 
     @Override
     public void fireWrite(SASLEnvelope envelope) {
-        next.handler().handleWrite(next, envelope);
+        next.invokeHandlerWrite(envelope);
     }
 
     @Override
     public void fireWrite(HeaderEnvelope envelope) {
-        next.handler().handleWrite(next, envelope);
+        next.invokeHandlerWrite(envelope);
     }
 
     @Override
     public void fireWrite(ProtonBuffer buffer) {
-        next.handler().handleWrite(next, buffer);
+        next.invokeHandlerWrite(buffer);
+    }
+
+    //----- Internal invoke of Engine and Handler state methods
+
+    void invokeEngineStarting() {
+        handler.engineStarting(this);
+    }
+
+    void invokeEngineStateChanged() {
+        handler.handleEngineStateChanged(this);
+    }
+
+    void invokeEngineFailed(EngineFailedException failure) {
+        handler.engineFailed(this, failure);
+    }
+
+    //----- Internal invoke of Read methods
+
+    void invokeHandlerRead(IncomingAMQPEnvelope envelope) {
+        handler.handleRead(this, envelope);
+    }
+
+    void invokeHandlerRead(SASLEnvelope envelope) {
+        handler.handleRead(this, envelope);
+    }
+
+    void invokeHandlerRead(HeaderEnvelope envelope) {
+        handler.handleRead(this, envelope);
+    }
+
+    void invokeHandlerRead(ProtonBuffer buffer) {
+        handler.handleRead(this, buffer);
+    }
+
+    //----- Internal invoke of Write methods
+
+    void invokeHandlerWrite(OutgoingAMQPEnvelope envelope) {
+        handler.handleWrite(this, envelope);
+    }
+
+    void invokeHandlerWrite(SASLEnvelope envelope) {
+        handler.handleWrite(this, envelope);
+    }
+
+    void invokeHandlerWrite(HeaderEnvelope envelope) {
+        handler.handleWrite(this, envelope);
+    }
+
+    void invokeHandlerWrite(ProtonBuffer buffer) {
+        handler.handleWrite(this, buffer);
     }
 }
