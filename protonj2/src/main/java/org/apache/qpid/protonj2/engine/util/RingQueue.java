@@ -36,9 +36,8 @@ public class RingQueue<E> extends AbstractQueue<E> {
     private int read = 0;
     private int write = -1;
     private int size;
-    private int modCount = 0;
 
-    private Object[] backingArray;
+    private final Object[] backingArray;
 
     public RingQueue(int queueSize) {
         this.backingArray = new Object[queueSize];
@@ -57,7 +56,6 @@ public class RingQueue<E> extends AbstractQueue<E> {
         } else {
             write = advance(write, backingArray.length);
             size++;
-            modCount++;
             backingArray[write] = e;
             return true;
         }
@@ -75,7 +73,6 @@ public class RingQueue<E> extends AbstractQueue<E> {
             backingArray[read] = null;
             read = advance(read, backingArray.length);
             size--;
-            modCount++;
         }
 
         return result;
@@ -148,7 +145,6 @@ public class RingQueue<E> extends AbstractQueue<E> {
         read = 0;
         write = -1;
         size = 0;
-        modCount = 0;
 
         Arrays.fill(backingArray, null);
     }
@@ -186,14 +182,14 @@ public class RingQueue<E> extends AbstractQueue<E> {
     }
 
     private static int advance(int value, int limit) {
-        return (value + 1) % limit;
+        return (++value) % limit;
     }
 
     //----- Ring Queue Iterator Implementation
 
     private class RingIterator implements Iterator<E> {
 
-        private int expectedModCount = modCount;
+        private int expectedSize = size;
 
         private E nextElement;
         private int position;
@@ -219,7 +215,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
             if (nextElement == null) {
                 throw new NoSuchElementException();
             }
-            if (expectedModCount != RingQueue.this.modCount) {
+            if (expectedSize != RingQueue.this.size) {
                 throw new ConcurrentModificationException();
             }
 
