@@ -63,6 +63,8 @@ public class ProtonFrameEncodingHandler implements EngineHandler {
     public void handlerAdded(EngineHandlerContext context) {
         engine = (ProtonEngine) context.engine();
         configuration = engine.configuration();
+
+        ((ProtonEngineHandlerContext) context).interestMask(ProtonEngineHandlerContext.HANDLER_WRITES);
     }
 
     @Override

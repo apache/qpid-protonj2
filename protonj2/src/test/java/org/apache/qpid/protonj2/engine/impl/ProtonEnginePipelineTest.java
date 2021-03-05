@@ -22,6 +22,10 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.apache.qpid.protonj2.engine.EngineHandler;
+import org.apache.qpid.protonj2.engine.EngineHandlerContext;
+import org.apache.qpid.protonj2.engine.HeaderEnvelope;
+import org.apache.qpid.protonj2.engine.util.FrameReadSinkTransportHandler;
+import org.apache.qpid.protonj2.engine.util.FrameWriteSinkTransportHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -351,5 +355,68 @@ public class ProtonEnginePipelineTest {
 
         assertNull(pipeline.first());
         assertNull(pipeline.last());
+    }
+
+    @Test
+    public void testHandlerCanOptIntoAllEvents() {
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
+
+        EngineHandler handler = Mockito.mock(EngineHandler.class);
+        Mockito.doAnswer((invocation) -> {
+            ((ProtonEngineHandlerContext) invocation.getArgument(0)).interestMask(ProtonEngineHandlerContext.HANDLER_ALL_EVENTS);
+            return null;
+        }).when(handler).handlerAdded(Mockito.any(EngineHandlerContext.class));
+
+        pipeline.addLast("read-sink", new FrameReadSinkTransportHandler());
+        pipeline.addLast("test", handler);
+        pipeline.addLast("write-sink", new FrameWriteSinkTransportHandler());
+
+        pipeline.fireRead(HeaderEnvelope.AMQP_HEADER_ENVELOPE);
+        pipeline.fireWrite(HeaderEnvelope.AMQP_HEADER_ENVELOPE);
+
+        Mockito.verify(handler).handlerAdded(Mockito.any(EngineHandlerContext.class));
+        Mockito.verify(handler).handleRead(Mockito.any(EngineHandlerContext.class), Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(handler).handleWrite(Mockito.any(EngineHandlerContext.class), Mockito.any(HeaderEnvelope.class));
+        Mockito.verifyNoMoreInteractions(handler);
+    }
+
+    @Test
+    public void testHandlerCanOptOutOfReadEvents() {
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
+
+        EngineHandler handler = Mockito.mock(EngineHandler.class);
+        Mockito.doAnswer((invocation) -> {
+            ((ProtonEngineHandlerContext) invocation.getArgument(0)).interestMask(ProtonEngineHandlerContext.HANDLER_WRITES);
+            return null;
+        }).when(handler).handlerAdded(Mockito.any(EngineHandlerContext.class));
+
+        pipeline.addLast("read-sink", new FrameReadSinkTransportHandler());
+        pipeline.addLast("test", handler);
+        pipeline.addLast("write-sink", new FrameWriteSinkTransportHandler());
+
+        pipeline.fireRead(HeaderEnvelope.AMQP_HEADER_ENVELOPE);
+
+        Mockito.verify(handler).handlerAdded(Mockito.any(EngineHandlerContext.class));
+        Mockito.verifyNoMoreInteractions(handler);
+    }
+
+    @Test
+    public void testHandlerCanOptOutOfWriteEvents() {
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
+
+        EngineHandler handler = Mockito.mock(EngineHandler.class);
+        Mockito.doAnswer((invocation) -> {
+            ((ProtonEngineHandlerContext) invocation.getArgument(0)).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
+            return null;
+        }).when(handler).handlerAdded(Mockito.any(EngineHandlerContext.class));
+
+        pipeline.addLast("read-sink", new FrameReadSinkTransportHandler());
+        pipeline.addLast("test", handler);
+        pipeline.addLast("write-sink", new FrameWriteSinkTransportHandler());
+
+        pipeline.fireWrite(HeaderEnvelope.AMQP_HEADER_ENVELOPE);
+
+        Mockito.verify(handler).handlerAdded(Mockito.any(EngineHandlerContext.class));
+        Mockito.verifyNoMoreInteractions(handler);
     }
 }

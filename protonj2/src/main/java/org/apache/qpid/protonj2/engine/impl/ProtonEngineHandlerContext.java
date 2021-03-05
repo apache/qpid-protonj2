@@ -34,9 +34,15 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     ProtonEngineHandlerContext previous;
     ProtonEngineHandlerContext next;
 
+    public static final int HANDLER_READS = 1 << 1;
+    public static final int HANDLER_WRITES = 1 << 2;
+    public static final int HANDLER_ALL_EVENTS = HANDLER_READS | HANDLER_WRITES;
+
     private final String name;
     private final Engine engine;
     private final EngineHandler handler;
+
+    private int intereskMask = HANDLER_ALL_EVENTS;
 
     public ProtonEngineHandlerContext(String name, Engine engine, EngineHandler handler) {
         this.name = name;
@@ -59,6 +65,23 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
         return engine;
     }
 
+    /**
+     * Allows a handler to indicate if it wants to be notified of a Engine Handler events for
+     * specific operations or opt into all engine handler events.  By opting out of the events
+     * that the handler does not process the call chain can be reduced when processing engine
+     * events.
+     *
+     * @return the interest mask that should be used to determine if a handler should be signaled.
+     */
+    public int interestMask() {
+        return intereskMask;
+    }
+
+    public ProtonEngineHandlerContext interestMask(int mask) {
+        this.intereskMask = mask;
+        return this;
+    }
+
     @Override
     public void fireEngineStarting() {
         next.invokeEngineStarting();
@@ -76,42 +99,42 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
 
     @Override
     public void fireRead(ProtonBuffer buffer) {
-        previous.invokeHandlerRead(buffer);
+        findNextReadHandler().invokeHandlerRead(buffer);
     }
 
     @Override
     public void fireRead(HeaderEnvelope header) {
-        previous.invokeHandlerRead(header);
+        findNextReadHandler().invokeHandlerRead(header);
     }
 
     @Override
     public void fireRead(SASLEnvelope envelope) {
-        previous.invokeHandlerRead(envelope);
+        findNextReadHandler().invokeHandlerRead(envelope);
     }
 
     @Override
     public void fireRead(IncomingAMQPEnvelope envelope) {
-        previous.invokeHandlerRead(envelope);
+        findNextReadHandler().invokeHandlerRead(envelope);
     }
 
     @Override
     public void fireWrite(OutgoingAMQPEnvelope envelope) {
-        next.invokeHandlerWrite(envelope);
+        findNextWriteHandler().invokeHandlerWrite(envelope);
     }
 
     @Override
     public void fireWrite(SASLEnvelope envelope) {
-        next.invokeHandlerWrite(envelope);
+        findNextWriteHandler().invokeHandlerWrite(envelope);
     }
 
     @Override
     public void fireWrite(HeaderEnvelope envelope) {
-        next.invokeHandlerWrite(envelope);
+        findNextWriteHandler().invokeHandlerWrite(envelope);
     }
 
     @Override
     public void fireWrite(ProtonBuffer buffer) {
-        next.invokeHandlerWrite(buffer);
+        findNextWriteHandler().invokeHandlerWrite(buffer);
     }
 
     //----- Internal invoke of Engine and Handler state methods
@@ -162,5 +185,25 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
 
     void invokeHandlerWrite(ProtonBuffer buffer) {
         handler.handleWrite(this, buffer);
+    }
+
+    private ProtonEngineHandlerContext findNextReadHandler() {
+        ProtonEngineHandlerContext ctx = this;
+        do {
+            ctx = ctx.previous;
+        } while (skipContext(ctx, HANDLER_READS));
+        return ctx;
+    }
+
+    private ProtonEngineHandlerContext findNextWriteHandler() {
+        ProtonEngineHandlerContext ctx = this;
+        do {
+            ctx = ctx.next;
+        } while (skipContext(ctx, HANDLER_WRITES));
+        return ctx;
+    }
+
+    private static boolean skipContext(ProtonEngineHandlerContext ctx, int interestMask) {
+        return (ctx.interestMask() & interestMask) == 0;
     }
 }

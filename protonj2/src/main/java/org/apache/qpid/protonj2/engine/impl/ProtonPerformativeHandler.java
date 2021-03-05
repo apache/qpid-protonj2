@@ -53,6 +53,8 @@ public class ProtonPerformativeHandler implements EngineHandler, HeaderHandler<E
         engine = (ProtonEngine) context.engine();
         connection = engine.connection();
         configuration = engine.configuration();
+
+        ((ProtonEngineHandlerContext) context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
     }
 
     @Override

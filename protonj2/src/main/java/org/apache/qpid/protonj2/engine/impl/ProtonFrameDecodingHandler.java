@@ -22,12 +22,12 @@ import org.apache.qpid.protonj2.codec.CodecFactory;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.engine.AMQPPerformativeEnvelopePool;
 import org.apache.qpid.protonj2.engine.EmptyEnvelope;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.HeaderEnvelope;
 import org.apache.qpid.protonj2.engine.IncomingAMQPEnvelope;
-import org.apache.qpid.protonj2.engine.AMQPPerformativeEnvelopePool;
 import org.apache.qpid.protonj2.engine.SASLEnvelope;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.FrameDecodingException;
@@ -102,16 +102,18 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
     @Override
     public void handleRead(EngineHandlerContext context, SASLEnvelope envelope) {
         envelope.getBody().invoke(this, context);
+        ((ProtonEngineHandlerContext) context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         context.fireRead(envelope);
     }
 
     @Override
     public void handleWrite(EngineHandlerContext context, SASLEnvelope envelope) {
         envelope.invoke(this, context);
+        ((ProtonEngineHandlerContext) context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         context.fireWrite(envelope);
     }
 
-    //----- Sasl Performative Handler to check for change to non-SASL state
+    //----- SASL Performative Handler to check for change to non-SASL state
 
     @Override
     public void handleOutcome(SaslOutcome saslOutcome, EngineHandlerContext context) {
