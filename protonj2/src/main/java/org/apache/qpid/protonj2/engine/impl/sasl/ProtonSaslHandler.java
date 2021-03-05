@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.protonj2.engine.impl.sasl;
 
-import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.EngineState;
@@ -137,11 +136,6 @@ public final class ProtonSaslHandler implements EngineHandler {
             // Delegate to the SASL Context to allow state tracking to be maintained.
             frame.invoke(safeGetSaslContext().saslWriteContext(), context);
         }
-    }
-
-    @Override
-    public void handleWrite(EngineHandlerContext context, ProtonBuffer buffer) {
-        context.fireWrite(buffer);
     }
 
     //----- Internal implementation API and helper methods
