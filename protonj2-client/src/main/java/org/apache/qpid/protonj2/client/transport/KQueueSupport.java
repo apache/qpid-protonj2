@@ -32,6 +32,8 @@ public class KQueueSupport {
 
     private static final Logger LOG = LoggerFactory.getLogger(KQueueSupport.class);
 
+    public static final String NAME = "KQUEUE";
+
     public static boolean isAvailable(TransportOptions transportOptions) {
         try {
             return transportOptions.allowNativeIO() && KQueue.isAvailable();

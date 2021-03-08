@@ -24,30 +24,30 @@ import org.slf4j.LoggerFactory;
 
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.incubator.channel.uring.IOUring;
+import io.netty.incubator.channel.uring.IOUringEventLoopGroup;
+import io.netty.incubator.channel.uring.IOUringSocketChannel;
 
-public class EpollSupport {
+public class IOUringSupport {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EpollSupport.class);
+    private static final Logger LOG = LoggerFactory.getLogger(IOUringSupport.class);
 
-    public static final String NAME = "EPOLL";
+    public static final String NAME = "IO_URING";
 
     public static boolean isAvailable(TransportOptions transportOptions) {
         try {
-            return transportOptions.allowNativeIO() && Epoll.isAvailable();
+            return transportOptions.allowNativeIO() && IOUring.isAvailable();
         } catch (NoClassDefFoundError ncdfe) {
-            LOG.debug("Unable to check for Epoll support due to missing class definition", ncdfe);
+            LOG.debug("Unable to check for IO_Uring support due to missing class definition", ncdfe);
             return false;
         }
     }
 
     public static EventLoopGroup createGroup(int nThreads, ThreadFactory ioThreadfactory) {
-        return new EpollEventLoopGroup(nThreads, ioThreadfactory);
+        return new IOUringEventLoopGroup(nThreads, ioThreadfactory);
     }
 
     public static Class<? extends Channel> getChannelClass() {
-        return EpollSocketChannel.class;
+        return IOUringSocketChannel.class;
     }
 }

@@ -45,7 +45,8 @@
     <log4j.slf4j.version>2.14.0</log4j.slf4j.version>
     <hamcrest.version>2.2</hamcrest.version>
     <netty.version>4.1.59.Final</netty.version>
-    <netty-tcnative-version>2.0.36.Final</netty-tcnative-version>
+    <netty.iouring.version>0.0.4.Final</netty.iouring.version>
+    <netty.tcnative.version>2.0.36.Final</netty.tcnative.version>
 
     <!-- Plugin versions -->
     <maven.bundle.plugin.version>5.1.1</maven.bundle.plugin.version>
@@ -57,6 +58,7 @@
     <surefire.runOrder>filesystem</surefire.runOrder>
     <proton.trace.frames>false</proton.trace.frames>
 
+    <netty-transport-native-io-uring-classifier>linux-x86_64</netty-transport-native-io-uring-classifier>
     <netty-transport-native-epoll-classifier>linux-x86_64</netty-transport-native-epoll-classifier>
     <netty-transport-native-kqueue-classifier>osx-x86_64</netty-transport-native-kqueue-classifier>
 
@@ -154,11 +156,17 @@
         <version>${netty.version}</version>
         <classifier>${netty-transport-native-kqueue-classifier}</classifier>
       </dependency>
+      <dependency>
+        <groupId>io.netty.incubator</groupId>
+        <artifactId>netty-incubator-transport-native-io_uring</artifactId>
+        <version>${netty.iouring.version}</version>
+        <classifier>${netty-transport-native-io-uring-classifier}</classifier>
+      </dependency>
       <!--  Testing only Uber Jar inclusion -->
       <dependency>
          <groupId>io.netty</groupId>
          <artifactId>netty-tcnative-boringssl-static</artifactId>
-         <version>${netty-tcnative-version}</version>
+         <version>${netty.tcnative.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.qpid</groupId>

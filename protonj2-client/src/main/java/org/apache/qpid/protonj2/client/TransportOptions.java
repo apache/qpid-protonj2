@@ -38,6 +38,7 @@ public class TransportOptions implements Cloneable {
     public static final int DEFAULT_LOCAL_PORT = 0;
     public static final boolean DEFAULT_USE_WEBSOCKETS = false;
     public static final int DEFAULT_WEBSOCKET_MAX_FRAME_SIZE = 65535;
+    public static final String[] DEFAULT_NATIVEIO_PREFERENCES = { "EPOLL", "IO_URING", "KQUEUE" };
 
     private int sendBufferSize = DEFAULT_SEND_BUFFER_SIZE;
     private int receiveBufferSize = DEFAULT_RECEIVE_BUFFER_SIZE;
@@ -51,6 +52,7 @@ public class TransportOptions implements Cloneable {
     private String localAddress;
     private int localPort = DEFAULT_LOCAL_PORT;
     private boolean allowNativeIO = DEFAULT_ALLOW_NATIVE_IO;
+    private String[] nativeIOPeference = DEFAULT_NATIVEIO_PREFERENCES;
     private boolean traceBytes = DEFAULT_TRACE_BYTES;
     private boolean useWebSockets = DEFAULT_USE_WEBSOCKETS;
     private String webSocketPath;
@@ -237,6 +239,20 @@ public class TransportOptions implements Cloneable {
     }
 
     /**
+     * @return the nativeIOPeference
+     */
+    public String[] nativeIOPeference() {
+        return nativeIOPeference;
+    }
+
+    /**
+     * @param nativeIOPeference the nativeIOPeference to set
+     */
+    public void nativeIOPeference(String... nativeIOPeference) {
+        this.nativeIOPeference = nativeIOPeference;
+    }
+
+    /**
      * @return true if the transport should enable byte tracing
      */
     public boolean traceBytes() {
@@ -311,6 +327,7 @@ public class TransportOptions implements Cloneable {
         other.trafficClass(trafficClass());
         other.defaultTcpPort(defaultTcpPort());
         other.allowNativeIO(allowNativeIO());
+        other.nativeIOPeference(nativeIOPeference());
         other.traceBytes(traceBytes());
         other.localAddress(localAddress());
         other.localPort(localPort());

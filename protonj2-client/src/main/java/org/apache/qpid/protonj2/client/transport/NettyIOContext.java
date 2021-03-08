@@ -57,22 +57,43 @@ public final class NettyIOContext {
         this.sslOptions = ssl;
         this.threadFactory = new TrackableThreadFactory(ioThreadName, true);
 
-        final boolean useKQueue = KQueueSupport.isAvailable(options) && options.allowNativeIO();
-        final boolean useEpoll = EpollSupport.isAvailable(options) && options.allowNativeIO();
+        final String[] nativeIOPreference = options.nativeIOPeference();
 
-        if (useKQueue) {
-            LOG.trace("Netty Transports will be using KQueue mode");
-            group = KQueueSupport.createGroup(1, threadFactory);
-            channelClass = KQueueSupport.getChannelClass();
-        } else if (useEpoll) {
-            LOG.trace("Netty Transports will be using Epoll mode");
-            group = EpollSupport.createGroup(1, threadFactory);
-            channelClass = EpollSupport.getChannelClass();
-        } else {
-            LOG.trace("Netty Transports will be using NIO mode");
-            group = new NioEventLoopGroup(1, threadFactory);
-            channelClass = NioSocketChannel.class;
+        EventLoopGroup selectedGroup = null;
+        Class<? extends Channel> selectedChannelClass = null;
+
+        if (options.allowNativeIO()) {
+            for (String nativeID : nativeIOPreference) {
+                if (EpollSupport.NAME.equalsIgnoreCase(nativeID) && EpollSupport.isAvailable(options)) {
+                    LOG.trace("Netty Transports will be using Epoll mode");
+                    selectedGroup = EpollSupport.createGroup(1, threadFactory);
+                    selectedChannelClass = EpollSupport.getChannelClass();
+                    break;
+                } else if (IOUringSupport.NAME.equalsIgnoreCase(nativeID) && IOUringSupport.isAvailable(options)) {
+                    LOG.trace("Netty Transports will be using IO-Uring mode");
+                    selectedGroup = IOUringSupport.createGroup(1, threadFactory);
+                    selectedChannelClass = IOUringSupport.getChannelClass();
+                    break;
+                } else if (KQueueSupport.NAME.equalsIgnoreCase(nativeID) && KQueueSupport.isAvailable(options)) {
+                    LOG.trace("Netty Transports will be using KQueue mode");
+                    selectedGroup = KQueueSupport.createGroup(1, threadFactory);
+                    selectedChannelClass = KQueueSupport.getChannelClass();
+                    break;
+                } else {
+                    throw new IllegalArgumentException(
+                        String.format("Provided preferred native trasport type name: %s , is not vliad.", nativeID));
+                }
+            }
         }
+
+        if (selectedGroup == null) {
+            LOG.trace("Netty Transports will be using NIO mode");
+            selectedGroup = new NioEventLoopGroup(1, threadFactory);
+            selectedChannelClass = NioSocketChannel.class;
+        }
+
+        this.group = selectedGroup;
+        this.channelClass = selectedChannelClass;
     }
 
     public void shutdown() {

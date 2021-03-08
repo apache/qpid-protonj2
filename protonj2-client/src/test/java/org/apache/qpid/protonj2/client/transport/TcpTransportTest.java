@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.client.transport;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -52,6 +53,8 @@ import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.kqueue.KQueue;
 import io.netty.channel.kqueue.KQueueEventLoopGroup;
+import io.netty.incubator.channel.uring.IOUring;
+import io.netty.incubator.channel.uring.IOUringEventLoopGroup;
 import io.netty.util.ResourceLeakDetector;
 import io.netty.util.ResourceLeakDetector.Level;
 
@@ -731,6 +734,15 @@ public class TcpTransportTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testCreateFailsIfUnknownPerferredNativeIOLayerSelected() throws Exception {
+        TransportOptions options = createTransportOptions();
+        options.allowNativeIO(true);
+        options.nativeIOPeference("NATIVE-IO");
+
+        assertThrows(IllegalArgumentException.class, () -> createTransport(options, createSSLOptions()));
+    }
+
+    @Test
     public void testConnectToServerWithEpollEnabled() throws Exception {
         doTestEpollSupport(true);
     }
@@ -750,6 +762,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             TransportOptions options = createTransportOptions();
             options.allowNativeIO(useEpoll);
+            options.nativeIOPeference("EPOLL");
             Transport transport = createTransport(options, createSSLOptions());
             try {
                 transport.connect(HOSTNAME, port, testListener).awaitConnect();
@@ -774,7 +787,51 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @SuppressWarnings("deprecation")
+    @Test
+    public void testConnectToServerWithIOUringEnabled() throws Exception {
+        doTestIORingSupport(true);
+    }
+
+    @Test
+    public void testConnectToServerWithIOUringDisabled() throws Exception {
+        doTestIORingSupport(false);
+    }
+
+    private void doTestIORingSupport(boolean useIOUring) throws Exception {
+        assumeTrue(IOUring.isAvailable());
+
+        try (NettyEchoServer server = createEchoServer()) {
+            server.start();
+
+            int port = server.getServerPort();
+
+            TransportOptions options = createTransportOptions();
+            options.allowNativeIO(useIOUring);
+            options.nativeIOPeference("IO_URING");
+            Transport transport = createTransport(options, createSSLOptions());
+            try {
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
+            } catch (Exception e) {
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
+            }
+
+            assertTrue(transport.isConnected());
+            assertEquals(HOSTNAME, transport.getHost(), "Server host is incorrect");
+            assertEquals(port, transport.getPort(), "Server port is incorrect");
+            assertIOUring("Transport should be using URing", useIOUring, transport);
+
+            transport.close();
+
+            // Additional close should not fail or cause other problems.
+            transport.close();
+        }
+
+        assertFalse(transportErrored);
+        assertTrue(exceptions.isEmpty());
+        assertTrue(data.isEmpty());
+    }
+
     private void assertEpoll(String message, boolean expected, Transport transport) throws Exception {
         Field bootstrap = null;
         Class<?> transportType = transport.getClass();
@@ -797,9 +854,37 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         Bootstrap transportBootstrap = (Bootstrap) bootstrap.get(transport);
 
         if (expected) {
-            assertTrue(transportBootstrap.group() instanceof EpollEventLoopGroup, message);
+            assertTrue(transportBootstrap.config().group() instanceof EpollEventLoopGroup, message);
         } else {
-            assertFalse(transportBootstrap.group() instanceof EpollEventLoopGroup, message);
+            assertFalse(transportBootstrap.config().group() instanceof EpollEventLoopGroup, message);
+        }
+    }
+
+    private void assertIOUring(String message, boolean expected, Transport transport) throws Exception {
+        Field bootstrap = null;
+        Class<?> transportType = transport.getClass();
+
+        while (transportType != null && bootstrap == null) {
+            try {
+                bootstrap = transportType.getDeclaredField("bootstrap");
+            } catch (NoSuchFieldException error) {
+                transportType = transportType.getSuperclass();
+                if (Object.class.equals(transportType)) {
+                    transportType = null;
+                }
+            }
+        }
+
+        assertNotNull(bootstrap, "Transport implementation unknown");
+
+        bootstrap.setAccessible(true);
+
+        Bootstrap transportBootstrap = (Bootstrap) bootstrap.get(transport);
+
+        if (expected) {
+            assertTrue(transportBootstrap.config().group() instanceof IOUringEventLoopGroup, message);
+        } else {
+            assertFalse(transportBootstrap.config().group() instanceof IOUringEventLoopGroup, message);
         }
     }
 
