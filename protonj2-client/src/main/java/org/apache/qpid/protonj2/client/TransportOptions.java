@@ -38,7 +38,7 @@ public class TransportOptions implements Cloneable {
     public static final int DEFAULT_LOCAL_PORT = 0;
     public static final boolean DEFAULT_USE_WEBSOCKETS = false;
     public static final int DEFAULT_WEBSOCKET_MAX_FRAME_SIZE = 65535;
-    public static final String[] DEFAULT_NATIVEIO_PREFERENCES = { "EPOLL", "IO_URING", "KQUEUE" };
+    public static final String[] DEFAULT_NATIVEIO_PREFERENCES = { "EPOLL", "KQUEUE" };
 
     private int sendBufferSize = DEFAULT_SEND_BUFFER_SIZE;
     private int receiveBufferSize = DEFAULT_RECEIVE_BUFFER_SIZE;
