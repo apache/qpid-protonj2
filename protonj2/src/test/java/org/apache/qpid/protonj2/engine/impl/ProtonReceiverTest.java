@@ -1771,6 +1771,15 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
     @Test
     public void testReceiverReportsDeliveryUpdatedOnDispositionForMultipleTransfers() throws Exception {
+        doTestReceiverReportsDeliveryUpdatedOnDispositionForMultipleTransfers(0);
+    }
+
+    @Test
+    public void testReceiverReportsDeliveryUpdatedOnDispositionForMultipleTransfersDeliveryIdOverflows() throws Exception {
+        doTestReceiverReportsDeliveryUpdatedOnDispositionForMultipleTransfers(Integer.MAX_VALUE);
+    }
+
+    private void doTestReceiverReportsDeliveryUpdatedOnDispositionForMultipleTransfers(int firstDeliveryId) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -1780,19 +1789,19 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectBegin().respond();
         peer.expectAttach().respond();
         peer.expectFlow().withLinkCredit(2);
-        peer.remoteTransfer().withDeliveryId(0)
+        peer.remoteTransfer().withDeliveryId(firstDeliveryId)
                              .withDeliveryTag(new byte[] {0})
                              .withMore(false)
                              .withMessageFormat(0).queue();
-        peer.remoteTransfer().withDeliveryId(1)
+        peer.remoteTransfer().withDeliveryId(firstDeliveryId + 1)
                              .withDeliveryTag(new byte[] {1})
                              .withMore(false)
                              .withMessageFormat(0).queue();
         peer.remoteDisposition().withSettled(true)
                                 .withRole(Role.SENDER.getValue())
                                 .withState().accepted()
-                                .withFirst(0)
-                                .withLast(1).queue();
+                                .withFirst(firstDeliveryId)
+                                .withLast(firstDeliveryId + 1).queue();
         peer.expectDetach().respond();
 
         Connection connection = engine.start();

@@ -63,6 +63,11 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
         return this;
     }
 
+    public DispositionInjectAction withFirst(int first) {
+        disposition.setFirst(UnsignedInteger.valueOf(first));
+        return this;
+    }
+
     public DispositionInjectAction withFirst(long first) {
         disposition.setFirst(UnsignedInteger.valueOf(first));
         return this;
@@ -70,6 +75,11 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
 
     public DispositionInjectAction withFirst(UnsignedInteger first) {
         disposition.setFirst(first);
+        return this;
+    }
+
+    public DispositionInjectAction withLast(int last) {
+        disposition.setLast(UnsignedInteger.valueOf(last));
         return this;
     }
 

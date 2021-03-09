@@ -152,32 +152,39 @@ public class ProtonSessionIncomingWindow {
      * @return the {@link Disposition}
      */
     Disposition handleDisposition(Disposition disposition) {
-        final long first = disposition.getFirst();
-        final long last = disposition.hasLast() ? disposition.getLast() : first;
+        final int first = (int) disposition.getFirst();
 
-        if (last < first) {
-            engine.engineFailed(new ProtocolViolationException(
-                "Received Disposition with mismatched first and last delivery Ids: [" + first + ", " + last + "]"));
-        }
-
-        long index = first;
-
-        // TODO - Common case will be one element so optimize for that.
-
-        do {
-            // TODO - Here is a chance for optimization, if the map containing the unsettled
-            //        is navigable then we can use a sub-map to limit the range to the first
-            //        and last elements and then simply walk next until the end without checking
-            //        each index between for its presence.
-            ProtonIncomingDelivery delivery = disposition.getSettled() ?
-                unsettled.remove((int) index) : unsettled.get((int) index);
+        if (disposition.hasLast() && disposition.getLast() != first) {
+            handleRangedDisposition(disposition);
+        } else {
+            final ProtonIncomingDelivery delivery = disposition.getSettled() ?
+                unsettled.remove(first) : unsettled.get(first);
 
             if (delivery != null) {
                 delivery.getLink().remoteDisposition(disposition, delivery);
             }
-        } while (++index <= last);
+        }
 
         return disposition;
+    }
+
+    private void handleRangedDisposition(Disposition disposition) {
+        final int first = (int) disposition.getFirst();
+        final int last = (int) disposition.getLast();
+        final boolean settled = disposition.getSettled();
+
+        int index = first;
+        ProtonIncomingDelivery delivery;
+
+        // TODO: If SplayMap gets a subMap that works we could get the ranged view which would
+        //       be more efficient.
+        do {
+            delivery = settled ? unsettled.remove(index) : unsettled.get(index);
+
+            if (delivery != null) {
+                delivery.getLink().remoteDisposition(disposition, delivery);
+            }
+        } while (index++ != last);
     }
 
     long updateIncomingWindow() {

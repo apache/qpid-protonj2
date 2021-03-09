@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
@@ -3873,5 +3874,75 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         connection.close();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testSenderReportsDeliveryUpdatedOnDispositionForMultipleTransfers() throws Exception {
+        final Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        final ProtonTestConnector peer = createTestPeer(engine);
+        final byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(2).queue();
+        peer.expectTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(false)
+                             .withPayload(payload);
+        peer.expectTransfer().withDeliveryId(1)
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(false)
+                             .withPayload(payload);
+        peer.remoteDisposition().withSettled(true)
+                                .withRole(Role.RECEIVER.getValue())
+                                .withState().accepted()
+                                .withFirst(0)
+                                .withLast(1).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("test");
+
+        final AtomicInteger dispositionCounter = new AtomicInteger();
+
+        final ArrayList<OutgoingDelivery> deliveries = new ArrayList<>();
+
+        sender.deliveryStateUpdatedHandler(delivery -> {
+            if (delivery.isRemotelySettled()) {
+                dispositionCounter.incrementAndGet();
+                deliveries.add(delivery);
+            }
+        });
+
+        sender.open();
+
+        OutgoingDelivery delivery1 = sender.next();
+        delivery1.setTag(new byte[] { 0 });
+        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        OutgoingDelivery delivery2 = sender.next();
+        delivery2.setTag(new byte[] { 1 });
+        delivery2.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        peer.waitForScriptToComplete();
+        peer.expectDetach().respond();
+
+        sender.close();
+
+        assertEquals(2, deliveries.size(), "Not all deliveries received dispositions");
+
+        byte deliveryTag = 0;
+
+        for (OutgoingDelivery delivery : deliveries) {
+            assertEquals(deliveryTag++, delivery.getTag().tagBuffer().getByte(0), "Delivery not updated in correct order");
+            assertTrue(delivery.isRemotelySettled(), "Delivery should be marked as remotely setted");
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
     }
 }
