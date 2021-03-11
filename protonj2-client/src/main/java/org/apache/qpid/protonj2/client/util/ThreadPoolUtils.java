@@ -151,10 +151,10 @@ public final class ThreadPoolUtils {
             // complete so the end user can see this in the log
             if (warned) {
                 LOG.info("Shutdown of ExecutorService: {} is shutdown: {} and terminated: {} took: {}.",
-                    new Object[] { executorService, executorService.isShutdown(), executorService.isTerminated(), TimeUtils.printDuration(watch.taken()) });
+                    executorService, executorService.isShutdown(), executorService.isTerminated(), TimeUtils.printDuration(watch.taken()));
             } else if (LOG.isDebugEnabled()) {
                 LOG.debug("Shutdown of ExecutorService: {} is shutdown: {} and terminated: {} took: {}.",
-                    new Object[] { executorService, executorService.isShutdown(), executorService.isTerminated(), TimeUtils.printDuration(watch.taken()) });
+                    executorService, executorService.isShutdown(), executorService.isTerminated(), TimeUtils.printDuration(watch.taken()));
             }
         }
     }

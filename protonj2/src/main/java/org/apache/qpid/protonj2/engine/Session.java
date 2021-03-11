@@ -29,11 +29,6 @@ public interface Session extends Endpoint<Session> {
     SessionState getState();
 
     /**
-     * @return the remaining session capacity based on how many bytes are currently pending,
-     */
-    int getRemainingIncomingCapacity();
-
-    /**
      * @return the parent {@link Connection} for this Session.
      */
     Connection getConnection();
@@ -57,14 +52,14 @@ public interface Session extends Endpoint<Session> {
      *
      * @return a set of Sender instances tracked by this session.
      */
-    Set<Sender> senders();
+    Set<? extends Sender> senders();
 
     /**
      * Returns a {@link Set} of {@link Receiver} instances that are being tracked by this {@link Session}.
      *
      * @return a set of Receiver instances tracked by this session.
      */
-    Set<Receiver> receivers();
+    Set<? extends Receiver> receivers();
 
     //----- Session sender and receiver factory methods
 
@@ -122,6 +117,36 @@ public interface Session extends Endpoint<Session> {
      * @return the current incoming capacity of this session.
      */
     int getIncomingCapacity();
+
+    /**
+     * @return the remaining session capacity based on how many bytes are currently pending,
+     */
+    int getRemainingIncomingCapacity();
+
+    /**
+     * Sets the maximum number of bytes this session can be write before blocking additional
+     * sends until the written bytes are known to have been flushed to the write.  This limit
+     * is intended to deal with issues of memory allocation when the I/O layer allows for
+     * asynchronous writes and finer grained control over the pending write buffers is needed.
+     *
+     * @param outgoingCapacity
+     *      maximum number of outgoing bytes this session will allow before stopping senders from sending.
+     *
+     * @return this {@link Session} instance.
+     *
+     * @throws IllegalStateException if the {@link Session} has already been closed.
+     */
+    Session setOutgoingCapacity(int outgoingCapacity) throws IllegalStateException;
+
+    /**
+     * @return the current outgoing capacity limit of this session.
+     */
+    int getOutgoingCapacity();
+
+    /**
+     * @return the remaining session outgoing capacity based on how many bytes are currently pending,
+     */
+    int getRemainingOutgoingCapacity();
 
     /**
      * Set the handle max value for this Session.

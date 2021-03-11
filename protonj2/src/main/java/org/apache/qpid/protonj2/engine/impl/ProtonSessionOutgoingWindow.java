@@ -16,9 +16,10 @@
  */
 package org.apache.qpid.protonj2.engine.impl;
 
-import java.util.function.Consumer;
+import java.util.Set;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
 import org.apache.qpid.protonj2.engine.util.SplayMap;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.apache.qpid.protonj2.types.transport.Begin;
@@ -35,29 +36,34 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
  */
 public class ProtonSessionOutgoingWindow {
 
-    private static final int DEFAULT_WINDOW_SIZE = Integer.MAX_VALUE; // biggest legal value
-
     private final ProtonSession session;
     private final ProtonEngine engine;
+    private final int localChannel;
 
     // This is used for the delivery-id actually stamped in each transfer frame of a given message delivery.
     private int outgoingDeliveryId = 0;
 
-    // These are used for the session windows communicated via Begin/Flow frames
-    // and the conceptual transfer-id relating to updating them.
-    private long outgoingWindow = DEFAULT_WINDOW_SIZE;
+    // Conceptual outgoing Transfer ID value.
     private int nextOutgoingId = 0;
+
+    // Track outgoing windowing state information in order to stop outgoing writes if the high
+    // water mark is hit and restart later once the low water mark is hit.  When outgoing capacity
+    // is at the default -1 value then no real limit is applied.  If set to zero no writes are allowed.
+    private int outgoingCapacity = -1;
+    private int outgoingWindowHighWaterMark = Integer.MAX_VALUE;
+    private int outgoingWindowLowWaterMark = Integer.MAX_VALUE / 2;
+    private int pendingOutgoingWrites;
+    private boolean locallyWritable;
 
     private long remoteIncomingWindow;
     private int remoteNextIncomingId = nextOutgoingId;
-
-    private int outgoingBytes;
 
     private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
     public ProtonSessionOutgoingWindow(ProtonSession session) {
         this.session = session;
         this.engine = session.getConnection().getEngine();
+        this.localChannel = session.getLocalChannel();
     }
 
     /**
@@ -72,11 +78,89 @@ public class ProtonSessionOutgoingWindow {
         begin.setNextOutgoingId(getNextOutgoingId());
         begin.setOutgoingWindow(getOutgoingWindow());
 
+        updateOutgoingWindowState();
+
         return begin;
     }
 
     int getAndIncrementNextDeliveryId() {
         return outgoingDeliveryId++;
+    }
+
+    void setOutgoingCapacity(int outgoingCapacity) {
+        this.outgoingCapacity = outgoingCapacity;
+        updateOutgoingWindowState();
+    }
+
+    int getOutgoingCapacity() {
+        return outgoingCapacity;
+    }
+
+    int getRemainingOutgoingCapacity() {
+        // If set to lower value after some writes are pending this calculation could go negative which we don't want
+        // so ensure it never drops below zero.  Then limit the max value to max positive value and hold there
+        // as it being more than that is a fairly pointless value to try and convey.
+        final int allowedWrites = Math.max(0, outgoingWindowHighWaterMark - pendingOutgoingWrites);
+        final int remaining = (int) (allowedWrites * session.getEngine().configuration().getOutboundMaxFrameSize());
+
+        if (outgoingCapacity < 0 || remaining < 0) {
+            return Integer.MAX_VALUE;
+        } else {
+            return remaining;
+        }
+    }
+
+    boolean isSendable() {
+        return remoteIncomingWindow > 0 && locallyWritable;
+    }
+
+    private void updateOutgoingWindowState() {
+        final boolean oldWritable = locallyWritable;
+        final int maxFrameSize = (int) session.getEngine().configuration().getOutboundMaxFrameSize();
+
+        if (outgoingCapacity == 0) {
+            outgoingWindowHighWaterMark = outgoingWindowLowWaterMark = 0;
+            locallyWritable = false;
+        } else if (outgoingCapacity > 0) {
+            outgoingWindowHighWaterMark = Math.max(1, outgoingCapacity / maxFrameSize);
+            outgoingWindowLowWaterMark = outgoingWindowHighWaterMark / 2;
+            locallyWritable = pendingOutgoingWrites <= outgoingWindowLowWaterMark;
+        } else {
+            // User disabled outgoing windowing so reset state to reflect that we are not
+            // enforcing any limit from now on, at least not any sane limit.
+            outgoingWindowHighWaterMark = Integer.MAX_VALUE;
+            outgoingWindowLowWaterMark = Integer.MAX_VALUE / 2;
+            locallyWritable = true;
+        }
+
+        if (!oldWritable && locallyWritable) {
+            Set<ProtonSender> senders = session.senders();
+            for (ProtonSender sender : senders) {
+                if (sender.getCredit() > 0) {
+                    sender.signalLinkCreditStateUpdated();
+                }
+
+                if (!locallyWritable) {
+                    break;
+                }
+            }
+        }
+    }
+
+    private void handleOutgoingFrameWriteComplete() {
+        if (--pendingOutgoingWrites <= outgoingWindowLowWaterMark && outgoingCapacity != 0  && !locallyWritable) {
+            locallyWritable = true;
+            Set<ProtonSender> senders = session.senders();
+            for (ProtonSender sender : senders) {
+                if (sender.getCredit() > 0) {
+                    sender.signalLinkCreditStateUpdated();
+                }
+
+                if (!locallyWritable) {
+                    break;
+                }
+            }
+        }
     }
 
     //----- Handle incoming performatives relevant to the session.
@@ -166,22 +250,20 @@ public class ProtonSessionOutgoingWindow {
         } while (index++ != last);
     }
 
-    void writeFlow(ProtonSender link) {
-        session.writeFlow(link);
-    }
-
     //----- Handle sender link actions in the session window context
 
     private final Disposition cachedDisposition = new Disposition();
     private final Transfer cachedTransfer = new Transfer();
-    private final Consumer<Performative> cachedTransferUpdater = (performative) -> cachedTransfer.setMore(true);
+
+    private void handlePayloadToLargeRequiresSplitFrames(Performative performative) {
+        cachedTransfer.setMore(true);
+    }
 
     void processSend(ProtonSender sender, ProtonOutgoingDelivery delivery, ProtonBuffer payload, boolean complete) {
         // For a transfer that hasn't completed but has no bytes in the final transfer write we want
         // to allow a transfer to go out with the more flag as false.
 
         if (!delivery.isSettled()) {
-            // TODO - Casting is ugly
             unsettled.put((int) delivery.getDeliveryId(), delivery);
         }
 
@@ -197,6 +279,11 @@ public class ProtonSessionOutgoingWindow {
             cachedTransfer.setState(delivery.getState());
 
             do {
+                // Update session window tracking for each transfer that ends up being sent.
+                nextOutgoingId++;
+                remoteIncomingWindow--;
+                locallyWritable = ++pendingOutgoingWrites < outgoingWindowHighWaterMark;
+
                 // Only the first transfer requires the delivery tag, afterwards we can omit it for efficiency.
                 if (delivery.getTransferCount() == 0) {
                     cachedTransfer.setDeliveryTag(delivery.getTag());
@@ -205,16 +292,15 @@ public class ProtonSessionOutgoingWindow {
                 }
                 cachedTransfer.setMore(!complete);
 
-                try {
-                    engine.fireWrite(engine.wrap(cachedTransfer, session.getLocalChannel(), payload).setPayloadToLargeHandler(cachedTransferUpdater));
-                } finally {
-                    delivery.afterTransferWritten();
-                }
+                OutgoingAMQPEnvelope frame = engine.wrap(cachedTransfer, localChannel, payload);
 
-                // Update session window tracking
-                nextOutgoingId++;
-                remoteIncomingWindow--;
-            } while (payload != null && payload.isReadable() && remoteIncomingWindow > 0);
+                frame.setPayloadToLargeHandler(this::handlePayloadToLargeRequiresSplitFrames);
+                frame.setFrameWriteCompletionHandler(this::handleOutgoingFrameWriteComplete);
+
+                engine.fireWrite(frame);
+
+                delivery.afterTransferWritten();
+            } while (payload != null && payload.isReadable() && isSendable());
         } finally {
             cachedTransfer.reset();
         }
@@ -223,7 +309,6 @@ public class ProtonSessionOutgoingWindow {
     void processDisposition(ProtonSender sender, ProtonOutgoingDelivery delivery) {
         // Would only be tracked if not already remotely settled.
         if (delivery.isSettled() && !delivery.isRemotelySettled()) {
-            // TODO - Casting is ugly but our ID values are longs
             unsettled.remove((int) delivery.getDeliveryId());
         }
 
@@ -260,16 +345,12 @@ public class ProtonSessionOutgoingWindow {
 
     //----- Access to internal state useful for tests
 
-    long getOutgoingBytes() {
-        return outgoingBytes;
-    }
-
     int getNextOutgoingId() {
         return nextOutgoingId;
     }
 
     long getOutgoingWindow() {
-        return outgoingWindow;
+        return Integer.MAX_VALUE;
     }
 
     int getRemoteNextIncomingId() {

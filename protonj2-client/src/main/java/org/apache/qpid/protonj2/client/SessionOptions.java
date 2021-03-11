@@ -28,7 +28,8 @@ import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
  */
 public class SessionOptions {
 
-    public static final int DEFAULT_SESSION_CAPACITY = 100 * 1024 * 1024;
+    public static final int DEFAULT_SESSION_INCOMING_CAPACITY = 100 * 1024 * 1024;
+    public static final int DEFAULT_SESSION_OUTGOING_CAPACITY = 100 * 1024 * 1024;
 
     private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
     private long drainTimeout = ConnectionOptions.DEFAULT_DRAIN_TIMEOUT;
@@ -36,7 +37,9 @@ public class SessionOptions {
     private long openTimeout = ConnectionOptions.DEFAULT_OPEN_TIMEOUT;
     private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
 
-    private int incomingCapacity = DEFAULT_SESSION_CAPACITY;
+    private int incomingCapacity = DEFAULT_SESSION_INCOMING_CAPACITY;
+    private int outgoingCapacity = DEFAULT_SESSION_OUTGOING_CAPACITY;
+
     private String[] offeredCapabilities;
     private String[] desiredCapabilities;
     private Map<String, Object> properties;
@@ -70,6 +73,8 @@ public class SessionOptions {
         other.sendTimeout(sendTimeout);
         other.drainTimeout(drainTimeout);
         other.requestTimeout(requestTimeout);
+        other.incomingCapacity(incomingCapacity);
+        other.outgoingCapacity(outgoingCapacity);
 
         if (offeredCapabilities != null) {
             other.offeredCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
@@ -267,6 +272,33 @@ public class SessionOptions {
      */
     public SessionOptions incomingCapacity(int incomingCapacity) {
         this.incomingCapacity = incomingCapacity;
+        return this;
+    }
+
+    /**
+     * @return the outgoing capacity limit that is configured for newly created {@link Session} instances.
+     */
+    public int outgoingCapacity() {
+        return outgoingCapacity;
+    }
+
+    /**
+     * Sets the outgoing capacity for a {@link Session} the created session.  The outgoing capacity
+     * control how much buffering a session will allow before applying back pressure to the local
+     * thereby preventing excessive memory overhead while writing large amounts of data and the
+     * client is experiencing back-pressure due to the remote not keeping pace.
+     * <p>
+     * This is an advanced option and in most cases the client defaults should be left in place unless
+     * a specific issue needs to be addressed.  Setting this value incorrectly can lead to senders that
+     * either block frequently or experience very poor overall performance.
+     *
+     * @param outgoingCapacity
+     *      the outgoing capacity to set when creating a new {@link Session}.
+     *
+     * @return this {@link SessionOptions} instance.
+     */
+    public SessionOptions outgoingCapacity(int outgoingCapacity) {
+        this.outgoingCapacity = outgoingCapacity;
         return this;
     }
 }

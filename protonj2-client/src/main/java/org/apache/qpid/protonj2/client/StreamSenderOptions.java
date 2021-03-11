@@ -25,6 +25,15 @@ import java.util.Map;
 public class StreamSenderOptions extends SenderOptions {
 
     /**
+     * Defines the default pending write buffering size which is used to control how much outgoing
+     * data can be buffered for local writing before the sender has back pressured applied to avoid
+     * out of memory conditions due to overly large pending batched writes.
+     */
+    public static final int DEFAULT_PENDING_WRITES_BUFFER_SIZE = SessionOptions.DEFAULT_SESSION_OUTGOING_CAPACITY;
+
+    private int pendingWritesBufferSize = DEFAULT_PENDING_WRITES_BUFFER_SIZE;
+
+    /**
      * Defines the default minimum size that the context write buffer will allocate
      * which drives the interval auto flushing of written data for this context.
      */
@@ -74,16 +83,16 @@ public class StreamSenderOptions extends SenderOptions {
     }
 
     /**
-     * @return the configured context write buffering limit for the associated {@link SendContext}
+     * @return the configured context write buffering limit for the associated {@link StreamSender}
      */
     public int writeBufferSize() {
         return writeBufferSize;
     }
 
     /**
-     * Sets the overall number of bytes the context will buffer before automatically flushing the
-     * currently buffered bytes.  By default the context implementation chooses a value for this
-     * buffer limited based on the configured frame size limits of the connection.
+     * Sets the overall number of bytes the stream sender will buffer before automatically flushing the
+     * currently buffered bytes.  By default the stream sender implementation chooses a value for this
+     * buffer limit based on the configured frame size limits of the connection.
      *
      * @param writeBufferSize
      *       The number of bytes that can be written before the context performs a flush operation.
@@ -92,6 +101,29 @@ public class StreamSenderOptions extends SenderOptions {
      */
     public StreamSenderOptions writeBufferSize(int writeBufferSize) {
         this.writeBufferSize = writeBufferSize;
+        return this;
+    }
+
+    /**
+     * @return the configured pending write buffering limit for the associated {@link StreamSender}
+     */
+    public int pendingWritesBufferSize() {
+        return this.pendingWritesBufferSize;
+    }
+
+    /**
+     * Sets the overall number of bytes the stream sender will allow to be pending for write before applying
+     * back pressure to the stream write caller.  By default the stream sender implementation chooses a value
+     * for this pending write limit based on the configured frame size limits of the connection.  This is an
+     * advanced option and should not be used unless the impact of doing so is understood by the user.
+     *
+     * @param pendingWritesBufferSize
+     *       The number of bytes that can be pending for write before the sender applies back pressure.
+     *
+     * @return this {@link StreamSenderOptions} instance.
+     */
+    public StreamSenderOptions pendingWritesBufferSize(int pendingWritesBufferSize) {
+        this.pendingWritesBufferSize = pendingWritesBufferSize;
         return this;
     }
 

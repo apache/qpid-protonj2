@@ -466,8 +466,17 @@ public class ClientConnection implements Connection {
 
         executor.execute(() -> {
             try {
+                int sessionCapacity = StreamSenderOptions.DEFAULT_PENDING_WRITES_BUFFER_SIZE;
+                if (senderOptions != null) {
+                    sessionCapacity = senderOptions.pendingWritesBufferSize();
+                }
+
+                // Session capacity cannot be smaller than one frame size so we adjust to the lower bound
+                sessionCapacity = (int) Math.max(sessionCapacity, protonConnection.getMaxFrameSize());
+
                 checkClosedOrFailed();
-                ClientStreamSession session = (ClientStreamSession) sessionBuilder.streamSession(null).open();
+                SessionOptions sessionOptions = new SessionOptions(sessionBuilder.getDefaultSessionOptions());
+                ClientStreamSession session = (ClientStreamSession) sessionBuilder.streamSession(sessionOptions.outgoingCapacity(sessionCapacity)).open();
                 createRequest.complete(session.internalOpenStreamSender(address, senderOptions));
             } catch (Throwable error) {
                 createRequest.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -949,7 +958,7 @@ public class ClientConnection implements Connection {
 
     //----- Reconnection related internal API
 
-    private void attemptConnection(String host, Integer port) {
+    private void attemptConnection(String host, int port) {
         try {
             reconnectAttempts++;
             transport = ioContext.newTransport();

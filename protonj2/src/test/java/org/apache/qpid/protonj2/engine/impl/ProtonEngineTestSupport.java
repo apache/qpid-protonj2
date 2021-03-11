@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.engine.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Queue;
 import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
@@ -141,6 +142,20 @@ public abstract class ProtonEngineTestSupport {
             engine.accept(ProtonByteBufferAllocator.DEFAULT.wrap(buffer));
         });
         engine.outputConsumer(buffer -> {
+            peer.accept(buffer.toByteBuffer());
+        });
+
+        return peer;
+    }
+
+    protected ProtonTestConnector createTestPeer(Engine engine, Queue<Runnable> asyncIOCallback) {
+        ProtonTestConnector peer = new ProtonTestConnector(buffer -> {
+            engine.accept(ProtonByteBufferAllocator.DEFAULT.wrap(buffer));
+        });
+        engine.outputHandler((buffer, callback) -> {
+            if (callback != null) {
+                asyncIOCallback.offer(callback);
+            }
             peer.accept(buffer.toByteBuffer());
         });
 

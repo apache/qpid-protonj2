@@ -54,6 +54,7 @@ public class ProtonSessionIncomingWindow {
     // Tracks the most recent delivery Id for validation against the next incoming delivery
     private SequenceNumber lastDeliveryid;
 
+    private long maxFrameSize;
     private long incomingBytes;
 
     private SplayMap<ProtonIncomingDelivery> unsettled = new SplayMap<>();
@@ -61,6 +62,7 @@ public class ProtonSessionIncomingWindow {
     public ProtonSessionIncomingWindow(ProtonSession session) {
         this.session = session;
         this.engine = session.getConnection().getEngine();
+        this.maxFrameSize = session.getConnection().getMaxFrameSize();
     }
 
     public void setIncomingCapaity(int incomingCapacity) {
@@ -72,10 +74,7 @@ public class ProtonSessionIncomingWindow {
     }
 
     public int getRemainingIncomingCapacity() {
-        final long maxFrameSize = session.getConnection().getMaxFrameSize();
-
         // TODO: This is linked to below update of capacity which also needs more attention.
-
         if (incomingCapacity <= 0 || maxFrameSize == UnsignedInteger.MAX_VALUE.longValue()) {
             return (int) DEFAULT_WINDOW_SIZE;
         } else {
@@ -92,6 +91,9 @@ public class ProtonSessionIncomingWindow {
      * @return the configured performative
      */
     Begin configureOutbound(Begin begin) {
+        // Update as it might have changed if session created before connection open() called.
+        this.maxFrameSize = session.getConnection().getMaxFrameSize();
+
         return begin.setIncomingWindow(updateIncomingWindow());
     }
 
@@ -135,7 +137,7 @@ public class ProtonSessionIncomingWindow {
         nextIncomingId++;
 
         ProtonIncomingDelivery delivery = link.remoteTransfer(transfer, payload);
-        if (delivery != null && !delivery.isRemotelySettled() && delivery.isFirstTransfer()) {
+        if (!delivery.isRemotelySettled() && delivery.isFirstTransfer()) {
             unsettled.put((int) delivery.getDeliveryId(), delivery);
         }
 
@@ -188,8 +190,6 @@ public class ProtonSessionIncomingWindow {
     }
 
     long updateIncomingWindow() {
-        // TODO - long vs int types for these unsigned value
-        long maxFrameSize = session.getConnection().getMaxFrameSize();
         // TODO - need to revisit this logic and decide on sane cutoff for capacity restriction.
         if (incomingCapacity <= 0 || maxFrameSize == UnsignedInteger.MAX_VALUE.longValue()) {
             incomingWindow = DEFAULT_WINDOW_SIZE;
@@ -225,13 +225,12 @@ public class ProtonSessionIncomingWindow {
     private final Disposition cachedDisposition = new Disposition();
 
     void processDisposition(ProtonReceiver receiver, ProtonIncomingDelivery delivery) {
-        // Would only be tracked if not already remotely settled.
-        if (delivery.isSettled() && !delivery.isRemotelySettled()) {
-            // TODO - Casting is ugly but our ID values are longs
-            unsettled.remove((int) delivery.getDeliveryId());
-        }
-
         if (!delivery.isRemotelySettled()) {
+            // Would only be tracked if not already remotely settled.
+            if (delivery.isSettled()) {
+                unsettled.remove((int) delivery.getDeliveryId());
+            }
+
             cachedDisposition.reset();
             cachedDisposition.setFirst(delivery.getDeliveryId());
             cachedDisposition.setRole(Role.RECEIVER);

@@ -390,7 +390,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             delivery = new ProtonIncomingDelivery(this, transfer.getDeliveryId(), transfer.getDeliveryTag());
             delivery.setMessageFormat((int) transfer.getMessageFormat());
 
-            // TODO - Casting is ugly but our ID values are longs
             unsettled.put((int) transfer.getDeliveryId(), delivery);
             currentDeliveryId.set((int) transfer.getDeliveryId());
         }

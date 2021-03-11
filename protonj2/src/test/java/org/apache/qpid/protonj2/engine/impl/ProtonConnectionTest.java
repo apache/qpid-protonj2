@@ -1768,4 +1768,67 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
         assertNull(failure);
     }
+
+    @Test
+    public void testUnexpectedEndFrameFailsEngine() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        Connection connection = engine.connection();
+
+        connection.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.remoteEnd().onChannel(10).queue();
+
+        engine.start();
+
+        peer.waitForScriptToComplete();
+        assertNotNull(failure);
+    }
+
+    @Test
+    public void testUnexpectedAttachForUnknownChannelFrameFailsEngine() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        Connection connection = engine.connection();
+
+        connection.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.remoteAttach().ofSender().withName("test").withHandle(0).onChannel(10).queue();
+
+        engine.start();
+
+        peer.waitForScriptToComplete();
+        assertNotNull(failure);
+    }
+
+    @Test
+    public void testUnexpectedDetachForUnknownChannelFrameFailsEngine() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        Connection connection = engine.connection();
+
+        connection.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.remoteDetach().withHandle(0).onChannel(10).queue();
+
+        engine.start();
+
+        peer.waitForScriptToComplete();
+        assertNotNull(failure);
+    }
 }

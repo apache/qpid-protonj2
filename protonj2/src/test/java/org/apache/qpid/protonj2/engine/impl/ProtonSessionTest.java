@@ -29,19 +29,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.ConnectionState;
+import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.engine.Link;
+import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.engine.Receiver;
 import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
@@ -1799,6 +1804,560 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
 
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSessionOutgoingSetEqualToMaxFrameSize() throws Exception {
+        testSessionConfigureOutgoingCapacity(1024, 1024, 1024);
+    }
+
+    @Test
+    public void testSessionOutgoingSetToTwiceMaxFrameSize() throws Exception {
+        testSessionConfigureOutgoingCapacity(1024, 2048, 2048);
+    }
+
+    @Test
+    public void testSessionOutgoingSetToSmallerThanMaxFrameSize() throws Exception {
+        testSessionConfigureOutgoingCapacity(1024, 512, 1024);
+    }
+
+    @Test
+    public void testSessionOutgoingSetToLargerThanMaxFrameSizeAndNotEven() throws Exception {
+        testSessionConfigureOutgoingCapacity(1024, 8199, 8192);
+    }
+
+    @Test
+    public void testSessionOutgoingSetToZeroToDisableOutput() throws Exception {
+        testSessionConfigureOutgoingCapacity(1024, 0, 0);
+    }
+
+    private void testSessionConfigureOutgoingCapacity(int frameSize, int sessionCapacity, int remainingCapacity) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(frameSize).respond();
+        peer.expectBegin().respond();
+
+        Connection connection = engine.start().setMaxFrameSize(frameSize).open();
+        Session session = connection.session().open();
+
+        peer.waitForScriptToComplete();
+
+        assertEquals(Integer.MAX_VALUE, session.getRemainingOutgoingCapacity());
+
+        session.setOutgoingCapacity(sessionCapacity);
+
+        assertEquals(remainingCapacity, session.getRemainingOutgoingCapacity());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSessionNotWritableWhenOutgoingCapacitySetToZeroAlsoReflectsInSenders() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(2).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("test").open();
+
+        peer.waitForScriptToComplete();
+
+        assertTrue(sender.isSendable());
+        assertEquals(Integer.MAX_VALUE, session.getRemainingOutgoingCapacity());
+
+        session.setOutgoingCapacity(0);
+
+        assertFalse(sender.isSendable());
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSenderCannotSendAfterUsingUpOutgoingCapacityLimit() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();
+        ProtonTestConnector peer = createTestPeer(engine, asyncIOCallbacks);
+
+        final byte[] payload = new byte[] {0, 1, 2, 3, 4};
+        final DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(1024).respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).queue();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().setOutgoingCapacity(2048).open();
+        Sender sender = session.sender("test").setDeliveryTagGenerator(generator).open();
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withPayload(payload);
+        peer.expectTransfer().withPayload(payload);
+
+        assertTrue(sender.isSendable());
+        assertEquals(2048, session.getRemainingOutgoingCapacity());
+
+        // Open, Begin, Attach
+        assertEquals(3, asyncIOCallbacks.size());
+        asyncIOCallbacks.forEach(runner -> runner.run());
+        asyncIOCallbacks.clear();
+
+        OutgoingDelivery delivery1 = sender.next();
+        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        OutgoingDelivery delivery2 = sender.next();
+        delivery2.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        peer.waitForScriptToComplete();
+
+        assertEquals(2, asyncIOCallbacks.size());
+        assertFalse(sender.isSendable());
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSenderGetsUpdatedOnceSessionOutgoingWindowIsExpandedByWriteCallbacks() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();
+        ProtonTestConnector peer = createTestPeer(engine, asyncIOCallbacks);
+
+        final byte[] payload = new byte[] {0, 1, 2, 3, 4};
+        final DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(1024).respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).queue();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().setOutgoingCapacity(3072).open();
+        Sender sender = session.sender("test").setDeliveryTagGenerator(generator).open();
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withPayload(payload);
+        peer.expectTransfer().withPayload(payload);
+        peer.expectTransfer().withPayload(payload);
+
+        final AtomicInteger creditStateUpdated = new AtomicInteger();
+        sender.creditStateUpdateHandler((self) -> {
+            creditStateUpdated.incrementAndGet();
+        });
+
+        assertTrue(sender.isSendable());
+        assertEquals(3072, session.getRemainingOutgoingCapacity());
+
+        // Open, Begin, Attach
+        assertEquals(3, asyncIOCallbacks.size());
+        asyncIOCallbacks.forEach(runner -> runner.run());
+        asyncIOCallbacks.clear();
+
+        OutgoingDelivery delivery1 = sender.next();
+        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        OutgoingDelivery delivery2 = sender.next();
+        delivery2.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        OutgoingDelivery delivery3 = sender.next();
+        delivery3.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        peer.waitForScriptToComplete();
+
+        assertEquals(3, asyncIOCallbacks.size());
+        assertFalse(sender.isSendable());
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+
+        asyncIOCallbacks.forEach(runner -> runner.run());
+        asyncIOCallbacks.clear();
+
+        assertEquals(1, creditStateUpdated.get());
+        assertTrue(sender.isSendable());
+        assertEquals(3072, session.getRemainingOutgoingCapacity());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSetSameOutgoingWindowAfterBecomingNotWritableDoesNotTriggerWritable() throws Exception {
+        // Should not become writable because two outstanding writes but low water mark remains one frame pending.
+        testSessionOutgoingWindowExpandedAfterItBecomeNotWritable(2048, false);
+    }
+
+    @Test
+    public void testExpandingOutgoingWindowAfterBecomingNotWritableUpdateSenderAsWritableOneFrameBigger() throws Exception {
+        // Should not become writable because two outstanding writes but low water mark remains one frame pending.
+        testSessionOutgoingWindowExpandedAfterItBecomeNotWritable(3072, false);
+    }
+
+    @Test
+    public void testExpandingOutgoingWindowAfterBecomingNotWritableUpdateSenderAsWritableTwoFramesBiffer() throws Exception {
+        // Should become writable since low water mark was one but becomes two and we have only two pending.
+        testSessionOutgoingWindowExpandedAfterItBecomeNotWritable(4096, true);
+    }
+
+    @Test
+    public void testDisableOutgoingWindowingAfterBecomingNotWritableUpdateSenderAsWritable() throws Exception {
+        // Should become pending since we are lifting restrictions
+        testSessionOutgoingWindowExpandedAfterItBecomeNotWritable(-1, true);
+    }
+
+    private void testSessionOutgoingWindowExpandedAfterItBecomeNotWritable(int updatedWindow, boolean becomesWritable) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();
+        ProtonTestConnector peer = createTestPeer(engine, asyncIOCallbacks);
+
+        final int maxFrameSize = 1024;
+        final byte[] payload = new byte[] {0, 1, 2, 3, 4};
+        final DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(maxFrameSize).respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).queue();
+
+        Connection connection = engine.start().setMaxFrameSize(maxFrameSize).open();
+        Session session = connection.session().setOutgoingCapacity(2048).open();
+        Sender sender = session.sender("test").setDeliveryTagGenerator(generator).open();
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withPayload(payload);
+        peer.expectTransfer().withPayload(payload);
+
+        final AtomicInteger creditStateUpdated = new AtomicInteger();
+        sender.creditStateUpdateHandler((self) -> {
+            creditStateUpdated.incrementAndGet();
+        });
+
+        assertTrue(sender.isSendable());
+        assertEquals(2048, session.getRemainingOutgoingCapacity());
+
+        // Open, Begin, Attach
+        assertEquals(3, asyncIOCallbacks.size());
+        asyncIOCallbacks.forEach(runner -> runner.run());
+        asyncIOCallbacks.clear();
+
+        OutgoingDelivery delivery1 = sender.next();
+        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        OutgoingDelivery delivery2 = sender.next();
+        delivery2.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        peer.waitForScriptToComplete();
+
+        assertEquals(2, asyncIOCallbacks.size());
+        assertFalse(sender.isSendable());
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+
+        session.setOutgoingCapacity(updatedWindow);
+
+        if (becomesWritable) {
+            assertEquals(1, creditStateUpdated.get());
+            assertTrue(sender.isSendable());
+        } else {
+            assertEquals(0, creditStateUpdated.get());
+            assertFalse(sender.isSendable());
+        }
+
+        if (updatedWindow == -1) {
+            assertEquals(Integer.MAX_VALUE, session.getRemainingOutgoingCapacity());
+        } else {
+            assertEquals(updatedWindow - (asyncIOCallbacks.size() * maxFrameSize), session.getRemainingOutgoingCapacity());
+        }
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testMultiplySendersCannotSendAfterUsingUpOutgoingCapacityLimit() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();
+        ProtonTestConnector peer = createTestPeer(engine, asyncIOCallbacks);
+
+        final byte[] payload = new byte[] {0, 1, 2, 3, 4};
+        final DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(1024).respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).queue();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).queue();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().setOutgoingCapacity(2048).open();
+        Sender sender1 = session.sender("test1").setDeliveryTagGenerator(generator).open();
+        Sender sender2 = session.sender("test2").setDeliveryTagGenerator(generator).open();
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withPayload(payload);
+        peer.expectTransfer().withPayload(payload);
+
+        assertTrue(sender1.isSendable());
+        assertTrue(sender2.isSendable());
+        assertEquals(2048, session.getRemainingOutgoingCapacity());
+
+        // Open, Begin, Attach, Attach
+        assertEquals(4, asyncIOCallbacks.size());
+        asyncIOCallbacks.forEach(runner -> runner.run());
+        asyncIOCallbacks.clear();
+
+        OutgoingDelivery delivery1 = sender1.next();
+        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        OutgoingDelivery delivery2 = sender2.next();
+        delivery2.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        peer.waitForScriptToComplete();
+
+        assertEquals(2, asyncIOCallbacks.size());
+        assertFalse(sender1.isSendable());
+        assertFalse(sender2.isSendable());
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testOnlyOneSenderNotifiedOfNewCapacityIfFirstOneUsesItUp() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();
+        ProtonTestConnector peer = createTestPeer(engine, asyncIOCallbacks);
+
+        final byte[] payload = new byte[] {0, 1, 2, 3, 4};
+        final DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(1024).respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).queue();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).queue();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().setOutgoingCapacity(2048).open();
+        Sender sender1 = session.sender("test1").setDeliveryTagGenerator(generator).open();
+        Sender sender2 = session.sender("test2").setDeliveryTagGenerator(generator).open();
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withPayload(payload);
+        peer.expectTransfer().withPayload(payload);
+
+        // One of them should write to the high water mark again and stop the other getting called.
+        final AtomicInteger creditStateUpdated = new AtomicInteger();
+        sender1.creditStateUpdateHandler((self) -> {
+            creditStateUpdated.incrementAndGet();
+            OutgoingDelivery delivery = self.next();
+            delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        });
+        sender2.creditStateUpdateHandler((self) -> {
+            creditStateUpdated.incrementAndGet();
+            OutgoingDelivery delivery = self.next();
+            delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        });
+
+        assertTrue(sender1.isSendable());
+        assertTrue(sender2.isSendable());
+        assertEquals(2048, session.getRemainingOutgoingCapacity());
+
+        // Open, Begin, Attach, Attach
+        assertEquals(4, asyncIOCallbacks.size());
+        asyncIOCallbacks.forEach(runner -> runner.run());
+        asyncIOCallbacks.clear();
+
+        OutgoingDelivery delivery1 = sender1.next();
+        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        OutgoingDelivery delivery2 = sender2.next();
+        delivery2.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withPayload(payload);
+
+        assertEquals(2, asyncIOCallbacks.size());
+        assertFalse(sender1.isSendable());
+        assertFalse(sender2.isSendable());
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+
+        // Free a frame's worth of window which should allow a new write from one sender.
+        asyncIOCallbacks.poll().run();
+
+        assertEquals(2, asyncIOCallbacks.size());
+        assertFalse(sender1.isSendable());
+        assertFalse(sender2.isSendable());
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+        assertEquals(1, creditStateUpdated.get());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReduceOutgoingWindowDoesNotStopSenderIfSomeWindowRemaining() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();
+        ProtonTestConnector peer = createTestPeer(engine, asyncIOCallbacks);
+
+        final byte[] payload = new byte[] {0, 1, 2, 3, 4};
+        final DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(1024).respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).queue();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().setOutgoingCapacity(4096).open();
+        Sender sender = session.sender("test1").setDeliveryTagGenerator(generator).open();
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withPayload(payload);
+
+        assertTrue(sender.isSendable());
+        assertEquals(4096, session.getRemainingOutgoingCapacity());
+
+        // Open, Begin, Attach
+        assertEquals(3, asyncIOCallbacks.size());
+        asyncIOCallbacks.forEach(runner -> runner.run());
+        asyncIOCallbacks.clear();
+
+        OutgoingDelivery delivery1 = sender.next();
+        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        peer.waitForScriptToComplete();
+
+        assertEquals(1, asyncIOCallbacks.size());
+        assertTrue(sender.isSendable());
+        assertEquals(3072, session.getRemainingOutgoingCapacity());
+
+        session.setOutgoingCapacity(2048);
+        assertEquals(1024, session.getRemainingOutgoingCapacity());
+        assertTrue(sender.isSendable());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testDisableOutgoingWindowMarksSenderAsNotSendableWhenWriteStillPending() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();
+        ProtonTestConnector peer = createTestPeer(engine, asyncIOCallbacks);
+
+        final byte[] payload = new byte[] {0, 1, 2, 3, 4};
+        final DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(1024).respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).queue();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().setOutgoingCapacity(4096).open();
+        Sender sender = session.sender("test1").setDeliveryTagGenerator(generator).open();
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withPayload(payload);
+
+        assertTrue(sender.isSendable());
+        assertEquals(4096, session.getRemainingOutgoingCapacity());
+
+        // Open, Begin, Attach
+        assertEquals(3, asyncIOCallbacks.size());
+        asyncIOCallbacks.forEach(runner -> runner.run());
+        asyncIOCallbacks.clear();
+
+        OutgoingDelivery delivery1 = sender.next();
+        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        peer.waitForScriptToComplete();
+
+        assertEquals(1, asyncIOCallbacks.size());
+        assertTrue(sender.isSendable());
+        assertEquals(3072, session.getRemainingOutgoingCapacity());
+
+        session.setOutgoingCapacity(0);
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+        assertFalse(sender.isSendable());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReduceAndThenIncreaseOutgoingWindowRemebersPreviouslyPendingWrites() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();
+        ProtonTestConnector peer = createTestPeer(engine, asyncIOCallbacks);
+
+        final byte[] payload = new byte[] {0, 1, 2, 3, 4};
+        final DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(1024).respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).queue();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().setOutgoingCapacity(4096).open();
+        Sender sender = session.sender("test1").setDeliveryTagGenerator(generator).open();
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withPayload(payload);
+
+        assertTrue(sender.isSendable());
+        assertEquals(4096, session.getRemainingOutgoingCapacity());
+
+        // Open, Begin, Attach
+        assertEquals(3, asyncIOCallbacks.size());
+        asyncIOCallbacks.forEach(runner -> runner.run());
+        asyncIOCallbacks.clear();
+
+        OutgoingDelivery delivery1 = sender.next();
+        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        peer.waitForScriptToComplete();
+
+        assertEquals(1, asyncIOCallbacks.size());
+        assertTrue(sender.isSendable());
+        assertEquals(3072, session.getRemainingOutgoingCapacity());
+
+        session.setOutgoingCapacity(1024);
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+        assertFalse(sender.isSendable());
+        session.setOutgoingCapacity(4096);
+        assertEquals(3072, session.getRemainingOutgoingCapacity());
+        assertTrue(sender.isSendable());
+
+        peer.waitForScriptToComplete();
         assertNull(failure);
     }
 }

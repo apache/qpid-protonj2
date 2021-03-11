@@ -194,6 +194,22 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     }
 
     @Override
+    public Session setOutgoingCapacity(int outgoingCapacity) {
+        outgoingWindow.setOutgoingCapacity(outgoingCapacity);
+        return this;
+    }
+
+    @Override
+    public int getOutgoingCapacity() {
+        return outgoingWindow.getOutgoingCapacity();
+    }
+
+    @Override
+    public int getRemainingOutgoingCapacity() {
+        return outgoingWindow.getRemainingOutgoingCapacity();
+    }
+
+    @Override
     public Session setHandleMax(long handleMax) throws IllegalStateException {
         checkNotOpened("Cannot set handle max on already opened Session");
 
@@ -286,8 +302,8 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Set<Sender> senders() {
-        final Set<Sender> result;
+    public Set<ProtonSender> senders() {
+        final Set<ProtonSender> result;
 
         if (senderByNameMap.isEmpty()) {
             result = Collections.EMPTY_SET;
@@ -300,8 +316,8 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Set<Receiver> receivers() {
-        final Set<Receiver> result;
+    public Set<ProtonReceiver> receivers() {
+        final Set<ProtonReceiver> result;
 
         if (receiverByNameMap.isEmpty()) {
             result = Collections.EMPTY_SET;

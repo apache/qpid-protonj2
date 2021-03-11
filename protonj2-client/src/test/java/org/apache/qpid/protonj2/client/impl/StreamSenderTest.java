@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -105,6 +106,78 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             StreamSenderOptions senderOptions = new StreamSenderOptions();
             senderOptions.targetOptions().capabilities("queue");
             StreamSender sender = connection.openStreamSender("test-queue", senderOptions);
+
+            sender.openFuture().get();
+            sender.close();
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testOpenStreamSenderAppliesDefaultSessionOutgoingWindow() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER.getValue())
+                               .withTarget().withCapabilities("queue").and()
+                               .respond();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("StreamSender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSenderOptions senderOptions = new StreamSenderOptions();
+            senderOptions.targetOptions().capabilities("queue");
+            ClientStreamSender sender = (ClientStreamSender) connection.openStreamSender("test-queue", senderOptions);
+
+            assertEquals(StreamSenderOptions.DEFAULT_PENDING_WRITES_BUFFER_SIZE, sender.getProtonSender().getSession().getOutgoingCapacity());
+
+            sender.openFuture().get();
+            sender.close();
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testOpenStreamSenderAppliesConfiguredSessionOutgoingWindow() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER.getValue())
+                               .withTarget().withCapabilities("queue").and()
+                               .respond();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            final int PENDING_WRITES_BUFFER_SIZE = StreamSenderOptions.DEFAULT_PENDING_WRITES_BUFFER_SIZE / 2;
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("StreamSender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSenderOptions senderOptions = new StreamSenderOptions().pendingWritesBufferSize(PENDING_WRITES_BUFFER_SIZE);
+            senderOptions.targetOptions().capabilities("queue");
+            ClientStreamSender sender = (ClientStreamSender) connection.openStreamSender("test-queue", senderOptions);
+
+            assertEquals(PENDING_WRITES_BUFFER_SIZE, sender.getProtonSender().getSession().getOutgoingCapacity());
 
             sender.openFuture().get();
             sender.close();

@@ -29,7 +29,7 @@ public class StreamReceiverOptions extends ReceiverOptions {
      * data can be buffered before the remote has back pressured applied to avoid out of
      * memory conditions.
      */
-    public static final int DEFAULT_READ_BUFFER_SIZE = 50 * 1024 * 1024;
+    public static final int DEFAULT_READ_BUFFER_SIZE = SessionOptions.DEFAULT_SESSION_INCOMING_CAPACITY;
 
     private int readBufferSize = DEFAULT_READ_BUFFER_SIZE;
 

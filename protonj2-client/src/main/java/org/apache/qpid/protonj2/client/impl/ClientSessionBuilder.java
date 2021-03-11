@@ -54,11 +54,11 @@ final class ClientSessionBuilder {
     }
 
     private static Session createSession(Connection connection, SessionOptions options) {
-        return connection.session().setIncomingCapacity(options.incomingCapacity());
+        return connection.session().setIncomingCapacity(options.incomingCapacity()).setOutgoingCapacity(options.outgoingCapacity());
     }
 
     public static Session recreateSession(ClientConnection connection, Session previousSession, SessionOptions options) {
-        return connection.getProtonConnection().session().setIncomingCapacity(options.incomingCapacity());
+        return connection.getProtonConnection().session().setIncomingCapacity(options.incomingCapacity()).setOutgoingCapacity(options.outgoingCapacity());
     }
 
     /*
