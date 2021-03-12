@@ -74,6 +74,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         connection.open();
 
+        assertEquals(connection, connection.getParent());
+
         peer.waitForScriptToComplete();
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -567,6 +569,9 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         if (setIdleTimeout) {
             connection.setIdleTimeout(expectedIdleTimeout);
         }
+
+        assertEquals(expectedContainerId, connection.getContainerId());
+        assertEquals(expectedHostname, connection.getHostname());
 
         connection.open();
         connection.close();
@@ -1770,6 +1775,29 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testSecondOpenAfterReceiptOfFirstFailsEngine() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        Connection connection = engine.connection();
+
+        connection.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectClose().withError(notNullValue());
+
+        engine.start();
+
+        peer.remoteOpen().onChannel(0).now();
+
+        peer.waitForScriptToComplete();
+        assertNotNull(failure);
+    }
+
+    @Test
     public void testUnexpectedEndFrameFailsEngine() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1782,9 +1810,11 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
-        peer.remoteEnd().onChannel(10).queue();
+        peer.expectClose().withError(notNullValue());
 
         engine.start();
+
+        peer.remoteEnd().onChannel(10).now();
 
         peer.waitForScriptToComplete();
         assertNotNull(failure);
@@ -1803,9 +1833,11 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
-        peer.remoteAttach().ofSender().withName("test").withHandle(0).onChannel(10).queue();
+        peer.expectClose().withError(notNullValue());
 
         engine.start();
+
+        peer.remoteAttach().ofSender().withName("test").withHandle(0).onChannel(10).now();
 
         peer.waitForScriptToComplete();
         assertNotNull(failure);
@@ -1824,9 +1856,35 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
-        peer.remoteDetach().withHandle(0).onChannel(10).queue();
+        peer.expectClose().withError(notNullValue());
 
         engine.start();
+
+        peer.remoteDetach().withHandle(0).onChannel(10).now();
+
+        peer.waitForScriptToComplete();
+        assertNotNull(failure);
+    }
+
+    @Test
+    public void testSecondBeginForAlreadyBegunSessionTriggerEngineFailure() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        Connection connection = engine.connection();
+        connection.session().open();
+        connection.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().onChannel(0).respond().onChannel(0);
+        peer.expectClose().withError(notNullValue());
+
+        engine.start();
+
+        peer.remoteBegin().onChannel(0).now();
 
         peer.waitForScriptToComplete();
         assertNotNull(failure);
