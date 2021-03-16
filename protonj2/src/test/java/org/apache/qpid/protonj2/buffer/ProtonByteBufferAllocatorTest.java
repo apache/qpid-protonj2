@@ -20,7 +20,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.Test;
 
@@ -89,6 +94,28 @@ public class ProtonByteBufferAllocatorTest {
     }
 
     @Test
+    public void testOutputBufferWithInitialCapacity() {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.outputBuffer(1024);
+
+        assertNotNull(buffer);
+        assertNotEquals(ProtonByteBuffer.DEFAULT_CAPACITY, buffer.capacity());
+        assertEquals(1024, buffer.capacity());
+        assertEquals(ProtonByteBuffer.DEFAULT_MAXIMUM_CAPACITY, buffer.maxCapacity());
+    }
+
+    @Test
+    public void testOutputBufferWithInitialAndMaximumCapacity() {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.outputBuffer(1024, 2048);
+
+        assertNotNull(buffer);
+        assertNotEquals(ProtonByteBuffer.DEFAULT_CAPACITY, buffer.capacity());
+        assertNotEquals(ProtonByteBuffer.DEFAULT_MAXIMUM_CAPACITY, buffer.maxCapacity());
+
+        assertEquals(1024, buffer.capacity());
+        assertEquals(2048, buffer.maxCapacity());
+    }
+
+    @Test
     public void testWrapByteArray() {
         byte[] source = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(source);
@@ -134,5 +161,21 @@ public class ProtonByteBufferAllocatorTest {
 
         assertSame(source, buffer.getArray());
         assertEquals(1, buffer.getArrayOffset());
+    }
+
+    @Test
+    public void testCannotWrapReadOnlyByteBuffer() {
+        ByteBuffer buffer = ByteBuffer.allocate(1024).asReadOnlyBuffer();
+        assertThrows(UnsupportedOperationException.class, () -> ProtonByteBufferAllocator.DEFAULT.wrap(buffer));
+    }
+
+    @Test
+    public void testCannotWrapByteBufferWithoutArrayBacking() {
+        ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
+
+        assumeTrue(buffer.isDirect());
+        assumeFalse(buffer.hasArray());
+
+        assertThrows(UnsupportedOperationException.class, () -> ProtonByteBufferAllocator.DEFAULT.wrap(buffer));
     }
 }

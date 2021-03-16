@@ -222,14 +222,13 @@ public class ProtonBufferInputStream extends InputStream implements DataInput {
             switch (c) {
                 case '\n':
                     break loop;
-
                 case '\r':
                     if (available > 0 && (char) buffer.getUnsignedByte(buffer.getReadIndex()) == '\n') {
                         buffer.skipBytes(1);
                         --available;
                     }
-                    break loop;
 
+                    break loop;
                 default:
                     if (readBuffer == null) {
                         readBuffer = new StringBuilder();
@@ -238,7 +237,13 @@ public class ProtonBufferInputStream extends InputStream implements DataInput {
             }
         } while (available > 0);
 
-        return readBuffer != null && readBuffer.length() > 0 ? readBuffer.toString() : "";
+        final String result = readBuffer != null && readBuffer.length() > 0 ? readBuffer.toString() : "";
+
+        if (readBuffer != null) {
+            readBuffer.setLength(0);
+        }
+
+        return result;
     }
 
     @Override
