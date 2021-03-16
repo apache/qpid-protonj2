@@ -190,6 +190,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
     private class RingIterator implements Iterator<E> {
 
         private int expectedSize = size;
+        private int expectedReadIndex = read;
 
         private E nextElement;
         private int position;
@@ -215,7 +216,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
             if (nextElement == null) {
                 throw new NoSuchElementException();
             }
-            if (expectedSize != RingQueue.this.size) {
+            if (expectedSize != size || expectedReadIndex != read) {
                 throw new ConcurrentModificationException();
             }
 
