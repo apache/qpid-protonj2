@@ -68,7 +68,7 @@ public class DeliveryIdTracker extends Number implements Comparable<DeliveryIdTr
         return empty;
     }
 
-    public int compareTo(SequenceNumber other) {
+    public int compareTo(Number other) {
         if (isEmpty()) {
             return -1;
         } else {
@@ -105,18 +105,22 @@ public class DeliveryIdTracker extends Number implements Comparable<DeliveryIdTr
 
     @Override
     public float floatValue() {
-        return longValue();
+        return Float.intBitsToFloat(deliveryId);
     }
 
     @Override
     public double doubleValue() {
-        return longValue();
+        return Float.floatToIntBits(deliveryId);
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof DeliveryIdTracker) {
             return ((DeliveryIdTracker) other).deliveryId == this.deliveryId;
+        } else if (other instanceof SequenceNumber) {
+            return ((SequenceNumber) other).intValue() == this.deliveryId;
+        } else if (other instanceof UnsignedInteger) {
+            return ((UnsignedInteger) other).intValue() == this.deliveryId;
         }
 
         return false;

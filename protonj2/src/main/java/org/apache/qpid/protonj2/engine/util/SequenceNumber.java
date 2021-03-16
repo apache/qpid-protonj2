@@ -98,6 +98,10 @@ public class SequenceNumber extends Number implements Comparable<SequenceNumber>
         return Integer.compareUnsigned(sequence, other.sequence);
     }
 
+    public int compareTo(Number other) {
+        return Integer.compareUnsigned(sequence, other.intValue());
+    }
+
     public int compareTo(int other) {
         return Integer.compareUnsigned(sequence, other);
     }
