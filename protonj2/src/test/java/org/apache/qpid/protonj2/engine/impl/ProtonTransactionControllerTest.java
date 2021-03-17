@@ -483,9 +483,19 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
 
         txnController.declaredHandler(result -> {
             declaredTxnId.set(result.getTxnId().arrayCopy());
+            if (useNewTransactionAPI) {
+                assertEquals(txnController, result.getLinkedResource(TransactionController.class) );
+            } else {
+                assertNull(result.getLinkedResource());
+            }
         });
         txnController.dischargedHandler(result -> {
             dischargedTxnId.set(result.getTxnId().arrayCopy());
+            if (useNewTransactionAPI) {
+                assertEquals(txnController, result.getLinkedResource(TransactionController.class) );
+            } else {
+                assertNull(result.getLinkedResource());
+            }
         });
 
         txnController.open();
@@ -496,10 +506,13 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         final Transaction<TransactionController> txn;
         if (useNewTransactionAPI) {
             txn = txnController.newTransaction();
+            txn.setLinkedResource(txnController);
             assertEquals(TransactionState.IDLE, txn.getState());
             txnController.declare(txn);
         } else {
             txn = txnController.declare();
+            assertNotNull(txn.getAttachments());
+            assertSame(txn.getAttachments(), txn.getAttachments());
         }
 
         assertNotNull(txn);
@@ -517,6 +530,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         peer.expectClose().respond();
 
         assertArrayEquals(TXN_ID, dischargedTxnId.get());
+        assertFalse(txn.isFailed());
 
         txnController.close();
         session.close();
@@ -1107,6 +1121,9 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
 
         peer.remoteFlow().withNextIncomingId(1).withDeliveryCount(0).withLinkCredit(1).now();
         peer.waitForScriptToComplete();
+
+        assertTrue(txn.get().isDeclared());
+
         peer.expectDischarge().withTxnId(TXN_ID).withFail(false).accept();
 
         assertNotNull(txn.get());
@@ -1118,6 +1135,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         peer.expectEnd().respond();
         peer.expectClose().respond();
 
+        assertTrue(txn.get().isDischarged());
         assertArrayEquals(TXN_ID, dischargedTxnId.get());
 
         txnController.close();
@@ -1167,6 +1185,9 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         final Transaction<TransactionController> txn = txnController.newTransaction();
 
         txnController.declare(txn);
+
+        assertFalse(txn.isDeclared());  // No response yet
+        assertFalse(txn.isDischarged());
 
         try {
             txnController.declare(txn);
@@ -1276,6 +1297,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         assertEquals(TransactionState.DISCHARGE_FAILED, txn.getState());
         assertEquals(failureError, txn.getCondition());
         assertTrue(txnController.transactions().isEmpty());
+        assertTrue(txn.isFailed());
 
         txnController.close();
         session.close();

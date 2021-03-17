@@ -40,5 +40,8 @@ public class ProtonDeliveryTagGeneratorTest {
 
         assertEquals(0, tag1.tagLength());
         assertNotNull(tag1.tagBytes());
+
+        assertNotNull(tagGen1.toString());
+        assertNotNull(tagGen2.toString());
     }
 }

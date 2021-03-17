@@ -49,6 +49,14 @@ class ProtocolFramePoolTest {
         AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> pool = AMQPPerformativeEnvelopePool.incomingEnvelopePool(AMQPPerformativeEnvelopePool.DEFAULT_MAX_POOL_SIZE + 10);
 
         assertEquals(AMQPPerformativeEnvelopePool.DEFAULT_MAX_POOL_SIZE + 10, pool.getMaxPoolSize());
+
+        IncomingAMQPEnvelope frame1 = pool.take(new Transfer(), 0, null);
+
+        frame1.release();
+
+        IncomingAMQPEnvelope frame2 = pool.take(new Transfer(), 0, null);
+
+        assertSame(frame1, frame2);
     }
 
     @Test
@@ -95,6 +103,14 @@ class ProtocolFramePoolTest {
         AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> pool = AMQPPerformativeEnvelopePool.outgoingEnvelopePool(AMQPPerformativeEnvelopePool.DEFAULT_MAX_POOL_SIZE + 10);
 
         assertEquals(AMQPPerformativeEnvelopePool.DEFAULT_MAX_POOL_SIZE + 10, pool.getMaxPoolSize());
+
+        OutgoingAMQPEnvelope frame1 = pool.take(new Transfer(), 0, null);
+
+        frame1.release();
+
+        OutgoingAMQPEnvelope frame2 = pool.take(new Transfer(), 0, null);
+
+        assertSame(frame1, frame2);
     }
 
     @Test

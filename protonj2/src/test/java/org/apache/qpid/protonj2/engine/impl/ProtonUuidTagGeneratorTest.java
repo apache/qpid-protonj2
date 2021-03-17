@@ -26,6 +26,7 @@ import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonByteUtils;
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ public class ProtonUuidTagGeneratorTest {
     public void testCreateTagGenerator() {
         DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.UUID.createGenerator();
         assertTrue(generator instanceof ProtonUuidTagGenerator);
+        assertNotNull(generator.toString());
     }
 
     @Test
@@ -65,10 +67,16 @@ public class ProtonUuidTagGeneratorTest {
 
         assertEquals(16, tag.tagLength());
 
-        UUID uuid = UUID.nameUUIDFromBytes(tag.tagBytes());
+        byte[] tagBuffer = tag.tagBuffer().getArray();
+
+        long msBytes = ProtonByteUtils.readLong(tagBuffer, 0);
+        long lsBytes = ProtonByteUtils.readLong(tagBuffer, 8);
+
+        UUID uuid = new UUID(msBytes, lsBytes);
 
         assertNotNull(uuid);
-        assertNotEquals(tag.hashCode(), uuid.hashCode());
+        assertEquals(tag.hashCode(), uuid.hashCode());
+        assertEquals(uuid.toString(), tag.toString());
     }
 
     @Test
@@ -79,10 +87,16 @@ public class ProtonUuidTagGeneratorTest {
 
         assertEquals(16, tag.tagLength());
 
-        UUID uuid = UUID.nameUUIDFromBytes(tag.tagBuffer().getArray());
+        byte[] tagBuffer = tag.tagBuffer().getArray();
+
+        long msBytes = ProtonByteUtils.readLong(tagBuffer, 0);
+        long lsBytes = ProtonByteUtils.readLong(tagBuffer, 8);
+
+        UUID uuid = new UUID(msBytes, lsBytes);
 
         assertNotNull(uuid);
-        assertNotEquals(tag.hashCode(), uuid.hashCode());
+        assertEquals(tag.hashCode(), uuid.hashCode());
+        assertEquals(uuid.toString(), tag.toString());
     }
 
     @Test
@@ -96,10 +110,16 @@ public class ProtonUuidTagGeneratorTest {
 
         assertEquals(16, buffer.getReadableBytes());
 
-        UUID uuid = UUID.nameUUIDFromBytes(buffer.getArray());
+        byte[] tagBuffer = tag.tagBuffer().getArray();
+
+        long msBytes = ProtonByteUtils.readLong(tagBuffer, 0);
+        long lsBytes = ProtonByteUtils.readLong(tagBuffer, 8);
+
+        UUID uuid = new UUID(msBytes, lsBytes);
 
         assertNotNull(uuid);
-        assertNotEquals(tag.hashCode(), uuid.hashCode());
+        assertEquals(tag.hashCode(), uuid.hashCode());
+        assertEquals(uuid.toString(), tag.toString());
     }
 
     @Test

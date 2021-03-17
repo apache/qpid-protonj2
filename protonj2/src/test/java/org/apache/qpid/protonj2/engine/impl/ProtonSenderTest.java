@@ -3945,4 +3945,53 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertNull(failure);
     }
+
+    @Test
+    public void testSenderReportsIsSendableAfterOpenedIfRemoteSendsFlowBeforeLocallyOpened() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.remoteAttach().withName("receiver")
+                           .withHandle(0)
+                           .withRole(Role.RECEIVER.getValue())
+                           .withInitialDeliveryCount(0)
+                           .onChannel(0).queue();
+        peer.remoteFlow().withLinkCredit(1).queue();
+        peer.expectAttach();
+        peer.expectDetach().respond();
+
+        final AtomicBoolean senderRemotelyOpened = new AtomicBoolean();
+        final AtomicReference<Sender> sender = new AtomicReference<>();
+
+        Connection connection = engine.start();
+
+        connection.senderOpenHandler(result -> {
+            senderRemotelyOpened.set(true);
+            sender.set(result);
+        });
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        connection.session().open();
+
+        assertTrue(senderRemotelyOpened.get(), "Sender remote opened event did not fire");
+
+        assertFalse(sender.get().isSendable());
+
+        sender.get().open();
+
+        assertTrue(sender.get().isSendable());
+
+        sender.get().close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 }

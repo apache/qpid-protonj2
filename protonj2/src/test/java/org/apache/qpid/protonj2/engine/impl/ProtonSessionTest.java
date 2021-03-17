@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.engine.impl;
 
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,6 +53,7 @@ import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineStateException;
+import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
 import org.apache.qpid.protonj2.test.driver.ProtonTestConnector;
@@ -62,6 +64,7 @@ import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.ConnectionError;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.apache.qpid.protonj2.types.transport.Role;
+import org.apache.qpid.protonj2.types.transport.SessionError;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -101,6 +104,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
                .closeHandler(result -> sessionRemoteClose.set(true));
 
         session.open();
+
+        assertEquals(connection, session.getParent());
+
         session.close();
 
         assertTrue(sessionLocalOpen.get(), "Session should have reported local open");
@@ -2359,5 +2365,80 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
         assertNull(failure);
+    }
+
+    @Test
+    public void testHandleInUseErrorReturnedIfAttachWithAlreadyBoundHandleArrives() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withHandle(0).respond().withHandle(0);
+        peer.expectAttach().withHandle(1).respond().withHandle(0);
+        peer.expectEnd().withError(SessionError.HANDLE_IN_USE.toString(),  "Attach received with handle that is already in use");
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        session.sender("test1").open();
+        session.sender("test2").open();
+
+        peer.waitForScriptToComplete();
+        peer.expectClose().respond();
+
+        connection.close();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testEngineFailedWhenSessionReceivesDetachForUnknownLink() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.remoteDetach().withHandle(2).onChannel(0).queue();
+        peer.expectClose().withError(notNullValue());
+
+        Connection connection = engine.start().open();
+        connection.session().open();
+
+        peer.waitForScriptToComplete();
+
+        assertNotNull(failure);
+        assertTrue(failure instanceof ProtocolViolationException);
+    }
+
+    @Test
+    public void testEngineFailedWhenSessionReceivesTransferForUnknownLink() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().ofReceiver().respond();
+        peer.remoteDetach().queue();
+        peer.remoteTransfer().withHandle(0)
+                             .withDeliveryId(1)
+                             .withDeliveryTag(new byte[] {1})
+                             .onChannel(0)
+                             .queue();
+        peer.expectClose().withError(notNullValue());
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        session.receiver("test").open();
+
+        peer.waitForScriptToComplete();
+
+        assertNotNull(failure);
+        assertTrue(failure instanceof ProtocolViolationException);
     }
 }

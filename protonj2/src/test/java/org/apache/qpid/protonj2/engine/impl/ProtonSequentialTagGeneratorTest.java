@@ -34,6 +34,7 @@ public class ProtonSequentialTagGeneratorTest {
     public void testCreateTagGenerator() {
         DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.SEQUENTIAL.createGenerator();
         assertTrue(generator instanceof ProtonSequentialTagGenerator);
+        assertNotNull(generator.toString());
     }
 
     @Test
