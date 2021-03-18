@@ -47,6 +47,7 @@ public class SessionTracker {
     private UnsignedShort localChannel;
     private UnsignedShort remoteChannel;
     private UnsignedInteger nextIncomingId;
+    private UnsignedInteger nextOutgoingId;
     private Begin remoteBegin;
     private Begin localBegin;
     private End remoteEnd;
@@ -110,6 +111,10 @@ public class SessionTracker {
         return nextIncomingId;
     }
 
+    public UnsignedInteger getNextOutgoingId() {
+        return nextOutgoingId;
+    }
+
     //----- Handle performatives and update session state
 
     public SessionTracker handleBegin(Begin remoteBegin, UnsignedShort remoteChannel) {
@@ -123,6 +128,7 @@ public class SessionTracker {
     public SessionTracker handleLocalBegin(Begin localBegin, UnsignedShort localChannel) {
         this.localBegin = localBegin;
         this.localChannel = localChannel;
+        this.nextOutgoingId = localBegin.getNextOutgoingId();
 
         return this;
     }

@@ -91,6 +91,9 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
                 response.onChannel(session.getLocalChannel());
             }
 
+            // TODO: The auto response values need to be pulled from session activity to produce meaningful auto
+            //       generated values for scripted responses.
+
             // Populate the fields of the response with defaults if non set by the test script
             if (response.getPerformative().getNextIncomingId() == null) {
                 response.withNextIncomingId(flow.getNextOutgoingId().longValue()); //TODO: this could be wrong, need to know about the transfers received (and sent by peer).
