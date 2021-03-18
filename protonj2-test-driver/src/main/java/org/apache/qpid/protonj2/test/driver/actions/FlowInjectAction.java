@@ -33,6 +33,8 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
 
     private final Flow flow = new Flow();
 
+    private boolean explicitlyNullHandle;
+
     public FlowInjectAction(AMQPTestDriver driver) {
         super(driver);
     }
@@ -88,7 +90,14 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
     }
 
     public FlowInjectAction withHandle(UnsignedInteger handle) {
+        explicitlyNullHandle = handle == null;
         flow.setHandle(handle);
+        return this;
+    }
+
+    public FlowInjectAction withNullHandle() {
+        explicitlyNullHandle = true;
+        flow.setHandle(null);
         return this;
     }
 
@@ -150,7 +159,7 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
 
         // Auto select last opened sender on last opened session.  Later an option could
         // be added to allow forcing the handle to be null for testing specification requirements.
-        if (flow.getHandle() == null) {
+        if (flow.getHandle() == null && !explicitlyNullHandle) {
             flow.setHandle(link.getHandle());
         }
         if (flow.getIncomingWindow() == null) {
