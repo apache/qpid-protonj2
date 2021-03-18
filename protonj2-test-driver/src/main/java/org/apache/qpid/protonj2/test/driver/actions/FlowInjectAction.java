@@ -157,9 +157,10 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
             onChannel(session.getLocalChannel().intValue());
         }
 
-        // Auto select last opened sender on last opened session.  Later an option could
-        // be added to allow forcing the handle to be null for testing specification requirements.
-        if (flow.getHandle() == null && !explicitlyNullHandle) {
+        // Auto select last opened sender on last opened session, unless there's no links opened
+        // in which case we can assume this is session only flow.  Also check if the test scripted
+        // this as null which indicates the test is trying to send session only.
+        if (flow.getHandle() == null && !explicitlyNullHandle && link != null) {
             flow.setHandle(link.getHandle());
         }
         if (flow.getIncomingWindow() == null) {
