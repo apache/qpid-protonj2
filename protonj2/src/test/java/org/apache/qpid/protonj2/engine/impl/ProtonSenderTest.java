@@ -3536,6 +3536,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
 
         {
+            // Not expecting an update as we weren't yet able to send and still aren't
             final CountDownLatch senderCreditUpdated = new CountDownLatch(1);
             sender.creditStateUpdateHandler(handler -> {
                 senderCreditUpdated.countDown();
@@ -3543,9 +3544,77 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
             sender.open();
 
-            assertTrue(senderCreditUpdated.await(10, TimeUnit.SECONDS));
+            assertTrue(senderCreditUpdated.await(5, TimeUnit.MILLISECONDS));
             assertFalse(sender.isSendable());
         }
+
+        final OutgoingDelivery delivery = sender.next();
+        assertNotNull(delivery);
+
+        delivery.setTag(new byte[] {0});
+        // Shouldn't generate any frames as there's no session capacity
+        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
+
+        {
+            final CountDownLatch senderCreditUpdated = new CountDownLatch(1);
+            sender.creditStateUpdateHandler(handler -> {
+                senderCreditUpdated.countDown();
+            });
+
+            peer.remoteFlow().withDeliveryCount(0)
+                             .withLinkCredit(10)
+                             .withIncomingWindow(1)
+                             .withOutgoingWindow(10)
+                             .withNextIncomingId(0)
+                             .withNextOutgoingId(0).now();
+
+            assertTrue(senderCreditUpdated.await(10, TimeUnit.SECONDS));
+            assertTrue(sender.isSendable());
+        }
+
+        peer.expectTransfer().withHandle(0)
+                             .withMore(false)
+                             .withSettled(false)
+                             .withState(nullValue())
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withPayload(payload);
+        peer.expectDetach().withHandle(0).respond();
+
+        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        assertFalse(sender.isSendable());
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSenderBecomesSendableAfterRemoteIncomingWindowExpeandedSessionFlowSentBeforeAttach() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.remoteFlow().withNullHandle()
+                         .withIncomingWindow(0)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(0).queue();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1").open();
+
+        assertFalse(sender.isSendable());
 
         final OutgoingDelivery delivery = sender.next();
         assertNotNull(delivery);
@@ -3639,6 +3708,77 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
             peer.remoteFlow().withDeliveryCount(0)
                              .withLinkCredit(1)
+                             .withIncomingWindow(0)
+                             .withOutgoingWindow(10)
+                             .withNextIncomingId(0)
+                             .withNextOutgoingId(0).now();
+
+            assertTrue(senderCreditUpdated.await(10, TimeUnit.SECONDS));
+            assertFalse(sender.isSendable());
+        }
+
+        peer.expectDetach().withHandle(0).respond();
+
+        // Should not generate any outgoing transfers as the delivery is not sendable
+        final OutgoingDelivery delivery = sender.next();
+        delivery.setTag(new byte[] {0});
+        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSessionRevokesIncomingWindowSetsSenderStateToNotSenableViaSessionFlow() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.remoteFlow().withIncomingWindow(1)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(0).queue();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1").open();
+
+        assertFalse(sender.isSendable());
+
+        {
+            final CountDownLatch senderCreditUpdated = new CountDownLatch(1);
+            sender.creditStateUpdateHandler(handler -> {
+                senderCreditUpdated.countDown();
+            });
+
+            peer.remoteFlow().withDeliveryCount(0)
+                             .withLinkCredit(1)
+                             .withIncomingWindow(1)
+                             .withOutgoingWindow(10)
+                             .withNextIncomingId(0)
+                             .withNextOutgoingId(0).now();
+
+            assertTrue(senderCreditUpdated.await(10, TimeUnit.SECONDS));
+            assertTrue(sender.isSendable());
+        }
+
+        {
+            final CountDownLatch senderCreditUpdated = new CountDownLatch(1);
+            sender.creditStateUpdateHandler(handler -> {
+                senderCreditUpdated.countDown();
+            });
+
+            // Arrives at session level but impacts the links in the session.
+            peer.remoteFlow().withNullHandle()
                              .withIncomingWindow(0)
                              .withOutgoingWindow(10)
                              .withNextIncomingId(0)
@@ -4060,6 +4200,157 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertTrue(sender.get().isSendable());
 
         sender.get().close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    void testWriteThatExceedConfiguredSessionIncomingCreditLimitOnTransfer() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().withNextOutgoingId(0).respond();
+        peer.expectAttach().ofSender().respond();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("test").open();
+
+        int payloadOutstanding = 4800;
+        final byte[] bytes = new byte[payloadOutstanding];
+        Arrays.fill(bytes, (byte) 1);
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(bytes);
+
+        OutgoingDelivery delivery = sender.next().setTag(new byte[] { 0 });
+        assertEquals(payload.getReadableBytes(), payloadOutstanding);
+        delivery.writeBytes(payload);
+        assertEquals(payload.getReadableBytes(), payloadOutstanding);
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(0).withLinkCredit(10).now();
+        peer.expectTransfer().withNonNullPayload().withMore(true);
+
+        delivery.writeBytes(payload);
+        assertTrue(payload.getReadableBytes() < payloadOutstanding);  // Leave space for Transfer
+        payloadOutstanding = payload.getReadableBytes();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).now();
+        peer.expectTransfer().withNonNullPayload().withMore(true);
+
+        delivery.writeBytes(payload);
+        assertTrue(payload.getReadableBytes() < payloadOutstanding, "Expected < " + payloadOutstanding + " but was: " + payload.getReadableBytes());
+        payloadOutstanding = payload.getReadableBytes();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(2).withLinkCredit(10).now();
+        peer.expectTransfer().withNonNullPayload().withMore(true);
+
+        delivery.writeBytes(payload);
+        assertTrue(payload.getReadableBytes() < payloadOutstanding, "Expected < " + payloadOutstanding + " but was: " + payload.getReadableBytes());
+        payloadOutstanding = payload.getReadableBytes();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(3).withLinkCredit(10).now();
+        peer.expectTransfer().withNonNullPayload().withMore(true);
+
+        delivery.writeBytes(payload);
+        assertTrue(payload.getReadableBytes() < payloadOutstanding, "Expected < " + payloadOutstanding + " but was: " + payload.getReadableBytes());
+        payloadOutstanding = payload.getReadableBytes();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(4).withLinkCredit(10).now();
+        peer.expectTransfer().withNonNullPayload().withMore(false).accept();
+
+        delivery.writeBytes(payload);
+        assertEquals(0 , payload.getReadableBytes());
+
+        peer.waitForScriptToComplete(500, TimeUnit.SECONDS);
+        peer.expectDetach().respond();
+        peer.expectClose().respond();
+
+        sender.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    void testWriteThatExceedsConfiguredSessionIncomingCreditLimitOnTransferFromCreditUpdatedhandler() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().withNextOutgoingId(0).respond();
+        peer.expectAttach().ofSender().respond();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("test").open();
+
+        int payloadOutstanding = 4800;
+        final byte[] bytes = new byte[payloadOutstanding];
+        Arrays.fill(bytes, (byte) 1);
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(bytes);
+
+        final OutgoingDelivery delivery = sender.next().setTag(new byte[] { 0 });
+        assertEquals(payload.getReadableBytes(), payloadOutstanding);
+        delivery.writeBytes(payload);
+        assertEquals(payload.getReadableBytes(), payloadOutstanding);
+
+        sender.creditStateUpdateHandler((theSender) -> {
+            delivery.writeBytes(payload);
+        });
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectTransfer().withNonNullPayload().withMore(true);
+        peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(0).withLinkCredit(10).now();
+
+        assertTrue(payload.getReadableBytes() < payloadOutstanding);  // Leave space for Transfer
+        payloadOutstanding = payload.getReadableBytes();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectTransfer().withNonNullPayload().withMore(true);
+        peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).now();
+
+        assertTrue(payload.getReadableBytes() < payloadOutstanding, "Expected < " + payloadOutstanding + " but was: " + payload.getReadableBytes());
+        payloadOutstanding = payload.getReadableBytes();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectTransfer().withNonNullPayload().withMore(true);
+        peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(2).withLinkCredit(10).now();
+
+        assertTrue(payload.getReadableBytes() < payloadOutstanding, "Expected < " + payloadOutstanding + " but was: " + payload.getReadableBytes());
+        payloadOutstanding = payload.getReadableBytes();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectTransfer().withNonNullPayload().withMore(true);
+        peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(3).withLinkCredit(10).now();
+
+        assertTrue(payload.getReadableBytes() < payloadOutstanding, "Expected < " + payloadOutstanding + " but was: " + payload.getReadableBytes());
+        payloadOutstanding = payload.getReadableBytes();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectTransfer().withNonNullPayload().withMore(false).accept();
+        peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(4).withLinkCredit(10).now();
+
+        assertEquals(0 , payload.getReadableBytes());
+
+        peer.waitForScriptToComplete(500, TimeUnit.SECONDS);
+        peer.expectDetach().respond();
+        peer.expectClose().respond();
+
+        sender.close();
+        connection.close();
 
         peer.waitForScriptToComplete();
 

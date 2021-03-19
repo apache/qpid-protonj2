@@ -231,7 +231,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             sessionWindow.processDisposition(this, delivery);
         } finally {
             if (delivery.isSettled()) {
-                // TODO - Casting is ugly but right now our unsigned integers are longs
                 unsettled.remove((int) delivery.getDeliveryId());
                 if (delivery.getTag() != null) {
                     delivery.getTag().release();

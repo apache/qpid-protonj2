@@ -261,10 +261,20 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         }
 
         if (isLocallyOpen()) {
-            if (getCredit() > 0 && !sendable) {
-                sendable = true;
-            }
+            sendable = getCredit() > 0 && sessionWindow.isSendable();
 
+            signalLinkCreditStateUpdated();
+        }
+
+        return this;
+    }
+
+    ProtonSender handleSessionCreditStateUpdate(ProtonSessionOutgoingWindow protonSessionOutgoingWindow) {
+        final boolean previousSendable = sendable;
+
+        sendable = getCredit() > 0 && sessionWindow.isSendable();
+
+        if (previousSendable != sendable) {
             signalLinkCreditStateUpdated();
         }
 
@@ -294,12 +304,11 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
             }
 
             if (!delivery.isSettled()) {
-                // TODO - Casting is ugly but right now our unsigned integers are longs
                 unsettled.put((int) delivery.getDeliveryId(), delivery);
             }
 
             try {
-                sessionWindow.processSend(this, delivery, buffer, complete);
+                sendable = sessionWindow.processSend(this, delivery, buffer, complete) && getCredit() > 0;
             } finally {
                 if (complete && (buffer == null || !buffer.isReadable())) {
                     delivery.markComplete();
@@ -326,7 +335,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
             sessionWindow.processDisposition(this, delivery);
         } finally {
             if (delivery.isSettled()) {
-                // TODO - Casting is ugly but right now our unsigned integers are longs
                 unsettled.remove((int) delivery.getDeliveryId());
             }
         }
@@ -340,16 +348,10 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
                 sessionWindow.processAbort(this, delivery);
             }
         } finally {
-            // TODO - Casting is ugly but right now our unsigned integers are longs
             unsettled.remove((int) delivery.getDeliveryId());
             currentDeliveryId.reset();
             current = null;
         }
-    }
-
-    Sender signalNoLongerSendable() {
-        sendable = false;
-        return this;
     }
 
     //----- Sender event handlers
@@ -389,9 +391,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     @Override
     protected void transitionedToLocallyOpened() {
         localAttach.setInitialDeliveryCount(currentDeliveryId.longValue());
-        if (getCredit() > 0) {
-            sendable = true;
-        }
+        sendable = getCredit() > 0 && sessionWindow.isSendable();
     }
 
     @Override

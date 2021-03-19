@@ -136,10 +136,7 @@ public class ProtonSessionOutgoingWindow {
         if (!oldWritable && locallyWritable) {
             Set<ProtonSender> senders = session.senders();
             for (ProtonSender sender : senders) {
-                if (sender.getCredit() > 0) {
-                    sender.signalLinkCreditStateUpdated();
-                }
-
+                sender.handleSessionCreditStateUpdate(this);
                 if (!locallyWritable) {
                     break;
                 }
@@ -152,10 +149,7 @@ public class ProtonSessionOutgoingWindow {
             locallyWritable = true;
             Set<ProtonSender> senders = session.senders();
             for (ProtonSender sender : senders) {
-                if (sender.getCredit() > 0) {
-                    sender.signalLinkCreditStateUpdated();
-                }
-
+                sender.handleSessionCreditStateUpdate(this);
                 if (!locallyWritable) {
                     break;
                 }
@@ -259,7 +253,7 @@ public class ProtonSessionOutgoingWindow {
         cachedTransfer.setMore(true);
     }
 
-    void processSend(ProtonSender sender, ProtonOutgoingDelivery delivery, ProtonBuffer payload, boolean complete) {
+    boolean processSend(ProtonSender sender, ProtonOutgoingDelivery delivery, ProtonBuffer payload, boolean complete) {
         // For a transfer that hasn't completed but has no bytes in the final transfer write we want
         // to allow a transfer to go out with the more flag as false.
 
@@ -304,6 +298,8 @@ public class ProtonSessionOutgoingWindow {
         } finally {
             cachedTransfer.reset();
         }
+
+        return isSendable();
     }
 
     void processDisposition(ProtonSender sender, ProtonOutgoingDelivery delivery) {

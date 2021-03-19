@@ -1748,7 +1748,7 @@ public class SenderTest extends ImperativeClientTestCase {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
-            peer.expectBegin().respond();
+            peer.expectBegin().withNextOutgoingId(0).respond();
             peer.expectAttach().ofSender().respond();
             peer.start();
 
@@ -1775,7 +1775,66 @@ public class SenderTest extends ImperativeClientTestCase {
             });
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).now();
+            peer.expectTransfer().withNonNullPayload().withMore(true);
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).queue();
+            peer.expectTransfer().withNonNullPayload().withMore(true);
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(2).withLinkCredit(10).queue();
+            peer.expectTransfer().withNonNullPayload().withMore(true);
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(3).withLinkCredit(10).queue();
+            peer.expectTransfer().withNonNullPayload().withMore(true);
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(4).withLinkCredit(10).queue();
+            peer.expectTransfer().withNonNullPayload().withMore(false).accept();
+
+            // Grant the credit to start meeting the above expectations
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(0).withLinkCredit(10).now();
+
+            peer.waitForScriptToComplete(500, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            assertFalse(sendFailed.get());
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void testAutoFlushDuringWriteWithRollingIncomingWindowUpdates() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().withNextOutgoingId(0).respond();
+            peer.expectAttach().ofSender().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().maxFrameSize(1024);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            Sender sender = connection.openSender("test-queue");
+
+            final byte[] payload = new byte[4800];
+            Arrays.fill(payload, (byte) 1);
+
+            final AtomicBoolean sendFailed = new AtomicBoolean();
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    sender.send(Message.create(payload));
+                } catch (Exception e) {
+                    LOG.info("send failed with error: ", e);
+                    sendFailed.set(true);
+                }
+            });
+
+            // Credit should will be refilling as transfers arrive vs being exhausted on each
+            // incoming transfer and the send awaiting more credit.
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectTransfer().withNonNullPayload().withMore(true);
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(2).withLinkCredit(10).queue();
             peer.expectTransfer().withNonNullPayload().withMore(true);
@@ -1783,10 +1842,12 @@ public class SenderTest extends ImperativeClientTestCase {
             peer.expectTransfer().withNonNullPayload().withMore(true);
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(4).withLinkCredit(10).queue();
             peer.expectTransfer().withNonNullPayload().withMore(true);
-            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(5).withLinkCredit(10).queue();
             peer.expectTransfer().withNonNullPayload().withMore(false).accept();
 
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            // Grant the credit to start meeting the above expectations
+            peer.remoteFlow().withIncomingWindow(2).withNextIncomingId(0).withLinkCredit(10).now();
+
+            peer.waitForScriptToComplete(500, TimeUnit.SECONDS);
             peer.expectDetach().respond();
             peer.expectClose().respond();
 

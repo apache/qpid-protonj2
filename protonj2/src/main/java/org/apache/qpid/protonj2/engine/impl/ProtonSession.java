@@ -529,14 +529,14 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     }
 
     void remoteFlow(Flow flow, int channel) {
+        final boolean previousSessionWritable = outgoingWindow.isSendable();
+
         // Session level flow processing.
         incomingWindow.handleFlow(flow);
         outgoingWindow.handleFlow(flow);
 
-        final ProtonLink<?> link;
-
         if (flow.hasHandle()) {
-            link = remoteLinks.get((int) flow.getHandle());
+            final ProtonLink<?> link = remoteLinks.get((int) flow.getHandle());
             if (link == null) {
                 getEngine().engineFailed(new ProtocolViolationException(
                     "Received uncorrelated handle on Flow from remote: " + channel));
@@ -545,13 +545,25 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
 
             link.remoteFlow(flow);
         } else {
-            link = null;
+            handleSessionOnlyFlow(flow, previousSessionWritable);
+        }
+    }
+
+    private void handleSessionOnlyFlow(Flow flow, boolean previousSessionWritable) {
+        if (previousSessionWritable != outgoingWindow.isSendable()) {
+            for (ProtonSender sender : senders()) {
+                sender.handleSessionCreditStateUpdate(outgoingWindow);
+
+                if (previousSessionWritable == outgoingWindow.isSendable()) {
+                    break;
+                }
+            }
         }
 
-        //TODO: perhaps make this optional 'auto-echo'? Otherwise listeners above might not have had time to
-        //      perform desired work before below occurs.
         if (flow.getEcho()) {
-            writeFlow(link);
+            // Auto respond to session level echo requests as there's not an event point at the
+            // moment that would otherwise allow a response.
+            writeFlow(null);
         }
     }
 
