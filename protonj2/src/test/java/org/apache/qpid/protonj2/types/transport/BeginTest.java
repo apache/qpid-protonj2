@@ -16,12 +16,17 @@
  */
 package org.apache.qpid.protonj2.types.transport;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +40,38 @@ public class BeginTest {
     @Test
     public void testToStringOnFreshInstance() {
         assertNotNull(new Begin().toString());
+    }
+
+    @Test
+    public void testHasMethods() {
+        Begin begin = new Begin();
+
+        assertFalse(begin.hasHandleMax());
+        assertFalse(begin.hasNextOutgoingId());
+        assertFalse(begin.hasDesiredCapabilites());
+        assertFalse(begin.hasOfferedCapabilites());
+        assertFalse(begin.hasOutgoingWindow());
+        assertFalse(begin.hasIncomingWindow());
+        assertFalse(begin.hasProperties());
+        assertFalse(begin.hasRemoteChannel());
+
+        begin.setDesiredCapabilities(Symbol.valueOf("test"));
+        begin.setOfferedCapabilities(Symbol.valueOf("test"));
+        begin.setHandleMax(65535);
+        begin.setIncomingWindow(255);
+        begin.setOutgoingWindow(Integer.MAX_VALUE);
+        begin.setRemoteChannel(1);
+        begin.setProperties(new HashMap<>());
+        begin.setNextOutgoingId(Short.MAX_VALUE);
+
+        assertTrue(begin.hasHandleMax());
+        assertTrue(begin.hasNextOutgoingId());
+        assertTrue(begin.hasDesiredCapabilites());
+        assertTrue(begin.hasOfferedCapabilites());
+        assertTrue(begin.hasOutgoingWindow());
+        assertTrue(begin.hasIncomingWindow());
+        assertTrue(begin.hasProperties());
+        assertTrue(begin.hasRemoteChannel());
     }
 
     @Test
@@ -156,5 +193,60 @@ public class BeginTest {
 
         assertEquals(0, original.getElementCount());
         assertEquals(0, copy.getElementCount());
+    }
+
+    @Test
+    public void testCopyHandlesProperties() {
+        Map<Symbol, Object> properties = new HashMap<>();
+        properties.put(Symbol.valueOf("test1"), "one");
+        properties.put(Symbol.valueOf("test2"), "two");
+        properties.put(Symbol.valueOf("test3"), "three");
+
+        final Begin begin = new Begin();
+        begin.setProperties(properties);
+
+        final Begin copied = begin.copy();
+
+        assertTrue(begin.hasProperties());
+        assertTrue(copied.hasProperties());
+
+        assertEquals(copied.getProperties(), begin.getProperties());
+        assertEquals(copied.getProperties(), properties);
+    }
+
+    @Test
+    public void testCopyHandlesDesiredCapabilities() {
+        Symbol[] desiredCapabilities = { Symbol.valueOf("test1"),
+                                         Symbol.valueOf("test2"),
+                                         Symbol.valueOf("test3") };
+
+        final Begin begin = new Begin();
+        begin.setDesiredCapabilities(desiredCapabilities);
+
+        final Begin copied = begin.copy();
+
+        assertTrue(begin.hasDesiredCapabilites());
+        assertTrue(copied.hasDesiredCapabilites());
+
+        assertArrayEquals(copied.getDesiredCapabilities(), begin.getDesiredCapabilities());
+        assertArrayEquals(copied.getDesiredCapabilities(), desiredCapabilities);
+    }
+
+    @Test
+    public void testCopyHandlesOfferedCapabilities() {
+        Symbol[] offeredCapabilities = { Symbol.valueOf("test1"),
+                                         Symbol.valueOf("test2"),
+                                         Symbol.valueOf("test3") };
+
+        final Begin begin = new Begin();
+        begin.setOfferedCapabilities(offeredCapabilities);
+
+        final Begin copied = begin.copy();
+
+        assertTrue(begin.hasOfferedCapabilites());
+        assertTrue(copied.hasOfferedCapabilites());
+
+        assertArrayEquals(copied.getOfferedCapabilities(), begin.getOfferedCapabilities());
+        assertArrayEquals(copied.getOfferedCapabilities(), offeredCapabilities);
     }
 }
