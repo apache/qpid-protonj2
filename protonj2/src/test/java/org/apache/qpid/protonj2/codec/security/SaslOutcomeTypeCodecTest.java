@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.codec.security;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -86,6 +87,26 @@ public class SaslOutcomeTypeCodecTest extends CodecTestSupport {
 
         assertEquals(code, result.getCode());
         assertArrayEquals(data, result.getAdditionalData().getArray());
+    }
+
+    @Test
+    public void testAdditionalDataHandlesNullBinaryWithoutNPEAndUpdates() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        byte[] data = new byte[] { 1, 2, 3, 4 };
+        SaslCode code = SaslCode.AUTH;
+
+        SaslOutcome input = new SaslOutcome();
+        input.setAdditionalData(new Binary(data));
+        input.setAdditionalData((Binary) null);
+        input.setCode(code);
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        final SaslOutcome result = (SaslOutcome) decoder.readObject(buffer, decoderState);
+
+        assertEquals(code, result.getCode());
+        assertNull(result.getAdditionalData());
     }
 
     @Test

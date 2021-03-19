@@ -21,8 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
@@ -95,5 +97,22 @@ public class SaslResponseTest {
     @Test
     public void testGetType() {
         assertEquals(SaslPerformativeType.RESPONSE, new SaslResponse().getPerformativeType());
+    }
+
+    @Test
+    public void testPerformativeHandlerInvocations() {
+        final SaslResponse value = new SaslResponse();
+        final AtomicBoolean invoked = new AtomicBoolean();
+
+        value.invoke(new SaslPerformativeHandler<AtomicBoolean>() {
+
+            @Override
+            public void handleResponse(SaslResponse saslResponse, AtomicBoolean context) {
+                context.set(true);
+            }
+
+        }, invoked);
+
+        assertTrue(invoked.get());
     }
 }

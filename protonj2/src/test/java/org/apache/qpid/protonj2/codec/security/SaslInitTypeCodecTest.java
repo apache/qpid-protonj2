@@ -106,6 +106,28 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testInitialResponseHandlesNullBinarySet() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        byte[] initialResponse = new byte[] { 1, 2, 3, 4 };
+
+        SaslInit input = new SaslInit();
+        input.setMechanism(Symbol.valueOf("ANONYMOUS"));
+
+        // Ensure that a null is handled without NPE and that it does indeed clear old value.
+        input.setInitialResponse(new Binary(initialResponse));
+        input.setInitialResponse((Binary) null);
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        final SaslInit result = (SaslInit) decoder.readObject(buffer, decoderState);
+
+        assertEquals(Symbol.valueOf("ANONYMOUS"), result.getMechanism());
+        assertNull(result.getHostname());
+        assertNull(result.getInitialResponse());
+    }
+
+    @Test
     public void testEncodeDecodeTypeMechanismAndHostname() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

@@ -60,7 +60,7 @@ public final class SaslOutcomeTypeEncoder extends AbstractDescribedListTypeEncod
 
     @Override
     public byte getListEncoding(SaslOutcome value) {
-        if (value.getAdditionalData().getReadableBytes() < 253) {
+        if (value.getAdditionalData() == null || value.getAdditionalData().getReadableBytes() < 253) {
             return EncodingCodes.LIST8;
         } else {
             return EncodingCodes.LIST32;

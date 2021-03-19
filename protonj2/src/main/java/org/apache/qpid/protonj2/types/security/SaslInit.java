@@ -48,9 +48,7 @@ public final class SaslInit implements SaslPerformative {
     }
 
     public SaslInit setInitialResponse(Binary initialResponse) {
-        if (initialResponse != null) {
-            setInitialResponse(initialResponse.asProtonBuffer());
-        }
+        this.initialResponse = initialResponse == null ? null : initialResponse.asProtonBuffer();
         return this;
     }
 

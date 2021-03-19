@@ -47,9 +47,7 @@ public final class SaslOutcome implements SaslPerformative {
     }
 
     public SaslOutcome setAdditionalData(Binary additionalData) {
-        if (additionalData != null) {
-            setAdditionalData(additionalData.asProtonBuffer());
-        }
+        this.additionalData = additionalData == null ? null : additionalData.asProtonBuffer();
         return this;
     }
 
