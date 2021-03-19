@@ -3592,6 +3592,77 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testSessionRevokesIncomingWindowSetsSenderStateToNotSenableViaDirectLinkFlow() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.remoteFlow().withIncomingWindow(1)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(0).queue();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1").open();
+
+        assertFalse(sender.isSendable());
+
+        {
+            final CountDownLatch senderCreditUpdated = new CountDownLatch(1);
+            sender.creditStateUpdateHandler(handler -> {
+                senderCreditUpdated.countDown();
+            });
+
+            peer.remoteFlow().withDeliveryCount(0)
+                             .withLinkCredit(1)
+                             .withIncomingWindow(1)
+                             .withOutgoingWindow(10)
+                             .withNextIncomingId(0)
+                             .withNextOutgoingId(0).now();
+
+            assertTrue(senderCreditUpdated.await(10, TimeUnit.SECONDS));
+            assertTrue(sender.isSendable());
+        }
+
+        {
+            final CountDownLatch senderCreditUpdated = new CountDownLatch(1);
+            sender.creditStateUpdateHandler(handler -> {
+                senderCreditUpdated.countDown();
+            });
+
+            peer.remoteFlow().withDeliveryCount(0)
+                             .withLinkCredit(1)
+                             .withIncomingWindow(0)
+                             .withOutgoingWindow(10)
+                             .withNextIncomingId(0)
+                             .withNextOutgoingId(0).now();
+
+            assertTrue(senderCreditUpdated.await(10, TimeUnit.SECONDS));
+            assertFalse(sender.isSendable());
+        }
+
+        peer.expectDetach().withHandle(0).respond();
+
+        // Should not generate any outgoing transfers as the delivery is not sendable
+        final OutgoingDelivery delivery = sender.next();
+        delivery.setTag(new byte[] {0});
+        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testSenderOnlyWritesToSessionRemoteIncomingLimitWriteBytes() throws Exception {
         doTestSenderOnlyWritesToSessionRemoteIncomingLimit(false);
     }
