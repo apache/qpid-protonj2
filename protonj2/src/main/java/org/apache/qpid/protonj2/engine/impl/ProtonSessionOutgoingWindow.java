@@ -190,7 +190,7 @@ public class ProtonSessionOutgoingWindow {
             remoteIncomingWindow = flow.getIncomingWindow();
         }
 
-        writeable = remoteIncomingWindow > 0 && pendingOutgoingWrites < outgoingWindowLowWaterMark;
+        writeable = remoteIncomingWindow > 0 && pendingOutgoingWrites <= outgoingWindowLowWaterMark;
 
         return flow;
     }
