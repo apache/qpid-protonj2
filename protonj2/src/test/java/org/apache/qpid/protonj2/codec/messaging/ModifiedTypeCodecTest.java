@@ -23,10 +23,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -59,13 +61,28 @@ public class ModifiedTypeCodecTest  extends CodecTestSupport {
 
     @Test
     public void testDecodeModified() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        doTestDecodeModified(false);
+    }
+
+    @Test
+    public void testDecodeModifiedFromStream() throws IOException {
+        doTestDecodeModified(true);
+    }
+
+    private void doTestDecodeModified(boolean fromStream) throws IOException {
+        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        final InputStream stream = new ProtonBufferInputStream(buffer);
 
         Modified value = new Modified();
 
         encoder.writeObject(buffer, encoderState, value);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof Modified);

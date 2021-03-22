@@ -23,8 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -59,13 +61,28 @@ public class DeclareTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeType() throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        doTestEncodeDecodeType(false);
+    }
+
+    @Test
+    public void testEncodeDecodeTypeFromStream() throws Exception {
+        doTestEncodeDecodeType(true);
+    }
+
+    private void doTestEncodeDecodeType(boolean fromStream) throws Exception {
+        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        final InputStream stream = new ProtonBufferInputStream(buffer);
 
         Declare input = new Declare();
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final Declare result = (Declare) decoder.readObject(buffer, decoderState);
+        final Declare result;
+        if (fromStream) {
+            result = (Declare) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (Declare) decoder.readObject(buffer, decoderState);
+        }
 
         assertNull(result.getGlobalId());
     }

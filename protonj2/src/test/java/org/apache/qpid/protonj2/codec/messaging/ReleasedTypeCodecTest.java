@@ -23,8 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -56,21 +58,36 @@ public class ReleasedTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeReleased() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+    public void testDecodeReleased() throws IOException {
+        doTestDecodeReleased(false);
+    }
+
+    @Test
+    public void testDecodeReleasedFromStream() throws IOException {
+        doTestDecodeReleased(true);
+    }
+
+    private void doTestDecodeReleased(boolean fromStream) throws IOException {
+        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        final InputStream stream = new ProtonBufferInputStream(buffer);
 
         Released value = Released.getInstance();
 
         encoder.writeObject(buffer, encoderState, value);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof Released);
     }
 
     @Test
-    public void TestDecodeReleasedWithList8() throws IOException {
+    public void testDecodeReleasedWithList8() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
@@ -87,7 +104,7 @@ public class ReleasedTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeReleasedWithList32() throws IOException {
+    public void testDecodeReleasedWithList32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator

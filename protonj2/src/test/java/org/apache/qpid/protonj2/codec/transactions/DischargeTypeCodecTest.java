@@ -23,9 +23,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -61,7 +63,17 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeType() throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        doTestEncodeDecodeType(false);
+    }
+
+    @Test
+    public void testEncodeDecodeTypeFromStream() throws Exception {
+        doTestEncodeDecodeType(true);
+    }
+
+    private void doTestEncodeDecodeType(boolean fromStream) throws Exception {
+        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        final InputStream stream = new ProtonBufferInputStream(buffer);
 
         Discharge input = new Discharge();
 
@@ -70,7 +82,12 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final Discharge result = (Discharge) decoder.readObject(buffer, decoderState);
+        final Discharge result;
+        if (fromStream) {
+            result = (Discharge) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (Discharge) decoder.readObject(buffer, decoderState);
+        }
 
         assertTrue(result.getFail());
 

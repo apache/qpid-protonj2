@@ -23,14 +23,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.ProtonDecoderFactory;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamDecoderFactory;
 import org.apache.qpid.protonj2.codec.decoders.security.SaslMechanismsTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.ProtonEncoderFactory;
 import org.apache.qpid.protonj2.codec.encoders.security.SaslMechanismsTypeEncoder;
@@ -49,6 +52,9 @@ public class SaslMechanismsTypeCodecTest extends CodecTestSupport {
 
         encoder = ProtonEncoderFactory.createSasl();
         encoderState = encoder.newEncoderState();
+
+        streamDecoder = ProtonStreamDecoderFactory.createSasl();
+        streamDecoderState = streamDecoder.newDecoderState();
     }
 
     @Test
@@ -70,7 +76,17 @@ public class SaslMechanismsTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeType() throws Exception {
+        doTestEncodeDecodeType(false);
+    }
+
+    @Test
+    public void testEncodeDecodeTypeFromStream() throws Exception {
+        doTestEncodeDecodeType(true);
+    }
+
+    private void doTestEncodeDecodeType(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Symbol[] mechanisms = new Symbol[] { Symbol.valueOf("ANONYMOUS"), Symbol.valueOf("EXTERNAL") };
 
@@ -79,7 +95,12 @@ public class SaslMechanismsTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final SaslMechanisms result = (SaslMechanisms) decoder.readObject(buffer, decoderState);
+        final SaslMechanisms result;
+        if (fromStream) {
+            result = (SaslMechanisms) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (SaslMechanisms) decoder.readObject(buffer, decoderState);
+        }
 
         assertArrayEquals(mechanisms, result.getSaslServerMechanisms());
     }

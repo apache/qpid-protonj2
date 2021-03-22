@@ -25,8 +25,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -65,7 +67,17 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeType() throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        doTestEncodeDecodeType(false);
+    }
+
+    @Test
+    public void testEncodeDecodeTypeFromStream() throws Exception {
+        doTestEncodeDecodeType(true);
+    }
+
+    private void doTestEncodeDecodeType(boolean fromStream) throws Exception {
+        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        final InputStream stream = new ProtonBufferInputStream(buffer);
 
         TransactionalState input = new TransactionalState();
         input.setTxnId(new Binary(new byte[] { 2, 4, 6, 8 }));
@@ -73,7 +85,12 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final TransactionalState result = (TransactionalState) decoder.readObject(buffer, decoderState);
+        final TransactionalState result;
+        if (fromStream) {
+            result = (TransactionalState) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (TransactionalState) decoder.readObject(buffer, decoderState);
+        }
 
         assertSame(result.getOutcome(), Accepted.getInstance());
 

@@ -24,14 +24,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.messaging.SourceTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.messaging.SourceTypeEncoder;
@@ -66,7 +69,17 @@ public class SourceTypeCodecTest extends CodecTestSupport {
 
    @Test
    public void testEncodeDecodeSourceType() throws Exception {
-      ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+       doTestEncodeDecodeSourceType(false);
+   }
+
+   @Test
+   public void testEncodeDecodeSourceTypeFromStream() throws Exception {
+       doTestEncodeDecodeSourceType(true);
+   }
+
+   private void doTestEncodeDecodeSourceType(boolean fromStream) throws Exception {
+      final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+      final InputStream stream = new ProtonBufferInputStream(buffer);
 
       Source value = new Source();
       value.setAddress("test");
@@ -74,7 +87,12 @@ public class SourceTypeCodecTest extends CodecTestSupport {
 
       encoder.writeObject(buffer, encoderState, value);
 
-      final Source result = (Source)decoder.readObject(buffer, decoderState);
+      final Source result;
+      if (fromStream) {
+          result = streamDecoder.readObject(stream, streamDecoderState, Source.class);
+      } else {
+          result = decoder.readObject(buffer, decoderState, Source.class);
+      }
 
       assertEquals("test", result.getAddress());
       assertEquals(TerminusDurability.UNSETTLED_STATE, result.getDurable());
@@ -82,7 +100,17 @@ public class SourceTypeCodecTest extends CodecTestSupport {
 
    @Test
    public void testFullyPopulatedSource() throws Exception {
-      ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+       doTestFullyPopulatedSource(false);
+   }
+
+   @Test
+   public void testFullyPopulatedSourceFromStream() throws Exception {
+       doTestFullyPopulatedSource(true);
+   }
+
+   private void doTestFullyPopulatedSource(boolean fromStream) throws Exception {
+       final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+       final InputStream stream = new ProtonBufferInputStream(buffer);
 
       Map<Symbol, Object> nodeProperties = new LinkedHashMap<>();
       nodeProperties.put(Symbol.valueOf("property-1"), "value-1");
@@ -109,7 +137,12 @@ public class SourceTypeCodecTest extends CodecTestSupport {
 
       encoder.writeObject(buffer, encoderState, value);
 
-      final Source result = (Source)decoder.readObject(buffer, decoderState);
+      final Source result;
+      if (fromStream) {
+          result = streamDecoder.readObject(stream, streamDecoderState, Source.class);
+      } else {
+          result = decoder.readObject(buffer, decoderState, Source.class);
+      }
 
       assertEquals("test", result.getAddress());
       assertEquals(TerminusDurability.UNSETTLED_STATE, result.getDurable());
@@ -127,7 +160,17 @@ public class SourceTypeCodecTest extends CodecTestSupport {
 
    @Test
    public void testSkipValue() throws IOException {
-       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+       doTestSkipValue(false);
+   }
+
+   @Test
+   public void testSkipValueFromStream() throws IOException {
+       doTestSkipValue(true);
+   }
+
+   private void doTestSkipValue(boolean fromStream) throws IOException {
+       final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+       final InputStream stream = new ProtonBufferInputStream(buffer);
 
        Source source = new Source();
        source.setAddress("address");
@@ -145,7 +188,12 @@ public class SourceTypeCodecTest extends CodecTestSupport {
            typeDecoder.skipValue(buffer, decoderState);
        }
 
-       final Object result = decoder.readObject(buffer, decoderState);
+       final Object result;
+       if (fromStream) {
+           result = streamDecoder.readObject(stream, streamDecoderState);
+       } else {
+           result = decoder.readObject(buffer, decoderState);
+       }
 
        assertNotNull(result);
        assertTrue(result instanceof Modified);
@@ -156,16 +204,17 @@ public class SourceTypeCodecTest extends CodecTestSupport {
 
    @Test
    public void testDecodeWithInvalidMap32Type() throws IOException {
-       doTestDecodeWithInvalidMapType(EncodingCodes.MAP32);
+       doTestDecodeWithInvalidMapType(EncodingCodes.MAP32, false);
    }
 
    @Test
    public void testDecodeWithInvalidMap8Type() throws IOException {
-       doTestDecodeWithInvalidMapType(EncodingCodes.MAP8);
+       doTestDecodeWithInvalidMapType(EncodingCodes.MAP8, false);
    }
 
-   private void doTestDecodeWithInvalidMapType(byte mapType) throws IOException {
-       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+   private void doTestDecodeWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
+       final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+       final InputStream stream = new ProtonBufferInputStream(buffer);
 
        buffer.writeByte((byte) 0); // Described Type Indicator
        buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -180,24 +229,42 @@ public class SourceTypeCodecTest extends CodecTestSupport {
            buffer.writeByte((byte) 0);  // Count
        }
 
-       try {
-           decoder.readObject(buffer, decoderState);
-           fail("Should not decode type with invalid encoding");
-       } catch (DecodeException ex) {}
+       if (fromStream) {
+           try {
+               streamDecoder.readObject(stream, streamDecoderState);
+               fail("Should not decode type with invalid encoding");
+           } catch (DecodeException ex) {}
+       } else {
+           try {
+               decoder.readObject(buffer, decoderState);
+               fail("Should not decode type with invalid encoding");
+           } catch (DecodeException ex) {}
+       }
    }
 
    @Test
    public void testSkipValueWithInvalidMap32Type() throws IOException {
-       doTestSkipValueWithInvalidMapType(EncodingCodes.MAP32);
+       doTestSkipValueWithInvalidMapType(EncodingCodes.MAP32, false);
    }
 
    @Test
    public void testSkipValueWithInvalidMap8Type() throws IOException {
-       doTestSkipValueWithInvalidMapType(EncodingCodes.MAP8);
+       doTestSkipValueWithInvalidMapType(EncodingCodes.MAP8, false);
    }
 
-   private void doTestSkipValueWithInvalidMapType(byte mapType) throws IOException {
-       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+   @Test
+   public void testSkipValueWithInvalidMap32TypeFromStream() throws IOException {
+       doTestSkipValueWithInvalidMapType(EncodingCodes.MAP32, true);
+   }
+
+   @Test
+   public void testSkipValueWithInvalidMap8TypeFromStream() throws IOException {
+       doTestSkipValueWithInvalidMapType(EncodingCodes.MAP8, true);
+   }
+
+   private void doTestSkipValueWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
+       final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+       final InputStream stream = new ProtonBufferInputStream(buffer);
 
        buffer.writeByte((byte) 0); // Described Type Indicator
        buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -212,18 +279,38 @@ public class SourceTypeCodecTest extends CodecTestSupport {
            buffer.writeByte((byte) 0);  // Count
        }
 
-       TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-       assertEquals(Source.class, typeDecoder.getTypeClass());
+       if (fromStream) {
+           StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+           assertEquals(Source.class, typeDecoder.getTypeClass());
 
-       try {
-           typeDecoder.skipValue(buffer, decoderState);
-           fail("Should not be able to skip type with invalid encoding");
-       } catch (DecodeException ex) {}
+           try {
+               typeDecoder.skipValue(stream, streamDecoderState);
+               fail("Should not be able to skip type with invalid encoding");
+           } catch (DecodeException ex) {}
+       } else {
+           TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+           assertEquals(Source.class, typeDecoder.getTypeClass());
+
+           try {
+               typeDecoder.skipValue(buffer, decoderState);
+               fail("Should not be able to skip type with invalid encoding");
+           } catch (DecodeException ex) {}
+       }
    }
 
    @Test
    public void testEncodeDecodeArray() throws IOException {
-       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+       doTestEncodeDecodeArray(false);
+   }
+
+   @Test
+   public void testEncodeDecodeArrayFromStream() throws IOException {
+       doTestEncodeDecodeArray(true);
+   }
+
+   private void doTestEncodeDecodeArray(boolean fromStream) throws IOException {
+       final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+       final InputStream stream = new ProtonBufferInputStream(buffer);
 
        Source[] array = new Source[3];
 
@@ -237,7 +324,12 @@ public class SourceTypeCodecTest extends CodecTestSupport {
 
        encoder.writeObject(buffer, encoderState, array);
 
-       final Object result = decoder.readObject(buffer, decoderState);
+       final Object result;
+       if (fromStream) {
+           result = streamDecoder.readObject(stream, streamDecoderState);
+       } else {
+           result = decoder.readObject(buffer, decoderState);
+       }
 
        assertTrue(result.getClass().isArray());
        assertEquals(Source.class, result.getClass().getComponentType());

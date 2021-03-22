@@ -23,8 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -58,8 +60,18 @@ public class ReceivedTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeRecieved() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+    public void testDecodeRecieved() throws IOException {
+        doTestDecodeRecieved(false);
+    }
+
+    @Test
+    public void testDecodeRecievedFromStream() throws IOException {
+        doTestDecodeRecieved(true);
+    }
+
+    private void doTestDecodeRecieved(boolean fromStream) throws IOException {
+        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        final InputStream stream = new ProtonBufferInputStream(buffer);
 
         Received value = new Received();
         value.setSectionNumber(UnsignedInteger.ONE);
@@ -67,14 +79,19 @@ public class ReceivedTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, value);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof Received);
     }
 
     @Test
-    public void TestDecodeReceivedWithList8() throws IOException {
+    public void testDecodeReceivedWithList8() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
@@ -95,7 +112,7 @@ public class ReceivedTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeReceivedWithList32() throws IOException {
+    public void testDecodeReceivedWithList32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator

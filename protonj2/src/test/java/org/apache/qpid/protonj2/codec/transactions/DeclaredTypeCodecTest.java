@@ -23,9 +23,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -61,14 +63,29 @@ public class DeclaredTypeCodecTest extends CodecTestSupport {
 
    @Test
    public void testEncodeDecodeType() throws Exception {
-      ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+       doTestEncodeDecodeType(false);
+   }
+
+   @Test
+   public void testEncodeDecodeTypeFromStream() throws Exception {
+       doTestEncodeDecodeType(true);
+   }
+
+   private void doTestEncodeDecodeType(boolean fromStream) throws Exception {
+       final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+       final InputStream stream = new ProtonBufferInputStream(buffer);
 
       Declared input = new Declared();
       input.setTxnId(new Binary(new byte[] {2, 4, 6, 8}));
 
       encoder.writeObject(buffer, encoderState, input);
 
-      final Declared result = (Declared)decoder.readObject(buffer, decoderState);
+      final Declared result;
+      if (fromStream) {
+          result = (Declared) streamDecoder.readObject(stream, streamDecoderState);
+      } else {
+          result = (Declared) decoder.readObject(buffer, decoderState);
+      }
 
       assertNotNull(result.getTxnId());
       assertNotNull(result.getTxnId().getArray());

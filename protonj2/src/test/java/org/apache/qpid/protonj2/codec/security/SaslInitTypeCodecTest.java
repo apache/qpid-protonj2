@@ -24,14 +24,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.ProtonDecoderFactory;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamDecoderFactory;
 import org.apache.qpid.protonj2.codec.decoders.security.SaslInitTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.ProtonEncoderFactory;
 import org.apache.qpid.protonj2.codec.encoders.security.SaslInitTypeEncoder;
@@ -51,6 +54,9 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
 
         encoder = ProtonEncoderFactory.createSasl();
         encoderState = encoder.newEncoderState();
+
+        streamDecoder = ProtonStreamDecoderFactory.createSasl();
+        streamDecoderState = streamDecoder.newDecoderState();
     }
 
     @Test
@@ -72,14 +78,29 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeTypeMechanismOnly() throws Exception {
+        doTestEncodeDecodeTypeMechanismOnly(false);
+    }
+
+    @Test
+    public void testEncodeDecodeTypeMechanismOnlyFromStream() throws Exception {
+        doTestEncodeDecodeTypeMechanismOnly(true);
+    }
+
+    private void doTestEncodeDecodeTypeMechanismOnly(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         SaslInit input = new SaslInit();
         input.setMechanism(Symbol.valueOf("ANONYMOUS"));
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final SaslInit result = (SaslInit) decoder.readObject(buffer, decoderState);
+        final SaslInit result;
+        if (fromStream) {
+            result = (SaslInit) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (SaslInit) decoder.readObject(buffer, decoderState);
+        }
 
         assertEquals(Symbol.valueOf("ANONYMOUS"), result.getMechanism());
         assertNull(result.getHostname());

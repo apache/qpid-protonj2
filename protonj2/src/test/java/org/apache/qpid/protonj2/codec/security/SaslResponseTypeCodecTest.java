@@ -23,15 +23,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.ProtonDecoderFactory;
+import org.apache.qpid.protonj2.codec.decoders.ProtonStreamDecoderFactory;
 import org.apache.qpid.protonj2.codec.decoders.security.SaslResponseTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.ProtonEncoderFactory;
 import org.apache.qpid.protonj2.codec.encoders.security.SaslResponseTypeEncoder;
@@ -50,6 +53,9 @@ public class SaslResponseTypeCodecTest extends CodecTestSupport {
 
         encoder = ProtonEncoderFactory.createSasl();
         encoderState = encoder.newEncoderState();
+
+        streamDecoder = ProtonStreamDecoderFactory.createSasl();
+        streamDecoderState = streamDecoder.newDecoderState();
     }
 
     @Test
@@ -71,7 +77,17 @@ public class SaslResponseTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeType() throws Exception {
+        doTestEncodeDecodeType(false);
+    }
+
+    @Test
+    public void testEncodeDecodeTypeFromStream() throws Exception {
+        doTestEncodeDecodeType(true);
+    }
+
+    private void doTestEncodeDecodeType(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         byte[] response = new byte[] { 1, 2, 3, 4 };
 
@@ -80,7 +96,12 @@ public class SaslResponseTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final SaslResponse result = (SaslResponse) decoder.readObject(buffer, decoderState);
+        final SaslResponse result;
+        if (fromStream) {
+            result = (SaslResponse) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (SaslResponse) decoder.readObject(buffer, decoderState);
+        }
 
         assertArrayEquals(response, result.getResponse().getArray());
     }
