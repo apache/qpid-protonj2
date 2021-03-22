@@ -53,7 +53,7 @@ public class ProtonSessionOutgoingWindow {
     private int outgoingWindowHighWaterMark = Integer.MAX_VALUE;
     private int outgoingWindowLowWaterMark = Integer.MAX_VALUE / 2;
     private int pendingOutgoingWrites;
-    private boolean locallyWritable;
+    private boolean writeable;
 
     private long remoteIncomingWindow;
     private int remoteNextIncomingId = nextOutgoingId;
@@ -111,33 +111,36 @@ public class ProtonSessionOutgoingWindow {
     }
 
     boolean isSendable() {
-        return remoteIncomingWindow > 0 && locallyWritable;
+        return writeable;
     }
 
     private void updateOutgoingWindowState() {
-        final boolean oldWritable = locallyWritable;
+        final boolean oldWritable = writeable;
         final int maxFrameSize = (int) session.getEngine().configuration().getOutboundMaxFrameSize();
 
         if (outgoingCapacity == 0) {
+            // At a setting of zero outgoing writes is manually disabled until elevated again to > 0
             outgoingWindowHighWaterMark = outgoingWindowLowWaterMark = 0;
-            locallyWritable = false;
+            writeable = false;
         } else if (outgoingCapacity > 0) {
+            // The local end is writable here if the current pending writes count is below the low water
+            // mark and also if there is remote incoming window to allow more write.
             outgoingWindowHighWaterMark = Math.max(1, outgoingCapacity / maxFrameSize);
             outgoingWindowLowWaterMark = outgoingWindowHighWaterMark / 2;
-            locallyWritable = pendingOutgoingWrites <= outgoingWindowLowWaterMark;
+            writeable = pendingOutgoingWrites <= outgoingWindowLowWaterMark && remoteIncomingWindow > 0;
         } else {
             // User disabled outgoing windowing so reset state to reflect that we are not
             // enforcing any limit from now on, at least not any sane limit.
             outgoingWindowHighWaterMark = Integer.MAX_VALUE;
             outgoingWindowLowWaterMark = Integer.MAX_VALUE / 2;
-            locallyWritable = true;
+            writeable = remoteIncomingWindow > 0;
         }
 
-        if (!oldWritable && locallyWritable) {
+        if (!oldWritable && writeable) {
             Set<ProtonSender> senders = session.senders();
             for (ProtonSender sender : senders) {
                 sender.handleSessionCreditStateUpdate(this);
-                if (!locallyWritable) {
+                if (!writeable) {
                     break;
                 }
             }
@@ -145,12 +148,13 @@ public class ProtonSessionOutgoingWindow {
     }
 
     private void handleOutgoingFrameWriteComplete() {
-        if (--pendingOutgoingWrites <= outgoingWindowLowWaterMark && outgoingCapacity != 0  && !locallyWritable) {
-            locallyWritable = true;
+        pendingOutgoingWrites = Math.max(0, --pendingOutgoingWrites);
+
+        if (!writeable && (writeable = pendingOutgoingWrites <= outgoingWindowLowWaterMark && remoteIncomingWindow > 0)) {
             Set<ProtonSender> senders = session.senders();
             for (ProtonSender sender : senders) {
                 sender.handleSessionCreditStateUpdate(this);
-                if (!locallyWritable) {
+                if (!writeable) {
                     break;
                 }
             }
@@ -185,6 +189,8 @@ public class ProtonSessionOutgoingWindow {
         } else {
             remoteIncomingWindow = flow.getIncomingWindow();
         }
+
+        writeable = remoteIncomingWindow > 0 && pendingOutgoingWrites < outgoingWindowLowWaterMark;
 
         return flow;
     }
@@ -274,9 +280,11 @@ public class ProtonSessionOutgoingWindow {
 
             do {
                 // Update session window tracking for each transfer that ends up being sent.
-                nextOutgoingId++;
-                remoteIncomingWindow--;
-                locallyWritable = ++pendingOutgoingWrites < outgoingWindowHighWaterMark;
+                ++nextOutgoingId;
+                ++pendingOutgoingWrites;
+                --remoteIncomingWindow;
+
+                writeable = pendingOutgoingWrites < outgoingWindowHighWaterMark && remoteIncomingWindow > 0;
 
                 // Only the first transfer requires the delivery tag, afterwards we can omit it for efficiency.
                 if (delivery.getTransferCount() == 0) {
