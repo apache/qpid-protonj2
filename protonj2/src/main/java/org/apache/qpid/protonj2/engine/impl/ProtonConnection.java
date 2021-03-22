@@ -43,7 +43,6 @@ import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
 import org.apache.qpid.protonj2.types.Symbol;
-import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.Attach;
@@ -223,6 +222,9 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     @Override
     public Connection setMaxFrameSize(long maxFrameSize) {
         checkNotOpened("Cannot set Max Frame Size on already opened Connection");
+
+        // We are specifically limiting max frame size to 2GB here as our buffers implementations
+        // cannot handle anything larger so we must protect them from larger frames.
         if (maxFrameSize > Integer.MAX_VALUE) {
             throw new IllegalArgumentException(String.format(
                 "Given max frame size value %d larger than this implementations limit of %d",
@@ -253,9 +255,6 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     @Override
     public ProtonConnection setIdleTimeout(long idleTimeout) {
         checkNotOpened("Cannot set Idle Timeout on already opened Connection");
-        if (idleTimeout < 0 || idleTimeout > UnsignedInteger.MAX_VALUE.longValue()) {
-            throw new IllegalArgumentException("Idle timeout cannot exceed the maximum value of an unsigned integer");
-        }
         localOpen.setIdleTimeout(idleTimeout);
         return this;
     }

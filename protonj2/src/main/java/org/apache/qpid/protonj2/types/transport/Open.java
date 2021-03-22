@@ -186,7 +186,9 @@ public final class Open implements Performative {
 
     public Open setMaxFrameSize(long maxFrameSize) {
         if (maxFrameSize < 0 || maxFrameSize > UINT_MAX) {
-            throw new IllegalArgumentException("The Max Frame size value given is out of range: " + maxFrameSize);
+            throw new IllegalArgumentException(String.format(
+                "Given max frame size value %d larger than this implementations limit of %d",
+                maxFrameSize, Integer.MAX_VALUE));
         } else {
             modified |= MAX_FRAME_SIZE;
         }
