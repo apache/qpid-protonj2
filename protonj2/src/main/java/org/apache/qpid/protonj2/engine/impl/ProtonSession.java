@@ -40,7 +40,6 @@ import org.apache.qpid.protonj2.engine.exceptions.EngineStateException;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.util.SplayMap;
 import org.apache.qpid.protonj2.types.Symbol;
-import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.transport.Attach;
 import org.apache.qpid.protonj2.types.transport.Begin;
 import org.apache.qpid.protonj2.types.transport.ConnectionError;
@@ -212,13 +211,6 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     @Override
     public Session setHandleMax(long handleMax) throws IllegalStateException {
         checkNotOpened("Cannot set handle max on already opened Session");
-
-        if (handleMax < 0L || handleMax > UnsignedInteger.MAX_VALUE.longValue()) {
-            throw new IllegalArgumentException(
-                String.format("Given Handle Max Value \"%d\" lies outside the range [%d] to [%d]",
-                              handleMax, 0, UnsignedInteger.MAX_VALUE.longValue()));
-        }
-
         this.localBegin.setHandleMax(handleMax);
 
         return this;
@@ -487,8 +479,7 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     void remoteAttach(Attach attach, int channel) {
         if (validateHandleMaxCompliance(attach)) {
             if (remoteLinks.containsKey((int) attach.getHandle())) {
-                setCondition(new ErrorCondition(SessionError.HANDLE_IN_USE, "Attach received with handle that is already in use"));
-                close();
+                setCondition(new ErrorCondition(SessionError.HANDLE_IN_USE, "Attach received with handle that is already in use")).close();
                 return;
             }
 
