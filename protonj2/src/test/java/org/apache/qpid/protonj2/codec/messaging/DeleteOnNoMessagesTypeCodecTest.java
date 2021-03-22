@@ -39,7 +39,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Test codec handling of DeleteOnNoMessages types.
  */
-public class DeleteOnNoMessagesTypeCodecTest  extends CodecTestSupport {
+public class DeleteOnNoMessagesTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testTypeClassReturnsCorrectType() throws IOException {

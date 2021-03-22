@@ -41,7 +41,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Test codec handling of Released types.
  */
-public class ReleasedTypeCodecTest  extends CodecTestSupport {
+public class ReleasedTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testTypeClassReturnsCorrectType() throws IOException {

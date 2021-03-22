@@ -39,7 +39,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Test codec handling of DeleteOnNoLinksOrMessages types.
  */
-public class DeleteOnNoLinksOrMessagesCodecTest  extends CodecTestSupport {
+public class DeleteOnNoLinksOrMessagesCodecTest extends CodecTestSupport {
 
     @Test
     public void testTypeClassReturnsCorrectType() throws IOException {

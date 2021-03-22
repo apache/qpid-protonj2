@@ -39,7 +39,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Test codec handling of DeleteOnClose types.
  */
-public class DeleteOnCloseTypeCodecTest  extends CodecTestSupport {
+public class DeleteOnCloseTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testTypeClassReturnsCorrectType() throws IOException {
