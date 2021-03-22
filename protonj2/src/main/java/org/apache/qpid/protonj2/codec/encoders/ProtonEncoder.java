@@ -141,10 +141,10 @@ public final class ProtonEncoder implements Encoder {
     public ProtonEncoderState getCachedEncoderState() {
         ProtonEncoderState state = singleThreadedState;
         if (state == null) {
-            state = newEncoderState();
+            singleThreadedState = state = newEncoderState();
         }
 
-        return state.reset();
+        return singleThreadedState.reset();
     }
 
     @Override
