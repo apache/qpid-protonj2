@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -95,28 +97,29 @@ public class ListTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeSmallSeriesOfLists() throws IOException {
-        doTestDecodeListSeries(SMALL_SIZE);
-    }
-
-    @Test
-    public void testDecodeLargeSeriesOfLists() throws IOException {
-        doTestDecodeListSeries(LARGE_SIZE);
-    }
-
-    @Test
     public void testDecodeSmallSeriesOfSymbolLists() throws IOException {
-        doTestDecodeSymbolListSeries(SMALL_SIZE);
+        doTestDecodeSymbolListSeries(SMALL_SIZE, false);
     }
 
     @Test
     public void testDecodeLargeSeriesOfSymbolLists() throws IOException {
-        doTestDecodeSymbolListSeries(LARGE_SIZE);
+        doTestDecodeSymbolListSeries(LARGE_SIZE, false);
+    }
+
+    @Test
+    public void testDecodeSmallSeriesOfSymbolListsFromStream() throws IOException {
+        doTestDecodeSymbolListSeries(SMALL_SIZE, true);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfSymbolListsFromStream() throws IOException {
+        doTestDecodeSymbolListSeries(LARGE_SIZE, true);
     }
 
     @SuppressWarnings("unchecked")
-    private void doTestDecodeSymbolListSeries(int size) throws IOException {
+    private void doTestDecodeSymbolListSeries(int size, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         List<Object> list = new ArrayList<>();
 
@@ -129,7 +132,12 @@ public class ListTypeCodecTest extends CodecTestSupport {
         }
 
         for (int i = 0; i < size; ++i) {
-            final Object result = decoder.readObject(buffer, decoderState);
+            final Object result;
+            if (fromStream) {
+                result = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                result = decoder.readObject(buffer, decoderState);
+            }
 
             assertNotNull(result);
             assertTrue(result instanceof List);
@@ -138,6 +146,16 @@ public class ListTypeCodecTest extends CodecTestSupport {
 
             assertEquals(list.size(), resultList.size());
         }
+    }
+
+    @Test
+    public void testDecodeSmallSeriesOfLists() throws IOException {
+        doTestDecodeListSeries(SMALL_SIZE);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfLists() throws IOException {
+        doTestDecodeListSeries(LARGE_SIZE);
     }
 
     @SuppressWarnings("unchecked")
@@ -173,10 +191,20 @@ public class ListTypeCodecTest extends CodecTestSupport {
         }
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void testArrayOfListsOfUUIDs() throws IOException {
+        doTestArrayOfListsOfUUIDs(false);
+    }
+
+    @Test
+    public void testArrayOfListsOfUUIDsFromStream() throws IOException {
+        doTestArrayOfListsOfUUIDs(true);
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private void doTestArrayOfListsOfUUIDs(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         ArrayList<UUID>[] source = new ArrayList[2];
         for (int i = 0; i < source.length; ++i) {
@@ -188,7 +216,13 @@ public class ListTypeCodecTest extends CodecTestSupport {
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
 

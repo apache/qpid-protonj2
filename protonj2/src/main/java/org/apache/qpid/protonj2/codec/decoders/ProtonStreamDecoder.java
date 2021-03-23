@@ -886,7 +886,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
     @SuppressWarnings("unchecked")
     @Override
     public <K, V> Map<K, V> readMap(InputStream stream, StreamDecoderState state) throws DecodeException {
-        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
+         final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
         switch (encodingCode) {
             case EncodingCodes.MAP8:

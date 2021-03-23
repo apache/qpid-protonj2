@@ -26,11 +26,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -60,8 +62,18 @@ public class ErrorConditionTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testEncodeDecodeType() throws Exception {
+    public void testEncodeAndDecode() throws IOException {
+        doTestEncodeAndDecode(false);
+    }
+
+    @Test
+    public void testEncodeAndDecodeFromStream() throws IOException {
+        doTestEncodeAndDecode(true);
+    }
+
+    private void doTestEncodeAndDecode(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Map<Symbol, Object> infoMap = new LinkedHashMap<>();
         infoMap.put(Symbol.valueOf("1"), true);
@@ -71,7 +83,12 @@ public class ErrorConditionTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, error);
 
-        final ErrorCondition result = (ErrorCondition) decoder.readObject(buffer, decoderState);
+        final ErrorCondition result;
+        if (fromStream) {
+            result = (ErrorCondition) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (ErrorCondition) decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertNotNull(result.getCondition());

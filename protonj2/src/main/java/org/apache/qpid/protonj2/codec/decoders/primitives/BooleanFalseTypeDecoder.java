@@ -35,8 +35,23 @@ public final class BooleanFalseTypeDecoder extends BooleanTypeDecoder {
     }
 
     @Override
+    public Boolean readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return Boolean.FALSE;
+    }
+
+    @Override
     public int getTypeCode() {
         return EncodingCodes.BOOLEAN_FALSE & 0xff;
+    }
+
+    @Override
+    public boolean readPrimitiveValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
+        return false;
+    }
+
+    @Override
+    public boolean readPrimitiveValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return false;
     }
 
     @Override

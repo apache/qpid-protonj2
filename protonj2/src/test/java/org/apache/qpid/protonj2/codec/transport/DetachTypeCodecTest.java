@@ -24,8 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -70,8 +72,18 @@ public class DetachTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testEncodeDecodeTypeWithNoError() throws Exception {
+    public void testEncodeDecodeTypeWithNoError() throws IOException {
+        doTestEncodeDecodeTypeWithNoError(false);
+    }
+
+    @Test
+    public void testEncodeDecodeTypeWithNoErrorFromStream() throws IOException {
+        doTestEncodeDecodeTypeWithNoError(true);
+    }
+
+    private void doTestEncodeDecodeTypeWithNoError(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Detach input = new Detach();
         input.setHandle(1);
@@ -79,7 +91,12 @@ public class DetachTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final Detach result = (Detach) decoder.readObject(buffer, decoderState);
+        final Detach result;
+        if (fromStream) {
+            result = (Detach) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (Detach) decoder.readObject(buffer, decoderState);
+        }
 
         assertEquals(1, result.getHandle());
         assertFalse(result.getClosed());

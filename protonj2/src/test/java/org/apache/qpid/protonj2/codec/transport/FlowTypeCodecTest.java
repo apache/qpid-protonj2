@@ -23,8 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -68,7 +70,17 @@ public class FlowTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeAndDecode() throws IOException {
+        doTestEncodeAndDecode(false);
+    }
+
+    @Test
+    public void testEncodeAndDecodeFromStream() throws IOException {
+        doTestEncodeAndDecode(true);
+    }
+
+    private void doTestEncodeAndDecode(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Flow input = new Flow();
 
@@ -85,7 +97,12 @@ public class FlowTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final Flow result = (Flow) decoder.readObject(buffer, decoderState);
+        final Flow result;
+        if (fromStream) {
+            result = (Flow) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (Flow) decoder.readObject(buffer, decoderState);
+        }
 
         assertEquals(10, result.getNextIncomingId());
         assertEquals(20, result.getIncomingWindow());

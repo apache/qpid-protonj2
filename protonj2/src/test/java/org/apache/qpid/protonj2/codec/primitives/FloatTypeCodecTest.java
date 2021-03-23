@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.codec.primitives;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -23,12 +24,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.FloatTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.primitives.FloatTypeEncoder;
@@ -69,6 +73,57 @@ public class FloatTypeCodecTest extends CodecTestSupport {
         assertEquals(43f, decoder.readFloat(buffer, decoderState, (short) 42), 0.0f);
         assertNull(decoder.readFloat(buffer, decoderState));
         assertEquals(43f, decoder.readFloat(buffer, decoderState, 43f), 0.0f);
+    }
+
+    @Test
+    public void testReadUByteFromEncodingCodeFromStream() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.FLOAT);
+        buffer.writeFloat(42.0f);
+        buffer.writeByte(EncodingCodes.FLOAT);
+        buffer.writeFloat(43.0f);
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(42f, streamDecoder.readFloat(stream, streamDecoderState).shortValue(), 0.0f);
+        assertEquals(43f, streamDecoder.readFloat(stream, streamDecoderState, (short) 42), 0.0f);
+        assertNull(streamDecoder.readFloat(stream, streamDecoderState));
+        assertEquals(43f, streamDecoder.readFloat(stream, streamDecoderState, 43f), 0.0f);
+    }
+
+    @Test
+    public void testEncodeAndDecodeArrayOfPrimitiveFlosts() throws IOException {
+        doTestEncodeAndDecodeArrayOfPrimitiveFlosts(false);
+    }
+
+    @Test
+    public void testEncodeAndDecodeArrayOfPrimitiveFlostsFromStream() throws IOException {
+        doTestEncodeAndDecodeArrayOfPrimitiveFlosts(true);
+    }
+
+    private void doTestEncodeAndDecodeArrayOfPrimitiveFlosts(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        float[] floats = new float[] { 0.1f, 0.2f, 1.1f, 1.2f };
+
+        encoder.writeArray(buffer, encoderState, floats);
+
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        float[] resultArray = (float[]) result;
+
+        assertArrayEquals(floats, resultArray);
     }
 
     @Test
@@ -115,6 +170,38 @@ public class FloatTypeCodecTest extends CodecTestSupport {
         }
 
         final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Float);
+
+        Float value = (Float) result;
+        assertEquals(expected, value.floatValue(), 0.1f);
+    }
+
+    @Test
+    public void testSkipValueFromStream() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeFloat(buffer, encoderState, Float.MAX_VALUE);
+            encoder.writeFloat(buffer, encoderState, 16.1f);
+        }
+
+        float expected = 42;
+
+        encoder.writeObject(buffer, encoderState, expected);
+
+        for (int i = 0; i < 10; ++i) {
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(Float.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(stream, streamDecoderState);
+            typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(Float.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(stream, streamDecoderState);
+        }
+
+        final Object result = streamDecoder.readObject(stream, streamDecoderState);
 
         assertNotNull(result);
         assertTrue(result instanceof Float);

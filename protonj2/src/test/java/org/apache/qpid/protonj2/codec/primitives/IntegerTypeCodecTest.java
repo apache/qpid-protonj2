@@ -23,8 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -73,6 +75,27 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
         assertEquals(43, decoder.readInteger(buffer, decoderState, 42));
         assertNull(decoder.readInteger(buffer, decoderState));
         assertEquals(42, decoder.readInteger(buffer, decoderState, 42));
+    }
+
+    @Test
+    public void testReadUByteFromEncodingCodeFromStream() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.INT);
+        buffer.writeInt(42);
+        buffer.writeByte(EncodingCodes.INT);
+        buffer.writeInt(44);
+        buffer.writeByte(EncodingCodes.SMALLINT);
+        buffer.writeByte(43);
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(42, streamDecoder.readInteger(stream, streamDecoderState).intValue());
+        assertEquals(44, streamDecoder.readInteger(stream, streamDecoderState, 42));
+        assertEquals(43, streamDecoder.readInteger(stream, streamDecoderState, 42));
+        assertNull(streamDecoder.readInteger(stream, streamDecoderState));
+        assertEquals(42, streamDecoder.readInteger(stream, streamDecoderState, 42));
     }
 
     @Test

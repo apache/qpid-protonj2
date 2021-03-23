@@ -25,10 +25,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -61,7 +63,17 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeAndDecode() throws IOException {
+        doTestEncodeAndDecode(false);
+    }
+
+    @Test
+    public void testEncodeAndDecodeFromStream() throws IOException {
+        doTestEncodeAndDecode(true);
+    }
+
+    private void doTestEncodeAndDecode(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Symbol[] offeredCapabilities = new Symbol[] {Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2")};
         Symbol[] desiredCapabilities = new Symbol[] {Symbol.valueOf("Cap-3"), Symbol.valueOf("Cap-4")};
@@ -78,7 +90,12 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final Open result = (Open) decoder.readObject(buffer, decoderState);
+        final Open result;
+        if (fromStream) {
+            result = (Open) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (Open) decoder.readObject(buffer, decoderState);
+        }
 
         assertEquals("test", result.getContainerId());
         assertEquals("localhost", result.getHostname());

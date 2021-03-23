@@ -23,11 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -70,39 +72,54 @@ public class BeginTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testEncodeDecodeType() throws Exception {
-       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+    public void testEncodeDecodeType() throws IOException {
+        doTestEncodeAndDecode(false);
+    }
 
-       Symbol[] offeredCapabilities = new Symbol[] {Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2")};
-       Symbol[] desiredCapabilities = new Symbol[] {Symbol.valueOf("Cap-3"), Symbol.valueOf("Cap-4")};
-       Map<Symbol, Object> properties = new HashMap<>();
-       properties.put(Symbol.valueOf("property"), "value");
+    @Test
+    public void testEncodeDecodeTypeFromStream() throws IOException {
+        doTestEncodeAndDecode(true);
+    }
 
-       Begin input = new Begin();
+    private void doTestEncodeAndDecode(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
-       input.setRemoteChannel(16);
-       input.setNextOutgoingId(24);
-       input.setIncomingWindow(32);
-       input.setOutgoingWindow(12);
-       input.setHandleMax(255);
-       input.setOfferedCapabilities(offeredCapabilities);
-       input.setDesiredCapabilities(desiredCapabilities);
-       input.setProperties(properties);
+        Symbol[] offeredCapabilities = new Symbol[] { Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2") };
+        Symbol[] desiredCapabilities = new Symbol[] { Symbol.valueOf("Cap-3"), Symbol.valueOf("Cap-4") };
+        Map<Symbol, Object> properties = new HashMap<>();
+        properties.put(Symbol.valueOf("property"), "value");
 
-       encoder.writeObject(buffer, encoderState, input);
+        Begin input = new Begin();
 
-       final Begin result = (Begin) decoder.readObject(buffer, decoderState);
+        input.setRemoteChannel(16);
+        input.setNextOutgoingId(24);
+        input.setIncomingWindow(32);
+        input.setOutgoingWindow(12);
+        input.setHandleMax(255);
+        input.setOfferedCapabilities(offeredCapabilities);
+        input.setDesiredCapabilities(desiredCapabilities);
+        input.setProperties(properties);
 
-       assertEquals(16, result.getRemoteChannel());
-       assertEquals(24, result.getNextOutgoingId());
-       assertEquals(32, result.getIncomingWindow());
-       assertEquals(12, result.getOutgoingWindow());
-       assertEquals(255, result.getHandleMax());
-       assertNotNull(result.getProperties());
-       assertEquals(1, properties.size());
-       assertTrue(properties.containsKey(Symbol.valueOf("property")));
-       assertArrayEquals(offeredCapabilities, result.getOfferedCapabilities());
-       assertArrayEquals(desiredCapabilities, result.getDesiredCapabilities());
+        encoder.writeObject(buffer, encoderState, input);
+
+        final Begin result;
+        if (fromStream) {
+            result = (Begin) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (Begin) decoder.readObject(buffer, decoderState);
+        }
+
+        assertEquals(16, result.getRemoteChannel());
+        assertEquals(24, result.getNextOutgoingId());
+        assertEquals(32, result.getIncomingWindow());
+        assertEquals(12, result.getOutgoingWindow());
+        assertEquals(255, result.getHandleMax());
+        assertNotNull(result.getProperties());
+        assertEquals(1, properties.size());
+        assertTrue(properties.containsKey(Symbol.valueOf("property")));
+        assertArrayEquals(offeredCapabilities, result.getOfferedCapabilities());
+        assertArrayEquals(desiredCapabilities, result.getDesiredCapabilities());
     }
 
     @Test

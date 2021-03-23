@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -33,8 +34,10 @@ import java.util.Random;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
@@ -78,7 +81,17 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testArrayOfArraysOfMixedTypes() throws IOException {
+        doTestArrayOfArraysOfMixedTypes(false);
+    }
+
+    @Test
+    public void testArrayOfArraysOfMixedTypesFromStream() throws IOException {
+        doTestArrayOfArraysOfMixedTypes(true);
+    }
+
+    private void doTestArrayOfArraysOfMixedTypes(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         final int size = 10;
 
@@ -90,7 +103,13 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
 
@@ -1059,16 +1078,27 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testSkipValueSmallByteArray() throws IOException {
-        doTestSkipValueOnArrayOfSize(200);
+        doTestSkipValueOnArrayOfSize(200, false);
     }
 
     @Test
     public void testSkipValueLargeByteArray() throws IOException {
-        doTestSkipValueOnArrayOfSize(1024);
+        doTestSkipValueOnArrayOfSize(1024, false);
     }
 
-    private void doTestSkipValueOnArrayOfSize(int arraySize) throws IOException {
+    @Test
+    public void testSkipValueSmallByteArrayFromStream() throws IOException {
+        doTestSkipValueOnArrayOfSize(200, true);
+    }
+
+    @Test
+    public void testSkipValueLargeByteArrayFromStream() throws IOException {
+        doTestSkipValueOnArrayOfSize(1024, true);
+    }
+
+    private void doTestSkipValueOnArrayOfSize(int arraySize, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Random filler = new Random();
         filler.setSeed(System.nanoTime());
@@ -1084,14 +1114,27 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, expected);
 
-        for (int i = 0; i < 10; ++i) {
-            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-            assertEquals(Object.class, typeDecoder.getTypeClass());
-            assertTrue(typeDecoder.isArrayType());
-            typeDecoder.skipValue(buffer, decoderState);
-        }
+        final Object result;
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        if (fromStream) {
+            for (int i = 0; i < 10; ++i) {
+                StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+                assertEquals(Object.class, typeDecoder.getTypeClass());
+                assertTrue(typeDecoder.isArrayType());
+                typeDecoder.skipValue(stream, streamDecoderState);
+            }
+
+            result = decoder.readObject(buffer, decoderState);
+        } else {
+            for (int i = 0; i < 10; ++i) {
+                TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+                assertEquals(Object.class, typeDecoder.getTypeClass());
+                assertTrue(typeDecoder.isArrayType());
+                typeDecoder.skipValue(buffer, decoderState);
+            }
+
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof byte[]);

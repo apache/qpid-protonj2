@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -56,17 +58,26 @@ public class MapTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeSmallSeriesOfMaps() throws IOException {
-        doTestDecodeMapSeries(SMALL_SIZE);
+        doTestDecodeMapSeries(SMALL_SIZE, false);
     }
 
     @Test
     public void testDecodeLargeSeriesOfMaps() throws IOException {
-        doTestDecodeMapSeries(LARGE_SIZE);
+        doTestDecodeMapSeries(LARGE_SIZE, false);
+    }
+
+    @Test
+    public void testDecodeSmallSeriesOfMapsFromStream() throws IOException {
+        doTestDecodeMapSeries(SMALL_SIZE, true);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfMapsFromStream() throws IOException {
+        doTestDecodeMapSeries(LARGE_SIZE, true);
     }
 
     @SuppressWarnings("unchecked")
-    private void doTestDecodeMapSeries(int size) throws IOException {
-
+    private void doTestDecodeMapSeries(int size, boolean fromStream) throws IOException {
         String myBoolKey = "myBool";
         boolean myBool = true;
         String myByteKey = "myByte";
@@ -101,13 +112,19 @@ public class MapTypeCodecTest extends CodecTestSupport {
         map.put(myStringKey, myString);
 
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, map);
         }
 
         for (int i = 0; i < size; ++i) {
-            final Object result = decoder.readObject(buffer, decoderState);
+            final Object result;
+            if (fromStream) {
+                result = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                result = decoder.readObject(buffer, decoderState);
+            }
 
             assertNotNull(result);
             assertTrue(result instanceof Map);

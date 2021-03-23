@@ -29,6 +29,7 @@ import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.types.UnsignedByte;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
+import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.apache.qpid.protonj2.types.UnsignedShort;
 import org.junit.jupiter.api.Test;
 
@@ -212,5 +213,166 @@ class ProtonEncoderTest extends CodecTestSupport {
         assertEquals(buffer.getByte(6), (byte) 255);
         assertEquals(buffer.getByte(7), (byte) 255);
         assertEquals(buffer.getByte(8), EncodingCodes.NULL);
+    }
+
+    @Test
+    public void testWriteUnsignedLongObject() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedLong(buffer, encoderState, UnsignedLong.valueOf(0));
+        encoder.writeUnsignedLong(buffer, encoderState, (UnsignedLong) null);
+        encoder.writeUnsignedLong(buffer, encoderState, UnsignedLong.valueOf(255));
+        encoder.writeUnsignedLong(buffer, encoderState, UnsignedLong.valueOf(-1));
+
+        assertEquals(13, buffer.getReadableBytes());
+        assertEquals(buffer.getByte(0), EncodingCodes.ULONG0);
+        assertEquals(buffer.getByte(1), EncodingCodes.NULL);
+        assertEquals(buffer.getByte(2), EncodingCodes.SMALLULONG);
+        assertEquals(buffer.getByte(3), (byte) 255);
+        assertEquals(buffer.getByte(4), EncodingCodes.ULONG);
+        assertEquals(buffer.getByte(5), (byte) 255);
+        assertEquals(buffer.getByte(6), (byte) 255);
+        assertEquals(buffer.getByte(7), (byte) 255);
+        assertEquals(buffer.getByte(8), (byte) 255);
+        assertEquals(buffer.getByte(9), (byte) 255);
+        assertEquals(buffer.getByte(10), (byte) 255);
+        assertEquals(buffer.getByte(11), (byte) 255);
+        assertEquals(buffer.getByte(12), (byte) 255);
+    }
+
+    @Test
+    public void testWriteUnsignedLongPrimitive() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedLong(buffer, encoderState, 0l);
+        encoder.writeUnsignedLong(buffer, encoderState, 255l);
+        encoder.writeUnsignedLong(buffer, encoderState, -1l  );
+
+        assertEquals(12, buffer.getReadableBytes());
+        assertEquals(buffer.getByte(0), EncodingCodes.ULONG0);
+        assertEquals(buffer.getByte(1), EncodingCodes.SMALLULONG);
+        assertEquals(buffer.getByte(2), (byte) 255);
+        assertEquals(buffer.getByte(3), EncodingCodes.ULONG);
+        assertEquals(buffer.getByte(4), (byte) 255);
+        assertEquals(buffer.getByte(5), (byte) 255);
+        assertEquals(buffer.getByte(6), (byte) 255);
+        assertEquals(buffer.getByte(7), (byte) 255);
+        assertEquals(buffer.getByte(8), (byte) 255);
+        assertEquals(buffer.getByte(9), (byte) 255);
+        assertEquals(buffer.getByte(10), (byte) 255);
+        assertEquals(buffer.getByte(11), (byte) 255);
+    }
+
+    @Test
+    public void testWriteUnsignedLongPrimitiveByte() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedLong(buffer, encoderState, (byte) 0);
+        encoder.writeUnsignedLong(buffer, encoderState, (byte) 255);
+
+        assertEquals(3, buffer.getReadableBytes());
+        assertEquals(buffer.getByte(0), EncodingCodes.ULONG0);
+        assertEquals(buffer.getByte(1), EncodingCodes.SMALLULONG);
+        assertEquals(buffer.getByte(2), (byte) 255);
+    }
+
+    @Test
+    public void testWriteByteObject() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeByte(buffer, encoderState, Byte.valueOf((byte) 0));
+        encoder.writeByte(buffer, encoderState, (Byte) null);
+        encoder.writeByte(buffer, encoderState, Byte.valueOf((byte) 255));
+
+        assertEquals(5, buffer.getReadableBytes());
+        assertEquals(buffer.getByte(0), EncodingCodes.BYTE);
+        assertEquals(buffer.getByte(1), 0);
+        assertEquals(buffer.getByte(2), EncodingCodes.NULL);
+        assertEquals(buffer.getByte(3), EncodingCodes.BYTE);
+        assertEquals(buffer.getByte(4), (byte) 255);
+    }
+
+    @Test
+    public void testWriteBytePrimitive() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeByte(buffer, encoderState, (byte) 0);
+        encoder.writeByte(buffer, encoderState, (byte) 255);
+
+        assertEquals(4, buffer.getReadableBytes());
+        assertEquals(buffer.getByte(0), EncodingCodes.BYTE);
+        assertEquals(buffer.getByte(1), 0);
+        assertEquals(buffer.getByte(2), EncodingCodes.BYTE);
+        assertEquals(buffer.getByte(3), (byte) 255);
+    }
+
+    @Test
+    public void testWriteShortObject() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeShort(buffer, encoderState, Short.valueOf((short) 0));
+        encoder.writeShort(buffer, encoderState, (Short) null);
+        encoder.writeShort(buffer, encoderState, Short.valueOf((short) 65535));
+
+        assertEquals(7, buffer.getReadableBytes());
+        assertEquals(buffer.getByte(0), EncodingCodes.SHORT);
+        assertEquals(buffer.getByte(1), 0);
+        assertEquals(buffer.getByte(2), 0);
+        assertEquals(buffer.getByte(3), EncodingCodes.NULL);
+        assertEquals(buffer.getByte(4), EncodingCodes.SHORT);
+        assertEquals(buffer.getByte(5), (byte) 255);
+        assertEquals(buffer.getByte(6), (byte) 255);
+    }
+
+    @Test
+    public void testWriteShortPrimitive() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeShort(buffer, encoderState, (short) 0);
+        encoder.writeShort(buffer, encoderState, (short) 65535);
+
+        assertEquals(6, buffer.getReadableBytes());
+        assertEquals(buffer.getByte(0), EncodingCodes.SHORT);
+        assertEquals(buffer.getByte(1), 0);
+        assertEquals(buffer.getByte(2), 0);
+        assertEquals(buffer.getByte(3), EncodingCodes.SHORT);
+        assertEquals(buffer.getByte(4), (byte) 255);
+        assertEquals(buffer.getByte(5), (byte) 255);
+    }
+
+    @Test
+    public void testWriteIntegerObject() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeInteger(buffer, encoderState, Integer.valueOf(0));
+        encoder.writeInteger(buffer, encoderState, (Integer) null);
+        encoder.writeInteger(buffer, encoderState, Integer.valueOf(Integer.MAX_VALUE));
+
+        assertEquals(8, buffer.getReadableBytes());
+        assertEquals(buffer.getByte(0), EncodingCodes.SMALLINT);
+        assertEquals(buffer.getByte(1), 0);
+        assertEquals(buffer.getByte(2), EncodingCodes.NULL);
+        assertEquals(buffer.getByte(3), EncodingCodes.INT);
+        assertEquals(buffer.getByte(4), (byte) 127);
+        assertEquals(buffer.getByte(5), (byte) 255);
+        assertEquals(buffer.getByte(6), (byte) 255);
+        assertEquals(buffer.getByte(7), (byte) 255);
+    }
+
+    @Test
+    public void testWriteIntegerPrimitive() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeInteger(buffer, encoderState, 0);
+        encoder.writeInteger(buffer, encoderState, Integer.MAX_VALUE);
+
+        assertEquals(7, buffer.getReadableBytes());
+        assertEquals(buffer.getByte(0), EncodingCodes.SMALLINT);
+        assertEquals(buffer.getByte(1), 0);
+        assertEquals(buffer.getByte(2), EncodingCodes.INT);
+        assertEquals(buffer.getByte(3), (byte) 127);
+        assertEquals(buffer.getByte(4), (byte) 255);
+        assertEquals(buffer.getByte(5), (byte) 255);
+        assertEquals(buffer.getByte(6), (byte) 255);
     }
 }
