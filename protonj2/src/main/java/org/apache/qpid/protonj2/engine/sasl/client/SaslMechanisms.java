@@ -38,6 +38,18 @@ public enum SaslMechanisms {
             return INSTANCE;
         }
     },
+    SCRAM_SHA_512 {
+
+        @Override
+        public Symbol getName() {
+            return ScramSHA512Mechanism.SCRAM_SHA_512;
+        }
+
+        @Override
+        public Mechanism createMechanism() {
+            return new ScramSHA512Mechanism();
+        }
+    },
     SCRAM_SHA_256 {
 
         @Override
