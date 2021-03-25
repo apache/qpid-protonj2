@@ -40,93 +40,95 @@ public class ConservativeClientFuture<V> extends ClientFuture<V> {
 
     @Override
     public V get(long amount, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        try {
-            if (isComplete() || amount == 0) {
-                failOnError();
-                return getResult();
+        switch (getState()) {
+            case SUCCESS:
+            case CANCELLED:
+                return result;
+            case FAILURE:
+                throw error;
+            default:
+                if (amount == 0) {
+                    return result;
+                }
+        }
+
+        final long timeout = unit.toNanos(amount);
+        long maxParkNanos = timeout / 8;
+        maxParkNanos = maxParkNanos > 0 ? maxParkNanos : timeout;
+        final long startTime = System.nanoTime();
+
+        while (true) {
+            final long elapsed = System.nanoTime() - startTime;
+            final long diff = elapsed - timeout;
+
+            switch (getState()) {
+                case SUCCESS:
+                case CANCELLED:
+                    return result;
+                case FAILURE:
+                    throw error;
+                default:
+                    if (diff >= 0) {
+                        throw new TimeoutException("Timed out waiting for completion");
+                    }
             }
 
-            final long timeout = unit.toNanos(amount);
-            long maxParkNanos = timeout / 8;
-            maxParkNanos = maxParkNanos > 0 ? maxParkNanos : timeout;
-            final long startTime = System.nanoTime();
-
-            if (Thread.currentThread().isInterrupted()) {
-                throw new InterruptedException();
-            }
-
-            while (true) {
-                final long elapsed = System.nanoTime() - startTime;
-                final long diff = elapsed - timeout;
-
-                if (diff >= 0) {
-                    failOnError();
-                    if (isComplete()) {
-                        return getResult();
-                    }
-                    throw new TimeoutException("Timed out waiting for completion");
+            synchronized (this) {
+                switch (getState()) {
+                    case SUCCESS:
+                    case CANCELLED:
+                        return result;
+                    case FAILURE:
+                        throw error;
+                    case COMPLETING:
+                        continue;  // Avoid thread signaling when we know answer is inbound.
                 }
 
-                if (isComplete()) {
-                    failOnError();
-                    return getResult();
-                }
-
-                synchronized (this) {
-                    if (isComplete()) {
-                        failOnError();
-                        return getResult();
-                    }
-
-                    waiting++;
-                    try {
-                        wait(-diff / 1000000, (int) (-diff % 1000000));
-                    } finally {
-                        waiting--;
-                    }
+                waiting++;
+                try {
+                    wait(-diff / 1000000, (int) (-diff % 1000000));
+                } catch (InterruptedException e) {
+                    Thread.interrupted();
+                    throw e;
+                } finally {
+                    waiting--;
                 }
             }
-        } catch (InterruptedException e) {
-            Thread.interrupted();
-            throw e;
         }
     }
 
     @Override
     public V get() throws InterruptedException, ExecutionException {
-        try {
-            if (isComplete()) {
-                failOnError();
-                return getResult();
+        while (true) {
+            switch (getState()) {
+                case SUCCESS:
+                case CANCELLED:
+                    return result;
+                case FAILURE:
+                    throw error;
             }
 
-            if (Thread.currentThread().isInterrupted()) {
-                throw new InterruptedException();
-            }
-
-            while (true) {
-                if (isComplete()) {
-                    failOnError();
-                    return getResult();
+            synchronized (this) {
+                switch (getState()) {
+                    case SUCCESS:
+                    case CANCELLED:
+                        return result;
+                    case FAILURE:
+                        throw error;
+                    case COMPLETING:
+                        continue;  // Avoid thread signaling when we know answer is inbound.
                 }
 
-                synchronized (this) {
-                    if (isComplete()) {
-                        failOnError();
-                        return getResult();
-                    }
-
-                    waiting++;
-                    try {
-                        wait();
-                    } finally {
-                        waiting--;
-                    }
+                waiting++;
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    Thread.interrupted();
+                    throw e;
+                } finally {
+                    waiting--;
                 }
             }
-        } catch (InterruptedException e) {
-            Thread.interrupted();
-            throw e;
         }
     }
 }

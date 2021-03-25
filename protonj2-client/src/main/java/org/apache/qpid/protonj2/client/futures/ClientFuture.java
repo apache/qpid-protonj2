@@ -31,6 +31,8 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
  */
 public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
 
+    private static final ClientException UNSPECIFIED_ERROR = new ClientException("Failed with an unspecified error");
+
     protected final ClientSynchronization<V> synchronization;
 
     // States used to track progress of this future
@@ -45,7 +47,7 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
         AtomicIntegerFieldUpdater.newUpdater(ClientFuture.class,"state");
 
     private volatile int state = INCOMPLETE;
-    protected ClientException error;
+    protected ExecutionException error;
     protected int waiting;
     protected V result;
 
@@ -97,10 +99,18 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
         return state > COMPLETING;
     }
 
+    /**
+     * @return the current {@link ClientFuture} state as if this call.
+     */
+    protected int getState() {
+        return state;
+    }
+
     @Override
     public void failed(ClientException result) {
         if (STATE_FIELD_UPDATER.compareAndSet(this, INCOMPLETE, COMPLETING)) {
-            error = result;
+            error = new ExecutionException(result != null ? result : UNSPECIFIED_ERROR);
+
             if (synchronization != null) {
                 synchronization.onPendingFailure(error);
             }
@@ -146,12 +156,5 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
      */
     protected void tryCancelTask() {
 
-    }
-
-    protected void failOnError() throws ExecutionException {
-        Throwable cause = error;
-        if (cause != null) {
-            throw new ExecutionException(error);
-        }
     }
 }
