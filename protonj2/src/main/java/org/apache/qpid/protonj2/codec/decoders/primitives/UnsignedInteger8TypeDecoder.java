@@ -49,7 +49,7 @@ public class UnsignedInteger8TypeDecoder extends AbstractPrimitiveTypeDecoder<Un
 
     @Override
     public UnsignedInteger readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        return UnsignedInteger.valueOf(ProtonStreamUtils.readByte(stream));
+        return UnsignedInteger.valueOf(ProtonStreamUtils.readByte(stream) & 0xff);
     }
 
     @Override

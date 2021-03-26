@@ -49,7 +49,7 @@ public final class UnsignedLong8TypeDecoder extends AbstractPrimitiveTypeDecoder
 
     @Override
     public UnsignedLong readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        return UnsignedLong.valueOf(ProtonStreamUtils.readByte(stream));
+        return UnsignedLong.valueOf(ProtonStreamUtils.readByte(stream) & 0xff);
     }
 
     @Override
