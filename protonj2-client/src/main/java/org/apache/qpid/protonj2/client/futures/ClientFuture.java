@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.client.futures;
 
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -30,8 +31,6 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
  * @param <V> the eventual result type for this Future
  */
 public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
-
-    private static final ClientException UNSPECIFIED_ERROR = new ClientException("Failed with an unspecified error");
 
     protected final ClientSynchronization<V> synchronization;
 
@@ -108,11 +107,15 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
 
     @Override
     public void failed(ClientException result) {
+        Objects.requireNonNull(result, "Cannot fail the Future type without providing an error cause");
+
         if (STATE_FIELD_UPDATER.compareAndSet(this, INCOMPLETE, COMPLETING)) {
-            error = new ExecutionException(result != null ? result : UNSPECIFIED_ERROR);
+            error = new ExecutionException(result);
 
             if (synchronization != null) {
-                synchronization.onPendingFailure(error);
+                try {
+                    synchronization.onPendingFailure(error);
+                } catch(Exception ignored) {}
             }
 
             STATE_FIELD_UPDATER.lazySet(this, FAILURE);
@@ -131,7 +134,9 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
             this.result = result;
 
             if (synchronization != null) {
-                synchronization.onPendingSuccess(result);
+                try {
+                    synchronization.onPendingSuccess(result);
+                } catch(Exception ignored) {}
             }
 
             STATE_FIELD_UPDATER.lazySet(this, SUCCESS);
