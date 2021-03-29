@@ -44,112 +44,86 @@ public class BalancedClientFuture<V> extends ClientFuture<V> {
 
     @Override
     public V get(long amount, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        switch (getState()) {
-            case SUCCESS:
-            case CANCELLED:
-                return result;
-            case FAILURE:
-                throw error;
-            default:
-                if (amount == 0) {
-                    return result;
+        if (isNotComplete() && amount > 0) {
+            final long timeout = unit.toNanos(amount);
+            long maxParkNanos = timeout / 8;
+            maxParkNanos = maxParkNanos > 0 ? maxParkNanos : timeout;
+            final long startTime = System.nanoTime();
+            int idleCount = 0;
+
+            while (isNotComplete()) {
+                final long elapsed = System.nanoTime() - startTime;
+                final long diff = elapsed - timeout;
+
+                if (diff >= 0) {
+                    throw new TimeoutException("Timed out waiting for completion");
+                } else if (idleCount < SPIN_COUNT) {
+                    idleCount++;
+                } else if (idleCount < YIELD_COUNT) {
+                    Thread.yield();
+                    idleCount++;
+                } else {
+                    synchronized (this) {
+                        if (isComplete()) {
+                            break;
+                        } else if (getState() < COMPLETING) {
+                            waiting++;
+                            try {
+                                wait(-diff / 1000000, (int) (-diff % 1000000));
+                            } catch (InterruptedException e) {
+                                Thread.interrupted();
+                                throw e;
+                            } finally {
+                                waiting--;
+                            }
+                        }
+                    }
                 }
+            }
         }
 
-        final long timeout = unit.toNanos(amount);
-        long maxParkNanos = timeout / 8;
-        maxParkNanos = maxParkNanos > 0 ? maxParkNanos : timeout;
-        final long startTime = System.nanoTime();
-        int idleCount = 0;
-
-        while (true) {
-            final long elapsed = System.nanoTime() - startTime;
-            final long diff = elapsed - timeout;
-
-            switch (getState()) {
-                case SUCCESS:
-                case CANCELLED:
-                    return result;
-                case FAILURE:
-                    throw error;
-                default:
-                    if (diff >= 0) {
-                        throw new TimeoutException("Timed out waiting for completion");
-                    }
-            }
-
-            if (idleCount < SPIN_COUNT) {
-                idleCount++;
-            } else if (idleCount < YIELD_COUNT) {
-                Thread.yield();
-                idleCount++;
-            } else {
-                synchronized (this) {
-                    switch (getState()) {
-                        case SUCCESS:
-                        case CANCELLED:
-                            return result;
-                        case FAILURE:
-                            throw error;
-                        case COMPLETING:
-                            continue;  // Avoid thread signaling when we know answer is inbound.
-                    }
-
-                    waiting++;
-                    try {
-                        wait(-diff / 1000000, (int) (-diff % 1000000));
-                    } catch (InterruptedException e) {
-                        Thread.interrupted();
-                        throw e;
-                    } finally {
-                        waiting--;
-                    }
-                }
-            }
+        if (error != null) {
+            throw error;
+        } else {
+            return getResult();
         }
     }
 
     @Override
     public V get() throws InterruptedException, ExecutionException {
-        int idleCount = 0;
+        if (isNotComplete()) {
+            int idleCount = 0;
 
-        while (true) {
-            switch (getState()) {
-                case SUCCESS:
-                case CANCELLED:
-                    return result;
-                case FAILURE:
-                    throw error;
-            }
-
-            if (idleCount < SPIN_COUNT) {
-                idleCount++;
-            } else if (idleCount < YIELD_COUNT) {
-                Thread.yield();
-                idleCount++;
-            } else {
-                synchronized (this) {
-                    switch (getState()) {
-                        case SUCCESS:
-                        case CANCELLED:
-                            return result;
-                        case FAILURE:
-                            throw error;
-                        case COMPLETING:
-                            continue;  // Avoid thread signaling when we know answer is inbound.
-                    }
-
-                    waiting++;
-                    try {
-                        wait();
-                    } catch (InterruptedException e) {
-                        Thread.interrupted();
-                        throw e;
-                    } finally {
-                        waiting--;
+            while (isNotComplete()) {
+                if (idleCount < SPIN_COUNT) {
+                    idleCount++;
+                } else if (idleCount < YIELD_COUNT) {
+                    Thread.yield();
+                    idleCount++;
+                } else {
+                    synchronized (this) {
+                        if (isComplete()) {
+                            break;
+                        } else if (getState() < COMPLETING) {
+                            waiting++;
+                            try {
+                                wait();
+                            } catch (InterruptedException e) {
+                                Thread.interrupted();
+                                throw e;
+                            } finally {
+                                waiting--;
+                            }
+                        }
                     }
                 }
             }
+        }
+
+        if (error != null) {
+            throw error;
+        } else {
+            return getResult();
         }
     }
 }

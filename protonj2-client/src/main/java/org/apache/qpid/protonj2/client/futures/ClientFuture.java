@@ -98,6 +98,10 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
         return state > COMPLETING;
     }
 
+    protected boolean isNotComplete() {
+        return state <= COMPLETING;
+    }
+
     /**
      * @return the current {@link ClientFuture} state as if this call.
      */
