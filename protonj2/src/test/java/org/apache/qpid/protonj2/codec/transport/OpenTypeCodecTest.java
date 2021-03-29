@@ -35,6 +35,7 @@ import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.transport.OpenTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.transport.OpenTypeEncoder;
@@ -108,7 +109,17 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testOpenEncodesDefaultMaxFrameSizeWhenSet() throws IOException {
+        doTestOpenEncodesDefaultMaxFrameSizeWhenSet(false);
+    }
+
+    @Test
+    public void testOpenEncodesDefaultMaxFrameSizeWhenSetFromStream() throws IOException {
+        doTestOpenEncodesDefaultMaxFrameSizeWhenSet(true);
+    }
+
+    private void doTestOpenEncodesDefaultMaxFrameSizeWhenSet(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         final Open input = new Open();
 
@@ -123,7 +134,12 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final Open result = (Open) decoder.readObject(buffer, decoderState);
+        final Open result;
+        if (fromStream) {
+            result = (Open) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (Open) decoder.readObject(buffer, decoderState);
+        }
 
         assertTrue(result.hasMaxFrameSize());
         assertEquals(UnsignedInteger.MAX_VALUE.longValue(), result.getMaxFrameSize());
@@ -131,7 +147,17 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testOpenEncodesDefaultIdleTimeoutWhenSet() throws IOException {
+        doTestOpenEncodesDefaultIdleTimeoutWhenSet(false);
+    }
+
+    @Test
+    public void testOpenEncodesDefaultIdleTimeoutWhenSetFromStream() throws IOException {
+        doTestOpenEncodesDefaultIdleTimeoutWhenSet(true);
+    }
+
+    private void doTestOpenEncodesDefaultIdleTimeoutWhenSet(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         final Open input = new Open();
 
@@ -146,7 +172,12 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final Open result = (Open) decoder.readObject(buffer, decoderState);
+        final Open result;
+        if (fromStream) {
+            result = (Open) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (Open) decoder.readObject(buffer, decoderState);
+        }
 
         assertTrue(result.hasIdleTimeout());
         assertEquals(UnsignedInteger.ZERO.longValue(), result.getIdleTimeout());
@@ -154,7 +185,17 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testOpenEncodesDefaultChannelMaxWhenSet() throws IOException {
+        doTestOpenEncodesDefaultChannelMaxWhenSet(false);
+    }
+
+    @Test
+    public void testOpenEncodesDefaultChannelMaxWhenSetFromStream() throws IOException {
+        doTestOpenEncodesDefaultChannelMaxWhenSet(true);
+    }
+
+    private void doTestOpenEncodesDefaultChannelMaxWhenSet(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         final Open input = new Open();
 
@@ -169,7 +210,12 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final Open result = (Open) decoder.readObject(buffer, decoderState);
+        final Open result;
+        if (fromStream) {
+            result = (Open) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (Open) decoder.readObject(buffer, decoderState);
+        }
 
         assertTrue(result.hasChannelMax());
         assertEquals(UnsignedShort.MAX_VALUE.intValue(), result.getChannelMax());
@@ -177,7 +223,17 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeAndDecodeOpenWithMaxMaxFrameSize() throws IOException {
+        doTestEncodeAndDecodeOpenWithMaxMaxFrameSize(false);
+    }
+
+    @Test
+    public void testEncodeAndDecodeOpenWithMaxMaxFrameSizeFromStream() throws IOException {
+        doTestEncodeAndDecodeOpenWithMaxMaxFrameSize(true);
+    }
+
+    private void doTestEncodeAndDecodeOpenWithMaxMaxFrameSize(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Open input = new Open();
 
@@ -188,7 +244,12 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final Open result = (Open) decoder.readObject(buffer, decoderState);
+        final Open result;
+        if (fromStream) {
+            result = (Open) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (Open) decoder.readObject(buffer, decoderState);
+        }
 
         assertEquals("test", result.getContainerId());
         assertEquals("localhost", result.getHostname());
@@ -198,7 +259,17 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testSkipValue() throws IOException {
+        doTestSkipValue(false);
+    }
+
+    @Test
+    public void testSkipValueFromStream() throws IOException {
+        doTestSkipValue(true);
+    }
+
+    private void doTestSkipValue(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Open close = new Open();
 
@@ -221,17 +292,28 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         encoder.writeObject(buffer, encoderState, close);
 
         for (int i = 0; i < 10; ++i) {
-            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-            assertEquals(Open.class, typeDecoder.getTypeClass());
-            typeDecoder.skipValue(buffer, decoderState);
+            if (fromStream) {
+                StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+                assertEquals(Open.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(stream, streamDecoderState);
+            } else {
+                TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+                assertEquals(Open.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(buffer, decoderState);
+            }
         }
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Open result;
+        if (fromStream) {
+            result = (Open) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (Open) decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof Open);
 
-        Open value = (Open) result;
+        Open value = result;
         assertEquals("test", value.getContainerId());
         assertEquals("localhost", value.getHostname());
         assertEquals(UnsignedShort.valueOf(512).intValue(), value.getChannelMax());
@@ -268,6 +350,15 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeUsingLegacyCodecAndDecodeWithNewCodec() throws Exception {
+        doTestEncodeUsingLegacyCodecAndDecodeWithNewCodec(false);
+    }
+
+    @Test
+    public void testEncodeUsingLegacyCodecAndDecodeWithNewCodecFromStream() throws Exception {
+        doTestEncodeUsingLegacyCodecAndDecodeWithNewCodec(true);
+    }
+
+    public void doTestEncodeUsingLegacyCodecAndDecodeWithNewCodec(boolean fromStream) throws Exception {
         Symbol[] offeredCapabilities = new Symbol[] {Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2")};
         Symbol[] desiredCapabilities = new Symbol[] {Symbol.valueOf("Cap-3"), Symbol.valueOf("Cap-4")};
 
@@ -281,9 +372,17 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         input.setDesiredCapabilities(desiredCapabilities);
 
         ProtonBuffer buffer = legacyCodec.encodeUsingLegacyEncoder(input);
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
         assertNotNull(buffer);
 
-        final Open result = (Open) decoder.readObject(buffer, decoderState);
+        final Open result;
+        if (fromStream) {
+            result = (Open) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (Open) decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
 
         assertTypesEqual(input, result);
@@ -511,16 +610,27 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testSkipValueWithInvalidMap32Type() throws IOException {
-        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP32);
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP32, false);
     }
 
     @Test
     public void testSkipValueWithInvalidMap8Type() throws IOException {
-        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP8);
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP8, false);
     }
 
-    private void doTestSkipValueWithInvalidMapType(byte mapType) throws IOException {
+    @Test
+    public void testSkipValueWithInvalidMap32TypeFromStream() throws IOException {
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP32, true);
+    }
+
+    @Test
+    public void testSkipValueWithInvalidMap8TypeFromStream() throws IOException {
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP8, true);
+    }
+
+    private void doTestSkipValueWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -535,27 +645,48 @@ public class OpenTypeCodecTest extends CodecTestSupport {
             buffer.writeByte((byte) 0);  // Count
         }
 
-        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-        assertEquals(Open.class, typeDecoder.getTypeClass());
+        if (fromStream) {
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(Open.class, typeDecoder.getTypeClass());
 
-        try {
-            typeDecoder.skipValue(buffer, decoderState);
-            fail("Should not be able to skip type with invalid encoding");
-        } catch (DecodeException ex) {}
+            try {
+                typeDecoder.skipValue(stream, streamDecoderState);
+                fail("Should not be able to skip type with invalid encoding");
+            } catch (DecodeException ex) {}
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Open.class, typeDecoder.getTypeClass());
+
+            try {
+                typeDecoder.skipValue(buffer, decoderState);
+                fail("Should not be able to skip type with invalid encoding");
+            } catch (DecodeException ex) {}
+        }
     }
 
     @Test
     public void testDecodedWithInvalidMap32Type() throws IOException {
-        doTestDecodeWithInvalidMapType(EncodingCodes.MAP32);
+        doTestDecodeWithInvalidMapType(EncodingCodes.MAP32, false);
     }
 
     @Test
     public void testDecodeWithInvalidMap8Type() throws IOException {
-        doTestDecodeWithInvalidMapType(EncodingCodes.MAP8);
+        doTestDecodeWithInvalidMapType(EncodingCodes.MAP8, false);
     }
 
-    private void doTestDecodeWithInvalidMapType(byte mapType) throws IOException {
+    @Test
+    public void testDecodedWithInvalidMap32TypeFromStream() throws IOException {
+        doTestDecodeWithInvalidMapType(EncodingCodes.MAP32, true);
+    }
+
+    @Test
+    public void testDecodeWithInvalidMap8TypeFromStream() throws IOException {
+        doTestDecodeWithInvalidMapType(EncodingCodes.MAP8, true);
+    }
+
+    private void doTestDecodeWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -570,15 +701,32 @@ public class OpenTypeCodecTest extends CodecTestSupport {
             buffer.writeByte((byte) 0);  // Count
         }
 
-        try {
-            decoder.readObject(buffer, decoderState);
-            fail("Should not decode type with invalid encoding");
-        } catch (DecodeException ex) {}
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("Should not decode type with invalid encoding");
+            } catch (DecodeException ex) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("Should not decode type with invalid encoding");
+            } catch (DecodeException ex) {}
+        }
     }
 
     @Test
     public void testEncodeDecodeArray() throws IOException {
+        doTestEncodeDecodeArray(false);
+    }
+
+    @Test
+    public void testEncodeDecodeArrayFromStream() throws IOException {
+        doTestEncodeDecodeArray(true);
+    }
+
+    private void doTestEncodeDecodeArray(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Open[] array = new Open[3];
 
@@ -592,7 +740,12 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, array);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertTrue(result.getClass().isArray());
         assertEquals(Open.class, result.getClass().getComponentType());
