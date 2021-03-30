@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
+import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
@@ -37,6 +37,7 @@ import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.messaging.PropertiesTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.messaging.PropertiesTypeEncoder;
 import org.apache.qpid.protonj2.types.Binary;
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.messaging.Modified;
 import org.apache.qpid.protonj2.types.messaging.Properties;
 import org.junit.jupiter.api.Test;
@@ -84,9 +85,14 @@ public class PropertiesTypeCodecTest extends CodecTestSupport {
         final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         final InputStream stream = new ProtonBufferInputStream(buffer);
 
-        Properties properties = new Properties();
+        final Random random = new Random();
+        random.setSeed(System.nanoTime());
 
-        Date timeNow = new Date(System.currentTimeMillis());
+        final int randomGroupSequence = random.nextInt();
+        final int randomAbsoluteExpiry = random.nextInt();
+        final int randomCreateTime = random.nextInt();
+
+        final Properties properties = new Properties();
 
         properties.setMessageId("ID:Message-1:1:1:0");
         properties.setUserId(new Binary(new byte[1]));
@@ -96,10 +102,10 @@ public class PropertiesTypeCodecTest extends CodecTestSupport {
         properties.setContentEncoding("text/UTF-8");
         properties.setContentType("text");
         properties.setCorrelationId("correlation-id");
-        properties.setAbsoluteExpiryTime(timeNow.getTime());
-        properties.setCreationTime(timeNow.getTime());
+        properties.setAbsoluteExpiryTime(randomAbsoluteExpiry);
+        properties.setCreationTime(randomCreateTime);
         properties.setGroupId("group-1");
-        properties.setGroupSequence(1);
+        properties.setGroupSequence(randomGroupSequence);
         properties.setReplyToGroupId("group-1");
 
         for (int i = 0; i < size; ++i) {
@@ -120,13 +126,13 @@ public class PropertiesTypeCodecTest extends CodecTestSupport {
             Properties decoded = (Properties) result;
 
             assertNotNull(decoded.getAbsoluteExpiryTime());
-            assertEquals(timeNow.getTime(), decoded.getAbsoluteExpiryTime());
+            assertEquals(Integer.toUnsignedLong(randomAbsoluteExpiry), decoded.getAbsoluteExpiryTime());
             assertEquals("text/UTF-8", decoded.getContentEncoding());
             assertEquals("text", decoded.getContentType());
             assertEquals("correlation-id", decoded.getCorrelationId());
-            assertEquals(timeNow.getTime(), decoded.getCreationTime());
+            assertEquals(Integer.toUnsignedLong(randomCreateTime), decoded.getCreationTime());
             assertEquals("group-1", decoded.getGroupId());
-            assertEquals(1, decoded.getGroupSequence());
+            assertEquals(Integer.toUnsignedLong(randomGroupSequence), decoded.getGroupSequence());
             assertEquals("ID:Message-1:1:1:0", decoded.getMessageId());
             assertEquals("queue:temp:me", decoded.getReplyTo());
             assertEquals("group-1", decoded.getReplyToGroupId());
@@ -134,6 +140,44 @@ public class PropertiesTypeCodecTest extends CodecTestSupport {
             assertEquals("queue:work", decoded.getTo());
             assertTrue(decoded.getUserId() instanceof Binary);
         }
+    }
+
+    @Test
+    public void testEncodeAndDecodeWithMaxUnsignedValuesFromLongs() throws IOException {
+        doTestEncodeAndDecodeWithMaxUnsignedValuesFromLongs(false);
+    }
+
+    @Test
+    public void testEncodeAndDecodeWithMaxUnsignedValuesFromLongsFromStream() throws IOException {
+        doTestEncodeAndDecodeWithMaxUnsignedValuesFromLongs(true);
+    }
+
+    private void doTestEncodeAndDecodeWithMaxUnsignedValuesFromLongs(boolean fromStream) throws IOException {
+        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final Properties properties = new Properties();
+
+        properties.setAbsoluteExpiryTime(UnsignedInteger.MAX_VALUE.longValue());
+        properties.setCreationTime(UnsignedInteger.MAX_VALUE.longValue());
+        properties.setGroupSequence(UnsignedInteger.MAX_VALUE.longValue());
+
+        encoder.writeObject(buffer, encoderState, properties);
+
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
+        assertNotNull(result);
+        assertTrue(result instanceof Properties);
+
+        Properties decoded = (Properties) result;
+
+        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), decoded.getAbsoluteExpiryTime());
+        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), decoded.getCreationTime());
+        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), decoded.getGroupSequence());
     }
 
     @Test

@@ -239,7 +239,23 @@ public class PropertiesTypeTest {
         assertTrue(properties.hasUserId());
         assertNotNull(properties.getUserId());
 
-        properties.setUserId(null);
+        properties.setUserId((Binary) null);
+        assertFalse(properties.hasUserId());
+        assertNull(properties.getUserId());
+    }
+
+    @Test
+    public void testUserIdFromByteArray() {
+        Properties properties = new Properties();
+
+        assertFalse(properties.hasUserId());
+        assertNull(properties.getUserId());
+
+        properties.setUserId("ID".getBytes(StandardCharsets.UTF_8));
+        assertTrue(properties.hasUserId());
+        assertNotNull(properties.getUserId());
+
+        properties.setUserId((byte[]) null);
         assertFalse(properties.hasUserId());
         assertNull(properties.getUserId());
     }
@@ -403,13 +419,17 @@ public class PropertiesTypeTest {
         assertFalse(properties.hasGroupSequence());
         assertEquals(0, properties.getGroupSequence());
 
+        properties.setGroupSequence(UnsignedInteger.MAX_VALUE.longValue());
+        assertTrue(properties.hasGroupSequence());
+        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), properties.getGroupSequence());
+
         try {
             properties.setGroupSequence(UnsignedInteger.MAX_VALUE.longValue() + 1);
             fail("Should perform range check on set value");
         } catch (IllegalArgumentException iae) {}
 
         try {
-            properties.setGroupSequence(-1);
+            properties.setGroupSequence(-1l);
             fail("Should perform range check on set value");
         } catch (IllegalArgumentException iae) {}
     }

@@ -188,6 +188,16 @@ public final class Properties implements Section<Properties> {
         return userId;
     }
 
+    public Properties setUserId(byte[] userId) {
+        if (userId == null) {
+            setUserId((Binary) null);
+        } else {
+            setUserId(new Binary(userId));
+        }
+
+        return this;
+    }
+
     public Properties setUserId(Binary userId) {
         if (userId == null) {
             modified &= ~USER_ID;
@@ -295,6 +305,12 @@ public final class Properties implements Section<Properties> {
         return absoluteExpiryTime;
     }
 
+    public Properties setAbsoluteExpiryTime(int absoluteExpiryTime) {
+        modified |= ABSOLUTE_EXPIRY;
+        this.absoluteExpiryTime = Integer.toUnsignedLong(absoluteExpiryTime);
+        return this;
+    }
+
     public Properties setAbsoluteExpiryTime(long absoluteExpiryTime) {
         modified |= ABSOLUTE_EXPIRY;
         this.absoluteExpiryTime = absoluteExpiryTime;
@@ -308,6 +324,12 @@ public final class Properties implements Section<Properties> {
 
     public long getCreationTime() {
         return creationTime;
+    }
+
+    public Properties setCreationTime(int creationTime) {
+        modified |= CREATION_TIME;
+        this.creationTime = Integer.toUnsignedLong(creationTime);
+        return this;
     }
 
     public Properties setCreationTime(long creationTime) {
@@ -340,6 +362,12 @@ public final class Properties implements Section<Properties> {
         return groupSequence;
     }
 
+    public Properties setGroupSequence(int groupSequence) {
+        this.modified |= GROUP_SEQUENCE;
+        this.groupSequence = Integer.toUnsignedLong(groupSequence);
+        return this;
+    }
+
     public Properties setGroupSequence(long groupSequence) {
         if (groupSequence < 0 || groupSequence > UnsignedInteger.MAX_VALUE.longValue()) {
             throw new IllegalArgumentException("Group Sequence value given is out of range: " + groupSequence);
@@ -353,7 +381,7 @@ public final class Properties implements Section<Properties> {
 
     public void clearGroupSequence() {
         modified &= ~GROUP_SEQUENCE;
-        groupSequence = 0;
+        groupSequence = 0l;
     }
 
     public String getReplyToGroupId() {

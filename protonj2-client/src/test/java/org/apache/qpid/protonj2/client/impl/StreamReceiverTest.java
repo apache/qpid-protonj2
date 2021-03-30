@@ -62,6 +62,7 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.ApplicationProperties;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.Symbol;
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
@@ -2718,6 +2719,90 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             receiver.close();
             connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReadMessagePropertiesFromStreamReceiverMessage() throws Exception {
+        final Properties properties = new Properties();
+
+        properties.setAbsoluteExpiryTime(Integer.MAX_VALUE);
+        properties.setContentEncoding("utf8");
+        properties.setContentType("text/plain");
+        properties.setCorrelationId(new byte[] { 1, 2, 3 });
+        properties.setCreationTime(Short.MAX_VALUE);
+        properties.setGroupId("Group");
+        properties.setGroupSequence(UnsignedInteger.MAX_VALUE.longValue());
+        properties.setMessageId(UUID.randomUUID());
+        properties.setReplyTo("replyTo");
+        properties.setReplyToGroupId("group-1");
+        properties.setSubject("test");
+        properties.setTo("queue");
+        properties.setUserId(new byte[] { 0, 1, 5, 6, 9 });
+
+        final byte[] payload = createEncodedMessage(new Header(), properties);
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            StreamReceiverMessage message = delivery.message();
+            assertNotNull(message);
+
+            Properties readProperties = message.properties();
+            assertNotNull(readProperties);
+            Header header = message.header();
+            assertNotNull(header);
+            assertNull(message.body());
+
+            assertEquals(Integer.MAX_VALUE, message.absoluteExpiryTime());
+            assertEquals("utf8", message.contentEncoding());
+            assertEquals("text/plain", message.contentType());
+            assertArrayEquals(new byte[] { 1, 2, 3 }, (byte[]) message.correlationId());
+            assertEquals("utf8", message.contentEncoding());
+            assertEquals("utf8", message.contentEncoding());
+            assertEquals("utf8", message.contentEncoding());
+            assertEquals(Short.MAX_VALUE, message.creationTime());
+            assertEquals(UnsignedInteger.MAX_VALUE.intValue(), message.groupSequence());
+            assertEquals(properties.getMessageId(), message.messageId());
+            assertEquals("replyTo", message.replyTo());
+            assertEquals("group-1", message.replyToGroupId());
+            assertEquals("test", message.subject());
+            assertEquals("queue", message.to());
+            assertArrayEquals(new byte[] { 0, 1, 5, 6, 9 }, message.userId());
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.closeAsync().get();
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
