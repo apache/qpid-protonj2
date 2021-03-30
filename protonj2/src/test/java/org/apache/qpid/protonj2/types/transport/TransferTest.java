@@ -83,7 +83,7 @@ public class TransferTest {
         Transfer transfer = new Transfer();
 
         try {
-            transfer.setHandle(-1);
+            transfer.setHandle(-1l);
             fail("Should not be able to set out of range value");
         } catch (IllegalArgumentException iae) {}
 
@@ -98,7 +98,7 @@ public class TransferTest {
         Transfer transfer = new Transfer();
 
         try {
-            transfer.setDeliveryId(-1);
+            transfer.setDeliveryId(-1l);
             fail("Should not be able to set out of range value");
         } catch (IllegalArgumentException iae) {}
 
@@ -113,7 +113,7 @@ public class TransferTest {
         Transfer transfer = new Transfer();
 
         try {
-            transfer.setMessageFormat(-1);
+            transfer.setMessageFormat(-1l);
             fail("Should not be able to set out of range value");
         } catch (IllegalArgumentException iae) {}
 

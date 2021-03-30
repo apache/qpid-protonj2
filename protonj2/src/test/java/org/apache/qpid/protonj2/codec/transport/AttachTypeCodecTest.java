@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
@@ -106,19 +107,25 @@ public class AttachTypeCodecTest extends CodecTestSupport {
        Symbol[] offeredCapabilities = new Symbol[] {Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2")};
        Symbol[] desiredCapabilities = new Symbol[] {Symbol.valueOf("Cap-3"), Symbol.valueOf("Cap-4")};
 
+       final Random random = new Random();
+       random.setSeed(System.nanoTime());
+
+       final int randomHandle = random.nextInt();
+       final int randomInitialDeliveryCount = random.nextInt();
+
        Attach input = new Attach();
 
        input.setName("name");
        input.setOfferedCapabilities(offeredCapabilities);
        input.setDesiredCapabilities(desiredCapabilities);
-       input.setHandle(64);
+       input.setHandle(randomHandle);
        input.setRole(Role.RECEIVER);
        input.setSenderSettleMode(SenderSettleMode.UNSETTLED);
        input.setReceiverSettleMode(ReceiverSettleMode.SECOND);
        input.setSource(new Source());
        input.setTarget(target);
        input.setIncompleteUnsettled(false);
-       input.setInitialDeliveryCount(10);
+       input.setInitialDeliveryCount(randomInitialDeliveryCount);
        input.setMaxMessageSize(UnsignedLong.valueOf(1024));
 
        encoder.writeObject(buffer, encoderState, input);
@@ -131,11 +138,11 @@ public class AttachTypeCodecTest extends CodecTestSupport {
        }
 
        assertEquals("name", result.getName());
-       assertEquals(64, result.getHandle());
+       assertEquals(Integer.toUnsignedLong(randomHandle), result.getHandle());
        assertEquals(Role.RECEIVER, result.getRole());
        assertEquals(SenderSettleMode.UNSETTLED, result.getSenderSettleMode());
        assertEquals(ReceiverSettleMode.SECOND, result.getReceiverSettleMode());
-       assertEquals(10, result.getInitialDeliveryCount());
+       assertEquals(Integer.toUnsignedLong(randomInitialDeliveryCount), result.getInitialDeliveryCount());
        assertEquals(UnsignedLong.valueOf(1024), result.getMaxMessageSize());
        assertNotNull(result.getSource());
        assertNotNull(result.getTarget());

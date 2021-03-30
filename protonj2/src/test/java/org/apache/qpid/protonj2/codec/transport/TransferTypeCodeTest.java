@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
@@ -85,12 +86,19 @@ public class TransferTypeCodeTest extends CodecTestSupport {
 
         ProtonBuffer tag = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2});
 
+        final Random random = new Random();
+        random.setSeed(System.nanoTime());
+
+        final int randomHandle = random.nextInt();
+        final int randomDeliveryId = random.nextInt();
+        final int randomMessageFormat = random.nextInt();
+
         Transfer input = new Transfer();
 
-        input.setHandle(UnsignedInteger.MAX_VALUE.longValue());
-        input.setDeliveryId(10);
+        input.setHandle(randomHandle);
+        input.setDeliveryId(randomDeliveryId);
         input.setDeliveryTag(tag);
-        input.setMessageFormat(0);
+        input.setMessageFormat(randomMessageFormat);
         input.setSettled(false);
         input.setBatchable(false);
 
@@ -103,10 +111,10 @@ public class TransferTypeCodeTest extends CodecTestSupport {
             result = (Transfer) decoder.readObject(buffer, decoderState);
         }
 
-        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), result.getHandle());
-        assertEquals(10, result.getDeliveryId());
+        assertEquals(Integer.toUnsignedLong(randomHandle), result.getHandle());
+        assertEquals(Integer.toUnsignedLong(randomDeliveryId), result.getDeliveryId());
         assertEquals(tag, result.getDeliveryTag().tagBuffer());
-        assertEquals(0, result.getMessageFormat());
+        assertEquals(Integer.toUnsignedLong(randomMessageFormat), result.getMessageFormat());
         assertFalse(result.getSettled());
         assertFalse(result.getBatchable());
     }

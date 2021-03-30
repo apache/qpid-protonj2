@@ -103,7 +103,7 @@ public class AttachTest {
     public void testHandleRangeChecks() {
         Attach attach = new Attach();
         try {
-            attach.setHandle(-1);
+            attach.setHandle(-1l);
             fail("Cannot set negative long handle value");
         } catch (IllegalArgumentException iae) {}
 
@@ -117,7 +117,7 @@ public class AttachTest {
     public void testDeliveryCountRangeChecks() {
         Attach attach = new Attach();
         try {
-            attach.setInitialDeliveryCount(-1);
+            attach.setInitialDeliveryCount(-1l);
             fail("Cannot set negative long delivery count value");
         } catch (IllegalArgumentException iae) {}
 

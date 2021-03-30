@@ -84,6 +84,7 @@ public class SourceTypeCodecTest extends CodecTestSupport {
       Source value = new Source();
       value.setAddress("test");
       value.setDurable(TerminusDurability.UNSETTLED_STATE);
+      value.setTimeout(UnsignedInteger.MAX_VALUE);
 
       encoder.writeObject(buffer, encoderState, value);
 
@@ -96,6 +97,7 @@ public class SourceTypeCodecTest extends CodecTestSupport {
 
       assertEquals("test", result.getAddress());
       assertEquals(TerminusDurability.UNSETTLED_STATE, result.getDurable());
+      assertEquals(UnsignedInteger.MAX_VALUE, result.getTimeout());
    }
 
    @Test

@@ -139,6 +139,12 @@ public final class Flow implements Performative {
         return nextIncomingId;
     }
 
+    public Flow setNextIncomingId(int nextIncomingId) {
+        modified |= NEXT_INCOMING_ID;
+        this.nextIncomingId = Integer.toUnsignedLong(nextIncomingId);
+        return this;
+    }
+
     public Flow setNextIncomingId(long nextIncomingId) {
         if (nextIncomingId < 0 || UnsignedInteger.MAX_VALUE.compareTo(nextOutgoingId) < 0) {
             throw new IllegalArgumentException("Next Incoming Id value given is out of range: " + nextIncomingId);
@@ -158,6 +164,12 @@ public final class Flow implements Performative {
 
     public long getIncomingWindow() {
         return incomingWindow;
+    }
+
+    public Flow setIncomingWindow(int incomingWindow) {
+        modified |= INCOMING_WINDOW;
+        this.incomingWindow = Integer.toUnsignedLong(incomingWindow);
+        return this;
     }
 
     public Flow setIncomingWindow(long incomingWindow) {
@@ -181,6 +193,12 @@ public final class Flow implements Performative {
         return nextOutgoingId;
     }
 
+    public Flow setNextOutgoingId(int nextOutgoingId) {
+        modified |= NEXT_OUTGOING_ID;
+        this.nextOutgoingId = Integer.toUnsignedLong(nextOutgoingId);
+        return this;
+    }
+
     public Flow setNextOutgoingId(long nextOutgoingId) {
         if (nextOutgoingId < 0 || nextOutgoingId > UINT_MAX) {
             throw new IllegalArgumentException("Next Outgoing Id value given is out of range: " + nextOutgoingId);
@@ -200,6 +218,12 @@ public final class Flow implements Performative {
 
     public long getOutgoingWindow() {
         return outgoingWindow;
+    }
+
+    public Flow setOutgoingWindow(int outgoingWindow) {
+        modified |= OUTGOING_WINDOW;
+        this.outgoingWindow = Integer.toUnsignedLong(outgoingWindow);
+        return this;
     }
 
     public Flow setOutgoingWindow(long outgoingWindow) {
@@ -223,6 +247,12 @@ public final class Flow implements Performative {
         return handle;
     }
 
+    public Flow setHandle(int handle) {
+        modified |= HANDLE;
+        this.handle = Integer.toUnsignedLong(handle);
+        return this;
+    }
+
     public Flow setHandle(long handle) {
         if (handle < 0 || handle > UINT_MAX) {
             throw new IllegalArgumentException("Handle value given is out of range: " + handle);
@@ -242,6 +272,12 @@ public final class Flow implements Performative {
 
     public long getDeliveryCount() {
         return deliveryCount;
+    }
+
+    public Flow setDeliveryCount(int deliveryCount) {
+        modified |= DELIVERY_COUNT;
+        this.deliveryCount = Integer.toUnsignedLong(deliveryCount);
+        return this;
     }
 
     public Flow setDeliveryCount(long deliveryCount) {
@@ -265,6 +301,12 @@ public final class Flow implements Performative {
         return linkCredit;
     }
 
+    public Flow setLinkCredit(int linkCredit) {
+        modified |= LINK_CREDIT;
+        this.linkCredit = Integer.toUnsignedLong(linkCredit);
+        return this;
+    }
+
     public Flow setLinkCredit(long linkCredit) {
         if (linkCredit < 0 || linkCredit > UINT_MAX) {
             throw new IllegalArgumentException("Link Credit value given is out of range: " + linkCredit);
@@ -284,6 +326,12 @@ public final class Flow implements Performative {
 
     public long getAvailable() {
         return available;
+    }
+
+    public Flow setAvailable(int available) {
+        modified |= AVAILABLE;
+        this.available = Integer.toUnsignedLong(available);
+        return this;
     }
 
     public Flow setAvailable(long available) {

@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
@@ -90,13 +91,22 @@ public class BeginTypeCodecTest extends CodecTestSupport {
         Map<Symbol, Object> properties = new HashMap<>();
         properties.put(Symbol.valueOf("property"), "value");
 
+        final Random random = new Random();
+        random.setSeed(System.nanoTime());
+
+        final int randomChannel = random.nextInt(65535);
+        final int randomeNextOutgoingId = random.nextInt();
+        final int randomeNextIncomingWindow = random.nextInt();
+        final int randomeNextOutgoingWindow = random.nextInt();
+        final int randomeHandleMax = random.nextInt();
+
         Begin input = new Begin();
 
-        input.setRemoteChannel(16);
-        input.setNextOutgoingId(24);
-        input.setIncomingWindow(32);
-        input.setOutgoingWindow(12);
-        input.setHandleMax(255);
+        input.setRemoteChannel(randomChannel);
+        input.setNextOutgoingId(randomeNextOutgoingId);
+        input.setIncomingWindow(randomeNextIncomingWindow);
+        input.setOutgoingWindow(randomeNextOutgoingWindow);
+        input.setHandleMax(randomeHandleMax);
         input.setOfferedCapabilities(offeredCapabilities);
         input.setDesiredCapabilities(desiredCapabilities);
         input.setProperties(properties);
@@ -110,11 +120,11 @@ public class BeginTypeCodecTest extends CodecTestSupport {
             result = (Begin) decoder.readObject(buffer, decoderState);
         }
 
-        assertEquals(16, result.getRemoteChannel());
-        assertEquals(24, result.getNextOutgoingId());
-        assertEquals(32, result.getIncomingWindow());
-        assertEquals(12, result.getOutgoingWindow());
-        assertEquals(255, result.getHandleMax());
+        assertEquals(randomChannel, result.getRemoteChannel());
+        assertEquals(Integer.toUnsignedLong(randomeNextOutgoingId), result.getNextOutgoingId());
+        assertEquals(Integer.toUnsignedLong(randomeNextIncomingWindow), result.getIncomingWindow());
+        assertEquals(Integer.toUnsignedLong(randomeNextOutgoingWindow), result.getOutgoingWindow());
+        assertEquals(Integer.toUnsignedLong(randomeHandleMax), result.getHandleMax());
         assertNotNull(result.getProperties());
         assertEquals(1, properties.size());
         assertTrue(properties.containsKey(Symbol.valueOf("property")));

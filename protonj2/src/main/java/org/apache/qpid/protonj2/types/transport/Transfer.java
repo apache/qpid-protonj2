@@ -120,6 +120,12 @@ public final class Transfer implements Performative {
         return handle;
     }
 
+    public Transfer setHandle(int handle) {
+        modified |= HANDLE;
+        this.handle = Integer.toUnsignedLong(handle);
+        return this;
+    }
+
     public Transfer setHandle(long handle) {
         if (handle < 0 || handle > UINT_MAX) {
             throw new IllegalArgumentException("Handle value given is out of range: " + handle);
@@ -139,6 +145,12 @@ public final class Transfer implements Performative {
 
     public long getDeliveryId() {
         return deliveryId;
+    }
+
+    public Transfer setDeliveryId(int deliveryId) {
+        modified |= DELIVERY_ID;
+        this.deliveryId = Integer.toUnsignedLong(deliveryId);
+        return this;
     }
 
     public Transfer setDeliveryId(long deliveryId) {
@@ -197,6 +209,12 @@ public final class Transfer implements Performative {
 
     public long getMessageFormat() {
         return messageFormat;
+    }
+
+    public Transfer setMessageFormat(int messageFormat) {
+        modified |= MESSAGE_FORMAT;
+        this.messageFormat = Integer.toUnsignedLong(messageFormat);
+        return this;
     }
 
     public Transfer setMessageFormat(long messageFormat) {

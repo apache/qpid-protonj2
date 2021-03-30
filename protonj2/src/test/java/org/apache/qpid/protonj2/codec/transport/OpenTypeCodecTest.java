@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
@@ -79,13 +80,20 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         Symbol[] offeredCapabilities = new Symbol[] {Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2")};
         Symbol[] desiredCapabilities = new Symbol[] {Symbol.valueOf("Cap-3"), Symbol.valueOf("Cap-4")};
 
+        final Random random = new Random();
+        random.setSeed(System.nanoTime());
+
+        final int randomChannelMax = random.nextInt(65535);
+        final int randomMaxFrameSize = random.nextInt();
+        final int randomIdleTimeout = random.nextInt();
+
         Open input = new Open();
 
         input.setContainerId("test");
         input.setHostname("localhost");
-        input.setChannelMax(UnsignedShort.valueOf(512).intValue());
-        input.setMaxFrameSize(UnsignedInteger.ONE.longValue());
-        input.setIdleTimeout(UnsignedInteger.ZERO.longValue());
+        input.setChannelMax(randomChannelMax);
+        input.setMaxFrameSize(randomMaxFrameSize);
+        input.setIdleTimeout(randomIdleTimeout);
         input.setOfferedCapabilities(offeredCapabilities);
         input.setDesiredCapabilities(desiredCapabilities);
 
@@ -100,9 +108,9 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         assertEquals("test", result.getContainerId());
         assertEquals("localhost", result.getHostname());
-        assertEquals(UnsignedShort.valueOf(512).intValue(), result.getChannelMax());
-        assertEquals(UnsignedInteger.ONE.longValue(), result.getMaxFrameSize());
-        assertEquals(UnsignedInteger.ZERO.longValue(), result.getIdleTimeout());
+        assertEquals(randomChannelMax, result.getChannelMax());
+        assertEquals(Integer.toUnsignedLong(randomMaxFrameSize), result.getMaxFrameSize());
+        assertEquals(Integer.toUnsignedLong(randomIdleTimeout), result.getIdleTimeout());
         assertArrayEquals(offeredCapabilities, result.getOfferedCapabilities());
         assertArrayEquals(desiredCapabilities, result.getDesiredCapabilities());
     }

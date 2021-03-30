@@ -113,7 +113,7 @@ public class BeginTest {
         Begin begin = new Begin();
 
         try {
-            begin.setIncomingWindow(-1);
+            begin.setIncomingWindow(-1l);
             fail("Should not be able to set out of range value");
         } catch (IllegalArgumentException iae) {}
 
@@ -128,7 +128,7 @@ public class BeginTest {
         Begin begin = new Begin();
 
         try {
-            begin.setOutgoingWindow(-1);
+            begin.setOutgoingWindow(-1l);
             fail("Should not be able to set out of range value");
         } catch (IllegalArgumentException iae) {}
 
@@ -143,7 +143,7 @@ public class BeginTest {
         Begin begin = new Begin();
 
         try {
-            begin.setHandleMax(-1);
+            begin.setHandleMax(-1l);
             fail("Should not be able to set out of range value");
         } catch (IllegalArgumentException iae) {}
 
@@ -158,7 +158,7 @@ public class BeginTest {
         Begin begin = new Begin();
 
         try {
-            begin.setNextOutgoingId(-1);
+            begin.setNextOutgoingId(-1l);
             fail("Should not be able to set out of range value");
         } catch (IllegalArgumentException iae) {}
 

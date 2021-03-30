@@ -184,6 +184,12 @@ public final class Open implements Performative {
         return maxFrameSize;
     }
 
+    public Open setMaxFrameSize(int maxFrameSize) {
+        modified |= MAX_FRAME_SIZE;
+        this.maxFrameSize = Integer.toUnsignedLong(maxFrameSize);
+        return this;
+    }
+
     public Open setMaxFrameSize(long maxFrameSize) {
         if (maxFrameSize < 0 || maxFrameSize > UINT_MAX) {
             throw new IllegalArgumentException(String.format(
@@ -201,6 +207,12 @@ public final class Open implements Performative {
         return channelMax;
     }
 
+    public Open setChannelMax(short channelMax) {
+        modified |= CHANNEL_MAX;
+        this.channelMax = Short.toUnsignedInt(channelMax);
+        return this;
+    }
+
     public Open setChannelMax(int channelMax) {
         if (channelMax < 0 || channelMax > UnsignedShort.MAX_VALUE.intValue()) {
             throw new IllegalArgumentException("The Channel Max value given is out of range: " + channelMax);
@@ -214,6 +226,12 @@ public final class Open implements Performative {
 
     public long getIdleTimeout() {
         return idleTimeout;
+    }
+
+    public Open setIdleTimeout(int idleTimeOut) {
+        modified |= IDLE_TIMEOUT;
+        this.idleTimeout = Integer.toUnsignedLong(idleTimeOut);
+        return this;
     }
 
     public Open setIdleTimeout(long idleTimeOut) {

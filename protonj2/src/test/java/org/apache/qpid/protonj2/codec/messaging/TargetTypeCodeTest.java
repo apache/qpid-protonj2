@@ -82,6 +82,7 @@ public class TargetTypeCodeTest extends CodecTestSupport {
       Target value = new Target();
       value.setAddress("test");
       value.setDurable(TerminusDurability.UNSETTLED_STATE);
+      value.setTimeout(UnsignedInteger.ZERO);
 
       encoder.writeObject(buffer, encoderState, value);
 
@@ -94,6 +95,7 @@ public class TargetTypeCodeTest extends CodecTestSupport {
 
       assertEquals("test", result.getAddress());
       assertEquals(TerminusDurability.UNSETTLED_STATE, result.getDurable());
+      assertEquals(UnsignedInteger.ZERO, result.getTimeout());
    }
 
    @Test

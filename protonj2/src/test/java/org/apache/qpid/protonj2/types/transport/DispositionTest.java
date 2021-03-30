@@ -46,7 +46,7 @@ public class DispositionTest {
         disposition.setLast(UnsignedInteger.MAX_VALUE.longValue());
 
         try {
-            disposition.setLast(UnsignedInteger.MAX_VALUE.intValue());
+            disposition.setLast(-1l);
             fail("Should throw on value out of range.");
         } catch (IllegalArgumentException iae) {}
 
@@ -65,7 +65,7 @@ public class DispositionTest {
         disposition.setFirst(UnsignedInteger.MAX_VALUE.longValue());
 
         try {
-            disposition.setFirst(UnsignedInteger.MAX_VALUE.intValue());
+            disposition.setFirst(-1l);
             fail("Should throw on value out of range.");
         } catch (IllegalArgumentException iae) {}
 

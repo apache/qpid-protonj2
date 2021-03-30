@@ -149,6 +149,12 @@ public final class Begin implements Performative {
         return nextOutgoingId;
     }
 
+    public Begin setNextOutgoingId(int nextOutgoingId) {
+        modified |= NEXT_OUTGOING_ID;
+        this.nextOutgoingId = Integer.toUnsignedLong(nextOutgoingId);
+        return this;
+    }
+
     public Begin setNextOutgoingId(long nextOutgoingId) {
         if (nextOutgoingId < 0 || nextOutgoingId > UINT_MAX) {
             throw new IllegalArgumentException("Next Outgoing Id value given is out of range: " + nextOutgoingId);
@@ -162,6 +168,12 @@ public final class Begin implements Performative {
 
     public long getIncomingWindow() {
         return incomingWindow;
+    }
+
+    public Begin setIncomingWindow(int incomingWindow) {
+        modified |= INCOMING_WINDOW;
+        this.incomingWindow = Integer.toUnsignedLong(incomingWindow);
+        return this;
     }
 
     public Begin setIncomingWindow(long incomingWindow) {
@@ -179,6 +191,12 @@ public final class Begin implements Performative {
         return outgoingWindow;
     }
 
+    public Begin setOutgoingWindow(int outgoingWindow) {
+        modified |= OUTGOING_WINDOW;
+        this.outgoingWindow = Integer.toUnsignedLong(outgoingWindow);
+        return this;
+    }
+
     public Begin setOutgoingWindow(long outgoingWindow) {
         if (outgoingWindow < 0 || outgoingWindow > UINT_MAX) {
             throw new IllegalArgumentException("Incoming Window value given is out of range: " + outgoingWindow);
@@ -192,6 +210,12 @@ public final class Begin implements Performative {
 
     public long getHandleMax() {
         return handleMax;
+    }
+
+    public Begin setHandleMax(int handleMax) {
+        modified |= HANDLE_MAX;
+        this.handleMax = Integer.toUnsignedLong(handleMax);
+        return this;
     }
 
     public Begin setHandleMax(long handleMax) {

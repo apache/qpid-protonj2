@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
@@ -76,7 +77,14 @@ public class DispositionTypeCodecTest extends CodecTestSupport {
 
         Disposition input = new Disposition();
 
-        input.setFirst(1);
+        final Random random = new Random();
+        random.setSeed(System.nanoTime());
+
+        final int randomFirst = random.nextInt();
+        final int randomLast = random.nextInt();
+
+        input.setFirst(randomFirst);
+        input.setLast(randomLast);
         input.setRole(Role.RECEIVER);
         input.setBatchable(false);
         input.setSettled(true);
@@ -86,7 +94,8 @@ public class DispositionTypeCodecTest extends CodecTestSupport {
 
         final Disposition result = (Disposition) decoder.readObject(buffer, decoderState);
 
-        assertEquals(1, result.getFirst());
+        assertEquals(Integer.toUnsignedLong(randomFirst), result.getFirst());
+        assertEquals(Integer.toUnsignedLong(randomLast), result.getLast());
         assertEquals(Role.RECEIVER, result.getRole());
         assertEquals(false, result.getBatchable());
         assertEquals(true, result.getSettled());

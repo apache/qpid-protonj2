@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
@@ -82,16 +83,28 @@ public class FlowTypeCodecTest extends CodecTestSupport {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         InputStream stream = new ProtonBufferInputStream(buffer);
 
+        final Random random = new Random();
+        random.setSeed(System.nanoTime());
+
+        final int randomeNextIncomingId = random.nextInt();
+        final int randomeNextOutgoingId = random.nextInt();
+        final int randomeNextIncomingWindow = random.nextInt();
+        final int randomeNextOutgoingWindow = random.nextInt();
+        final int randomeHandle = random.nextInt();
+        final int randomLinkCredit = random.nextInt();
+        final int randomeAvailable = random.nextInt();
+        final int randomeDeliveryCount = random.nextInt();
+
         Flow input = new Flow();
 
-        input.setNextIncomingId(10);
-        input.setIncomingWindow(20);
-        input.setNextOutgoingId(30);
-        input.setOutgoingWindow(40);
-        input.setHandle(UnsignedInteger.MAX_VALUE.longValue());
-        input.setDeliveryCount(50);
-        input.setLinkCredit(60);
-        input.setAvailable(70);
+        input.setNextIncomingId(randomeNextIncomingId);
+        input.setIncomingWindow(randomeNextIncomingWindow);
+        input.setNextOutgoingId(randomeNextOutgoingId);
+        input.setOutgoingWindow(randomeNextOutgoingWindow);
+        input.setHandle(randomeHandle);
+        input.setDeliveryCount(randomeDeliveryCount);
+        input.setLinkCredit(randomLinkCredit);
+        input.setAvailable(randomeAvailable);
         input.setDrain(true);
         input.setEcho(true);
 
@@ -104,14 +117,14 @@ public class FlowTypeCodecTest extends CodecTestSupport {
             result = (Flow) decoder.readObject(buffer, decoderState);
         }
 
-        assertEquals(10, result.getNextIncomingId());
-        assertEquals(20, result.getIncomingWindow());
-        assertEquals(30, result.getNextOutgoingId());
-        assertEquals(40, result.getOutgoingWindow());
-        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), result.getHandle());
-        assertEquals(50, result.getDeliveryCount());
-        assertEquals(60, result.getLinkCredit());
-        assertEquals(70, result.getAvailable());
+        assertEquals(Integer.toUnsignedLong(randomeNextIncomingId), result.getNextIncomingId());
+        assertEquals(Integer.toUnsignedLong(randomeNextIncomingWindow), result.getIncomingWindow());
+        assertEquals(Integer.toUnsignedLong(randomeNextOutgoingId), result.getNextOutgoingId());
+        assertEquals(Integer.toUnsignedLong(randomeNextOutgoingWindow), result.getOutgoingWindow());
+        assertEquals(Integer.toUnsignedLong(randomeHandle), result.getHandle());
+        assertEquals(Integer.toUnsignedLong(randomeDeliveryCount), result.getDeliveryCount());
+        assertEquals(Integer.toUnsignedLong(randomLinkCredit), result.getLinkCredit());
+        assertEquals(Integer.toUnsignedLong(randomeAvailable), result.getAvailable());
         assertTrue(input.getDrain());
         assertTrue(input.getEcho());
         assertNull(input.getProperties());

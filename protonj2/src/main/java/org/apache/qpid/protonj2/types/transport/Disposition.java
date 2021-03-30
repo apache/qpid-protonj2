@@ -104,6 +104,12 @@ public final class Disposition implements Performative {
         return first;
     }
 
+    public Disposition setFirst(int first) {
+        modified |= FIRST;
+        this.first = Integer.toUnsignedLong(first);
+        return this;
+    }
+
     public Disposition setFirst(long first) {
         if (first < 0 || first > UINT_MAX) {
             throw new IllegalArgumentException("First value given is out of range: " + first);
@@ -123,6 +129,12 @@ public final class Disposition implements Performative {
 
     public long getLast() {
         return last;
+    }
+
+    public Disposition setLast(int last) {
+        modified |= LAST;
+        this.last = Integer.toUnsignedLong(last);
+        return this;
     }
 
     public Disposition setLast(long last) {

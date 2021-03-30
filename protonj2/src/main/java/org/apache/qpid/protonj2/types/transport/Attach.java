@@ -205,6 +205,12 @@ public final class Attach implements Performative {
         return handle;
     }
 
+    public Attach setHandle(int handle) {
+        modified |= HANDLE;
+        this.handle = Integer.toUnsignedLong(handle);
+        return this;
+    }
+
     public Attach setHandle(long handle) {
         if (handle < 0 || handle > UINT_MAX) {
             throw new IllegalArgumentException("The Handle value given is out of range: " + handle);
@@ -353,6 +359,12 @@ public final class Attach implements Performative {
 
     public long getInitialDeliveryCount() {
         return initialDeliveryCount;
+    }
+
+    public Attach setInitialDeliveryCount(int initialDeliveryCount) {
+        modified |= INITIAL_DELIVERY_COUNT;
+        this.initialDeliveryCount = Integer.toUnsignedLong(initialDeliveryCount);
+        return this;
     }
 
     public Attach setInitialDeliveryCount(long initialDeliveryCount) {
