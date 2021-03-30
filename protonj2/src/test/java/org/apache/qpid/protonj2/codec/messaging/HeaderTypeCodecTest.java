@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
@@ -35,6 +36,7 @@ import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.messaging.HeaderTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.messaging.HeaderTypeEncoder;
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.messaging.Header;
 import org.junit.jupiter.api.Test;
 
@@ -93,11 +95,17 @@ public class HeaderTypeCodecTest extends CodecTestSupport {
 
         Header header = new Header();
 
+        final Random random = new Random();
+        random.setSeed(System.nanoTime());
+
+        final int randomDeliveryCount = random.nextInt();
+        final int randomTimeToLive = random.nextInt();
+
         header.setDurable(Boolean.TRUE);
         header.setPriority((byte) 3);
-        header.setDeliveryCount(10);
+        header.setDeliveryCount(randomDeliveryCount);
         header.setFirstAcquirer(Boolean.TRUE);
-        header.setTimeToLive(500);
+        header.setTimeToLive(randomTimeToLive);
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, header);
@@ -117,8 +125,47 @@ public class HeaderTypeCodecTest extends CodecTestSupport {
             Header decoded = (Header) result;
 
             assertEquals(3, decoded.getPriority());
+            assertEquals(Integer.toUnsignedLong(randomTimeToLive), decoded.getTimeToLive());
+            assertEquals(Integer.toUnsignedLong(randomDeliveryCount), decoded.getDeliveryCount());
             assertTrue(decoded.isDurable());
+            assertTrue(decoded.isFirstAcquirer());
         }
+    }
+
+    @Test
+    public void testEncodeAndDecodeWithMaxUnsignedValuesFromLongs() throws IOException {
+        doTestEncodeAndDecodeWithMaxUnsignedValuesFromLongs(false);
+    }
+
+    @Test
+    public void testEncodeAndDecodeWithMaxUnsignedValuesFromLongsFromStream() throws IOException {
+        doTestEncodeAndDecodeWithMaxUnsignedValuesFromLongs(true);
+    }
+
+    private void doTestEncodeAndDecodeWithMaxUnsignedValuesFromLongs(boolean fromStream) throws IOException {
+        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final Header header = new Header();
+
+        header.setDeliveryCount(UnsignedInteger.MAX_VALUE.longValue());
+        header.setTimeToLive(UnsignedInteger.MAX_VALUE.longValue());
+
+        encoder.writeObject(buffer, encoderState, header);
+
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
+        assertNotNull(result);
+        assertTrue(result instanceof Header);
+
+        Header decoded = (Header) result;
+
+        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), decoded.getDeliveryCount());
+        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), decoded.getTimeToLive());
     }
 
     @Test

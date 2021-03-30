@@ -143,6 +143,10 @@ public class HeaderTest {
         assertTrue(header.hasTimeToLive());
         assertEquals(0, header.getTimeToLive());
 
+        header.setTimeToLive(UnsignedInteger.MAX_VALUE.intValue());
+        assertTrue(header.hasTimeToLive());
+        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), header.getTimeToLive());
+
         try {
             header.setTimeToLive(UnsignedInteger.MAX_VALUE.longValue() + 1);
             fail("Should fail on out of range value");
@@ -150,7 +154,7 @@ public class HeaderTest {
         }
 
         try {
-            header.setTimeToLive(-1);
+            header.setTimeToLive(-1l);
             fail("Should fail on out of range value");
         } catch (IllegalArgumentException iae) {
         }
@@ -191,6 +195,10 @@ public class HeaderTest {
         assertFalse(header.hasDeliveryCount());
         assertEquals(Header.DEFAULT_DELIVERY_COUNT, header.getDeliveryCount());
 
+        header.setDeliveryCount(UnsignedInteger.MAX_VALUE.intValue());
+        assertTrue(header.hasDeliveryCount());
+        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), header.getDeliveryCount());
+
         try {
             header.setDeliveryCount(UnsignedInteger.MAX_VALUE.longValue() + 1);
             fail("Should fail on out of range value");
@@ -198,7 +206,7 @@ public class HeaderTest {
         }
 
         try {
-            header.setDeliveryCount(-1);
+            header.setDeliveryCount(-1l);
             fail("Should fail on out of range value");
         } catch (IllegalArgumentException iae) {
         }

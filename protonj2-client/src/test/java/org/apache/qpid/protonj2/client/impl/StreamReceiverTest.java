@@ -59,12 +59,12 @@ import org.apache.qpid.protonj2.client.test.Wait;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
-import org.apache.qpid.protonj2.test.driver.codec.messaging.ApplicationProperties;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
+import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Footer;
 import org.apache.qpid.protonj2.types.messaging.Header;
@@ -2170,6 +2170,13 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertFalse(footer.getValue().isEmpty());
             assertTrue(footer.getValue().containsKey(Symbol.valueOf("footer-key")));
 
+            assertTrue(message.hasFooters());
+            assertTrue(message.hasFooter("footer-key"));
+            message.forEachFooter((key, value) -> {
+                assertEquals(key, "footer-key");
+                assertEquals(value, "test");
+            });
+
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDetach().respond();
             peer.expectEnd().respond();
@@ -2725,6 +2732,70 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testReadMessageHeaderFromStreamReceiverMessage() throws Exception {
+        final Header header = new Header();
+
+        header.setDeliveryCount(UnsignedInteger.MAX_VALUE.longValue());
+        header.setDurable(true);
+        header.setFirstAcquirer(false);
+        header.setPriority((byte) 255);
+        header.setTimeToLive(Integer.MAX_VALUE);
+
+        final byte[] payload = createEncodedMessage(header);
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            StreamReceiverMessage message = delivery.message();
+            assertNotNull(message);
+
+            Header readHeader = message.header();
+            assertNotNull(readHeader);
+            assertNull(message.body());
+
+            assertEquals(Integer.toUnsignedLong(Integer.MAX_VALUE), message.timeToLive());
+            assertEquals(true, message.durable());
+            assertEquals(false, message.firstAcquirer());
+            assertEquals((byte) 255, message.priority());
+            assertEquals(Integer.toUnsignedLong(Integer.MAX_VALUE), message.timeToLive());
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testReadMessagePropertiesFromStreamReceiverMessage() throws Exception {
         final Properties properties = new Properties();
 
@@ -2775,6 +2846,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             StreamReceiverMessage message = delivery.message();
             assertNotNull(message);
 
+            assertFalse(message.hasProperties());
+            assertFalse(message.hasFooters());
+            assertFalse(message.hasAnnotations());
+
             Properties readProperties = message.properties();
             assertNotNull(readProperties);
             Header header = message.header();
@@ -2796,6 +2871,73 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertEquals("test", message.subject());
             assertEquals("queue", message.to());
             assertArrayEquals(new byte[] { 0, 1, 5, 6, 9 }, message.userId());
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReadApplicationPropertiesStreamReceiverMessage() throws Exception {
+        final Map<String, Object> propertiesMap = new HashMap<>();
+        final ApplicationProperties appProperties = new ApplicationProperties(propertiesMap);
+
+        propertiesMap.put("property1", UnsignedInteger.MAX_VALUE);
+        propertiesMap.put("property2", UnsignedInteger.ONE);
+        propertiesMap.put("property3", UnsignedInteger.ZERO);
+
+        final byte[] payload = createEncodedMessage(appProperties);
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+
+            assertNotNull(delivery);
+            assertTrue(delivery.completed());
+            assertFalse(delivery.aborted());
+
+            StreamReceiverMessage message = delivery.message();
+            assertNotNull(message);
+
+            assertTrue(message.hasProperties());
+            assertFalse(message.hasFooters());
+            assertFalse(message.hasAnnotations());
+
+            assertFalse(message.hasProperty("property"));
+            assertEquals(UnsignedInteger.MAX_VALUE, message.property("property1"));
+            assertEquals(UnsignedInteger.ONE, message.property("property2"));
+            assertEquals(UnsignedInteger.ZERO, message.property("property3"));
+
+            message.forEachProperty((key, value) -> {
+                assertTrue(propertiesMap.containsKey(key));
+                assertEquals(value, propertiesMap.get(key));
+            });
 
             peer.expectDetach().respond();
             peer.expectEnd().respond();

@@ -145,6 +145,10 @@ public final class Header implements Section<Header> {
         return timeToLive;
     }
 
+    public Header setTimeToLive(int value) {
+        return setTimeToLive(Integer.toUnsignedLong(value));
+    }
+
     public Header setTimeToLive(long value) {
         if (value < 0 || value > UINT_MAX) {
             throw new IllegalArgumentException("TTL value given is out of range: " + value);
@@ -185,6 +189,10 @@ public final class Header implements Section<Header> {
 
     public long getDeliveryCount() {
         return deliveryCount;
+    }
+
+    public Header setDeliveryCount(int value) {
+        return setDeliveryCount(Integer.toUnsignedLong(value));
     }
 
     public Header setDeliveryCount(long value) {

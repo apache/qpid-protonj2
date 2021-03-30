@@ -121,13 +121,13 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
                     header.setPriority(state.getDecoder().readUnsignedByte(buffer, state, Header.DEFAULT_PRIORITY));
                     break;
                 case 2:
-                    header.setTimeToLive(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    header.setTimeToLive(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 3:
                     header.setFirstAcquirer(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 4:
-                    header.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    header.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 default:
                     throw new DecodeException("To many entries in Header encoding");
@@ -206,13 +206,13 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
                     header.setPriority(state.getDecoder().readUnsignedByte(stream, state, Header.DEFAULT_PRIORITY));
                     break;
                 case 2:
-                    header.setTimeToLive(state.getDecoder().readUnsignedInteger(stream, state, 0));
+                    header.setTimeToLive(state.getDecoder().readUnsignedInteger(stream, state, 0l));
                     break;
                 case 3:
                     header.setFirstAcquirer(state.getDecoder().readBoolean(stream, state, false));
                     break;
                 case 4:
-                    header.setDeliveryCount(state.getDecoder().readUnsignedInteger(stream, state, 0));
+                    header.setDeliveryCount(state.getDecoder().readUnsignedInteger(stream, state, 0l));
                     break;
                 default:
                     throw new DecodeException("To many entries in Header encoding");

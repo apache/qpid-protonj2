@@ -636,7 +636,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
         if (currentState.ordinal() > StreamState.BODY_READABLE.ordinal()) {
             if (currentState == StreamState.DECODE_ERROR) {
                 throw new ClientException("Cannot read body due to decoding error in message payload");
-            } else {
+            } else if (bodyStream != null) {
                 throw new ClientIllegalStateException("Cannot read body from message whose body has already been read.");
             }
         }
