@@ -23,11 +23,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.messaging.AmqpValueTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.messaging.AmqpValueTypeEncoder;
@@ -56,38 +59,69 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeAmqpValueString() throws IOException {
-        doTestDecodeAmqpValueSeries(1, new AmqpValue<>("test"));
+        doTestDecodeAmqpValueSeries(1, new AmqpValue<>("test"), false);
     }
 
     @Test
     public void testDecodeAmqpValueNull() throws IOException {
-        doTestDecodeAmqpValueSeries(1, new AmqpValue<>(null));
+        doTestDecodeAmqpValueSeries(1, new AmqpValue<>(null), false);
     }
 
     @Test
     public void testDecodeAmqpValueUUID() throws IOException {
-        doTestDecodeAmqpValueSeries(1, new AmqpValue<>(UUID.randomUUID()));
+        doTestDecodeAmqpValueSeries(1, new AmqpValue<>(UUID.randomUUID()), false);
     }
 
     @Test
     public void testDecodeSmallSeriesOfAmqpValue() throws IOException {
-        doTestDecodeAmqpValueSeries(SMALL_SIZE, new AmqpValue<>("test"));
+        doTestDecodeAmqpValueSeries(SMALL_SIZE, new AmqpValue<>("test"), false);
     }
 
     @Test
     public void testDecodeLargeSeriesOfAmqpValue() throws IOException {
-        doTestDecodeAmqpValueSeries(LARGE_SIZE, new AmqpValue<>("test"));
+        doTestDecodeAmqpValueSeries(LARGE_SIZE, new AmqpValue<>("test"), false);
     }
 
-    private void doTestDecodeAmqpValueSeries(int size, AmqpValue<Object> value) throws IOException {
+    @Test
+    public void testDecodeAmqpValueStringFromStream() throws IOException {
+        doTestDecodeAmqpValueSeries(1, new AmqpValue<>("test"), true);
+    }
+
+    @Test
+    public void testDecodeAmqpValueNullFromStream() throws IOException {
+        doTestDecodeAmqpValueSeries(1, new AmqpValue<>(null), true);
+    }
+
+    @Test
+    public void testDecodeAmqpValueUUIDFromStream() throws IOException {
+        doTestDecodeAmqpValueSeries(1, new AmqpValue<>(UUID.randomUUID()), true);
+    }
+
+    @Test
+    public void testDecodeSmallSeriesOfAmqpValueFromStream() throws IOException {
+        doTestDecodeAmqpValueSeries(SMALL_SIZE, new AmqpValue<>("test"), true);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfAmqpValueFromStream() throws IOException {
+        doTestDecodeAmqpValueSeries(LARGE_SIZE, new AmqpValue<>("test"), true);
+    }
+
+    private void doTestDecodeAmqpValueSeries(int size, AmqpValue<Object> value, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, value);
         }
 
         for (int i = 0; i < size; ++i) {
-            final Object result = decoder.readObject(buffer, decoderState);
+            final Object result;
+            if (fromStream) {
+                result = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                result = decoder.readObject(buffer, decoderState);
+            }
 
             assertNotNull(result);
             assertTrue(result instanceof AmqpValue);
@@ -101,11 +135,26 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeAmqpValueWithEmptyValue() throws IOException {
+        doTestDecodeAmqpValueWithEmptyValue(false);
+    }
+
+    @Test
+    public void testDecodeAmqpValueWithEmptyValueFromStream() throws IOException {
+        doTestDecodeAmqpValueWithEmptyValue(true);
+    }
+
+    private void doTestDecodeAmqpValueWithEmptyValue(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         encoder.writeObject(buffer, encoderState, new AmqpValue<>(null));
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof AmqpValue);
@@ -117,7 +166,17 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeArrayOfAmqpValue() throws IOException {
+        doTestEncodeDecodeArrayOfAmqpValue(false);
+    }
+
+    @Test
+    public void testEncodeDecodeArrayOfAmqpValueFromStream() throws IOException {
+        doTestEncodeDecodeArrayOfAmqpValue(true);
+    }
+
+    private void doTestEncodeDecodeArrayOfAmqpValue(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         @SuppressWarnings("unchecked")
         AmqpValue<Object>[] array = new AmqpValue[3];
@@ -128,7 +187,12 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, array);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertTrue(result.getClass().isArray());
         assertEquals(AmqpValue.class, result.getClass().getComponentType());
@@ -145,7 +209,17 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testSkipValue() throws IOException {
+        doTestSkipValue(false);
+    }
+
+    @Test
+    public void testSkipValueFromStream() throws IOException {
+        doTestSkipValue(true);
+    }
+
+    private void doTestSkipValue(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeObject(buffer, encoderState, new AmqpValue<>("skipMe"));
@@ -154,12 +228,23 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
         encoder.writeObject(buffer, encoderState, new Modified());
 
         for (int i = 0; i < 10; ++i) {
-            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-            assertEquals(AmqpValue.class, typeDecoder.getTypeClass());
-            typeDecoder.skipValue(buffer, decoderState);
+            if (fromStream) {
+                StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+                assertEquals(AmqpValue.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(stream, streamDecoderState);
+            } else {
+                TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+                assertEquals(AmqpValue.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(buffer, decoderState);
+            }
         }
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof Modified);
@@ -168,10 +253,21 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
         assertFalse(modified.isDeliveryFailed());
     }
 
-    @SuppressWarnings("rawtypes")
     @Test
     public void testEncodeDecodeArray() throws IOException {
+        doTestEncodeDecodeArray(false);
+    }
+
+    @Test
+    public void testEncodeDecodeArrayFromStream() throws IOException {
+        doTestEncodeDecodeArray(true);
+    }
+
+    @SuppressWarnings("rawtypes")
+    @Test
+    private void doTestEncodeDecodeArray(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         AmqpValue[] array = new AmqpValue[3];
 
@@ -181,7 +277,12 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, array);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertTrue(result.getClass().isArray());
         assertEquals(AmqpValue.class, result.getClass().getComponentType());
