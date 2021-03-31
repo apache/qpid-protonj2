@@ -30,12 +30,17 @@ import org.apache.qpid.protonj2.types.Symbol;
 public class ClientConnectionCapabilities {
 
     private boolean anonymousRelaySupported;
+    private boolean delayedDeliverySupported;
 
     /**
      * @return true this the client requested and the remote answered that anonymous relay is supported.
      */
     public boolean anonymousRelaySupported() {
         return this.anonymousRelaySupported;
+    }
+
+    public boolean deliveryDelaySupported() {
+        return this.delayedDeliverySupported;
     }
 
     @SuppressWarnings("unchecked")
@@ -47,11 +52,16 @@ public class ClientConnectionCapabilities {
         final List<Symbol> desiredSymbols = desired != null ? Arrays.asList(desired) : Collections.EMPTY_LIST;
 
         anonymousRelaySupported = checkAnonymousRelaySupported(desiredSymbols, offeredSymbols);
+        delayedDeliverySupported = checkDeliveryRelaySupported(desiredSymbols, offeredSymbols);
 
         return this;
     }
 
     private boolean checkAnonymousRelaySupported(List<Symbol> desired, List<Symbol> offered) {
-        return desired.contains(ClientConstants.ANONYMOUS_RELAY) && offered.contains(ClientConstants.ANONYMOUS_RELAY);
+        return offered.contains(ClientConstants.ANONYMOUS_RELAY);
+    }
+
+    private boolean checkDeliveryRelaySupported(List<Symbol> desired, List<Symbol> offered) {
+        return offered.contains(ClientConstants.DELAYED_DELIVERY);
     }
 }
