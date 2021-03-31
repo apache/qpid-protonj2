@@ -42,7 +42,8 @@ public final class ClientStreamSession extends ClientSession {
 
     @Override
     public Receiver openReceiver(String address) throws ClientException {
-        return openReceiver(address, null);
+        checkClosedOrFailed();
+        throw new ClientUnsupportedOperationException("Cannot create a receiver from a streaming resource session");
     }
 
     @Override

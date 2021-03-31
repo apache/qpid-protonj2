@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.client.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -31,10 +32,13 @@ import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.ErrorCondition;
+import org.apache.qpid.protonj2.client.ReceiverOptions;
+import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.SessionOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
@@ -522,7 +526,50 @@ public class SessionTest extends ImperativeClientTestCase {
             Session session = connection.openSession();
 
             session.openFuture().get();
+
+            assertEquals(session.client(), container);
+
             session.closeAsync(ErrorCondition.create(condition, description, null));
+
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCannotCreateResourcesFromClosedSession() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+
+            session.openFuture().get();
+            session.close();
+
+            assertThrows(ClientIllegalStateException.class, () -> session.openReceiver("test"));
+            assertThrows(ClientIllegalStateException.class, () -> session.openReceiver("test", new ReceiverOptions()));
+            assertThrows(ClientIllegalStateException.class, () -> session.openDurableReceiver("test", "test"));
+            assertThrows(ClientIllegalStateException.class, () -> session.openDurableReceiver("test", "test", new ReceiverOptions()));
+            assertThrows(ClientIllegalStateException.class, () -> session.openDynamicReceiver());
+            assertThrows(ClientIllegalStateException.class, () -> session.openDynamicReceiver(new HashMap<>()));
+            assertThrows(ClientIllegalStateException.class, () -> session.openDynamicReceiver(new ReceiverOptions()));
+            assertThrows(ClientIllegalStateException.class, () -> session.openDynamicReceiver(new HashMap<>(), new ReceiverOptions()));
+            assertThrows(ClientIllegalStateException.class, () -> session.openSender("test"));
+            assertThrows(ClientIllegalStateException.class, () -> session.openSender("test", new SenderOptions()));
+            assertThrows(ClientIllegalStateException.class, () -> session.openAnonymousSender());
+            assertThrows(ClientIllegalStateException.class, () -> session.openAnonymousSender(new SenderOptions()));
 
             connection.closeAsync().get();
 
