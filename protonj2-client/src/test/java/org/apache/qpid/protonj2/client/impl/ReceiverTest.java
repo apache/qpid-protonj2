@@ -1905,7 +1905,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
-            Delivery delivery = receiver.receive(10, TimeUnit.MILLISECONDS);
+            Delivery delivery = receiver.receive(5, TimeUnit.SECONDS);
             assertNotNull(delivery);
             assertNull(delivery.annotations());
 
