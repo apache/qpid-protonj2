@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.client.transport;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -37,6 +38,7 @@ import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -58,6 +60,14 @@ public class WebSocketTransportTest extends TcpTransportTest {
     @Override
     protected TransportOptions createServerTransportOptions() {
         return new TransportOptions().useWebSockets(true);
+    }
+
+    @Override
+    @Test
+    public void testCannotCreateWithIllegalArgs() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> new WebSocketTransport(null, createTransportOptions(), createSSLOptions()));
+        assertThrows(IllegalArgumentException.class, () -> new WebSocketTransport(new Bootstrap(), null, createSSLOptions()));
+        assertThrows(IllegalArgumentException.class, () -> new WebSocketTransport(new Bootstrap(), createTransportOptions(), null));
     }
 
     @Test
@@ -143,7 +153,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             final int port = server.getServerPort();
 
-            List<Transport> transports = new ArrayList<Transport>();
+            List<Transport> transports = new ArrayList<>();
 
             Transport transport = createTransport(createTransportOptions().webSocketMaxFrameSize(FRAME_SIZE), createSSLOptions());
 
@@ -174,7 +184,17 @@ public class WebSocketTransportTest extends TcpTransportTest {
     }
 
     @Test
-    public void testConnectionReceivesFragmentedData() throws Exception {
+    public void testConnectionReceivesFragmentedDataSingleWriteAndFlush() throws Exception {
+        testConnectionReceivesFragmentedData(true);
+    }
+
+    @Test
+    public void testConnectionReceivesFragmentedDataWriteThenFlush() throws Exception {
+        testConnectionReceivesFragmentedData(false);
+    }
+
+    private void testConnectionReceivesFragmentedData(boolean writeAndFllush) throws Exception {
+
         final int FRAME_SIZE = 5317;
 
         ProtonBuffer sendBuffer = new ProtonNettyByteBuffer(Unpooled.buffer(FRAME_SIZE));
@@ -190,7 +210,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             final int port = server.getServerPort();
 
-            List<Transport> transports = new ArrayList<Transport>();
+            List<Transport> transports = new ArrayList<>();
 
             TransportOptions clientOptions = createTransportOptions();
             clientOptions.traceBytes(true);
@@ -202,7 +222,14 @@ public class WebSocketTransportTest extends TcpTransportTest {
             try {
                 transport.connect(HOSTNAME, port, wsListener).awaitConnect();
                 transports.add(transport);
-                transport.writeAndFlush(sendBuffer.copy());
+                if (writeAndFllush) {
+                    transport.writeAndFlush(ProtonByteBufferAllocator.DEFAULT.allocate());
+                    transport.writeAndFlush(sendBuffer.copy());
+                } else {
+                    transport.write(ProtonByteBufferAllocator.DEFAULT.allocate());
+                    transport.write(sendBuffer.copy());
+                    transport.flush();
+                }
             } catch (Exception e) {
                 fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
@@ -254,7 +281,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             final int port = server.getServerPort();
 
-            List<Transport> transports = new ArrayList<Transport>();
+            List<Transport> transports = new ArrayList<>();
 
             final Transport transport = createTransport(createTransportOptions().webSocketMaxFrameSize(FRAME_SIZE / 2), createSSLOptions());
 
@@ -291,7 +318,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             final int port = server.getServerPort();
 
-            List<Transport> transports = new ArrayList<Transport>();
+            List<Transport> transports = new ArrayList<>();
 
             final Transport transport = createTransport(createTransportOptions().webSocketMaxFrameSize(FRAME_SIZE), createSSLOptions());
 

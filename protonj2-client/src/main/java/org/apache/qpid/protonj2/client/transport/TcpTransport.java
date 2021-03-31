@@ -90,7 +90,7 @@ public class TcpTransport implements Transport {
         }
 
         if (bootstrap == null) {
-            throw new IllegalStateException("A transport must have an assigned Bootstrap before connect.");
+            throw new IllegalArgumentException("A transport must have an assigned Bootstrap before connect.");
         }
 
         this.sslOptions = sslOptions;

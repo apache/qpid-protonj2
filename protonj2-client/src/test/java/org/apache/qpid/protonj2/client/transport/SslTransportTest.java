@@ -328,6 +328,9 @@ public class SslTransportTest extends TcpTransportTest {
                 }
             }
 
+            assertNotNull(transport.getSslOptions());
+            assertEquals(verifyHost, transport.getSslOptions().verifyHost());
+
             if (verifyHost) {
                 assertFalse(transport.isConnected());
             } else {

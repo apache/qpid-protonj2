@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.client.transport;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -92,6 +93,13 @@ public class TcpTransportTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testCannotCreateWithIllegalArgs() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> new TcpTransport(null, createTransportOptions(), createSSLOptions()));
+        assertThrows(IllegalArgumentException.class, () -> new TcpTransport(new Bootstrap(), null, createSSLOptions()));
+        assertThrows(IllegalArgumentException.class, () -> new TcpTransport(new Bootstrap(), createTransportOptions(), null));
+    }
+
+    @Test
     public void testCloseOnNeverConnectedTransport() throws Exception {
         Transport transport = createTransport(createTransportOptions(), createSSLOptions());
         assertFalse(transport.isConnected());
@@ -103,6 +111,15 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertFalse(transportErrored);
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
+    }
+
+    @Test
+    public void testCannotCallConnectOnClosedTransport() throws Exception {
+        Transport transport = createTransport(createTransportOptions(), createSSLOptions());
+
+        transport.close();
+
+        assertThrows(IllegalStateException.class, () -> transport.connect("localhost", 5672, testListener));
     }
 
     @Test
@@ -160,6 +177,8 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             Transport transport = createTransport(createTransportOptions(), createSSLOptions());
 
+            assertNull(transport.getTransportListener());
+
             try {
                 transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
@@ -167,6 +186,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
                 LOG.info("Failed to connect to: {}:{} as expected.", HOSTNAME, port);
             }
 
+            assertEquals(testListener, transport.getTransportListener());
             assertFalse(transport.isConnected());
 
             transport.close();
@@ -371,7 +391,16 @@ public class TcpTransportTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testZeroSizedSentNoErrors() throws Exception {
+    public void testZeroSizedSentNoErrorsWriteAndFlush() throws Exception {
+        testZeroSizedSentNoErrors(true);
+    }
+
+    @Test
+    public void testZeroSizedSentNoErrorsWriteThenFlush() throws Exception {
+        testZeroSizedSentNoErrors(false);
+    }
+
+    private void testZeroSizedSentNoErrors(boolean writeAndFlush) throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
@@ -387,7 +416,12 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             assertTrue(transport.isConnected());
 
-            transport.writeAndFlush(new ProtonNettyByteBuffer(Unpooled.buffer(0)));
+            if (writeAndFlush) {
+                transport.writeAndFlush(new ProtonNettyByteBuffer(Unpooled.buffer(0)));
+            } else {
+                transport.write(new ProtonNettyByteBuffer(Unpooled.buffer(0)));
+                transport.flush();
+            }
 
             transport.close();
         }
