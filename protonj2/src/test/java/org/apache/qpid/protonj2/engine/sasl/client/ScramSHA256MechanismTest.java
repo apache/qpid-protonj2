@@ -65,6 +65,11 @@ public class ScramSHA256MechanismTest extends AbstractScramSHAMechanismTestBase 
     }
 
     @Test
+    public void testGetNameMatchesValueInSaslMechanismsEnum() {
+        assertEquals(SaslMechanisms.SCRAM_SHA_256.getName(), getMechanismForTesting().getName());
+    }
+
+    @Test
     public void testDifferentClientNonceOnEachInstance() throws Exception {
         ScramSHA256Mechanism mech1 = new ScramSHA256Mechanism();
         ScramSHA256Mechanism mech2 = new ScramSHA256Mechanism();
