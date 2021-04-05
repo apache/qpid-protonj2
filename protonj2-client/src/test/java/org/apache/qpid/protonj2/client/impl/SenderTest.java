@@ -53,6 +53,9 @@ import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Released;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusDurability;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.protonj2.test.driver.matchers.messaging.DeliveryAnnotationsMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferPayloadCompositeMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAmqpValueMatcher;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.LinkError;
 import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
@@ -155,6 +158,53 @@ public class SenderTest extends ImperativeClientTestCase {
                 sender.close();
             } else {
                 sender.detach();
+            }
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateSenderAndCloseWithErrorSync() throws Exception {
+        doTestCreateSenderAndCloseOrDeatchWithErrorSync(true);
+    }
+
+    @Test
+    public void testCreateSenderAndDetachWithErrorSync() throws Exception {
+        doTestCreateSenderAndCloseOrDeatchWithErrorSync(false);
+    }
+
+    private void doTestCreateSenderAndCloseOrDeatchWithErrorSync(boolean close) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.expectDetach().withError("amqp-resource-deleted", "an error message").withClosed(close).respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Sender sender = session.openSender("test-queue");
+            sender.openFuture().get(10, TimeUnit.SECONDS);
+
+            if (close) {
+                sender.close(ErrorCondition.create("amqp-resource-deleted", "an error message", null));
+            } else {
+                sender.detach(ErrorCondition.create("amqp-resource-deleted", "an error message", null));
             }
 
             connection.closeAsync().get(10, TimeUnit.SECONDS);
@@ -540,15 +590,25 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendWhenCreditIsAvailable() throws Exception {
-        doTestSendWhenCreditIsAvailable(false);
+        doTestSendWhenCreditIsAvailable(false, false);
     }
 
     @Test
     public void testTrySendWhenCreditIsAvailable() throws Exception {
-        doTestSendWhenCreditIsAvailable(true);
+        doTestSendWhenCreditIsAvailable(true, false);
     }
 
-    private void doTestSendWhenCreditIsAvailable(boolean trySend) throws Exception {
+    @Test
+    public void testSendWhenCreditIsAvailableWithDeliveryAnnotations() throws Exception {
+        doTestSendWhenCreditIsAvailable(false, true);
+    }
+
+    @Test
+    public void testTrySendWhenCreditIsAvailableWithDeliveryAnnotations() throws Exception {
+        doTestSendWhenCreditIsAvailable(true, true);
+    }
+
+    private void doTestSendWhenCreditIsAvailable(boolean trySend, boolean addDeliveryAnnotations) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -577,8 +637,23 @@ public class SenderTest extends ImperativeClientTestCase {
             Receiver receiver = session.openReceiver("test-queue", new ReceiverOptions().creditWindow(0));
             receiver.openFuture().get(10, TimeUnit.SECONDS);
 
+            Map<String, Object> deliveryAnnotations = new HashMap<>();
+            deliveryAnnotations.put("da1", 1);
+            deliveryAnnotations.put("da2", 2);
+            deliveryAnnotations.put("da3", 3);
+            DeliveryAnnotationsMatcher daMatcher = new DeliveryAnnotationsMatcher(true);
+            daMatcher.withEntry("da1", Matchers.equalTo(1));
+            daMatcher.withEntry("da2", Matchers.equalTo(2));
+            daMatcher.withEntry("da3", Matchers.equalTo(3));
+            EncodedAmqpValueMatcher bodyMatcher = new EncodedAmqpValueMatcher("Hello World");
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            if (addDeliveryAnnotations) {
+                payloadMatcher.setDeliveryAnnotationsMatcher(daMatcher);
+            }
+            payloadMatcher.setMessageContentMatcher(bodyMatcher);
+
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectTransfer().withNonNullPayload();
+            peer.expectTransfer().withPayload(payloadMatcher);
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
@@ -586,10 +661,19 @@ public class SenderTest extends ImperativeClientTestCase {
 
             final Tracker tracker;
             if (trySend) {
-                tracker = sender.trySend(message);
+                if (addDeliveryAnnotations) {
+                    tracker = sender.trySend(message, deliveryAnnotations);
+                } else {
+                    tracker = sender.trySend(message);
+                }
             } else {
-                tracker = sender.send(message);
+                if (addDeliveryAnnotations) {
+                    tracker = sender.send(message, deliveryAnnotations);
+                } else {
+                    tracker = sender.send(message);
+                }
             }
+
             assertNotNull(tracker);
 
             sender.closeAsync().get(10, TimeUnit.SECONDS);

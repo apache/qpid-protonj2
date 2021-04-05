@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
@@ -43,6 +44,7 @@ import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.DeliveryMode;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.OutputStreamOptions;
+import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
@@ -82,6 +84,103 @@ import org.slf4j.LoggerFactory;
 public class StreamSenderTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(StreamSenderTest.class);
+
+    @Test
+    public void testSendWhenCreditIsAvailable() throws Exception {
+        doTestSendWhenCreditIsAvailable(false, false);
+    }
+
+    @Test
+    public void testTrySendWhenCreditIsAvailable() throws Exception {
+        doTestSendWhenCreditIsAvailable(true, false);
+    }
+
+    @Test
+    public void testSendWhenCreditIsAvailableWithDeliveryAnnotations() throws Exception {
+        doTestSendWhenCreditIsAvailable(false, true);
+    }
+
+    @Test
+    public void testTrySendWhenCreditIsAvailableWithDeliveryAnnotations() throws Exception {
+        doTestSendWhenCreditIsAvailable(true, true);
+    }
+
+    private void doTestSendWhenCreditIsAvailable(boolean trySend, boolean addDeliveryAnnotations) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withDeliveryCount(0)
+                             .withLinkCredit(10)
+                             .withIncomingWindow(1024)
+                             .withOutgoingWindow(10)
+                             .withNextIncomingId(0)
+                             .withNextOutgoingId(1).queue();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            sender.openFuture().get(10, TimeUnit.SECONDS);
+
+            // This ensures that the flow to sender is processed before we try-send
+            Receiver receiver = connection.openReceiver("test-queue", new ReceiverOptions().creditWindow(0));
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            Map<String, Object> deliveryAnnotations = new HashMap<>();
+            deliveryAnnotations.put("da1", 1);
+            deliveryAnnotations.put("da2", 2);
+            deliveryAnnotations.put("da3", 3);
+            DeliveryAnnotationsMatcher daMatcher = new DeliveryAnnotationsMatcher(true);
+            daMatcher.withEntry("da1", Matchers.equalTo(1));
+            daMatcher.withEntry("da2", Matchers.equalTo(2));
+            daMatcher.withEntry("da3", Matchers.equalTo(3));
+            EncodedAmqpValueMatcher bodyMatcher = new EncodedAmqpValueMatcher("Hello World");
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            if (addDeliveryAnnotations) {
+                payloadMatcher.setDeliveryAnnotationsMatcher(daMatcher);
+            }
+            payloadMatcher.setMessageContentMatcher(bodyMatcher);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withNonNullPayload();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            Message<String> message = Message.create("Hello World");
+
+            final Tracker tracker;
+            if (trySend) {
+                if (addDeliveryAnnotations) {
+                    tracker = sender.trySend(message, deliveryAnnotations);
+                } else {
+                    tracker = sender.trySend(message);
+                }
+            } else {
+                if (addDeliveryAnnotations) {
+                    tracker = sender.send(message, deliveryAnnotations);
+                } else {
+                    tracker = sender.send(message);
+                }
+            }
+
+            assertNotNull(tracker);
+
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 
     @Test
     public void testOpenStreamSenderWithLinCapabilities() throws Exception {
@@ -218,6 +317,12 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             // Create a custom message format send context and ensure that no early buffer writes take place
             StreamSenderMessage message = sender.beginMessage();
 
+            assertEquals(Header.DEFAULT_PRIORITY, message.priority());
+            assertEquals(Header.DEFAULT_DELIVERY_COUNT, message.deliveryCount());
+            assertEquals(Header.DEFAULT_FIRST_ACQUIRER, message.firstAcquirer());
+            assertEquals(Header.DEFAULT_TIME_TO_LIVE, message.timeToLive());
+            assertEquals(Header.DEFAULT_DURABILITY, message.durable());
+
             message.messageFormat(17);
 
             // Gates send on remote flow having been sent and received
@@ -263,6 +368,79 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             assertNotNull(message.tracker().settlementFuture().isDone());
             assertNotNull(message.tracker().settlementFuture().get().settled());
+            assertThrows(ClientIllegalStateException.class, () -> message.addBodySection(new AmqpValue<>("three")));
+            assertThrows(ClientIllegalStateException.class, () -> message.body());
+            assertThrows(ClientIllegalStateException.class, () -> message.rawOutputStream());
+
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testClearBodySectionsIsNoOpForStreamSenderMessage() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectBegin().respond(); // Hidden session for stream sender
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.expectAttach().respond();  // Open a receiver to ensure sender link has processed
+            peer.expectFlow();              // the inbound flow frame we sent previously before send.
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+            Session session = connection.openSession().openFuture().get();
+
+            StreamSenderOptions options = new StreamSenderOptions();
+            options.deliveryMode(DeliveryMode.AT_MOST_ONCE);
+            options.writeBufferSize(Integer.MAX_VALUE);
+
+            StreamSender sender = connection.openStreamSender("test-qos", options);
+
+            // Create a custom message format send context and ensure that no early buffer writes take place
+            StreamSenderMessage message = sender.beginMessage();
+
+            message.messageFormat(17);
+
+            // Gates send on remote flow having been sent and received
+            session.openReceiver("dummy").openFuture().get();
+
+            EncodedAmqpValueMatcher bodyMatcher1 = new EncodedAmqpValueMatcher("one", true);
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.addMessageContentMatcher(bodyMatcher1);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withMore(false).withMessageFormat(17).withPayload(payloadMatcher).accept();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            message.addBodySection(new AmqpValue<>("one"));
+            message.clearBodySections();
+            message.forEachBodySection((section) -> {
+                // No sections retained so this should never run.
+                throw new RuntimeException();
+            });
+
+            assertNotNull(message.bodySections());
+            assertTrue(message.bodySections().isEmpty());
+
+            message.complete();
+
+            assertNotNull(message.tracker().settlementFuture().isDone());
+            assertNotNull(message.tracker().settlementFuture().get().settled());
+            assertThrows(ClientIllegalStateException.class, () -> message.body());
+            assertThrows(ClientIllegalStateException.class, () -> message.rawOutputStream());
 
             sender.closeAsync().get(10, TimeUnit.SECONDS);
 
@@ -346,6 +524,45 @@ public class StreamSenderTest extends ImperativeClientTestCase {
                 sender.beginMessage();
                 fail("Should not be able create a new streaming sender message before last one is compelted.");
             } catch (ClientIllegalStateException ex) {
+                // Expected
+            }
+
+            message.abort();
+
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCannotAssignAnOutputStreamToTheMessageBody() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond(); // Hidden session for stream sender
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            StreamSender sender = (StreamSender) connection.openStreamSender("test-qos").openFuture().get();
+            StreamSenderMessage message = sender.beginMessage();
+
+            try {
+                message.body(new ByteArrayOutputStream());
+                fail("Should not be able assign an output stream to the message body");
+            } catch (ClientUnsupportedOperationException ex) {
                 // Expected
             }
 
@@ -1258,6 +1475,10 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             OutputStream stream = message.rawOutputStream();
 
+            // Only one writer at a time can exist
+            assertThrows(ClientIllegalStateException.class, () -> message.rawOutputStream());
+            assertThrows(ClientIllegalStateException.class, () -> message.body());
+
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectTransfer().withMore(true).withPayload(new byte[] { 0, 1, 2, 3 });
             peer.expectTransfer().withMore(false).withNullPayload();
@@ -1901,6 +2122,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             stream.close();
             assertTrue(message.aborted());
             assertTrue(sendCompleted.await(100, TimeUnit.SECONDS));
+            assertThrows(ClientIllegalStateException.class, () -> message.rawOutputStream());
+            assertThrows(ClientIllegalStateException.class, () -> message.body());
 
             sender.closeAsync().get();
             connection.closeAsync().get();
@@ -2053,6 +2276,69 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             assertTrue(sendCompleted.await(100, TimeUnit.SECONDS));
             assertFalse(sendFailed.get());
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void testWriteToCreditLimitFramesOfMessagePayloadOneBytePerWrite() throws Exception {
+        final int WRITE_COUNT = 10;
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withIncomingWindow(WRITE_COUNT).withNextIncomingId(1).withLinkCredit(WRITE_COUNT).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamSender sender = connection.openStreamSender("test-queue");
+            StreamSenderMessage tracker = sender.beginMessage();
+            OutputStream stream = tracker.body();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            final byte[][] payloads = new byte[WRITE_COUNT][256];
+            for (int i = 0; i < WRITE_COUNT; ++i) {
+                payloads[i] = new byte[256];
+                Arrays.fill(payloads[i], (byte)(i + 1));
+            }
+
+            for (int i = 0; i < WRITE_COUNT; ++i) {
+                EncodedDataMatcher dataMatcher = new EncodedDataMatcher(payloads[i]);
+                TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+                payloadMatcher.setMessageContentMatcher(dataMatcher);
+
+                peer.expectTransfer().withPayload(payloadMatcher).withMore(true);
+            }
+
+            for (int i = 0; i < WRITE_COUNT; ++i) {
+                for (byte value : payloads[i]) {
+                    stream.write(value);
+                }
+                stream.flush();
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withNullPayload().withMore(false).accept();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            // grant one more credit for the complete to arrive.
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(WRITE_COUNT + 1).withLinkCredit(1).now();
+
+            stream.close();
 
             sender.closeAsync().get();
             connection.closeAsync().get();

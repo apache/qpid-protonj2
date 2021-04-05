@@ -50,11 +50,7 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
     protected int waiting;
     protected V result;
 
-    public ClientFuture() {
-        this(null);
-    }
-
-    public ClientFuture(ClientSynchronization<V> synchronization) {
+    protected ClientFuture(ClientSynchronization<V> synchronization) {
         this.synchronization = synchronization;
     }
 

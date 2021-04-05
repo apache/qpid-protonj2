@@ -167,6 +167,54 @@ public class ReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testCreateSenderAndCloseWithErrorSync() throws Exception {
+        doTestCreateSenderAndCloseOrDeatchWithErrorSync(true);
+    }
+
+    @Test
+    public void testCreateSenderAndDetachWithErrorSync() throws Exception {
+        doTestCreateSenderAndCloseOrDeatchWithErrorSync(false);
+    }
+
+    private void doTestCreateSenderAndCloseOrDeatchWithErrorSync(boolean close) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.expectDetach().withError("amqp-resource-deleted", "an error message").withClosed(close).respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Receiver receiver = session.openReceiver("test-queue");
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            if (close) {
+                receiver.close(ErrorCondition.create("amqp-resource-deleted", "an error message", null));
+            } else {
+                receiver.detach(ErrorCondition.create("amqp-resource-deleted", "an error message", null));
+            }
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testReceiverOpenRejectedByRemote() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();

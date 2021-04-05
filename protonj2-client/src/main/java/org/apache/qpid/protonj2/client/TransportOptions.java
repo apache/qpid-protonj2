@@ -249,7 +249,11 @@ public class TransportOptions implements Cloneable {
      * @param nativeIOPeference the nativeIOPeference to set
      */
     public void nativeIOPeference(String... nativeIOPeference) {
-        this.nativeIOPeference = nativeIOPeference;
+        if (nativeIOPeference == null || nativeIOPeference.length == 0 || nativeIOPeference.length == 1 && nativeIOPeference[0] == null) {
+            this.nativeIOPeference = DEFAULT_NATIVEIO_PREFERENCES;
+        } else {
+            this.nativeIOPeference = nativeIOPeference;
+        }
     }
 
     /**

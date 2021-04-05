@@ -1304,4 +1304,44 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
         assertThrows(IllegalArgumentException.class, () -> connection.setMaxFrameSize(UnsignedInteger.MAX_VALUE.longValue()));
     }
+
+    @Test
+    public void testEngineShutdownHandlerThrowsIsIngoredAndShutdownCompletes() {
+        ProtonEngine engine = (ProtonEngine) EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+
+        engine.shutdownHandler((theEngine) -> {
+            throw new RuntimeException();
+        });
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        assertTrue(engine.isWritable());
+        assertTrue(engine.isRunning());
+        assertFalse(engine.isShutdown());
+        assertFalse(engine.isFailed());
+        assertNull(engine.failureCause());
+        assertEquals(EngineState.STARTED, engine.state());
+
+        try {
+            engine.shutdown();
+            fail("User event handler throw wasn't propagated");
+        } catch (RuntimeException expected) {
+            // Expected
+        }
+
+        assertFalse(engine.isWritable());
+        assertFalse(engine.isRunning());
+        assertTrue(engine.isShutdown());
+        assertFalse(engine.isFailed());
+        assertNull(engine.failureCause());
+        assertEquals(EngineState.SHUTDOWN, engine.state());
+
+        // should not perform any additional work.
+        engine.shutdown();
+
+        assertNotNull(connection);
+        assertNull(failure);
+    }
 }

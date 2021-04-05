@@ -16,8 +16,10 @@
  */
 package org.apache.qpid.protonj2.client;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -149,6 +151,24 @@ public class TransportOptionsTest extends ImperativeClientTestCase {
         options.trafficClass(0);
         options.trafficClass(128);
         options.trafficClass(255);
+    }
+
+    @Test
+    public void testNativeIOPerferencesCannotBeNulled() {
+        TransportOptions options = createNonDefaultOptions();
+
+        assertNotNull(options.nativeIOPeference());
+        assertArrayEquals(TransportOptions.DEFAULT_NATIVEIO_PREFERENCES, options.nativeIOPeference());
+
+        options.nativeIOPeference((String) null);
+
+        assertNotNull(options.nativeIOPeference());
+        assertArrayEquals(TransportOptions.DEFAULT_NATIVEIO_PREFERENCES, options.nativeIOPeference());
+
+        options.nativeIOPeference("epolling");
+
+        assertNotNull(options.nativeIOPeference());
+        assertArrayEquals(new String[] { "epolling" }, options.nativeIOPeference());
     }
 
     @Test

@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.codec.decoders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
@@ -30,6 +31,8 @@ import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeEOFException;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.types.UnknownDescribedType;
+import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.junit.jupiter.api.Test;
 
 public class ProtonDecoderTest extends CodecTestSupport {
@@ -140,5 +143,94 @@ public class ProtonDecoderTest extends CodecTestSupport {
             decoder.readMultiple(buffer, decoderState, String.class);
             fail("Should not be able to convert to wrong resulting array type");
         } catch (ClassCastException cce) {}
+    }
+
+    @Test
+    public void testDecodeUnknownDescribedTypeWithNegativeLongDescriptor() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final UUID value = UUID.randomUUID();
+
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        buffer.writeByte(EncodingCodes.ULONG);
+        buffer.writeLong(UnsignedLong.MAX_VALUE.longValue());
+        buffer.writeByte(EncodingCodes.UUID);
+        buffer.writeLong(value.getMostSignificantBits());
+        buffer.writeLong(value.getLeastSignificantBits());
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof UnknownDescribedType);
+
+        UnknownDescribedType type = (UnknownDescribedType) result;
+        assertTrue(type.getDescribed() instanceof UUID);
+        assertEquals(value, type.getDescribed());
+    }
+
+    @Test
+    public void testDecodeUnknownDescribedTypeWithMaxLongDescriptor() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final UUID value = UUID.randomUUID();
+
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        buffer.writeByte(EncodingCodes.ULONG);
+        buffer.writeLong(Long.MAX_VALUE);
+        buffer.writeByte(EncodingCodes.UUID);
+        buffer.writeLong(value.getMostSignificantBits());
+        buffer.writeLong(value.getLeastSignificantBits());
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof UnknownDescribedType);
+
+        UnknownDescribedType type = (UnknownDescribedType) result;
+        assertTrue(type.getDescribed() instanceof UUID);
+        assertEquals(value, type.getDescribed());
+    }
+
+    @Test
+    public void testDecodeUnknownDescribedTypeWithUnknownDescriptorCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final UUID value = UUID.randomUUID();
+
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(255);
+        buffer.writeByte(EncodingCodes.UUID);
+        buffer.writeLong(value.getMostSignificantBits());
+        buffer.writeLong(value.getLeastSignificantBits());
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof UnknownDescribedType);
+
+        UnknownDescribedType type = (UnknownDescribedType) result;
+        assertTrue(type.getDescribed() instanceof UUID);
+        assertEquals(value, type.getDescribed());
+    }
+
+    @Test
+    public void testReadUnsignedIntegerTypes() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT0);
+        buffer.writeByte(EncodingCodes.SMALLUINT);
+        buffer.writeByte(127);
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(0);
+        buffer.writeByte(0);
+        buffer.writeByte(0);
+        buffer.writeByte(255);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(0, decoder.readUnsignedInteger(buffer, decoderState, 32));
+        assertEquals(127, decoder.readUnsignedInteger(buffer, decoderState, 32));
+        assertEquals(255, decoder.readUnsignedInteger(buffer, decoderState, 32));
+        assertEquals(32, decoder.readUnsignedInteger(buffer, decoderState, 32));
     }
 }

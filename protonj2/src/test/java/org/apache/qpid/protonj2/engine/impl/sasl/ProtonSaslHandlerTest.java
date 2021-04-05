@@ -31,15 +31,19 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.AMQPPerformativeEnvelopePool;
 import org.apache.qpid.protonj2.engine.Engine;
+import org.apache.qpid.protonj2.engine.EngineFactory;
+import org.apache.qpid.protonj2.engine.EngineSaslDriver;
 import org.apache.qpid.protonj2.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.protonj2.engine.EngineState;
 import org.apache.qpid.protonj2.engine.HeaderEnvelope;
 import org.apache.qpid.protonj2.engine.PerformativeEnvelope;
 import org.apache.qpid.protonj2.engine.SASLEnvelope;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
+import org.apache.qpid.protonj2.engine.exceptions.EngineStartedException;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.impl.ProtonConstants;
 import org.apache.qpid.protonj2.engine.impl.ProtonEngine;
+import org.apache.qpid.protonj2.engine.sasl.SaslClientContext;
 import org.apache.qpid.protonj2.engine.sasl.SaslOutcome;
 import org.apache.qpid.protonj2.engine.sasl.SaslServerContext;
 import org.apache.qpid.protonj2.engine.sasl.SaslServerListener;
@@ -176,6 +180,46 @@ public class ProtonSaslHandlerTest {
         engine.saslDriver().setMaxFrameSize(2048);
 
         assertEquals(2048, engine.saslDriver().getMaxFrameSize());
+    }
+
+    @Test
+    public void testCannotRegisterSaslDriverAfterEngineStarted() {
+        final ProtonEngine engine = (ProtonEngine) EngineFactory.PROTON.createEngine();
+
+        engine.start();
+
+        assertTrue(engine.isRunning());
+        assertThrows(EngineStartedException.class, () -> engine.registerSaslDriver(new EngineSaslDriver() {
+
+            @Override
+            public SaslClientContext client() {
+                return null;
+            }
+
+            @Override
+            public SaslServerContext server() {
+                return null;
+            }
+
+            @Override
+            public SaslState getSaslState() {
+                return null;
+            }
+
+            @Override
+            public SaslOutcome getSaslOutcome() {
+                return null;
+            }
+
+            @Override
+            public int getMaxFrameSize() {
+                return 0;
+            }
+
+            @Override
+            public void setMaxFrameSize(int maxFrameSize) {
+            }
+        }));
     }
 
     /**

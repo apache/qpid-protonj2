@@ -175,7 +175,7 @@ public final class ProtonDecoder implements Decoder {
     public ProtonDecoderState getCachedDecoderState() {
         ProtonDecoderState state = singleThreadedState;
         if (state == null) {
-            state = newDecoderState();
+            singleThreadedState = state = newDecoderState();
         }
 
         return state.reset();

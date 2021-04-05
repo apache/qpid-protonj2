@@ -178,7 +178,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
     public ProtonStreamDecoderState getCachedDecoderState() {
         ProtonStreamDecoderState state = singleThreadedState;
         if (state == null) {
-            state = singleThreadedState = newDecoderState();
+            singleThreadedState = state = newDecoderState();
         }
 
         return state.reset();

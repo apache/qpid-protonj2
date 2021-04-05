@@ -34,6 +34,8 @@ public final class UnsignedLong extends Number implements Comparable<UnsignedLon
     }
 
     public static final UnsignedLong ZERO = cachedValues[0];
+    public static final UnsignedLong ONE = cachedValues[1];
+    public static final UnsignedLong MAX_VALUE = new UnsignedLong(0xffffffffffffffffl);
 
     private final long underlying;
 

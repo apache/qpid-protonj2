@@ -20,8 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.util.NoLocalType;
 import org.apache.qpid.protonj2.codec.util.NoLocalTypeDecoder;
@@ -35,15 +37,32 @@ public class RegisteredTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeRegistredType() throws IOException {
+        doTestEncodeDecodeRegistredType(false);
+    }
+
+    @Test
+    public void testEncodeDecodeRegistredTypeFromStream() throws IOException {
+        doTestEncodeDecodeRegistredType(true);
+    }
+
+    private void doTestEncodeDecodeRegistredType(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         // Register the codec pair.
         encoder.registerDescribedTypeEncoder(new NoLocalTypeEncoder());
         decoder.registerDescribedTypeDecoder(new NoLocalTypeDecoder());
+        streamDecoder.registerDescribedTypeDecoder(new NoLocalTypeDecoder());
 
         encoder.writeObject(buffer, encoderState, NoLocalType.NO_LOCAL);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertTrue(result instanceof NoLocalType);
         NoLocalType resultTye = (NoLocalType) result;
         assertEquals(NoLocalType.NO_LOCAL.getDescriptor(), resultTye.getDescriptor());

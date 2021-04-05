@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.security.ProviderException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -44,7 +45,13 @@ public class ClientFutureTest {
         final ClientFuture<Void> future = futuresFactory.createFuture();
 
         assertFalse(future.isComplete());
+        assertFalse(future.isDone());
+        assertFalse(future.isFailed());
+
         future.complete(null);
+
+        assertFalse(future.isFailed());
+        assertTrue(future.isDone());
         assertTrue(future.isComplete());
     }
 
@@ -52,14 +59,42 @@ public class ClientFutureTest {
     @ValueSource(strings = { "conservative", "balanced", "progressive" })
     public void testOnSuccess(String futureType) {
         final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
-        final ClientFuture<Void> future = futuresFactory.createFuture();
+        final ClientFuture<Boolean> future = futuresFactory.createFuture();
 
-        future.complete(null);
+        assertFalse(future.isComplete());
+        assertFalse(future.isDone());
+
+        future.complete(true);
+
         try {
-            future.get();
+            assertTrue(future.get());
         } catch (Exception cause) {
             fail("Should not throw an error");
         }
+
+        assertTrue(future.isComplete());
+        assertTrue(future.isDone());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "conservative", "balanced", "progressive" })
+    public void testOnSuccessFromAnotherThread(String futureType) {
+        final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
+        final ClientFuture<Boolean> future = futuresFactory.createFuture();
+
+        assertFalse(future.isComplete());
+        assertFalse(future.isDone());
+
+        ForkJoinPool.commonPool().submit(() -> future.complete(true));
+
+        try {
+            assertTrue(future.get());
+        } catch (Exception cause) {
+            fail("Should not throw an error");
+        }
+
+        assertTrue(future.isComplete());
+        assertTrue(future.isDone());
     }
 
     @ParameterizedTest
@@ -121,6 +156,44 @@ public class ClientFutureTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "conservative", "balanced", "progressive" })
+    public void testTimedGetWhenCancelled(String futureType) {
+        final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
+        final ClientFuture<Void> future = futuresFactory.createFuture();
+
+        future.cancel(true);
+
+        try {
+            assertNull(future.get(10, TimeUnit.MILLISECONDS));
+        } catch (Exception cause) {
+            fail("Should not throw an error");
+        }
+
+        assertTrue(future.isCancelled());
+        assertTrue(future.isDone());
+        assertFalse(future.isFailed());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "conservative", "balanced", "progressive" })
+    public void testTimedGetWhenCancelledFromAnotherThread(String futureType) {
+        final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
+        final ClientFuture<Void> future = futuresFactory.createFuture();
+
+        ForkJoinPool.commonPool().submit(() -> future.cancel(true));
+
+        try {
+            assertNull(future.get(10, TimeUnit.MILLISECONDS));
+        } catch (Exception cause) {
+            fail("Should not throw an error");
+        }
+
+        assertTrue(future.isCancelled());
+        assertTrue(future.isDone());
+        assertFalse(future.isFailed());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "conservative", "balanced", "progressive" })
     public void testOnFailure(String futureType) {
         final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
         final ClientFuture<Void> future = futuresFactory.createFuture();
@@ -137,6 +210,33 @@ public class ClientFutureTest {
         } catch (TimeoutException e) {
             fail("Should not throw an ExecutionException");
         }
+
+        assertTrue(future.isDone());
+        assertTrue(future.isFailed());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "conservative", "balanced", "progressive" })
+    public void testOnFailureFromAnotherThread(String futureType) {
+        final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
+        final ClientFuture<Void> future = futuresFactory.createFuture();
+        final ClientException ex = new ClientException("Failed");
+
+        ForkJoinPool.commonPool().submit(() -> future.failed(ex));
+
+        try {
+            future.get(5, TimeUnit.SECONDS);
+            fail("Should throw an error");
+        } catch (ExecutionException exe) {
+            assertSame(exe.getCause(), ex);
+        } catch (InterruptedException e) {
+            fail("Should not throw an ExecutionException");
+        } catch (TimeoutException e) {
+            fail("Should not throw an ExecutionException");
+        }
+
+        assertTrue(future.isDone());
+        assertTrue(future.isFailed());
     }
 
     @ParameterizedTest
@@ -202,6 +302,79 @@ public class ClientFutureTest {
         }
 
         assertTrue(syncCalled.get(), "Synchronization not called");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "conservative", "balanced", "progressive" })
+    public void testOnSuccessCallsSynchronizationIngoresThrownError(String futureType) {
+        final AtomicBoolean syncCalled = new AtomicBoolean(false);
+        final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
+
+        final ClientFuture<Void> future = futuresFactory.createFuture(new ClientSynchronization<Void>() {
+
+            @Override
+            public void onPendingSuccess(Void result) {
+                syncCalled.set(true);
+                throw new RuntimeException();
+            }
+
+            @Override
+            public void onPendingFailure(Throwable cause) {
+
+            }
+        });
+
+        future.complete(null);
+        try {
+            future.get(5, TimeUnit.SECONDS);
+        } catch (Exception cause) {
+            fail("Should not throw an error");
+        }
+
+        assertTrue(syncCalled.get(), "Synchronization not called");
+        assertTrue(future.isComplete());
+        assertTrue(future.isDone());
+        assertFalse(future.isFailed());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "conservative", "balanced", "progressive" })
+    public void testOnFailureCallsSynchronizationAndIngoresThrownErrors(String futureType) {
+        final AtomicBoolean syncCalled = new AtomicBoolean(false);
+        final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
+
+        final ClientFuture<Void> future = futuresFactory.createFuture(new ClientSynchronization<Void>() {
+
+            @Override
+            public void onPendingSuccess(Void result) {
+            }
+
+            @Override
+            public void onPendingFailure(Throwable cause) {
+                syncCalled.set(true);
+                throw new RuntimeException();
+            }
+        });
+
+        final ClientException ex = new ClientException("Failed");
+
+        future.failed(ex);
+        try {
+            future.get(5, TimeUnit.SECONDS);
+            fail("Should throw an error");
+        } catch (ProviderException cause) {
+        } catch (InterruptedException e) {
+            fail("Should not throw an ExecutionException");
+        } catch (ExecutionException e) {
+            assertSame(e.getCause(), ex);
+        } catch (TimeoutException e) {
+            fail("Should not throw an ExecutionException");
+        }
+
+        assertTrue(syncCalled.get(), "Synchronization not called");
+        assertTrue(future.isComplete());
+        assertTrue(future.isDone());
+        assertTrue(future.isFailed());
     }
 
     @ParameterizedTest
@@ -345,7 +518,27 @@ public class ClientFutureTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "conservative", "balanced", "progressive" })
-    public void testUnfailableOnFailureCallsSuccessSynchronization(String futureType) {
+    public void testUnfailableOnFailureCannotFail(String futureType) {
+        final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
+        final ClientFuture<Void> future = futuresFactory.createUnfailableFuture();
+        final ClientException ex = new ClientException("Failed");
+
+        future.failed(ex);
+
+        try {
+            future.get(5, TimeUnit.SECONDS);
+        } catch (Exception cause) {
+            fail("Should not throw an error");
+        }
+
+        assertTrue(future.isDone());
+        assertFalse(future.isFailed());
+        assertFalse(future.isCancelled());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "conservative", "balanced", "progressive" })
+    public void testUnfailableOnFailureCallsSuccessSynchronizationWhenFailed(String futureType) {
         final AtomicBoolean syncCalled = new AtomicBoolean(false);
         final ClientFutureFactory futuresFactory = ClientFutureFactory.create(futureType);
 

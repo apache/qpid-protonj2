@@ -22,12 +22,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.util.NoLocalType;
 import org.apache.qpid.protonj2.types.UnknownDescribedType;
@@ -40,30 +42,46 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeUnknownDescribedType() throws Exception {
+        doTestDecodeUnknownDescribedType(false);
+    }
+
+    @Test
+    public void testDecodeUnknownDescribedTypeFromStream() throws Exception {
+        doTestDecodeUnknownDescribedType(true);
+    }
+
+    private void doTestDecodeUnknownDescribedType(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         encoder.writeObject(buffer, encoderState, NoLocalType.NO_LOCAL);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertTrue(result instanceof UnknownDescribedType);
         UnknownDescribedType resultTye = (UnknownDescribedType) result;
         assertEquals(NoLocalType.NO_LOCAL.getDescriptor(), resultTye.getDescriptor());
     }
 
     @Test
-    public void testDecodeSmallSeriesOfUnknownDescribedTypes() throws IOException {
-        doTestDecodeUnknownDescribedTypeSeries(SMALL_SIZE);
+    public void testUnknownDescribedTypeInList() throws IOException {
+        doTestUnknownDescribedTypeInList(false);
     }
 
     @Test
-    public void testDecodeLargeSeriesOfUnknownDescribedTypes() throws IOException {
-        doTestDecodeUnknownDescribedTypeSeries(LARGE_SIZE);
+    public void testUnknownDescribedTypeInListFromStream() throws IOException {
+        doTestUnknownDescribedTypeInList(true);
     }
 
     @SuppressWarnings("unchecked")
-    @Test
-    public void testUnknownDescribedTypeInList() throws IOException {
+    private void doTestUnknownDescribedTypeInList(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         List<Object> listOfUnkowns = new ArrayList<>();
 
@@ -71,7 +89,12 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
 
         encoder.writeList(buffer, encoderState, listOfUnkowns);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof List);
@@ -86,10 +109,20 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
         assertEquals(NoLocalType.NO_LOCAL.getDescriptor(), resultTye.getDescriptor());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testUnknownDescribedTypeInMap() throws IOException {
+        doTestUnknownDescribedTypeInMap(false);
+    }
+
+    @Test
+    public void testUnknownDescribedTypeInMapFromStream() throws IOException {
+        doTestUnknownDescribedTypeInMap(true);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void doTestUnknownDescribedTypeInMap(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Map<Object, Object> mapOfUnknowns = new HashMap<>();
 
@@ -97,7 +130,12 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
 
         encoder.writeMap(buffer, encoderState, mapOfUnknowns);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof Map);
@@ -131,15 +169,41 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
         } catch (IllegalArgumentException iae) {}
     }
 
-    private void doTestDecodeUnknownDescribedTypeSeries(int size) throws IOException {
+    @Test
+    public void testDecodeSmallSeriesOfUnknownDescribedTypes() throws IOException {
+        doTestDecodeUnknownDescribedTypeSeries(SMALL_SIZE, false);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfUnknownDescribedTypes() throws IOException {
+        doTestDecodeUnknownDescribedTypeSeries(LARGE_SIZE, false);
+    }
+
+    @Test
+    public void testDecodeSmallSeriesOfUnknownDescribedTypesFromStream() throws IOException {
+        doTestDecodeUnknownDescribedTypeSeries(SMALL_SIZE, true);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfUnknownDescribedTypesFromStream() throws IOException {
+        doTestDecodeUnknownDescribedTypeSeries(LARGE_SIZE, true);
+    }
+
+    private void doTestDecodeUnknownDescribedTypeSeries(int size, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, NoLocalType.NO_LOCAL);
         }
 
         for (int i = 0; i < size; ++i) {
-            final Object result = decoder.readObject(buffer, decoderState);
+            final Object result;
+            if (fromStream) {
+                result = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                result = decoder.readObject(buffer, decoderState);
+            }
 
             assertNotNull(result);
             assertTrue(result instanceof UnknownDescribedType);
