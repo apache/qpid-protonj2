@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.client;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -67,6 +68,7 @@ public class SaslOptions {
      * @return this options object for chaining.
      */
     public SaslOptions addAllowedMechanism(String mechanism) {
+        Objects.requireNonNull(mechanism, "Cannot add null as an allowed mechanism");
         this.saslAllowedMechs.add(mechanism);
         return this;
     }
@@ -88,6 +90,7 @@ public class SaslOptions {
      */
     public SaslOptions copyInto(SaslOptions other) {
         other.saslEnabled(saslEnabled());
+        other.saslAllowedMechs.addAll(saslAllowedMechs);
 
         return other;
     }

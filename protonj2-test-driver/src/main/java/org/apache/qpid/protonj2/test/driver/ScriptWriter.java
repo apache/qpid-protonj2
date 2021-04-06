@@ -21,8 +21,10 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.test.driver.actions.AMQPHeaderInjectAction;
@@ -399,8 +401,29 @@ public abstract class ScriptWriter {
      *      The SASL code that indicates which failure the remote will be sent.
      */
     public void expectFailingSASLPlainConnect(byte saslCode) {
+        expectFailingSASLPlainConnect(saslCode, "PLAIN");
+    }
+
+    /**
+     * Creates all the scripted elements needed for a failed SASL Plain
+     * connection.
+     * <p>
+     * For this exchange the SASL header is expected which is responded to with the
+     * corresponding SASL header and an immediate SASL mechanisms frame that only
+     * advertises plain as the mechanism.  It is expected that the remote will
+     * send a SASL init with the plain mechanism selected and the outcome is
+     * predefined failing the exchange.
+     *
+     * @param saslCode
+     *      The SASL code that indicates which failure the remote will be sent.
+     * @param offeredMechanisms
+     *      The set of mechanisms that the server should offer in the SASL Mechanisms frame
+     */
+    public void expectFailingSASLPlainConnect(byte saslCode, String... offeredMechanisms) {
+        assertTrue(Arrays.asList(offeredMechanisms).contains("PLAIN"));
+
         expectSASLHeader().respondWithSASLPHeader();
-        remoteSaslMechanisms().withMechanisms("PLAIN").queue();
+        remoteSaslMechanisms().withMechanisms(offeredMechanisms).queue();
         expectSaslInit().withMechanism("PLAIN");
 
         if (saslCode <= 0 || saslCode > SaslCode.SYS_TEMP.ordinal()) {
@@ -408,6 +431,55 @@ public abstract class ScriptWriter {
         }
 
         remoteSaslOutcome().withCode(SaslCode.valueOf(saslCode)).queue();
+    }
+
+    /**
+     * Creates all the scripted elements needed for a successful SASL EXTERNAL
+     * connection.
+     * <p>
+     * For this exchange the SASL header is expected which is responded to with the
+     * corresponding SASL header and an immediate SASL mechanisms frame that only
+     * advertises EXTERNAL as the mechanism.  It is expected that the remote will
+     * send a SASL init with the EXTERNAL mechanism selected and the outcome is
+     * predefined as success.  Once done the expectation is added for the AMQP
+     * header to arrive and a header response will be sent.
+     */
+    public void expectSaslExternalConnect() {
+        expectSASLHeader().respondWithSASLPHeader();
+        remoteSaslMechanisms().withMechanisms("EXTERNAL").queue();
+        expectSaslInit().withMechanism("EXTERNAL").withInitialResponse(new byte[0]);
+        remoteSaslOutcome().withCode(SaslCode.OK).queue();
+        expectAMQPHeader().respondWithAMQPHeader();
+    }
+
+    /**
+     * Creates all the scripted elements needed for a SASL exchange with the offered
+     * mechanisms but the client should fail if configured such that it cannot match
+     * any of those to its own available mechanisms.
+     *
+     * @param offeredMechanisms
+     *      The set of SASL Mechanisms to advertise as available on the peer.
+     */
+    public void expectSaslMechanismNegotiationFailure(String... offeredMechanisms) {
+        expectSASLHeader().respondWithSASLPHeader();
+        remoteSaslMechanisms().withMechanisms(offeredMechanisms).queue();
+    }
+
+    /**
+     * Creates all the scripted elements needed for a SASL exchange with the offered
+     * mechanisms with the expectation that the client will respond with the provided
+     * mechanism and then the server will fail the exchange with the auth failed code.
+     *
+     * @param offeredMechanisms
+     *      The set of SASL Mechanisms to advertise as available on the peer.
+     * @param chosenMechanism
+     *      The SASL Mechanism that the client should select and respond with.
+     */
+    public void expectSaslConnectThatAlwaysFailsAuthentication(String[] offeredMechanisms, String chosenMechanism) {
+        expectSASLHeader().respondWithSASLPHeader();
+        remoteSaslMechanisms().withMechanisms(offeredMechanisms).queue();
+        expectSaslInit().withMechanism(chosenMechanism);
+        remoteSaslOutcome().withCode(SaslCode.AUTH).queue();
     }
 
     //----- Utility methods for tests writing raw scripted SASL tests
