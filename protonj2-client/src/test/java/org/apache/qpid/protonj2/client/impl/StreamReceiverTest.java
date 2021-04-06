@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -44,6 +45,7 @@ import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.DeliveryState;
+import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.StreamDelivery;
@@ -83,6 +85,178 @@ import org.slf4j.LoggerFactory;
 class StreamReceiverTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(StreamReceiverTest.class);
+
+    @Test
+    public void testCreateReceiverAndClose() throws Exception {
+        doTestCreateReceiverAndCloseOrDetachLink(true);
+    }
+
+    @Test
+    public void testCreateReceiverAndDetach() throws Exception {
+        doTestCreateReceiverAndCloseOrDetachLink(false);
+    }
+
+    private void doTestCreateReceiverAndCloseOrDetachLink(boolean close) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectDetach().withClosed(close).respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            if (close) {
+                receiver.closeAsync().get(10, TimeUnit.SECONDS);
+            } else {
+                receiver.detachAsync().get(10, TimeUnit.SECONDS);
+            }
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateReceiverAndCloseSync() throws Exception {
+        doTestCreateReceiverAndCloseOrDetachSyncLink(true);
+    }
+
+    @Test
+    public void testCreateReceiverAndDetachSync() throws Exception {
+        doTestCreateReceiverAndCloseOrDetachSyncLink(false);
+    }
+
+    private void doTestCreateReceiverAndCloseOrDetachSyncLink(boolean close) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectDetach().withClosed(close).respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            if (close) {
+                receiver.close();
+            } else {
+                receiver.detach();
+            }
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateSenderAndCloseWithErrorSync() throws Exception {
+        doTestCreateSenderAndCloseOrDeatchWithErrorSync(true);
+    }
+
+    @Test
+    public void testCreateSenderAndDetachWithErrorSync() throws Exception {
+        doTestCreateSenderAndCloseOrDeatchWithErrorSync(false);
+    }
+
+    private void doTestCreateSenderAndCloseOrDeatchWithErrorSync(boolean close) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.expectDetach().withError("amqp-resource-deleted", "an error message").withClosed(close).respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            if (close) {
+                receiver.close(ErrorCondition.create("amqp-resource-deleted", "an error message", null));
+            } else {
+                receiver.detach(ErrorCondition.create("amqp-resource-deleted", "an error message", null));
+            }
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateSenderAndCloseWithErrorASync() throws Exception {
+        doTestCreateSenderAndCloseOrDeatchWithErrorASync(true);
+    }
+
+    @Test
+    public void testCreateSenderAndDetachWithErrorASync() throws Exception {
+        doTestCreateSenderAndCloseOrDeatchWithErrorASync(false);
+    }
+
+    private void doTestCreateSenderAndCloseOrDeatchWithErrorASync(boolean close) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.expectDetach().withError("amqp-resource-deleted", "an error message").withClosed(close).respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            if (close) {
+                receiver.closeAsync(ErrorCondition.create("amqp-resource-deleted", "an error message", null)).get();
+            } else {
+                receiver.detachAsync(ErrorCondition.create("amqp-resource-deleted", "an error message", null)).get();
+            }
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 
     @Test
     public void testStreamReceiverConfiguresSessionCapacity_1() throws Exception {
@@ -177,6 +351,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             StreamReceiver receiver = connection.openStreamReceiver("test-queue", receiverOptions);
 
             receiver.openFuture().get();
+
+            assertSame(container, receiver.client());
+            assertSame(connection, receiver.connection());
+
             receiver.close();
 
             connection.closeAsync().get(10, TimeUnit.SECONDS);

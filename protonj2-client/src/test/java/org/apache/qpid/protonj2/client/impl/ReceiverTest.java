@@ -568,6 +568,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
         }
     }
+
     @Test
     public void testCreateDynamicReceiver() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
