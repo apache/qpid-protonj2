@@ -62,6 +62,12 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
         return this;
     }
 
+    @Override
+    public BeginExpectation optional() {
+        super.optional();
+        return this;
+    }
+
     public BeginInjectAction respond() {
         response = new BeginInjectAction(driver);
         driver.addScriptedElement(response);

@@ -36,9 +36,11 @@ import org.apache.qpid.protonj2.client.ClientOptions;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.ErrorCondition;
+import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Session;
+import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRedirectedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -494,6 +496,41 @@ public class ConnectionTest extends ImperativeClientTestCase {
             connection.openFuture().get();
             // Should close normally and not throw error as we initiated the close.
             connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testConnectionClosedWithErrorToRemoteSync() throws Exception {
+        doTestConnectionClosedWithErrorToRemote(false);
+    }
+
+    @Test
+    public void testConnectionClosedWithErrorToRemoteAsync() throws Exception {
+        doTestConnectionClosedWithErrorToRemote(true);
+    }
+
+    private void doTestConnectionClosedWithErrorToRemote(boolean async) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectClose().withError(ConnectionError.CONNECTION_FORCED.toString(), "Closed").respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
+
+            connection.openFuture().get();
+            if (async) {
+                connection.closeAsync(ErrorCondition.create(ConnectionError.CONNECTION_FORCED.toString(), "Closed")).get();
+            } else {
+                connection.close(ErrorCondition.create(ConnectionError.CONNECTION_FORCED.toString(), "Closed"));
+            }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1259,6 +1296,166 @@ public class ConnectionTest extends ImperativeClientTestCase {
                 remoteURI.getHost(), remoteURI.getPort(), connectionOptions()).openFuture().get();
 
             connection.close(ErrorCondition.create(condition, description, null));
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testAnonymousSenderOpenHeldUntilConnectionOpenedAndSupportConfirmed() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen();
+            peer.expectBegin();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Sender sender = connection.openAnonymousSender();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            // This should happen after we inject the held open and attach
+            peer.expectAttach().ofSender().withTarget().withAddress(Matchers.nullValue()).and().respond();
+            peer.expectClose().respond();
+
+            // Inject held responses to get the ball rolling again
+            peer.remoteOpen().withOfferedCapabilities("ANONYMOUS-RELAY").now();
+            peer.respondToLastBegin().now();
+
+            try {
+                sender.openFuture().get();
+            } catch (ExecutionException ex) {
+                fail("Open of Sender failed waiting for response: " + ex.getCause());
+            }
+
+            connection.closeAsync();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSendHeldUntilConnectionOpenedAndSupportConfirmed() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond().withOfferedCapabilities("ANONYMOUS-RELAY");
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().withTarget().withAddress(nullValue()).and().respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.expectTransfer().withNonNullPayload()
+                                 .withDeliveryTag(new byte[] {0}).respond().withSettled(true).withState().accepted();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            try {
+                Tracker tracker = connection.send(Message.create("Hello World"));
+                assertNotNull(tracker);
+                tracker.awaitAccepted();
+            } catch (ClientException ex) {
+                fail("Open of Sender failed waiting for response: " + ex.getCause());
+            }
+
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testConnectionLevelSendFailsWhenAnonymousRelayNotAdvertisedByRemote() throws Exception {
+        doTestConnectionLevelSendFailsWhenAnonymousRelayNotAdvertisedByRemote(false);
+    }
+
+    @Test
+    public void testConnectionLevelSendFailsWhenAnonymousRelayNotAdvertisedByRemoteAfterAlreadyOpened() throws Exception {
+        doTestConnectionLevelSendFailsWhenAnonymousRelayNotAdvertisedByRemote(true);
+    }
+
+    private void doTestConnectionLevelSendFailsWhenAnonymousRelayNotAdvertisedByRemote(boolean openWait) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            // Ensures that the Begin arrives regard of a race on open without anonymous relay support
+            connection.defaultSession();
+
+            if (openWait) {
+                connection.openFuture().get();
+            }
+
+            try {
+                connection.send(Message.create("Hello World"));
+                fail("Open of Sender should fail as remote did not advertise anonymous relay support: ");
+            } catch (ClientUnsupportedOperationException ex) {
+            }
+
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testOpenAnonymousSenderFailsWhenAnonymousRelayNotAdvertisedByRemote() throws Exception {
+        doTestOpenAnonymousSenderFailsWhenAnonymousRelayNotAdvertisedByRemote(false);
+    }
+
+    @Test
+    public void testOpenAnonymousSenderFailsWhenAnonymousRelayNotAdvertisedByRemoteAfterAlreadyOpened() throws Exception {
+        doTestOpenAnonymousSenderFailsWhenAnonymousRelayNotAdvertisedByRemote(true);
+    }
+
+    private void doTestOpenAnonymousSenderFailsWhenAnonymousRelayNotAdvertisedByRemote(boolean openWait) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            // Ensures that the Begin arrives regard of a race on open without anonymous relay support
+            connection.defaultSession();
+
+            if (openWait) {
+                connection.openFuture().get();
+            }
+
+            try {
+                connection.openAnonymousSender().openFuture().get();
+                fail("Open of Sender should fail as remote did not advertise anonymous relay support: ");
+            } catch (ClientUnsupportedOperationException ex) {
+            } catch (ExecutionException ex) {
+                assertTrue(ex.getCause() instanceof ClientUnsupportedOperationException);
+            }
+
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

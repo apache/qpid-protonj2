@@ -490,18 +490,18 @@ public class ClientConnection implements Connection {
     public Tracker send(Message<?> message) throws ClientException {
         checkClosedOrFailed();
         Objects.requireNonNull(message, "Cannot send a null message");
-        final ClientFuture<Tracker> result = getFutureFactory().createFuture();
+        final ClientFuture<Sender> result = getFutureFactory().createFuture();
 
         executor.execute(() -> {
             try {
                 checkClosedOrFailed();
-                result.complete(lazyCreateConnectionSender().send(message));
+                result.complete(lazyCreateConnectionSender());
             } catch (Throwable error) {
                 result.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
         });
 
-        return request(this, result);
+        return request(this, result).send(message);
     }
 
     @Override

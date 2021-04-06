@@ -50,6 +50,21 @@ public interface ErrorCondition {
      * cannot be null however the other attribute can.
      *
      * @param condition
+     *      The value that defines the error condition.
+     * @param description
+     *      The supplementary description for the given error condition.
+     *
+     * @return a new read-only {@link ErrorCondition} object
+     */
+    static ErrorCondition create(String condition, String description) {
+        return new ClientErrorCondition(condition, description, null);
+    }
+
+    /**
+     * Create an error condition object using the supplied values.  The condition string
+     * cannot be null however the other attribute can.
+     *
+     * @param condition
      * 		The value that defines the error condition.
      * @param description
      * 		The supplementary description for the given error condition.
