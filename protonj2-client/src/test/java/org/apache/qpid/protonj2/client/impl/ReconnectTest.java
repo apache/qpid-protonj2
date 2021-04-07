@@ -324,9 +324,11 @@ public class ReconnectTest extends ImperativeClientTestCase {
             }
 
             try {
-                connection.defaultSession();
+                connection.defaultSession().openFuture().get();
                 fail("Should fail connection since remote rejected open with auth error");
-            } catch (ClientConnectionSecurityException exe) {
+            } catch (ClientConnectionSecurityException cliEx) {
+            } catch (ExecutionException exe) {
+                assertTrue(exe.getCause() instanceof ClientConnectionSecurityException);
             }
 
             connection.close();
