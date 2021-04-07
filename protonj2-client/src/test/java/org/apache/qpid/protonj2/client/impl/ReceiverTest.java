@@ -610,6 +610,91 @@ public class ReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testCreateDynamicReceiverWthNodeProperties() throws Exception {
+        final Map<String, Object> nodeProperties = new HashMap<>();
+        nodeProperties.put("test-property-1", "one");
+        nodeProperties.put("test-property-2", "two");
+        nodeProperties.put("test-property-3", "three");
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue())
+                               .withSource()
+                                   .withDynamic(true)
+                                   .withAddress((String) null)
+                                   .withDynamicNodeProperties(nodeProperties)
+                               .and().respond()
+                               .withSource()
+                                   .withDynamic(true)
+                                   .withAddress("test-dynamic-node")
+                                   .withDynamicNodeProperties(nodeProperties);
+            peer.expectFlow();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openDynamicReceiver(nodeProperties);
+
+            assertNotNull("Remote should have assigned the address for the dynamic receiver", receiver.address());
+            assertEquals("test-dynamic-node", receiver.address());
+
+            receiver.closeAsync().get(10, TimeUnit.SECONDS);
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateDynamicReceiverWithNoCreditWindow() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue())
+                               .withSource().withDynamic(true).withAddress((String) null)
+                               .and().respond()
+                               .withSource().withDynamic(true).withAddress("test-dynamic-node");
+            peer.expectAttach().ofSender().respond();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(0);
+            Receiver receiver = session.openDynamicReceiver(receiverOptions).openFuture().get();
+
+            // Perform another round trip operation to ensure we see that no flow frame was
+            // sent by the receiver
+            session.openSender("test");
+
+            assertNotNull("Remote should have assigned the address for the dynamic receiver", receiver.address());
+            assertEquals("test-dynamic-node", receiver.address());
+
+            receiver.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testDynamicReceiverAddressWaitsForRemoteAttach() throws Exception {
         tryReadDynamicReceiverAddress(true);
     }

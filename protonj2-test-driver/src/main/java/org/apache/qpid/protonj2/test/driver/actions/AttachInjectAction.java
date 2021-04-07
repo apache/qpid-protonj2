@@ -394,8 +394,13 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
             return this;
         }
 
-        public SourceBuilder withDynamicNodeProperties(Map<Symbol, Object> properties) {
+        public SourceBuilder withDynamicNodePropertiesMap(Map<Symbol, Object> properties) {
             source.setDynamicNodeProperties(properties);
+            return this;
+        }
+
+        public SourceBuilder withDynamicNodeProperties(Map<String, Object> properties) {
+            source.setDynamicNodeProperties(TypeMapper.toSymbolKeyedMap(properties));
             return this;
         }
 
@@ -488,8 +493,13 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
             return this;
         }
 
-        public TargetBuilder withDynamicNodeProperties(Map<Symbol, Object> properties) {
+        public TargetBuilder withDynamicNodePropertiesMap(Map<Symbol, Object> properties) {
             target.setDynamicNodeProperties(properties);
+            return this;
+        }
+
+        public TargetBuilder withDynamicNodeProperties(Map<String, Object> properties) {
+            target.setDynamicNodeProperties(TypeMapper.toSymbolKeyedMap(properties));
             return this;
         }
 

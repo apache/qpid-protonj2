@@ -83,8 +83,12 @@ public class SourceMatcher extends ListDescribedTypeMatcher {
         return withDynamic(equalTo(dynamic));
     }
 
-    public SourceMatcher withDynamicNodeProperties(Map<Symbol, Object> properties) {
+    public SourceMatcher withDynamicNodePropertiesMap(Map<Symbol, Object> properties) {
         return withDynamicNodeProperties(equalTo(properties));
+    }
+
+    public SourceMatcher withDynamicNodeProperties(Map<String, Object> properties) {
+        return withDynamicNodeProperties(equalTo(TypeMapper.toSymbolKeyedMap(properties)));
     }
 
     public SourceMatcher withDistributionMode(String distributionMode) {

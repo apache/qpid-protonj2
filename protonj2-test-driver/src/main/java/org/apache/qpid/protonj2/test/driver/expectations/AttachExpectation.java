@@ -515,7 +515,13 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         }
 
         @Override
-        public AttachSourceMatcher withDynamicNodeProperties(Map<Symbol, Object> properties) {
+        public AttachSourceMatcher withDynamicNodePropertiesMap(Map<Symbol, Object> properties) {
+            super.withDynamicNodePropertiesMap(properties);
+            return this;
+        }
+
+        @Override
+        public AttachSourceMatcher withDynamicNodeProperties(Map<String, Object> properties) {
             super.withDynamicNodeProperties(properties);
             return this;
         }
