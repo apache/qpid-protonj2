@@ -607,6 +607,23 @@ public class ClientConnection implements Connection {
         });
     }
 
+    void autoFlushOff() {
+        autoFlush = false;
+    }
+
+    void autoFlushOn() {
+        autoFlush = true;
+    }
+
+    void flush() {
+        try {
+            transport.flush();
+        } catch (IOException e) {
+            LOG.debug("Error while flushing engine output to transport: ", e.getMessage());
+            throw new UncheckedIOException(e);
+        }
+    }
+
     //----- Private implementation events handlers and utility methods
 
     private void handleLocalOpen(org.apache.qpid.protonj2.engine.Connection connection) {
@@ -666,38 +683,6 @@ public class ClientConnection implements Connection {
         openFuture.complete(this);
     }
 
-    private void submitConnectionEvent(BiConsumer<Connection, ConnectionEvent> handler, String host, int port, ClientIOException cause) {
-        if (handler != null) {
-            try {
-                notifications.submit(() -> {
-                    try {
-                        handler.accept(this, new ConnectionEvent(host, port));
-                    } catch (Exception ex) {
-                        LOG.trace("User supplied connection life-cycle event handler threw: ", ex);
-                    }
-                });
-            } catch (Exception ex) {
-                LOG.trace("Error thrown while attempting to submit event notification ", ex);
-            }
-        }
-    }
-
-    private void submitDisconnectionEvent(BiConsumer<Connection, DisconnectionEvent> handler, String host, int port, ClientIOException cause) {
-        if (handler != null) {
-            try {
-                notifications.submit(() -> {
-                    try {
-                        handler.accept(this, new DisconnectionEvent(host, port, cause));
-                    } catch (Exception ex) {
-                        LOG.trace("User supplied disconnection life-cycle event handler threw: ", ex);
-                    }
-                });
-            } catch (Exception ex) {
-                LOG.trace("Error thrown while attempting to submit event notification ", ex);
-            }
-        }
-    }
-
     private void handleRemotecClose(org.apache.qpid.protonj2.engine.Connection connection) {
         // When the connection is already locally closed this implies the application requested
         // a close of this connection so this is normal, if not then the remote is closing for
@@ -715,23 +700,6 @@ public class ClientConnection implements Connection {
             } catch (Throwable ignored) {
                 // Engine handlers will ensure we close down if not already locally closed.
             }
-        }
-    }
-
-    void autoFlushOff() {
-        autoFlush = false;
-    }
-
-    void autoFlushOn() {
-        autoFlush = true;
-    }
-
-    void flush() {
-        try {
-            transport.flush();
-        } catch (IOException e) {
-            LOG.debug("Error while flushing engine output to transport: ", e.getMessage());
-            throw new UncheckedIOException(e);
         }
     }
 
@@ -807,6 +775,38 @@ public class ClientConnection implements Connection {
 
             openFuture.complete(this);
             closeFuture.complete(this);
+        }
+    }
+
+    private void submitConnectionEvent(BiConsumer<Connection, ConnectionEvent> handler, String host, int port, ClientIOException cause) {
+        if (handler != null) {
+            try {
+                notifications.submit(() -> {
+                    try {
+                        handler.accept(this, new ConnectionEvent(host, port));
+                    } catch (Exception ex) {
+                        LOG.trace("User supplied connection life-cycle event handler threw: ", ex);
+                    }
+                });
+            } catch (Exception ex) {
+                LOG.trace("Error thrown while attempting to submit event notification ", ex);
+            }
+        }
+    }
+
+    private void submitDisconnectionEvent(BiConsumer<Connection, DisconnectionEvent> handler, String host, int port, ClientIOException cause) {
+        if (handler != null) {
+            try {
+                notifications.submit(() -> {
+                    try {
+                        handler.accept(this, new DisconnectionEvent(host, port, cause));
+                    } catch (Exception ex) {
+                        LOG.trace("User supplied disconnection life-cycle event handler threw: ", ex);
+                    }
+                });
+            } catch (Exception ex) {
+                LOG.trace("Error thrown while attempting to submit event notification ", ex);
+            }
         }
     }
 

@@ -30,8 +30,10 @@ import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.Session;
+import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionSecurityException;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionSecuritySaslException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.util.StopWatch;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
@@ -300,9 +302,9 @@ public class ReconnectTest extends ImperativeClientTestCase {
     @Test
     public void testConnectThrowsSecurityViolationOnFailureFromOpen() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
-
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().reject(AmqpError.UNAUTHORIZED_ACCESS.toString(), "Anonymous connections not allowed");
+            peer.expectBegin().optional();  // Could arrive if remote open response not processed in time
             peer.expectClose();
             peer.start();
 
@@ -317,10 +319,23 @@ public class ReconnectTest extends ImperativeClientTestCase {
             try {
                 connection.openFuture().get();
             } catch (ExecutionException exe) {
+                // Possible based on time of rejecting open arrival.
                 assertTrue(exe.getCause() instanceof ClientConnectionSecurityException);
             }
 
+            try {
+                connection.defaultSession();
+                fail("Should fail connection since remote rejected open with auth error");
+            } catch (ClientConnectionSecurityException exe) {
+            }
+
             connection.close();
+
+            try {
+                connection.defaultSession();
+                fail("Should fail as illegal state as connection was closed.");
+            } catch (ClientIllegalStateException exe) {
+            }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -607,6 +622,93 @@ public class ReconnectTest extends ImperativeClientTestCase {
             connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testConnectionReportsFailedAfterMaxinitialReconnectAttempts() throws Exception {
+        try (ProtonTestServer firstPeer = new ProtonTestServer()) {
+            firstPeer.start();
+
+            final URI primaryURI = firstPeer.getServerURI();
+
+            firstPeer.close();
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.reconnectOptions().reconnectEnabled(true);
+            options.reconnectOptions().maxReconnectAttempts(-1); // Try forever if connect succeeds once.
+            options.reconnectOptions().maxInitialConnectionAttempts(3);
+            options.reconnectOptions().warnAfterReconnectAttempts(5);
+            options.reconnectOptions().reconnectDelay(10);
+            options.reconnectOptions().useReconnectBackOff(false);
+
+            Client container = Client.create();
+            Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
+
+            try {
+                connection.openFuture().get();
+                fail("Should not successfully connect.");
+            } catch (ExecutionException exe) {
+                assertTrue(exe.getCause() instanceof ClientConnectionRemotelyClosedException);
+            }
+
+            try {
+                connection.defaultSender();
+                fail("Connection should be in a failed state now.");
+            } catch (ClientConnectionRemotelyClosedException cliEx) {
+            }
+
+            connection.close();
+
+            try {
+                connection.defaultSender();
+                fail("Connection should be in a closed state now.");
+            } catch (ClientIllegalStateException cliEx) {
+            }
+        }
+    }
+
+    @Test
+    public void testConnectionReportsFailedAfterMaxinitialReconnectAttemptsWithBackOff() throws Exception {
+        try (ProtonTestServer firstPeer = new ProtonTestServer()) {
+            firstPeer.start();
+
+            final URI primaryURI = firstPeer.getServerURI();
+
+            firstPeer.close();
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.reconnectOptions().reconnectEnabled(true);
+            options.reconnectOptions().maxReconnectAttempts(-1); // Try forever if connect succeeds once.
+            options.reconnectOptions().maxInitialConnectionAttempts(10);
+            options.reconnectOptions().warnAfterReconnectAttempts(2);
+            options.reconnectOptions().reconnectDelay(10);
+            options.reconnectOptions().useReconnectBackOff(true);
+            options.reconnectOptions().maxReconnectDelay(100);
+
+            Client container = Client.create();
+            Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
+
+            try {
+                connection.openFuture().get();
+                fail("Should not successfully connect.");
+            } catch (ExecutionException exe) {
+                assertTrue(exe.getCause() instanceof ClientConnectionRemotelyClosedException);
+            }
+
+            try {
+                connection.defaultSender();
+                fail("Connection should be in a failed state now.");
+            } catch (ClientConnectionRemotelyClosedException cliEx) {
+            }
+
+            connection.close();
+
+            try {
+                connection.defaultSender();
+                fail("Connection should be in a closed state now.");
+            } catch (ClientIllegalStateException cliEx) {
+            }
         }
     }
 }
