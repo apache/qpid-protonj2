@@ -41,7 +41,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 @Timeout(20)
-public class SaslIntegrationTest extends ImperativeClientTestCase {
+public class SaslConnectionTest extends ImperativeClientTestCase {
 
     private static final String ANONYMOUS = "ANONYMOUS";
     private static final String PLAIN = "PLAIN";
@@ -69,6 +69,33 @@ public class SaslIntegrationTest extends ImperativeClientTestCase {
 
     protected ConnectionOptions connectionOptions() {
         return new ConnectionOptions();
+    }
+
+    @Test
+    public void testSaslLayerDisabledConnection() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer(serverOptions())) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ConnectionOptions clientOptions = connectionOptions();
+            clientOptions.saslOptions().saslEnabled(false);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertFalse(peer.hasSecureConnection());
+            assertFalse(peer.isConnectionVerified());
+
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
     }
 
     @Test
