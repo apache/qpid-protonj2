@@ -1682,6 +1682,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                  .withDeliveryTag(new byte[] { 1 })
                                  .withMore(false)
                                  .withMessageFormat(0).afterDelay(5).queue();
+            peer.expectDisposition().withFirst(0).withSettled(true);
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -1710,6 +1711,8 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             } else {
                 fail("Unknown test option");
             }
+
+            bodyStream.close();
 
             peer.expectDetach().respond();
             peer.expectEnd().respond();
