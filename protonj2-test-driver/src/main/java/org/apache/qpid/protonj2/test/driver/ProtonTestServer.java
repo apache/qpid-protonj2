@@ -109,6 +109,10 @@ public class ProtonTestServer extends ProtonTestPeer {
         return server.getConnectionSSLEngine();
     }
 
+    public int getConnectionRemotePort() {
+        return server.getClientPort();
+    }
+
     @Override
     public AMQPTestDriver getDriver() {
         return driver;

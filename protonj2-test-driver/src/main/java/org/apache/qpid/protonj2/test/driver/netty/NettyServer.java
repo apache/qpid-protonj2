@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -107,6 +108,15 @@ public abstract class NettyServer implements AutoCloseable {
 
     public boolean hasSecureConnection() {
         return sslHandler != null;
+    }
+
+    public boolean hasClientConnection() {
+        return clientChannel != null && clientChannel.isOpen();
+    }
+
+    public int getClientPort() {
+        Objects.requireNonNull(clientChannel);
+        return (((InetSocketAddress) clientChannel.remoteAddress()).getPort());
     }
 
     public boolean isPeerVerified() {

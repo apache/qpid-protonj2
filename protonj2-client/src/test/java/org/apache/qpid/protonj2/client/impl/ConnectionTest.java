@@ -55,6 +55,7 @@ import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.ConnectionError;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -1454,6 +1455,36 @@ public class ConnectionTest extends ImperativeClientTestCase {
             } catch (ExecutionException ex) {
                 assertTrue(ex.getCause() instanceof ClientUnsupportedOperationException);
             }
+
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Disabled("Disabled due to requirement of hard coded port")
+    @Test
+    public void testLocalPortOption() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final int localPort = 5671;
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions();
+            options.transportOptions().localPort(localPort);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            connection.openFuture().get();
+
+            assertEquals(localPort, peer.getConnectionRemotePort());
 
             connection.close();
 
