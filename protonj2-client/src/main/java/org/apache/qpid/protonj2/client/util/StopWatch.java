@@ -34,6 +34,13 @@ public final class StopWatch {
     }
 
     /**
+     * @return check if the {@link StopWatch} has already been started.
+     */
+    public boolean isStarted() {
+        return start != 0;
+    }
+
+    /**
      * Creates the stop watch
      *
      * @param started whether it should start immediately

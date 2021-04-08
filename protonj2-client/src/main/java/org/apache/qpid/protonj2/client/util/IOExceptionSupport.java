@@ -21,7 +21,7 @@ import java.io.IOException;
 /**
  * Used to make throwing IOException instances easier.
  */
-public class IOExceptionSupport {
+public abstract class IOExceptionSupport {
 
     /**
      * Checks the given cause to determine if it's already an IOException type and
