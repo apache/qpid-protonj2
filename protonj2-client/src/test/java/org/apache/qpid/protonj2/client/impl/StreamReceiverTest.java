@@ -39,6 +39,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.Client;
@@ -46,6 +48,7 @@ import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.ErrorCondition;
+import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.StreamDelivery;
@@ -54,7 +57,9 @@ import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.StreamReceiverOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryAbortedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientLinkRemotelyClosedException;
+import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.test.Wait;
@@ -3125,6 +3130,144 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             peer.expectClose().respond();
 
             receiver.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testDrainFutureSignalsFailureWhenDrainTimeoutExceeded() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.expectFlow().withDrain(true);
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamReceiverOptions receiverOptions = new StreamReceiverOptions().drainTimeout(15);
+            Receiver receiver = connection.openStreamReceiver("test-queue", receiverOptions).openFuture().get();
+
+            try {
+                receiver.drain().get();
+                fail("Drain call should fail timeout exceeded.");
+            } catch (ExecutionException cliEx) {
+                LOG.debug("Receiver threw error on drain call", cliEx);
+                assertTrue(cliEx.getCause() instanceof ClientOperationTimedOutException);
+            }
+
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testDrainFutureSignalsFailureWhenConnectionDrainTimeoutExceeded() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.expectFlow().withDrain(true);
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions connectionOptions = new ConnectionOptions().drainTimeout(20);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions);
+            Receiver receiver = connection.openStreamReceiver("test-queue").openFuture().get();
+
+            try {
+                receiver.drain().get();
+                fail("Drain call should fail timeout exceeded.");
+            } catch (ExecutionException cliEx) {
+                LOG.debug("Receiver threw error on drain call", cliEx);
+                assertTrue(cliEx.getCause() instanceof ClientOperationTimedOutException);
+            }
+
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testDrainCompletesWhenReceiverHasNoCredit() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Receiver receiver = connection.openStreamReceiver("test-queue", new StreamReceiverOptions().creditWindow(0));
+            receiver.openFuture().get(5, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            Future<? extends Receiver> draining = receiver.drain();
+            draining.get(5, TimeUnit.SECONDS);
+
+            // Close things down
+            peer.expectClose().respond();
+            connection.closeAsync().get(5, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testDrainAdditionalDrainCallThrowsWhenReceiverStillDraining() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.expectFlow().withDrain(true);
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamReceiverOptions receiverOptions = new StreamReceiverOptions();
+            Receiver receiver = connection.openStreamReceiver("test-queue", receiverOptions).openFuture().get();
+
+            receiver.drain();
+
+            try {
+                receiver.drain().get();
+                fail("Drain call should fail timeout exceeded.");
+            } catch (ExecutionException cliEx) {
+                LOG.debug("Receiver threw error on drain call", cliEx);
+                assertTrue(cliEx.getCause() instanceof ClientIllegalStateException);
+            }
+
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);

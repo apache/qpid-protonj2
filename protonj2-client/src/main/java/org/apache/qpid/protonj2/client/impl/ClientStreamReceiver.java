@@ -59,6 +59,7 @@ public final class ClientStreamReceiver implements StreamReceiver {
     private final ClientFuture<Receiver> openFuture;
     private final ClientFuture<Receiver> closeFuture;
     private ClientFuture<Receiver> drainingFuture;
+    private ScheduledFuture<?> drainingTimeout;
     private final StreamReceiverOptions options;
     private final ClientSession session;
     private final ScheduledExecutorService executor;
@@ -279,18 +280,15 @@ public final class ClientStreamReceiver implements StreamReceiver {
         executor.execute(() -> {
             if (notClosedOrFailed(drainComplete)) {
                 if (protonReceiver.isDraining()) {
-                    drainComplete.failed(new ClientException("Already draining"));
-                    return;
-                }
-
-                if (protonReceiver.getCredit() == 0) {
-                    drainComplete.complete(this);
+                    drainComplete.failed(new ClientIllegalStateException("StreamReceiver is already draining"));
                     return;
                 }
 
                 try {
                     if (protonReceiver.drain()) {
                         drainingFuture = drainComplete;
+                        drainingTimeout = session.scheduleRequestTimeout(drainingFuture, options.drainTimeout(),
+                            () -> new ClientOperationTimedOutException("Timed out waiting for remote to respond to drain request"));
                     } else {
                         drainComplete.complete(this);
                     }
@@ -497,6 +495,10 @@ public final class ClientStreamReceiver implements StreamReceiver {
 
             if (drainingFuture != null) {
                 drainingFuture.complete(this);
+                if (drainingTimeout != null) {
+                    drainingTimeout.cancel(false);
+                    drainingTimeout = null;
+                }
             }
 
             protonReceiver.localCloseHandler(null);
@@ -568,6 +570,10 @@ public final class ClientStreamReceiver implements StreamReceiver {
         if (drainingFuture != null) {
             if (receiver.getCredit() == 0) {
                 drainingFuture.complete(this);
+                if (drainingTimeout != null) {
+                    drainingTimeout.cancel(false);
+                    drainingTimeout = null;
+                }
             }
         }
     }
@@ -689,6 +695,11 @@ public final class ClientStreamReceiver implements StreamReceiver {
             if (drainingFuture != null) {
                 drainingFuture.failed(new ClientResourceRemotelyClosedException("The Receiver has been closed"));
             }
+        }
+
+        if (drainingTimeout != null) {
+            drainingTimeout.cancel(false);
+            drainingTimeout = null;
         }
 
         closeFuture.complete(this);

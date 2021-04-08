@@ -75,6 +75,7 @@ final class ClientSessionBuilder {
                     sessionOptions.closeTimeout(connectionOptions.closeTimeout());
                     sessionOptions.requestTimeout(connectionOptions.requestTimeout());
                     sessionOptions.sendTimeout(connectionOptions.sendTimeout());
+                    sessionOptions.drainTimeout(connectionOptions.drainTimeout());
                 }
 
                 defaultSessionOptions = sessionOptions;

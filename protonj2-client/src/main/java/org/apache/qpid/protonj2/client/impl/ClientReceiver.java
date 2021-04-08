@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
@@ -55,6 +56,7 @@ public final class ClientReceiver implements Receiver {
     private final ClientFuture<Receiver> openFuture;
     private final ClientFuture<Receiver> closeFuture;
     private ClientFuture<Receiver> drainingFuture;
+    private ScheduledFuture<?> drainingTimeout;
 
     private final ReceiverOptions options;
     private final ClientSession session;
@@ -275,18 +277,18 @@ public final class ClientReceiver implements Receiver {
         ClientFuture<Receiver> creditAdded = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
-            checkClosedOrFailed(creditAdded);
-
-            if (options.creditWindow() != 0) {
-                creditAdded.failed(new ClientIllegalStateException("Cannot add credit when a credit window has been configured"));
-            } else if (protonReceiver.isDraining()) {
-                creditAdded.failed(new ClientIllegalStateException("Cannot add credit while a drain is pending"));
-            } else {
-                try {
-                    protonReceiver.addCredit(credits);
-                    creditAdded.complete(this);
-                } catch (Exception ex) {
-                    creditAdded.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+            if (notClosedOrFailed(creditAdded)) {
+                if (options.creditWindow() != 0) {
+                    creditAdded.failed(new ClientIllegalStateException("Cannot add credit when a credit window has been configured"));
+                } else if (protonReceiver.isDraining()) {
+                    creditAdded.failed(new ClientIllegalStateException("Cannot add credit while a drain is pending"));
+                } else {
+                    try {
+                        protonReceiver.addCredit(credits);
+                        creditAdded.complete(this);
+                    } catch (Exception ex) {
+                        creditAdded.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+                    }
                 }
             }
         });
@@ -300,26 +302,23 @@ public final class ClientReceiver implements Receiver {
         final ClientFuture<Receiver> drainComplete = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
-            checkClosedOrFailed(drainComplete);
-
-            if (protonReceiver.isDraining()) {
-                drainComplete.failed(new ClientException("Already draining"));
-                return;
-            }
-
-            if (protonReceiver.getCredit() == 0) {
-                drainComplete.complete(this);
-                return;
-            }
-
-            try {
-                if (protonReceiver.drain()) {
-                    drainingFuture = drainComplete;
-                } else {
-                    drainComplete.complete(this);
+            if (notClosedOrFailed(drainComplete)) {
+                if (protonReceiver.isDraining()) {
+                    drainComplete.failed(new ClientIllegalStateException("Receiver is already draining"));
+                    return;
                 }
-            } catch (Exception ex) {
-                drainComplete.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+
+                try {
+                    if (protonReceiver.drain()) {
+                        drainingFuture = drainComplete;
+                        drainingTimeout = session.scheduleRequestTimeout(drainingFuture, options.drainTimeout(),
+                            () -> new ClientOperationTimedOutException("Timed out waiting for remote to respond to drain request"));
+                    } else {
+                        drainComplete.complete(this);
+                    }
+                } catch (Exception ex) {
+                    drainComplete.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+                }
             }
         });
 
@@ -479,6 +478,10 @@ public final class ClientReceiver implements Receiver {
 
             if (drainingFuture != null) {
                 drainingFuture.complete(this);
+                if (drainingTimeout != null) {
+                    drainingTimeout.cancel(false);
+                    drainingTimeout = null;
+                }
             }
 
             protonReceiver.localCloseHandler(null);
@@ -539,6 +542,10 @@ public final class ClientReceiver implements Receiver {
         if (drainingFuture != null) {
             if (receiver.getCredit() == 0) {
                 drainingFuture.complete(this);
+                if (drainingTimeout != null) {
+                    drainingTimeout.cancel(false);
+                    drainingTimeout = null;
+                }
             }
         }
     }
@@ -595,11 +602,15 @@ public final class ClientReceiver implements Receiver {
         }
     }
 
-    private void checkClosedOrFailed(ClientFuture<?> request) {
+    private boolean notClosedOrFailed(ClientFuture<?> request) {
         if (isClosed()) {
             request.failed(new ClientIllegalStateException("The Receiver was explicity closed", failureCause));
+            return false;
         } else if (failureCause != null) {
             request.failed(failureCause);
+            return false;
+        } else {
+            return true;
         }
     }
 
@@ -635,6 +646,11 @@ public final class ClientReceiver implements Receiver {
             if (drainingFuture != null) {
                 drainingFuture.failed(new ClientResourceRemotelyClosedException("The Receiver has been closed"));
             }
+        }
+
+        if (drainingTimeout != null) {
+            drainingTimeout.cancel(false);
+            drainingTimeout = null;
         }
 
         closeFuture.complete(this);
