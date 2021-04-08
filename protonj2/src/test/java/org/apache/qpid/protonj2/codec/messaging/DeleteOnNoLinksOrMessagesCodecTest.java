@@ -23,12 +23,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.messaging.DeleteOnNoLinksOrMessagesTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.messaging.DeleteOnNoLinksOrMessagesTypeEncoder;
@@ -57,13 +60,28 @@ public class DeleteOnNoLinksOrMessagesCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeDeleteOnNoLinksOrMessages() throws IOException {
+        doTestDecodeDeleteOnNoLinksOrMessages(false);
+    }
+
+    @Test
+    public void testDecodeDeleteOnNoLinksOrMessagesFromStream() throws IOException {
+        doTestDecodeDeleteOnNoLinksOrMessages(true);
+    }
+
+    private void doTestDecodeDeleteOnNoLinksOrMessages(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         DeleteOnNoLinksOrMessages value = DeleteOnNoLinksOrMessages.getInstance();
 
         encoder.writeObject(buffer, encoderState, value);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof DeleteOnNoLinksOrMessages);
@@ -71,7 +89,17 @@ public class DeleteOnNoLinksOrMessagesCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeDeleteOnNoLinksOrMessagesWithList8() throws IOException {
+        doTestDecodeDeleteOnNoLinksOrMessagesWithList8(false);
+    }
+
+    @Test
+    public void testDecodeDeleteOnNoLinksOrMessagesWithList8FromStream() throws IOException {
+        doTestDecodeDeleteOnNoLinksOrMessagesWithList8(true);
+    }
+
+    private void doTestDecodeDeleteOnNoLinksOrMessagesWithList8(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -80,7 +108,12 @@ public class DeleteOnNoLinksOrMessagesCodecTest extends CodecTestSupport {
         buffer.writeByte((byte) 0);  // Size
         buffer.writeByte((byte) 0);  // Count
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof DeleteOnNoLinksOrMessages);
@@ -88,7 +121,17 @@ public class DeleteOnNoLinksOrMessagesCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeDeleteOnNoLinksOrMessagesWithList32() throws IOException {
+        doTestDecodeDeleteOnNoLinksOrMessagesWithList32(false);
+    }
+
+    @Test
+    public void testDecodeDeleteOnNoLinksOrMessagesWithList32FromStream() throws IOException {
+        doTestDecodeDeleteOnNoLinksOrMessagesWithList32(true);
+    }
+
+    private void doTestDecodeDeleteOnNoLinksOrMessagesWithList32(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -97,7 +140,12 @@ public class DeleteOnNoLinksOrMessagesCodecTest extends CodecTestSupport {
         buffer.writeInt((byte) 0);  // Size
         buffer.writeInt((byte) 0);  // Count
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof DeleteOnNoLinksOrMessages);
@@ -105,7 +153,17 @@ public class DeleteOnNoLinksOrMessagesCodecTest extends CodecTestSupport {
 
     @Test
     public void testSkipValue() throws IOException {
+        doTestSkipValue(false);
+    }
+
+    @Test
+    public void testSkipValueFromStream() throws IOException {
+        doTestSkipValue(true);
+    }
+
+    private void doTestSkipValue(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeObject(buffer, encoderState, DeleteOnNoLinksOrMessages.getInstance());
@@ -114,12 +172,23 @@ public class DeleteOnNoLinksOrMessagesCodecTest extends CodecTestSupport {
         encoder.writeObject(buffer, encoderState, new Modified());
 
         for (int i = 0; i < 10; ++i) {
-            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-            assertEquals(DeleteOnNoLinksOrMessages.class, typeDecoder.getTypeClass());
-            typeDecoder.skipValue(buffer, decoderState);
+            if (fromStream) {
+                StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+                assertEquals(DeleteOnNoLinksOrMessages.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(stream, streamDecoderState);
+            } else {
+                TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+                assertEquals(DeleteOnNoLinksOrMessages.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(buffer, decoderState);
+            }
         }
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof Modified);
@@ -130,16 +199,27 @@ public class DeleteOnNoLinksOrMessagesCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeWithInvalidMap32Type() throws IOException {
-        doTestDecodeWithInvalidMapType(EncodingCodes.MAP32);
+        doTestDecodeWithInvalidMapType(EncodingCodes.MAP32, false);
     }
 
     @Test
     public void testDecodeWithInvalidMap8Type() throws IOException {
-        doTestDecodeWithInvalidMapType(EncodingCodes.MAP8);
+        doTestDecodeWithInvalidMapType(EncodingCodes.MAP8, false);
     }
 
-    private void doTestDecodeWithInvalidMapType(byte mapType) throws IOException {
+    @Test
+    public void testDecodeWithInvalidMap32TypeFromStream() throws IOException {
+        doTestDecodeWithInvalidMapType(EncodingCodes.MAP32, true);
+    }
+
+    @Test
+    public void testDecodeWithInvalidMap8TypeFromStream() throws IOException {
+        doTestDecodeWithInvalidMapType(EncodingCodes.MAP8, true);
+    }
+
+    private void doTestDecodeWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -154,24 +234,42 @@ public class DeleteOnNoLinksOrMessagesCodecTest extends CodecTestSupport {
             buffer.writeByte((byte) 0);  // Count
         }
 
-        try {
-            decoder.readObject(buffer, decoderState);
-            fail("Should not decode type with invalid encoding");
-        } catch (DecodeException ex) {}
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("Should not decode type with invalid encoding");
+            } catch (DecodeException ex) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("Should not decode type with invalid encoding");
+            } catch (DecodeException ex) {}
+        }
     }
 
     @Test
     public void testSkipValueWithInvalidMap32Type() throws IOException {
-        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP32);
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP32, false);
     }
 
     @Test
     public void testSkipValueWithInvalidMap8Type() throws IOException {
-        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP8);
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP8, false);
     }
 
-    private void doTestSkipValueWithInvalidMapType(byte mapType) throws IOException {
+    @Test
+    public void testSkipValueWithInvalidMap32TypeFromStream() throws IOException {
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP32, true);
+    }
+
+    @Test
+    public void testSkipValueWithInvalidMap8TypeFromStream() throws IOException {
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP8, true);
+    }
+
+    private void doTestSkipValueWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -186,18 +284,38 @@ public class DeleteOnNoLinksOrMessagesCodecTest extends CodecTestSupport {
             buffer.writeByte((byte) 0);  // Count
         }
 
-        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-        assertEquals(DeleteOnNoLinksOrMessages.class, typeDecoder.getTypeClass());
+        if (fromStream) {
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(DeleteOnNoLinksOrMessages.class, typeDecoder.getTypeClass());
 
-        try {
-            typeDecoder.skipValue(buffer, decoderState);
-            fail("Should not be able to skip type with invalid encoding");
-        } catch (DecodeException ex) {}
+            try {
+                typeDecoder.skipValue(stream, streamDecoderState);
+                fail("Should not be able to skip type with invalid encoding");
+            } catch (DecodeException ex) {}
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(DeleteOnNoLinksOrMessages.class, typeDecoder.getTypeClass());
+
+            try {
+                typeDecoder.skipValue(buffer, decoderState);
+                fail("Should not be able to skip type with invalid encoding");
+            } catch (DecodeException ex) {}
+        }
     }
 
     @Test
     public void testEncodeDecodeArray() throws IOException {
+        doTestEncodeDecodeArray(false);
+    }
+
+    @Test
+    public void testEncodeDecodeArrayFromStream() throws IOException {
+        doTestEncodeDecodeArray(true);
+    }
+
+    private void doTestEncodeDecodeArray(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         DeleteOnNoLinksOrMessages[] array = new DeleteOnNoLinksOrMessages[3];
 
@@ -207,7 +325,12 @@ public class DeleteOnNoLinksOrMessagesCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, array);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertTrue(result.getClass().isArray());
         assertEquals(DeleteOnNoLinksOrMessages.class, result.getClass().getComponentType());
