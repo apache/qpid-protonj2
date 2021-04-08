@@ -83,13 +83,8 @@ class ClientTracker implements Tracker {
 
     @Override
     public Tracker disposition(DeliveryState state, boolean settle) throws ClientException {
-        org.apache.qpid.protonj2.types.transport.DeliveryState protonState = null;
-        if (state != null) {
-            protonState = ClientDeliveryState.asProtonType(state);
-        }
-
         try {
-            sender.disposition(delivery, protonState, settle);
+            sender.disposition(delivery, ClientDeliveryState.asProtonType(state), settle);
         } finally {
             if (settle) {
                 remoteSettlementFuture.complete(this);
