@@ -35,13 +35,13 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class RecoonectionURIPool {
+public class RecoonectionURIPoolTest {
 
     private List<URI> uris;
 
     @BeforeEach
     public void setUp() throws Exception {
-        uris = new ArrayList<URI>();
+        uris = new ArrayList<>();
 
         uris.add(new URI("tcp://192.168.2.1:5672"));
         uris.add(new URI("tcp://192.168.2.2:5672"));
@@ -55,6 +55,7 @@ public class RecoonectionURIPool {
 
         assertTrue(pool.isEmpty());
         assertEquals(0, pool.size());
+        assertNotNull(pool.toString());
     }
 
     @Test
@@ -66,6 +67,8 @@ public class RecoonectionURIPool {
     @Test
     public void testCreateNonEmptyPoolWithURIs() throws URISyntaxException {
         ReconnectionURIPool pool = new ReconnectionURIPool(uris);
+
+        assertEquals(uris, pool.getList());
         assertNotNull(pool.getNext());
         assertEquals(uris.get(1), pool.getNext());
     }
@@ -83,6 +86,8 @@ public class RecoonectionURIPool {
         assertEquals(uris.get(0), pool.getNext());
         assertEquals(uris.get(0), pool.getNext());
         assertEquals(uris.get(0), pool.getNext());
+
+        assertNotNull(pool.toString());
     }
 
     @Test
@@ -392,8 +397,8 @@ public class RecoonectionURIPool {
             pool.shuffle();
         }
 
-        List<URI> current = new ArrayList<URI>();
-        List<URI> previous = new ArrayList<URI>();
+        List<URI> current = new ArrayList<>();
+        List<URI> previous = new ArrayList<>();
 
         boolean shuffled = false;
 
@@ -455,6 +460,24 @@ public class RecoonectionURIPool {
         pool.removeAll();
         assertTrue(pool.isEmpty());
         assertEquals(0, pool.size());
+
+        pool.removeAll();
+    }
+
+    @Test
+    public void testReplaceAll() throws URISyntaxException {
+        ReconnectionURIPool pool = new ReconnectionURIPool(uris);
+        assertEquals(uris.size(), pool.size());
+
+        List<URI> newUris = new ArrayList<>();
+
+        newUris.add(new URI("tcp://192.168.2.1:5672"));
+        newUris.add(new URI("tcp://192.168.2.2:5672"));
+
+        pool.replaceAll(newUris);
+        assertFalse(pool.isEmpty());
+        assertEquals(newUris.size(), pool.size());
+        assertEquals(newUris, pool.getList());
 
         pool.removeAll();
     }
