@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -105,6 +106,10 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             Receiver receiver = session.openReceiver("test-queue");
             receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertSame(container, receiver.client());
+            assertSame(connection, receiver.connection());
+            assertSame(session, receiver.session());
 
             if (close) {
                 receiver.closeAsync().get(10, TimeUnit.SECONDS);

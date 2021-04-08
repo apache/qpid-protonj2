@@ -122,6 +122,9 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             StreamReceiver receiver = connection.openStreamReceiver("test-queue");
             receiver.openFuture().get(10, TimeUnit.SECONDS);
 
+            assertSame(container, receiver.client());
+            assertSame(connection, receiver.connection());
+
             if (close) {
                 receiver.closeAsync().get(10, TimeUnit.SECONDS);
             } else {
@@ -3268,6 +3271,335 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                 assertTrue(cliEx.getCause() instanceof ClientIllegalStateException);
             }
 
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReceiverGetRemotePropertiesWaitsForRemoteAttach() throws Exception {
+        tryReadReceiverRemoteProperties(true);
+    }
+
+    @Test
+    public void testReceiverGetRemotePropertiesFailsAfterOpenTimeout() throws Exception {
+        tryReadReceiverRemoteProperties(false);
+    }
+
+    private void tryReadReceiverRemoteProperties(boolean attachResponse) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue());
+            peer.expectFlow();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            StreamReceiverOptions options = new StreamReceiverOptions().openTimeout(100);
+            Receiver receiver = connection.openStreamReceiver("test-receiver", options);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            Map<String, Object> expectedProperties = new HashMap<>();
+            expectedProperties.put("TEST", "test-property");
+
+            if (attachResponse) {
+                peer.expectDetach().respond();
+                peer.expectEnd().respond();
+                peer.respondToLastAttach().withPropertiesMap(expectedProperties).later(10);
+            } else {
+                peer.expectDetach();
+                peer.expectEnd();
+            }
+
+            if (attachResponse) {
+                assertNotNull(receiver.properties(), "Remote should have responded with a remote properties value");
+                assertEquals(expectedProperties, receiver.properties());
+            } else {
+                try {
+                    receiver.properties();
+                    fail("Should failed to get remote state due to no attach response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from blocking call", ex);
+                }
+            }
+
+            try {
+                receiver.closeAsync().get();
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close whenn connection not closed and detach sent");
+            }
+
+            peer.expectClose().respond();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReceiverGetRemoteOfferedCapabilitiesWaitsForRemoteAttach() throws Exception {
+        tryReadReceiverRemoteOfferedCapabilities(true);
+    }
+
+    @Test
+    public void testReceiverGetRemoteOfferedCapabilitiesFailsAfterOpenTimeout() throws Exception {
+        tryReadReceiverRemoteOfferedCapabilities(false);
+    }
+
+    private void tryReadReceiverRemoteOfferedCapabilities(boolean attachResponse) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue());
+            peer.expectFlow();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            StreamReceiver receiver = connection.openStreamReceiver("test-receiver");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            if (attachResponse) {
+                peer.expectDetach().respond();
+                peer.expectEnd().respond();
+                peer.respondToLastAttach().withOfferedCapabilities("QUEUE").later(10);
+            } else {
+                peer.expectDetach();
+                peer.expectEnd();
+            }
+
+            if (attachResponse) {
+                assertNotNull(receiver.offeredCapabilities(), "Remote should have responded with a remote offered Capabilities value");
+                assertEquals(1, receiver.offeredCapabilities().length);
+                assertEquals("QUEUE", receiver.offeredCapabilities()[0]);
+            } else {
+                try {
+                    receiver.offeredCapabilities();
+                    fail("Should failed to get remote state due to no attach response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from blocking call", ex);
+                }
+            }
+
+            try {
+                receiver.closeAsync().get();
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close whenn connection not closed and detach sent");
+            }
+
+            peer.expectClose().respond();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReceiverGetRemoteDesiredCapabilitiesWaitsForRemoteAttach() throws Exception {
+        tryReadReceiverRemoteDesiredCapabilities(true);
+    }
+
+    @Test
+    public void testReceiverGetRemoteDesiredCapabilitiesFailsAfterOpenTimeout() throws Exception {
+        tryReadReceiverRemoteDesiredCapabilities(false);
+    }
+
+    private void tryReadReceiverRemoteDesiredCapabilities(boolean attachResponse) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue());
+            peer.expectFlow();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            Receiver receiver = connection.openStreamReceiver("test-receiver");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            if (attachResponse) {
+                peer.expectDetach().respond();
+                peer.expectEnd().respond();
+                peer.respondToLastAttach().withDesiredCapabilities("Error-Free").later(10);
+            } else {
+                peer.expectDetach();
+                peer.expectEnd();
+            }
+
+            if (attachResponse) {
+                assertNotNull(receiver.desiredCapabilities(), "Remote should have responded with a remote desired Capabilities value");
+                assertEquals(1, receiver.desiredCapabilities().length);
+                assertEquals("Error-Free", receiver.desiredCapabilities()[0]);
+            } else {
+                try {
+                    receiver.desiredCapabilities();
+                    fail("Should failed to get remote state due to no attach response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from blocking call", ex);
+                }
+            }
+
+            try {
+                receiver.closeAsync().get();
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close whenn connection not closed and detach sent");
+            }
+
+            peer.expectClose().respond();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReceiverGetTargetWaitsForRemoteAttach() throws Exception {
+        tryReadReceiverTarget(true);
+    }
+
+    @Test
+    public void testReceiverGetTargetFailsAfterOpenTimeout() throws Exception {
+        tryReadReceiverTarget(false);
+    }
+
+    private void tryReadReceiverTarget(boolean attachResponse) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue());
+            peer.expectFlow();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            Receiver receiver = connection.openStreamReceiver("test-receiver");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            if (attachResponse) {
+                peer.expectDetach().respond();
+                peer.expectEnd().respond();
+                peer.respondToLastAttach().later(10);
+            } else {
+                peer.expectDetach();
+                peer.expectEnd();
+            }
+
+            if (attachResponse) {
+                assertNotNull(receiver.target(), "Remote should have responded with a Target value");
+            } else {
+                try {
+                    receiver.target();
+                    fail("Should failed to get remote source due to no attach response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from blocking call", ex);
+                }
+            }
+
+            try {
+                receiver.closeAsync().get();
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close whenn connection not closed and detach sent");
+            }
+
+            peer.expectClose().respond();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReceiverGetSourceWaitsForRemoteAttach() throws Exception {
+        tryReadReceiverSource(true);
+    }
+
+    @Test
+    public void testReceiverGetSourceFailsAfterOpenTimeout() throws Exception {
+        tryReadReceiverSource(false);
+    }
+
+    private void tryReadReceiverSource(boolean attachResponse) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue());
+            peer.expectFlow();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            Receiver receiver = connection.openStreamReceiver("test-receiver");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            if (attachResponse) {
+                peer.expectDetach().respond();
+                peer.expectEnd().respond();
+                peer.respondToLastAttach().later(10);
+            } else {
+                peer.expectDetach();
+                peer.expectEnd();
+            }
+
+            if (attachResponse) {
+                assertNotNull(receiver.source(), "Remote should have responded with a Source value");
+                assertEquals("test-receiver", receiver.source().address());
+            } else {
+                try {
+                    receiver.source();
+                    fail("Should failed to get remote source due to no attach response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from blocking call", ex);
+                }
+            }
+
+            try {
+                receiver.closeAsync().get();
+            } catch (ExecutionException ex) {
+                LOG.debug("Caught unexpected exception from close call", ex);
+                fail("Should not fail close whenn connection not closed and detach sent");
+            }
+
+            peer.expectClose().respond();
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
