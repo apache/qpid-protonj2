@@ -2576,4 +2576,44 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    public void testOpenDurableReceiver() throws Exception {
+        final String address = "test-topic";
+        final String subscriptionName = "mySubscriptionName";
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver()
+                               .withName(subscriptionName)
+                               .withSource()
+                                   .withAddress(address)
+                                   .withDurable(TerminusDurability.UNSETTLED_STATE)
+                                   .withExpiryPolicy(TerminusExpiryPolicy.NEVER)
+                                   .withDistributionMode("copy")
+                               .and().respond();
+            peer.expectFlow();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openDurableReceiver(address, subscriptionName);
+
+            receiver.openFuture().get();
+            receiver.closeAsync().get();
+
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

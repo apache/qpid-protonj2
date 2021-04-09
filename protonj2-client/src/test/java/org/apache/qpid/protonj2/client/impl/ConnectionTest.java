@@ -49,6 +49,8 @@ import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationExce
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusDurability;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
@@ -1457,6 +1459,45 @@ public class ConnectionTest extends ImperativeClientTestCase {
             }
 
             connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testOpenDurableReceiverFromConnection() throws Exception {
+        final String address = "test-topic";
+        final String subscriptionName = "mySubscriptionName";
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver()
+                               .withName(subscriptionName)
+                               .withSource()
+                                   .withAddress(address)
+                                   .withDurable(TerminusDurability.UNSETTLED_STATE)
+                                   .withExpiryPolicy(TerminusExpiryPolicy.NEVER)
+                                   .withDistributionMode("copy")
+                               .and().respond();
+            peer.expectFlow();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Receiver receiver = connection.openDurableReceiver(address, subscriptionName);
+
+            receiver.openFuture().get();
+            receiver.closeAsync().get();
+
+            connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
