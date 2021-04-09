@@ -505,7 +505,16 @@ public class SessionTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testCloseWithErrorCondition() throws Exception {
+    public void testCloseWithErrorConditionSync() throws Exception {
+        doTestCloseWithErrorCondition(true);
+    }
+
+    @Test
+    public void testCloseWithErrorConditionAsync() throws Exception {
+        doTestCloseWithErrorCondition(false);
+    }
+
+    private void doTestCloseWithErrorCondition(boolean sync) throws Exception {
         final String condition = "amqp:precondition-failed";
         final String description = "something bad happened.";
 
@@ -529,7 +538,11 @@ public class SessionTest extends ImperativeClientTestCase {
 
             assertEquals(session.client(), container);
 
-            session.closeAsync(ErrorCondition.create(condition, description, null));
+            if (sync) {
+                session.close(ErrorCondition.create(condition, description, null));
+            } else {
+                session.closeAsync(ErrorCondition.create(condition, description, null));
+            }
 
             connection.closeAsync().get();
 

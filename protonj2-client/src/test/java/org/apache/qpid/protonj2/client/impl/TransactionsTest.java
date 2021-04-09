@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -1317,6 +1318,15 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 assertTrue(tracker.remoteSettled());
                 assertNull(tracker.state());
                 assertFalse(tracker.settled());
+                assertFalse(tracker.awaitAccepted().settled());
+                assertFalse(tracker.awaitSettlement().settled());
+                assertFalse(tracker.awaitAccepted(1, TimeUnit.SECONDS).settled());
+                assertFalse(tracker.awaitSettlement(1, TimeUnit.SECONDS).settled());
+                assertSame(sender, tracker.sender());
+
+                // These should no-op since message was never sent.
+                tracker.settle();
+                tracker.disposition(ClientDeliveryState.ClientAccepted.getInstance(), true);
             }
 
             try {

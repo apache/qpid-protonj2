@@ -1139,6 +1139,36 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testCreateAnonymousSenderAppliesOptions() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond().withOfferedCapabilities("ANONYMOUS-RELAY");
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().withSenderSettleModeSettled()
+                                          .withReceivervSettlesFirst()
+                                          .withTarget().withAddress(Matchers.nullValue()).and().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            SenderOptions senderOptions = new SenderOptions().deliveryMode(DeliveryMode.AT_MOST_ONCE);
+            Sender anonymousSender = session.openAnonymousSender(senderOptions);
+
+            anonymousSender.openFuture().get();
+
+            connection.closeAsync();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testAnonymousSenderOpenHeldUntilConnectionOpenedAndSupportConfirmed() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
@@ -2381,6 +2411,36 @@ public class SenderTest extends ImperativeClientTestCase {
 
             sender.closeAsync().get();
             connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSenderLinkNameOptionAppliedWhenSet() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().withName("custom-link-name").respond();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            SenderOptions senderOptions = new SenderOptions().linkName("custom-link-name");
+            Sender sender = session.openSender("test-queue", senderOptions);
+
+            sender.openFuture().get();
+            sender.close();
+
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

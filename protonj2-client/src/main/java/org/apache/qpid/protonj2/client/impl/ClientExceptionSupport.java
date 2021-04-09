@@ -27,6 +27,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientConnectionSecurityExcept
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionSecuritySaslException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientLinkRedirectedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientLinkRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
@@ -96,6 +97,8 @@ public class ClientExceptionSupport {
 
         if (cause instanceof TimeoutException) {
             return new ClientOperationTimedOutException(message, cause);
+        } else if (cause instanceof IllegalStateException) {
+            return new ClientIllegalStateException(message, cause);
         } else {
             return new ClientException(message, cause);
         }
