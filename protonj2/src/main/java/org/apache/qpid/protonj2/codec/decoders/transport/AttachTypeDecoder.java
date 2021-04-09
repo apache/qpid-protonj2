@@ -62,22 +62,18 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
 
     @Override
     public Attach readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readAttach(buffer, state, (ListTypeDecoder) decoder);
+        return readAttach(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Attach[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Attach[] result = new Attach[count];
+        final Attach[] result = new Attach[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readAttach(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readAttach(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -85,7 +81,7 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -93,21 +89,25 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
     }
 
     private Attach readAttach(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Attach attach = new Attach();
+        final Attach attach = new Attach();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         if (count < MIN_ATTACH_LIST_ENTRIES) {
             throw new DecodeException(errorForMissingRequiredFields(count));
+        }
+
+        if (count > MAX_ATTACH_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in Attach list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
             // Peek ahead and see if there is a null in the next slot, if so we don't call
             // the setter for that entry to ensure the returned type reflects the encoded
             // state in the modification entry.
-            boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
+            final boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
                 // Ensure mandatory fields are set
                 if (index < MIN_ATTACH_LIST_ENTRIES) {
@@ -164,9 +164,6 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
                 case 13:
                     attach.setProperties(state.getDecoder().readMap(buffer, state));
                     break;
-                default:
-                    throw new DecodeException(
-                        "To many entries in Attach list encoding: " + count + " max allowed entries = " + MAX_ATTACH_LIST_ENTRIES);
             }
         }
 
@@ -175,22 +172,18 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
 
     @Override
     public Attach readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readAttach(stream, state, (ListTypeDecoder) decoder);
+        return readAttach(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Attach[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Attach[] result = new Attach[count];
+        final Attach[] result = new Attach[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readAttach(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readAttach(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -198,7 +191,7 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -206,14 +199,18 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
     }
 
     private Attach readAttach(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Attach attach = new Attach();
+        final Attach attach = new Attach();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         if (count < MIN_ATTACH_LIST_ENTRIES) {
             throw new DecodeException(errorForMissingRequiredFields(count));
+        }
+
+        if (count > MAX_ATTACH_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in Attach list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -222,7 +219,7 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
             // the encoded state in the modification entry.
             if (stream.markSupported()) {
                 stream.mark(1);
-                boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
+                final boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
                 if (nullValue) {
                     // Ensure mandatory fields are set
                     if (index < MIN_ATTACH_LIST_ENTRIES) {
@@ -281,9 +278,6 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
                 case 13:
                     attach.setProperties(state.getDecoder().readMap(stream, state));
                     break;
-                default:
-                    throw new DecodeException(
-                        "To many entries in Attach list encoding: " + count + " max allowed entries = " + MAX_ATTACH_LIST_ENTRIES);
             }
         }
 

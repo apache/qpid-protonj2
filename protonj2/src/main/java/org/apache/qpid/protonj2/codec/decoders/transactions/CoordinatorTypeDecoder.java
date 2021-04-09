@@ -55,22 +55,18 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
 
     @Override
     public Coordinator readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readCoordinator(buffer, state, (ListTypeDecoder) decoder);
+        return readCoordinator(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Coordinator[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Coordinator[] result = new Coordinator[count];
+        final Coordinator[] result = new Coordinator[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readCoordinator(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readCoordinator(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -78,7 +74,7 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -86,29 +82,19 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
     }
 
     private Coordinator readCoordinator(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Coordinator coordinator = new Coordinator();
+        final Coordinator coordinator = new Coordinator();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_COORDINATOR_LIST_ENTRIES) {
             throw new DecodeException("Not enougn entries in Coordinator list encoding: " + count);
-        }
-
-        if (count > MAX_COORDINATOR_LIST_ENTRIES) {
+        } else if (count > MAX_COORDINATOR_LIST_ENTRIES) {
             throw new DecodeException("To many entries in Coordinator list encoding: " + count);
-        }
-
-        for (int index = 0; index < count; ++index) {
-            switch (index) {
-                case 0:
-                    coordinator.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
-                    break;
-                default:
-                    throw new DecodeException("To many entries in Header encoding");
-            }
+        } else if (count == 1) {
+            coordinator.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
         }
 
         return coordinator;
@@ -116,22 +102,18 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
 
     @Override
     public Coordinator readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readCoordinator(stream, state, (ListTypeDecoder) decoder);
+        return readCoordinator(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Coordinator[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Coordinator[] result = new Coordinator[count];
+        final Coordinator[] result = new Coordinator[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readCoordinator(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readCoordinator(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -139,7 +121,7 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -147,29 +129,19 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
     }
 
     private Coordinator readCoordinator(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Coordinator coordinator = new Coordinator();
+        final Coordinator coordinator = new Coordinator();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_COORDINATOR_LIST_ENTRIES) {
             throw new DecodeException("Not enougn entries in Coordinator list encoding: " + count);
-        }
-
-        if (count > MAX_COORDINATOR_LIST_ENTRIES) {
+        } else if (count > MAX_COORDINATOR_LIST_ENTRIES) {
             throw new DecodeException("To many entries in Coordinator list encoding: " + count);
-        }
-
-        for (int index = 0; index < count; ++index) {
-            switch (index) {
-                case 0:
-                    coordinator.setCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
-                    break;
-                default:
-                    throw new DecodeException("To many entries in Header encoding");
-            }
+        } else if (count == 1) {
+            coordinator.setCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
         }
 
         return coordinator;

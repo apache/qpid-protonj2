@@ -38,7 +38,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
     }
 
     public ProtonBuffer readValueAsBuffer(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        int length = readSize(buffer);
+        final int length = readSize(buffer);
 
         if (length > buffer.getReadableBytes()) {
             throw new DecodeException(
@@ -46,7 +46,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
                               "of data available (%d)", length, buffer.getReadableBytes()));
         }
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.allocate(length, length);
+        final ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.allocate(length, length);
 
         buffer.readBytes(payload);
 
@@ -54,7 +54,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
     }
 
     public byte[] readValueAsArray(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        int length = readSize(buffer);
+        final int length = readSize(buffer);
 
         if (length > buffer.getReadableBytes()) {
             throw new DecodeException(
@@ -62,7 +62,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
                               "of data available (%d)", length, buffer.getReadableBytes()));
         }
 
-        byte[] payload = new byte[length];
+        final byte[] payload = new byte[length];
 
         buffer.readBytes(payload);
 
@@ -79,8 +79,8 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
     }
 
     public byte[] readValueAsArray(InputStream stream, StreamDecoderState state) throws DecodeException {
-        int length = readSize(stream);
-        byte[] payload = new byte[length];
+        final int length = readSize(stream);
+        final byte[] payload = new byte[length];
 
         try {
             stream.read(payload);
@@ -93,7 +93,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        int length = readSize(buffer);
+        final int length = readSize(buffer);
 
         if (length > buffer.getReadableBytes()) {
             throw new DecodeException(

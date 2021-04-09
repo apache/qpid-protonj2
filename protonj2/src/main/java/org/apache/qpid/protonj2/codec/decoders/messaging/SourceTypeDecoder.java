@@ -59,22 +59,18 @@ public final class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source
 
     @Override
     public Source readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readSource(buffer, state, (ListTypeDecoder) decoder);
+        return readSource(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Source[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Source[] result = new Source[count];
+        final Source[] result = new Source[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readSource(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readSource(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -82,7 +78,7 @@ public final class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -90,11 +86,11 @@ public final class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source
     }
 
     private Source readSource(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Source source = new Source();
+        final Source source = new Source();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         if (count < MIN_SOURCE_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in Source list encoding: " + count);
@@ -110,15 +106,15 @@ public final class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source
                     source.setAddress(state.getDecoder().readString(buffer, state));
                     break;
                 case 1:
-                    long durability = state.getDecoder().readUnsignedInteger(buffer, state, 0);
+                    final long durability = state.getDecoder().readUnsignedInteger(buffer, state, 0);
                     source.setDurable(TerminusDurability.valueOf(durability));
                     break;
                 case 2:
-                    Symbol expiryPolicy = state.getDecoder().readSymbol(buffer, state);
+                    final Symbol expiryPolicy = state.getDecoder().readSymbol(buffer, state);
                     source.setExpiryPolicy(expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : TerminusExpiryPolicy.valueOf(expiryPolicy));
                     break;
                 case 3:
-                    UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(buffer, state);
+                    final UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(buffer, state);
                     source.setTimeout(timeout == null ? UnsignedInteger.ZERO : timeout);
                     break;
                 case 4:
@@ -142,8 +138,6 @@ public final class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source
                 case 10:
                     source.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Source encoding");
             }
         }
 
@@ -152,22 +146,18 @@ public final class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source
 
     @Override
     public Source readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readSource(stream, state, (ListTypeDecoder) decoder);
+        return readSource(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Source[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Source[] result = new Source[count];
+        final Source[] result = new Source[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readSource(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readSource(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -175,7 +165,7 @@ public final class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -183,11 +173,11 @@ public final class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source
     }
 
     private Source readSource(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Source source = new Source();
+        final Source source = new Source();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         if (count < MIN_SOURCE_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in Source list encoding: " + count);
@@ -203,15 +193,15 @@ public final class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source
                     source.setAddress(state.getDecoder().readString(stream, state));
                     break;
                 case 1:
-                    long durability = state.getDecoder().readUnsignedInteger(stream, state, 0);
+                    final long durability = state.getDecoder().readUnsignedInteger(stream, state, 0);
                     source.setDurable(TerminusDurability.valueOf(durability));
                     break;
                 case 2:
-                    Symbol expiryPolicy = state.getDecoder().readSymbol(stream, state);
+                    final Symbol expiryPolicy = state.getDecoder().readSymbol(stream, state);
                     source.setExpiryPolicy(expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : TerminusExpiryPolicy.valueOf(expiryPolicy));
                     break;
                 case 3:
-                    UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(stream, state);
+                    final UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(stream, state);
                     source.setTimeout(timeout == null ? UnsignedInteger.ZERO : timeout);
                     break;
                 case 4:
@@ -235,8 +225,6 @@ public final class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source
                 case 10:
                     source.setCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Source encoding");
             }
         }
 

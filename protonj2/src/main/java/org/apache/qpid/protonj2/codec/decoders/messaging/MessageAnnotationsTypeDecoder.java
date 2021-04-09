@@ -55,23 +55,20 @@ public final class MessageAnnotationsTypeDecoder extends AbstractDescribedTypeDe
 
     @Override
     public MessageAnnotations readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (decoder instanceof NullTypeDecoder) {
             decoder.readValue(buffer, state);
             return new MessageAnnotations(null);
         }
 
-        checkIsExpectedType(MapTypeDecoder.class, decoder);
-
-        return new MessageAnnotations(readMap(buffer, state, (MapTypeDecoder) decoder));
+        return new MessageAnnotations(readMap(buffer, state, checkIsExpectedTypeAndCast(MapTypeDecoder.class, decoder)));
     }
 
     @Override
     public MessageAnnotations[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        MessageAnnotations[] result = new MessageAnnotations[count];
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final MessageAnnotations[] result = new MessageAnnotations[count];
 
         if (decoder instanceof NullTypeDecoder) {
             for (int i = 0; i < count; ++i) {
@@ -81,9 +78,7 @@ public final class MessageAnnotationsTypeDecoder extends AbstractDescribedTypeDe
             return result;
         }
 
-        checkIsExpectedType(MapTypeDecoder.class, decoder);
-
-        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
+        final MapTypeDecoder mapDecoder = checkIsExpectedTypeAndCast(MapTypeDecoder.class, decoder);
 
         for (int i = 0; i < count; ++i) {
             result[i] = new MessageAnnotations(readMap(buffer, state, mapDecoder));
@@ -94,7 +89,7 @@ public final class MessageAnnotationsTypeDecoder extends AbstractDescribedTypeDe
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof NullTypeDecoder)) {
             checkIsExpectedType(MapTypeDecoder.class, decoder);
@@ -103,8 +98,8 @@ public final class MessageAnnotationsTypeDecoder extends AbstractDescribedTypeDe
     }
 
     private Map<Symbol, Object> readMap(ProtonBuffer buffer, DecoderState state, MapTypeDecoder mapDecoder) throws DecodeException {
-        int size = mapDecoder.readSize(buffer);
-        int count = mapDecoder.readCount(buffer);
+        final int size = mapDecoder.readSize(buffer);
+        final int count = mapDecoder.readCount(buffer);
 
         if (count > buffer.getReadableBytes()) {
             throw new DecodeException(String.format(
@@ -113,7 +108,7 @@ public final class MessageAnnotationsTypeDecoder extends AbstractDescribedTypeDe
         }
 
         // Count include both key and value so we must include that in the loop
-        Map<Symbol, Object> map = new LinkedHashMap<>(count);
+        final Map<Symbol, Object> map = new LinkedHashMap<>(count);
         for (int i = 0; i < count / 2; i++) {
             Symbol key = state.getDecoder().readSymbol(buffer, state);
             Object value = state.getDecoder().readObject(buffer, state);
@@ -126,23 +121,20 @@ public final class MessageAnnotationsTypeDecoder extends AbstractDescribedTypeDe
 
     @Override
     public MessageAnnotations readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         if (decoder instanceof NullTypeDecoder) {
             decoder.readValue(stream, state);
             return new MessageAnnotations(null);
         }
 
-        checkIsExpectedType(MapTypeDecoder.class, decoder);
-
-        return new MessageAnnotations(readMap(stream, state, (MapTypeDecoder) decoder));
+        return new MessageAnnotations(readMap(stream, state, checkIsExpectedTypeAndCast(MapTypeDecoder.class, decoder)));
     }
 
     @Override
     public MessageAnnotations[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
-
-        MessageAnnotations[] result = new MessageAnnotations[count];
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final MessageAnnotations[] result = new MessageAnnotations[count];
 
         if (decoder instanceof NullTypeDecoder) {
             for (int i = 0; i < count; ++i) {
@@ -152,9 +144,7 @@ public final class MessageAnnotationsTypeDecoder extends AbstractDescribedTypeDe
             return result;
         }
 
-        checkIsExpectedType(MapTypeDecoder.class, decoder);
-
-        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
+        final MapTypeDecoder mapDecoder = checkIsExpectedTypeAndCast(MapTypeDecoder.class, decoder);
 
         for (int i = 0; i < count; ++i) {
             result[i] = new MessageAnnotations(readMap(stream, state, mapDecoder));
@@ -165,7 +155,7 @@ public final class MessageAnnotationsTypeDecoder extends AbstractDescribedTypeDe
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         if (!(decoder instanceof NullTypeDecoder)) {
             checkIsExpectedType(MapTypeDecoder.class, decoder);
@@ -175,11 +165,11 @@ public final class MessageAnnotationsTypeDecoder extends AbstractDescribedTypeDe
 
     private Map<Symbol, Object> readMap(InputStream stream, StreamDecoderState state, MapTypeDecoder mapDecoder) throws DecodeException {
         @SuppressWarnings("unused")
-        int size = mapDecoder.readSize(stream);
-        int count = mapDecoder.readCount(stream);
+        final int size = mapDecoder.readSize(stream);
+        final int count = mapDecoder.readCount(stream);
 
         // Count include both key and value so we must include that in the loop
-        Map<Symbol, Object> map = new LinkedHashMap<>(count);
+        final Map<Symbol, Object> map = new LinkedHashMap<>(count);
         for (int i = 0; i < count / 2; i++) {
             Symbol key = state.getDecoder().readSymbol(stream, state);
             Object value = state.getDecoder().readObject(stream, state);

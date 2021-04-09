@@ -57,22 +57,20 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
 
     @Override
     public ApplicationProperties readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (decoder instanceof NullTypeDecoder) {
             return new ApplicationProperties(null);
         }
 
-        checkIsExpectedType(MapTypeDecoder.class, decoder);
-
-        return new ApplicationProperties(readMap(buffer, state, (MapTypeDecoder) decoder));
+        return new ApplicationProperties(readMap(buffer, state, checkIsExpectedTypeAndCast(MapTypeDecoder.class, decoder)));
     }
 
     @Override
     public ApplicationProperties[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        ApplicationProperties[] result = new ApplicationProperties[count];
+        final ApplicationProperties[] result = new ApplicationProperties[count];
 
         if (decoder instanceof NullTypeDecoder) {
             for (int i = 0; i < count; ++i) {
@@ -81,12 +79,8 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
             return result;
         }
 
-        checkIsExpectedType(MapTypeDecoder.class, decoder);
-
-        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
-
         for (int i = 0; i < count; ++i) {
-            result[i] = new ApplicationProperties(readMap(buffer, state, mapDecoder));
+            result[i] = new ApplicationProperties(readMap(buffer, state, checkIsExpectedTypeAndCast(MapTypeDecoder.class, decoder)));
         }
 
         return result;
@@ -94,7 +88,7 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof NullTypeDecoder)) {
             checkIsExpectedType(MapTypeDecoder.class, decoder);
@@ -103,8 +97,8 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
     }
 
     private Map<String, Object> readMap(ProtonBuffer buffer, DecoderState state, MapTypeDecoder mapDecoder) throws DecodeException {
-        int size = mapDecoder.readSize(buffer);
-        int count = mapDecoder.readCount(buffer);
+        final int size = mapDecoder.readSize(buffer);
+        final int count = mapDecoder.readCount(buffer);
 
         if (count > buffer.getReadableBytes()) {
             throw new DecodeException(String.format(
@@ -112,10 +106,10 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
                     "of data available (%d)", size, buffer.getReadableBytes()));
         }
 
-        Decoder decoder = state.getDecoder();
+        final Decoder decoder = state.getDecoder();
 
         // Count include both key and value so we must include that in the loop
-        Map<String, Object> map = new LinkedHashMap<>(count);
+        final Map<String, Object> map = new LinkedHashMap<>(count);
         for (int i = 0; i < count / 2; i++) {
             String key = decoder.readString(buffer, state);
             Object value = decoder.readObject(buffer, state);
@@ -128,22 +122,20 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
 
     @Override
     public ApplicationProperties readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         if (decoder instanceof NullTypeDecoder) {
             return new ApplicationProperties(null);
         }
 
-        checkIsExpectedType(MapTypeDecoder.class, decoder);
-
-        return new ApplicationProperties(readMap(stream, state, (MapTypeDecoder) decoder));
+        return new ApplicationProperties(readMap(stream, state, checkIsExpectedTypeAndCast(MapTypeDecoder.class, decoder)));
     }
 
     @Override
     public ApplicationProperties[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        ApplicationProperties[] result = new ApplicationProperties[count];
+        final ApplicationProperties[] result = new ApplicationProperties[count];
 
         if (decoder instanceof NullTypeDecoder) {
             for (int i = 0; i < count; ++i) {
@@ -152,12 +144,8 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
             return result;
         }
 
-        checkIsExpectedType(MapTypeDecoder.class, decoder);
-
-        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
-
         for (int i = 0; i < count; ++i) {
-            result[i] = new ApplicationProperties(readMap(stream, state, mapDecoder));
+            result[i] = new ApplicationProperties(readMap(stream, state, checkIsExpectedTypeAndCast(MapTypeDecoder.class, decoder)));
         }
 
         return result;
@@ -165,7 +153,7 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         if (!(decoder instanceof NullTypeDecoder)) {
             checkIsExpectedType(MapTypeDecoder.class, decoder);
@@ -175,13 +163,13 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
 
     private Map<String, Object> readMap(InputStream stream, StreamDecoderState state, MapTypeDecoder mapDecoder) throws DecodeException {
         @SuppressWarnings("unused")
-        int size = mapDecoder.readSize(stream);
-        int count = mapDecoder.readCount(stream);
+        final int size = mapDecoder.readSize(stream);
+        final int count = mapDecoder.readCount(stream);
 
-        StreamDecoder decoder = state.getDecoder();
+        final StreamDecoder decoder = state.getDecoder();
 
         // Count include both key and value so we must include that in the loop
-        Map<String, Object> map = new LinkedHashMap<>(count);
+        final Map<String, Object> map = new LinkedHashMap<>(count);
         for (int i = 0; i < count / 2; i++) {
             String key = decoder.readString(stream, state);
             Object value = decoder.readObject(stream, state);

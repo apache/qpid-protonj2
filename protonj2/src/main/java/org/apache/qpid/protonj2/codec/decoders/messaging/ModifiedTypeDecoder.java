@@ -57,20 +57,16 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
     public Modified readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readModified(buffer, state, (ListTypeDecoder) decoder);
+        return readModified(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Modified[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Modified[] result = new Modified[count];
+        final Modified[] result = new Modified[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readModified(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readModified(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -78,7 +74,7 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -86,11 +82,11 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
     }
 
     private Modified readModified(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Modified modified = new Modified();
+        final Modified modified = new Modified();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_MODIFIED_LIST_ENTRIES) {
@@ -122,7 +118,7 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
 
     @Override
     public Modified readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -131,13 +127,11 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
 
     @Override
     public Modified[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Modified[] result = new Modified[count];
+        final Modified[] result = new Modified[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readModified(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readModified(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -145,7 +139,7 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -153,11 +147,11 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
     }
 
     private Modified readModified(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Modified modified = new Modified();
+        final Modified modified = new Modified();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_MODIFIED_LIST_ENTRIES) {

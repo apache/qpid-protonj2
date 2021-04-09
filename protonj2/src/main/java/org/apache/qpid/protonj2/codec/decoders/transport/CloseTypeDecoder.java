@@ -56,22 +56,18 @@ public final class CloseTypeDecoder extends AbstractDescribedTypeDecoder<Close> 
 
     @Override
     public Close readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readClose(buffer, state, (ListTypeDecoder) decoder);
+        return readClose(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Close[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Close[] result = new Close[count];
+        final Close[] result = new Close[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readClose(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readClose(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -79,7 +75,7 @@ public final class CloseTypeDecoder extends AbstractDescribedTypeDecoder<Close> 
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -87,28 +83,18 @@ public final class CloseTypeDecoder extends AbstractDescribedTypeDecoder<Close> 
     }
 
     private Close readClose(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Close close = new Close();
+        final Close close = new Close();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         if (count < MIN_CLOSE_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in Close list encoding: " + count);
-        }
-
-        if (count > MAX_CLOSE_LIST_ENTRIES) {
+        } else if (count > MAX_CLOSE_LIST_ENTRIES) {
             throw new DecodeException("To many entries in Close list encoding: " + count);
-        }
-
-        for (int index = 0; index < count; ++index) {
-            switch (index) {
-                case 0:
-                    close.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
-                    break;
-                default:
-                    throw new DecodeException("To many entries in Close encoding");
-            }
+        } else if (count == 1) {
+            close.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
         }
 
         return close;
@@ -116,22 +102,18 @@ public final class CloseTypeDecoder extends AbstractDescribedTypeDecoder<Close> 
 
     @Override
     public Close readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readClose(stream, state, (ListTypeDecoder) decoder);
+        return readClose(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Close[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Close[] result = new Close[count];
+        final Close[] result = new Close[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readClose(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readClose(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -139,7 +121,7 @@ public final class CloseTypeDecoder extends AbstractDescribedTypeDecoder<Close> 
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -147,28 +129,18 @@ public final class CloseTypeDecoder extends AbstractDescribedTypeDecoder<Close> 
     }
 
     private Close readClose(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Close close = new Close();
+        final Close close = new Close();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         if (count < MIN_CLOSE_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in Close list encoding: " + count);
-        }
-
-        if (count > MAX_CLOSE_LIST_ENTRIES) {
+        } if (count > MAX_CLOSE_LIST_ENTRIES) {
             throw new DecodeException("To many entries in Close list encoding: " + count);
-        }
-
-        for (int index = 0; index < count; ++index) {
-            switch (index) {
-                case 0:
-                    close.setError(state.getDecoder().readObject(stream, state, ErrorCondition.class));
-                    break;
-                default:
-                    throw new DecodeException("To many entries in Close encoding");
-            }
+        } else if (count == 1) {
+            close.setError(state.getDecoder().readObject(stream, state, ErrorCondition.class));
         }
 
         return close;

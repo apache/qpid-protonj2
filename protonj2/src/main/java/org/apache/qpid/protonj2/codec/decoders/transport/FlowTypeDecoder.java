@@ -57,22 +57,18 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
 
     @Override
     public Flow readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readFlow(buffer, state, (ListTypeDecoder) decoder);
+        return readFlow(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Flow[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Flow[] result = new Flow[count];
+        final Flow[] result = new Flow[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readFlow(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readFlow(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -80,7 +76,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -88,22 +84,26 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
     }
 
     private Flow readFlow(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Flow flow = new Flow();
+        final Flow flow = new Flow();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_FLOW_LIST_ENTRIES) {
             throw new DecodeException(errorForMissingRequiredFields(count));
         }
 
+        if (count > MAX_FLOW_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in Flow list encoding: " + count);
+        }
+
         for (int index = 0; index < count; ++index) {
             // Peek ahead and see if there is a null in the next slot, if so we don't call
             // the setter for that entry to ensure the returned type reflects the encoded
             // state in the modification entry.
-            boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
+            final boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
                 // Ensure mandatory fields are set
                 if (index > 0 && index < MIN_FLOW_LIST_ENTRIES) {
@@ -148,9 +148,6 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
                 case 10:
                     flow.setProperties(state.getDecoder().readMap(buffer, state));
                     break;
-                default:
-                    throw new DecodeException(
-                        "To many entries in Flow list encoding: " + count + " max allowed entries = " + MAX_FLOW_LIST_ENTRIES);
             }
         }
 
@@ -159,22 +156,18 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
 
     @Override
     public Flow readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readFlow(stream, state, (ListTypeDecoder) decoder);
+        return readFlow(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Flow[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Flow[] result = new Flow[count];
+        final Flow[] result = new Flow[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readFlow(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readFlow(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -182,7 +175,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -190,15 +183,19 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
     }
 
     private Flow readFlow(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Flow flow = new Flow();
+        final Flow flow = new Flow();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_FLOW_LIST_ENTRIES) {
             throw new DecodeException(errorForMissingRequiredFields(count));
+        }
+
+        if (count > MAX_FLOW_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in Flow list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -207,7 +204,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
             // the encoded state in the modification entry.
             if (stream.markSupported()) {
                 stream.mark(1);
-                boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
+                final boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
                 if (nullValue) {
                     // Ensure mandatory fields are set
                     if (index > 0 && index < MIN_FLOW_LIST_ENTRIES) {
@@ -254,9 +251,6 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
                 case 10:
                     flow.setProperties(state.getDecoder().readMap(stream, state));
                     break;
-                default:
-                    throw new DecodeException(
-                        "To many entries in Flow list encoding: " + count + " max allowed entries = " + MAX_FLOW_LIST_ENTRIES);
             }
         }
 

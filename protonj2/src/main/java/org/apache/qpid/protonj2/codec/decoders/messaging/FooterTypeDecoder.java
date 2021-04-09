@@ -54,16 +54,14 @@ public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer
     @SuppressWarnings("unchecked")
     @Override
     public Footer readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (decoder instanceof NullTypeDecoder) {
             decoder.readValue(buffer, state);
             return new Footer(null);
         }
 
-        checkIsExpectedType(MapTypeDecoder.class, decoder);
-
-        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
+        MapTypeDecoder mapDecoder = checkIsExpectedTypeAndCast(MapTypeDecoder.class, decoder);
 
         return new Footer(mapDecoder.readValue(buffer, state));
     }
@@ -71,9 +69,9 @@ public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer
     @SuppressWarnings("unchecked")
     @Override
     public Footer[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        Footer[] result = new Footer[count];
+        final Footer[] result = new Footer[count];
 
         if (decoder instanceof NullTypeDecoder) {
             for (int i = 0; i < count; ++i) {
@@ -83,9 +81,7 @@ public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer
             return result;
         }
 
-        checkIsExpectedType(MapTypeDecoder.class, decoder);
-
-        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
+        final MapTypeDecoder mapDecoder = checkIsExpectedTypeAndCast(MapTypeDecoder.class, decoder);
 
         for (int i = 0; i < count; ++i) {
             result[i] = new Footer(mapDecoder.readValue(buffer, state));
@@ -96,7 +92,7 @@ public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof NullTypeDecoder)) {
             checkIsExpectedType(MapTypeDecoder.class, decoder);
@@ -107,16 +103,14 @@ public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer
     @SuppressWarnings("unchecked")
     @Override
     public Footer readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         if (decoder instanceof NullTypeDecoder) {
             decoder.readValue(stream, state);
             return new Footer(null);
         }
 
-        checkIsExpectedType(MapTypeDecoder.class, decoder);
-
-        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
+        final MapTypeDecoder mapDecoder = checkIsExpectedTypeAndCast(MapTypeDecoder.class, decoder);
 
         return new Footer(mapDecoder.readValue(stream, state));
     }
@@ -124,9 +118,9 @@ public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer
     @SuppressWarnings("unchecked")
     @Override
     public Footer[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        Footer[] result = new Footer[count];
+        final Footer[] result = new Footer[count];
 
         if (decoder instanceof NullTypeDecoder) {
             for (int i = 0; i < count; ++i) {
@@ -136,9 +130,7 @@ public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer
             return result;
         }
 
-        checkIsExpectedType(MapTypeDecoder.class, decoder);
-
-        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
+        final MapTypeDecoder mapDecoder = checkIsExpectedTypeAndCast(MapTypeDecoder.class, decoder);
 
         for (int i = 0; i < count; ++i) {
             result[i] = new Footer(mapDecoder.readValue(stream, state));
@@ -149,7 +141,7 @@ public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         if (!(decoder instanceof NullTypeDecoder)) {
             checkIsExpectedType(MapTypeDecoder.class, decoder);

@@ -60,22 +60,18 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
 
     @Override
     public Transfer readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readTransfer(buffer, state, (ListTypeDecoder) decoder);
+        return readTransfer(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Transfer[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Transfer[] result = new Transfer[count];
+        final Transfer[] result = new Transfer[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readTransfer(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readTransfer(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -83,7 +79,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -91,22 +87,26 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
     }
 
     private Transfer readTransfer(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Transfer transfer = new Transfer();
+        final Transfer transfer = new Transfer();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_TRANSFER_LIST_ENTRIES) {
             throw new DecodeException("The handle field cannot be omitted");
         }
 
+        if (count > MAX_TRANSFER_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in Transfer list encoding: " + count);
+        }
+
         for (int index = 0; index < count; ++index) {
             // Peek ahead and see if there is a null in the next slot, if so we don't call
             // the setter for that entry to ensure the returned type reflects the encoded
             // state in the modification entry.
-            boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
+            final boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
                 if (index == 0) {
                     throw new DecodeException("The handle field cannot be omitted");
@@ -136,7 +136,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
                     transfer.setMore(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 6:
-                    UnsignedByte rcvSettleMode = state.getDecoder().readUnsignedByte(buffer, state);
+                    final UnsignedByte rcvSettleMode = state.getDecoder().readUnsignedByte(buffer, state);
                     transfer.setRcvSettleMode(rcvSettleMode == null ? null : ReceiverSettleMode.values()[rcvSettleMode.intValue()]);
                     break;
                 case 7:
@@ -151,9 +151,6 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
                 case 10:
                     transfer.setBatchable(state.getDecoder().readBoolean(buffer, state, false));
                     break;
-                default:
-                    throw new DecodeException(
-                        "To many entries in Flow list encoding: " + count + " max allowed entries = " + MAX_TRANSFER_LIST_ENTRIES);
             }
         }
 
@@ -162,22 +159,18 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
 
     @Override
     public Transfer readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readTransfer(stream, state, (ListTypeDecoder) decoder);
+        return readTransfer(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Transfer[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Transfer[] result = new Transfer[count];
+        final Transfer[] result = new Transfer[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readTransfer(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readTransfer(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -185,7 +178,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -193,15 +186,19 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
     }
 
     private Transfer readTransfer(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Transfer transfer = new Transfer();
+        final Transfer transfer = new Transfer();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_TRANSFER_LIST_ENTRIES) {
             throw new DecodeException("The handle field cannot be omitted");
+        }
+
+        if (count > MAX_TRANSFER_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in Transfer list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -210,7 +207,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
             // the encoded state in the modification entry.
             if (stream.markSupported()) {
                 stream.mark(1);
-                boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
+                final boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
                 if (nullValue) {
                     if (index == 0) {
                         throw new DecodeException("The handle field cannot be omitted");
@@ -242,7 +239,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
                     transfer.setMore(state.getDecoder().readBoolean(stream, state, false));
                     break;
                 case 6:
-                    UnsignedByte rcvSettleMode = state.getDecoder().readUnsignedByte(stream, state);
+                    final UnsignedByte rcvSettleMode = state.getDecoder().readUnsignedByte(stream, state);
                     transfer.setRcvSettleMode(rcvSettleMode == null ? null : ReceiverSettleMode.values()[rcvSettleMode.intValue()]);
                     break;
                 case 7:
@@ -257,9 +254,6 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
                 case 10:
                     transfer.setBatchable(state.getDecoder().readBoolean(stream, state, false));
                     break;
-                default:
-                    throw new DecodeException(
-                        "To many entries in Flow list encoding: " + count + " max allowed entries = " + MAX_TRANSFER_LIST_ENTRIES);
             }
         }
 

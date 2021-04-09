@@ -35,7 +35,7 @@ public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecode
 
     @Override
     public Map<Object, Object> readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        int size = readSize(buffer);
+        final int size = readSize(buffer);
 
         if (size > buffer.getReadableBytes()) {
             throw new DecodeException(String.format(
@@ -43,7 +43,7 @@ public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecode
                     "of data available (%d)", size, buffer.getReadableBytes()));
         }
 
-        int count = readCount(buffer);
+        final int count = readCount(buffer);
 
         if (count % 2 != 0) {
             throw new DecodeException(String.format(
@@ -52,7 +52,7 @@ public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecode
         }
 
         // Count include both key and value so we must include that in the loop
-        Map<Object, Object> map = new LinkedHashMap<>(count);
+        final Map<Object, Object> map = new LinkedHashMap<>(count);
         for (int i = 0; i < count / 2; i++) {
             Object key = state.getDecoder().readObject(buffer, state);
             Object value = state.getDecoder().readObject(buffer, state);
@@ -71,10 +71,10 @@ public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecode
     @Override
     public Map<Object, Object> readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         readSize(stream);
-        int count = readCount(stream);
+        final int count = readCount(stream);
 
         // Count include both key and value so we must include that in the loop
-        Map<Object, Object> map = new LinkedHashMap<>(count);
+        final Map<Object, Object> map = new LinkedHashMap<>(count);
         for (int i = 0; i < count / 2; i++) {
             Object key = state.getDecoder().readObject(stream, state);
             Object value = state.getDecoder().readObject(stream, state);

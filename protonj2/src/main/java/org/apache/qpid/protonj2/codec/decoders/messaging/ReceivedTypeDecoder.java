@@ -54,22 +54,18 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
 
     @Override
     public Received readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readReceived(buffer, state, (ListTypeDecoder) decoder);
+        return readReceived(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Received[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Received[] result = new Received[count];
+        final Received[] result = new Received[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readReceived(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readReceived(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -77,7 +73,7 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -85,11 +81,11 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
     }
 
     private Received readReceived(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Received received = new Received();
+        final Received received = new Received();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
         if (count != REQUIRED_RECEIVED_LIST_ENTRIES) {
@@ -114,22 +110,18 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
 
     @Override
     public Received readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readReceived(stream, state, (ListTypeDecoder) decoder);
+        return readReceived(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Received[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Received[] result = new Received[count];
+        final Received[] result = new Received[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readReceived(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readReceived(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -137,7 +129,7 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -145,11 +137,11 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
     }
 
     private Received readReceived(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Received received = new Received();
+        final Received received = new Received();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         // Don't decode anything if things already look wrong.
         if (count != REQUIRED_RECEIVED_LIST_ENTRIES) {

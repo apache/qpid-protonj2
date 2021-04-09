@@ -56,22 +56,18 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
 
     @Override
     public End readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readEnd(buffer, state, (ListTypeDecoder) decoder);
+        return readEnd(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public End[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        End[] result = new End[count];
+        final End[] result = new End[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readEnd(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readEnd(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -79,7 +75,7 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -87,11 +83,11 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
     }
 
     private End readEnd(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        End end = new End();
+        final End end = new End();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         if (count < MIN_END_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in End list encoding: " + count);
@@ -106,8 +102,6 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
                 case 0:
                     end.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
                     break;
-                default:
-                    throw new DecodeException("To many entries in End encoding");
             }
         }
 
@@ -116,22 +110,18 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
 
     @Override
     public End readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readEnd(stream, state, (ListTypeDecoder) decoder);
+        return readEnd(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public End[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        End[] result = new End[count];
+        final End[] result = new End[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readEnd(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readEnd(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -139,7 +129,7 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -147,11 +137,11 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
     }
 
     private End readEnd(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        End end = new End();
+        final End end = new End();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         if (count < MIN_END_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in End list encoding: " + count);
@@ -166,8 +156,6 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
                 case 0:
                     end.setError(state.getDecoder().readObject(stream, state, ErrorCondition.class));
                     break;
-                default:
-                    throw new DecodeException("To many entries in End encoding");
             }
         }
 

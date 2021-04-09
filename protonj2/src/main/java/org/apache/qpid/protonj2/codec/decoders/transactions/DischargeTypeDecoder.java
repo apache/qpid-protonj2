@@ -55,22 +55,18 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
 
     @Override
     public Discharge readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readDischarge(buffer, state, (ListTypeDecoder) decoder);
+        return readDischarge(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Discharge[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Discharge[] result = new Discharge[count];
+        final Discharge[] result = new Discharge[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readDischarge(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readDischarge(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -78,7 +74,7 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -86,11 +82,11 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
     }
 
     private Discharge readDischarge(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Discharge discharge = new Discharge();
+        final Discharge discharge = new Discharge();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_DISCHARGE_LIST_ENTRIES) {
@@ -109,8 +105,6 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
                 case 1:
                     discharge.setFail(state.getDecoder().readBoolean(buffer, state, false));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Discharge encoding");
             }
         }
 
@@ -119,22 +113,18 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
 
     @Override
     public Discharge readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readDischarge(stream, state, (ListTypeDecoder) decoder);
+        return readDischarge(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Discharge[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Discharge[] result = new Discharge[count];
+        final Discharge[] result = new Discharge[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readDischarge(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readDischarge(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -142,7 +132,7 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -150,11 +140,11 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
     }
 
     private Discharge readDischarge(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Discharge discharge = new Discharge();
+        final Discharge discharge = new Discharge();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_DISCHARGE_LIST_ENTRIES) {
@@ -173,8 +163,6 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
                 case 1:
                     discharge.setFail(state.getDecoder().readBoolean(stream, state, false));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Discharge encoding");
             }
         }
 

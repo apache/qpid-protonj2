@@ -54,22 +54,18 @@ public final class SaslResponseTypeDecoder extends AbstractDescribedTypeDecoder<
 
     @Override
     public SaslResponse readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readProperties(buffer, state, (ListTypeDecoder) decoder);
+        return readProperties(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public SaslResponse[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        SaslResponse[] result = new SaslResponse[count];
+        final SaslResponse[] result = new SaslResponse[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readProperties(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readProperties(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -77,7 +73,7 @@ public final class SaslResponseTypeDecoder extends AbstractDescribedTypeDecoder<
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -85,24 +81,16 @@ public final class SaslResponseTypeDecoder extends AbstractDescribedTypeDecoder<
     }
 
     private SaslResponse readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        SaslResponse response = new SaslResponse();
+        final SaslResponse response = new SaslResponse();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         if (count != REQUIRED_LIST_ENTRIES) {
             throw new DecodeException("SASL Response must contain a single response binary: " + count);
-        }
-
-        for (int index = 0; index < count; ++index) {
-            switch (index) {
-                case 0:
-                    response.setResponse(state.getDecoder().readBinaryAsBuffer(buffer, state));
-                    break;
-                default:
-                    throw new DecodeException("To many entries in Properties encoding");
-            }
+        } else {
+            response.setResponse(state.getDecoder().readBinaryAsBuffer(buffer, state));
         }
 
         return response;
@@ -110,22 +98,18 @@ public final class SaslResponseTypeDecoder extends AbstractDescribedTypeDecoder<
 
     @Override
     public SaslResponse readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readProperties(stream, state, (ListTypeDecoder) decoder);
+        return readProperties(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public SaslResponse[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        SaslResponse[] result = new SaslResponse[count];
+        final SaslResponse[] result = new SaslResponse[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readProperties(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readProperties(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -133,7 +117,7 @@ public final class SaslResponseTypeDecoder extends AbstractDescribedTypeDecoder<
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -141,24 +125,16 @@ public final class SaslResponseTypeDecoder extends AbstractDescribedTypeDecoder<
     }
 
     private SaslResponse readProperties(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        SaslResponse response = new SaslResponse();
+        final SaslResponse response = new SaslResponse();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         if (count != REQUIRED_LIST_ENTRIES) {
             throw new DecodeException("SASL Response must contain a single response binary: " + count);
-        }
-
-        for (int index = 0; index < count; ++index) {
-            switch (index) {
-                case 0:
-                    response.setResponse(state.getDecoder().readBinaryAsBuffer(stream, state));
-                    break;
-                default:
-                    throw new DecodeException("To many entries in Properties encoding");
-            }
+        } else {
+            response.setResponse(state.getDecoder().readBinaryAsBuffer(stream, state));
         }
 
         return response;

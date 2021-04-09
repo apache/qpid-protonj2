@@ -57,22 +57,19 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
 
     @Override
     public Properties readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readProperties(buffer, state, (ListTypeDecoder) decoder);
+        return readProperties(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Properties[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final ListTypeDecoder listDecoder = checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Properties[] result = new Properties[count];
+        final Properties[] result = new Properties[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readProperties(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readProperties(buffer, state, listDecoder);
         }
 
         return result;
@@ -80,7 +77,7 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -88,11 +85,11 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
     }
 
     private Properties readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Properties properties = new Properties();
+        final Properties properties = new Properties();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_PROPERTIES_LIST_ENTRIES) {
@@ -153,8 +150,6 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
                 case 12:
                     properties.setReplyToGroupId(state.getDecoder().readString(buffer, state));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Properties encoding");
             }
         }
 
@@ -163,22 +158,19 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
 
     @Override
     public Properties readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readProperties(stream, state, (ListTypeDecoder) decoder);
+        return readProperties(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Properties[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final ListTypeDecoder listDecoder = checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Properties[] result = new Properties[count];
+        final Properties[] result = new Properties[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readProperties(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readProperties(stream, state, listDecoder);
         }
 
         return result;
@@ -186,7 +178,7 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -194,11 +186,11 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
     }
 
     private Properties readProperties(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Properties properties = new Properties();
+        final Properties properties = new Properties();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_PROPERTIES_LIST_ENTRIES) {
@@ -262,8 +254,6 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
                 case 12:
                     properties.setReplyToGroupId(state.getDecoder().readString(stream, state));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Properties encoding");
             }
         }
 

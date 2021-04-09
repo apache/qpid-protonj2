@@ -35,7 +35,7 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
 
     @Override
     public List<Object> readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        int size = readSize(buffer);
+        final int size = readSize(buffer);
 
         // Ensure we do not allocate an array of size greater then the available data, otherwise there is a risk for an OOM error
         if (size > buffer.getReadableBytes()) {
@@ -44,7 +44,7 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
                     "of data available (%d)", size, buffer.getReadableBytes()));
         }
 
-        int count = readCount(buffer);
+        final int count = readCount(buffer);
 
         if (count > buffer.getReadableBytes()) {
             throw new DecodeException(String.format(
@@ -52,7 +52,7 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
                     "of data available (%d)", count, buffer.getReadableBytes()));
         }
 
-        List<Object> list = new ArrayList<>(count);
+        final List<Object> list = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             list.add(state.getDecoder().readObject(buffer, state));
         }
@@ -68,9 +68,9 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
     @Override
     public List<Object> readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         readSize(stream);
-        int count = readCount(stream);
+        final int count = readCount(stream);
 
-        List<Object> list = new ArrayList<>(count);
+        final List<Object> list = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             list.add(state.getDecoder().readObject(stream, state));
         }

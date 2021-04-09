@@ -56,22 +56,18 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
 
     @Override
     public SaslOutcome readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readProperties(buffer, state, (ListTypeDecoder) decoder);
+        return readProperties(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public SaslOutcome[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        SaslOutcome[] result = new SaslOutcome[count];
+        final SaslOutcome[] result = new SaslOutcome[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readProperties(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readProperties(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -79,7 +75,7 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -87,11 +83,11 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
     }
 
     private SaslOutcome readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        SaslOutcome outcome = new SaslOutcome();
+        final SaslOutcome outcome = new SaslOutcome();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_SASL_OUTCOME_LIST_ENTRIES) {
@@ -110,8 +106,6 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
                 case 1:
                     outcome.setAdditionalData(state.getDecoder().readBinaryAsBuffer(buffer, state));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Properties encoding");
             }
         }
 
@@ -120,22 +114,18 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
 
     @Override
     public SaslOutcome readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readProperties(stream, state, (ListTypeDecoder) decoder);
+        return readProperties(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public SaslOutcome[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        SaslOutcome[] result = new SaslOutcome[count];
+        final SaslOutcome[] result = new SaslOutcome[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readProperties(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readProperties(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -143,7 +133,7 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -151,11 +141,11 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
     }
 
     private SaslOutcome readProperties(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        SaslOutcome outcome = new SaslOutcome();
+        final SaslOutcome outcome = new SaslOutcome();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_SASL_OUTCOME_LIST_ENTRIES) {
@@ -174,8 +164,6 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
                 case 1:
                     outcome.setAdditionalData(state.getDecoder().readBinaryAsBuffer(stream, state));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Properties encoding");
             }
         }
 

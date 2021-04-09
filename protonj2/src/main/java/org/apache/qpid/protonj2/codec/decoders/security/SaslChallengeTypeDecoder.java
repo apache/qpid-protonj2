@@ -54,16 +54,14 @@ public final class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder
 
     @Override
     public SaslChallenge readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readProperties(buffer, state, (ListTypeDecoder) decoder);
+        return readProperties(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -72,37 +70,27 @@ public final class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder
 
     @Override
     public SaslChallenge[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        SaslChallenge[] result = new SaslChallenge[count];
+        final SaslChallenge[] result = new SaslChallenge[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readProperties(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readProperties(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
     }
 
     private SaslChallenge readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        SaslChallenge challenge = new SaslChallenge();
+        final SaslChallenge challenge = new SaslChallenge();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         if (count != REQUIRED_LIST_ENTRIES) {
             throw new DecodeException("SASL Challenge must contain a single challenge binary: " + count);
-        }
-
-        for (int index = 0; index < count; ++index) {
-            switch (index) {
-                case 0:
-                    challenge.setChallenge(state.getDecoder().readBinaryAsBuffer(buffer, state));
-                    break;
-                default:
-                    throw new DecodeException("To many entries in Properties encoding");
-            }
+        } else {
+            challenge.setChallenge(state.getDecoder().readBinaryAsBuffer(buffer, state));
         }
 
         return challenge;
@@ -110,16 +98,14 @@ public final class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder
 
     @Override
     public SaslChallenge readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readProperties(stream, state, (ListTypeDecoder) decoder);
+        return readProperties(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -128,37 +114,27 @@ public final class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder
 
     @Override
     public SaslChallenge[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        SaslChallenge[] result = new SaslChallenge[count];
+        final SaslChallenge[] result = new SaslChallenge[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readProperties(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readProperties(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
     }
 
     private SaslChallenge readProperties(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        SaslChallenge challenge = new SaslChallenge();
+        final SaslChallenge challenge = new SaslChallenge();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         if (count != REQUIRED_LIST_ENTRIES) {
             throw new DecodeException("SASL Challenge must contain a single challenge binary: " + count);
-        }
-
-        for (int index = 0; index < count; ++index) {
-            switch (index) {
-                case 0:
-                    challenge.setChallenge(state.getDecoder().readBinaryAsBuffer(stream, state));
-                    break;
-                default:
-                    throw new DecodeException("To many entries in Properties encoding");
-            }
+        } else {
+            challenge.setChallenge(state.getDecoder().readBinaryAsBuffer(stream, state));
         }
 
         return challenge;

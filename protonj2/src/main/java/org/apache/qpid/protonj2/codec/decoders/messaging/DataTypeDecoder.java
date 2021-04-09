@@ -97,10 +97,7 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
     @Override
     public Data[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        checkIsExpectedType(BinaryTypeDecoder.class, decoder);
-
-        final BinaryTypeDecoder valueDecoder = (BinaryTypeDecoder) decoder;
+        final BinaryTypeDecoder valueDecoder = checkIsExpectedTypeAndCast(BinaryTypeDecoder.class, decoder);
         final Binary[] binaryArray = valueDecoder.readArrayElements(buffer, state, count);
 
         final Data[] dataArray = new Data[count];
@@ -144,10 +141,7 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
     @Override
     public Data[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
         final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
-
-        checkIsExpectedType(BinaryTypeDecoder.class, decoder);
-
-        final BinaryTypeDecoder valueDecoder = (BinaryTypeDecoder) decoder;
+        final BinaryTypeDecoder valueDecoder = checkIsExpectedTypeAndCast(BinaryTypeDecoder.class, decoder);
         final Binary[] binaryArray = valueDecoder.readArrayElements(stream, state, count);
 
         final Data[] dataArray = new Data[count];

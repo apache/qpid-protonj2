@@ -58,22 +58,18 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
 
     @Override
     public Target readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readTarget(buffer, state, (ListTypeDecoder) decoder);
+        return readTarget(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Target[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Target[] result = new Target[count];
+        final Target[] result = new Target[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readTarget(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readTarget(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -81,7 +77,7 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -89,11 +85,11 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
     }
 
     private Target readTarget(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Target target = new Target();
+        final Target target = new Target();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         if (count < MIN_TARGET_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in Target list encoding: " + count);
@@ -109,15 +105,15 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
                     target.setAddress(state.getDecoder().readString(buffer, state));
                     break;
                 case 1:
-                    long durability = state.getDecoder().readUnsignedInteger(buffer, state, 0);
+                    final long durability = state.getDecoder().readUnsignedInteger(buffer, state, 0);
                     target.setDurable(TerminusDurability.valueOf(durability));
                     break;
                 case 2:
-                    Symbol expiryPolicy = state.getDecoder().readSymbol(buffer, state);
+                    final Symbol expiryPolicy = state.getDecoder().readSymbol(buffer, state);
                     target.setExpiryPolicy(expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : TerminusExpiryPolicy.valueOf(expiryPolicy));
                     break;
                 case 3:
-                    UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(buffer, state);
+                    final UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(buffer, state);
                     target.setTimeout(timeout == null ? UnsignedInteger.ZERO : timeout);
                     break;
                 case 4:
@@ -129,8 +125,6 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
                 case 6:
                     target.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Target encoding");
             }
         }
 
@@ -139,22 +133,18 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
 
     @Override
     public Target readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readTarget(stream, state, (ListTypeDecoder) decoder);
+        return readTarget(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Target[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Target[] result = new Target[count];
+        final Target[] result = new Target[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readTarget(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readTarget(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -162,7 +152,7 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -170,11 +160,11 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
     }
 
     private Target readTarget(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Target target = new Target();
+        final Target target = new Target();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         if (count < MIN_TARGET_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in Target list encoding: " + count);
@@ -190,15 +180,15 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
                     target.setAddress(state.getDecoder().readString(stream, state));
                     break;
                 case 1:
-                    long durability = state.getDecoder().readUnsignedInteger(stream, state, 0);
+                    final long durability = state.getDecoder().readUnsignedInteger(stream, state, 0);
                     target.setDurable(TerminusDurability.valueOf(durability));
                     break;
                 case 2:
-                    Symbol expiryPolicy = state.getDecoder().readSymbol(stream, state);
+                    final Symbol expiryPolicy = state.getDecoder().readSymbol(stream, state);
                     target.setExpiryPolicy(expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : TerminusExpiryPolicy.valueOf(expiryPolicy));
                     break;
                 case 3:
-                    UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(stream, state);
+                    final UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(stream, state);
                     target.setTimeout(timeout == null ? UnsignedInteger.ZERO : timeout);
                     break;
                 case 4:
@@ -210,8 +200,6 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
                 case 6:
                     target.setCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Target encoding");
             }
         }
 

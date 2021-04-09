@@ -34,7 +34,7 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public Symbol readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        int length = readSize(buffer);
+        final int length = readSize(buffer);
 
         if (length == 0) {
             return Symbol.valueOf("");
@@ -46,7 +46,7 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
                     "of data available (%d)", length, buffer.getReadableBytes()));
         }
 
-        ProtonBuffer symbolBuffer = buffer.slice(buffer.getReadIndex(), length);
+        final ProtonBuffer symbolBuffer = buffer.slice(buffer.getReadIndex(), length);
         buffer.skipBytes(length);
 
         return Symbol.getSymbol(symbolBuffer, true);
@@ -74,7 +74,7 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public Symbol readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        int length = readSize(stream);
+        final int length = readSize(stream);
 
         if (length == 0) {
             return Symbol.valueOf("");

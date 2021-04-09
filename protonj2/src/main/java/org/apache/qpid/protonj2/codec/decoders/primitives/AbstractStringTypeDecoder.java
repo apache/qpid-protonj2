@@ -32,7 +32,7 @@ public abstract class AbstractStringTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public String readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        int length = readSize(buffer);
+        final int length = readSize(buffer);
 
         if (length > buffer.getReadableBytes()) {
             throw new DecodeException(String.format(
@@ -49,7 +49,7 @@ public abstract class AbstractStringTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public String readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        int length = readSize(stream);
+        final int length = readSize(stream);
 
         if (length != 0) {
             return state.decodeUTF8(stream, length);

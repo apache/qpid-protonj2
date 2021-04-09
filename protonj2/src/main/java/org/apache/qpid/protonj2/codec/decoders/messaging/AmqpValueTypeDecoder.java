@@ -52,17 +52,17 @@ public final class AmqpValueTypeDecoder extends AbstractDescribedTypeDecoder<Amq
 
     @Override
     public AmqpValue<?> readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
         return new AmqpValue<>(decoder.readValue(buffer, state));
     }
 
     @Override
     public AmqpValue[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        Object[] elements = decoder.readArrayElements(buffer, state, count);
+        final Object[] elements = decoder.readArrayElements(buffer, state, count);
 
-        AmqpValue[] array = new AmqpValue[count];
+        final AmqpValue[] array = new AmqpValue[count];
         for (int i = 0; i < count; ++i) {
             array[i] = new AmqpValue<>(elements[i]);
         }
@@ -72,23 +72,23 @@ public final class AmqpValueTypeDecoder extends AbstractDescribedTypeDecoder<Amq
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
         decoder.skipValue(buffer, state);
     }
 
     @Override
     public AmqpValue readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
         return new AmqpValue<>(decoder.readValue(stream, state));
     }
 
     @Override
     public AmqpValue[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        Object[] elements = decoder.readArrayElements(stream, state, count);
+        final Object[] elements = decoder.readArrayElements(stream, state, count);
 
-        AmqpValue[] array = new AmqpValue[count];
+        final AmqpValue[] array = new AmqpValue[count];
         for (int i = 0; i < count; ++i) {
             array[i] = new AmqpValue<>(elements[i]);
         }

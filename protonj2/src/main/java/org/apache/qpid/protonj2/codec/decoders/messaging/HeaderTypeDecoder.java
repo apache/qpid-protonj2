@@ -57,22 +57,19 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
 
     @Override
     public Header readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readHeader(buffer, state, (ListTypeDecoder) decoder);
+        return readHeader(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Header[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final ListTypeDecoder listDecoder = checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Header[] result = new Header[count];
+        final Header[] result = new Header[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readHeader(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readHeader(buffer, state, listDecoder);
         }
 
         return result;
@@ -80,7 +77,7 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -88,11 +85,11 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
     }
 
     private Header readHeader(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Header header = new Header();
+        final Header header = new Header();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_HEADER_LIST_ENTRIES) {
@@ -129,8 +126,6 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
                 case 4:
                     header.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Header encoding");
             }
         }
 
@@ -139,22 +134,19 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
 
     @Override
     public Header readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readHeader(stream, state, (ListTypeDecoder) decoder);
+        return readHeader(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Header[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final ListTypeDecoder listDecoder = checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Header[] result = new Header[count];
+        final Header[] result = new Header[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readHeader(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readHeader(stream, state, listDecoder);
         }
 
         return result;
@@ -162,7 +154,7 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -170,11 +162,11 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
     }
 
     private Header readHeader(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Header header = new Header();
+        final Header header = new Header();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_HEADER_LIST_ENTRIES) {
@@ -214,8 +206,6 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
                 case 4:
                     header.setDeliveryCount(state.getDecoder().readUnsignedInteger(stream, state, 0l));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Header encoding");
             }
         }
 

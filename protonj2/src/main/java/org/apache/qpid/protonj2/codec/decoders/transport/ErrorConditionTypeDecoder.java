@@ -56,22 +56,18 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
 
     @Override
     public ErrorCondition readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readErrorCondition(buffer, state, (ListTypeDecoder) decoder);
+        return readErrorCondition(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public ErrorCondition[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        ErrorCondition[] result = new ErrorCondition[count];
+        final ErrorCondition[] result = new ErrorCondition[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readErrorCondition(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readErrorCondition(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -79,7 +75,7 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -88,8 +84,8 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
 
     private ErrorCondition readErrorCondition(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_ERROR_CONDITION_LIST_ENTRIES) {
@@ -114,8 +110,6 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
                 case 2:
                     info = state.getDecoder().readMap(buffer, state);
                     break;
-                default:
-                    throw new DecodeException("To many entries in ErrorCondition encoding");
             }
         }
 
@@ -124,22 +118,18 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
 
     @Override
     public ErrorCondition readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readErrorCondition(stream, state, (ListTypeDecoder) decoder);
+        return readErrorCondition(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public ErrorCondition[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        ErrorCondition[] result = new ErrorCondition[count];
+        final ErrorCondition[] result = new ErrorCondition[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readErrorCondition(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readErrorCondition(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -147,7 +137,7 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -156,8 +146,8 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
 
     private ErrorCondition readErrorCondition(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_ERROR_CONDITION_LIST_ENTRIES) {
@@ -182,8 +172,6 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
                 case 2:
                     info = state.getDecoder().readMap(stream, state);
                     break;
-                default:
-                    throw new DecodeException("To many entries in ErrorCondition encoding");
             }
         }
 

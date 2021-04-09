@@ -56,22 +56,20 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
 
     @Override
     public Rejected readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
-        return readRejected(buffer, state, (ListTypeDecoder) decoder);
+        return readRejected(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Rejected[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Rejected[] result = new Rejected[count];
+        final Rejected[] result = new Rejected[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readRejected(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readRejected(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -79,7 +77,7 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -87,11 +85,11 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
     }
 
     private Rejected readRejected(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Rejected rejected = new Rejected();
+        final Rejected rejected = new Rejected();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_REJECTED_LIST_ENTRIES) {
@@ -117,22 +115,18 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
 
     @Override
     public Rejected readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readRejected(stream, state, (ListTypeDecoder) decoder);
+        return readRejected(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Rejected[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Rejected[] result = new Rejected[count];
+        final Rejected[] result = new Rejected[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readRejected(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readRejected(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -140,7 +134,7 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -148,11 +142,11 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
     }
 
     private Rejected readRejected(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Rejected rejected = new Rejected();
+        final Rejected rejected = new Rejected();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_REJECTED_LIST_ENTRIES) {

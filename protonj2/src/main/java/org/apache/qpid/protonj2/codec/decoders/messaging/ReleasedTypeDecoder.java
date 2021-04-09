@@ -52,7 +52,7 @@ public final class ReleasedTypeDecoder extends AbstractDescribedTypeDecoder<Rele
 
     @Override
     public Released readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -63,11 +63,11 @@ public final class ReleasedTypeDecoder extends AbstractDescribedTypeDecoder<Rele
 
     @Override
     public Released[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
-        Released[] result = new Released[count];
+        final Released[] result = new Released[count];
         for (int i = 0; i < count; ++i) {
             decoder.skipValue(buffer, state);
             result[i] = Released.getInstance();
@@ -78,7 +78,7 @@ public final class ReleasedTypeDecoder extends AbstractDescribedTypeDecoder<Rele
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -87,7 +87,7 @@ public final class ReleasedTypeDecoder extends AbstractDescribedTypeDecoder<Rele
 
     @Override
     public Released readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -98,11 +98,11 @@ public final class ReleasedTypeDecoder extends AbstractDescribedTypeDecoder<Rele
 
     @Override
     public Released[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
-        Released[] result = new Released[count];
+        final Released[] result = new Released[count];
         for (int i = 0; i < count; ++i) {
             decoder.skipValue(stream, state);
             result[i] = Released.getInstance();
@@ -113,7 +113,7 @@ public final class ReleasedTypeDecoder extends AbstractDescribedTypeDecoder<Rele
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 

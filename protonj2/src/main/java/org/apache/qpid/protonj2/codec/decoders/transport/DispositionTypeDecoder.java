@@ -59,22 +59,18 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
 
     @Override
     public Disposition readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readDisposition(buffer, state, (ListTypeDecoder) decoder);
+        return readDisposition(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Disposition[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         Disposition[] result = new Disposition[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readDisposition(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readDisposition(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -82,7 +78,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -90,21 +86,25 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
     }
 
     private Disposition readDisposition(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Disposition disposition = new Disposition();
+        final Disposition disposition = new Disposition();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         if (count < MIN_DISPOSITION_LIST_ENTRIES) {
             throw new DecodeException(errorForMissingRequiredFields(count));
+        }
+
+        if (count > MAX_DISPOSITION_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in Disposition list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
             // Peek ahead and see if there is a null in the next slot, if so we don't call
             // the setter for that entry to ensure the returned type reflects the encoded
             // state in the modification entry.
-            boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
+            final boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
                 // Ensure mandatory fields are set
                 if (index < MIN_DISPOSITION_LIST_ENTRIES) {
@@ -134,9 +134,6 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
                 case 5:
                     disposition.setBatchable(state.getDecoder().readBoolean(buffer, state, false));
                     break;
-                default:
-                    throw new DecodeException(
-                        "To many entries in Disposition list encoding: " + count + " max allowed entries = " + MAX_DISPOSITION_LIST_ENTRIES);
             }
         }
 
@@ -154,22 +151,18 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
 
     @Override
     public Disposition readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readDisposition(stream, state, (ListTypeDecoder) decoder);
+        return readDisposition(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Disposition[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Disposition[] result = new Disposition[count];
+        final Disposition[] result = new Disposition[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readDisposition(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readDisposition(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -177,7 +170,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -185,14 +178,18 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
     }
 
     private Disposition readDisposition(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Disposition disposition = new Disposition();
+        final Disposition disposition = new Disposition();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         if (count < MIN_DISPOSITION_LIST_ENTRIES) {
             throw new DecodeException(errorForMissingRequiredFields(count));
+        }
+
+        if (count > MAX_DISPOSITION_LIST_ENTRIES) {
+            throw new DecodeException("To many entries in Disposition list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -201,7 +198,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
             // the encoded state in the modification entry.
             if (stream.markSupported()) {
                 stream.mark(1);
-                boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
+                final boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
                 if (nullValue) {
                     // Ensure mandatory fields are set
                     if (index < MIN_DISPOSITION_LIST_ENTRIES) {
@@ -233,9 +230,6 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
                 case 5:
                     disposition.setBatchable(state.getDecoder().readBoolean(stream, state, false));
                     break;
-                default:
-                    throw new DecodeException(
-                        "To many entries in Disposition list encoding: " + count + " max allowed entries = " + MAX_DISPOSITION_LIST_ENTRIES);
             }
         }
 

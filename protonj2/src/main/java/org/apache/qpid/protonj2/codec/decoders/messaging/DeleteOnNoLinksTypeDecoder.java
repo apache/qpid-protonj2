@@ -52,7 +52,7 @@ public final class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecod
 
     @Override
     public DeleteOnNoLinks readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -63,11 +63,11 @@ public final class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecod
 
     @Override
     public DeleteOnNoLinks[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
-        DeleteOnNoLinks[] result = new DeleteOnNoLinks[count];
+        final DeleteOnNoLinks[] result = new DeleteOnNoLinks[count];
 
         for (int i = 0; i < count; ++i) {
             decoder.skipValue(buffer, state);
@@ -79,7 +79,7 @@ public final class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecod
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -88,7 +88,7 @@ public final class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecod
 
     @Override
     public DeleteOnNoLinks readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -99,11 +99,11 @@ public final class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecod
 
     @Override
     public DeleteOnNoLinks[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
-        DeleteOnNoLinks[] result = new DeleteOnNoLinks[count];
+        final DeleteOnNoLinks[] result = new DeleteOnNoLinks[count];
 
         for (int i = 0; i < count; ++i) {
             decoder.skipValue(stream, state);
@@ -115,7 +115,7 @@ public final class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecod
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 

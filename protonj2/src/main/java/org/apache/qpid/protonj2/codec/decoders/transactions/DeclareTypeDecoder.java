@@ -56,22 +56,18 @@ public final class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Decla
 
     @Override
     public Declare readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readDeclare(buffer, state, (ListTypeDecoder) decoder);
+        return readDeclare(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Declare[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Declare[] result = new Declare[count];
+        final Declare[] result = new Declare[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readDeclare(buffer, state, (ListTypeDecoder) decoder);
+            result[i] = readDeclare(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -79,7 +75,7 @@ public final class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Decla
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -87,29 +83,19 @@ public final class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Decla
     }
 
     private Declare readDeclare(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Declare declare = new Declare();
+        final Declare declare = new Declare();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(buffer);
-        int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer);
+        final int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_DECLARE_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in Declare list encoding: " + count);
-        }
-
-        if (count > MAX_DECLARE_LIST_ENTRIES) {
+        } else if (count > MAX_DECLARE_LIST_ENTRIES) {
             throw new DecodeException("To many entries in Declare list encoding: " + count);
-        }
-
-        for (int index = 0; index < count; ++index) {
-            switch (index) {
-                case 0:
-                    declare.setGlobalId(state.getDecoder().readObject(buffer, state, GlobalTxId.class));
-                    break;
-                default:
-                    throw new DecodeException("To many entries in Declare encoding");
-            }
+        } else if (count == 1) {
+            declare.setGlobalId(state.getDecoder().readObject(buffer, state, GlobalTxId.class));
         }
 
         return declare;
@@ -117,22 +103,18 @@ public final class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Decla
 
     @Override
     public Declare readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        return readDeclare(stream, state, (ListTypeDecoder) decoder);
+        return readDeclare(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
     public Declare[] readArrayElements(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        Declare[] result = new Declare[count];
+        final Declare[] result = new Declare[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readDeclare(stream, state, (ListTypeDecoder) decoder);
+            result[i] = readDeclare(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -140,7 +122,7 @@ public final class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Decla
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
+        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
 
@@ -148,29 +130,19 @@ public final class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Decla
     }
 
     private Declare readDeclare(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
-        Declare declare = new Declare();
+        final Declare declare = new Declare();
 
         @SuppressWarnings("unused")
-        int size = listDecoder.readSize(stream);
-        int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream);
+        final int count = listDecoder.readCount(stream);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_DECLARE_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in Declare list encoding: " + count);
-        }
-
-        if (count > MAX_DECLARE_LIST_ENTRIES) {
+        } else if (count > MAX_DECLARE_LIST_ENTRIES) {
             throw new DecodeException("To many entries in Declare list encoding: " + count);
-        }
-
-        for (int index = 0; index < count; ++index) {
-            switch (index) {
-                case 0:
-                    declare.setGlobalId(state.getDecoder().readObject(stream, state, GlobalTxId.class));
-                    break;
-                default:
-                    throw new DecodeException("To many entries in Declare encoding");
-            }
+        } else if (count == 1) {
+            declare.setGlobalId(state.getDecoder().readObject(stream, state, GlobalTxId.class));
         }
 
         return declare;

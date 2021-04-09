@@ -40,6 +40,26 @@ public abstract class AbstractDescribedTypeDecoder<V> implements DescribedTypeDe
         return "DescribedTypeDecoder<" + getTypeClass().getSimpleName() + ">";
     }
 
+    @SuppressWarnings("unchecked")
+    protected static <E> E checkIsExpectedTypeAndCast(Class<?> expected, TypeDecoder<?> actual) throws DecodeException {
+        if (!expected.isAssignableFrom(actual.getClass())) {
+            throw new DecodeException(
+                "Expected " + expected + "encoding but got decoder for type: " + actual.getTypeClass().getName());
+        }
+
+        return (E) expected.cast(actual);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static <E> E checkIsExpectedTypeAndCast(Class<?> expected, StreamTypeDecoder<?> actual) throws DecodeException {
+        if (!expected.isAssignableFrom(actual.getClass())) {
+            throw new DecodeException(
+                "Expected " + expected + "encoding but got decoder for type: " + actual.getTypeClass().getName());
+        }
+
+        return (E) expected.cast(actual);
+    }
+
     protected static void checkIsExpectedType(Class<?> expected, TypeDecoder<?> actual) throws DecodeException {
         if (!expected.isAssignableFrom(actual.getClass())) {
             throw new DecodeException(
