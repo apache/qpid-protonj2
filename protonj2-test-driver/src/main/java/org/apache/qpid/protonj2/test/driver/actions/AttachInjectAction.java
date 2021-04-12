@@ -419,6 +419,11 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
             return this;
         }
 
+        public SourceBuilder withFilterMap(Map<String, Object> filters) {
+            source.setFilter(TypeMapper.toSymbolKeyedMap(filters));
+            return this;
+        }
+
         public SourceBuilder withDefaultOutcome(Outcome outcome) {
             source.setDefaultOutcome((DescribedType) outcome);
             return this;

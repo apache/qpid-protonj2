@@ -38,6 +38,8 @@ import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
+import org.apache.qpid.protonj2.client.Source;
+import org.apache.qpid.protonj2.client.Target;
 import org.apache.qpid.protonj2.client.Tracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryStateException;
@@ -2440,6 +2442,103 @@ public class SenderTest extends ImperativeClientTestCase {
             sender.openFuture().get();
             sender.close();
 
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testInspectRemoteSourceMatchesValuesSent() throws Exception {
+        Map<String, Object> remoteFilters = new HashMap<>();
+        remoteFilters.put("filter-1", "value1");
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond().withSource().withOutcomes("Accepted", "Released")
+                                                                 .withCapabilities("Queue")
+                                                                 .withDistributionMode("COPY")
+                                                                 .withDynamic(false)
+                                                                 .withExpiryPolicy(TerminusExpiryPolicy.SESSION_END)
+                                                                 .withDurability(TerminusDurability.UNSETTLED_STATE)
+                                                                 .withDefaultOutcome(Released.getInstance())
+                                                                 .withTimeout(Integer.MAX_VALUE)
+                                                                 .withFilterMap(remoteFilters)
+                                                                 .withAddress("test-queue");
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Sender sender = session.openSender("test-queue");
+
+            Source remoteSource = sender.source();
+
+            assertTrue(remoteSource.outcomes().contains(DeliveryState.Type.ACCEPTED));
+            assertTrue(remoteSource.capabilities().contains("Queue"));
+            assertEquals("test-queue", remoteSource.address());
+            assertFalse(remoteSource.dynamic());
+            assertNull(remoteSource.dynamicNodeProperties());
+            assertEquals(DistributionMode.COPY, remoteSource.distributionMode());
+            assertEquals(DeliveryState.released(), remoteSource.defaultOutcome());
+            assertEquals(Integer.MAX_VALUE, remoteSource.timeout());
+            assertEquals(DurabilityMode.UNSETTLED_STATE, remoteSource.durabilityMode());
+            assertEquals(ExpiryPolicy.SESSION_CLOSE, remoteSource.expiryPolicy());
+            assertEquals(remoteFilters, remoteSource.filters());
+
+            sender.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testInspectRemoteTargetMatchesValuesSent() throws Exception {
+        Map<String, Object> remoteFilters = new HashMap<>();
+        remoteFilters.put("filter-1", "value1");
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond().withTarget().withCapabilities("Queue")
+                                                                 .withDynamic(false)
+                                                                 .withExpiryPolicy(TerminusExpiryPolicy.SESSION_END)
+                                                                 .withDurability(TerminusDurability.UNSETTLED_STATE)
+                                                                 .withTimeout(Integer.MAX_VALUE)
+                                                                 .withAddress("test-queue");
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Sender sender = session.openSender("test-queue");
+
+            Target remoteTarget = sender.target();
+
+            assertTrue(remoteTarget.capabilities().contains("Queue"));
+            assertEquals("test-queue", remoteTarget.address());
+            assertFalse(remoteTarget.dynamic());
+            assertEquals(Integer.MAX_VALUE, remoteTarget.timeout());
+            assertEquals(DurabilityMode.UNSETTLED_STATE, remoteTarget.durabilityMode());
+            assertEquals(ExpiryPolicy.SESSION_CLOSE, remoteTarget.expiryPolicy());
+
+            sender.close();
             connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
