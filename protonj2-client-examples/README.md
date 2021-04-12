@@ -23,10 +23,6 @@ through system properties named USER and PASSWORD respectively. E.g:
 
     Windows: java -DUSER=guest -DPASSWORD=guest -cp "target\classes\;target\dependency\*" org.apache.qpid.protonj2.client.examples.HelloWorld
 
-NOTE: You can configure the connection and queue details used by updating the
-JNDI configuration file before building. It can be found at:
-src/main/resources/jndi.properties
-
 NOTE: The earlier build command will cause Maven to resolve the client artifact
 dependencies against its local and remote repositories. If you wish to use a
 locally-built client, ensure to "mvn install" it in your local repo first.
