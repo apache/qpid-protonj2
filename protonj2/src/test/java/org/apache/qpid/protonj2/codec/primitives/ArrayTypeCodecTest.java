@@ -1142,4 +1142,46 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         byte[] value = (byte[]) result;
         assertArrayEquals(expected, value);
     }
+
+    @Test
+    public void testArrayOfInts() throws IOException {
+        doTestArrayOfInts(false);
+    }
+
+    @Test
+    public void testArrayOfIntsFromStream() throws IOException {
+        doTestArrayOfInts(true);
+    }
+
+    public void doTestArrayOfInts(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        final int size = 10;
+
+        int[] source = new int[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = random.nextInt();
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        int[] array = (int[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
 }

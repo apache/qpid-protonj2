@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
@@ -116,5 +117,50 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
 
         Long value = (Long) result;
         assertEquals(expected, value.shortValue());
+    }
+
+    @Test
+    public void testArrayOfObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        Random random = new Random();
+        random.setSeed(System.nanoTime());
+
+        final int size = 10;
+
+        Date[] source = new Date[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = new Date(random.nextLong());
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        long[] array = (long[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i].getTime(), array[i]);
+        }
+    }
+
+    @Test
+    public void testZeroSizedArrayOfObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Date[] source = new Date[0];
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        long[] array = (long[]) result;
+        assertEquals(source.length, array.length);
     }
 }

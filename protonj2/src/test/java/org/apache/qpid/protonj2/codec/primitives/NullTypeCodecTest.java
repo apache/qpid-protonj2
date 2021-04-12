@@ -21,11 +21,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.NullTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.primitives.NullTypeEncoder;
@@ -75,15 +78,32 @@ public class NullTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testSkipNullDoesNotTouchBuffer() throws IOException {
+        doTestSkipNullDoesNotTouchBuffer(false);
+    }
+
+    @Test
+    public void testSkipNullDoesNotTouchStream() throws IOException {
+        doTestSkipNullDoesNotTouchBuffer(true);
+    }
+
+    private void doTestSkipNullDoesNotTouchBuffer(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.NULL);
 
-        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-        assertEquals(Void.class, typeDecoder.getTypeClass());
-
-        int index = buffer.getReadIndex();
-        typeDecoder.skipValue(buffer, decoderState);
-        assertEquals(index, buffer.getReadIndex());
+        if (fromStream) {
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(Void.class, typeDecoder.getTypeClass());
+            int index = buffer.getReadIndex();
+            typeDecoder.skipValue(stream, streamDecoderState);
+            assertEquals(index, buffer.getReadIndex());
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Void.class, typeDecoder.getTypeClass());
+            int index = buffer.getReadIndex();
+            typeDecoder.skipValue(buffer, decoderState);
+            assertEquals(index, buffer.getReadIndex());
+        }
     }
 }

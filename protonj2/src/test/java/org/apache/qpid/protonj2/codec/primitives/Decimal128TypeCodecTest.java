@@ -17,12 +17,14 @@
 package org.apache.qpid.protonj2.codec.primitives;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
@@ -120,5 +122,50 @@ public class Decimal128TypeCodecTest extends CodecTestSupport {
 
         Decimal128 value = (Decimal128) result;
         assertEquals(expected, value);
+    }
+
+    @Test
+    public void testArrayOfObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        Random random = new Random();
+        random.setSeed(System.nanoTime());
+
+        final int size = 10;
+
+        Decimal128[] source = new Decimal128[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = new Decimal128(random.nextLong(), random.nextLong());
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertFalse(result.getClass().getComponentType().isPrimitive());
+
+        Decimal128[] array = (Decimal128[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
+
+    @Test
+    public void testZeroSizedArrayOfObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Decimal128[] source = new Decimal128[0];
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertFalse(result.getClass().getComponentType().isPrimitive());
+
+        Decimal128[] array = (Decimal128[]) result;
+        assertEquals(source.length, array.length);
     }
 }

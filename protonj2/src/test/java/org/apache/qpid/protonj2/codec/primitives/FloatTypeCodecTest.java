@@ -209,4 +209,47 @@ public class FloatTypeCodecTest extends CodecTestSupport {
         Float value = (Float) result;
         assertEquals(expected, value.floatValue(), 0.1f);
     }
+
+    @Test
+    public void testArrayOfFloatObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final int size = 10;
+
+        Float[] source = new Float[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = random.nextFloat();
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        float[] array = (float[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
+
+    @Test
+    public void testZeroSizedArrayOfFloatObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Float[] source = new Float[0];
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        float[] array = (float[]) result;
+        assertEquals(source.length, array.length);
+    }
 }

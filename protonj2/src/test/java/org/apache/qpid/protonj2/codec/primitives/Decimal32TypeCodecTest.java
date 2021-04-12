@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.primitives;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -111,5 +112,48 @@ public class Decimal32TypeCodecTest extends CodecTestSupport {
 
         Decimal32 value = (Decimal32) result;
         assertEquals(expected, value);
+    }
+
+    @Test
+    public void testArrayOfObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final int size = 10;
+
+        Decimal32[] source = new Decimal32[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = new Decimal32(random.nextInt());
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertFalse(result.getClass().getComponentType().isPrimitive());
+
+        Decimal32[] array = (Decimal32[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
+
+    @Test
+    public void testZeroSizedArrayOfObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Decimal32[] source = new Decimal32[0];
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertFalse(result.getClass().getComponentType().isPrimitive());
+
+        Decimal32[] array = (Decimal32[]) result;
+        assertEquals(source.length, array.length);
     }
 }

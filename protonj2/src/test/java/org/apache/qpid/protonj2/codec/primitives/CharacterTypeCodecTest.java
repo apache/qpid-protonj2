@@ -122,4 +122,80 @@ public class CharacterTypeCodecTest extends CodecTestSupport {
         Character value = (Character) result;
         assertEquals(expected, value.charValue());
     }
+
+    @Test
+    public void testArrayOfCharacterObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final int size = 10;
+
+        Character[] source = new Character[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = Character.valueOf((char) i);
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        char[] array = (char[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
+
+    @Test
+    public void testZeroSizedArrayOfCharacterObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Character[] source = new Character[0];
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        char[] array = (char[]) result;
+        assertEquals(source.length, array.length);
+    }
+
+    @Test
+    public void testDecodeSmallCharArray() throws IOException {
+        doTestDecodeCharArrayType(SMALL_ARRAY_SIZE);
+    }
+
+    @Test
+    public void testDecodeLargeCharArray() throws IOException {
+        doTestDecodeCharArrayType(LARGE_ARRAY_SIZE);
+    }
+
+    private void doTestDecodeCharArrayType(int size) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        char[] source = new char[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = Character.valueOf((char) i);
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        char[] array = (char[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
 }

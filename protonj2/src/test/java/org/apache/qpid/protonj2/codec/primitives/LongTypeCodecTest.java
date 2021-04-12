@@ -23,13 +23,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.primitives.Long8TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.LongTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.primitives.LongTypeEncoder;
 import org.junit.jupiter.api.Test;
@@ -83,12 +88,13 @@ public class LongTypeCodecTest extends CodecTestSupport {
     @Test
     public void testGetTypeCode() {
         assertEquals(EncodingCodes.LONG, (byte) new LongTypeDecoder().getTypeCode());
+        assertEquals(EncodingCodes.SMALLLONG, (byte) new Long8TypeDecoder().getTypeCode());
     }
 
     @Test
     public void testGetTypeClass() {
         assertEquals(Long.class, new LongTypeEncoder().getTypeClass());
-        assertEquals(Long.class, new LongTypeDecoder().getTypeClass());
+        assertEquals(Long.class, new Long8TypeDecoder().getTypeClass());
     }
 
     @Test
@@ -113,7 +119,17 @@ public class LongTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testSkipValue() throws IOException {
+        doTestSkipValue(false);
+    }
+
+    @Test
+    public void testSkipValueFromStream() throws IOException {
+        doTestSkipValue(true);
+    }
+
+    public void doTestSkipValue(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeLong(buffer, encoderState, Long.MAX_VALUE);
@@ -125,20 +141,79 @@ public class LongTypeCodecTest extends CodecTestSupport {
         encoder.writeObject(buffer, encoderState, expected);
 
         for (int i = 0; i < 10; ++i) {
-            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-            assertEquals(Long.class, typeDecoder.getTypeClass());
-            typeDecoder.skipValue(buffer, decoderState);
-            typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-            assertEquals(Long.class, typeDecoder.getTypeClass());
-            typeDecoder.skipValue(buffer, decoderState);
+            if (fromStream) {
+                StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+                assertEquals(Long.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(stream, streamDecoderState);
+                typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+                assertEquals(Long.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(stream, streamDecoderState);
+            } else {
+                TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+                assertEquals(Long.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(buffer, decoderState);
+                typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+                assertEquals(Long.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(buffer, decoderState);
+            }
         }
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof Long);
 
         Long value = (Long) result;
-        assertEquals(expected, value.longValue());
+        assertEquals(expected, value.intValue());
+    }
+
+    @Test
+    public void testArrayOfObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        Random random = new Random();
+        random.setSeed(System.nanoTime());
+
+        final int size = 10;
+
+        Long[] source = new Long[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = Long.valueOf(random.nextLong());
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        long[] array = (long[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
+
+    @Test
+    public void testZeroSizedArrayOfObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Long[] source = new Long[0];
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        long[] array = (long[]) result;
+        assertEquals(source.length, array.length);
     }
 }

@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 
 import org.apache.qpid.protonj2.codec.decoders.ProtonDecoderFactory;
 import org.apache.qpid.protonj2.codec.decoders.ProtonStreamDecoderFactory;
@@ -62,6 +63,9 @@ public class CodecTestSupport {
     protected StreamDecoderState streamDecoderState;
     protected StreamDecoder streamDecoder;
 
+    protected Random random = new Random();
+    protected long currentSeed;
+
     protected final LegacyCodecAdapter legacyCodec = new LegacyCodecAdapter();
 
     @BeforeEach
@@ -74,6 +78,9 @@ public class CodecTestSupport {
 
         streamDecoder = ProtonStreamDecoderFactory.create();
         streamDecoderState = streamDecoder.newDecoderState();
+
+        currentSeed = System.nanoTime();
+        random.setSeed(currentSeed);
     }
 
     /**

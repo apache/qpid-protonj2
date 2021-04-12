@@ -122,4 +122,47 @@ public class DoubleTypeCodecTest extends CodecTestSupport {
         Double value = (Double) result;
         assertEquals(expected, value.doubleValue(), 0.1f);
     }
+
+    @Test
+    public void testArrayOfDoubleObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final int size = 10;
+
+        Double[] source = new Double[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = Double.valueOf((char) i);
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        double[] array = (double[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
+
+    @Test
+    public void testZeroSizedArrayOfDoubleObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Double[] source = new Double[0];
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        double[] array = (double[]) result;
+        assertEquals(source.length, array.length);
+    }
 }
