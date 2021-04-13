@@ -21,7 +21,6 @@ import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.types.Symbol;
-import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 
 public final class Flow implements Performative {
@@ -146,7 +145,7 @@ public final class Flow implements Performative {
     }
 
     public Flow setNextIncomingId(long nextIncomingId) {
-        if (nextIncomingId < 0 || UnsignedInteger.MAX_VALUE.compareTo(nextOutgoingId) < 0) {
+        if (nextIncomingId < 0 || nextIncomingId > UINT_MAX) {
             throw new IllegalArgumentException("Next Incoming Id value given is out of range: " + nextIncomingId);
         } else {
             modified |= NEXT_INCOMING_ID;

@@ -265,6 +265,68 @@ public class SaslChallengeTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDecodeWithNotEnoughListEntriesList0() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST0, false);
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList8() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST8, false);
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList32() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST32, false);
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList0FromStream() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST0, true);
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList8FromStream() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST8, true);
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList32FromStream() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST32, true);
+    }
+
+    private void doTestDecodeWithNotEnoughListEntriesList32(byte listType, boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(SaslChallenge.DESCRIPTOR_CODE.byteValue());
+        if (listType == EncodingCodes.LIST32) {
+            buffer.writeByte(EncodingCodes.LIST32);
+            buffer.writeInt((byte) 0);  // Size
+            buffer.writeInt((byte) 0);  // Count
+        } else if (listType == EncodingCodes.LIST8) {
+            buffer.writeByte(EncodingCodes.LIST8);
+            buffer.writeByte((byte) 0);  // Size
+            buffer.writeByte((byte) 0);  // Count
+        } else {
+            buffer.writeByte(EncodingCodes.LIST0);
+        }
+
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("Should not decode type with invalid min entries");
+            } catch (DecodeException ex) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("Should not decode type with invalid min entries");
+            } catch (DecodeException ex) {}
+        }
+    }
+
+    @Test
     public void testEncodeDecodeArray() throws IOException {
         testEncodeDecodeArray(false);
     }

@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.codec.decoders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -213,6 +214,27 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
     }
 
     @Test
+    public void testReadUnsignedIntegerTypes() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.UINT0);
+        buffer.writeByte(EncodingCodes.SMALLUINT);
+        buffer.writeByte(127);
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(0);
+        buffer.writeByte(0);
+        buffer.writeByte(0);
+        buffer.writeByte(255);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(0, streamDecoder.readUnsignedInteger(stream, streamDecoderState, 32));
+        assertEquals(127, streamDecoder.readUnsignedInteger(stream, streamDecoderState, 32));
+        assertEquals(255, streamDecoder.readUnsignedInteger(stream, streamDecoderState, 32));
+        assertEquals(32, streamDecoder.readUnsignedInteger(stream, streamDecoderState, 32));
+    }
+
+    @Test
     public void testReadMultipleRequestsWrongTypeForArrayEncoding() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         InputStream stream = new ProtonBufferInputStream(buffer);
@@ -225,5 +247,51 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
             streamDecoder.readMultiple(stream, streamDecoderState, String.class);
             fail("Should not be able to convert to wrong resulting array type");
         } catch (ClassCastException cce) {}
+    }
+
+    @Test
+    public void testReadStringWithCustomStringDecoder() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.STR32);
+        buffer.writeInt(16);
+        buffer.writeBytes(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
+
+        ((ProtonStreamDecoderState) streamDecoderState).setStringDecoder(new UTF8StreamDecoder() {
+
+            @Override
+            public String decodeUTF8(InputStream tream) {
+                return "string-decoder";
+            }
+        });
+
+        assertNotNull(((ProtonStreamDecoderState) streamDecoderState).getStringDecoder());
+
+        String result = streamDecoder.readString(stream, streamDecoderState);
+
+        assertEquals("string-decoder", result);
+        assertTrue(buffer.isReadable());  // We didn't read anything so buffer was untouched
+    }
+
+    @Test
+    public void testStringReadFromCustomDecoderThrowsDecodeExceptionOnError() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.STR32);
+        buffer.writeInt(16);
+        buffer.writeBytes(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
+
+        ((ProtonStreamDecoderState) streamDecoderState).setStringDecoder(new UTF8StreamDecoder() {
+
+            @Override
+            public String decodeUTF8(InputStream tream) {
+                throw new IndexOutOfBoundsException();
+            }
+        });
+
+        assertNotNull(((ProtonStreamDecoderState) streamDecoderState).getStringDecoder());
+        assertThrows(DecodeException.class, () -> streamDecoder.readString(stream, streamDecoderState));
     }
 }

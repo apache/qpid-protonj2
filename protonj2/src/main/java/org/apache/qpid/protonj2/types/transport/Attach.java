@@ -382,6 +382,10 @@ public final class Attach implements Performative {
         return maxMessageSize;
     }
 
+    public Attach setMaxMessageSize(long maxMessageSize) {
+        return setMaxMessageSize(UnsignedLong.valueOf(maxMessageSize));
+    }
+
     public Attach setMaxMessageSize(UnsignedLong maxMessageSize) {
         if (maxMessageSize != null) {
             modified |= MAX_MESSAGE_SIZE;

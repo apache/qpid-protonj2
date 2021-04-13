@@ -17,8 +17,10 @@
 package org.apache.qpid.protonj2.codec.decoders;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -232,5 +234,49 @@ public class ProtonDecoderTest extends CodecTestSupport {
         assertEquals(127, decoder.readUnsignedInteger(buffer, decoderState, 32));
         assertEquals(255, decoder.readUnsignedInteger(buffer, decoderState, 32));
         assertEquals(32, decoder.readUnsignedInteger(buffer, decoderState, 32));
+    }
+
+    @Test
+    public void testReadStringWithCustomStringDecoder() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.STR32);
+        buffer.writeInt(16);
+        buffer.writeBytes(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
+
+        ((ProtonDecoderState) decoderState).setStringDecoder(new UTF8Decoder() {
+
+            @Override
+            public String decodeUTF8(ProtonBuffer buffer, int utf8length) {
+               return "string-decoder";
+            }
+        });
+
+        assertNotNull(((ProtonDecoderState) decoderState).getStringDecoder());
+
+        String result = decoder.readString(buffer, decoderState);
+
+        assertEquals("string-decoder", result);
+        assertFalse(buffer.isReadable());
+    }
+
+    @Test
+    public void testStringReadFromCustomDecoderThrowsDecodeExceptionOnError() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.STR32);
+        buffer.writeInt(16);
+        buffer.writeBytes(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
+
+        ((ProtonDecoderState) decoderState).setStringDecoder(new UTF8Decoder() {
+
+            @Override
+            public String decodeUTF8(ProtonBuffer buffer, int utf8length) {
+                throw new IndexOutOfBoundsException();
+            }
+        });
+
+        assertNotNull(((ProtonDecoderState) decoderState).getStringDecoder());
+        assertThrows(DecodeException.class, () -> decoder.readString(buffer, decoderState));
     }
 }

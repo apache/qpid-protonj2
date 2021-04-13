@@ -34,6 +34,14 @@ public class ErrorConditionTest {
         assertNotNull(new ErrorCondition(AmqpError.DECODE_ERROR, (String) null).toString());
     }
 
+    @Test
+    public void testEqualsWithCreateFromStringVsCreateFromSymbolCondition() {
+        ErrorCondition fromString = new ErrorCondition(AmqpError.DECODE_ERROR.toString(), "error");
+        ErrorCondition fromSymbol = new ErrorCondition(AmqpError.DECODE_ERROR, "error");
+
+        assertEquals(fromString, fromSymbol);
+    }
+
     @SuppressWarnings("unlikely-arg-type")
     @Test
     public void testEquals() {

@@ -22,6 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.types.DeliveryTag;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.junit.jupiter.api.Test;
 
 public class TransferTest {
@@ -56,6 +59,115 @@ public class TransferTest {
     }
 
     @Test
+    public void testClearFieldsAPI() {
+        Transfer transfer = new Transfer();
+
+        transfer.setAborted(true);
+        transfer.setBatchable(true);
+        transfer.setDeliveryId(1);
+        transfer.setDeliveryTag(new byte[] { 1 });
+        transfer.setHandle(2);
+        transfer.setMessageFormat(12);
+        transfer.setMore(true);
+        transfer.setRcvSettleMode(ReceiverSettleMode.SECOND);
+        transfer.setResume(true);
+        transfer.setSettled(true);
+        transfer.setState(Accepted.getInstance());
+
+        assertNotNull(transfer.toString());
+        assertEquals(11, transfer.getElementCount());
+        assertFalse(transfer.isEmpty());
+        assertTrue(transfer.hasAborted());
+        assertTrue(transfer.hasBatchable());
+        assertTrue(transfer.hasDeliveryId());
+        assertTrue(transfer.hasDeliveryTag());
+        assertTrue(transfer.hasHandle());
+        assertTrue(transfer.hasMessageFormat());
+        assertTrue(transfer.hasMore());
+        assertTrue(transfer.hasRcvSettleMode());
+        assertTrue(transfer.hasResume());
+        assertTrue(transfer.hasSettled());
+        assertTrue(transfer.hasState());
+
+        transfer.clearAborted();
+        transfer.clearBatchable();
+        transfer.clearDeliveryId();
+        transfer.clearDeliveryTag();
+        transfer.clearHandle();
+        transfer.clearMessageFormat();
+        transfer.clearMore();
+        transfer.clearRcvSettleMode();
+        transfer.clearResume();
+        transfer.clearSettled();
+        transfer.clearState();
+
+        assertEquals(0, transfer.getElementCount());
+        assertTrue(transfer.isEmpty());
+        assertFalse(transfer.hasAborted());
+        assertFalse(transfer.hasBatchable());
+        assertFalse(transfer.hasDeliveryId());
+        assertFalse(transfer.hasDeliveryTag());
+        assertFalse(transfer.hasHandle());
+        assertFalse(transfer.hasMessageFormat());
+        assertFalse(transfer.hasMore());
+        assertFalse(transfer.hasRcvSettleMode());
+        assertFalse(transfer.hasResume());
+        assertFalse(transfer.hasSettled());
+        assertFalse(transfer.hasState());
+
+        transfer.setDeliveryTag(new byte[] { 1 });
+        assertTrue(transfer.hasDeliveryTag());
+        transfer.setDeliveryTag((byte[]) null);
+        assertFalse(transfer.hasDeliveryTag());
+
+        transfer.setDeliveryTag(new byte[] { 1 });
+        assertTrue(transfer.hasDeliveryTag());
+        transfer.setDeliveryTag((DeliveryTag) null);
+        assertFalse(transfer.hasDeliveryTag());
+
+        transfer.setDeliveryTag(new byte[] { 1 });
+        assertTrue(transfer.hasDeliveryTag());
+        transfer.setDeliveryTag((ProtonBuffer) null);
+        assertFalse(transfer.hasDeliveryTag());
+
+        transfer.setRcvSettleMode(ReceiverSettleMode.SECOND);
+        assertTrue(transfer.hasRcvSettleMode());
+        transfer.setRcvSettleMode(null);
+        assertFalse(transfer.hasRcvSettleMode());
+    }
+
+    @Test
+    public void testCopy() {
+        Transfer transfer = new Transfer();
+
+        transfer.setAborted(true);
+        transfer.setBatchable(true);
+        transfer.setDeliveryId(1);
+        transfer.setDeliveryTag(new byte[] { 1 });
+        transfer.setHandle(2);
+        transfer.setMessageFormat(12);
+        transfer.setMore(true);
+        transfer.setRcvSettleMode(ReceiverSettleMode.SECOND);
+        transfer.setResume(true);
+        transfer.setSettled(true);
+        transfer.setState(Accepted.getInstance());
+
+        Transfer copy = transfer.copy();
+
+        assertEquals(transfer.getAborted(), copy.getAborted());
+        assertEquals(transfer.getBatchable(), copy.getBatchable());
+        assertEquals(transfer.getDeliveryId(), copy.getDeliveryId());
+        assertEquals(transfer.getDeliveryTag(), copy.getDeliveryTag());
+        assertEquals(transfer.getHandle(), copy.getHandle());
+        assertEquals(transfer.getMessageFormat(), copy.getMessageFormat());
+        assertEquals(transfer.getMore(), copy.getMore());
+        assertEquals(transfer.getRcvSettleMode(), copy.getRcvSettleMode());
+        assertEquals(transfer.getResume(), copy.getResume());
+        assertEquals(transfer.getSettled(), copy.getSettled());
+        assertEquals(transfer.getState(), copy.getState());
+    }
+
+    @Test
     public void testIsEmpty() {
         Transfer transfer = new Transfer();
 
@@ -72,6 +184,7 @@ public class TransferTest {
 
         transfer.setAborted(false);
 
+        assertNotNull(transfer.toString());
         assertTrue(transfer.getElementCount() > 0);
         assertFalse(transfer.isEmpty());
         assertTrue(transfer.hasAborted());

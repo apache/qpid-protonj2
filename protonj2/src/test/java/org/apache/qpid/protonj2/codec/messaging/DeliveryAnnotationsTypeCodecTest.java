@@ -244,11 +244,26 @@ public class DeliveryAnnotationsTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeMessageAnnotationsWithEmptyValue() throws IOException {
+        doTestEncodeDecodeMessageAnnotationsWithEmptyValue(false);
+    }
+
+    @Test
+    public void testEncodeDecodeMessageAnnotationsWithEmptyValueFromStream() throws IOException {
+        doTestEncodeDecodeMessageAnnotationsWithEmptyValue(true);
+    }
+
+    private void doTestEncodeDecodeMessageAnnotationsWithEmptyValue(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         encoder.writeObject(buffer, encoderState, new DeliveryAnnotations(null));
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof DeliveryAnnotations);
@@ -259,21 +274,37 @@ public class DeliveryAnnotationsTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testSkipValueWithInvalidList32Type() throws IOException {
-        doTestSkipValueWithInvalidListType(EncodingCodes.LIST32);
+        doTestSkipValueWithInvalidListType(EncodingCodes.LIST32, false);
     }
 
     @Test
     public void testSkipValueWithInvalidList8Type() throws IOException {
-        doTestSkipValueWithInvalidListType(EncodingCodes.LIST8);
+        doTestSkipValueWithInvalidListType(EncodingCodes.LIST8, false);
     }
 
     @Test
     public void testSkipValueWithInvalidList0Type() throws IOException {
-        doTestSkipValueWithInvalidListType(EncodingCodes.LIST0);
+        doTestSkipValueWithInvalidListType(EncodingCodes.LIST0, false);
     }
 
-    private void doTestSkipValueWithInvalidListType(byte listType) throws IOException {
+    @Test
+    public void testSkipValueWithInvalidList32TypeFromStream() throws IOException {
+        doTestSkipValueWithInvalidListType(EncodingCodes.LIST32, true);
+    }
+
+    @Test
+    public void testSkipValueWithInvalidList8TypeFromStream() throws IOException {
+        doTestSkipValueWithInvalidListType(EncodingCodes.LIST8, true);
+    }
+
+    @Test
+    public void testSkipValueWithInvalidList0TypeFromStream() throws IOException {
+        doTestSkipValueWithInvalidListType(EncodingCodes.LIST0, true);
+    }
+
+    private void doTestSkipValueWithInvalidListType(byte listType, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -290,13 +321,23 @@ public class DeliveryAnnotationsTypeCodecTest extends CodecTestSupport {
             buffer.writeByte(EncodingCodes.LIST0);
         }
 
-        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-        assertEquals(DeliveryAnnotations.class, typeDecoder.getTypeClass());
+        if (fromStream) {
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(DeliveryAnnotations.class, typeDecoder.getTypeClass());
 
-        try {
-            typeDecoder.skipValue(buffer, decoderState);
-            fail("Should not be able to skip type with invalid encoding");
-        } catch (DecodeException ex) {}
+            try {
+                typeDecoder.skipValue(stream, streamDecoderState);
+                fail("Should not be able to skip type with invalid encoding");
+            } catch (DecodeException ex) {}
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(DeliveryAnnotations.class, typeDecoder.getTypeClass());
+
+            try {
+                typeDecoder.skipValue(buffer, decoderState);
+                fail("Should not be able to skip type with invalid encoding");
+            } catch (DecodeException ex) {}
+        }
     }
 
     @Test
@@ -341,7 +382,17 @@ public class DeliveryAnnotationsTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeArray() throws IOException {
+        doTestEncodeDecodeArray(false);
+    }
+
+    @Test
+    public void testEncodeDecodeArrayFromStream() throws IOException {
+        doTestEncodeDecodeArray(true);
+    }
+
+    private void doTestEncodeDecodeArray(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         DeliveryAnnotations[] array = new DeliveryAnnotations[3];
 
@@ -355,7 +406,12 @@ public class DeliveryAnnotationsTypeCodecTest extends CodecTestSupport {
 
         encoder.writeObject(buffer, encoderState, array);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertTrue(result.getClass().isArray());
         assertEquals(DeliveryAnnotations.class, result.getClass().getComponentType());
@@ -371,6 +427,15 @@ public class DeliveryAnnotationsTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeAndDecodeAnnoationsWithEmbeddedMaps() throws IOException {
+        doTestEncodeAndDecodeAnnoationsWithEmbeddedMaps(false);
+    }
+
+    @Test
+    public void testEncodeAndDecodeAnnoationsWithEmbeddedMapsFromStream() throws IOException {
+        doTestEncodeAndDecodeAnnoationsWithEmbeddedMaps(true);
+    }
+
+    public void doTestEncodeAndDecodeAnnoationsWithEmbeddedMaps(boolean fromStream) throws IOException {
         final Symbol SYMBOL_1 = Symbol.valueOf("x-opt-test1");
         final Symbol SYMBOL_2 = Symbol.valueOf("x-opt-test2");
 
@@ -393,10 +458,16 @@ public class DeliveryAnnotationsTypeCodecTest extends CodecTestSupport {
         annotations.getValue().put(SYMBOL_2, symbolKeyedMap);
 
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         encoder.writeObject(buffer, encoderState, annotations);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof DeliveryAnnotations);

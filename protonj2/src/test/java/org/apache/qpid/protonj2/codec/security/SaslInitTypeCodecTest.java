@@ -455,4 +455,54 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
             assertEquals(array[i].getInitialResponse(), resultArray[i].getInitialResponse());
         }
     }
+
+    @Test
+    public void testDecodeWithToManyListEntriesList8() throws IOException {
+        doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST8, false);
+    }
+
+    @Test
+    public void testDecodeWithToManyListEntriesList32() throws IOException {
+        doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST32, false);
+    }
+
+    @Test
+    public void testDecodeWithToManyListEntriesList8FromStream() throws IOException {
+        doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST8, true);
+    }
+
+    @Test
+    public void testDecodeWithToManyListEntriesList32FromStream() throws IOException {
+        doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST32, true);
+    }
+
+    private void doTestDecodeWithToManyListEntriesList32(byte listType, boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(SaslInit.DESCRIPTOR_CODE.byteValue());
+        if (listType == EncodingCodes.LIST32) {
+            buffer.writeByte(EncodingCodes.LIST32);
+            buffer.writeInt((byte) 64);  // Size
+            buffer.writeInt((byte) 8);  // Count
+        } else if (listType == EncodingCodes.LIST8) {
+            buffer.writeByte(EncodingCodes.LIST8);
+            buffer.writeByte((byte) 64);  // Size
+            buffer.writeByte((byte) 8);  // Count
+        }
+
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("Should not decode type with invalid min entries");
+            } catch (DecodeException ex) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("Should not decode type with invalid min entries");
+            } catch (DecodeException ex) {}
+        }
+    }
 }

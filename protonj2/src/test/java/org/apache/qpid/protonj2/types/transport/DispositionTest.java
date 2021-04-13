@@ -19,10 +19,12 @@ package org.apache.qpid.protonj2.types.transport;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.apache.qpid.protonj2.types.UnsignedInteger;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.junit.jupiter.api.Test;
 
 public class DispositionTest {
@@ -76,6 +78,13 @@ public class DispositionTest {
     }
 
     @Test
+    public void testRoleCannotBeSetNull() {
+        Disposition disposition = new Disposition();
+
+        assertThrows(NullPointerException.class, () -> disposition.setRole(null));
+    }
+
+    @Test
     public void testInitialState() {
         Disposition disposition = new Disposition();
 
@@ -89,6 +98,41 @@ public class DispositionTest {
         assertFalse(disposition.hasState());
     }
 
+    @Test
+    public void testClearPayloadAPI() {
+        Disposition disposition = new Disposition();
+
+        disposition.setBatchable(true);
+        disposition.setFirst(1);
+        disposition.setLast(2);
+        disposition.setRole(Role.SENDER);
+        disposition.setSettled(true);
+        disposition.setState(Accepted.getInstance());
+
+        assertFalse(disposition.isEmpty());
+        assertTrue(disposition.hasBatchable());
+        assertTrue(disposition.hasFirst());
+        assertTrue(disposition.hasLast());
+        assertTrue(disposition.hasRole());
+        assertTrue(disposition.hasSettled());
+        assertTrue(disposition.hasState());
+
+        disposition.clearBatchable();
+        disposition.clearFirst();
+        disposition.clearLast();
+        disposition.clearRole();
+        disposition.clearSettled();
+        disposition.clearState();
+
+        assertEquals(0, disposition.getElementCount());
+        assertTrue(disposition.isEmpty());
+        assertFalse(disposition.hasBatchable());
+        assertFalse(disposition.hasFirst());
+        assertFalse(disposition.hasLast());
+        assertFalse(disposition.hasRole());
+        assertFalse(disposition.hasSettled());
+        assertFalse(disposition.hasState());
+    }
 
     @Test
     public void testIsEmpty() {

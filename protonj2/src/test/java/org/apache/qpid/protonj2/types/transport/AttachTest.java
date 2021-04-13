@@ -16,13 +16,22 @@
  */
 package org.apache.qpid.protonj2.types.transport;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.qpid.protonj2.types.Binary;
+import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
+import org.apache.qpid.protonj2.types.messaging.Source;
 import org.apache.qpid.protonj2.types.messaging.Target;
 import org.apache.qpid.protonj2.types.transactions.Coordinator;
 import org.junit.jupiter.api.Test;
@@ -170,6 +179,157 @@ public class AttachTest {
 
         assertNotNull(copy.getTarget());
         assertEquals(original.<Target>getTarget(), copy.<Target>getTarget());
+    }
+
+    @Test
+    public void testCopy() {
+        final Map<Binary, DeliveryState> unsettled = new HashMap<>();
+        unsettled.put(new Binary(new byte[] {1}), Accepted.getInstance());
+
+        final Map<Symbol, Object> properties = new HashMap<>();
+        properties.put(Symbol.valueOf("test"), "test1");
+
+        Attach original = new Attach();
+
+        original.setDesiredCapabilities(Symbol.valueOf("queue"));
+        original.setOfferedCapabilities(Symbol.valueOf("queue"), Symbol.valueOf("topic"));
+        original.setHandle(1);
+        original.setIncompleteUnsettled(true);
+        original.setUnsettled(unsettled);
+        original.setInitialDeliveryCount(12);
+        original.setName("test");
+        original.setTarget(new Target());
+        original.setSource(new Source());
+        original.setRole(Role.RECEIVER);
+        original.setSenderSettleMode(SenderSettleMode.SETTLED);
+        original.setReceiverSettleMode(ReceiverSettleMode.SECOND);
+        original.setMaxMessageSize(1024);
+        original.setProperties(properties);
+
+        assertNotNull(original.toString());  // Check no fumble on full populated fields.
+
+        Attach copy = original.copy();
+
+        assertArrayEquals(copy.getDesiredCapabilities(), copy.getDesiredCapabilities());
+        assertArrayEquals(copy.getOfferedCapabilities(), copy.getOfferedCapabilities());
+        assertEquals(original.<Target>getTarget(), copy.<Target>getTarget());
+        assertEquals(original.getIncompleteUnsettled(), copy.getIncompleteUnsettled());
+        assertEquals(original.getUnsettled(), copy.getUnsettled());
+        assertEquals(original.getInitialDeliveryCount(), copy.getInitialDeliveryCount());
+        assertEquals(original.getName(), copy.getName());
+        assertEquals(original.getSource(), copy.getSource());
+        assertEquals(original.getRole(), copy.getRole());
+        assertEquals(original.getSenderSettleMode(), copy.getSenderSettleMode());
+        assertEquals(original.getReceiverSettleMode(), copy.getReceiverSettleMode());
+        assertEquals(original.getMaxMessageSize(), copy.getMaxMessageSize());
+        assertEquals(original.getProperties(), copy.getProperties());
+    }
+
+    @Test
+    public void testHasFields() {
+        final Map<Binary, DeliveryState> unsettled = new HashMap<>();
+        unsettled.put(new Binary(new byte[] {1}), Accepted.getInstance());
+        final Map<Symbol, Object> properties = new HashMap<>();
+        properties.put(Symbol.valueOf("test"), "test1");
+
+        Attach original = new Attach();
+
+        original.setDesiredCapabilities(Symbol.valueOf("queue"));
+        original.setOfferedCapabilities(Symbol.valueOf("queue"), Symbol.valueOf("topic"));
+        original.setHandle(1);
+        original.setIncompleteUnsettled(true);
+        original.setUnsettled(unsettled);
+        original.setInitialDeliveryCount(12);
+        original.setName("test");
+        original.setTarget(new Target());
+        original.setSource(new Source());
+        original.setRole(Role.RECEIVER);
+        original.setSenderSettleMode(SenderSettleMode.SETTLED);
+        original.setReceiverSettleMode(ReceiverSettleMode.SECOND);
+        original.setMaxMessageSize(1024);
+        original.setProperties(properties);
+
+        assertTrue(original.hasDesiredCapabilites());
+        assertTrue(original.hasOfferedCapabilites());
+        assertTrue(original.hasHandle());
+        assertTrue(original.hasIncompleteUnsettled());
+        assertTrue(original.hasUnsettled());
+        assertTrue(original.hasInitialDeliveryCount());
+        assertTrue(original.hasName());
+        assertTrue(original.hasTarget());
+        assertFalse(original.hasCoordinator());
+        assertTrue(original.hasSource());
+        assertTrue(original.hasRole());
+        assertTrue(original.hasSenderSettleMode());
+        assertTrue(original.hasReceiverSettleMode());
+        assertTrue(original.hasMaxMessageSize());
+        assertTrue(original.hasProperties());
+
+        original.setProperties(null);
+        original.setSource(null);
+        original.setTarget((Coordinator) null);
+        original.setMaxMessageSize(null);
+        original.setUnsettled(null);
+        original.setOfferedCapabilities(null);
+        original.setDesiredCapabilities(null);
+
+        assertFalse(original.hasTarget());
+        assertFalse(original.hasSource());
+        assertFalse(original.hasMaxMessageSize());
+        assertFalse(original.hasProperties());
+        assertFalse(original.hasUnsettled());
+
+        original.setCoordinator(new Coordinator());
+        assertFalse(original.hasTarget());
+        assertTrue(original.hasCoordinator());
+        original.setCoordinator(null);
+        assertFalse(original.hasTarget());
+        assertFalse(original.hasCoordinator());
+        assertFalse(original.hasDesiredCapabilites());
+        assertFalse(original.hasOfferedCapabilites());
+    }
+
+    @Test
+    public void testSetTargetAndCoordinatorThrowIllegalArguementErrorOnBadInput() {
+        Attach original = new Attach();
+
+        assertThrows(IllegalArgumentException.class, () -> original.setTarget(new Source()));
+    }
+
+    @Test
+    public void testReplaceTargetWithCoordinator() {
+        Attach original = new Attach();
+
+        assertFalse(original.hasTarget());
+        assertFalse(original.hasCoordinator());
+
+        original.setTarget(new Target());
+
+        assertTrue(original.hasTarget());
+        assertFalse(original.hasCoordinator());
+
+        original.setCoordinator(new Coordinator());
+
+        assertFalse(original.hasTarget());
+        assertTrue(original.hasCoordinator());
+    }
+
+    @Test
+    public void testReplaceCoordinatorWithTarget() {
+        Attach original = new Attach();
+
+        assertFalse(original.hasTarget());
+        assertFalse(original.hasCoordinator());
+
+        original.setCoordinator(new Coordinator());
+
+        assertFalse(original.hasTarget());
+        assertTrue(original.hasCoordinator());
+
+        original.setTarget(new Target());
+
+        assertTrue(original.hasTarget());
+        assertFalse(original.hasCoordinator());
     }
 
     @Test

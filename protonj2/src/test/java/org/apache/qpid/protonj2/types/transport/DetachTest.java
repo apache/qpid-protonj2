@@ -17,8 +17,11 @@
 package org.apache.qpid.protonj2.types.transport;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -32,6 +35,33 @@ public class DetachTest {
     @Test
     public void testToStringOnFreshInstance() {
         assertNotNull(new Detach().toString());
+    }
+
+    @Test
+    public void testDetachIsPresentChecks() {
+        Detach detach = new Detach();
+
+        assertTrue(detach.isEmpty());
+        assertFalse(detach.hasClosed());
+        assertFalse(detach.hasError());
+        assertFalse(detach.hasHandle());
+
+        detach.setClosed(false);
+        detach.setHandle(1);
+        detach.setError(new ErrorCondition("error", "error"));
+
+        assertFalse(detach.isEmpty());
+        assertTrue(detach.hasClosed());
+        assertTrue(detach.hasError());
+        assertTrue(detach.hasHandle());
+    }
+
+    @Test
+    public void testSetHandleEnforcesLimits() {
+        Detach detach = new Detach();
+
+        assertThrows(IllegalArgumentException.class, () -> detach.setHandle(Long.MAX_VALUE));
+        assertThrows(IllegalArgumentException.class, () -> detach.setHandle(-1l));
     }
 
     @Test
