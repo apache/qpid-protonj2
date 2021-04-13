@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -321,6 +322,33 @@ class ClientMessageTest {
     }
 
     @Test
+    public void testAddMultipleBodySectionsPreservesOriginal() {
+        ClientMessage<byte[]> message = ClientMessage.create();
+
+        List<Data> expected = new ArrayList<>();
+        expected.add(new Data(new byte[] { 1 }));
+        expected.add(new Data(new byte[] { 2 }));
+        expected.add(new Data(new byte[] { 3 }));
+
+        message.body(new byte[] { 0 });
+
+        assertNotNull(message.body());
+
+        for (Data value : expected) {
+            message.addBodySection(value);
+        }
+
+        assertEquals(expected.size() + 1, message.bodySections().size());
+
+        final AtomicInteger counter = new AtomicInteger();
+        message.bodySections().forEach(section -> {
+            assertTrue(section instanceof Data);
+            final Data dataView = (Data) section;
+            assertEquals(counter.getAndIncrement(), dataView.getBinary().getArray()[0]);
+        });
+    }
+
+    @Test
     public void testAddMultipleBodySections() {
         ClientMessage<byte[]> message = ClientMessage.create();
 
@@ -365,6 +393,24 @@ class ClientMessageTest {
         });
 
         assertEquals(0, count.get());
+
+        for (Data value : expected) {
+            message.addBodySection(value);
+        }
+
+        assertEquals(expected.size(), message.bodySections().size());
+        message.body(new byte[] { 3 });
+        assertEquals(expected.size(), message.bodySections().size());
+        expected.set(0, new Data(new byte[] { 3 }));
+
+        Iterator<?> expectations = expected.iterator();
+        message.bodySections().forEach(section -> {
+            assertEquals(section, expectations.next());
+        });
+
+        message.body(null);
+        assertNull(message.body());
+        assertEquals(0, message.bodySections().size());
     }
 
     @Test
@@ -426,12 +472,30 @@ class ClientMessageTest {
     public void testAddMultipleBodySectionsValidatesDefaultFormat() {
         ClientMessage<Object> message = ClientMessage.create();
 
-        List<Section<?>> expected = new ArrayList<>();
-        expected.add(new Data(new byte[] { 0 }));
-        expected.add(new AmqpValue<>("test"));
-        expected.add(new AmqpSequence<>(new ArrayList<>()));
+        final List<Section<?>> expected1 = new ArrayList<>();
+        expected1.add(new Data(new byte[] { 0 }));
+        expected1.add(new AmqpValue<>("test"));
+        expected1.add(new AmqpSequence<>(new ArrayList<>()));
 
-        assertThrows(IllegalArgumentException.class, () -> expected.forEach(section -> message.addBodySection(section)));
+        assertThrows(IllegalArgumentException.class, () -> expected1.forEach(section -> message.addBodySection(section)));
+
+        message.clearBodySections();
+
+        final List<Section<?>> expected2 = new ArrayList<>();
+        expected2.add(new AmqpSequence<>(new ArrayList<>()));
+        expected2.add(new Data(new byte[] { 0 }));
+        expected2.add(new AmqpValue<>("test"));
+
+        assertThrows(IllegalArgumentException.class, () -> expected2.forEach(section -> message.addBodySection(section)));
+
+        message.clearBodySections();
+
+        final List<Section<?>> expected3 = new ArrayList<>();
+        expected3.add(new AmqpValue<>("test"));
+        expected3.add(new AmqpSequence<>(new ArrayList<>()));
+        expected3.add(new Data(new byte[] { 0 }));
+
+        assertThrows(IllegalArgumentException.class, () -> expected3.forEach(section -> message.addBodySection(section)));
     }
 
     @Test
@@ -639,5 +703,68 @@ class ClientMessageTest {
         message.forEachFooter((k, v) -> {
             fail("Should not be any remaining footers");
         });
+    }
+
+    @Test
+    public void testGetUserIdHandlesNullPropertiesOrNullUserIDInProperties() {
+        ClientMessage<String> message = ClientMessage.create();
+
+        assertNull(message.properties());
+        assertNull(message.userId());
+
+        message.properties(new Properties());
+
+        assertNull(message.userId());
+    }
+
+    @Test
+    public void testApplicationPropertiesAccessorHandlerNullMapOrEmptyMap() {
+        ClientMessage<String> message = ClientMessage.create();
+
+        assertNull(message.applicationProperties());
+        assertNull(message.property("test"));
+        assertFalse(message.hasProperty("test"));
+        assertFalse(message.hasProperties());
+
+        message.applicationProperties(new ApplicationProperties(null));
+
+        assertNotNull(message.applicationProperties());
+        assertNull(message.property("test"));
+        assertFalse(message.hasProperty("test"));
+        assertFalse(message.hasProperties());
+    }
+
+    @Test
+    public void testFooterAccessorHandlerNullMapOrEmptyMap() {
+        ClientMessage<String> message = ClientMessage.create();
+
+        assertNull(message.footer());
+        assertNull(message.footer("test"));
+        assertFalse(message.hasFooter("test"));
+        assertFalse(message.hasFooters());
+
+        message.footer(new Footer(null));
+
+        assertNotNull(message.footer());
+        assertNull(message.footer("test"));
+        assertFalse(message.hasFooter("test"));
+        assertFalse(message.hasFooters());
+    }
+
+    @Test
+    public void testMessageAnnotationsAccessorHandlerNullMapOrEmptyMap() {
+        ClientMessage<String> message = ClientMessage.create();
+
+        assertNull(message.annotations());
+        assertNull(message.annotation("test"));
+        assertFalse(message.hasAnnotation("test"));
+        assertFalse(message.hasAnnotations());
+
+        message.annotations(new MessageAnnotations(null));
+
+        assertNotNull(message.annotations());
+        assertNull(message.annotation("test"));
+        assertFalse(message.hasAnnotation("test"));
+        assertFalse(message.hasAnnotations());
     }
 }

@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.client.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -29,8 +30,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -69,7 +72,9 @@ import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedCompositingDat
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedDataMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedPartialDataSectionMatcher;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
+import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Header;
+import org.apache.qpid.protonj2.types.messaging.Section;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -317,6 +322,9 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             // Create a custom message format send context and ensure that no early buffer writes take place
             StreamSenderMessage message = sender.beginMessage();
 
+            assertEquals(sender, message.sender());
+            assertNull(message.tracker());
+
             assertEquals(Header.DEFAULT_PRIORITY, message.priority());
             assertEquals(Header.DEFAULT_DELIVERY_COUNT, message.deliveryCount());
             assertEquals(Header.DEFAULT_FIRST_ACQUIRER, message.firstAcquirer());
@@ -366,11 +374,14 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             message.complete();
 
+            assertNotNull(message.tracker());
+            assertEquals(17, message.messageFormat());
             assertNotNull(message.tracker().settlementFuture().isDone());
             assertNotNull(message.tracker().settlementFuture().get().settled());
             assertThrows(ClientIllegalStateException.class, () -> message.addBodySection(new AmqpValue<>("three")));
             assertThrows(ClientIllegalStateException.class, () -> message.body());
             assertThrows(ClientIllegalStateException.class, () -> message.rawOutputStream());
+            assertThrows(ClientIllegalStateException.class, () -> message.abort());
 
             sender.closeAsync().get(10, TimeUnit.SECONDS);
 
@@ -490,6 +501,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             message.abort();
 
+            assertThrows(ClientIllegalStateException.class, () -> message.complete());
+
             sender.closeAsync().get(10, TimeUnit.SECONDS);
             connection.closeAsync().get(10, TimeUnit.SECONDS);
 
@@ -529,6 +542,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             message.abort();
 
+            assertThrows(ClientIllegalStateException.class, () -> message.complete());
+
             sender.closeAsync().get(10, TimeUnit.SECONDS);
             connection.closeAsync().get(10, TimeUnit.SECONDS);
 
@@ -567,6 +582,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             }
 
             message.abort();
+
+            assertThrows(ClientIllegalStateException.class, () -> message.complete());
 
             sender.closeAsync().get(10, TimeUnit.SECONDS);
             connection.closeAsync().get(10, TimeUnit.SECONDS);
@@ -2634,6 +2651,96 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             sender.close();
             connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testBatchAddBodySectionsWritesEach() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectBegin().respond(); // Hidden session for stream sender
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.expectAttach().respond();  // Open a receiver to ensure sender link has processed
+            peer.expectFlow();              // the inbound flow frame we sent previously before send.
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+            Session session = connection.openSession().openFuture().get();
+
+            StreamSenderOptions options = new StreamSenderOptions();
+            options.deliveryMode(DeliveryMode.AT_MOST_ONCE);
+            options.writeBufferSize(Integer.MAX_VALUE);
+
+            StreamSender sender = connection.openStreamSender("test-qos", options);
+
+            // Create a custom message format send context and ensure that no early buffer writes take place
+            StreamSenderMessage message = sender.beginMessage();
+
+            assertEquals(Header.DEFAULT_PRIORITY, message.priority());
+            assertEquals(Header.DEFAULT_DELIVERY_COUNT, message.deliveryCount());
+            assertEquals(Header.DEFAULT_FIRST_ACQUIRER, message.firstAcquirer());
+            assertEquals(Header.DEFAULT_TIME_TO_LIVE, message.timeToLive());
+            assertEquals(Header.DEFAULT_DURABILITY, message.durable());
+
+            // Gates send on remote flow having been sent and received
+            session.openReceiver("dummy").openFuture().get();
+
+            HeaderMatcher headerMatcher = new HeaderMatcher(true);
+            headerMatcher.withDurable(true);
+            headerMatcher.withPriority((byte) 1);
+            headerMatcher.withTtl(65535);
+            headerMatcher.withFirstAcquirer(true);
+            headerMatcher.withDeliveryCount(2);
+            EncodedDataMatcher data1Matcher = new EncodedDataMatcher(new byte[] { 0, 1, 2, 3 }, true);
+            EncodedDataMatcher data2Matcher = new EncodedDataMatcher(new byte[] { 4, 5, 6, 7 }, true);
+            EncodedDataMatcher data3Matcher = new EncodedDataMatcher(new byte[] { 8, 9, 0, 1 });
+            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
+            payloadMatcher.setHeadersMatcher(headerMatcher);
+            payloadMatcher.addMessageContentMatcher(data1Matcher);
+            payloadMatcher.addMessageContentMatcher(data2Matcher);
+            payloadMatcher.addMessageContentMatcher(data3Matcher);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withMore(false).withPayload(payloadMatcher).accept();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            // Populate all Header values
+            Header header = new Header();
+            header.setDurable(true);
+            header.setPriority((byte) 1);
+            header.setTimeToLive(65535);
+            header.setFirstAcquirer(true);
+            header.setDeliveryCount(2);
+
+            List<Section<?>> sections = new ArrayList<>(3);
+            sections.add(new Data(new byte[] { 0, 1, 2, 3 }));
+            sections.add(new Data(new byte[] { 4, 5, 6, 7 }));
+            sections.add(new Data(new byte[] { 8, 9, 0, 1 }));
+
+            message.header(header);
+            message.bodySections(sections);
+
+            message.complete();
+
+            assertEquals(message, message.complete()); // Should no-op at this point
+            assertNotNull(message.tracker().settlementFuture().isDone());
+            assertNotNull(message.tracker().settlementFuture().get().settled());
+
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
