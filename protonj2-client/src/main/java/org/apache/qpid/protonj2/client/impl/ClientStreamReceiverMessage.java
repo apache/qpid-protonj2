@@ -111,10 +111,6 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
         return delivery;
     }
 
-    IncomingDelivery protonDelivery() {
-        return protonDelivery;
-    }
-
     @Override
     public boolean aborted() {
         if (protonDelivery != null) {

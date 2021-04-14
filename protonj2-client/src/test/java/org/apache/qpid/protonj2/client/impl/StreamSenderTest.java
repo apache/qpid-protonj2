@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,6 +33,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +75,7 @@ import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedDataMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedPartialDataSectionMatcher;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
+import org.apache.qpid.protonj2.types.messaging.Footer;
 import org.apache.qpid.protonj2.types.messaging.Header;
 import org.apache.qpid.protonj2.types.messaging.Section;
 import org.apache.qpid.protonj2.types.transport.Role;
@@ -1556,7 +1559,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             propertiesMatcher.withReplyTo("the-minions");
             propertiesMatcher.withCorrelationId("abc");
             propertiesMatcher.withContentEncoding("application/json");
-            propertiesMatcher.withContentEncoding("gzip");
+            propertiesMatcher.withContentType("gzip");
             propertiesMatcher.withAbsoluteExpiryTime(123);
             propertiesMatcher.withCreationTime(1);
             propertiesMatcher.withGroupId("disgruntled");
@@ -1588,32 +1591,64 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             // Populate all Header values
             message.durable(true);
+            assertEquals(true, message.durable());
             message.priority((byte) 1);
+            assertEquals(1, message.priority());
             message.timeToLive(65535);
+            assertEquals(65535, message.timeToLive());
             message.firstAcquirer(true);
+            assertTrue(message.firstAcquirer());
             message.deliveryCount(2);
+            assertEquals(2, message.deliveryCount());
             // Populate message annotations
+            assertFalse(message.hasAnnotations());
+            assertFalse(message.hasAnnotation("ma1"));
             message.annotation("ma1", 1);
+            assertTrue(message.hasAnnotation("ma1"));
+            assertEquals(1, message.annotation("ma1"));
             message.annotation("ma2", 2);
+            assertEquals(2, message.annotation("ma2"));
             message.annotation("ma3", 3);
+            assertEquals(3, message.annotation("ma3"));
+            assertTrue(message.hasAnnotations());
             // Populate all Properties values
             message.messageId("ID:12345");
+            assertEquals("ID:12345", message.messageId());
             message.userId("user".getBytes(StandardCharsets.UTF_8));
+            assertArrayEquals("user".getBytes(StandardCharsets.UTF_8), message.userId());
             message.to("the-management");
+            assertEquals("the-management", message.to());
             message.subject("amqp");
+            assertEquals("amqp", message.subject());
             message.replyTo("the-minions");
+            assertEquals("the-minions", message.replyTo());
             message.correlationId("abc");
+            assertEquals("abc", message.correlationId());
             message.contentEncoding("application/json");
-            message.contentEncoding("gzip");
+            assertEquals("application/json", message.contentEncoding());
+            message.contentType("gzip");
+            assertEquals("gzip", message.contentType());
             message.absoluteExpiryTime(123);
+            assertEquals(123, message.absoluteExpiryTime());
             message.creationTime(1);
+            assertEquals(1, message.creationTime());
             message.groupId("disgruntled");
+            assertEquals("disgruntled", message.groupId());
             message.groupSequence(8192);
+            assertEquals(8192, message.groupSequence());
             message.replyToGroupId("/dev/null");
+            assertEquals("/dev/null", message.replyToGroupId());
             // Populate message application properties
+            assertFalse(message.hasProperties());
+            assertFalse(message.hasProperty("ma1"));
             message.property("ap1", 1);
+            assertEquals(1, message.property("ap1"));
+            assertTrue(message.hasProperty("ap1"));
             message.property("ap2", 2);
+            assertEquals(2, message.property("ap2"));
             message.property("ap3", 3);
+            assertEquals(3, message.property("ap3"));
+            assertTrue(message.hasProperties());
 
             OutputStream stream = message.body();
 
@@ -1694,15 +1729,23 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             message.property("ap2", 2);
             message.property("ap3", 3);
             // Populate message footers
+            assertFalse(message.hasFooters());
+            assertFalse(message.hasFooter("f1"));
             message.footer("f1", 1);
             message.footer("f2", 2);
             message.footer("f3", 3);
+            assertTrue(message.hasFooter("f1"));
+            assertTrue(message.hasFooters());
 
             OutputStreamOptions bodyOptions = new OutputStreamOptions().completeSendOnClose(true);
             OutputStream stream = message.body(bodyOptions);
 
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.encode(Collections.emptyMap()));
+
             stream.write(payload);
             stream.close();
+
+            assertThrows(ClientIllegalStateException.class, () -> message.footer(new Footer(Collections.emptyMap())));
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDetach().respond();

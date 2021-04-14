@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1444,6 +1445,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                  .withMore(false)
                                  .withMessageFormat(0)
                                  .withPayload(payload).queue();
+            peer.expectDisposition().withState().accepted().withSettled(true);
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -1463,6 +1465,15 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertNotNull(message);
             Header header = message.header();
             assertNotNull(header);
+
+            assertSame(receiver, message.receiver());
+            assertSame(delivery, message.delivery());
+
+            assertNull(message.properties());
+            assertNull(message.annotations());
+            assertNull(message.applicationProperties());
+            assertNull(message.footer());
+            assertTrue(message.completed());
 
             peer.expectDetach().respond();
             peer.expectEnd().respond();
@@ -1821,6 +1832,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertNotNull(delivery);
             assertTrue(delivery.completed());
             assertFalse(delivery.aborted());
+            assertEquals(0, delivery.messageFormat());
 
             StreamReceiverMessage message = delivery.message();
             assertNotNull(message);
@@ -1828,6 +1840,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             InputStream bodyStream = message.body();
             assertNotNull(bodyStream);
 
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.messageFormat(1));
             assertNull(message.header());
             assertNull(message.annotations());
             assertNull(message.properties());
@@ -1851,6 +1864,93 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertEquals(-1, bodyStream.read(receivedBody));
             assertEquals(-1, bodyStream.read());
             assertNull(message.footer());
+
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testStreamReceiverMessageThrowsOnAnyMessageModificationAPI() throws Exception {
+        final byte[] body = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        final byte[] payload = createEncodedMessage(new Data(body));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamDelivery delivery = receiver.receive();
+            final StreamReceiverMessage message = delivery.message();
+
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.header(new Header()));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.properties(new Properties()));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.applicationProperties(new ApplicationProperties(null)));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.annotations(new MessageAnnotations(null)));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.footer(new Footer(null)));
+
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.messageFormat(1));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.durable(true));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.priority((byte) 4));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.timeToLive(128));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.firstAcquirer(false));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.deliveryCount(10));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.messageId(10));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.correlationId(10));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.userId(new byte[] {1}));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.to("test"));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.subject("test"));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.replyTo("test"));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.contentType("test"));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.contentEncoding("test"));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.absoluteExpiryTime(10));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.creationTime(10));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.groupId("test"));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.groupSequence(10));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.replyToGroupId("test"));
+
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.annotation("test", 1));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.removeAnnotation("test"));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.property("test", 1));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.removeProperty("test"));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.footer("test", 1));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.removeFooter("test"));
+
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.body(InputStream.nullInputStream()));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.addBodySection(new AmqpValue<>("test")));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.bodySections(Collections.emptyList()));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.bodySections());
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.clearBodySections());
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.forEachBodySection((section) -> {}));
+            assertThrows(ClientUnsupportedOperationException.class, () -> message.encode(Collections.emptyMap()));
+
+            InputStream bodyStream = message.body();
+
+            assertNotNull(bodyStream.readAllBytes());
+            bodyStream.close();
 
             peer.expectDetach().respond();
             peer.expectEnd().respond();
