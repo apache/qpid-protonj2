@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.Character.UnicodeBlock;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -32,6 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -56,51 +58,108 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(false);
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisTypeFS() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(true);
+    }
+
+    private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.UINT);
 
-        try {
-            decoder.readString(buffer, decoderState);
-            fail("Should not allow read of integer type as this type");
-        } catch (DecodeException e) {}
+        if (fromStream) {
+            try {
+                streamDecoder.readString(stream, streamDecoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        } else {
+            try {
+                decoder.readString(buffer, decoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        }
     }
 
     @Test
     public void testReadFromNullEncodingCode() throws IOException {
+        testReadFromNullEncodingCode(false);
+    }
+
+    @Test
+    public void testReadFromNullEncodingCodeFS() throws IOException {
+        testReadFromNullEncodingCode(true);
+    }
+
+    private void testReadFromNullEncodingCode(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.NULL);
 
-        assertNull(decoder.readString(buffer, decoderState));
+        if (fromStream) {
+            assertNull(streamDecoder.readString(stream, streamDecoderState));
+        } else {
+            assertNull(decoder.readString(buffer, decoderState));
+        }
     }
 
     @Test
     public void testEncodeSmallString() throws IOException {
-        doTestEncodeDecode(SMALL_STRING_VALUIE);
+        doTestEncodeDecode(SMALL_STRING_VALUIE, false);
     }
 
     @Test
     public void testEncodeLargeString() throws IOException {
-        doTestEncodeDecode(LARGE_STRING_VALUIE);
+        doTestEncodeDecode(LARGE_STRING_VALUIE, false);
     }
 
     @Test
     public void testEncodeEmptyString() throws IOException {
-        doTestEncodeDecode("");
+        doTestEncodeDecode("", false);
     }
 
     @Test
     public void testEncodeNullString() throws IOException {
-        doTestEncodeDecode(null);
+        doTestEncodeDecode(null, false);
     }
 
-    private void doTestEncodeDecode(String value) throws IOException {
+    @Test
+    public void testEncodeSmallStringFS() throws IOException {
+        doTestEncodeDecode(SMALL_STRING_VALUIE, true);
+    }
+
+    @Test
+    public void testEncodeLargeStringFS() throws IOException {
+        doTestEncodeDecode(LARGE_STRING_VALUIE, true);
+    }
+
+    @Test
+    public void testEncodeEmptyStringFS() throws IOException {
+        doTestEncodeDecode("", true);
+    }
+
+    @Test
+    public void testEncodeNullStringFS() throws IOException {
+        doTestEncodeDecode(null, true);
+    }
+
+    private void doTestEncodeDecode(String value, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         encoder.writeObject(buffer, encoderState, value);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         if (value != null) {
             assertNotNull(result);
@@ -114,23 +173,39 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeSmallSeriesOfStrings() throws IOException {
-        doTestDecodeStringSeries(SMALL_SIZE);
+        doTestDecodeStringSeries(SMALL_SIZE, false);
     }
 
     @Test
     public void testDecodeLargeSeriesOfStrings() throws IOException {
-        doTestDecodeStringSeries(LARGE_SIZE);
+        doTestDecodeStringSeries(LARGE_SIZE, false);
     }
 
-    private void doTestDecodeStringSeries(int size) throws IOException {
+    @Test
+    public void testDecodeSmallSeriesOfStringsFS() throws IOException {
+        doTestDecodeStringSeries(SMALL_SIZE, true);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfStringsFS() throws IOException {
+        doTestDecodeStringSeries(LARGE_SIZE, true);
+    }
+
+    private void doTestDecodeStringSeries(int size, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (int i = 0; i < size; ++i) {
             encoder.writeString(buffer, encoderState, LARGE_STRING_VALUIE);
         }
 
         for (int i = 0; i < size; ++i) {
-            final Object result = decoder.readObject(buffer, decoderState);
+            final Object result;
+            if (fromStream) {
+                result = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                result = decoder.readObject(buffer, decoderState);
+            }
 
             assertNotNull(result);
             assertTrue(result instanceof String);
@@ -140,33 +215,66 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeStringOfZeroLengthWithLargeEncoding() throws IOException {
-        doTestDecodeStringOfZeroLengthWithGivenEncoding(EncodingCodes.STR32);
+        doTestDecodeStringOfZeroLengthWithGivenEncoding(EncodingCodes.STR32, false);
     }
 
     @Test
     public void testDecodeStringOfZeroLengthWithSmallEncoding() throws IOException {
-        doTestDecodeStringOfZeroLengthWithGivenEncoding(EncodingCodes.STR8);
+        doTestDecodeStringOfZeroLengthWithGivenEncoding(EncodingCodes.STR8, false);
     }
 
-    private void doTestDecodeStringOfZeroLengthWithGivenEncoding(byte encodingCode) throws IOException {
+    @Test
+    public void testDecodeStringOfZeroLengthWithLargeEncodingFS() throws IOException {
+        doTestDecodeStringOfZeroLengthWithGivenEncoding(EncodingCodes.STR32, true);
+    }
+
+    @Test
+    public void testDecodeStringOfZeroLengthWithSmallEncodingFS() throws IOException {
+        doTestDecodeStringOfZeroLengthWithGivenEncoding(EncodingCodes.STR8, true);
+    }
+
+    private void doTestDecodeStringOfZeroLengthWithGivenEncoding(byte encodingCode, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         // Manually encode the type we want.
         buffer.writeByte(EncodingCodes.STR32);
         buffer.writeInt(0);
 
-        String result = decoder.readString(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertEquals("", result);
     }
 
     @Test
     public void testEncodeAndDecodeComplexStrings() throws IOException {
+        testEncodeAndDecodeComplexStrings(false);
+    }
+
+    @Test
+    public void testEncodeAndDecodeComplexStringsFS() throws IOException {
+        testEncodeAndDecodeComplexStrings(true);
+    }
+
+    private void testEncodeAndDecodeComplexStrings(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (final String input : TEST_DATA) {
             encoder.writeString(buffer, encoderState, input);
-            String result = decoder.readString(buffer, decoderState);
+
+            final Object result;
+            if (fromStream) {
+                result = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                result = decoder.readObject(buffer, decoderState);
+            }
 
             buffer.clear();
 
@@ -176,30 +284,64 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodedSizeExceedsRemainingDetectedStr32() throws IOException {
+        testEncodedSizeExceedsRemainingDetectedStr32(false);
+    }
+
+    @Test
+    public void testEncodedSizeExceedsRemainingDetectedStr32FS() throws IOException {
+        testEncodedSizeExceedsRemainingDetectedStr32(true);
+    }
+
+    private void testEncodedSizeExceedsRemainingDetectedStr32(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.STR32);
         buffer.writeInt(8);
         buffer.writeInt(Integer.MAX_VALUE);
 
-        try {
-            decoder.readObject(buffer, decoderState);
-            fail("should throw an IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {}
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("should throw an IllegalArgumentException");
+            } catch (IllegalArgumentException iae) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("should throw an IllegalArgumentException");
+            } catch (IllegalArgumentException iae) {}
+        }
     }
 
     @Test
     public void testEncodedSizeExceedsRemainingDetectedStr8() throws IOException {
+        testEncodedSizeExceedsRemainingDetectedStr8(false);
+    }
+
+    @Test
+    public void testEncodedSizeExceedsRemainingDetectedStr8FS() throws IOException {
+        testEncodedSizeExceedsRemainingDetectedStr8(true);
+    }
+
+    private void testEncodedSizeExceedsRemainingDetectedStr8(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.STR8);
         buffer.writeByte(4);
         buffer.writeByte(Byte.MAX_VALUE);
 
-        try {
-            decoder.readObject(buffer, decoderState);
-            fail("should throw an IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {}
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("should throw an IllegalArgumentException");
+            } catch (IllegalArgumentException iae) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("should throw an IllegalArgumentException");
+            } catch (IllegalArgumentException iae) {}
+        }
     }
 
     //----- Test support for string encodings --------------------------------//
@@ -269,7 +411,17 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testSkipValue() throws IOException {
+        testSkipValue(false);
+    }
+
+    @Test
+    public void testSkipValueFS() throws IOException {
+        testSkipValue(true);
+    }
+
+    private void testSkipValue(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeString(buffer, encoderState, "skipMe");
@@ -285,7 +437,12 @@ public class StringTypeCodecTest extends CodecTestSupport {
             typeDecoder.skipValue(buffer, decoderState);
         }
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof String);
@@ -296,8 +453,18 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeNonStringWhenStringExpectedReportsUsefulError() {
+        testDecodeNonStringWhenStringExpectedReportsUsefulError(false);
+    }
+
+    @Test
+    public void testDecodeNonStringWhenStringExpectedReportsUsefulErrorFS() {
+        testDecodeNonStringWhenStringExpectedReportsUsefulError(true);
+    }
+
+    private void testDecodeNonStringWhenStringExpectedReportsUsefulError(boolean fromStream) {
         final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         final UUID encoded = UUID.randomUUID();
+        final InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.UUID);
         buffer.writeLong(encoded.getMostSignificantBits());
@@ -308,11 +475,20 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
         buffer.markReadIndex();
 
-        try {
-            decoder.readString(buffer, decoderState);
-        } catch (DecodeException ex) {
-            // Should indicate the type that it found in the error
-            assertTrue(ex.getMessage().contains(EncodingCodes.toString(EncodingCodes.UUID)));
+        if (fromStream) {
+            try {
+                streamDecoder.readString(stream, streamDecoderState);
+            } catch (DecodeException ex) {
+                // Should indicate the type that it found in the error
+                assertTrue(ex.getMessage().contains(EncodingCodes.toString(EncodingCodes.UUID)));
+            }
+        } else {
+            try {
+                decoder.readString(buffer, decoderState);
+            } catch (DecodeException ex) {
+                // Should indicate the type that it found in the error
+                assertTrue(ex.getMessage().contains(EncodingCodes.toString(EncodingCodes.UUID)));
+            }
         }
 
         buffer.resetReadIndex();
@@ -322,15 +498,34 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeUnknownTypeWhenStringExpectedReportsUsefulError() {
+        testDecodeUnknownTypeWhenStringExpectedReportsUsefulError(false);
+    }
+
+    @Test
+    public void testDecodeUnknownTypeWhenStringExpectedReportsUsefulErrorFS() {
+        testDecodeUnknownTypeWhenStringExpectedReportsUsefulError(true);
+    }
+
+    private void testDecodeUnknownTypeWhenStringExpectedReportsUsefulError(boolean fromStream) {
         final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        final InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte((byte) 0x01);
 
-        try {
-            decoder.readString(buffer, decoderState);
-        } catch (DecodeException ex) {
-            // Should indicate the type that it found in the error
-            assertTrue(ex.getMessage().contains("Unknown-Type:0x01"));
+        if (fromStream) {
+            try {
+                streamDecoder.readString(stream, streamDecoderState);
+            } catch (DecodeException ex) {
+                // Should indicate the type that it found in the error
+                assertTrue(ex.getMessage().contains("Unknown-Type:0x01"));
+            }
+        } else {
+            try {
+                decoder.readString(buffer, decoderState);
+            } catch (DecodeException ex) {
+                // Should indicate the type that it found in the error
+                assertTrue(ex.getMessage().contains("Unknown-Type:0x01"));
+            }
         }
     }
 }

@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.codec.decoders;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -79,29 +80,34 @@ public final class ProtonStreamDecoderState implements StreamDecoderState {
 
     private static String internalDecode(InputStream stream, final int length, CharsetDecoder decoder, char[] scratch) throws IOException {
         int offset;
+        int lastRead = 0;
+
         for (offset = 0; offset < length; offset++) {
-            final byte b = (byte) stream.read();
-            if (b < 0) {
+            lastRead = stream.read();
+            if (lastRead < 0) {
+                throw new EOFException("Reached end of stream before decoding the full String content");
+            } else if (lastRead > 127) {
                 break;
             }
-            scratch[offset] = (char) b;
+            scratch[offset] = (char) lastRead;
         }
 
         if (offset == length) {
             return new String(scratch, 0, length);
         } else {
-            return internalDecodeUTF8(stream, length, scratch, offset, decoder);
+            return internalDecodeUTF8(stream, length, scratch, (byte) lastRead, offset, decoder);
         }
     }
 
-    private static String internalDecodeUTF8(final InputStream stream, final int length, final char[] chars, final int offset, final CharsetDecoder decoder) throws IOException {
+    private static String internalDecodeUTF8(final InputStream stream, final int length, final char[] chars, final byte stoppageByte, final int offset, final CharsetDecoder decoder) throws IOException {
         final CharBuffer out = CharBuffer.wrap(chars);
         out.position(offset);
 
         // Create a buffer from the remaining portion of the buffer and then use the decoder to complete the work
         // remember to move the main buffer position to consume the data processed.
         final byte[] trailingBytes = new byte[length - offset];
-        stream.read(trailingBytes);
+        trailingBytes[0] = stoppageByte;
+        stream.read(trailingBytes, 1, trailingBytes.length - 1);
         ByteBuffer byteBuffer = ByteBuffer.wrap(trailingBytes);
 
         try {
