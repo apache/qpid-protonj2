@@ -181,16 +181,16 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testCreateSenderAndCloseWithErrorSync() throws Exception {
-        doTestCreateSenderAndCloseOrDeatchWithErrorSync(true);
+    public void testCreateReceiverAndCloseWithErrorSync() throws Exception {
+        doTestCreateReceiverAndCloseOrDeatchWithErrorSync(true);
     }
 
     @Test
-    public void testCreateSenderAndDetachWithErrorSync() throws Exception {
-        doTestCreateSenderAndCloseOrDeatchWithErrorSync(false);
+    public void testCreateReceiverAndDetachWithErrorSync() throws Exception {
+        doTestCreateReceiverAndCloseOrDeatchWithErrorSync(false);
     }
 
-    private void doTestCreateSenderAndCloseOrDeatchWithErrorSync(boolean close) throws Exception {
+    private void doTestCreateReceiverAndCloseOrDeatchWithErrorSync(boolean close) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -224,16 +224,16 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testCreateSenderAndCloseWithErrorASync() throws Exception {
-        doTestCreateSenderAndCloseOrDeatchWithErrorASync(true);
+    public void testCreateReveiverAndCloseWithErrorAsync() throws Exception {
+        doTestCreateReveiverAndCloseOrDeatchWithErrorAsync(true);
     }
 
     @Test
-    public void testCreateSenderAndDetachWithErrorASync() throws Exception {
-        doTestCreateSenderAndCloseOrDeatchWithErrorASync(false);
+    public void testCreateReveiverAndDetachWithErrorAsync() throws Exception {
+        doTestCreateReveiverAndCloseOrDeatchWithErrorAsync(false);
     }
 
-    private void doTestCreateSenderAndCloseOrDeatchWithErrorASync(boolean close) throws Exception {
+    private void doTestCreateReveiverAndCloseOrDeatchWithErrorAsync(boolean close) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
