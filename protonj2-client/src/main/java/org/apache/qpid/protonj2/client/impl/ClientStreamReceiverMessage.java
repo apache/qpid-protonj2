@@ -730,10 +730,11 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
                     }
                 }
 
-                // TODO: Handle inability to decode stream chunk by setting some configured
-                //       disposition and closing the stream plus ensuring that the remaining
-                //       transfers get their incoming bytes read and discarded to ensure that
-                //       session credit is expanded.
+                // TODO: At the moment there is no automatic rejection or release etc
+                //       of the delivery.  The user is expected to apply a disposition in
+                //       response to this error that initiates the desired outcome.  We
+                //       could look to add auto settlement with a configured outcome in
+                //       the future.
 
                 throw ClientExceptionSupport.createNonFatalOrPassthrough(ex);
             }
