@@ -158,7 +158,7 @@ public class ProtonByteBuffer extends ProtonAbstractBuffer {
         checkDestinationIndex(index, length, destinationIndex, destination.capacity());
 
         if (destination.hasArray()) {
-            getBytes(index, destination.getArray(), destination.getArrayOffset() + destinationIndex, length);
+            System.arraycopy(array, index, destination.getArray(), destination.getArrayOffset() + destinationIndex, length);
         } else {
             destination.setBytes(destinationIndex, array, index, length);
         }
@@ -210,7 +210,7 @@ public class ProtonByteBuffer extends ProtonAbstractBuffer {
     public ProtonBuffer setBytes(int index, ProtonBuffer source, int sourceIndex, int length) {
         checkSourceIndex(index, length, sourceIndex, source.capacity());
         if (source.hasArray()) {
-            setBytes(index, source.getArray(), source.getArrayOffset() + sourceIndex, length);
+            System.arraycopy(source.getArray(), source.getArrayOffset() + sourceIndex, array, index, length);
         } else {
             source.getBytes(sourceIndex, array, index, length);
         }
