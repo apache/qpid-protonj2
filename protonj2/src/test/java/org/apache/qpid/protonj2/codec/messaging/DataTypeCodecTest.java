@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -44,7 +45,9 @@ import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Modified;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
+@Timeout(20)
 public class DataTypeCodecTest extends CodecTestSupport {
 
     @Test
@@ -475,5 +478,55 @@ public class DataTypeCodecTest extends CodecTestSupport {
             assertTrue(resultArray[i] instanceof Data);
             assertArrayEquals(array[i].getValue(), resultArray[i].getValue());
         }
+    }
+
+    @Test
+    public void testReadTypeWithNullEncoding() throws IOException {
+        testReadTypeWithNullEncoding(false);
+    }
+
+    @Test
+    public void testReadTypeWithNullEncodingFromStream() throws IOException {
+        testReadTypeWithNullEncoding(true);
+    }
+
+    private void testReadTypeWithNullEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Data.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(EncodingCodes.NULL);
+
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
+        assertNotNull(result);
+        assertTrue(result instanceof Data);
+
+        Data decoded = (Data) result;
+        assertNull(decoded.getBinary());
+    }
+
+    @Test
+    public void testReadTypeWithOverLargeEncoding() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Data.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(EncodingCodes.VBIN32);
+        buffer.writeInt(Integer.MAX_VALUE); // Not enough bytes in buffer for this
+        buffer.writeByte(0);
+
+        try {
+            decoder.readObject(buffer, decoderState);
+            fail("Should not decode type with invalid encoding");
+        } catch (DecodeException ex) {}
     }
 }

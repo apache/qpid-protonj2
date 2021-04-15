@@ -82,12 +82,7 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
         final int position = buffer.getReadIndex();
         final ProtonBuffer data = ProtonByteBufferAllocator.DEFAULT.allocate(size, size);
 
-        if (data.hasArray()) {
-            buffer.getBytes(position, data.getArray(), data.getArrayOffset(), size);
-        } else {
-            buffer.getBytes(position, data, 0, size);
-        }
-
+        buffer.getBytes(position, data.getArray(), data.getArrayOffset(), size);
         data.setWriteIndex(size);
         buffer.setReadIndex(position + size);
 

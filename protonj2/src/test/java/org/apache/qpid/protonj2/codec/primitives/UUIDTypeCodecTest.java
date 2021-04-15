@@ -24,33 +24,64 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
 import org.junit.jupiter.api.Test;
 
 public class UUIDTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(false);
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisTypeFromStream() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(true);
+    }
+
+    private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.UINT);
 
-        try {
-            decoder.readUUID(buffer, decoderState);
-            fail("Should not allow read of integer type as this type");
-        } catch (DecodeException e) {}
+        if (fromStream) {
+            try {
+                streamDecoder.readUUID(stream, streamDecoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        } else {
+            try {
+                decoder.readUUID(buffer, decoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        }
     }
 
     @Test
     public void testReadFromNullEncodingCode() throws IOException {
+        testReadFromNullEncodingCode(false);
+    }
+
+    @Test
+    public void testReadFromNullEncodingCodeFromStream() throws IOException {
+        testReadFromNullEncodingCode(true);
+    }
+
+    private void testReadFromNullEncodingCode(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         final UUID value = UUID.randomUUID();
 
@@ -60,26 +91,47 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
         buffer.writeLong(value.getLeastSignificantBits());
 
         assertNull(decoder.readUUID(buffer, decoderState));
-        assertEquals(value, decoder.readUUID(buffer, decoderState));
+
+        if (fromStream) {
+            assertEquals(value, streamDecoder.readUUID(stream, streamDecoderState));
+        } else {
+            assertEquals(value, decoder.readUUID(buffer, decoderState));
+        }
     }
 
     @Test
     public void testEncodeDecodeUUID() throws IOException {
-        doTestEncodeDecodeUUIDSeries(1);
+        doTestEncodeDecodeUUIDSeries(1, false);
     }
 
     @Test
     public void testEncodeDecodeSmallSeriesOfUUIDs() throws IOException {
-        doTestEncodeDecodeUUIDSeries(SMALL_SIZE);
+        doTestEncodeDecodeUUIDSeries(SMALL_SIZE, false);
     }
 
     @Test
     public void testEncodeDecodeLargeSeriesOfUUIDs() throws IOException {
-        doTestEncodeDecodeUUIDSeries(LARGE_SIZE);
+        doTestEncodeDecodeUUIDSeries(LARGE_SIZE, false);
     }
 
-    private void doTestEncodeDecodeUUIDSeries(int size) throws IOException {
+    @Test
+    public void testEncodeDecodeUUIDFromStream() throws IOException {
+        doTestEncodeDecodeUUIDSeries(1, true);
+    }
+
+    @Test
+    public void testEncodeDecodeSmallSeriesOfUUIDsFromStream() throws IOException {
+        doTestEncodeDecodeUUIDSeries(SMALL_SIZE, true);
+    }
+
+    @Test
+    public void testEncodeDecodeLargeSeriesOfUUIDsFromStream() throws IOException {
+        doTestEncodeDecodeUUIDSeries(LARGE_SIZE, true);
+    }
+
+    private void doTestEncodeDecodeUUIDSeries(int size, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         UUID[] source = new UUID[size];
         for (int i = 0; i < size; ++i) {
@@ -91,7 +143,12 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
         }
 
         for (int i = 0; i < size; ++i) {
-            final Object result = decoder.readObject(buffer, decoderState);
+            final Object result;
+            if (fromStream) {
+                result = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                result = decoder.readObject(buffer, decoderState);
+            }
 
             assertNotNull(result);
             assertTrue(result instanceof UUID);
@@ -104,16 +161,27 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeSmallUUIDArray() throws IOException {
-        doTestDecodeUUDIArrayType(SMALL_ARRAY_SIZE);
+        doTestDecodeUUDIArrayType(SMALL_ARRAY_SIZE, false);
     }
 
     @Test
     public void testDecodeLargeUUDIArray() throws IOException {
-        doTestDecodeUUDIArrayType(LARGE_ARRAY_SIZE);
+        doTestDecodeUUDIArrayType(LARGE_ARRAY_SIZE, false);
     }
 
-    private void doTestDecodeUUDIArrayType(int size) throws IOException {
+    @Test
+    public void testDecodeSmallUUIDArrayFromStream() throws IOException {
+        doTestDecodeUUDIArrayType(SMALL_ARRAY_SIZE, true);
+    }
+
+    @Test
+    public void testDecodeLargeUUDIArrayFromStream() throws IOException {
+        doTestDecodeUUDIArrayType(LARGE_ARRAY_SIZE, true);
+    }
+
+    private void doTestDecodeUUDIArrayType(int size, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         UUID[] source = new UUID[size];
         for (int i = 0; i < size; ++i) {
@@ -122,7 +190,13 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
 
@@ -159,12 +233,28 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testWriteUUIDArrayWithZeroSize() throws IOException {
+        testWriteUUIDArrayWithZeroSize(false);
+    }
+
+    @Test
+    public void testWriteUUIDArrayWithZeroSizeFromStream() throws IOException {
+        testWriteUUIDArrayWithZeroSize(true);
+    }
+
+    private void testWriteUUIDArrayWithZeroSize(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         UUID[] source = new UUID[0];
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
 
@@ -174,7 +264,17 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testObjectArrayContainingUUID() throws IOException {
+        testObjectArrayContainingUUID(false);
+    }
+
+    @Test
+    public void testObjectArrayContainingUUIDFromStream() throws IOException {
+        testObjectArrayContainingUUID(true);
+    }
+
+    private void testObjectArrayContainingUUID(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Object[] source = new Object[10];
         for (int i = 0; i < 10; ++i) {
@@ -183,7 +283,13 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
 
@@ -197,7 +303,17 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testWriteArrayOfUUIDArrayWithZeroSize() throws IOException {
+        testWriteArrayOfUUIDArrayWithZeroSize(false);
+    }
+
+    @Test
+    public void testWriteArrayOfUUIDArrayWithZeroSizeFromStream() throws IOException {
+        testWriteArrayOfUUIDArrayWithZeroSize(true);
+    }
+
+    private void testWriteArrayOfUUIDArrayWithZeroSize(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         UUID[][] source = new UUID[2][0];
         try {
@@ -206,7 +322,13 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
             fail("Should be able to encode array with no size");
         }
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
 
@@ -224,7 +346,17 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testSkipValue() throws IOException {
+        testSkipValue(false);
+    }
+
+    @Test
+    public void testSkipValueFromStream() throws IOException {
+        testSkipValue(true);
+    }
+
+    private void testSkipValue(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeUUID(buffer, encoderState, UUID.randomUUID());
@@ -235,12 +367,27 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
         encoder.writeObject(buffer, encoderState, expected);
 
         for (int i = 0; i < 10; ++i) {
-            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-            assertEquals(UUID.class, typeDecoder.getTypeClass());
-            typeDecoder.skipValue(buffer, decoderState);
+            if (fromStream) {
+                StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+                assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+                assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), EncodingCodes.UUID & 0xFF);
+                assertEquals(UUID.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(stream, streamDecoderState);
+            } else {
+                TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+                assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+                assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), EncodingCodes.UUID & 0xFF);
+                assertEquals(UUID.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(buffer, decoderState);
+            }
         }
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof UUID);
@@ -251,7 +398,17 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testArrayOfObjects() throws IOException {
+        testArrayOfObjects(false);
+    }
+
+    @Test
+    public void testArrayOfObjectsFromStream() throws IOException {
+        testArrayOfObjects(true);
+    }
+
+    private void testArrayOfObjects(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         final int size = 10;
 
@@ -262,7 +419,13 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
         assertFalse(result.getClass().getComponentType().isPrimitive());
@@ -277,13 +440,29 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testZeroSizedArrayOfObjects() throws IOException {
+        testZeroSizedArrayOfObjects(false);
+    }
+
+    @Test
+    public void testZeroSizedArrayOfObjectsFromStream() throws IOException {
+        testZeroSizedArrayOfObjects(true);
+    }
+
+    private void testZeroSizedArrayOfObjects(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         UUID[] source = new UUID[0];
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
         assertFalse(result.getClass().getComponentType().isPrimitive());

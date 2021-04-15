@@ -185,9 +185,15 @@ public class SourceTypeCodecTest extends CodecTestSupport {
        encoder.writeObject(buffer, encoderState, new Modified());
 
        for (int i = 0; i < 10; ++i) {
-           TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-           assertEquals(Source.class, typeDecoder.getTypeClass());
-           typeDecoder.skipValue(buffer, decoderState);
+           if (fromStream) {
+               StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+               assertEquals(Source.class, typeDecoder.getTypeClass());
+               typeDecoder.skipValue(stream, streamDecoderState);
+           } else {
+               TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+               assertEquals(Source.class, typeDecoder.getTypeClass());
+               typeDecoder.skipValue(buffer, decoderState);
+           }
        }
 
        final Object result;
@@ -344,6 +350,106 @@ public class SourceTypeCodecTest extends CodecTestSupport {
            assertEquals(array[i].getAddress(), resultArray[i].getAddress());
            assertEquals(array[i].isDynamic(), resultArray[i].isDynamic());
            assertEquals(array[i].getDefaultOutcome(), resultArray[i].getDefaultOutcome());
+       }
+   }
+
+   @Test
+   public void testDecodeWithNotEnoughListEntriesList8() throws IOException {
+       doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST8, false);
+   }
+
+   @Test
+   public void testDecodeWithNotEnoughListEntriesList32() throws IOException {
+       doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST32, false);
+   }
+
+   @Test
+   public void testDecodeWithNotEnoughListEntriesList8FromStream() throws IOException {
+       doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST8, true);
+   }
+
+   @Test
+   public void testDecodeWithNotEnoughListEntriesList32FromStream() throws IOException {
+       doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST32, true);
+   }
+
+   private void doTestDecodeWithNotEnoughListEntriesList32(byte listType, boolean fromStream) throws IOException {
+       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+       InputStream stream = new ProtonBufferInputStream(buffer);
+
+       buffer.writeByte((byte) 0); // Described Type Indicator
+       buffer.writeByte(EncodingCodes.SMALLULONG);
+       buffer.writeByte(Source.DESCRIPTOR_CODE.byteValue());
+       if (listType == EncodingCodes.LIST32) {
+           buffer.writeByte(EncodingCodes.LIST32);
+           buffer.writeInt(128);  // Size
+           buffer.writeInt(-1);  // Count, reads as negative as encoder treats these as signed ints.
+       } else if (listType == EncodingCodes.LIST8) {
+           buffer.writeByte(EncodingCodes.LIST8);
+           buffer.writeByte((byte) 128);  // Size
+           buffer.writeByte((byte) 0xFF);  // Count
+       }
+
+       if (fromStream) {
+           try {
+               streamDecoder.readObject(stream, streamDecoderState);
+               fail("Should not decode type with invalid min entries");
+           } catch (DecodeException ex) {}
+       } else {
+           try {
+               decoder.readObject(buffer, decoderState);
+               fail("Should not decode type with invalid min entries");
+           } catch (DecodeException ex) {}
+       }
+   }
+
+   @Test
+   public void testDecodeWithToManyListEntriesList8() throws IOException {
+       doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST8, false);
+   }
+
+   @Test
+   public void testDecodeWithToManyListEntriesList32() throws IOException {
+       doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST32, false);
+   }
+
+   @Test
+   public void testDecodeWithToManyListEntriesList8FromStream() throws IOException {
+       doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST8, true);
+   }
+
+   @Test
+   public void testDecodeWithToManyListEntriesList32FromStream() throws IOException {
+       doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST32, true);
+   }
+
+   private void doTestDecodeWithToManyListEntriesList32(byte listType, boolean fromStream) throws IOException {
+       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+       InputStream stream = new ProtonBufferInputStream(buffer);
+
+       buffer.writeByte((byte) 0); // Described Type Indicator
+       buffer.writeByte(EncodingCodes.SMALLULONG);
+       buffer.writeByte(Source.DESCRIPTOR_CODE.byteValue());
+       if (listType == EncodingCodes.LIST32) {
+           buffer.writeByte(EncodingCodes.LIST32);
+           buffer.writeInt(128);  // Size
+           buffer.writeInt(127);  // Count
+       } else if (listType == EncodingCodes.LIST8) {
+           buffer.writeByte(EncodingCodes.LIST8);
+           buffer.writeByte((byte) 128);  // Size
+           buffer.writeByte((byte) 127);  // Count
+       }
+
+       if (fromStream) {
+           try {
+               streamDecoder.readObject(stream, streamDecoderState);
+               fail("Should not decode type with invalid min entries");
+           } catch (DecodeException ex) {}
+       } else {
+           try {
+               decoder.readObject(buffer, decoderState);
+               fail("Should not decode type with invalid min entries");
+           } catch (DecodeException ex) {}
        }
    }
 }

@@ -558,7 +558,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             expectedEncodingWrapper.setWriteIndex(0);
 
             // Write the array encoding code, array size, and element count
-            if(count < 254) {
+            if (count < 254) {
                 expectedEncodingWrapper.writeByte((byte) 0xE0); // 'array8' type descriptor code
                 expectedEncodingWrapper.writeByte((byte) arrayPayloadSize);
                 expectedEncodingWrapper.writeByte((byte) count);
@@ -927,7 +927,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             expectedEncodingWrapper.setWriteIndex(0);
 
             // Write the array encoding code, array size, and element count
-            if(count < 254) {
+            if (count < 254) {
                 expectedEncodingWrapper.writeByte((byte) 0xE0); // 'array8' type descriptor code
                 expectedEncodingWrapper.writeByte((byte) arrayPayloadSize);
                 expectedEncodingWrapper.writeByte((byte) count);

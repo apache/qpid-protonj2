@@ -476,4 +476,53 @@ public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
         assertEquals(resultMap.get(SYMBOL_1), stringKeyedMap);
         assertEquals(resultMap.get(SYMBOL_2), symbolKeyedMap);
     }
-}
+
+    @Test
+    public void testReadTypeWithNullEncoding() throws IOException {
+        testReadTypeWithNullEncoding(false);
+    }
+
+    @Test
+    public void testReadTypeWithNullEncodingFromStream() throws IOException {
+        testReadTypeWithNullEncoding(true);
+    }
+
+    private void testReadTypeWithNullEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(MessageAnnotations.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(EncodingCodes.NULL);
+
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
+        assertNotNull(result);
+        assertTrue(result instanceof MessageAnnotations);
+
+        MessageAnnotations decoded = (MessageAnnotations) result;
+        assertNull(decoded.getValue());
+    }
+
+    @Test
+    public void testReadTypeWithOverLargeEncoding() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(MessageAnnotations.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(EncodingCodes.MAP32);
+        buffer.writeInt(Integer.MAX_VALUE);  // Size
+        buffer.writeInt(4);  // Count
+
+        try {
+            decoder.readObject(buffer, decoderState);
+            fail("Should not decode type with invalid encoding");
+        } catch (DecodeException ex) {}
+    }}

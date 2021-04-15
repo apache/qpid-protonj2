@@ -100,8 +100,6 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
                 case 1:
                     received.setSectionOffset(state.getDecoder().readUnsignedLong(buffer, state));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Received encoding");
             }
         }
 
@@ -156,8 +154,6 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
                 case 1:
                     received.setSectionOffset(state.getDecoder().readUnsignedLong(stream, state));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Received encoding");
             }
         }
 

@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.codec.transactions;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -93,6 +94,33 @@ public class CoordinatorTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testEncodeDecodeCoordinatorTypeNoCapabilities() throws Exception {
+        testEncodeDecodeCoordinatorTypeWithNoCapabilities(false);
+    }
+
+    @Test
+    public void testEncodeDecodeCoordinatorTypeNoCapabilitiesFromStream() throws Exception {
+        testEncodeDecodeCoordinatorTypeWithNoCapabilities(true);
+    }
+
+    private void testEncodeDecodeCoordinatorTypeWithNoCapabilities(boolean fromStream) throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+        Coordinator input = new Coordinator();
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        final Coordinator result;
+        if (fromStream) {
+            result = (Coordinator) streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = (Coordinator) decoder.readObject(buffer, decoderState);
+        }
+
+        assertNull(result.getCapabilities());
+    }
+
+    @Test
     public void testSkipValue() throws IOException {
         testSkipValue(false);
     }
@@ -119,9 +147,15 @@ public class CoordinatorTypeCodecTest extends CodecTestSupport {
         encoder.writeObject(buffer, encoderState, coordinator);
 
         for (int i = 0; i < 10; ++i) {
-            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-            assertEquals(Coordinator.class, typeDecoder.getTypeClass());
-            typeDecoder.skipValue(buffer, decoderState);
+            if (fromStream) {
+                StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+                assertEquals(Coordinator.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(stream, streamDecoderState);
+            } else {
+                TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+                assertEquals(Coordinator.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(buffer, decoderState);
+            }
         }
 
         final Coordinator result;
@@ -285,6 +319,108 @@ public class CoordinatorTypeCodecTest extends CodecTestSupport {
             assertNotNull(resultArray[i]);
             assertTrue(resultArray[i] instanceof Coordinator);
             assertArrayEquals(array[i].getCapabilities(), resultArray[i].getCapabilities());
+        }
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList8() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST8, false);
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList32() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST32, false);
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList8FromStream() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST8, true);
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList32FromStream() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST32, true);
+    }
+
+    private void doTestDecodeWithNotEnoughListEntriesList32(byte listType, boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Coordinator.DESCRIPTOR_CODE.byteValue());
+        if (listType == EncodingCodes.LIST32) {
+            buffer.writeByte(EncodingCodes.LIST32);
+            buffer.writeInt(64);  // Size
+            buffer.writeInt(-1);  // Count
+        } else if (listType == EncodingCodes.LIST8) {
+            buffer.writeByte(EncodingCodes.LIST8);
+            buffer.writeByte((byte) 64);  // Size
+            buffer.writeByte((byte) 0xFF);  // Count
+        } else {
+            buffer.writeByte(EncodingCodes.LIST0);
+        }
+
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("Should not decode type with invalid min entries");
+            } catch (DecodeException ex) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("Should not decode type with invalid min entries");
+            } catch (DecodeException ex) {}
+        }
+    }
+
+    @Test
+    public void testDecodeWithToManyListEntriesList8() throws IOException {
+        doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST8, false);
+    }
+
+    @Test
+    public void testDecodeWithToManyListEntriesList32() throws IOException {
+        doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST32, false);
+    }
+
+    @Test
+    public void testDecodeWithToManyListEntriesList8FromStream() throws IOException {
+        doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST8, true);
+    }
+
+    @Test
+    public void testDecodeWithToManyListEntriesList32FromStream() throws IOException {
+        doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST32, true);
+    }
+
+    private void doTestDecodeWithToManyListEntriesList32(byte listType, boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Coordinator.DESCRIPTOR_CODE.byteValue());
+        if (listType == EncodingCodes.LIST32) {
+            buffer.writeByte(EncodingCodes.LIST32);
+            buffer.writeInt(128);  // Size
+            buffer.writeInt(127);  // Count
+        } else if (listType == EncodingCodes.LIST8) {
+            buffer.writeByte(EncodingCodes.LIST8);
+            buffer.writeByte((byte) 128);  // Size
+            buffer.writeByte((byte) 127);  // Count
+        }
+
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("Should not decode type with invalid min entries");
+            } catch (DecodeException ex) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("Should not decode type with invalid min entries");
+            } catch (DecodeException ex) {}
         }
     }
 }

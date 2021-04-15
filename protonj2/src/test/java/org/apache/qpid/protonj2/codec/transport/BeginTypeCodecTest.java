@@ -134,6 +134,50 @@ public class BeginTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testEncodeDecodeFailsOnMissingIncomingWindow() throws IOException {
+        testEncodeDecodeFailsOnMissingIncomingWindow(false);
+    }
+
+    @Test
+    public void testEncodeDecodeFailsOnMissingIncomingWindowFromStream() throws IOException {
+        testEncodeDecodeFailsOnMissingIncomingWindow(true);
+    }
+
+    private void testEncodeDecodeFailsOnMissingIncomingWindow(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        final Random random = new Random();
+        random.setSeed(System.nanoTime());
+
+        final int randomChannel = random.nextInt(65535);
+        final int randomeNextOutgoingId = random.nextInt();
+        final int randomeNextOutgoingWindow = random.nextInt();
+        final int randomeHandleMax = random.nextInt();
+
+        Begin input = new Begin();
+
+        input.setRemoteChannel(randomChannel);
+        input.setNextOutgoingId(randomeNextOutgoingId);
+        input.setOutgoingWindow(randomeNextOutgoingWindow);
+        input.setHandleMax(randomeHandleMax);
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("Should not decode type with invalid encoding");
+            } catch (DecodeException ex) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("Should not decode type with invalid encoding");
+            } catch (DecodeException ex) {}
+        }
+    }
+
+    @Test
     public void testEncodeUsingNewCodecAndDecodeWithLegacyCodec() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
@@ -418,6 +462,113 @@ public class BeginTypeCodecTest extends CodecTestSupport {
             assertEquals(array[i].getOutgoingWindow(), resultArray[i].getOutgoingWindow());
             assertEquals(array[i].getIncomingWindow(), resultArray[i].getIncomingWindow());
             assertEquals(array[i].getRemoteChannel(), resultArray[i].getRemoteChannel());
+        }
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList8() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST8, false);
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList32() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST32, false);
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList0FromStream() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST0, true);
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList8FromStream() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST8, true);
+    }
+
+    @Test
+    public void testDecodeWithNotEnoughListEntriesList32FromStream() throws IOException {
+        doTestDecodeWithNotEnoughListEntriesList32(EncodingCodes.LIST32, true);
+    }
+
+    private void doTestDecodeWithNotEnoughListEntriesList32(byte listType, boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Begin.DESCRIPTOR_CODE.byteValue());
+        if (listType == EncodingCodes.LIST32) {
+            buffer.writeByte(EncodingCodes.LIST32);
+            buffer.writeInt((byte) 0);  // Size
+            buffer.writeInt((byte) 0);  // Count
+        } else if (listType == EncodingCodes.LIST8) {
+            buffer.writeByte(EncodingCodes.LIST8);
+            buffer.writeByte((byte) 0);  // Size
+            buffer.writeByte((byte) 0);  // Count
+        } else {
+            buffer.writeByte(EncodingCodes.LIST0);
+        }
+
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("Should not decode type with invalid min entries");
+            } catch (DecodeException ex) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("Should not decode type with invalid min entries");
+            } catch (DecodeException ex) {}
+        }
+    }
+
+    @Test
+    public void testDecodeWithToManyListEntriesList8() throws IOException {
+        doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST8, false);
+    }
+
+    @Test
+    public void testDecodeWithToManyListEntriesList32() throws IOException {
+        doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST32, false);
+    }
+
+    @Test
+    public void testDecodeWithToManyListEntriesList8FromStream() throws IOException {
+        doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST8, true);
+    }
+
+    @Test
+    public void testDecodeWithToManyListEntriesList32FromStream() throws IOException {
+        doTestDecodeWithToManyListEntriesList32(EncodingCodes.LIST32, true);
+    }
+
+    private void doTestDecodeWithToManyListEntriesList32(byte listType, boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Begin.DESCRIPTOR_CODE.byteValue());
+        if (listType == EncodingCodes.LIST32) {
+            buffer.writeByte(EncodingCodes.LIST32);
+            buffer.writeInt(128);  // Size
+            buffer.writeInt(127);  // Count
+        } else if (listType == EncodingCodes.LIST8) {
+            buffer.writeByte(EncodingCodes.LIST8);
+            buffer.writeByte((byte) 128);  // Size
+            buffer.writeByte((byte) 127);  // Count
+        }
+
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("Should not decode type with invalid min entries");
+            } catch (DecodeException ex) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("Should not decode type with invalid min entries");
+            } catch (DecodeException ex) {}
         }
     }
 }

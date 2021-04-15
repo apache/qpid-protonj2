@@ -105,8 +105,6 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
                 case 0:
                     rejected.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Rejected encoding");
             }
         }
 
@@ -162,8 +160,6 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
                 case 0:
                     rejected.setError(state.getDecoder().readObject(stream, state, ErrorCondition.class));
                     break;
-                default:
-                    throw new DecodeException("To many entries in Rejected encoding");
             }
         }
 
