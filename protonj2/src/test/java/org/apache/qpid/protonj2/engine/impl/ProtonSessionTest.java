@@ -1741,6 +1741,8 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         Connection connection = engine.start().open();
         Session session = connection.session().setHandleMax(0).open();
 
+        assertEquals(0, session.getHandleMax());
+
         if (receiver) {
             session.receiver("receiver1").open();
             try {
@@ -1856,6 +1858,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         session.setOutgoingCapacity(sessionCapacity);
 
+        assertEquals(sessionCapacity, session.getOutgoingCapacity());
         assertEquals(remainingCapacity, session.getRemainingOutgoingCapacity());
 
         peer.waitForScriptToComplete();

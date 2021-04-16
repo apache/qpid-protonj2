@@ -124,7 +124,17 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testArrayOfArraysOfArraysOfShortTypes() throws IOException {
+        testArrayOfArraysOfArraysOfShortTypes(false);
+    }
+
+    @Test
+    public void testArrayOfArraysOfArraysOfShortTypesFromStream() throws IOException {
+        testArrayOfArraysOfArraysOfShortTypes(true);
+    }
+
+    private void testArrayOfArraysOfArraysOfShortTypes(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         final int size = 10;
 
@@ -139,7 +149,13 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
 
@@ -167,7 +183,17 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testWriteArrayOfArraysStrings() throws IOException {
+        testWriteArrayOfArraysStrings(false);
+    }
+
+    @Test
+    public void testWriteArrayOfArraysStringsFromStream() throws IOException {
+        testWriteArrayOfArraysStrings(true);
+    }
+
+    private void testWriteArrayOfArraysStrings(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         String[][] stringArray = new String[2][1];
 
@@ -182,7 +208,12 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
         encoder.writeArray(buffer, encoderState, stringArray);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
@@ -244,6 +275,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         String[] input = new String[] { "test", "legacy", "codec" };
 
         ProtonBuffer buffer = legacyCodec.encodeUsingLegacyEncoder(input);
+
         assertNotNull(buffer);
 
         Object decoded = decoder.readObject(buffer, decoderState);
@@ -271,7 +303,17 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeAndDecodeArrayOfListsUsingReadMultiple() throws Exception {
+        testEncodeAndDecodeArrayOfListsUsingReadMultiple(false);
+    }
+
+    @Test
+    public void testEncodeAndDecodeArrayOfListsUsingReadMultipleFromStream() throws Exception {
+        testEncodeAndDecodeArrayOfListsUsingReadMultiple(true);
+    }
+
+    private void testEncodeAndDecodeArrayOfListsUsingReadMultiple(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         @SuppressWarnings("rawtypes")
         List[] lists = new List[3];
@@ -291,7 +333,12 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         encoder.writeObject(buffer, encoderState, lists);
 
         @SuppressWarnings("rawtypes")
-        List[] decoded = decoder.readMultiple(buffer, decoderState, List.class);
+        final List[] decoded;
+        if (fromStream) {
+            decoded = streamDecoder.readMultiple(stream, streamDecoderState, List.class);
+        } else {
+            decoded = decoder.readMultiple(buffer, decoderState, List.class);
+        }
 
         assertNotNull(decoded);
         assertTrue(decoded.getClass().isArray());
@@ -301,7 +348,17 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeAndDecodeArrayOfMapsUsingReadMultiple() throws Exception {
+        testEncodeAndDecodeArrayOfMapsUsingReadMultiple(false);
+    }
+
+    @Test
+    public void testEncodeAndDecodeArrayOfMapsUsingReadMultipleFromStream() throws Exception {
+        testEncodeAndDecodeArrayOfMapsUsingReadMultiple(true);
+    }
+
+    private void testEncodeAndDecodeArrayOfMapsUsingReadMultiple(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         @SuppressWarnings("rawtypes")
         Map[] maps = new Map[3];
@@ -321,7 +378,12 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         encoder.writeObject(buffer, encoderState, maps);
 
         @SuppressWarnings("rawtypes")
-        Map[] decoded = decoder.readMultiple(buffer, decoderState, Map.class);
+        final Map[] decoded;
+        if (fromStream) {
+            decoded = streamDecoder.readMultiple(stream, streamDecoderState, Map.class);
+        } else {
+            decoded = decoder.readMultiple(buffer, decoderState, Map.class);
+        }
 
         assertNotNull(decoded);
         assertTrue(decoded.getClass().isArray());
@@ -332,23 +394,43 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     @Test
     public void testEncodeDecodeBooleanArray100() throws Throwable {
         // boolean array8 less than 128 bytes
-        doEncodeDecodeBooleanArrayTestImpl(100);
+        doEncodeDecodeBooleanArrayTestImpl(100, false);
     }
 
     @Test
     public void testEncodeDecodeBooleanArray192() throws Throwable {
         // boolean array8 greater than 128 bytes
-        doEncodeDecodeBooleanArrayTestImpl(192);
+        doEncodeDecodeBooleanArrayTestImpl(192, false);
     }
 
     @Test
     public void testEncodeDecodeBooleanArray384() throws Throwable {
         // boolean array32
-        doEncodeDecodeBooleanArrayTestImpl(384);
+        doEncodeDecodeBooleanArrayTestImpl(384, false);
     }
 
-    private void doEncodeDecodeBooleanArrayTestImpl(int count) throws Throwable {
+    @Test
+    public void testEncodeDecodeBooleanArray100FS() throws Throwable {
+        // boolean array8 less than 128 bytes
+        doEncodeDecodeBooleanArrayTestImpl(100, true);
+    }
+
+    @Test
+    public void testEncodeDecodeBooleanArray192FS() throws Throwable {
+        // boolean array8 greater than 128 bytes
+        doEncodeDecodeBooleanArrayTestImpl(192, true);
+    }
+
+    @Test
+    public void testEncodeDecodeBooleanArray384FS() throws Throwable {
+        // boolean array32
+        doEncodeDecodeBooleanArrayTestImpl(384, true);
+    }
+
+    private void doEncodeDecodeBooleanArrayTestImpl(int count, boolean fromStream) throws Throwable {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
         boolean[] source = createPayloadArrayBooleans(count);
 
         try {
@@ -397,7 +479,14 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
             // Now verify against the decoding
             buffer.resetReadIndex();
-            Object decoded = decoder.readObject(buffer, decoderState);
+
+            final Object decoded;
+            if (fromStream) {
+                decoded = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                decoded = decoder.readObject(buffer, decoderState);
+            }
+
             assertNotNull(decoded);
             assertTrue(decoded.getClass().isArray());
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
@@ -424,35 +513,66 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     @Test
     public void testEncodeDecodeByteArray100() throws Throwable {
         // byte array8 less than 128 bytes
-        doEncodeDecodeByteArrayTestImpl(100);
+        doEncodeDecodeByteArrayTestImpl(100, false);
     }
 
     @Test
     public void testEncodeDecodeByteArray192() throws Throwable {
         // byte array8 greater than 128 bytes
-        doEncodeDecodeByteArrayTestImpl(192);
+        doEncodeDecodeByteArrayTestImpl(192, false);
     }
 
     @Test
     public void testEncodeDecodeByteArray254() throws Throwable {
         // byte array8 greater than 128 bytes
-        doEncodeDecodeByteArrayTestImpl(254);
+        doEncodeDecodeByteArrayTestImpl(254, false);
     }
 
     @Test
     public void testEncodeDecodeByteArray255() throws Throwable {
         // byte array8 greater than 128 bytes
-        doEncodeDecodeByteArrayTestImpl(255);
+        doEncodeDecodeByteArrayTestImpl(255, false);
     }
 
     @Test
     public void testEncodeDecodeByteArray384() throws Throwable {
         // byte array32
-        doEncodeDecodeByteArrayTestImpl(384);
+        doEncodeDecodeByteArrayTestImpl(384, false);
     }
 
-    private void doEncodeDecodeByteArrayTestImpl(int count) throws Throwable {
+    @Test
+    public void testEncodeDecodeByteArray100FS() throws Throwable {
+        // byte array8 less than 128 bytes
+        doEncodeDecodeByteArrayTestImpl(100, true);
+    }
+
+    @Test
+    public void testEncodeDecodeByteArray192FS() throws Throwable {
+        // byte array8 greater than 128 bytes
+        doEncodeDecodeByteArrayTestImpl(192, true);
+    }
+
+    @Test
+    public void testEncodeDecodeByteArray254FS() throws Throwable {
+        // byte array8 greater than 128 bytes
+        doEncodeDecodeByteArrayTestImpl(254, true);
+    }
+
+    @Test
+    public void testEncodeDecodeByteArray255FS() throws Throwable {
+        // byte array8 greater than 128 bytes
+        doEncodeDecodeByteArrayTestImpl(255, true);
+    }
+
+    @Test
+    public void testEncodeDecodeByteArray384FS() throws Throwable {
+        // byte array32
+        doEncodeDecodeByteArrayTestImpl(384, true);
+    }
+
+    private void doEncodeDecodeByteArrayTestImpl(int count, boolean fromStream) throws Throwable {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         byte[] source = createPayloadArrayBytes(count);
 
@@ -501,7 +621,14 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
             // Now verify against the decoding
             buffer.resetReadIndex();
-            Object decoded = decoder.readObject(buffer, decoderState);
+
+            final Object decoded;
+            if (fromStream) {
+                decoded = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                decoded = decoder.readObject(buffer, decoderState);
+            }
+
             assertNotNull(decoded);
             assertTrue(decoded.getClass().isArray());
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
@@ -528,23 +655,42 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     @Test
     public void testEncodeDecodeShortArray50() throws Throwable {
         // short array8 less than 128 bytes
-        doEncodeDecodeShortArrayTestImpl(50);
+        doEncodeDecodeShortArrayTestImpl(50, false);
     }
 
     @Test
     public void testEncodeDecodeShortArray100() throws Throwable {
         // short array8 greater than 128 bytes
-        doEncodeDecodeShortArrayTestImpl(100);
+        doEncodeDecodeShortArrayTestImpl(100, false);
     }
 
     @Test
     public void testEncodeDecodeShortArray384() throws Throwable {
         // short array32
-        doEncodeDecodeShortArrayTestImpl(384);
+        doEncodeDecodeShortArrayTestImpl(384, false);
     }
 
-    private void doEncodeDecodeShortArrayTestImpl(int count) throws Throwable {
+    @Test
+    public void testEncodeDecodeShortArray50FS() throws Throwable {
+        // short array8 less than 128 bytes
+        doEncodeDecodeShortArrayTestImpl(50, true);
+    }
+
+    @Test
+    public void testEncodeDecodeShortArray100FS() throws Throwable {
+        // short array8 greater than 128 bytes
+        doEncodeDecodeShortArrayTestImpl(100, true);
+    }
+
+    @Test
+    public void testEncodeDecodeShortArray384FS() throws Throwable {
+        // short array32
+        doEncodeDecodeShortArrayTestImpl(384, true);
+    }
+
+    private void doEncodeDecodeShortArrayTestImpl(int count, boolean fromStream) throws Throwable {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
         short[] source = createPayloadArrayShorts(count);
 
         try {
@@ -592,7 +738,14 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
             // Now verify against the decoding
             buffer.resetReadIndex();
-            Object decoded = decoder.readObject(buffer, decoderState);
+
+            final Object decoded;
+            if (fromStream) {
+                decoded = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                decoded = decoder.readObject(buffer, decoderState);
+            }
+
             assertNotNull(decoded);
             assertTrue(decoded.getClass().isArray());
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
@@ -619,23 +772,42 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     @Test
     public void testEncodeDecodeIntArray10() throws Throwable {
         // int array8 less than 128 bytes
-        doEncodeDecodeIntArrayTestImpl(10);
+        doEncodeDecodeIntArrayTestImpl(10, false);
     }
 
     @Test
     public void testEncodeDecodeIntArray50() throws Throwable {
         // int array8 greater than 128 bytes
-        doEncodeDecodeIntArrayTestImpl(50);
+        doEncodeDecodeIntArrayTestImpl(50, false);
     }
 
     @Test
     public void testEncodeDecodeIntArray384() throws Throwable {
         // int array32
-        doEncodeDecodeIntArrayTestImpl(384);
+        doEncodeDecodeIntArrayTestImpl(384, false);
     }
 
-    private void doEncodeDecodeIntArrayTestImpl(int count) throws Throwable {
+    @Test
+    public void testEncodeDecodeIntArray10FS() throws Throwable {
+        // int array8 less than 128 bytes
+        doEncodeDecodeIntArrayTestImpl(10, true);
+    }
+
+    @Test
+    public void testEncodeDecodeIntArray50FS() throws Throwable {
+        // int array8 greater than 128 bytes
+        doEncodeDecodeIntArrayTestImpl(50, true);
+    }
+
+    @Test
+    public void testEncodeDecodeIntArray384FS() throws Throwable {
+        // int array32
+        doEncodeDecodeIntArrayTestImpl(384, true);
+    }
+
+    private void doEncodeDecodeIntArrayTestImpl(int count, boolean fromStream) throws Throwable {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
         int[] source = createPayloadArrayInts(count);
 
         try {
@@ -685,7 +857,14 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
             // Now verify against the decoding
             buffer.resetReadIndex();
-            Object decoded = decoder.readObject(buffer, decoderState);
+
+            final Object decoded;
+            if (fromStream) {
+                decoded = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                decoded = decoder.readObject(buffer, decoderState);
+            }
+
             assertNotNull(decoded);
             assertTrue(decoded.getClass().isArray());
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
@@ -712,23 +891,42 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     @Test
     public void testEncodeDecodeLongArray10() throws Throwable {
         // long array8 less than 128 bytes
-        doEncodeDecodeLongArrayTestImpl(10);
+        doEncodeDecodeLongArrayTestImpl(10, false);
     }
 
     @Test
     public void testEncodeDecodeLongArray25() throws Throwable {
         // long array8 greater than 128 bytes
-        doEncodeDecodeLongArrayTestImpl(25);
+        doEncodeDecodeLongArrayTestImpl(25, false);
     }
 
     @Test
     public void testEncodeDecodeLongArray384() throws Throwable {
         // long array32
-        doEncodeDecodeLongArrayTestImpl(384);
+        doEncodeDecodeLongArrayTestImpl(384, false);
     }
 
-    private void doEncodeDecodeLongArrayTestImpl(int count) throws Throwable {
+    @Test
+    public void testEncodeDecodeLongArray10FS() throws Throwable {
+        // long array8 less than 128 bytes
+        doEncodeDecodeLongArrayTestImpl(10, false);
+    }
+
+    @Test
+    public void testEncodeDecodeLongArray25FS() throws Throwable {
+        // long array8 greater than 128 bytes
+        doEncodeDecodeLongArrayTestImpl(25, false);
+    }
+
+    @Test
+    public void testEncodeDecodeLongArray384FS() throws Throwable {
+        // long array32
+        doEncodeDecodeLongArrayTestImpl(384, false);
+    }
+
+    private void doEncodeDecodeLongArrayTestImpl(int count, boolean fromStream) throws Throwable {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
         long[] source = createPayloadArrayLongs(count);
 
         try {
@@ -779,7 +977,14 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
             // Now verify against the decoding
             buffer.resetReadIndex();
-            Object decoded = decoder.readObject(buffer, decoderState);
+
+            final Object decoded;
+            if (fromStream) {
+                decoded = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                decoded = decoder.readObject(buffer, decoderState);
+            }
+
             assertNotNull(decoded);
             assertTrue(decoded.getClass().isArray());
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
@@ -806,23 +1011,42 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     @Test
     public void testEncodeDecodeFloatArray25() throws Throwable {
         // float array8 less than 128 bytes
-        doEncodeDecodeFloatArrayTestImpl(25);
+        doEncodeDecodeFloatArrayTestImpl(25, false);
     }
 
     @Test
     public void testEncodeDecodeFloatArray50() throws Throwable {
         // float array8 greater than 128 bytes
-        doEncodeDecodeFloatArrayTestImpl(50);
+        doEncodeDecodeFloatArrayTestImpl(50, false);
     }
 
     @Test
     public void testEncodeDecodeFloatArray384() throws Throwable {
         // float array32
-        doEncodeDecodeFloatArrayTestImpl(384);
+        doEncodeDecodeFloatArrayTestImpl(384, false);
     }
 
-    private void doEncodeDecodeFloatArrayTestImpl(int count) throws Throwable {
+    @Test
+    public void testEncodeDecodeFloatArray25FS() throws Throwable {
+        // float array8 less than 128 bytes
+        doEncodeDecodeFloatArrayTestImpl(25, true);
+    }
+
+    @Test
+    public void testEncodeDecodeFloatArray50FS() throws Throwable {
+        // float array8 greater than 128 bytes
+        doEncodeDecodeFloatArrayTestImpl(50, true);
+    }
+
+    @Test
+    public void testEncodeDecodeFloatArray384FS() throws Throwable {
+        // float array32
+        doEncodeDecodeFloatArrayTestImpl(384, true);
+    }
+
+    private void doEncodeDecodeFloatArrayTestImpl(int count, boolean fromStream) throws Throwable {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
         float[] source = createPayloadArrayFloats(count);
 
         try {
@@ -870,7 +1094,14 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
             // Now verify against the decoding
             buffer.resetReadIndex();
-            Object decoded = decoder.readObject(buffer, decoderState);
+
+            final Object decoded;
+            if (fromStream) {
+                decoded = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                decoded = decoder.readObject(buffer, decoderState);
+            }
+
             assertNotNull(decoded);
             assertTrue(decoded.getClass().isArray());
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
@@ -897,23 +1128,42 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     @Test
     public void testEncodeDecodeDoubleArray10() throws Throwable {
         // double array8 less than 128 bytes
-        doEncodeDecodeDoubleArrayTestImpl(10);
+        doEncodeDecodeDoubleArrayTestImpl(10, false);
     }
 
     @Test
     public void testEncodeDecodeDoubleArray25() throws Throwable {
         // double array8 greater than 128 bytes
-        doEncodeDecodeDoubleArrayTestImpl(25);
+        doEncodeDecodeDoubleArrayTestImpl(25, false);
     }
 
     @Test
     public void testEncodeDecodeDoubleArray384() throws Throwable {
         // double array32
-        doEncodeDecodeDoubleArrayTestImpl(384);
+        doEncodeDecodeDoubleArrayTestImpl(384, false);
     }
 
-    private void doEncodeDecodeDoubleArrayTestImpl(int count) throws Throwable {
+    @Test
+    public void testEncodeDecodeDoubleArray10FS() throws Throwable {
+        // double array8 less than 128 bytes
+        doEncodeDecodeDoubleArrayTestImpl(10, true);
+    }
+
+    @Test
+    public void testEncodeDecodeDoubleArray25FS() throws Throwable {
+        // double array8 greater than 128 bytes
+        doEncodeDecodeDoubleArrayTestImpl(25, true);
+    }
+
+    @Test
+    public void testEncodeDecodeDoubleArray384FS() throws Throwable {
+        // double array32
+        doEncodeDecodeDoubleArrayTestImpl(384, true);
+    }
+
+    private void doEncodeDecodeDoubleArrayTestImpl(int count, boolean fromStream) throws Throwable {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
         double[] source = createPayloadArrayDoubles(count);
 
         try {
@@ -961,7 +1211,14 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
             // Now verify against the decoding
             buffer.resetReadIndex();
-            Object decoded = decoder.readObject(buffer, decoderState);
+
+            final Object decoded;
+            if (fromStream) {
+                decoded = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                decoded = decoder.readObject(buffer, decoderState);
+            }
+
             assertNotNull(decoded);
             assertTrue(decoded.getClass().isArray());
             assertTrue(decoded.getClass().getComponentType().isPrimitive());
@@ -988,23 +1245,42 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     @Test
     public void testEncodeDecodeCharArray25() throws Throwable {
         // char array8 less than 128 bytes
-        doEncodeDecodeCharArrayTestImpl(25);
+        doEncodeDecodeCharArrayTestImpl(25, false);
     }
 
     @Test
     public void testEncodeDecodeCharArray50() throws Throwable {
         // char array8 greater than 128 bytes
-        doEncodeDecodeCharArrayTestImpl(50);
+        doEncodeDecodeCharArrayTestImpl(50, false);
     }
 
     @Test
     public void testEncodeDecodeCharArray384() throws Throwable {
         // char array32
-        doEncodeDecodeCharArrayTestImpl(384);
+        doEncodeDecodeCharArrayTestImpl(384, false);
     }
 
-    private void doEncodeDecodeCharArrayTestImpl(int count) throws Throwable {
+    @Test
+    public void testEncodeDecodeCharArray25FS() throws Throwable {
+        // char array8 less than 128 bytes
+        doEncodeDecodeCharArrayTestImpl(25, true);
+    }
+
+    @Test
+    public void testEncodeDecodeCharArray50FS() throws Throwable {
+        // char array8 greater than 128 bytes
+        doEncodeDecodeCharArrayTestImpl(50, true);
+    }
+
+    @Test
+    public void testEncodeDecodeCharArray384FS() throws Throwable {
+        // char array32
+        doEncodeDecodeCharArrayTestImpl(384, true);
+    }
+
+    private void doEncodeDecodeCharArrayTestImpl(int count, boolean fromStream) throws Throwable {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
         char[] source = createPayloadArrayChars(count);
 
         try {
@@ -1018,7 +1294,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             expectedEncodingWrapper.setWriteIndex(0);
 
             // Write the array encoding code, array size, and element count
-            if(count < 254) {
+            if (count < 254) {
                 expectedEncodingWrapper.writeByte((byte) 0xE0); // 'array8' type descriptor code
                 expectedEncodingWrapper.writeByte((byte) arrayPayloadSize);
                 expectedEncodingWrapper.writeByte((byte) count);
@@ -1052,7 +1328,14 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
             // Now verify against the decoding
             buffer.resetReadIndex();
-            Object decoded = decoder.readObject(buffer, decoderState);
+
+            final Object decoded;
+            if (fromStream) {
+                decoded = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                decoded = decoder.readObject(buffer, decoderState);
+            }
+
             assertNotNull(decoded);
             assertTrue(decoded.getClass().isArray());
             assertTrue(decoded.getClass().getComponentType().isPrimitive());

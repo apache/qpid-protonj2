@@ -38,32 +38,63 @@ import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Test for the Proton List encoder / decoder
  */
+@Timeout(20)
 public class ListTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-
-        buffer.writeByte(EncodingCodes.UINT);
-
-        try {
-            decoder.readList(buffer, decoderState);
-            fail("Should not allow read of integer type as this type");
-        } catch (DecodeException e) {}
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(false);
     }
 
     @Test
-    public void testReadFromEncodingCodes() throws IOException {
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisTypeFS() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(true);
+    }
+
+    private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.UINT);
+
+        if (fromStream) {
+            try {
+                streamDecoder.readList(stream, streamDecoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        } else {
+            try {
+                decoder.readList(buffer, decoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        }
+    }
+
+    @Test
+    public void testTypeFromEncodingCode() throws IOException {
+        testTypeFromEncodingCode(false);
+    }
+
+    @Test
+    public void testTypeFromEncodingCodeFS() throws IOException {
+        testTypeFromEncodingCode(true);
+    }
+
+    public void testTypeFromEncodingCode(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.NULL);
 
@@ -90,10 +121,17 @@ public class ListTypeCodecTest extends CodecTestSupport {
         expected.add(Byte.valueOf((byte) 1));
         expected.add(Byte.valueOf((byte) 2));
 
-        assertNull(decoder.readList(buffer, decoderState));
-        assertEquals(Collections.EMPTY_LIST, decoder.readList(buffer, decoderState));
-        assertEquals(expected, decoder.readList(buffer, decoderState));
-        assertEquals(expected, decoder.readList(buffer, decoderState));
+        if (fromStream) {
+            assertNull(streamDecoder.readList(stream, streamDecoderState));
+            assertEquals(Collections.EMPTY_LIST, streamDecoder.readList(stream, streamDecoderState));
+            assertEquals(expected, streamDecoder.readList(stream, streamDecoderState));
+            assertEquals(expected, streamDecoder.readList(stream, streamDecoderState));
+        } else {
+            assertNull(decoder.readList(buffer, decoderState));
+            assertEquals(Collections.EMPTY_LIST, decoder.readList(buffer, decoderState));
+            assertEquals(expected, decoder.readList(buffer, decoderState));
+            assertEquals(expected, decoder.readList(buffer, decoderState));
+        }
     }
 
     @Test
@@ -150,17 +188,28 @@ public class ListTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeSmallSeriesOfLists() throws IOException {
-        doTestDecodeListSeries(SMALL_SIZE);
+        doTestDecodeListSeries(SMALL_SIZE, false);
     }
 
     @Test
     public void testDecodeLargeSeriesOfLists() throws IOException {
-        doTestDecodeListSeries(LARGE_SIZE);
+        doTestDecodeListSeries(LARGE_SIZE, false);
+    }
+
+    @Test
+    public void testDecodeSmallSeriesOfListsFS() throws IOException {
+        doTestDecodeListSeries(SMALL_SIZE, true);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfListsFS() throws IOException {
+        doTestDecodeListSeries(LARGE_SIZE, true);
     }
 
     @SuppressWarnings("unchecked")
-    private void doTestDecodeListSeries(int size) throws IOException {
+    private void doTestDecodeListSeries(int size, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         List<Object> list = new ArrayList<>();
 
@@ -180,7 +229,12 @@ public class ListTypeCodecTest extends CodecTestSupport {
         }
 
         for (int i = 0; i < size; ++i) {
-            final Object result = decoder.readObject(buffer, decoderState);
+            final Object result;
+            if (fromStream) {
+                result = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                result = decoder.readObject(buffer, decoderState);
+            }
 
             assertNotNull(result);
             assertTrue(result instanceof List);
@@ -250,26 +304,66 @@ public class ListTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testCountExceedsRemainingDetectedList8() throws IOException {
+        testCountExceedsRemainingDetectedList8(false);
+    }
+
+    @Test
+    public void testCountExceedsRemainingDetectedList8FS() throws IOException {
+        testCountExceedsRemainingDetectedList8(true);
+    }
+
+    private void testCountExceedsRemainingDetectedList8(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.LIST8);
         buffer.writeByte(4);
         buffer.writeByte(Byte.MAX_VALUE);
 
-        try {
-            decoder.readObject(buffer, decoderState);
-            fail("should throw an IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {}
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("should throw an IllegalArgumentException");
+            } catch (IllegalArgumentException iae) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("should throw an IllegalArgumentException");
+            } catch (IllegalArgumentException iae) {}
+        }
+    }
+
+    @Test
+    public void testDecodeEmptyList() throws IOException {
+        testDecodeEmptyList(false);
+    }
+
+    @Test
+    public void testDecodeEmptyListFS() throws IOException {
+        testDecodeEmptyList(true);
     }
 
     @SuppressWarnings("unchecked")
-    @Test
-    public void testDecodeEmptyList() throws IOException {
+    private void testDecodeEmptyList(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.LIST0);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.peekNextTypeDecoder(stream, streamDecoderState);
+            assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+            assertEquals(EncodingCodes.LIST0 & 0xff, ((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode());
+
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.peekNextTypeDecoder(buffer, decoderState);
+            assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+            assertEquals(EncodingCodes.LIST0 & 0xff, ((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode());
+
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof List);
@@ -334,6 +428,8 @@ public class ListTypeCodecTest extends CodecTestSupport {
 
         TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
         assertEquals(List.class, typeDecoder.getTypeClass());
+        assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+        assertEquals(EncodingCodes.LIST8 & 0xff, ((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode());
 
         try {
             typeDecoder.readValue(buffer, decoderState);
@@ -353,6 +449,8 @@ public class ListTypeCodecTest extends CodecTestSupport {
 
         TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
         assertEquals(List.class, typeDecoder.getTypeClass());
+        assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+        assertEquals(EncodingCodes.LIST32 & 0xff, ((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode());
 
         try {
             typeDecoder.readValue(buffer, decoderState);
@@ -362,10 +460,20 @@ public class ListTypeCodecTest extends CodecTestSupport {
         assertEquals(9, buffer.getReadIndex());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testSkipValue() throws IOException {
+        testSkipValue(false);
+    }
+
+    @Test
+    public void testSkipValueFS() throws IOException {
+        testSkipValue(true);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void testSkipValue(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         List<UUID> skip = new ArrayList<>();
         for (int i = 0; i < 10; ++i) {
@@ -382,12 +490,23 @@ public class ListTypeCodecTest extends CodecTestSupport {
         encoder.writeObject(buffer, encoderState, expected);
 
         for (int i = 0; i < 10; ++i) {
-            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-            assertEquals(List.class, typeDecoder.getTypeClass());
-            typeDecoder.skipValue(buffer, decoderState);
+            if (fromStream) {
+                StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+                assertEquals(List.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(stream, streamDecoderState);
+            } else {
+                TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+                assertEquals(List.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(buffer, decoderState);
+            }
         }
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof List);

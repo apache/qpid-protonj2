@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -1358,6 +1359,114 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testReceiverDrainWithNoCreditResultInNoOutput() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("test").open();
+
+        peer.waitForScriptToComplete();
+        peer.expectDetach().respond();
+
+        receiver.drain();
+        receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverDrainAllowsOnlyOnePendingDrain() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+
+        int creditWindow = 100;
+
+        // Add some credit, verify not draining
+        Matcher<Boolean> notDrainingMatcher = anyOf(equalTo(false), nullValue());
+        peer.expectFlow().withDrain(notDrainingMatcher).withLinkCredit(creditWindow).withDeliveryCount(0);
+        receiver.addCredit(creditWindow);
+
+        peer.waitForScriptToComplete();
+
+        peer.expectFlow().withDrain(true).withLinkCredit(creditWindow).withDeliveryCount(0);
+
+        receiver.drain();
+
+        assertThrows(IllegalStateException.class, () -> receiver.drain());
+
+        peer.waitForScriptToComplete();
+
+        peer.expectDetach().respond();
+        receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverDrainWithCreditsAllowsOnlyOnePendingDrain() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("test").open();
+
+        final int creditWindow = 100;
+
+        peer.waitForScriptToComplete();
+
+        peer.expectFlow().withDrain(true).withLinkCredit(creditWindow).withDeliveryCount(0);
+
+        receiver.drain(creditWindow);
+
+        assertThrows(IllegalStateException.class, () -> receiver.drain(creditWindow));
+
+        peer.waitForScriptToComplete();
+
+        peer.expectDetach().respond();
+        receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testReceiverThrowsOnAddCreditAfterConnectionClosed() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1637,6 +1746,71 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         // Second disposition should be sent as we didn't settle previously.
         receivedDelivery.get().disposition(Released.getInstance(), true);
+
+        receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverSendsUpdatedDispostionsForTransferBeforeSettlementThenSettles() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(100);
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(false)
+                             .withMessageFormat(0).queue();
+        peer.expectDisposition().withFirst(0)
+                                .withSettled(false)
+                                .withRole(Role.RECEIVER.getValue())
+                                .withState().accepted();
+        peer.expectDisposition().withFirst(0)
+                                .withSettled(false)
+                                .withRole(Role.RECEIVER.getValue())
+                                .withState().released();
+        peer.expectDisposition().withFirst(0)
+                                .withSettled(true)
+                                .withRole(Role.RECEIVER.getValue())
+                                .withState().released();
+        peer.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicBoolean deliveryArrived = new AtomicBoolean();
+        final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
+        receiver.deliveryReadHandler(delivery -> {
+            deliveryArrived.set(true);
+            receivedDelivery.set(delivery);
+
+            delivery.disposition(Accepted.getInstance());
+        });
+        receiver.open();
+        receiver.addCredit(100);
+
+        assertTrue(deliveryArrived.get(), "Delivery did not arrive at the receiver");
+        assertFalse(receivedDelivery.get().isPartial(), "Deliver should not be partial");
+        assertTrue(receiver.hasUnsettled());
+
+        // Second disposition should be sent as we didn't settle previously.
+        receivedDelivery.get().disposition(Released.getInstance());
+        receivedDelivery.get().settle();
 
         receiver.close();
 
@@ -2050,6 +2224,9 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         Receiver receiver1 = session.receiver("receiver-1");
         Receiver receiver2 = session.receiver("receiver-2");
 
+        final String delivery1LinkedResource = "Delivery1";
+        final String delivery2LinkedResource = "Delivery2";
+
         final AtomicReference<IncomingDelivery> receivedDelivery1 = new AtomicReference<>();
         final AtomicReference<IncomingDelivery> receivedDelivery2 = new AtomicReference<>();
 
@@ -2065,17 +2242,27 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         // Receiver 1 handlers for delivery processing.
         receiver1.deliveryReadHandler(delivery -> {
             receivedDelivery1.set(delivery);
+            delivery.setLinkedResource(delivery1LinkedResource);
         });
         receiver1.deliveryStateUpdatedHandler(delivery -> {
             delivery1Updated.set(true);
+            assertEquals(delivery1LinkedResource, delivery.getLinkedResource());
+            assertEquals(delivery1LinkedResource, delivery.getLinkedResource(String.class));
+            final String autoCasted = delivery.getLinkedResource();
+            assertEquals(delivery1LinkedResource, autoCasted);
         });
 
         // Receiver 2 handlers for delivery processing.
         receiver2.deliveryReadHandler(delivery -> {
             receivedDelivery2.set(delivery);
+            delivery.setLinkedResource(delivery2LinkedResource);
         });
         receiver2.deliveryStateUpdatedHandler(delivery -> {
             delivery2Updated.set(true);
+            assertEquals(delivery2LinkedResource, delivery.getLinkedResource());
+            assertEquals(delivery2LinkedResource, delivery.getLinkedResource(String.class));
+            final String autoCasted = delivery.getLinkedResource();
+            assertEquals(delivery2LinkedResource, autoCasted);
         });
 
         receiver1.open();

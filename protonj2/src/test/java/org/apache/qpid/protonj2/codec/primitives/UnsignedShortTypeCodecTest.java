@@ -24,13 +24,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
 import org.apache.qpid.protonj2.types.UnsignedShort;
 import org.junit.jupiter.api.Test;
 
@@ -38,31 +42,68 @@ public class UnsignedShortTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-
-        buffer.writeByte(EncodingCodes.UINT);
-        buffer.writeByte(EncodingCodes.UINT);
-        buffer.writeByte(EncodingCodes.UINT);
-
-        try {
-            decoder.readUnsignedShort(buffer, decoderState);
-            fail("Should not allow read of integer type as this type");
-        } catch (DecodeException e) {}
-
-        try {
-            decoder.readUnsignedShort(buffer, decoderState, (short) 0);
-            fail("Should not allow read of integer type as this type");
-        } catch (DecodeException e) {}
-
-        try {
-            decoder.readUnsignedShort(buffer, decoderState, 0);
-            fail("Should not allow read of integer type as this type");
-        } catch (DecodeException e) {}
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(false);
     }
 
     @Test
-    public void testReadUByteFromEncodingCode() throws IOException {
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisTypeFS() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(true);
+    }
+
+    private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+
+        if (fromStream) {
+            try {
+                streamDecoder.readUnsignedShort(stream, streamDecoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+
+            try {
+                streamDecoder.readUnsignedShort(stream, streamDecoderState, (short) 0);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+
+            try {
+                streamDecoder.readUnsignedShort(stream, streamDecoderState, 0);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        } else {
+            try {
+                decoder.readUnsignedShort(buffer, decoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+
+            try {
+                decoder.readUnsignedShort(buffer, decoderState, (short) 0);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+
+            try {
+                decoder.readUnsignedShort(buffer, decoderState, 0);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        }
+    }
+
+    @Test
+    public void testTypeFromEncodingCode() throws IOException {
+        testTypeFromEncodingCode(false);
+    }
+
+    @Test
+    public void testTypeFromEncodingCodeFS() throws IOException {
+        testTypeFromEncodingCode(true);
+    }
+
+    public void testTypeFromEncodingCode(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.USHORT);
         buffer.writeShort((short) 42);
@@ -72,31 +113,71 @@ public class UnsignedShortTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.NULL);
 
-        assertEquals(42, decoder.readUnsignedShort(buffer, decoderState).shortValue());
-        assertEquals(43, decoder.readUnsignedShort(buffer, decoderState, (short) 42));
-        assertNull(decoder.readUnsignedShort(buffer, decoderState));
-        assertEquals(42, decoder.readUnsignedShort(buffer, decoderState, (short) 42));
-        assertEquals(43, decoder.readUnsignedShort(buffer, decoderState, 43));
+        if (fromStream) {
+            assertEquals(42, streamDecoder.readUnsignedShort(stream, streamDecoderState).shortValue());
+            assertEquals(43, streamDecoder.readUnsignedShort(stream, streamDecoderState, (short) 42));
+            assertNull(streamDecoder.readUnsignedShort(stream, streamDecoderState));
+            assertEquals(42, streamDecoder.readUnsignedShort(stream, streamDecoderState, (short) 42));
+            assertEquals(43, streamDecoder.readUnsignedShort(stream, streamDecoderState, 43));
+        } else {
+            assertEquals(42, decoder.readUnsignedShort(buffer, decoderState).shortValue());
+            assertEquals(43, decoder.readUnsignedShort(buffer, decoderState, (short) 42));
+            assertNull(decoder.readUnsignedShort(buffer, decoderState));
+            assertEquals(42, decoder.readUnsignedShort(buffer, decoderState, (short) 42));
+            assertEquals(43, decoder.readUnsignedShort(buffer, decoderState, 43));
+        }
     }
 
     @Test
     public void testEncodeDecodeUnsignedShort() throws Exception {
+        testEncodeDecodeUnsignedShort(false);
+    }
+
+    @Test
+    public void testEncodeDecodeUnsignedShortFS() throws Exception {
+        testEncodeDecodeUnsignedShort(true);
+    }
+
+    public void testEncodeDecodeUnsignedShort(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         encoder.writeUnsignedShort(buffer, encoderState, UnsignedShort.valueOf((byte) 64));
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertTrue(result instanceof UnsignedShort);
         assertEquals(64, ((UnsignedShort) result).byteValue());
     }
 
     @Test
     public void testEncodeDecodeUnsignedShortAbove32k() throws Exception {
+        testEncodeDecodeUnsignedShortAbove32k(false);
+    }
+
+    @Test
+    public void testEncodeDecodeUnsignedShortAbove32kFS() throws Exception {
+        testEncodeDecodeUnsignedShortAbove32k(true);
+    }
+
+    private void testEncodeDecodeUnsignedShortAbove32k(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         encoder.writeUnsignedShort(buffer, encoderState, UnsignedShort.valueOf((short) 33565));
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertTrue(result instanceof UnsignedShort);
         assertTrue(((UnsignedShort) result).shortValue() < 0);
         assertEquals(33565, ((UnsignedShort) result).intValue());
@@ -104,11 +185,27 @@ public class UnsignedShortTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeUnsignedShortFromInt() throws Exception {
+        testEncodeDecodeUnsignedShortFromInt(false);
+    }
+
+    @Test
+    public void testEncodeDecodeUnsignedShortFromIntFS() throws Exception {
+        testEncodeDecodeUnsignedShortFromInt(true);
+    }
+
+    private void testEncodeDecodeUnsignedShortFromInt(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         encoder.writeUnsignedShort(buffer, encoderState, 33565);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertTrue(result instanceof UnsignedShort);
         assertTrue(((UnsignedShort) result).shortValue() < 0);
         assertEquals(33565, ((UnsignedShort) result).intValue());
@@ -122,34 +219,66 @@ public class UnsignedShortTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeShort() throws Exception {
+        testEncodeDecodeShort(false);
+    }
+
+    @Test
+    public void testEncodeDecodeShortFS() throws Exception {
+        testEncodeDecodeShort(true);
+    }
+
+    private void testEncodeDecodeShort(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         encoder.writeUnsignedShort(buffer, encoderState, (short) 64);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertTrue(result instanceof UnsignedShort);
         assertEquals(64, ((UnsignedShort) result).shortValue());
     }
 
     @Test
     public void testDecodeSmallSeriesOfUnsignedShorts() throws IOException {
-        doTestDecodeUnsignedShortSeries(SMALL_SIZE);
+        doTestDecodeUnsignedShortSeries(SMALL_SIZE, false);
     }
 
     @Test
     public void testDecodeLargeSeriesOfUnsignedShorts() throws IOException {
-        doTestDecodeUnsignedShortSeries(LARGE_SIZE);
+        doTestDecodeUnsignedShortSeries(LARGE_SIZE, false);
     }
 
-    private void doTestDecodeUnsignedShortSeries(int size) throws IOException {
+    @Test
+    public void testDecodeSmallSeriesOfUnsignedShortsFS() throws IOException {
+        doTestDecodeUnsignedShortSeries(SMALL_SIZE, true);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfUnsignedShortsFS() throws IOException {
+        doTestDecodeUnsignedShortSeries(LARGE_SIZE, true);
+    }
+
+    private void doTestDecodeUnsignedShortSeries(int size, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (int i = 0; i < size; ++i) {
             encoder.writeUnsignedShort(buffer, encoderState, (byte)(i % 255));
         }
 
         for (int i = 0; i < size; ++i) {
-            final UnsignedShort result = decoder.readUnsignedShort(buffer, decoderState);
+            final UnsignedShort result;
+            if (fromStream) {
+                result = streamDecoder.readUnsignedShort(stream, streamDecoderState);
+            } else {
+                result = decoder.readUnsignedShort(buffer, decoderState);
+            }
 
             assertNotNull(result);
             assertEquals((byte)(i % 255), result.byteValue());
@@ -157,8 +286,18 @@ public class UnsignedShortTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testArrayOfUnsignedShortObjects() throws IOException {
+    public void testArrayOfObjects() throws IOException {
+        testArrayOfObjects(false);
+    }
+
+    @Test
+    public void testArrayOfObjectsFS() throws IOException {
+        testArrayOfObjects(true);
+    }
+
+    private void testArrayOfObjects(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         final int size = 10;
 
@@ -169,7 +308,13 @@ public class UnsignedShortTypeCodecTest extends CodecTestSupport {
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
         assertFalse(result.getClass().getComponentType().isPrimitive());
@@ -183,14 +328,30 @@ public class UnsignedShortTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testZeroSizedArrayOfUnsignedShortObjects() throws IOException {
+    public void testZeroSizedArrayOfObjects() throws IOException {
+        testZeroSizedArrayOfObjects(false);
+    }
+
+    @Test
+    public void testZeroSizedArrayOfObjectsFS() throws IOException {
+        testZeroSizedArrayOfObjects(true);
+    }
+
+    private void testZeroSizedArrayOfObjects(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         UnsignedShort[] source = new UnsignedShort[0];
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
         assertFalse(result.getClass().getComponentType().isPrimitive());
@@ -201,7 +362,17 @@ public class UnsignedShortTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testSkipValue() throws IOException {
+        doTestSkipValue(false);
+    }
+
+    @Test
+    public void testSkipValueFromStream() throws IOException {
+        doTestSkipValue(true);
+    }
+
+    public void doTestSkipValue(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeUnsignedShort(buffer, encoderState, UnsignedShort.valueOf(i));
@@ -212,12 +383,27 @@ public class UnsignedShortTypeCodecTest extends CodecTestSupport {
         encoder.writeObject(buffer, encoderState, expected);
 
         for (int i = 0; i < 10; ++i) {
-            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-            assertEquals(UnsignedShort.class, typeDecoder.getTypeClass());
-            typeDecoder.skipValue(buffer, decoderState);
+            if (fromStream) {
+                StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+                assertEquals(UnsignedShort.class, typeDecoder.getTypeClass());
+                assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+                assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), EncodingCodes.USHORT & 0xFF);
+                typeDecoder.skipValue(stream, streamDecoderState);
+            } else {
+                TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+                assertEquals(UnsignedShort.class, typeDecoder.getTypeClass());
+                assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+                assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), EncodingCodes.USHORT & 0xFF);
+                typeDecoder.skipValue(buffer, decoderState);
+            }
         }
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof UnsignedShort);

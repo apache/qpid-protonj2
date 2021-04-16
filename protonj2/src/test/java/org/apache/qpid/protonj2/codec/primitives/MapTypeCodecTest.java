@@ -38,7 +38,9 @@ import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
 import org.apache.qpid.protonj2.types.Binary;
 import org.junit.jupiter.api.Test;
 
@@ -46,14 +48,31 @@ public class MapTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(false);
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisTypeFS() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(true);
+    }
+
+    private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.UINT);
 
-        try {
-            decoder.readMap(buffer, decoderState);
-            fail("Should not allow read of integer type as this type");
-        } catch (DecodeException e) {}
+        if (fromStream) {
+            try {
+                streamDecoder.readMap(stream, streamDecoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        } else {
+            try {
+                decoder.readMap(buffer, decoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        }
     }
 
     @Test
@@ -135,10 +154,20 @@ public class MapTypeCodecTest extends CodecTestSupport {
         }
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void testArrayOfMApsOfStringToUUIDs() throws IOException {
+        testArrayOfMApsOfStringToUUIDs(false);
+    }
+
+    @Test
+    public void testArrayOfMApsOfStringToUUIDsFS() throws IOException {
+        testArrayOfMApsOfStringToUUIDs(true);
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private void testArrayOfMApsOfStringToUUIDs(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Map<String, UUID>[] source = new LinkedHashMap[2];
         for (int i = 0; i < source.length; ++i) {
@@ -150,7 +179,13 @@ public class MapTypeCodecTest extends CodecTestSupport {
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
 
@@ -162,10 +197,20 @@ public class MapTypeCodecTest extends CodecTestSupport {
         }
     }
 
-    @SuppressWarnings({ "unchecked" })
     @Test
     public void testMapOfArraysOfUUIDsIndexedByString() throws IOException {
+        testMapOfArraysOfUUIDsIndexedByString(false);
+    }
+
+    @Test
+    public void testMapOfArraysOfUUIDsIndexedByStringFS() throws IOException {
+        testMapOfArraysOfUUIDsIndexedByString(true);
+    }
+
+    @SuppressWarnings({ "unchecked" })
+    private void testMapOfArraysOfUUIDsIndexedByString(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         UUID[] element1 = new UUID[] { UUID.randomUUID() };
         UUID[] element2 = new UUID[] { UUID.randomUUID(), UUID.randomUUID() };
@@ -180,7 +225,13 @@ public class MapTypeCodecTest extends CodecTestSupport {
 
         encoder.writeMap(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result instanceof Map);
 
@@ -199,24 +250,25 @@ public class MapTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testSizeToLargeValidationMAP32() throws IOException {
-        dotestSizeToLargeValidation(EncodingCodes.MAP32);
+        dotestSizeToLargeValidation(EncodingCodes.MAP32, true);
     }
 
     @Test
     public void testSizeToLargeValidationMAP8() throws IOException {
-        dotestSizeToLargeValidation(EncodingCodes.MAP8);
+        dotestSizeToLargeValidation(EncodingCodes.MAP8, true);
     }
 
-    private void dotestSizeToLargeValidation(byte encodingCode) throws IOException {
+    private void dotestSizeToLargeValidation(byte encodingCode, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(encodingCode);
         if (encodingCode == EncodingCodes.MAP32) {
             buffer.writeInt(Integer.MAX_VALUE);
-            buffer.writeInt(2);
+            buffer.writeInt(4);
         } else {
             buffer.writeByte(Byte.MAX_VALUE);
-            buffer.writeByte(2);
+            buffer.writeByte(4);
         }
         buffer.writeByte(EncodingCodes.STR8);
         buffer.writeByte(4);
@@ -225,25 +277,54 @@ public class MapTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(5);
         buffer.writeBytes("value".getBytes(StandardCharsets.UTF_8));
 
-        try {
-            decoder.readObject(buffer, decoderState);
-            fail("should throw an IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {}
+        if (fromStream) {
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.peekNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(Map.class, typeDecoder.getTypeClass());
+            assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+            assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), encodingCode & 0xFF);
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.peekNextTypeDecoder(buffer, decoderState);
+            assertEquals(Map.class, typeDecoder.getTypeClass());
+            assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+            assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), encodingCode & 0xFF);
+        }
+
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("should throw an IllegalArgumentException");
+            } catch (IllegalArgumentException iae) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("should throw an IllegalArgumentException");
+            } catch (IllegalArgumentException iae) {}
+        }
     }
 
     @Test
     public void testOddElementCountDetectedMAP32() throws IOException {
-        doTestOddElementCountDetected(EncodingCodes.MAP32);
+        doTestOddElementCountDetected(EncodingCodes.MAP32, false);
     }
 
     @Test
     public void testOddElementCountDetectedMAP8() throws IOException {
-        doTestOddElementCountDetected(EncodingCodes.MAP8);
+        doTestOddElementCountDetected(EncodingCodes.MAP8, false);
     }
 
-    private void doTestOddElementCountDetected(byte encodingCode) throws IOException {
+    @Test
+    public void testOddElementCountDetectedMAP32FS() throws IOException {
+        doTestOddElementCountDetected(EncodingCodes.MAP32, true);
+    }
 
+    @Test
+    public void testOddElementCountDetectedMAP8FS() throws IOException {
+        doTestOddElementCountDetected(EncodingCodes.MAP8, true);
+    }
+
+    private void doTestOddElementCountDetected(byte encodingCode, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(encodingCode);
         if (encodingCode == EncodingCodes.MAP32) {
@@ -260,16 +341,33 @@ public class MapTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(5);
         buffer.writeBytes("value".getBytes(StandardCharsets.UTF_8));
 
-        try {
-            decoder.readObject(buffer, decoderState);
-            fail("should throw an IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {}
+        if (fromStream) {
+            try {
+                streamDecoder.readObject(stream, streamDecoderState);
+                fail("should throw an IllegalArgumentException");
+            } catch (IllegalArgumentException iae) {}
+        } else {
+            try {
+                decoder.readObject(buffer, decoderState);
+                fail("should throw an IllegalArgumentException");
+            } catch (IllegalArgumentException iae) {}
+        }
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        doTestSkipValue(false);
+    }
+
+    @Test
+    public void testSkipValueFromStream() throws IOException {
+        doTestSkipValue(true);
     }
 
     @SuppressWarnings("unchecked")
-    @Test
-    public void testSkipValue() throws IOException {
+    public void doTestSkipValue(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Map<String, UUID> skip = new HashMap<>();
         for (int i = 0; i < 10; ++i) {
@@ -286,12 +384,23 @@ public class MapTypeCodecTest extends CodecTestSupport {
         encoder.writeObject(buffer, encoderState, expected);
 
         for (int i = 0; i < 10; ++i) {
-            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-            assertEquals(Map.class, typeDecoder.getTypeClass());
-            typeDecoder.skipValue(buffer, decoderState);
+            if (fromStream) {
+                StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+                assertEquals(Map.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(stream, streamDecoderState);
+            } else {
+                TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+                assertEquals(Map.class, typeDecoder.getTypeClass());
+                typeDecoder.skipValue(buffer, decoderState);
+            }
         }
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
 
         assertNotNull(result);
         assertTrue(result instanceof Map);

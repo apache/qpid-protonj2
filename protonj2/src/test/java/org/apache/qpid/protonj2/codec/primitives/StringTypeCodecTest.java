@@ -38,7 +38,9 @@ import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
 import org.junit.jupiter.api.Test;
 
 public class StringTypeCodecTest extends CodecTestSupport {
@@ -238,8 +240,25 @@ public class StringTypeCodecTest extends CodecTestSupport {
         InputStream stream = new ProtonBufferInputStream(buffer);
 
         // Manually encode the type we want.
-        buffer.writeByte(EncodingCodes.STR32);
-        buffer.writeInt(0);
+        if (encodingCode == EncodingCodes.STR32) {
+            buffer.writeByte(EncodingCodes.STR32);
+            buffer.writeInt(0);
+        } else {
+            buffer.writeByte(EncodingCodes.STR8);
+            buffer.writeByte(0);
+        }
+
+        if (fromStream) {
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.peekNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(String.class, typeDecoder.getTypeClass());
+            assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+            assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), encodingCode & 0xFF);
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.peekNextTypeDecoder(buffer, decoderState);
+            assertEquals(String.class, typeDecoder.getTypeClass());
+            assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+            assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), encodingCode & 0xFF);
+        }
 
         final Object result;
         if (fromStream) {
@@ -432,9 +451,19 @@ public class StringTypeCodecTest extends CodecTestSupport {
         encoder.writeObject(buffer, encoderState, expected);
 
         for (int i = 0; i < 10; ++i) {
-            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-            assertEquals(String.class, typeDecoder.getTypeClass());
-            typeDecoder.skipValue(buffer, decoderState);
+            if (fromStream) {
+                StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+                assertEquals(String.class, typeDecoder.getTypeClass());
+                assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+                assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), EncodingCodes.STR8 & 0xFF);
+                typeDecoder.skipValue(stream, streamDecoderState);
+            } else {
+                TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+                assertEquals(String.class, typeDecoder.getTypeClass());
+                assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+                assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), EncodingCodes.STR8 & 0xFF);
+                typeDecoder.skipValue(buffer, decoderState);
+            }
         }
 
         final Object result;

@@ -69,11 +69,25 @@ public class NullTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testReadNullDoesNotTouchBuffer() throws IOException {
+        testReadNullDoesNotTouchBuffer(false);
+    }
+
+    @Test
+    public void testReadNullDoesNotTouchBufferFS() throws IOException {
+        testReadNullDoesNotTouchBuffer(true);
+    }
+
+    private void testReadNullDoesNotTouchBuffer(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(1, 1);
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.NULL);
 
-        assertNull(decoder.readObject(buffer, decoderState));
+        if (fromStream) {
+            assertNull(streamDecoder.readObject(stream, streamDecoderState));
+        } else {
+            assertNull(decoder.readObject(buffer, decoderState));
+        }
     }
 
     @Test

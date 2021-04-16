@@ -42,20 +42,42 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(false);
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisTypeFS() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(true);
+    }
+
+    private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.UINT);
         buffer.writeByte(EncodingCodes.UINT);
 
-        try {
-            decoder.readInteger(buffer, decoderState);
-            fail("Should not allow read of integer type as this type");
-        } catch (DecodeException e) {}
+        if (fromStream) {
+            try {
+                streamDecoder.readInteger(stream, streamDecoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
 
-        try {
-            decoder.readInteger(buffer, decoderState, (short) 0);
-            fail("Should not allow read of integer type as this type");
-        } catch (DecodeException e) {}
+            try {
+                streamDecoder.readInteger(stream, streamDecoderState, (short) 0);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        } else {
+            try {
+                decoder.readInteger(buffer, decoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+
+            try {
+                decoder.readInteger(buffer, decoderState, (short) 0);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        }
     }
 
     @Test
@@ -130,6 +152,28 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(42);
 
         assertEquals(42, decoder.readInteger(buffer, decoderState).intValue());
+    }
+
+    @Test
+    public void testReadIntegerFromEncodingCodeIntFromStream() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.INT);
+        buffer.writeInt(42);
+
+        assertEquals(42, streamDecoder.readInteger(stream, streamDecoderState).intValue());
+    }
+
+    @Test
+    public void testReadIntegerFromEncodingCodeSmallIntFromStream() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.SMALLINT);
+        buffer.writeByte(42);
+
+        assertEquals(42, streamDecoder.readInteger(stream, streamDecoderState).intValue());
     }
 
     @Test
@@ -231,13 +275,29 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testZeroSizedArrayOfObjects() throws IOException {
+        testZeroSizedArrayOfObjects(false);
+    }
+
+    @Test
+    public void testZeroSizedArrayOfObjectsFS() throws IOException {
+        testZeroSizedArrayOfObjects(true);
+    }
+
+    private void testZeroSizedArrayOfObjects(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Integer[] source = new Integer[0];
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
         assertTrue(result.getClass().getComponentType().isPrimitive());

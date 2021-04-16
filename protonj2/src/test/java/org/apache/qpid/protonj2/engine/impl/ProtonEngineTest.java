@@ -42,6 +42,7 @@ import org.apache.qpid.protonj2.engine.EngineState;
 import org.apache.qpid.protonj2.engine.HeaderEnvelope;
 import org.apache.qpid.protonj2.engine.SASLEnvelope;
 import org.apache.qpid.protonj2.engine.Session;
+import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineNotStartedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineShutdownException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineStateException;
@@ -1343,5 +1344,37 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
         assertNotNull(connection);
         assertNull(failure);
+    }
+
+    @Test
+    public void testEnginePipelineProtectsFromExternalUserMischief() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        Connection connection = engine.connection().open();
+
+        peer.waitForScriptToComplete();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen();
+
+        engine.start();
+
+        assertTrue(engine.isWritable());
+        assertNotNull(connection);
+        assertNull(failure);
+
+        assertThrows(IllegalAccessError.class, () -> engine.pipeline().fireEngineStarting());
+        assertThrows(IllegalAccessError.class, () -> engine.pipeline().fireEngineStateChanged());
+        assertThrows(IllegalAccessError.class, () -> engine.pipeline().fireFailed(new EngineFailedException(null)));
+
+        engine.shutdown();
+
+        assertThrows(EngineShutdownException.class, () -> engine.pipeline().first());
+        assertThrows(EngineShutdownException.class, () -> engine.pipeline().last());
+        assertThrows(EngineShutdownException.class, () -> engine.pipeline().firstContext());
+        assertThrows(EngineShutdownException.class, () -> engine.pipeline().lastContext());
+
+        peer.waitForScriptToComplete();
     }
 }

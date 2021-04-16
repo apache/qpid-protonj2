@@ -42,41 +42,55 @@ public class FloatTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(false);
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisTypeFS() throws Exception {
+        testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(true);
+    }
+
+    private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.UINT);
         buffer.writeByte(EncodingCodes.UINT);
 
-        try {
-            decoder.readFloat(buffer, decoderState);
-            fail("Should not allow read of integer type as this type");
-        } catch (DecodeException e) {}
+        if (fromStream) {
+            try {
+                streamDecoder.readFloat(stream, streamDecoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
 
-        try {
-            decoder.readFloat(buffer, decoderState, 0f);
-            fail("Should not allow read of integer type as this type");
-        } catch (DecodeException e) {}
+            try {
+                streamDecoder.readFloat(stream, streamDecoderState, 0f);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        } else {
+            try {
+                decoder.readFloat(buffer, decoderState);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+
+            try {
+                decoder.readFloat(buffer, decoderState, 0f);
+                fail("Should not allow read of integer type as this type");
+            } catch (DecodeException e) {}
+        }
     }
 
     @Test
-    public void testReadUByteFromEncodingCode() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-
-        buffer.writeByte(EncodingCodes.FLOAT);
-        buffer.writeFloat(42.0f);
-        buffer.writeByte(EncodingCodes.FLOAT);
-        buffer.writeFloat(43.0f);
-        buffer.writeByte(EncodingCodes.NULL);
-        buffer.writeByte(EncodingCodes.NULL);
-
-        assertEquals(42f, decoder.readFloat(buffer, decoderState).shortValue(), 0.0f);
-        assertEquals(43f, decoder.readFloat(buffer, decoderState, (short) 42), 0.0f);
-        assertNull(decoder.readFloat(buffer, decoderState));
-        assertEquals(43f, decoder.readFloat(buffer, decoderState, 43f), 0.0f);
+    public void testReadPrimitiveTypeFromEncodingCode() throws IOException {
+        testReadPrimitiveTypeFromEncodingCode(false);
     }
 
     @Test
-    public void testReadUByteFromEncodingCodeFromStream() throws IOException {
+    public void testReadPrimitiveTypeFromEncodingCodeFS() throws IOException {
+        testReadPrimitiveTypeFromEncodingCode(true);
+    }
+
+    private void testReadPrimitiveTypeFromEncodingCode(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         InputStream stream = new ProtonBufferInputStream(buffer);
 
@@ -87,10 +101,17 @@ public class FloatTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.NULL);
 
-        assertEquals(42f, streamDecoder.readFloat(stream, streamDecoderState).shortValue(), 0.0f);
-        assertEquals(43f, streamDecoder.readFloat(stream, streamDecoderState, (short) 42), 0.0f);
-        assertNull(streamDecoder.readFloat(stream, streamDecoderState));
-        assertEquals(43f, streamDecoder.readFloat(stream, streamDecoderState, 43f), 0.0f);
+        if (fromStream) {
+            assertEquals(42f, streamDecoder.readFloat(stream, streamDecoderState).shortValue(), 0.0f);
+            assertEquals(43f, streamDecoder.readFloat(stream, streamDecoderState, (short) 42), 0.0f);
+            assertNull(streamDecoder.readFloat(stream, streamDecoderState));
+            assertEquals(43f, streamDecoder.readFloat(stream, streamDecoderState, 43f), 0.0f);
+        } else {
+            assertEquals(42f, decoder.readFloat(buffer, decoderState).shortValue(), 0.0f);
+            assertEquals(43f, decoder.readFloat(buffer, decoderState, (short) 42), 0.0f);
+            assertNull(decoder.readFloat(buffer, decoderState));
+            assertEquals(43f, decoder.readFloat(buffer, decoderState, 43f), 0.0f);
+        }
     }
 
     @Test
@@ -139,12 +160,26 @@ public class FloatTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testReadFloatFromEncodingCode() throws IOException {
+        testReadFloatFromEncodingCode(false);
+    }
+
+    @Test
+    public void testReadFloatFromEncodingCodeFS() throws IOException {
+        testReadFloatFromEncodingCode(true);
+    }
+
+    private void testReadFloatFromEncodingCode(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         buffer.writeByte(EncodingCodes.FLOAT);
         buffer.writeFloat(42);
 
-        assertEquals(42, decoder.readFloat(buffer, decoderState).intValue());
+        if (fromStream) {
+            assertEquals(42, streamDecoder.readFloat(stream, streamDecoderState).intValue());
+        } else {
+            assertEquals(42, decoder.readFloat(buffer, decoderState).intValue());
+        }
     }
 
     @Test
@@ -211,8 +246,18 @@ public class FloatTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testArrayOfFloatObjects() throws IOException {
+    public void testArrayOfObjects() throws IOException {
+        testArrayOfObjects(false);
+    }
+
+    @Test
+    public void testArrayOfObjectsFS() throws IOException {
+        testArrayOfObjects(true);
+    }
+
+    private void testArrayOfObjects(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         final int size = 10;
 
@@ -223,7 +268,13 @@ public class FloatTypeCodecTest extends CodecTestSupport {
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
         assertTrue(result.getClass().getComponentType().isPrimitive());
@@ -237,14 +288,30 @@ public class FloatTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testZeroSizedArrayOfFloatObjects() throws IOException {
+    public void testZeroSizedArrayOfObjects() throws IOException {
+        testZeroSizedArrayOfObjects(false);
+    }
+
+    @Test
+    public void testZeroSizedArrayOfObjectsFS() throws IOException {
+        testZeroSizedArrayOfObjects(true);
+    }
+
+    private void testZeroSizedArrayOfObjects(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Float[] source = new Float[0];
 
         encoder.writeArray(buffer, encoderState, source);
 
-        Object result = decoder.readObject(buffer, decoderState);
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
         assertTrue(result.getClass().getComponentType().isPrimitive());

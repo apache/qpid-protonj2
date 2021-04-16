@@ -47,8 +47,7 @@ public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecode
 
         if (count % 2 != 0) {
             throw new DecodeException(String.format(
-                "Map encoded number of elements %d is not an even number.",
-                size, buffer.getReadableBytes()));
+                "Map encoded number of elements %d is not an even number.", count));
         }
 
         // Count include both key and value so we must include that in the loop
@@ -72,6 +71,11 @@ public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecode
     public Map<Object, Object> readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         readSize(stream);
         final int count = readCount(stream);
+
+        if (count % 2 != 0) {
+            throw new DecodeException(String.format(
+                "Map encoded number of elements %d is not an even number.", count));
+        }
 
         // Count include both key and value so we must include that in the loop
         final Map<Object, Object> map = new LinkedHashMap<>(count);

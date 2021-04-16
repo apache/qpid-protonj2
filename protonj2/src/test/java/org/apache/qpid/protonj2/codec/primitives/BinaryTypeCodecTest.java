@@ -36,6 +36,7 @@ import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.BinaryTypeDecoder;
 import org.apache.qpid.protonj2.types.Binary;
 import org.junit.jupiter.api.Test;
@@ -278,6 +279,8 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(255);
 
         TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+        assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), EncodingCodes.VBIN8 & 0xFF);
         assertEquals(Binary.class, typeDecoder.getTypeClass());
 
         try {
@@ -297,6 +300,8 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(255);
 
         StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+        assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+        assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), EncodingCodes.VBIN8 & 0xFF);
         assertEquals(Binary.class, typeDecoder.getTypeClass());
 
         try {
@@ -316,6 +321,8 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
         buffer.writeInt(Integer.MAX_VALUE);
 
         TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+        assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), EncodingCodes.VBIN32 & 0xFF);
         assertEquals(Binary.class, typeDecoder.getTypeClass());
 
         try {
@@ -335,6 +342,8 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
         buffer.writeInt(Integer.MAX_VALUE);
 
         StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+        assertTrue(typeDecoder instanceof PrimitiveTypeDecoder);
+        assertEquals(((PrimitiveTypeDecoder<?>) typeDecoder).getTypeCode(), EncodingCodes.VBIN32 & 0xFF);
         assertEquals(Binary.class, typeDecoder.getTypeClass());
 
         try {
