@@ -84,7 +84,7 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testReadFromNullEncodingCode() throws IOException {
-        testReadFromNullEncodingCode(true);
+        testReadFromNullEncodingCode(false);
     }
 
     @Test

@@ -90,11 +90,11 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
         buffer.writeLong(value.getMostSignificantBits());
         buffer.writeLong(value.getLeastSignificantBits());
 
-        assertNull(decoder.readUUID(buffer, decoderState));
-
         if (fromStream) {
+            assertNull(streamDecoder.readUUID(stream, streamDecoderState));
             assertEquals(value, streamDecoder.readUUID(stream, streamDecoderState));
         } else {
+            assertNull(decoder.readUUID(buffer, decoderState));
             assertEquals(value, decoder.readUUID(buffer, decoderState));
         }
     }

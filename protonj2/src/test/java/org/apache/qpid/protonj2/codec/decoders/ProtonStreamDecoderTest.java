@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.codec.decoders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -34,11 +35,21 @@ import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeEOFException;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.types.UnknownDescribedType;
 import org.apache.qpid.protonj2.types.UnsignedLong;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class ProtonStreamDecoderTest extends CodecTestSupport {
+
+    @Test
+    public void testGetCachedDecoderStateReturnsCachedState() {
+        StreamDecoderState first = streamDecoder.getCachedDecoderState();
+
+        assertSame(first, streamDecoder.getCachedDecoderState());
+    }
 
     @Test
     public void testReadNullFromReadObjectForNullEncodng() throws IOException {
@@ -293,5 +304,50 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
         assertNotNull(((ProtonStreamDecoderState) streamDecoderState).getStringDecoder());
         assertThrows(DecodeException.class, () -> streamDecoder.readString(stream, streamDecoderState));
+    }
+
+    @Test
+    public void testCannotPeekFromStreamThatCannotMark() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+
+        Mockito.when(stream.markSupported()).thenReturn(false);
+
+        try {
+            streamDecoder.peekNextTypeDecoder(stream, streamDecoderState);
+            fail("Should fail on read of object from empty stream");
+        } catch (UnsupportedOperationException uopex) {}
+    }
+
+    @Test
+    public void testDecodeErrorFromPeekWhenStreamResetFails() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+
+        encoder.writeObject(buffer, encoderState, "test");
+
+        Mockito.doThrow(new IOException()).when(stream).reset();
+
+        try {
+            streamDecoder.peekNextTypeDecoder(stream, streamDecoderState);
+            fail("Should fail on read of object from empty stream");
+        } catch (DecodeException dex) {}
+    }
+
+    @Test
+    public void testStreamDecoderCanStillReadWhenMarkNotSupported() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+
+        encoder.writeObject(buffer, encoderState, "test");
+        encoder.writeObject(buffer, encoderState, Accepted.getInstance());
+
+        Mockito.when(stream.markSupported()).thenReturn(false);
+
+        final Object string = streamDecoder.readObject(stream, streamDecoderState);
+        final Object accepted = streamDecoder.readObject(stream, streamDecoderState);
+
+        assertEquals("test", string);
+        assertSame(Accepted.getInstance(), accepted);
     }
 }

@@ -98,6 +98,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         InputStream stream = new ProtonBufferInputStream(buffer);
 
+        buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.BOOLEAN_TRUE);
         buffer.writeByte(EncodingCodes.BOOLEAN);
         buffer.writeByte(0);
@@ -106,6 +107,8 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(1);
 
         if (fromStream) {
+            assertNull(streamDecoder.readBoolean(stream, streamDecoderState));
+
             boolean result1 = streamDecoder.readBoolean(stream, streamDecoderState);
             boolean result2 = streamDecoder.readBoolean(stream, streamDecoderState);
             boolean result3 = streamDecoder.readBoolean(stream, streamDecoderState);
@@ -116,6 +119,8 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
             assertFalse(result3);
             assertTrue(result4);
         } else {
+            assertNull(decoder.readBoolean(buffer, decoderState));
+
             boolean result1 = decoder.readBoolean(buffer, decoderState);
             boolean result2 = decoder.readBoolean(buffer, decoderState);
             boolean result3 = decoder.readBoolean(buffer, decoderState);

@@ -235,8 +235,8 @@ public final class ProtonStreamDecoder implements StreamDecoder {
     public StreamTypeDecoder<?> readNextTypeDecoder(InputStream stream, StreamDecoderState state) throws DecodeException {
         final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
-        if (stream.markSupported()) {
-            if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR) {
+        if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR) {
+            if (stream.markSupported()) {
                 stream.mark(STREAM_PEEK_MARK_LIMIT);
                 try {
                     final long result = readUnsignedLong(stream, state, amqpTypeDecoders.length);
@@ -252,15 +252,33 @@ public final class ProtonStreamDecoder implements StreamDecoder {
                     return slowReadNextTypeDecoder(stream, state);
                 }
             } else {
-                return primitiveDecoders[encodingCode & 0xff];
+                return slowReadNextTypeDecoder(stream, state);
             }
         } else {
-            return slowReadNextTypeDecoder(stream, state);
+            return primitiveDecoders[encodingCode & 0xff];
         }
     }
 
     private StreamTypeDecoder<?> slowReadNextTypeDecoder(InputStream stream, StreamDecoderState state) throws DecodeException {
-        final Object descriptor = readObject(stream, state);
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
+        final Object descriptor;
+
+        switch (encodingCode) {
+            case EncodingCodes.SMALLULONG:
+                descriptor = UnsignedLong.valueOf(ProtonStreamUtils.readByte(stream) & 0xffl);
+                break;
+            case EncodingCodes.ULONG:
+                descriptor = UnsignedLong.valueOf(ProtonStreamUtils.readLong(stream));
+                break;
+            case EncodingCodes.SYM8:
+                descriptor = symbol8Decoder.readValue(stream, state);
+                break;
+            case EncodingCodes.SYM32:
+                descriptor = symbol32Decoder.readValue(stream, state);
+                break;
+            default:
+                throw new DecodeException("Expected Descriptor type but found encoding: " + EncodingCodes.toString(encodingCode));
+        }
 
         StreamTypeDecoder<?> StreamTypeDecoder = describedTypeDecoders.get(descriptor);
         if (StreamTypeDecoder == null) {

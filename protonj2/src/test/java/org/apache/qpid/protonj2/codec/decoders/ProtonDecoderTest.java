@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -32,12 +33,20 @@ import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeEOFException;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.types.UnknownDescribedType;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.junit.jupiter.api.Test;
 
 public class ProtonDecoderTest extends CodecTestSupport {
+
+    @Test
+    public void testGetCachedDecoderStateReturnsCachedState() {
+        DecoderState first = decoder.getCachedDecoderState();
+
+        assertSame(first, decoder.getCachedDecoderState());
+    }
 
     @Test
     public void testReadNullFromReadObjectForNullEncodng() throws IOException {

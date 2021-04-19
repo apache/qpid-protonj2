@@ -21,7 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.InputStream;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.junit.jupiter.api.Test;
@@ -41,14 +44,41 @@ public class DeliveryTagCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisTypeFromStream() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            streamDecoder.readDeliveryTag(stream, streamDecoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (DecodeException e) {}
+    }
+
+    @Test
     public void testReadDeliveryTagsFromBinaryEncodedValues() throws Exception {
+        testReadDeliveryTagsFromBinaryEncodedValues(false);
+    }
+
+    @Test
+    public void testReadDeliveryTagsFromBinaryEncodedValuesFS() throws Exception {
+        testReadDeliveryTagsFromBinaryEncodedValues(true);
+    }
+
+    public void testReadDeliveryTagsFromBinaryEncodedValues(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(32, 32);
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         final byte[] tagBytes = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
         buffer.writeByte(EncodingCodes.NULL);
 
-        assertNull(decoder.readDeliveryTag(buffer, decoderState));
+        if (fromStream) {
+            assertNull(streamDecoder.readDeliveryTag(stream, streamDecoderState));
+        } else {
+            assertNull(decoder.readDeliveryTag(buffer, decoderState));
+        }
 
         buffer.writeByte(EncodingCodes.VBIN8);
         buffer.writeByte(tagBytes.length);
@@ -58,8 +88,16 @@ public class DeliveryTagCodecTest extends CodecTestSupport {
         buffer.writeInt(tagBytes.length);
         buffer.writeBytes(tagBytes);
 
-        DeliveryTag tag1 = decoder.readDeliveryTag(buffer, decoderState);
-        DeliveryTag tag2 = decoder.readDeliveryTag(buffer, decoderState);
+        final DeliveryTag tag1;
+        final DeliveryTag tag2;
+
+        if (fromStream) {
+            tag1 = streamDecoder.readDeliveryTag(stream, streamDecoderState);
+            tag2 = streamDecoder.readDeliveryTag(stream, streamDecoderState);
+        } else {
+            tag1 = decoder.readDeliveryTag(buffer, decoderState);
+            tag2 = decoder.readDeliveryTag(buffer, decoderState);
+        }
 
         assertNotSame(tag1, tag2);
         assertArrayEquals(tag1.tagBytes(), tag2.tagBytes());
