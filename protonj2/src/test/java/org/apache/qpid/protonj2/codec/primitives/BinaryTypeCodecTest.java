@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Random;
@@ -40,6 +41,7 @@ import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.BinaryTypeDecoder;
 import org.apache.qpid.protonj2.types.Binary;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 /**
  * Test the Binary codec for correctness
@@ -272,6 +274,35 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDecodeAsBufferFailsEarlyOnInvliadBinaryLengthVBin32() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
+
+        buffer.writeByte(EncodingCodes.VBIN32);
+        buffer.writeInt(Integer.MAX_VALUE);
+
+        try {
+            decoder.readBinaryAsBuffer(buffer, decoderState);
+            fail("Should not be able to read binary with length greater than readable bytes");
+        } catch (IllegalArgumentException iae) {}
+
+        assertEquals(5, buffer.getReadIndex());
+    }
+
+    @Test
+    public void testDecodeOfBinaryTagFailsEarlyOnInvliadBinaryLengthVBin32() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.VBIN32);
+        buffer.writeInt(Integer.MAX_VALUE);
+        buffer.writeInt(Integer.MAX_VALUE);
+
+        try {
+            decoder.readDeliveryTag(buffer, decoderState);
+            fail("Should not be able to read binary with length greater than readable bytes");
+        } catch (DecodeException dex) {}
+    }
+
+    @Test
     public void testSkipFailsEarlyOnInvliadBinaryLengthVBin8() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
 
@@ -463,5 +494,31 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
             Binary decoded = ((Binary[]) result)[i];
             assertArrayEquals(source[i].getArray(), decoded.getArray());
         }
+    }
+
+    @Test
+    public void testStreamSkipOfEncodingHandlesIOException() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        Random filler = new Random();
+        filler.setSeed(System.nanoTime());
+
+        byte[] input = new byte[512];
+        filler.nextBytes(input);
+
+        encoder.writeBinary(buffer, encoderState, input);
+
+        StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+        assertEquals(Binary.class, typeDecoder.getTypeClass());
+
+        stream = Mockito.spy(stream);
+
+        Mockito.when(stream.skip(Mockito.anyLong())).thenThrow(EOFException.class);
+
+        try {
+            typeDecoder.skipValue(stream, streamDecoderState);
+            fail("Expected an exception on skip of encoded list failure.");
+        } catch (DecodeException dex) {}
     }
 }

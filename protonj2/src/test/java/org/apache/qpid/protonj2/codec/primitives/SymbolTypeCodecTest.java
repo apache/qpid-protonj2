@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -40,6 +41,7 @@ import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class SymbolTypeCodecTest extends CodecTestSupport {
 
@@ -546,5 +548,25 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
 
         Symbol value = (Symbol) result;
         assertEquals(expected, value);
+    }
+
+    @Test
+    public void testStreamSkipOfEncodingHandlesIOException() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        encoder.writeObject(buffer, encoderState, Symbol.valueOf("TEST-SYMBOL-VALUE"));
+
+        StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+        assertEquals(Symbol.class, typeDecoder.getTypeClass());
+
+        stream = Mockito.spy(stream);
+
+        Mockito.when(stream.skip(Mockito.anyLong())).thenThrow(EOFException.class);
+
+        try {
+            typeDecoder.skipValue(stream, streamDecoderState);
+            fail("Expected an exception on skip of encoded list failure.");
+        } catch (DecodeException dex) {}
     }
 }

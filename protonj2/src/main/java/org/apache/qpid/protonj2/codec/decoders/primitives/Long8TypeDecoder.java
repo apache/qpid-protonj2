@@ -41,6 +41,16 @@ public final class Long8TypeDecoder extends LongTypeDecoder {
     }
 
     @Override
+    public long readPrimitiveValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
+        return buffer.readByte();
+    }
+
+    @Override
+    public long readPrimitiveValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+        return ProtonStreamUtils.readByte(stream);
+    }
+
+    @Override
     public int getTypeCode() {
         return EncodingCodes.SMALLLONG & 0xff;
     }

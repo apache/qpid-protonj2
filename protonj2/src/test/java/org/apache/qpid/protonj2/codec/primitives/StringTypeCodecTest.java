@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.Character.UnicodeBlock;
@@ -42,6 +43,7 @@ import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class StringTypeCodecTest extends CodecTestSupport {
 
@@ -556,5 +558,25 @@ public class StringTypeCodecTest extends CodecTestSupport {
                 assertTrue(ex.getMessage().contains("Unknown-Type:0x01"));
             }
         }
+    }
+
+    @Test
+    public void testStreamSkipOfStringEncodingHandlesIOException() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        encoder.writeObject(buffer, encoderState, "test-string-value");
+
+        StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+        assertEquals(String.class, typeDecoder.getTypeClass());
+
+        stream = Mockito.spy(stream);
+
+        Mockito.when(stream.skip(Mockito.anyLong())).thenThrow(EOFException.class);
+
+        try {
+            typeDecoder.skipValue(stream, streamDecoderState);
+            fail("Expected an exception on skip of encoded string failure.");
+        } catch (DecodeException dex) {}
     }
 }

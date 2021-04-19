@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -43,6 +44,7 @@ import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
 import org.apache.qpid.protonj2.types.Binary;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class MapTypeCodecTest extends CodecTestSupport {
 
@@ -457,6 +459,31 @@ public class MapTypeCodecTest extends CodecTestSupport {
         map.put("submap", subMap);
 
         doTestEncodeMapWithUnknownEntryKeyTypeTestImpl(map);
+    }
+
+    @Test
+    public void testStreamSkipOfListEncodingHandlesIOException() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        Map<String, UUID> skip = new HashMap<>();
+        for (int i = 0; i < 10; ++i) {
+            skip.put(UUID.randomUUID().toString(), UUID.randomUUID());
+        }
+
+        encoder.writeMap(buffer, encoderState, skip);
+
+        StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+        assertEquals(Map.class, typeDecoder.getTypeClass());
+
+        stream = Mockito.spy(stream);
+
+        Mockito.when(stream.skip(Mockito.anyLong())).thenThrow(EOFException.class);
+
+        try {
+            typeDecoder.skipValue(stream, streamDecoderState);
+            fail("Expected an exception on skip when it throws.");
+        } catch (DecodeException dex) {}
     }
 
     private void doTestEncodeMapWithUnknownEntryKeyTypeTestImpl(Map<?, ?> map) {

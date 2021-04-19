@@ -305,4 +305,62 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
         int[] array = (int[]) result;
         assertEquals(source.length, array.length);
     }
+
+    @Test
+    public void testReadIntegerArrayInt32() throws IOException {
+        doTestReadIntegerArray(EncodingCodes.INT, false);
+    }
+
+    @Test
+    public void testReadIntegerArrayInt32FromStream() throws IOException {
+        doTestReadIntegerArray(EncodingCodes.INT, true);
+    }
+
+    @Test
+    public void testReadIntegerArrayInt8() throws IOException {
+        doTestReadIntegerArray(EncodingCodes.SMALLINT, false);
+    }
+
+    @Test
+    public void testReadIntegerArrayInt8FromStream() throws IOException {
+        doTestReadIntegerArray(EncodingCodes.SMALLINT, true);
+    }
+
+    public void doTestReadIntegerArray(byte encoding, boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        if (encoding == EncodingCodes.INT) {
+            buffer.writeByte(EncodingCodes.ARRAY32);
+            buffer.writeInt(17);  // Size
+            buffer.writeInt(2);   // Count
+            buffer.writeByte(EncodingCodes.INT);
+            buffer.writeInt(1);   // [0]
+            buffer.writeInt(2);   // [1]
+        } else if (encoding == EncodingCodes.SMALLINT) {
+            buffer.writeByte(EncodingCodes.ARRAY32);
+            buffer.writeInt(11);  // Size
+            buffer.writeInt(2);   // Count
+            buffer.writeByte(EncodingCodes.SMALLINT);
+            buffer.writeByte(1);   // [0]
+            buffer.writeByte(2);   // [1]
+        }
+
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        int[] array = (int[]) result;
+
+        assertEquals(2, array.length);
+        assertEquals(1, array[0]);
+        assertEquals(2, array[1]);
+    }
 }

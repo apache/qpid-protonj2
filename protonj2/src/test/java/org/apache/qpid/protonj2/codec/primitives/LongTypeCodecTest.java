@@ -321,4 +321,62 @@ public class LongTypeCodecTest extends CodecTestSupport {
         long[] array = (long[]) result;
         assertEquals(source.length, array.length);
     }
+
+    @Test
+    public void testReadLongArray() throws IOException {
+        doTestReadLongArray(EncodingCodes.LONG, false);
+    }
+
+    @Test
+    public void testReadLongArrayFromStream() throws IOException {
+        doTestReadLongArray(EncodingCodes.LONG, true);
+    }
+
+    @Test
+    public void testReadSmallLongArray() throws IOException {
+        doTestReadLongArray(EncodingCodes.SMALLLONG, false);
+    }
+
+    @Test
+    public void testReadSmallLongArrayFromStream() throws IOException {
+        doTestReadLongArray(EncodingCodes.SMALLLONG, true);
+    }
+
+    public void doTestReadLongArray(byte encoding, boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        if (encoding == EncodingCodes.LONG) {
+            buffer.writeByte(EncodingCodes.ARRAY32);
+            buffer.writeInt(25);  // Size
+            buffer.writeInt(2);   // Count
+            buffer.writeByte(EncodingCodes.LONG);
+            buffer.writeLong(1l);   // [0]
+            buffer.writeLong(2l);   // [1]
+        } else if (encoding == EncodingCodes.SMALLLONG) {
+            buffer.writeByte(EncodingCodes.ARRAY32);
+            buffer.writeInt(11);  // Size
+            buffer.writeInt(2);   // Count
+            buffer.writeByte(EncodingCodes.SMALLLONG);
+            buffer.writeByte(1);   // [0]
+            buffer.writeByte(2);   // [1]
+        }
+
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        long[] array = (long[]) result;
+
+        assertEquals(2, array.length);
+        assertEquals(1, array[0]);
+        assertEquals(2, array[1]);
+    }
 }

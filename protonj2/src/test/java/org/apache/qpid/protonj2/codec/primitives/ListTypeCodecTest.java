@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.mockito.Mockito;
 
 /**
  * Test for the Proton List encoder / decoder
@@ -532,6 +534,31 @@ public class ListTypeCodecTest extends CodecTestSupport {
         list.add(subList);
 
         doTestEncodeListWithUnknownEntryTypeTestImpl(list);
+    }
+
+    @Test
+    public void testStreamSkipOfEncodingHandlesIOException() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        List<UUID> skip = new ArrayList<>();
+        for (int i = 0; i < 10; ++i) {
+            skip.add(UUID.randomUUID());
+        }
+
+        encoder.writeList(buffer, encoderState, skip);
+
+        StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+        assertEquals(List.class, typeDecoder.getTypeClass());
+
+        stream = Mockito.spy(stream);
+
+        Mockito.when(stream.skip(Mockito.anyLong())).thenThrow(EOFException.class);
+
+        try {
+            typeDecoder.skipValue(stream, streamDecoderState);
+            fail("Expected an exception on skip of encoded list failure.");
+        } catch (DecodeException dex) {}
     }
 
     private void doTestEncodeListWithUnknownEntryTypeTestImpl(List<Object> list) {

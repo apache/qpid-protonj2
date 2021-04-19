@@ -185,9 +185,17 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
                 } else if (Short.class.equals(typeClass)) {
                     return decodePrimitiveTypeArray((ShortTypeDecoder) decoder, buffer, state, count);
                 } else if (Integer.class.equals(typeClass)) {
-                    return decodePrimitiveTypeArray((Integer32TypeDecoder) decoder, buffer, state, count);
+                    if (primitiveTypeDecoder.getTypeCode() == (EncodingCodes.INT & 0xff)) {
+                        return decodePrimitiveTypeArray((Integer32TypeDecoder) decoder, buffer, state, count);
+                    } else {
+                        return decodePrimitiveTypeArray((Integer8TypeDecoder) decoder, buffer, state, count);
+                    }
                 } else if (Long.class.equals(typeClass)) {
-                    return decodePrimitiveTypeArray((LongTypeDecoder) decoder, buffer, state, count);
+                    if (primitiveTypeDecoder.getTypeCode() == (EncodingCodes.LONG & 0xff)) {
+                        return decodePrimitiveTypeArray((LongTypeDecoder) decoder, buffer, state, count);
+                    } else {
+                        return decodePrimitiveTypeArray((Long8TypeDecoder) decoder, buffer, state, count);
+                    }
                 } else if (Double.class.equals(typeClass)) {
                     return decodePrimitiveTypeArray((DoubleTypeDecoder) decoder, buffer, state, count);
                 } else if (Float.class.equals(typeClass)) {
@@ -253,7 +261,27 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
         return array;
     }
 
+    private static int[] decodePrimitiveTypeArray(Integer8TypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {
+        final int[] array = new int[count];
+
+        for (int i = 0; i < count; i++) {
+            array[i] = decoder.readPrimitiveValue(buffer, state);
+        }
+
+        return array;
+    }
+
     private static long[] decodePrimitiveTypeArray(LongTypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {
+        final long[] array = new long[count];
+
+        for (int i = 0; i < count; i++) {
+            array[i] = decoder.readPrimitiveValue(buffer, state);
+        }
+
+        return array;
+    }
+
+    private static long[] decodePrimitiveTypeArray(Long8TypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {
         final long[] array = new long[count];
 
         for (int i = 0; i < count; i++) {
@@ -321,9 +349,17 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
                 } else if (Short.class.equals(typeClass)) {
                     return decodePrimitiveTypeArray((ShortTypeDecoder) decoder, stream, state, count);
                 } else if (Integer.class.equals(typeClass)) {
-                    return decodePrimitiveTypeArray((Integer32TypeDecoder) decoder, stream, state, count);
+                    if (primitiveTypeDecoder.getTypeCode() == (EncodingCodes.INT & 0xff)) {
+                        return decodePrimitiveTypeArray((Integer32TypeDecoder) decoder, stream, state, count);
+                    } else {
+                        return decodePrimitiveTypeArray((Integer8TypeDecoder) decoder, stream, state, count);
+                    }
                 } else if (Long.class.equals(typeClass)) {
-                    return decodePrimitiveTypeArray((LongTypeDecoder) decoder, stream, state, count);
+                    if (primitiveTypeDecoder.getTypeCode() == (EncodingCodes.LONG & 0xff)) {
+                        return decodePrimitiveTypeArray((LongTypeDecoder) decoder, stream, state, count);
+                    } else {
+                        return decodePrimitiveTypeArray((Long8TypeDecoder) decoder, stream, state, count);
+                    }
                 } else if (Double.class.equals(typeClass)) {
                     return decodePrimitiveTypeArray((DoubleTypeDecoder) decoder, stream, state, count);
                 } else if (Float.class.equals(typeClass)) {
@@ -389,7 +425,27 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
         return array;
     }
 
+    private static int[] decodePrimitiveTypeArray(Integer8TypeDecoder decoder, InputStream stream, StreamDecoderState state, int count) {
+        final int[] array = new int[count];
+
+        for (int i = 0; i < count; i++) {
+            array[i] = decoder.readPrimitiveValue(stream, state);
+        }
+
+        return array;
+    }
+
     private static long[] decodePrimitiveTypeArray(LongTypeDecoder decoder, InputStream stream, StreamDecoderState state, int count) {
+        final long[] array = new long[count];
+
+        for (int i = 0; i < count; i++) {
+            array[i] = decoder.readPrimitiveValue(stream, state);
+        }
+
+        return array;
+    }
+
+    private static long[] decodePrimitiveTypeArray(Long8TypeDecoder decoder, InputStream stream, StreamDecoderState state, int count) {
         final long[] array = new long[count];
 
         for (int i = 0; i < count; i++) {
