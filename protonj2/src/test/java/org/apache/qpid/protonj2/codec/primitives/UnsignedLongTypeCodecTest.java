@@ -600,4 +600,83 @@ public class UnsignedLongTypeCodecTest extends CodecTestSupport {
         UnsignedLong value = (UnsignedLong) result;
         assertEquals(expected, value);
     }
+
+    @Test
+    public void testReadULongArray() throws IOException {
+        doTestReadULongArray(EncodingCodes.ULONG, false);
+    }
+
+    @Test
+    public void testReadULongArrayFromStream() throws IOException {
+        doTestReadULongArray(EncodingCodes.ULONG, true);
+    }
+
+    @Test
+    public void testReadSmallULongArray() throws IOException {
+        doTestReadULongArray(EncodingCodes.SMALLULONG, false);
+    }
+
+    @Test
+    public void testReadSmallULongArrayFromStream() throws IOException {
+        doTestReadULongArray(EncodingCodes.SMALLULONG, true);
+    }
+
+    @Test
+    public void testReadULong0Array() throws IOException {
+        doTestReadULongArray(EncodingCodes.ULONG0, false);
+    }
+
+    @Test
+    public void testReadULong0ArrayFromStream() throws IOException {
+        doTestReadULongArray(EncodingCodes.ULONG0, true);
+    }
+
+    public void doTestReadULongArray(byte encoding, boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        if (encoding == EncodingCodes.ULONG) {
+            buffer.writeByte(EncodingCodes.ARRAY32);
+            buffer.writeInt(25);  // Size
+            buffer.writeInt(2);   // Count
+            buffer.writeByte(EncodingCodes.ULONG);
+            buffer.writeLong(1l);   // [0]
+            buffer.writeLong(2l);   // [1]
+        } else if (encoding == EncodingCodes.SMALLULONG) {
+            buffer.writeByte(EncodingCodes.ARRAY32);
+            buffer.writeInt(11);  // Size
+            buffer.writeInt(2);   // Count
+            buffer.writeByte(EncodingCodes.SMALLULONG);
+            buffer.writeByte(1);   // [0]
+            buffer.writeByte(2);   // [1]
+        } else {
+            buffer.writeByte(EncodingCodes.ARRAY32);
+            buffer.writeInt(9);  // Size
+            buffer.writeInt(2);   // Count
+            buffer.writeByte(EncodingCodes.ULONG0);
+        }
+
+        final Object result;
+        if (fromStream) {
+            result = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            result = decoder.readObject(buffer, decoderState);
+        }
+
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertFalse(result.getClass().getComponentType().isPrimitive());
+
+        UnsignedLong[] array = (UnsignedLong[]) result;
+
+        assertEquals(2, array.length);
+
+        if (encoding == EncodingCodes.ULONG0) {
+            assertEquals(UnsignedLong.ZERO, array[0]);
+            assertEquals(UnsignedLong.ZERO, array[1]);
+        } else {
+            assertEquals(UnsignedLong.valueOf(1), array[0]);
+            assertEquals(UnsignedLong.valueOf(2), array[1]);
+        }
+    }
 }

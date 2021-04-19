@@ -50,11 +50,6 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
 
     @Override
     public Object readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        return readValueAsObject(buffer, state);
-    }
-
-    @Override
-    public Object[] readValueAsObjectArray(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         int size = readSize(buffer);
         int count = readCount(buffer);
 
@@ -70,43 +65,11 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
                 size, buffer.getReadableBytes()));
         }
 
-        return decodeAsArray(buffer, state, count);
-    }
-
-    @Override
-    public Object readValueAsObject(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        int size = readSize(buffer);
-        int count = readCount(buffer);
-
-        if (getTypeCode() == (EncodingCodes.ARRAY32 & 0xff)) {
-            size -= 8; // 4 bytes each for size and count;
-        } else {
-            size -= 2; // 1 byte each for size and count;
-        }
-
-        if (size > buffer.getReadableBytes()) {
-            throw new DecodeException(String.format(
-                "Array size indicated %d is greater than the amount of data available to decode (%d)",
-                size, buffer.getReadableBytes()));
-        }
-
-        return decodeAsObject(buffer, state, count);
+        return decodeArray(buffer, state, count);
     }
 
     @Override
     public Object readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        return readValueAsObject(stream, state);
-    }
-
-    @Override
-    public Object[] readValueAsObjectArray(InputStream stream, StreamDecoderState state) throws DecodeException {
-        readSize(stream);
-
-        return decodeAsArray(stream, state, readCount(stream));
-    }
-
-    @Override
-    public Object readValueAsObject(InputStream stream, StreamDecoderState state) throws DecodeException {
         readSize(stream);
 
         return decodeAsObject(stream, state, readCount(stream));
@@ -130,45 +93,16 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
 
     protected abstract int readCount(InputStream stream);
 
-    private static Object[] decodeAsArray(ProtonBuffer buffer, DecoderState state, final int count) throws DecodeException {
-        final PrimitiveTypeDecoder<?> decoder = (PrimitiveTypeDecoder<?>) state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        return decodeNonPrimitiveArray(decoder, buffer, state, count);
-    }
-
-    private static Object[] decodeNonPrimitiveArray(TypeDecoder<?> decoder, ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
-        if (count > buffer.getReadableBytes()) {
-            throw new DecodeException(String.format(
-                "Array element count %d is specified to be greater than the amount of data available (%d)",
-                count, buffer.getReadableBytes()));
-        }
-
-        if (decoder.isArrayType()) {
-            final PrimitiveArrayTypeDecoder arrayDecoder = (PrimitiveArrayTypeDecoder) decoder;
-
-            final Object[] array = new Object[count];
-            for (int i = 0; i < count; i++) {
-                array[i] = arrayDecoder.readValueAsObject(buffer, state);
-            }
-
-            return array;
-        } else {
-            return decoder.readArrayElements(buffer, state, count);
-        }
-    }
-
-    private static Object decodeAsObject(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
+    private static Object decodeArray(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (decoder instanceof PrimitiveTypeDecoder) {
             final PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) decoder;
+            final int typeCode = primitiveTypeDecoder.getTypeCode();
+
             if (primitiveTypeDecoder.isJavaPrimitive()) {
-                final int typeCode = ((PrimitiveTypeDecoder<?>) decoder).getTypeCode();
 
-                if (typeCode != EncodingCodes.BOOLEAN_TRUE &&
-                    typeCode != EncodingCodes.BOOLEAN_FALSE &&
-                    typeCode != EncodingCodes.NULL) {
-
+                if (typeCode != EncodingCodes.BOOLEAN_TRUE && typeCode != EncodingCodes.BOOLEAN_FALSE) {
                     if (count > buffer.getReadableBytes()) {
                         throw new DecodeException(String.format(
                             "Array element count %d is specified to be greater than the amount of data available (%d)",
@@ -205,10 +139,43 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
                 } else {
                     throw new DecodeException("Unexpected class " + decoder.getClass().getName());
                 }
-            }
-        }
+            } else if (decoder.isArrayType()) {
+                return decodeNonPrimitiveArray(decoder, buffer, state, count);
+            } else {
+                if (typeCode != EncodingCodes.ULONG0 && typeCode != EncodingCodes.UINT0 && typeCode != EncodingCodes.LIST0) {
+                    if (count > buffer.getReadableBytes()) {
+                        throw new DecodeException(String.format(
+                            "Array element count %d is specified to be greater than the amount of data available (%d)",
+                            count, buffer.getReadableBytes()));
+                    }
+                }
 
-        return decodeNonPrimitiveArray(decoder, buffer, state, count);
+                return decoder.readArrayElements(buffer, state, count);
+            }
+        } else {
+            if (count > buffer.getReadableBytes()) {
+                throw new DecodeException(String.format(
+                    "Array element count %d is specified to be greater than the amount of data available (%d)",
+                    count, buffer.getReadableBytes()));
+            }
+
+            return decodeNonPrimitiveArray(decoder, buffer, state, count);
+        }
+    }
+
+    private static Object decodeNonPrimitiveArray(TypeDecoder<?> decoder, ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
+        if (decoder.isArrayType()) {
+            final PrimitiveArrayTypeDecoder arrayDecoder = (PrimitiveArrayTypeDecoder) decoder;
+
+            final Object[] array = new Object[count];
+            for (int i = 0; i < count; i++) {
+                array[i] = arrayDecoder.readValue(buffer, state);
+            }
+
+            return array;
+        } else {
+            return decoder.readArrayElements(buffer, state, count);
+        }
     }
 
     private static boolean[] decodePrimitiveTypeArray(BooleanTypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {
@@ -313,27 +280,6 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
 
     //----- InputStream based array decoding
 
-    private static Object[] decodeAsArray(InputStream stream, StreamDecoderState state, final int count) throws DecodeException {
-        final PrimitiveTypeDecoder<?> decoder = (PrimitiveTypeDecoder<?>) state.getDecoder().readNextTypeDecoder(stream, state);
-
-        return decodeNonPrimitiveArray(decoder, stream, state, count);
-    }
-
-    private static Object[] decodeNonPrimitiveArray(StreamTypeDecoder<?> decoder, InputStream stream, StreamDecoderState state, int count) throws DecodeException {
-        if (decoder.isArrayType()) {
-            final PrimitiveArrayTypeDecoder arrayDecoder = (PrimitiveArrayTypeDecoder) decoder;
-
-            final Object[] array = new Object[count];
-            for (int i = 0; i < count; i++) {
-                array[i] = arrayDecoder.readValueAsObject(stream, state);
-            }
-
-            return array;
-        } else {
-            return decoder.readArrayElements(stream, state, count);
-        }
-    }
-
     private static Object decodeAsObject(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
         final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
@@ -373,6 +319,21 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
         }
 
         return decodeNonPrimitiveArray(decoder, stream, state, count);
+    }
+
+    private static Object[] decodeNonPrimitiveArray(StreamTypeDecoder<?> decoder, InputStream stream, StreamDecoderState state, int count) throws DecodeException {
+        if (decoder.isArrayType()) {
+            final PrimitiveArrayTypeDecoder arrayDecoder = (PrimitiveArrayTypeDecoder) decoder;
+
+            final Object[] array = new Object[count];
+            for (int i = 0; i < count; i++) {
+                array[i] = arrayDecoder.readValue(stream, state);
+            }
+
+            return array;
+        } else {
+            return decoder.readArrayElements(stream, state, count);
+        }
     }
 
     private static boolean[] decodePrimitiveTypeArray(BooleanTypeDecoder decoder, InputStream stream, StreamDecoderState state, int count) {

@@ -238,7 +238,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertTrue(typeDecoder instanceof PrimitiveArrayTypeDecoder);
             PrimitiveArrayTypeDecoder arrayDecoder = (PrimitiveArrayTypeDecoder) typeDecoder;
-            boolean[] booleans = (boolean[]) arrayDecoder.readValueAsObject(stream, streamDecoderState);
+            boolean[] booleans = (boolean[]) arrayDecoder.readValue(stream, streamDecoderState);
             assertEquals(10, booleans.length);
             for (boolean value : booleans) {
                 assertEquals(encodingCode == EncodingCodes.BOOLEAN_TRUE, value);
@@ -247,7 +247,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
             TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
             assertTrue(typeDecoder instanceof PrimitiveArrayTypeDecoder);
             PrimitiveArrayTypeDecoder arrayDecoder = (PrimitiveArrayTypeDecoder) typeDecoder;
-            boolean[] booleans = (boolean[]) arrayDecoder.readValueAsObject(buffer, decoderState);
+            boolean[] booleans = (boolean[]) arrayDecoder.readValue(buffer, decoderState);
             assertEquals(10, booleans.length);
             for (boolean value : booleans) {
                 assertEquals(encodingCode == EncodingCodes.BOOLEAN_TRUE, value);
