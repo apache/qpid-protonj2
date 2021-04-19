@@ -35,6 +35,7 @@ import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.PrimitiveArrayTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
 import org.junit.jupiter.api.Test;
 
@@ -124,6 +125,133 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
             assertFalse(result2);
             assertFalse(result3);
             assertTrue(result4);
+        }
+    }
+
+    @Test
+    public void testDecodeBooleanEncodedBytesWithTypeDecoder() throws Exception {
+        testDecodeBooleanEncodedBytesWithTypeDecoder(false);
+    }
+
+    @Test
+    public void testDecodeBooleanEncodedBytesWithTypeDecoderFS() throws Exception {
+        testDecodeBooleanEncodedBytesWithTypeDecoder(true);
+    }
+
+    private void testDecodeBooleanEncodedBytesWithTypeDecoder(boolean fromStream) throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        buffer.writeByte(EncodingCodes.BOOLEAN_TRUE);
+        buffer.writeByte(EncodingCodes.BOOLEAN);
+        buffer.writeByte(0);
+        buffer.writeByte(EncodingCodes.BOOLEAN_FALSE);
+        buffer.writeByte(EncodingCodes.BOOLEAN);
+        buffer.writeByte(1);
+
+        if (fromStream) {
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(Boolean.class, typeDecoder.getTypeClass());
+            assertTrue((boolean) typeDecoder.readValue(stream, streamDecoderState));
+            typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(Boolean.class, typeDecoder.getTypeClass());
+            assertFalse((boolean) typeDecoder.readValue(stream, streamDecoderState));
+            typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(Boolean.class, typeDecoder.getTypeClass());
+            assertFalse((boolean) typeDecoder.readValue(stream, streamDecoderState));
+            typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(Boolean.class, typeDecoder.getTypeClass());
+            assertTrue((boolean) typeDecoder.readValue(stream, streamDecoderState));
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Boolean.class, typeDecoder.getTypeClass());
+            assertTrue((boolean) typeDecoder.readValue(buffer, decoderState));
+            typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Boolean.class, typeDecoder.getTypeClass());
+            assertFalse((boolean) typeDecoder.readValue(buffer, decoderState));
+            typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Boolean.class, typeDecoder.getTypeClass());
+            assertFalse((boolean) typeDecoder.readValue(buffer, decoderState));
+            typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Boolean.class, typeDecoder.getTypeClass());
+            assertTrue((boolean) typeDecoder.readValue(buffer, decoderState));
+        }
+    }
+
+    @Test
+    public void testDecodeBooleanTrueArray32() throws Exception {
+        testDecodeBooleanEncodedBytesWithTypeDecoder(EncodingCodes.ARRAY32, EncodingCodes.BOOLEAN_TRUE, false);
+    }
+
+    @Test
+    public void testDecodeBooleanTrueArray32FromStream() throws Exception {
+        testDecodeBooleanEncodedBytesWithTypeDecoder(EncodingCodes.ARRAY32, EncodingCodes.BOOLEAN_TRUE, true);
+    }
+
+    @Test
+    public void testDecodeBooleanFalseArray32() throws Exception {
+        testDecodeBooleanEncodedBytesWithTypeDecoder(EncodingCodes.ARRAY32, EncodingCodes.BOOLEAN_FALSE, false);
+    }
+
+    @Test
+    public void testDecodeBooleanFalseArray32FromStream() throws Exception {
+        testDecodeBooleanEncodedBytesWithTypeDecoder(EncodingCodes.ARRAY32, EncodingCodes.BOOLEAN_FALSE, true);
+    }
+
+    @Test
+    public void testDecodeBooleanTrueArray8() throws Exception {
+        testDecodeBooleanEncodedBytesWithTypeDecoder(EncodingCodes.ARRAY8, EncodingCodes.BOOLEAN_TRUE, false);
+    }
+
+    @Test
+    public void testDecodeBooleanTrueArray8FromStream() throws Exception {
+        testDecodeBooleanEncodedBytesWithTypeDecoder(EncodingCodes.ARRAY8, EncodingCodes.BOOLEAN_TRUE, true);
+    }
+
+    @Test
+    public void testDecodeBooleanFalseArray8() throws Exception {
+        testDecodeBooleanEncodedBytesWithTypeDecoder(EncodingCodes.ARRAY8, EncodingCodes.BOOLEAN_FALSE, false);
+    }
+
+    @Test
+    public void testDecodeBooleanFalseArray8FromStream() throws Exception {
+        testDecodeBooleanEncodedBytesWithTypeDecoder(EncodingCodes.ARRAY8, EncodingCodes.BOOLEAN_FALSE, true);
+    }
+
+    private void testDecodeBooleanEncodedBytesWithTypeDecoder(byte arrayType, byte encodingCode, boolean fromStream) throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        if (arrayType == EncodingCodes.ARRAY32) {
+            buffer.writeByte(EncodingCodes.ARRAY32);
+            buffer.writeInt(3);  // Size
+            buffer.writeInt(10); // Count
+            buffer.writeByte(encodingCode);
+        } else {
+            buffer.writeByte(EncodingCodes.ARRAY8);
+            buffer.writeByte(3);  // Size
+            buffer.writeByte(10); // Count
+            buffer.writeByte(encodingCode);
+        }
+
+        if (fromStream) {
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertTrue(typeDecoder instanceof PrimitiveArrayTypeDecoder);
+            PrimitiveArrayTypeDecoder arrayDecoder = (PrimitiveArrayTypeDecoder) typeDecoder;
+            boolean[] booleans = (boolean[]) arrayDecoder.readValueAsObject(stream, streamDecoderState);
+            assertEquals(10, booleans.length);
+            for (boolean value : booleans) {
+                assertEquals(encodingCode == EncodingCodes.BOOLEAN_TRUE, value);
+            }
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertTrue(typeDecoder instanceof PrimitiveArrayTypeDecoder);
+            PrimitiveArrayTypeDecoder arrayDecoder = (PrimitiveArrayTypeDecoder) typeDecoder;
+            boolean[] booleans = (boolean[]) arrayDecoder.readValueAsObject(buffer, decoderState);
+            assertEquals(10, booleans.length);
+            for (boolean value : booleans) {
+                assertEquals(encodingCode == EncodingCodes.BOOLEAN_TRUE, value);
+            }
         }
     }
 

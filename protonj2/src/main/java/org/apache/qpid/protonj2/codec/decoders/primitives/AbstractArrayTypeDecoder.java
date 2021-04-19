@@ -163,10 +163,17 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
         if (decoder instanceof PrimitiveTypeDecoder) {
             final PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) decoder;
             if (primitiveTypeDecoder.isJavaPrimitive()) {
-                if (count > buffer.getReadableBytes()) {
-                    throw new DecodeException(String.format(
-                        "Array element count %d is specified to be greater than the amount of data available (%d)",
-                        count, buffer.getReadableBytes()));
+                final int typeCode = ((PrimitiveTypeDecoder<?>) decoder).getTypeCode();
+
+                if (typeCode != EncodingCodes.BOOLEAN_TRUE &&
+                    typeCode != EncodingCodes.BOOLEAN_FALSE &&
+                    typeCode != EncodingCodes.NULL) {
+
+                    if (count > buffer.getReadableBytes()) {
+                        throw new DecodeException(String.format(
+                            "Array element count %d is specified to be greater than the amount of data available (%d)",
+                            count, buffer.getReadableBytes()));
+                    }
                 }
 
                 final Class<?> typeClass = decoder.getTypeClass();
