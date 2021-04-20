@@ -17,6 +17,8 @@
 package org.apache.qpid.protonj2.types.messaging;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -55,6 +57,55 @@ public class ApplicationPropertiesTest {
         assertNotSame(original, copy);
         assertNotSame(original.getValue(), copy.getValue());
         assertEquals(original.getValue(), copy.getValue());
+    }
+
+    @Test
+    public void testHashCode() {
+        Map<String, Object> payload1 = new HashMap<>();
+        payload1.put("key", "value");
+
+        Map<String, Object> payload2 = new HashMap<>();
+        payload2.put("key1", "value");
+        payload2.put("key2", "value");
+
+        ApplicationProperties original = new ApplicationProperties(payload1);
+        ApplicationProperties copy = original.copy();
+        ApplicationProperties another = new ApplicationProperties(payload2);
+
+        assertEquals(original.hashCode(), copy.hashCode());
+        assertNotEquals(original.hashCode(), another.hashCode());
+
+        ApplicationProperties empty = new ApplicationProperties(null);
+        ApplicationProperties empty2 = new ApplicationProperties(null);
+
+        assertEquals(empty2.hashCode(), empty.hashCode());
+        assertNotEquals(original.hashCode(), empty.hashCode());
+    }
+
+    @Test
+    public void testEquals() {
+        Map<String, Object> payload1 = new HashMap<>();
+        payload1.put("key", "value");
+
+        Map<String, Object> payload2 = new HashMap<>();
+        payload2.put("key1", "value");
+        payload2.put("key2", "value");
+
+        ApplicationProperties original = new ApplicationProperties(payload1);
+        ApplicationProperties copy = original.copy();
+        ApplicationProperties another = new ApplicationProperties(payload2);
+        ApplicationProperties empty = new ApplicationProperties(null);
+        ApplicationProperties empty2 = new ApplicationProperties(null);
+
+        assertEquals(original, original);
+        assertEquals(original, copy);
+        assertNotEquals(original, another);
+        assertNotEquals(original, "test");
+        assertNotEquals(original, empty);
+        assertNotEquals(empty, original);
+        assertEquals(empty, empty2);
+
+        assertFalse(original.equals(null));
     }
 
     @Test

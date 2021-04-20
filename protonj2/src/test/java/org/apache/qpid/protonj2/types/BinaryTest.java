@@ -16,7 +16,9 @@
  */
 package org.apache.qpid.protonj2.types;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
@@ -31,6 +33,18 @@ public class BinaryTest {
         Binary binary = createSteppedValueBinary(10);
 
         assertFalse(binary.equals("not-a-Binary"), "Objects should not be equal with different type");
+    }
+
+    @Test
+    public void testCreateEmptyBinary() {
+        Binary binary = new Binary();
+
+        assertNull(binary.getArray());
+        assertNull(binary.asByteBuffer());
+        assertNull(binary.asProtonBuffer());
+        assertNull(binary.arrayCopy());
+        assertEquals(binary, binary.copy());
+        assertEquals("", binary.toString());
     }
 
     @Test

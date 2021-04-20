@@ -17,13 +17,44 @@
 package org.apache.qpid.protonj2.types;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.Test;
 
 public class UnsignedByteTest {
+
+    @Test
+    public void testEquals() {
+        UnsignedByte ubyte1 = UnsignedByte.valueOf((byte) 1);
+        UnsignedByte ubyte2 = UnsignedByte.valueOf((byte) 2);
+
+        assertEquals(ubyte1, ubyte1);
+        assertNotEquals(ubyte1, ubyte2);
+        assertNotEquals(ubyte1, ubyte2);
+
+        assertNotEquals(ubyte1, "test");
+        assertFalse(ubyte1.equals(null));
+
+        assertEquals(ubyte1, UnsignedByte.valueOf((byte) 1));
+        assertEquals(ubyte2, UnsignedByte.valueOf((byte) 2));
+
+        assertSame(ubyte1, UnsignedByte.valueOf((byte) 1));
+        assertSame(ubyte2, UnsignedByte.valueOf((byte) 2));
+
+        UnsignedByte ubyte3 = UnsignedByte.valueOf((byte) 255);
+        UnsignedByte ubyte4 = UnsignedByte.valueOf((byte) 255);
+
+        assertNotSame(ubyte3, new UnsignedByte((byte) 255));
+        assertNotSame(ubyte4, new UnsignedByte((byte) 255));
+
+        assertEquals(ubyte3, new UnsignedByte((byte) 255));
+        assertEquals(ubyte4, new UnsignedByte((byte) 255));
+    }
 
     @Test
     public void testToString() {
@@ -66,6 +97,22 @@ public class UnsignedByteTest {
         assertEquals(255l, UnsignedByte.valueOf((byte) 255).longValue());
         assertEquals(1l, UnsignedByte.valueOf((byte) 1).longValue());
         assertEquals(127l, UnsignedByte.valueOf((byte) 127).longValue());
+    }
+
+    @Test
+    public void testFloatValue() {
+        assertEquals(0, UnsignedByte.valueOf((byte) 0).floatValue());
+        assertEquals(255, UnsignedByte.valueOf((byte) 255).floatValue());
+        assertEquals(1, UnsignedByte.valueOf((byte) 1).floatValue());
+        assertEquals(127, UnsignedByte.valueOf((byte) 127).floatValue());
+    }
+
+    @Test
+    public void testDoubleValue() {
+        assertEquals(0, UnsignedByte.valueOf((byte) 0).doubleValue());
+        assertEquals(255, UnsignedByte.valueOf((byte) 255).doubleValue());
+        assertEquals(1, UnsignedByte.valueOf((byte) 1).doubleValue());
+        assertEquals(127, UnsignedByte.valueOf((byte) 127).doubleValue());
     }
 
     @Test
@@ -114,6 +161,8 @@ public class UnsignedByteTest {
 
     @Test
     public void testValueOfStringWithOutOfRangeValueThrowsNFE() throws Exception {
+        assertEquals(255, UnsignedByte.valueOf("255").intValue());
+
         try {
             UnsignedByte.valueOf("256");
             fail("Expected exception was not thrown");

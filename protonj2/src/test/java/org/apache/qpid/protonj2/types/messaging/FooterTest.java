@@ -17,6 +17,8 @@
 package org.apache.qpid.protonj2.types.messaging;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -61,5 +63,54 @@ public class FooterTest {
     @Test
     public void testGetType() {
         assertEquals(SectionType.Footer, new Footer(null).getType());
+    }
+
+    @Test
+    public void testHashCode() {
+        Map<Symbol, Object> payload1 = new HashMap<>();
+        payload1.put(Symbol.valueOf("key"), "value");
+
+        Map<Symbol, Object> payload2 = new HashMap<>();
+        payload1.put(Symbol.valueOf("key1"), "value");
+        payload1.put(Symbol.valueOf("key2"), "value");
+
+        Footer original = new Footer(payload1);
+        Footer copy = original.copy();
+        Footer another = new Footer(payload2);
+
+        assertEquals(original.hashCode(), copy.hashCode());
+        assertNotEquals(original.hashCode(), another.hashCode());
+
+        Footer empty = new Footer(null);
+        Footer empty2 = new Footer(null);
+
+        assertEquals(empty2.hashCode(), empty.hashCode());
+        assertNotEquals(original.hashCode(), empty.hashCode());
+    }
+
+    @Test
+    public void testEquals() {
+        Map<Symbol, Object> payload1 = new HashMap<>();
+        payload1.put(Symbol.valueOf("key"), "value");
+
+        Map<Symbol, Object> payload2 = new HashMap<>();
+        payload2.put(Symbol.valueOf("key1"), "value");
+        payload2.put(Symbol.valueOf("key2"), "value");
+
+        Footer original = new Footer(payload1);
+        Footer copy = original.copy();
+        Footer another = new Footer(payload2);
+        Footer empty = new Footer(null);
+        Footer empty2 = new Footer(null);
+
+        assertEquals(original, original);
+        assertEquals(original, copy);
+        assertNotEquals(original, another);
+        assertNotEquals(original, "test");
+        assertNotEquals(original, empty);
+        assertNotEquals(empty, original);
+        assertEquals(empty, empty2);
+
+        assertFalse(original.equals(null));
     }
 }

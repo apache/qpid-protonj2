@@ -17,7 +17,10 @@
 package org.apache.qpid.protonj2.types;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -45,6 +48,34 @@ public class UnsignedShortTest {
     }
 
     @Test
+    public void testEquals() {
+        UnsignedShort ubyte1 = UnsignedShort.valueOf((short) 1);
+        UnsignedShort ubyte2 = UnsignedShort.valueOf((short) 2);
+
+        assertEquals(ubyte1, ubyte1);
+        assertNotEquals(ubyte1, ubyte2);
+        assertNotEquals(ubyte1, ubyte2);
+
+        assertNotEquals(ubyte1, "test");
+        assertFalse(ubyte1.equals(null));
+
+        assertEquals(ubyte1, UnsignedShort.valueOf((short) 1));
+        assertEquals(ubyte2, UnsignedShort.valueOf((short) 2));
+
+        assertSame(ubyte1, UnsignedShort.valueOf((short) 1));
+        assertSame(ubyte2, UnsignedShort.valueOf((short) 2));
+
+        UnsignedShort ubyte3 = UnsignedShort.valueOf((short) 32767);
+        UnsignedShort ubyte4 = UnsignedShort.valueOf((short) 32767);
+
+        assertNotSame(ubyte3, UnsignedShort.valueOf((short) 32767));
+        assertNotSame(ubyte4, UnsignedShort.valueOf((short) 32767));
+
+        assertEquals(ubyte3, UnsignedShort.valueOf((short) 32767));
+        assertEquals(ubyte4, UnsignedShort.valueOf((short) 32767));
+    }
+
+    @Test
     public void testShortValue() {
         assertEquals((short) 0, UnsignedShort.valueOf((short) 0).shortValue());
         assertEquals((short) 65535, UnsignedShort.valueOf((short) 65535).shortValue());
@@ -66,6 +97,22 @@ public class UnsignedShortTest {
         assertEquals(65535l, UnsignedShort.valueOf((short) 65535).longValue());
         assertEquals(1l, UnsignedShort.valueOf((short) 1).longValue());
         assertEquals(127l, UnsignedShort.valueOf((short) 127).longValue());
+    }
+
+    @Test
+    public void testFloatValue() {
+        assertEquals(0, UnsignedShort.valueOf((short) 0).floatValue());
+        assertEquals(65535, UnsignedShort.valueOf((short) 65535).floatValue());
+        assertEquals(1, UnsignedShort.valueOf((short) 1).floatValue());
+        assertEquals(127, UnsignedShort.valueOf((short) 127).floatValue());
+    }
+
+    @Test
+    public void testDoubleValue() {
+        assertEquals(0, UnsignedShort.valueOf((short) 0).doubleValue());
+        assertEquals(65535, UnsignedShort.valueOf((short) 65535).doubleValue());
+        assertEquals(1, UnsignedShort.valueOf((short) 1).doubleValue());
+        assertEquals(127, UnsignedShort.valueOf((short) 127).doubleValue());
     }
 
     @Test
@@ -134,6 +181,8 @@ public class UnsignedShortTest {
 
     @Test
     public void testValueOfStringWithOutOfRangeValueThrowsNFE() throws Exception {
+        assertEquals(65535, UnsignedShort.valueOf("65535").intValue());
+
         try {
             UnsignedShort.valueOf("65536");
             fail("Expected exception was not thrown");

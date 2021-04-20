@@ -17,7 +17,10 @@
 package org.apache.qpid.protonj2.types;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -37,6 +40,34 @@ public class UnsignedLongTest {
         assertEquals("0",  UnsignedLong.valueOf(0).toString());
         assertEquals("65535", UnsignedLong.valueOf(65535).toString());
         assertEquals("127", UnsignedLong.valueOf(127).toString());
+    }
+
+    @Test
+    public void testEquals() {
+        UnsignedLong ubyte1 = UnsignedLong.valueOf(1);
+        UnsignedLong ubyte2 = UnsignedLong.valueOf(2);
+
+        assertEquals(ubyte1, ubyte1);
+        assertNotEquals(ubyte1, ubyte2);
+        assertNotEquals(ubyte1, ubyte2);
+
+        assertNotEquals(ubyte1, "test");
+        assertFalse(ubyte1.equals(null));
+
+        assertEquals(ubyte1, UnsignedLong.valueOf(1));
+        assertEquals(ubyte2, UnsignedLong.valueOf(2));
+
+        assertSame(ubyte1, UnsignedLong.valueOf(1));
+        assertSame(ubyte2, UnsignedLong.valueOf(2));
+
+        UnsignedLong ubyte3 = UnsignedLong.valueOf(32767);
+        UnsignedLong ubyte4 = UnsignedLong.valueOf(32767);
+
+        assertNotSame(ubyte3, UnsignedLong.valueOf(32767));
+        assertNotSame(ubyte4, UnsignedLong.valueOf(32767));
+
+        assertEquals(ubyte3, UnsignedLong.valueOf(32767));
+        assertEquals(ubyte4, UnsignedLong.valueOf(32767));
     }
 
     @Test
@@ -76,6 +107,22 @@ public class UnsignedLongTest {
     }
 
     @Test
+    public void testFloatValue() {
+        assertEquals(0, UnsignedLong.valueOf(0).floatValue());
+        assertEquals(65535, UnsignedLong.valueOf(65535).floatValue());
+        assertEquals(1, UnsignedLong.valueOf(1).floatValue());
+        assertEquals(127, UnsignedLong.valueOf(127).floatValue());
+    }
+
+    @Test
+    public void testDoubleValue() {
+        assertEquals(0, UnsignedLong.valueOf(0).doubleValue());
+        assertEquals(65535, UnsignedLong.valueOf(65535).doubleValue());
+        assertEquals(1, UnsignedLong.valueOf(1).doubleValue());
+        assertEquals(127, UnsignedLong.valueOf(127).doubleValue());
+    }
+
+    @Test
     public void testCompareToByte() {
         assertTrue(UnsignedLong.valueOf(255).compareTo(255) == 0);
         assertTrue(UnsignedLong.valueOf(0).compareTo(0) == 0);
@@ -92,7 +139,17 @@ public class UnsignedLongTest {
     }
 
     @Test
+    public void testCompareLongs() {
+        assertTrue(UnsignedLong.compare(65535, 65535) == 0);
+        assertTrue(UnsignedLong.compare(0, 0) == 0);
+        assertTrue(UnsignedLong.compare(127, 126) > 0);
+        assertTrue(UnsignedLong.compare(32, 64) < 0);
+    }
+
+    @Test
     public void testValueOfStringWithNegativeNumberThrowsNFE() throws Exception {
+        assertEquals(Long.MAX_VALUE, UnsignedLong.valueOf("9223372036854775807").longValue());
+
         try {
             UnsignedLong.valueOf("-1");
             fail("Expected exception was not thrown");

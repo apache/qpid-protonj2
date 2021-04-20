@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -61,6 +62,7 @@ public class HeaderTest {
         assertFalse(header.hasTimeToLive());
         assertFalse(header.hasFirstAcquirer());
         assertFalse(header.hasDeliveryCount());
+        assertSame(header, header.getValue());
 
         assertEquals(Header.DEFAULT_DURABILITY, header.isDurable());
         assertEquals(Header.DEFAULT_PRIORITY, header.getPriority());
@@ -86,6 +88,23 @@ public class HeaderTest {
         assertEquals(Header.DEFAULT_TIME_TO_LIVE - 10, copy.getTimeToLive());
         assertEquals(!Header.DEFAULT_FIRST_ACQUIRER, copy.isFirstAcquirer());
         assertEquals(Header.DEFAULT_DELIVERY_COUNT + 5, copy.getDeliveryCount());
+    }
+
+    @Test
+    public void testReset() {
+        Header header = new Header();
+
+        header.setDurable(!Header.DEFAULT_DURABILITY);
+        header.setPriority((byte) (Header.DEFAULT_PRIORITY + 1));
+        header.setTimeToLive(Header.DEFAULT_TIME_TO_LIVE - 10);
+        header.setFirstAcquirer(!Header.DEFAULT_FIRST_ACQUIRER);
+        header.setDeliveryCount(Header.DEFAULT_DELIVERY_COUNT + 5);
+
+        assertFalse(header.isEmpty());
+
+        header.reset();
+
+        assertTrue(header.isEmpty());
     }
 
     @Test

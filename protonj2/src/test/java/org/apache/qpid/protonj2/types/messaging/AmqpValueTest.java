@@ -17,6 +17,8 @@
 package org.apache.qpid.protonj2.types.messaging;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -43,5 +45,46 @@ public class AmqpValueTest {
     @Test
     public void testGetType() {
         assertEquals(SectionType.AmqpValue, new AmqpValue<>(null).getType());
+    }
+
+    @Test
+    public void testHashCode() {
+        String first = new String("first");
+        String second = new String("second");
+
+        AmqpValue<String> original = new AmqpValue<>(first);
+        AmqpValue<String> copy = original.copy();
+        AmqpValue<String> another = new AmqpValue<>(second);
+
+        assertEquals(original.hashCode(), copy.hashCode());
+        assertNotEquals(original.hashCode(), another.hashCode());
+
+        AmqpValue<String> empty = new AmqpValue<>(null);
+        AmqpValue<String> empty2 = new AmqpValue<>(null);
+
+        assertEquals(empty2.hashCode(), empty.hashCode());
+        assertNotEquals(original.hashCode(), empty.hashCode());
+    }
+
+    @Test
+    public void testEquals() {
+        String first = new String("first");
+        String second = new String("second");
+
+        AmqpValue<String> original = new AmqpValue<>(first);
+        AmqpValue<String> copy = original.copy();
+        AmqpValue<String> another = new AmqpValue<>(second);
+        AmqpValue<String> empty = new AmqpValue<>(null);
+        AmqpValue<String> empty2 = new AmqpValue<>(null);
+
+        assertEquals(original, original);
+        assertEquals(original, copy);
+        assertNotEquals(original, another);
+        assertNotEquals(original, "test");
+        assertNotEquals(original, empty);
+        assertNotEquals(empty, original);
+        assertEquals(empty, empty2);
+
+        assertFalse(original.equals(null));
     }
 }

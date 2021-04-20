@@ -17,11 +17,14 @@
 package org.apache.qpid.protonj2.types.messaging;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.qpid.protonj2.types.messaging.Section.SectionType;
 import org.junit.jupiter.api.Test;
@@ -59,5 +62,52 @@ public class AmqpSequenceTest {
     @Test
     public void testGetType() {
         assertEquals(SectionType.AmqpSequence, new AmqpSequence<>(null).getType());
+    }
+
+    @Test
+    public void testHashCode() {
+        List<String> first = new ArrayList<>();
+        first.add("first");
+
+        List<String> second = new ArrayList<>();
+        second.add("second");
+
+        AmqpSequence<String> original = new AmqpSequence<>(first);
+        AmqpSequence<String> copy = original.copy();
+        AmqpSequence<String> another = new AmqpSequence<>(second);
+
+        assertEquals(original.hashCode(), copy.hashCode());
+        assertNotEquals(original.hashCode(), another.hashCode());
+
+        AmqpSequence<String> empty = new AmqpSequence<>(null);
+        AmqpSequence<String> empty2 = new AmqpSequence<>(null);
+
+        assertEquals(empty2.hashCode(), empty.hashCode());
+        assertNotEquals(original.hashCode(), empty.hashCode());
+    }
+
+    @Test
+    public void testEquals() {
+        List<String> first = new ArrayList<>();
+        first.add("first");
+
+        List<String> second = new ArrayList<>();
+        second.add("second");
+
+        AmqpSequence<String> original = new AmqpSequence<>(first);
+        AmqpSequence<String> copy = original.copy();
+        AmqpSequence<String> another = new AmqpSequence<>(second);
+        AmqpSequence<String> empty = new AmqpSequence<>(null);
+        AmqpSequence<String> empty2 = new AmqpSequence<>(null);
+
+        assertEquals(original, original);
+        assertEquals(original, copy);
+        assertNotEquals(original, another);
+        assertNotEquals(original, "test");
+        assertNotEquals(original, empty);
+        assertNotEquals(empty, original);
+        assertEquals(empty, empty2);
+
+        assertFalse(original.equals(null));
     }
 }

@@ -16,11 +16,16 @@
  */
 package org.apache.qpid.protonj2.types.messaging;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.messaging.Section.SectionType;
 import org.junit.jupiter.api.Test;
@@ -51,6 +56,62 @@ public class DataTest {
 
         assertNotNull(copy.getValue());
         assertNotSame(data.getValue(), copy.getValue());
+    }
+
+    @Test
+    public void testHashCode() {
+        byte[] bytes = new byte[] { 1 };
+        Binary binary = new Binary(bytes);
+        Data data = new Data(binary);
+        Data copy = data.copy();
+
+        assertNotNull(copy.getValue());
+        assertNotSame(data.getValue(), copy.getValue());
+
+        assertEquals(data.hashCode(), copy.hashCode());
+
+        Data second = new Data(new byte[] { 1, 2, 3 });
+
+        assertNotEquals(data.hashCode(), second.hashCode());
+
+        assertNotEquals(new Data((Binary) null).hashCode(), data.hashCode());
+        assertEquals(new Data((Binary) null).hashCode(), new Data((ProtonBuffer) null).hashCode());
+    }
+
+    @Test
+    public void testEquals() {
+        byte[] bytes = new byte[] { 1 };
+        Binary binary = new Binary(bytes);
+        Data data = new Data(binary);
+        Data copy = data.copy();
+
+        assertNotNull(copy.getValue());
+        assertNotSame(data.getValue(), copy.getValue());
+
+        assertEquals(data, data);
+        assertEquals(data, copy);
+
+        Data second = new Data(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1, 2, 3 }));
+        Data third = new Data(new byte[] { 1, 2, 3 }, 0, 3);
+        Data fourth = new Data(new byte[] { 1, 2, 3 }, 0, 1);
+        Data fifth = new Data(null, 0, 0);
+
+        assertNotEquals(data, second);
+        assertNotEquals(data, third);
+        assertNotEquals(data, fifth);
+        assertEquals(data, fourth);
+        assertFalse(data.equals(null));
+        assertNotEquals(data, "not a data");
+        assertNotEquals(data, new Data((Binary) null));
+        assertNotEquals(new Data((Binary) null), data);
+        assertEquals(new Data((Binary) null), new Data((ProtonBuffer) null));
+    }
+
+    @Test
+    public void testGetValueWhenUsingAnArrayView() {
+        Data view = new Data(new byte[] { 1, 2, 3 }, 0, 1);
+
+        assertArrayEquals(new byte[] {1}, view.getValue());
     }
 
     @Test

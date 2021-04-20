@@ -17,10 +17,12 @@
 package org.apache.qpid.protonj2.codec.encoders;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
@@ -44,6 +46,34 @@ class ProtonEncoderTest extends CodecTestSupport {
         assertTrue(state1 instanceof ProtonEncoderState);
 
         assertSame(state1, state2);
+    }
+
+    @Test
+    public void testProtonEncoderStateHasNoStringEncoderByDefault() throws IOException {
+        ProtonEncoderState state = (ProtonEncoderState) encoder.getCachedEncoderState();
+
+        assertNull(state.getUTF8Encoder());
+    }
+
+    @Test
+    public void testUseCustomUTF8EncoderInEncoderState() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final String expected = "test-encoding-string";
+
+        ((ProtonEncoderState) encoderState).setUTF8Encoder(new UTF8Encoder() {
+
+            @Override
+            public ProtonBuffer encodeUTF8(ProtonBuffer buffer, CharSequence sequence) {
+                return buffer.writeBytes(sequence.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        });
+
+        encoder.writeString(buffer, encoderState, expected);
+
+        final String result = decoder.readString(buffer, decoderState);
+
+        assertEquals(expected, result);
     }
 
     @Test

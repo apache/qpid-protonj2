@@ -20,13 +20,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.UUID;
 
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
+import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.apache.qpid.protonj2.types.messaging.Section.SectionType;
 import org.junit.jupiter.api.Test;
 
@@ -76,6 +80,8 @@ public class PropertiesTypeTest {
 
         assertTrue(properties.isEmpty());
         assertEquals(0, properties.getElementCount());
+
+        assertSame(properties, properties.getValue());
     }
 
     @Test
@@ -223,9 +229,26 @@ public class PropertiesTypeTest {
         assertTrue(properties.hasMessageId());
         assertNotNull(properties.getMessageId());
 
+        properties.setMessageId(UUID.randomUUID());
+        assertTrue(properties.hasMessageId());
+        assertNotNull(properties.getMessageId());
+
+        properties.setMessageId(new Binary(new byte[] { 1 }));
+        assertTrue(properties.hasMessageId());
+        assertNotNull(properties.getMessageId());
+
+        properties.setMessageId(UnsignedLong.ZERO);
+        assertTrue(properties.hasMessageId());
+        assertNotNull(properties.getMessageId());
+
         properties.setMessageId(null);
         assertFalse(properties.hasMessageId());
         assertNull(properties.getMessageId());
+
+        try {
+            properties.setMessageId(new HashMap<String, String>());
+            fail("Not a valid MessageId type.");
+        } catch (IllegalArgumentException iae) {}
     }
 
     @Test

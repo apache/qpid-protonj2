@@ -223,6 +223,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
         UnknownDescribedType type = (UnknownDescribedType) result;
         assertTrue(type.getDescribed() instanceof UUID);
         assertEquals(value, type.getDescribed());
+        assertNotNull(type.toString());
     }
 
     @Test

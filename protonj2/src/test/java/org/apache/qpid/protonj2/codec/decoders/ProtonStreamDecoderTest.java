@@ -222,6 +222,7 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
         UnknownDescribedType type = (UnknownDescribedType) result;
         assertTrue(type.getDescribed() instanceof UUID);
         assertEquals(value, type.getDescribed());
+        assertNotNull(type.toString());
     }
 
     @Test
@@ -349,5 +350,93 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
         assertEquals("test", string);
         assertSame(Accepted.getInstance(), accepted);
+    }
+
+    @Test
+    public void testReadDescriptorOfTypeSymbol32MarkNotSupported() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+
+        Mockito.when(stream.markSupported()).thenReturn(false);
+
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        buffer.writeByte(EncodingCodes.SYM32);
+        buffer.writeInt(Accepted.DESCRIPTOR_SYMBOL.getLength());
+        Accepted.DESCRIPTOR_SYMBOL.writeTo(buffer);
+        buffer.writeByte(EncodingCodes.LIST0);
+
+        final Object accepted = streamDecoder.readObject(stream, streamDecoderState);
+
+        assertSame(Accepted.getInstance(), accepted);
+    }
+
+    @Test
+    public void testReadDescriptorOfTypeSymbol8MarkNotSupported() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+
+        Mockito.when(stream.markSupported()).thenReturn(false);
+
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        buffer.writeByte(EncodingCodes.SYM8);
+        buffer.writeByte(Accepted.DESCRIPTOR_SYMBOL.getLength());
+        Accepted.DESCRIPTOR_SYMBOL.writeTo(buffer);
+        buffer.writeByte(EncodingCodes.LIST0);
+
+        final Object accepted = streamDecoder.readObject(stream, streamDecoderState);
+
+        assertSame(Accepted.getInstance(), accepted);
+    }
+
+    @Test
+    public void testReadDescriptorOfTypeUnsignedLongMarkNotSupported() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+
+        Mockito.when(stream.markSupported()).thenReturn(false);
+
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        buffer.writeByte(EncodingCodes.ULONG);
+        buffer.writeLong(Accepted.DESCRIPTOR_CODE.longValue());
+        buffer.writeByte(EncodingCodes.LIST0);
+
+        final Object accepted = streamDecoder.readObject(stream, streamDecoderState);
+
+        assertSame(Accepted.getInstance(), accepted);
+    }
+
+    @Test
+    public void testReadDescriptorOfTypeSmallUnsignedLongMarkNotSupported() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+
+        Mockito.when(stream.markSupported()).thenReturn(false);
+
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Accepted.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(EncodingCodes.LIST0);
+
+        final Object accepted = streamDecoder.readObject(stream, streamDecoderState);
+
+        assertSame(Accepted.getInstance(), accepted);
+    }
+
+    @Test
+    public void testDecodeErrorWhenMarkNotSupportedAndUnkownEncodingCodeFoundInDescribedType() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+
+        Mockito.when(stream.markSupported()).thenReturn(false);
+
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        buffer.writeByte(EncodingCodes.UUID);
+        buffer.writeLong(Accepted.DESCRIPTOR_CODE.longValue());
+        buffer.writeByte(EncodingCodes.LIST0);
+
+        try {
+            streamDecoder.readObject(stream, streamDecoderState);
+            fail("Should fail on read of object with bad descriptor type");
+        } catch (DecodeException dex) {}
     }
 }
