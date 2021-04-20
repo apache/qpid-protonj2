@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+--><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <parent>
+    <groupId>org.apache</groupId>
+    <artifactId>apache</artifactId>
+    <version>23</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.apache.qpid</groupId>
+  <artifactId>protonj2-parent</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>Qpid protonj2 Parent</name>
+  <description>Qpid protonj2 is a library for speaking AMQP 1.0.</description>
+
+  <properties>
+    <!-- See also maven.compiler.release in the java9on profile -->
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+
+    <!-- Test dependency versions -->
+    <junit.jupiter.version>5.7.1</junit.jupiter.version>
+    <junit.vintage.version>5.7.1</junit.vintage.version>
+    <mockito.version>3.8.0</mockito.version>
+    <proton.version>0.33.8</proton.version>
+    <slf4j.version>1.7.30</slf4j.version>
+    <log4j.slf4j.version>2.14.1</log4j.slf4j.version>
+    <hamcrest.version>2.2</hamcrest.version>
+    <netty.version>4.1.63.Final</netty.version>
+    <netty.iouring.version>0.0.5.Final</netty.iouring.version>
+    <netty.tcnative.version>2.0.38.Final</netty.tcnative.version>
+
+    <!-- Plugin versions -->
+    <maven.bundle.plugin.version>5.1.1</maven.bundle.plugin.version>
+    <jacoco.plugin.version>0.8.6</jacoco.plugin.version>
+
+    <!-- Test properties -->
+    <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
+    <surefire.runOrder>filesystem</surefire.runOrder>
+    <proton.trace.frames>false</proton.trace.frames>
+
+    <netty-transport-native-io-uring-classifier>linux-x86_64</netty-transport-native-io-uring-classifier>
+    <netty-transport-native-epoll-classifier>linux-x86_64</netty-transport-native-epoll-classifier>
+    <netty-transport-native-kqueue-classifier>osx-x86_64</netty-transport-native-kqueue-classifier>
+
+    <!-- surefire forked jvm arguments -->
+    <argLine>-Xmx2g -enableassertions ${jacoco-config}</argLine>
+  </properties>
+
+  <url>http://qpid.apache.org/proton</url>
+  <scm>
+    <connection>scm:git:http://git-wip-us.apache.org/repos/asf/qpid-protonj2.git</connection>
+    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/qpid-protonj2.git</developerConnection>
+    <url>https://git-wip-us.apache.org/repos/asf?p=qpid-protonj2.git</url>
+    <tag>HEAD</tag>
+  </scm>
+  <issueManagement>
+    <url>https://issues.apache.org/jira/browse/PROTON</url>
+    <system>JIRA</system>
+  </issueManagement>
+  <ciManagement>
+    <url>https://builds.apache.org/view/M-R/view/Qpid/job/Qpid-protonj2/</url>
+  </ciManagement>
+
+  <modules>
+    <module>protonj2</module>
+    <module>protonj2-performance-tests</module>
+    <module>protonj2-test-driver</module>
+    <module>protonj2-client</module>
+    <module>protonj2-client-examples</module>
+    <module>protonj2-client-docs</module>
+    <module>apache-qpid-protonj2</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- Internal module dependencies -->
+      <dependency>
+        <groupId>org.apache.qpid</groupId>
+        <artifactId>protonj2</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.qpid</groupId>
+        <artifactId>protonj2-test-driver</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.qpid</groupId>
+        <artifactId>protonj2-client</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-slf4j-impl</artifactId>
+        <version>${log4j.slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-buffer</artifactId>
+        <version>${netty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-common</artifactId>
+        <version>${netty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-handler</artifactId>
+        <version>${netty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-transport</artifactId>
+        <version>${netty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-codec-http</artifactId>
+        <version>${netty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-transport-native-epoll</artifactId>
+        <version>${netty.version}</version>
+        <classifier>${netty-transport-native-epoll-classifier}</classifier>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-transport-native-kqueue</artifactId>
+        <version>${netty.version}</version>
+        <classifier>${netty-transport-native-kqueue-classifier}</classifier>
+      </dependency>
+      <dependency>
+        <groupId>io.netty.incubator</groupId>
+        <artifactId>netty-incubator-transport-native-io_uring</artifactId>
+        <version>${netty.iouring.version}</version>
+        <classifier>${netty-transport-native-io-uring-classifier}</classifier>
+      </dependency>
+      <!--  Testing only Uber Jar inclusion -->
+      <dependency>
+         <groupId>io.netty</groupId>
+         <artifactId>netty-tcnative-boringssl-static</artifactId>
+         <version>${netty.tcnative.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.qpid</groupId>
+        <artifactId>proton-j</artifactId>
+        <version>${proton.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-api</artifactId>
+        <version>${junit.jupiter.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-engine</artifactId>
+        <version>${junit.jupiter.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-params</artifactId>
+        <version>${junit.jupiter.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.hamcrest</groupId>
+        <artifactId>hamcrest</artifactId>
+        <version>${hamcrest.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.hamcrest</groupId>
+        <artifactId>hamcrest-library</artifactId>
+        <version>${hamcrest.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <defaultGoal>install</defaultGoal>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <optimize>true</optimize>
+          <showDeprecation>true</showDeprecation>
+          <showWarnings>true</showWarnings>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>${maven.bundle.plugin.version}</version>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <Export-Package>${project.groupId}.protonj2.*</Export-Package>
+          </instructions>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <configuration>
+          <excludes combine.children="append">
+            <exclude>appveyor.yml</exclude>
+            <exclude>.travis.yml</exclude>
+            <exclude>.mailmap</exclude>
+            <exclude>**/*.md</exclude>
+            <exclude>**/*.pkcs12</exclude>
+            <exclude>**/*.p12</exclude>
+            <exclude>**/*.pem</exclude>
+            <exclude>**/*.pem.txt</exclude>
+            <exclude>**/*.crt</exclude>
+            <exclude>**/*.csr</exclude>
+            <exclude>**/*.keystore</exclude>
+            <exclude>**/*.truststore</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <propertyName>jacoco-config</propertyName>
+        </configuration>
+      </plugin>
+    </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <runOrder>${surefire.runOrder}</runOrder>
+            <redirectTestOutputToFile>${maven.test.redirectTestOutputToFile}</redirectTestOutputToFile>
+            <forkCount>1</forkCount>
+            <reuseForks>true</reuseForks>
+            <systemPropertyVariables>
+                <java.awt.headless>true</java.awt.headless>
+            </systemPropertyVariables>
+            <failIfNoTests>false</failIfNoTests>
+            <environmentVariables>
+              <PN_TRACE_FRM>${proton.trace.frames}</PN_TRACE_FRM>
+            </environmentVariables>
+          </configuration>
+        </plugin>
+        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>maven-bundle-plugin</artifactId>
+                    <versionRange>[2.4.0,)</versionRange>
+                    <goals>
+                      <goal>manifest</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore/>
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <configuration>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
+            <tagNameFormat>@{project.version}</tagNameFormat>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>${jacoco.plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <version>${spotbugs-maven-plugin-version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.plugin.version}</version>
+      </plugin>
+    </plugins>
+  </reporting>
+
+  <profiles>
+    <!-- Override the apache-release profile from the parent. Skip creating
+         a source release here, we have a release module that does it.  -->
+    <profile>
+      <id>apache-release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>source-release-assembly</id>
+                <configuration>
+                  <skipAssembly>true</skipAssembly>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>sources</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+</project>

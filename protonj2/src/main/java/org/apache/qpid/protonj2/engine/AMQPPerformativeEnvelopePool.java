@@ -1,0 +1,99 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.qpid.protonj2.engine;
+
+import java.util.function.Function;
+
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.engine.util.RingQueue;
+import org.apache.qpid.protonj2.types.transport.Performative;
+
+/**
+ * Pool of {@link PerformativeEnvelope} instances used to reduce allocations on incoming performatives.
+ *
+ * @param <E> The type of Protocol Performative to pool incoming or outgoing.
+ */
+public class AMQPPerformativeEnvelopePool<E extends PerformativeEnvelope<Performative>> {
+
+    public static final int DEFAULT_MAX_POOL_SIZE = 10;
+
+    private int maxPoolSize = DEFAULT_MAX_POOL_SIZE;
+
+    private final RingQueue<E> pool;
+    private final Function<AMQPPerformativeEnvelopePool<E>, E> envelopeBuilder;
+
+    public AMQPPerformativeEnvelopePool(Function<AMQPPerformativeEnvelopePool<E>, E> envelopeBuilder) {
+        this(envelopeBuilder, AMQPPerformativeEnvelopePool.DEFAULT_MAX_POOL_SIZE);
+    }
+
+    public AMQPPerformativeEnvelopePool(Function<AMQPPerformativeEnvelopePool<E>, E> envelopeBuilder, int maxPoolSize) {
+        this.pool = new RingQueue<>(getMaxPoolSize());
+        this.maxPoolSize = maxPoolSize;
+        this.envelopeBuilder = envelopeBuilder;
+    }
+
+    public final int getMaxPoolSize() {
+        return maxPoolSize;
+    }
+
+    @SuppressWarnings("unchecked")
+    public E take(Performative body, int channel, ProtonBuffer payload) {
+        return (E) pool.poll(this::supplyPooledResource).initialize(body, channel, payload);
+    }
+
+    void release(E pooledEnvelope) {
+        pool.offer(pooledEnvelope);
+    }
+
+    private E supplyPooledResource() {
+        return envelopeBuilder.apply(this);
+    }
+
+    /**
+     * @param maxPoolSize
+     *      The maximum number of protocol envelopes to store in the pool.
+     *
+     * @return a new {@link AMQPPerformativeEnvelopePool} that pools incoming AMQP envelopes
+     */
+    public static AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> incomingEnvelopePool(int maxPoolSize) {
+        return new AMQPPerformativeEnvelopePool<>((pool) -> new IncomingAMQPEnvelope(pool), maxPoolSize);
+    }
+
+    /**
+     * @return a new {@link AMQPPerformativeEnvelopePool} that pools incoming AMQP envelopes
+     */
+    public static AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> incomingEnvelopePool() {
+        return new AMQPPerformativeEnvelopePool<>((pool) -> new IncomingAMQPEnvelope(pool));
+    }
+
+    /**
+     * @param maxPoolSize
+     *      The maximum number of protocol envelopes to store in the pool.
+     *
+     * @return a new {@link AMQPPerformativeEnvelopePool} that pools outgoing AMQP envelopes
+     */
+    public static AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> outgoingEnvelopePool(int maxPoolSize) {
+        return new AMQPPerformativeEnvelopePool<>((pool) -> new OutgoingAMQPEnvelope(pool), maxPoolSize);
+    }
+
+    /**
+     * @return a new {@link AMQPPerformativeEnvelopePool} that pools outgoing AMQP envelopes
+     */
+    public static AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> outgoingEnvelopePool() {
+        return new AMQPPerformativeEnvelopePool<>((pool) -> new OutgoingAMQPEnvelope(pool));
+    }
+}
