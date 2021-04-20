@@ -41,7 +41,7 @@ public final class Modified implements DeliveryState, Outcome {
     public Modified(boolean deliveryFailed, boolean undeliverableHere, Map<Symbol, Object> annotations) {
         this.deliveryFailed = deliveryFailed;
         this.undeliverableHere = undeliverableHere;
-        this.messageAnnotations = new HashMap<>(annotations);
+        this.messageAnnotations = annotations != null ? new HashMap<>(annotations) : null;
     }
 
     public boolean isDeliveryFailed() {

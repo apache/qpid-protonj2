@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.transport.DeliveryState.DeliveryStateType;
@@ -33,6 +34,36 @@ public class ModifiedTest {
     @Test
     public void testToStringOnEmptyObject() {
         assertNotNull(new Modified().toString());
+    }
+
+    @Test
+    public void testCreateWithDeliveryFailed() {
+        Modified modified = new Modified(true, false);
+        assertTrue(modified.isDeliveryFailed());
+        assertFalse(modified.isUndeliverableHere());
+        assertNull(modified.getMessageAnnotations());
+    }
+
+    @Test
+    public void testCreateWithDeliveryFailedAndUndeliverableHere() {
+        Modified modified = new Modified(true, true);
+        assertTrue(modified.isDeliveryFailed());
+        assertTrue(modified.isUndeliverableHere());
+        assertNull(modified.getMessageAnnotations());
+    }
+
+    @Test
+    public void testCreateWithDeliveryFailedAndUndeliverableHereAndAnnotations() {
+        Map<Symbol, Object> annotations = new HashMap<>();
+        annotations.put(Symbol.valueOf("key1"), "value");
+        annotations.put(Symbol.valueOf("key2"), "value");
+
+        Modified modified = new Modified(true, true, annotations);
+        assertTrue(modified.isDeliveryFailed());
+        assertTrue(modified.isUndeliverableHere());
+        assertNotNull(modified.getMessageAnnotations());
+
+        assertEquals(annotations, modified.getMessageAnnotations());
     }
 
     @Test
