@@ -6,13 +6,25 @@ resuource.
 
 ## Client Options
 
-Before creating a new connection a Client object is created which accept a ClientOptions object to configure it.
+Before creating a new connection a Client object is created which accepts a ClientOptions object to configure it.
+
+     ClientOptions clientOptions = new ClientOptions();
+     Client client = Client.create(clientOptions);
+
+The following options are available for configuration when creating a new **Client** instance.
 
 + **ClientOptions.id** Allows configuration of the AMQP Container Id used by newly created Connections, if none is set the Client instance will create a unique Container Id that will be assigned to all new connections.
 
 ## Connection Configuration Options
 
 The ConnectionOptions object can be provided to a Client instance when creating a new connection and allows configuration of several different aspects of the resulting Connection instance.
+
+     ConnectionOptions connectionOptions = new ConnectionOptions();
+     connectionOptions.username("user");
+     connectionOptions.password("pass");
+     Connection connection = client.connect(serverHost, serverPort, connectionOptions);
+
+The following options are available for configuration when creating a new **Connection**.
 
 + **ConnectionOptions.username** User name value used to authenticate the connection
 + **ConnectionOptions.password** The password value used to authenticate the connection
@@ -29,6 +41,14 @@ The ConnectionOptions object can be provided to a Client instance when creating 
 
 The ConnectionOptions object exposes a set of configuration options for the underlying I/O transport layer known as the TransportOptions which allows for fine grained configuration of network level options.
 
+     ConnectionOptions connectionOptions = new ConnectionOptions();
+     connectionOptions.username("user");
+     connectionOptions.password("pass");
+     connectionOptions.transportOptions.allowNativeIO(false);
+     Connection connection = client.connect(serverHost, serverPort, connectionOptions);
+
+The following transport layer options are available for configuration when creating a new **Connection**.
+
 + **transportOptions.sendBufferSize** default is 64k
 + **transportOptions.receiveBufferSize** default is 64k
 + **transportOptions.trafficClass** default is 0
@@ -43,6 +63,16 @@ The ConnectionOptions object exposes a set of configuration options for the unde
 ### Connection SSL Options
 
 If an secure connection is desired the ConnectionOptions exposes another options type for configuring the client for that, the SslOptions.
+
+     ConnectionOptions connectionOptions = new ConnectionOptions();
+     connectionOptions.username("user");
+     connectionOptions.password("pass");
+     connectionOptions.transportOptions.useSsl(true);
+     connectionOptions.transportOptions.trustStoreLocation("<path>");
+     connectionOptions.transportOptions.trustStorePassword("password");
+     Connection connection = client.connect(serverHost, serverPort, connectionOptions);
+
+The following SSL layer options are available for configuration when creating a new **Connection**.
 
 + **sslOptions.useSsl** Enables or disables the use of the SSL transport layer, default is false.
 + **sslOptions.keyStoreLocation**  default is to read from the system property "javax.net.ssl.keyStore"
@@ -64,6 +94,19 @@ If an secure connection is desired the ConnectionOptions exposes another options
 
 ### Connection Automatic Reconnect Options
 
+When creating a new connection it is possible to configure that connection to perform automatic connection recovery.
+
+     ConnectionOptions connectionOptions = new ConnectionOptions();
+     connectionOptions.username("user");
+     connectionOptions.password("pass");
+     connectionOptions.reconnectionOptions.reconnectEnabled(true);
+     connectionOptions.reconnectionOptions.reconnectDelay(10_000);
+     connectionOptions.reconnectionOptions.useReconnectBackOff(true);
+     connectionOptions.reconnectionOptions.addReconnectHost("<host-name>", 5672);
+     Connection connection = client.connect(serverHost, serverPort, connectionOptions);
+
+The following connection automatic reconnect options are available for configuration when creating a new **Connection**.
+
 * **reconnectionOptions.reconnectEnabled** enables connection level reconnect for the client, default is false.
 + **reconnectionOptions.reconnectDelay** Controls the delay between successive reconnection attempts, defaults to 10 milliseconds.  If the backoff option is not enabled this value remains constant.
 + **reconnectionOptions.maxReconnectDelay** The maximum time that the client will wait before attempting a reconnect.  This value is only used when the backoff feature is enabled to ensure that the delay doesn't not grow too large.  Defaults to 30 seconds as the max time between connect attempts.
@@ -72,8 +115,16 @@ If an secure connection is desired the ConnectionOptions exposes another options
 + **reconnectionOptions.maxReconnectAttempts** The number of reconnection attempts allowed before reporting the connection as failed to the client.  The default is no limit or (-1).
 + **reconnectionOptions.maxInitialConnectionAttempts** For a client that has never connected to a remote peer before this option control how many attempts are made to connect before reporting the connection as failed.  The default is to use the value of maxReconnectAttempts.
 + **reconnectionOptions.warnAfterReconnectAttempts** Controls how often the client will log a message indicating that failover reconnection is being attempted.  The default is to log every 10 connection attempts.
++ **reconnectionOptions.addReconnectHost** Allows additional remote peers to be configured for use when the original connection fails or cannot be established to the host provided in the **connect** call.
 
 ## Session Configuration Options
+
+When creating a new Session the **SessionOptions** object can be provided which allows some control over various behaviors of the session.
+
+     SessionOptions sessionOptions = new SessionOptions();
+     Session session = connection.openSession(sessionOptions);
+
+The following options are available for configuration when creating a new **Session**.
 
 + **SessionOptions.closeTimeout** Timeout value that controls how long the client session waits on resource closure before returning. By default the client uses the matching connection level close timeout option value.
 + **SessionOptions.sendTimeout** Timeout value that sets the Session level default send timeout which can control how long a Sender waits on completion of a synchronous message send before returning an error. By default the client uses the matching connection level send timeout option value.
@@ -83,12 +134,26 @@ If an secure connection is desired the ConnectionOptions exposes another options
 
 ## Sender Configuration Options
 
+When creating a new Sender the **SenderOptions** object can be provided which allows some control over various behaviors of the sender.
+
+     SenderOptions senderOptions = new SenderOptions();
+     Sender sender = session.openSender("address", senderOptions);
+
+The following options are available for configuration when creating a new **Sender**.
+
 + **SenderOptions.closeTimeout** Timeout value that controls how long the client Sender waits on resource closure before returning. By default the client uses the matching session level close timeout option value.
 + **SenderOptions.sendTimeout** Timeout value that sets the Sender default send timeout which can control how long a Sender waits on completion of a synchronous message send before returning an error. By default the client uses the matching session level send timeout option value.
 + **SenderOptions.openTimeout** Timeout value that controls how long the client Sender waits on the AMQP Open process to complete  before returning with an error. By default the client uses the matching session level close timeout option value.
 + **SenderOptions.requestTimeout** Timeout value that controls how long the client connection waits on completion of various synchronous interactions, such as initiating or retiring a transaction, before returning an error. Does not affect synchronous message sends. By default the client uses the matching session level request timeout option value.
 
 ## Receiver Configuration Options
+
+When creating a new Receiver the **ReceiverOptions** object can be provided which allows some control over various behaviors of the receiver.
+
+     ReceiverOptions receiverOptions = new ReceiverOptions();
+     Receiver receiver = session.openReceiver("address", receiverOptions);
+
+The following options are available for configuration when creating a new **Sender**.
 
 + **ReceiverOptions.creditWindow** Configures the size of the credit window the Receiver will open with the remote which the Receiver will replenish automatically as incoming deliveries are read.  The default value is 10, to disable and control credit manually this value should be set to zero.
 + **ReceiverOptions.closeTimeout** Timeout value that controls how long the client session waits on resource closure before returning. By default the client uses the matching session level close timeout option value.
