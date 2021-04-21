@@ -1,1 +1,1 @@
-This module is used to produce the Apache Qpid proton-j2 release assemblies.
+This module is used to produce the Apache Qpid ProtonJ2 release assemblies.

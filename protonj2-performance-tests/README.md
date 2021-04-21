@@ -1,4 +1,4 @@
-protonj2 JMH Benchmarks
+ProtonJ2 JMH Benchmarks
 -------
 This module contains optional [JMH](http://openjdk.java.net/projects/code-tools/jmh/) performance tests designed
 to stress performance critical parts of the proton engine (eg encoders, decoders).
