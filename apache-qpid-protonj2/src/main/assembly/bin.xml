@@ -58,5 +58,53 @@
       </includes>
     </dependencySet>
   </dependencySets>
+  <moduleSets>
+    <moduleSet>
+      <useAllReactorProjects>true</useAllReactorProjects>
+      <includes>
+        <include>org.apache.qpid:protonj2-client-examples</include>
+      </includes>
+      <sources>
+        <includeModuleDirectory>false</includeModuleDirectory>
+        <fileSets>
+          <fileSet>
+            <directory>src</directory>
+            <outputDirectory>examples/src</outputDirectory>
+            <fileMode>0644</fileMode>
+            <directoryMode>0755</directoryMode>
+          </fileSet>
+          <fileSet>
+            <outputDirectory>examples/</outputDirectory>
+            <includes>
+              <include>pom.xml</include>
+              <include>README.txt</include>
+            </includes>
+            <fileMode>0644</fileMode>
+            <directoryMode>0755</directoryMode>
+          </fileSet>
+        </fileSets>
+      </sources>
+    </moduleSet>
+    <moduleSet>
+	  <useAllReactorProjects>true</useAllReactorProjects>
+      <includes>
+        <include>org.apache.qpid:protonj2-client-docs</include>
+      </includes>
+      <sources>
+        <includeModuleDirectory>false</includeModuleDirectory>
+        <fileSets>
+          <fileSet>
+            <includes>
+              <include>*.md</include>
+              <include>README.txt</include>
+            </includes>
+            <outputDirectory>docs</outputDirectory>
+            <fileMode>0644</fileMode>
+            <directoryMode>0755</directoryMode>
+          </fileSet>
+        </fileSets>
+      </sources>
+    </moduleSet>
+  </moduleSets>
 </assembly>
 
