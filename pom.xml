@@ -32,9 +32,9 @@
   <description>Qpid protonj2 is a library for speaking AMQP 1.0.</description>
 
   <properties>
-    <!-- See also maven.compiler.release in the java9on profile -->
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.release>11</maven.compiler.release>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
 
     <!-- Test dependency versions -->
     <junit.jupiter.version>5.7.1</junit.jupiter.version>

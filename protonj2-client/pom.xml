@@ -30,12 +30,6 @@
   <description>Imperative API for AMQP Messaging.</description>
   <packaging>jar</packaging>
 
-  <properties>
-    <!-- See also maven.compiler.release in the java9on profile -->
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.apache.qpid</groupId>
