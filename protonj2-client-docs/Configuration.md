@@ -1,4 +1,4 @@
-# Qpid protonj2 Imperative Client configuration
+# Qpid ProtonJ2 Imperative Client configuration
 
 This file details various configuration options for the Imperative API based Java client.  Each of the resources
 that allow configuration accept a configuration options object that encapsulates all configuration for that specific
@@ -153,13 +153,42 @@ When creating a new Receiver the **ReceiverOptions** object can be provided whic
      ReceiverOptions receiverOptions = new ReceiverOptions();
      Receiver receiver = session.openReceiver("address", receiverOptions);
 
-The following options are available for configuration when creating a new **Sender**.
+The following options are available for configuration when creating a new **Receiver**.
 
 + **ReceiverOptions.creditWindow** Configures the size of the credit window the Receiver will open with the remote which the Receiver will replenish automatically as incoming deliveries are read.  The default value is 10, to disable and control credit manually this value should be set to zero.
 + **ReceiverOptions.closeTimeout** Timeout value that controls how long the client session waits on resource closure before returning. By default the client uses the matching session level close timeout option value.
 + **ReceiverOptions.openTimeout** Timeout value that controls how long the client Session waits on the AMQP Open process to complete  before returning with an error. By default the client uses the matching session level close timeout option value.
 + **ReceiverOptions.requestTimeout** Timeout value that controls how long the client Receiver waits on completion of various synchronous interactions, such settlement of a delivery, before returning an error. By default the client uses the matching session level request timeout option value.
 + **ReceiverOptions.drainTimeout** Timeout value that controls how long the Receiver link waits on completion of a drain request before failing that request with an error.  By default the client uses the matching session level drain timeout option value.
+
+## Stream Sender Configuration Options
+
+When creating a new Sender the **SenderOptions** object can be provided which allows some control over various behaviors of the sender.
+
+     StreamSenderOptions streamSenderOptions = new StreamSenderOptions();
+     StreamSender streamSender = connection.openStreamSender("address", streamSenderOptions);
+
+The following options are available for configuration when creating a new **StreamSender**.
+
++ **StreamSenderOptions.closeTimeout** Timeout value that controls how long the client Sender waits on resource closure before returning. By default the client uses the matching session level close timeout option value.
++ **StreamSenderOptions.sendTimeout** Timeout value that sets the Sender default send timeout which can control how long a Sender waits on completion of a synchronous message send before returning an error. By default the client uses the matching session level send timeout option value.
++ **StreamSenderOptions.openTimeout** Timeout value that controls how long the client Sender waits on the AMQP Open process to complete  before returning with an error. By default the client uses the matching session level close timeout option value.
++ **StreamSenderOptions.requestTimeout** Timeout value that controls how long the client connection waits on completion of various synchronous interactions, such as initiating or retiring a transaction, before returning an error. Does not affect synchronous message sends. By default the client uses the matching session level request timeout option value.
+
+## Stream Receiver Configuration Options
+
+When creating a new Receiver the **ReceiverOptions** object can be provided which allows some control over various behaviors of the receiver.
+
+     StreamReceiverOptions streamReceiverOptions = new StreamReceiverOptions();
+     StreamReceiver streamReceiver = connection.openStreamReceiver("address", streamReceiverOptions);
+
+The following options are available for configuration when creating a new **StreamReceiver**.
+
++ **StreamReceiverOptions.creditWindow** Configures the size of the credit window the Receiver will open with the remote which the Receiver will replenish automatically as incoming deliveries are read.  The default value is 10, to disable and control credit manually this value should be set to zero.
++ **StreamReceiverOptions.closeTimeout** Timeout value that controls how long the client session waits on resource closure before returning. By default the client uses the matching session level close timeout option value.
++ **StreamReceiverOptions.openTimeout** Timeout value that controls how long the client Session waits on the AMQP Open process to complete  before returning with an error. By default the client uses the matching session level close timeout option value.
++ **StreamReceiverOptions.requestTimeout** Timeout value that controls how long the client Receiver waits on completion of various synchronous interactions, such settlement of a delivery, before returning an error. By default the client uses the matching session level request timeout option value.
++ **StreamReceiverOptions.drainTimeout** Timeout value that controls how long the Receiver link waits on completion of a drain request before failing that request with an error.  By default the client uses the matching session level drain timeout option value.
 
 ## Logging
 
