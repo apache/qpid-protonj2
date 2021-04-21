@@ -21,6 +21,7 @@ package org.apache.qpid.protonj2.test.driver.matchers.types;
 import java.util.Objects;
 
 import org.apache.qpid.protonj2.test.driver.codec.EncodingCodes;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.Data;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
@@ -54,8 +55,7 @@ public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<ByteBu
 
     /**
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedCompositingDataSectionMatcher(byte[] expectedValue) {
         this(Unpooled.wrappedBuffer(expectedValue));
@@ -63,8 +63,7 @@ public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<ByteBu
 
     /**
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedCompositingDataSectionMatcher(Binary expectedValue) {
         this(Unpooled.wrappedBuffer(expectedValue.asByteBuffer()));
@@ -72,8 +71,7 @@ public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<ByteBu
 
     /**
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedCompositingDataSectionMatcher(ByteBuf expectedValue) {
         Objects.requireNonNull(expectedValue, "The expected value cannot be null for this matcher");

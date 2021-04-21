@@ -19,6 +19,7 @@
 package org.apache.qpid.protonj2.test.driver.matchers.types;
 
 import org.apache.qpid.protonj2.test.driver.codec.messaging.AmqpValue;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.Data;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
@@ -31,8 +32,7 @@ public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {
 
     /**
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedDataMatcher(byte[] expectedValue) {
         this(new Binary(expectedValue), false);
@@ -40,8 +40,7 @@ public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {
 
     /**
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedDataMatcher(Binary expectedValue) {
         this(expectedValue, false);
@@ -49,8 +48,7 @@ public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {
 
     /**
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      * @param permitTrailingBytes
      *        if it is permitted for bytes to be left in the Binary after
      *        consuming the {@link AmqpValue}
@@ -61,8 +59,7 @@ public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {
 
     /**
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      * @param permitTrailingBytes
      *        if it is permitted for bytes to be left in the Binary after
      *        consuming the {@link AmqpValue}

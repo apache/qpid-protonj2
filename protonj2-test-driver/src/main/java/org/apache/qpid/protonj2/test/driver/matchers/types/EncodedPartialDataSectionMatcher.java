@@ -19,6 +19,7 @@
 package org.apache.qpid.protonj2.test.driver.matchers.types;
 
 import org.apache.qpid.protonj2.test.driver.codec.EncodingCodes;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.Data;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
@@ -45,8 +46,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
      *        the actual encoded size the Data section binary should eventually
      *        receive once all split frame transfers have arrived.
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedPartialDataSectionMatcher(int expectedEncodedSize, byte[] expectedValue) {
         this(expectedEncodedSize, Unpooled.wrappedBuffer(expectedValue), true);
@@ -57,8 +57,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
      *        the actual encoded size the Data section binary should eventually
      *        receive once all split frame transfers have arrived.
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedPartialDataSectionMatcher(int expectedEncodedSize, Binary expectedValue) {
         this(expectedEncodedSize, Unpooled.wrappedBuffer(expectedValue.asByteBuffer()), true);
@@ -69,8 +68,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
      *        the actual encoded size the Data section binary should eventually
      *        receive once all split frame transfers have arrived.
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedPartialDataSectionMatcher(int expectedEncodedSize, ByteBuf expectedValue) {
         this(expectedEncodedSize, expectedValue, true);
@@ -78,8 +76,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
 
     /**
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedPartialDataSectionMatcher(byte[] expectedValue) {
         this(-1, Unpooled.wrappedBuffer(expectedValue), false);
@@ -87,8 +84,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
 
     /**
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedPartialDataSectionMatcher(Binary expectedValue) {
         this(-1, Unpooled.wrappedBuffer(expectedValue.asByteBuffer()), false);
@@ -96,8 +92,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
 
     /**
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedPartialDataSectionMatcher(ByteBuf expectedValue) {
         this(-1, expectedValue, false);
@@ -108,8 +103,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
      *        the actual encoded size the Data section binary should eventually
      *        receive once all split frame transfers have arrived.
      * @param expectedValue
-     *        the value that is expected to be IN the received
-     *        {@link org.apache.qpid.proton.amqp.messaging.Data}
+     *        the value that is expected to be IN the received {@link Data}
      * @param expectDataSectionPreamble
      *        should the matcher check for the Data and Binary section encoding
      *        meta-data or only match the payload to the given expected value.

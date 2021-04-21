@@ -85,7 +85,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      * immediately without modifying the {@link Map}.
      *
      * @param key
-     *      the integer key value to search for in the {@link BottomUpSplayMap}.
+     *      the integer key value to search for in the {@link SplayMap}.
      *
      * @return the value stored for the given key if found or null if not in the {@link Map}.
      */
@@ -314,13 +314,13 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     /**
      * A specialized forEach implementation that accepts a {@link Consumer} function that will
-     * be called for each value in the {@link BottomUpSplayMap}.  This method can save overhead as it does not
+     * be called for each value in the {@link SplayMap}.  This method can save overhead as it does not
      * need to box the primitive key values into an object for the call to the provided function.
      * Unless otherwise specified by the implementing class, actions are performed in the order of entry
      * set iteration (if an iteration order is specified.)
      *
      * @param action
-     *      The action to be performed for each of the values in the {@link BottomUpSplayMap}.
+     *      The action to be performed for each of the values in the {@link SplayMap}.
      */
     public void forEach(Consumer<? super E> action) {
         Objects.requireNonNull(action);

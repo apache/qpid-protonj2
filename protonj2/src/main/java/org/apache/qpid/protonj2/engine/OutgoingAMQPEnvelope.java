@@ -75,7 +75,7 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
      * @param frameWriteCompleteHandler
      *      Runnable handler that will update state or otherwise respond to the write of a frame.
      *
-     * @return this {@link OutgoingProtocolFrame} instance.
+     * @return this {@link OutgoingAMQPEnvelope} instance.
      */
     public OutgoingAMQPEnvelope setFrameWriteCompletionHandler(Runnable frameWriteCompleteHandler) {
         this.frameWriteCompleteHandler = frameWriteCompleteHandler;

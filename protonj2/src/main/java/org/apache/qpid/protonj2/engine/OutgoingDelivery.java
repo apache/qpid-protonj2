@@ -33,7 +33,7 @@ public interface OutgoingDelivery {
     Sender getLink();
 
     /**
-     * @return the {@link Attachments} instance that is associated with this {@link Delivery}
+     * @return the {@link Attachments} instance that is associated with this {@link OutgoingDelivery}
      */
     Attachments getAttachments();
 
@@ -151,7 +151,6 @@ public interface OutgoingDelivery {
      * @return true if the delivery is partial
      *
      * @see #isAborted()
-     * @see #isComplete()
      */
     boolean isPartial();
 

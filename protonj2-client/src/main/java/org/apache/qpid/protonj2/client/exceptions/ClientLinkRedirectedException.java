@@ -22,6 +22,7 @@ import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Receiver;
+import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.impl.ClientRedirect;
 import org.apache.qpid.protonj2.types.transport.Open;
 

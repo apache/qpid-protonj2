@@ -76,7 +76,7 @@ public final class LegacyCodecAdapter {
      * @param buffer
      *      The buffer containing the encoded type.
      *
-     * @return a {@link LegacyTypeAdapter} that can compare against the new version of the type.
+     * @return a decoded version of the legacy encoded type that can compare against the new version of the type.
      */
     public Object decodeLegacyType(ProtonBuffer buffer) {
         ByteBuffer byteBuffer = buffer.toByteBuffer();

@@ -59,8 +59,6 @@ public class SslSupport {
      * when creating the handler. If they do not, an SSLContext will first be created
      * using the other option values.
      *
-     * @param allocator
-     *		  The Netty Buffer Allocator to use when Netty resources need to be created.
      * @param remote
      *        The URI of the remote peer that the SslHandler will be used against.
      * @param options
@@ -91,8 +89,6 @@ public class SslSupport {
      * when creating the handler. If they do not, an SSLContext will first be created
      * using the other option values.
      *
-     * @param allocator
-     *        The Netty Buffer Allocator to use when Netty resources need to be created.
      * @param remote
      *        The URI of the remote peer that the SslHandler will be used against.
      * @param options
@@ -183,8 +179,6 @@ public class SslSupport {
      *        the URI of the remote peer that will be used to initialize the engine, may be null if none should.
      * @param context
      *        the SSLContext to use when creating the engine.
-     * @param client
-     *        indicates if the context is meant for use with a client or sever
      * @param options
      *        the TransportOptions to use to configure the new SSLEngine.
      *

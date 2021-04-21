@@ -25,7 +25,7 @@ import org.apache.qpid.protonj2.types.Symbol;
 
 /**
  * Client implementation of the {@link ErrorCondition} type that wraps a
- * Proton specific AMQP {@link org.apache.qpid.protonj2.amqp.transport.ErrorCondition}.
+ * Proton specific AMQP {@link org.apache.qpid.protonj2.types.transport.ErrorCondition}.
  */
 public final class ClientErrorCondition implements ErrorCondition {
 

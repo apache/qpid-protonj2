@@ -42,7 +42,7 @@ public interface Transaction<E extends Endpoint<?>> {
      * For a {@link Transaction} that has either been requested to discharge or has successfully
      * discharged the {@link DischargeState} reflects whether the transaction was to be committed or
      * rolled back.   Prior to a discharge being attempted there is no state value and this method
-     * returns {@link DischargeState.NONE}.
+     * returns a {@link DischargeState} of none.
      *
      * @return the current {@link DischargeState} of the transaction.
      */
@@ -68,7 +68,7 @@ public interface Transaction<E extends Endpoint<?>> {
     boolean isFailed();
 
     /**
-     * If the declare or discharge of the transaction caused its state to become {@link TransactionState#FAILED}
+     * If the declare or discharge of the transaction caused its state to become {@link TransactionState} FAILED
      * this method returns the {@link ErrorCondition} that the remote used to describe the reason for the failure.
      *
      * @return the {@link ErrorCondition} that the {@link TransactionManager} used to fail the {@link Transaction}.

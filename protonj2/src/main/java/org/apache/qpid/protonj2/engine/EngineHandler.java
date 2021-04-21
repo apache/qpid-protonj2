@@ -133,10 +133,10 @@ public interface EngineHandler {
     /**
      * Handles write of AMQPHeader either by directly writing it to the output target or by
      * converting it to bytes and firing a write using the {@link ProtonBuffer} based API
-     * in {@link EngineHandlerContext#fireWrite(ProtonBuffer)}
+     * in {@link EngineHandlerContext#fireWrite(ProtonBuffer, Runnable)}
      *
      * @param context
-     *      The {@link EngineHandlerContext} associated with this {@link EngineWriteHandler} instance.
+     *      The {@link EngineHandlerContext} associated with this {@link EngineHandler} instance.
      * @param envelope
      *      The {@link HeaderEnvelope} instance to write.
      */
@@ -147,10 +147,10 @@ public interface EngineHandler {
     /**
      * Handles write of AMQP performative envelope either by directly writing it to the output target or
      * by converting it to bytes and firing a write using the {@link ProtonBuffer} based API in
-     * {@link EngineHandlerContext#fireWrite(ProtonBuffer)}
+     * {@link EngineHandlerContext#fireWrite(ProtonBuffer, Runnable)}
      *
      * @param context
-     *      The {@link EngineHandlerContext} associated with this {@link EngineWriteHandler} instance.
+     *      The {@link EngineHandlerContext} associated with this {@link EngineHandler} instance.
      * @param envelope
      *      The {@link OutgoingAMQPEnvelope} instance to write.
      */
@@ -161,10 +161,10 @@ public interface EngineHandler {
     /**
      * Handles write of SaslPerformative either by directly writing it to the output target or by
      * converting it to bytes and firing a write using the {@link ProtonBuffer} based API
-     * in {@link EngineHandlerContext#fireWrite(ProtonBuffer)}
+     * in {@link EngineHandlerContext#fireWrite(ProtonBuffer, Runnable)}
      *
      * @param context
-     *      The {@link EngineHandlerContext} associated with this {@link EngineWriteHandler} instance.
+     *      The {@link EngineHandlerContext} associated with this {@link EngineHandler} instance.
      * @param envelope
      *      The {@link SASLEnvelope} instance to write.
      */
@@ -179,7 +179,7 @@ public interface EngineHandler {
      * as an output sink is required for all low level engine writes.
      *
      * @param context
-     *      The {@link EngineHandlerContext} associated with this {@link EngineWriteHandler} instance.
+     *      The {@link EngineHandlerContext} associated with this {@link EngineHandler} instance.
      * @param buffer
      *      The {@link ProtonBuffer} whose payload is to be written to the output target.
      * @param ioComplete

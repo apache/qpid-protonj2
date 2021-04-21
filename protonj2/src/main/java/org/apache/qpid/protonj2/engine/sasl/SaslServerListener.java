@@ -38,7 +38,7 @@ public interface SaslServerListener {
      * authentication properties.
      * <p>
      * In the event that the server implementation cannot proceed with SASL authentication it should call the
-     * {@link SaslServerContext#saslFailure(org.apache.qpid.protonj2.engine.exceptions.SaslException)} signal
+     * {@link SaslServerContext#saslFailure(javax.security.sasl.SaslException)} signal
      * the {@link Engine} that it should transition to a failed state.
      *
      * @param context
@@ -52,7 +52,7 @@ public interface SaslServerListener {
      * method immediately or later using the same thread that invoked this event handler.
      * <p>
      * In the event that the server implementation cannot proceed with SASL authentication it should call the
-     * {@link SaslServerContext#saslFailure(org.apache.qpid.protonj2.engine.exceptions.SaslException)} to fail
+     * {@link SaslServerContext#saslFailure(javax.security.sasl.SaslException)} to fail
      * the SASL negotiation and signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context
@@ -72,7 +72,7 @@ public interface SaslServerListener {
      * can either respond immediately or it should response using the same thread that invoked this handler.
      * <p>
      * In the event that the server implementation cannot proceed with SASL authentication it should call the
-     * {@link SaslServerContext#saslFailure(org.apache.qpid.protonj2.engine.exceptions.SaslException)} to fail
+     * {@link SaslServerContext#saslFailure(javax.security.sasl.SaslException)} to fail
      * the SASL negotiation and signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context
@@ -95,7 +95,7 @@ public interface SaslServerListener {
      * same thread that the response handler was invoked from.
      * <p>
      * In the event that the server implementation cannot proceed with SASL authentication it should call the
-     * {@link SaslServerContext#saslFailure(org.apache.qpid.protonj2.engine.exceptions.SaslException)} to fail
+     * {@link SaslServerContext#saslFailure(javax.security.sasl.SaslException)} to fail
      * the SASL negotiation and signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context

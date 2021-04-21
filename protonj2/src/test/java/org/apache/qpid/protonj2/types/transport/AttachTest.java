@@ -270,8 +270,8 @@ public class AttachTest {
         original.setTarget((Coordinator) null);
         original.setMaxMessageSize(null);
         original.setUnsettled(null);
-        original.setOfferedCapabilities(null);
-        original.setDesiredCapabilities(null);
+        original.setOfferedCapabilities((Symbol[]) null);
+        original.setDesiredCapabilities((Symbol[]) null);
 
         assertFalse(original.hasTarget());
         assertFalse(original.hasSource());

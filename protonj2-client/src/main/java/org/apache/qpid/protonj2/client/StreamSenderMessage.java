@@ -61,7 +61,7 @@ public interface StreamSenderMessage extends AdvancedMessage<OutputStream> {
     /**
      * Marks the currently streaming message as being complete.
      * <p>
-     * Marking a message as complete finalizes the {@link SendContext} and causes a
+     * Marking a message as complete finalizes the streaming send operation and causes a
      * final {@link Transfer} frame to be sent to the remote indicating that the ongoing
      * streaming delivery is done and no more message data will arrive.
      *
@@ -90,7 +90,7 @@ public interface StreamSenderMessage extends AdvancedMessage<OutputStream> {
     StreamSenderMessage abort() throws ClientException;
 
     /**
-     * @return true if this {@link SendContext} has been marked as aborted previously.
+     * @return true if this {@link StreamSenderMessage} has been marked as aborted previously.
      */
     boolean aborted();
 
@@ -104,16 +104,16 @@ public interface StreamSenderMessage extends AdvancedMessage<OutputStream> {
      * based component.  The {@link Data} section based stream allows for control over the AMQP
      * message {@link Section} values that are sent but does the encoding itself.  For stream
      * of message data where the content source already consists of an AMQP encoded message refer
-     * to the {@link #rawOutputStream(OutputStreamOptions)} method.
+     * to the {@link #rawOutputStream} method.
      *
      * @param options
-     *      The stream options to use to configure the returned {@link MessageOutputStream}
+     *      The stream options to use to configure the returned {@link OutputStream}
      *
      * @return a {@link OutputStream} instance configured using the given options.
      *
      * @throws ClientException if an error occurs while creating the {@link OutputStream}.
      *
-     * @see #rawOutputStream(OutputStreamOptions)
+     * @see #rawOutputStream
      */
     OutputStream body(OutputStreamOptions options) throws ClientException;
 
@@ -133,7 +133,8 @@ public interface StreamSenderMessage extends AdvancedMessage<OutputStream> {
      *
      * @throws ClientException if an error occurs while creating the {@link OutputStream}.
      *
-     * @see #dataOutputStream(OutputStreamOptions)
+     * @see #body
+     * @see #body(OutputStreamOptions)
      */
     OutputStream rawOutputStream() throws ClientException;
 

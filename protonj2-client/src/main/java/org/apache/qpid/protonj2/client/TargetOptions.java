@@ -21,6 +21,12 @@ package org.apache.qpid.protonj2.client;
  */
 public final class TargetOptions extends TerminusOptions<TargetOptions> {
 
+    /**
+     * @param other
+     * 		The instance which should receive the configuration from this options instance.
+     *
+     * @return the given {@link TargetOptions} instance with all configuration copied from this instance.
+     */
     public TargetOptions copyInto(TargetOptions other) {
         super.copyInto(other);
         return this;

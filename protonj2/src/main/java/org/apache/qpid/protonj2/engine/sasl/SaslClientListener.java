@@ -37,7 +37,7 @@ public interface SaslClientListener {
      * authentication properties.
      * <p>
      * In the event that the client implementation cannot proceed with SASL authentication it should call the
-     * {@link SaslClientContext#saslFailure(org.apache.qpid.protonj2.engine.exceptions.SaslException)}
+     * {@link SaslClientContext#saslFailure(javax.security.sasl.SaslException)}
      * to signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context
@@ -53,7 +53,7 @@ public interface SaslClientListener {
      * or later using the same thread that triggered this event.
      * <p>
      * In the event that the client implementation cannot proceed with SASL authentication it should call the
-     * {@link SaslClientContext#saslFailure(org.apache.qpid.protonj2.engine.exceptions.SaslException)} to fail
+     * {@link SaslClientContext#saslFailure(javax.security.sasl.SaslException)} to fail
      * the SASL negotiation and signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context
@@ -74,7 +74,7 @@ public interface SaslClientListener {
      * thread that triggered this event.
      * <p>
      * In the event that the client implementation cannot proceed with SASL authentication it should call the
-     * {@link SaslClientContext#saslFailure(org.apache.qpid.protonj2.engine.exceptions.SaslException)} to fail
+     * {@link SaslClientContext#saslFailure(javax.security.sasl.SaslException)} to fail
      * the SASL negotiation and signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context
@@ -94,7 +94,7 @@ public interface SaslClientListener {
      * indicate that negotiations have failed and the server has not authenticated the client.
      * <p>
      * In the event that the client implementation cannot proceed with SASL authentication it should call the
-     * {@link SaslClientContext#saslFailure(org.apache.qpid.protonj2.engine.exceptions.SaslException)} to fail
+     * {@link SaslClientContext#saslFailure(javax.security.sasl.SaslException)} to fail
      * the SASL negotiation and signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context

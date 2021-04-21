@@ -85,9 +85,6 @@ import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Tests the {@link message} implementation
- */
 @Timeout(20)
 public class StreamSenderTest extends ImperativeClientTestCase {
 

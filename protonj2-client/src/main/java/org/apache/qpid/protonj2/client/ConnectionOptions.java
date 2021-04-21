@@ -558,9 +558,9 @@ public class ConnectionOptions {
      *
      * @return this {@link ConnectionOptions} instance.
      *
-     * @see #connectionInterrupted
-     * @see #connectionRestored
-     * @see #connectionFailed
+     * @see #interruptedHandler
+     * @see #connectedHandler
+     * @see #disconnectedHandler
      */
     public ConnectionOptions disconnectedHandler(BiConsumer<Connection, DisconnectionEvent> disconnectedHandler) {
         this.disconnectedHandler = disconnectedHandler;
@@ -615,7 +615,7 @@ public class ConnectionOptions {
      *
      * @see #connectedhedHandler
      * @see #reconnectedHandler
-     * @see #failedHandler
+     * @see #disconnectedHandler
      */
     public ConnectionOptions interruptedHandler(BiConsumer<Connection, DisconnectionEvent> interruptedHandler) {
         this.interruptedHandler = interruptedHandler;
@@ -641,7 +641,7 @@ public class ConnectionOptions {
      *
      * @see #connectedhedHandler
      * @see #interruptedHandler
-     * @see #failedHandler
+     * @see #disconnectedHandler
      */
     public ConnectionOptions reconnectedHandler(BiConsumer<Connection, ConnectionEvent> reconnectedHandler) {
         this.reconnectedHandler = reconnectedHandler;
