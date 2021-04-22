@@ -35,20 +35,19 @@ public interface ConnectionError {
      * attempt reconnection to the container using the details provided in the info map.
      * <br>
      * <ul>
-     *   <li>hostname</li>
+     *   <li>hostname:
      *     <ul>
      *       <li>the hostname of the container hosting the terminus. This is the value that SHOULD be
      *           supplied in the hostname field of the open frame, and during SASL and TLS negotiation
      *           (if used).
-     *       </li>
      *     </ul>
-     *   <li>network-host</li>
+     *   <li>network-host:
      *     <ul>
-     *       <li>the DNS hostname or IP address of the machine hosting the container.</li>
+     *       <li>the DNS hostname or IP address of the machine hosting the container.
      *     </ul>
-     *   <li>port</li>
+     *   <li>port:
      *     <ul>
-     *       <li>the port number on the machine hosting the container.</li>
+     *       <li>the port number on the machine hosting the container.
      *     </ul>
      * </ul>
      */

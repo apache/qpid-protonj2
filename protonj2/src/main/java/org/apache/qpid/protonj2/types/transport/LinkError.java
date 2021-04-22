@@ -40,24 +40,23 @@ public interface LinkError {
      * MAY contain the following information to allow the client to locate the attach to the terminus.
      * <br>
      * <ul>
-     *   <li>hostname</li>
+     *   <li>hostname:
      *     <ul>
      *       <li>the hostname of the container hosting the terminus. This is the value that SHOULD be
      *           supplied in the hostname field of the open frame, and during SASL and TLS negotiation
      *           (if used).
-     *       </li>
      *     </ul>
-     *   <li>network-host</li>
+     *   <li>network-host:
      *     <ul>
-     *       <li>the DNS hostname or IP address of the machine hosting the container.</li>
+     *       <li>the DNS hostname or IP address of the machine hosting the container.
      *     </ul>
-     *   <li>port</li>
+     *   <li>port:
      *     <ul>
-     *       <li>the port number on the machine hosting the container.</li>
+     *       <li>the port number on the machine hosting the container.
      *     </ul>
-     *   <li>address</li>
+     *   <li>address:
      *     <ul>
-     *       <li>the address of the terminus at the container.</li>
+     *       <li>the address of the terminus at the container.
      *     </ul>
      * </ul>
      */

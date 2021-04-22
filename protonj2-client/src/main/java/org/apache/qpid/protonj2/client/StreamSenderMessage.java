@@ -80,9 +80,6 @@ public interface StreamSenderMessage extends AdvancedMessage<OutputStream> {
      * Marks the currently streaming message as being aborted. Once aborted no further
      * writes regardless of whether any writes have yet been performed or not.
      *
-     * @param aborted
-     *      Should the message be marked as having been aborted.
-     *
      * @return this {@link StreamSenderMessage} instance.
      *
      * @throws ClientException if an error occurs while initiating the abort operation.

@@ -51,8 +51,7 @@ public interface ClientTransactionContext {
      * @param startNew
      *      Should the context immediately initiate a new transaction
      *
-     * @return this {@@Override
-    link ClientTransactionContext} instance.
+     * @return this {@link ClientTransactionContext} instance.
      *
      * @throws ClientIllegalStateException if an error occurs do to the transaction state.
      */
