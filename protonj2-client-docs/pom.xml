@@ -24,7 +24,7 @@
 
   <artifactId>protonj2-client-docs</artifactId>
   <packaging>pom</packaging>
-  <name>Qpid protonj2 Client Documentation</name>
+  <name>Qpid ProtonJ2 Client Documentation</name>
 
   <properties>
     <jacoco.skip>true</jacoco.skip>

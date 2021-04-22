@@ -24,8 +24,8 @@
   </parent>
 
   <artifactId>protonj2-performance-tests</artifactId>
-  <name>Qpid protonj2 JMH performance tests</name>
-  <description>JMH Tests for the protonj2 library</description>
+  <name>Qpid ProtonJ2 JMH performance tests</name>
+  <description>JMH Tests for the ProtonJ2 library</description>
   <packaging>jar</packaging>
 
   <properties>

@@ -25,7 +25,7 @@
 
   <artifactId>apache-qpid-protonj2</artifactId>
   <packaging>pom</packaging>
-  <name>Apache Qpid protonj2</name>
+  <name>Apache Qpid ProtonJ2</name>
 
   <dependencies>
     <dependency>

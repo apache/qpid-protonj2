@@ -26,7 +26,7 @@
   </parent>
 
   <artifactId>protonj2-client</artifactId>
-  <name>Qpid protonj2 Client Library</name>
+  <name>Qpid ProtonJ2 Client Library</name>
   <description>Imperative API for AMQP Messaging.</description>
   <packaging>jar</packaging>
 

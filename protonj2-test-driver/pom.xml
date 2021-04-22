@@ -25,7 +25,7 @@
 
   <artifactId>protonj2-test-driver</artifactId>
   <packaging>jar</packaging>
-  <name>Qpid protonj2 AMQP Test Driver</name>
+  <name>Qpid ProtonJ2 AMQP Test Driver</name>
 
   <dependencies>
     <dependency>

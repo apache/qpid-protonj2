@@ -24,7 +24,7 @@
   </parent>
 
   <artifactId>protonj2-client-examples</artifactId>
-  <name>Qpid protonj2 Client Examples</name>
+  <name>Qpid ProtonJ2 Client Examples</name>
   <description>Examples showing the use of the AMQP client</description>
   <packaging>jar</packaging>
 

@@ -28,8 +28,8 @@
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>Qpid protonj2 Parent</name>
-  <description>Qpid protonj2 is a library for speaking AMQP 1.0.</description>
+  <name>Qpid ProtonJ2 Parent</name>
+  <description>Qpid ProtonJ2 is a library for speaking AMQP 1.0.</description>
 
   <properties>
     <maven.compiler.release>11</maven.compiler.release>
@@ -78,7 +78,7 @@
     <system>JIRA</system>
   </issueManagement>
   <ciManagement>
-    <url>https://builds.apache.org/view/M-R/view/Qpid/job/Qpid-protonj2/</url>
+    <url>https://builds.apache.org/view/M-R/view/Qpid/job/Qpid-ProtonJ2/</url>
   </ciManagement>
 
   <modules>
