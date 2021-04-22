@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.client.impl;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -63,6 +64,7 @@ final class ClientLocalTransactionContext implements ClientTransactionContext {
     private final String DISCHARGE_FUTURE_NAME = "Discharge:Future";
     private final String START_TRANSACTION_MARKER = "Transaction:Start";
 
+    private final AtomicInteger coordinatorCounter = new AtomicInteger();
     private final ClientSession session;
 
     private Transaction<TransactionController> currentTxn;
@@ -252,7 +254,7 @@ final class ClientLocalTransactionContext implements ClientTransactionContext {
             Source source = new Source();
             source.setOutcomes(Arrays.copyOf(SUPPORTED_OUTCOMES, SUPPORTED_OUTCOMES.length));
 
-            TransactionController txnController = session.getProtonSession().coordinator("Coordinator:" + session.id());
+            TransactionController txnController = session.getProtonSession().coordinator(nextCoordinatorId());
             txnController.setSource(source)
                          .setCoordinator(coordinator)
                          .declaredHandler(this::handleTransactionDeclared)
@@ -436,6 +438,10 @@ final class ClientLocalTransactionContext implements ClientTransactionContext {
                     break;
             }
         }
+    }
+
+    private String nextCoordinatorId() {
+        return session.id() + ":" + coordinatorCounter.incrementAndGet();
     }
 
     private void handleParentEndpointClosed(TransactionController txnController) {
