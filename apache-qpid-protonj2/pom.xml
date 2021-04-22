@@ -107,8 +107,8 @@
                     <fileSet>
                       <directory>${project.build.directory}</directory>
                       <includes>
-                        <include>apache-qpid-jms-${project.version}-src.tar.gz</include>
-                        <include>apache-qpid-jms-${project.version}-bin.tar.gz</include>
+                        <include>apache-qpid-protonj2-${project.version}-src.tar.gz</include>
+                        <include>apache-qpid-protonj2-${project.version}-bin.tar.gz</include>
                       </includes>
                     </fileSet>
                   </fileSets>
