@@ -234,9 +234,8 @@
         <artifactId>apache-rat-plugin</artifactId>
         <configuration>
           <excludes combine.children="append">
-            <exclude>appveyor.yml</exclude>
-            <exclude>.travis.yml</exclude>
-            <exclude>.mailmap</exclude>
+            <exclude>.github/workflows/*.yml</exclude>
+            <exclude>**/version.txt</exclude>
             <exclude>**/*.md</exclude>
             <exclude>**/*.pkcs12</exclude>
             <exclude>**/*.p12</exclude>
