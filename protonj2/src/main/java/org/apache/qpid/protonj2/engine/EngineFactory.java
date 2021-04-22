@@ -23,6 +23,9 @@ import org.apache.qpid.protonj2.engine.impl.ProtonEngineFactory;
  */
 public interface EngineFactory {
 
+	/**
+	 * The Proton provided EngineFactory instance.
+	 */
     public static final EngineFactory PROTON = new ProtonEngineFactory();
 
     /**

@@ -65,6 +65,9 @@ public final class ProtonStreamDecoderFactory {
     private ProtonStreamDecoderFactory() {
     }
 
+    /**
+     * @return a new {@link ProtonDecoder} instance that only decodes AMQP types.
+     */
     public static ProtonStreamDecoder create() {
         ProtonStreamDecoder decoder = new ProtonStreamDecoder();
 
@@ -75,6 +78,9 @@ public final class ProtonStreamDecoderFactory {
         return decoder;
     }
 
+    /**
+     * @return a new {@link ProtonDecoder} instance that only decodes SASL types.
+     */
     public static ProtonStreamDecoder createSasl() {
         ProtonStreamDecoder decoder = new ProtonStreamDecoder();
 

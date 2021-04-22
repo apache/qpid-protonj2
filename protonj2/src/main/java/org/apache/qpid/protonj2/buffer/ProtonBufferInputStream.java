@@ -45,6 +45,9 @@ public class ProtonBufferInputStream extends InputStream implements DataInput {
         this.initialReadIndex = buffer.getReadIndex();
     }
 
+    /**
+     * @return a running total of the number of bytes that has been read from this {@link InputStream}.
+     */
     public int getBytesRead() {
         return buffer.getReadIndex() - initialReadIndex;
     }

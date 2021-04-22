@@ -45,6 +45,9 @@ public class ProtonBufferOutputStream extends OutputStream implements DataOutput
         this.startWriteIndex = buffer.getWriteIndex();
     }
 
+    /**
+     * @return a running total of the number of bytes that has been written to this {@link OutputStream}
+     */
     public int getBytesWritten() {
         return buffer.getWriteIndex() - startWriteIndex;
     }

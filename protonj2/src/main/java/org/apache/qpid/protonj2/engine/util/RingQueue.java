@@ -39,10 +39,23 @@ public class RingQueue<E> extends AbstractQueue<E> {
 
     private final Object[] backingArray;
 
+    /**
+     * Creates a new {@link RingQueue} instance with the given fixed Queue size.
+     *
+     * @param queueSize
+     * 		The size to use for the ring queue.
+     */
     public RingQueue(int queueSize) {
         this.backingArray = new Object[queueSize];
     }
 
+    /**
+     * Creates a new {@link RingQueue} instance with a size that matches the size of the
+     * given {@link Collection} and filled with the values from that {@link Collection}.
+     *
+     * @param collection
+     * 		the {@link Collection} whose values populates this {@link RingQueue} instance.
+     */
     public RingQueue(Collection<E> collection) {
         this.backingArray = new Object[collection.size()];
 
@@ -78,6 +91,15 @@ public class RingQueue<E> extends AbstractQueue<E> {
         return result;
     }
 
+    /**
+     * Retrieves and removes the head of this ring queue, and if the queue is currently empty
+     * a new instance of the queue type is provided by invoking the given {@link Supplier}.
+     *
+     * @param createOnEmpty
+     *     a {@link Supplier} which will return default values if the {@link RingQueue} is empty.
+     *
+     * @return the head element of this queue or a default instance created from the provided {@link Supplier}/
+     */
     public E poll(Supplier<E> createOnEmpty) {
         if (isEmpty()) {
             return createOnEmpty.get();

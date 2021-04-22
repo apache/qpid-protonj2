@@ -27,6 +27,7 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 
 /**
@@ -42,6 +43,10 @@ public final class ProtonStreamDecoderState implements StreamDecoderState {
 
     private UTF8StreamDecoder stringDecoder;
 
+    /**
+     * Create a new {@link StreamDecoderState} instance that is joined forever to the given {@link Decoder}.
+     * @param decoder
+     */
     public ProtonStreamDecoderState(ProtonStreamDecoder decoder) {
         this.decoder = decoder;
     }
@@ -57,10 +62,21 @@ public final class ProtonStreamDecoderState implements StreamDecoderState {
         return this;
     }
 
+    /**
+     * @return the currently set custom UTF-8 {@link String} decoder or null if non set.
+     */
     public UTF8StreamDecoder getStringDecoder() {
         return stringDecoder;
     }
 
+    /**
+     * Sets a custom UTF-8 {@link String} decoder that will be used for all {@link String} decoding done
+     * from the encoder associated with this {@link StreamDecoderState} instance.  If no decoder is registered
+     * then the implementation uses its own decoding algorithm.
+     *
+     * @param stringDecoder
+     * 		a custom {@link UTF8Decoder} that will be used for all {@link String} decoding.
+     */
     public void setStringDecoder(UTF8StreamDecoder stringDecoder) {
         this.stringDecoder = stringDecoder;
     }

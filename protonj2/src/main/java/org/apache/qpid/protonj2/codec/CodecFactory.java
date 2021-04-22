@@ -83,6 +83,9 @@ public final class CodecFactory {
         saslTypeDecoder = decoder;
     }
 
+    /**
+     * @return a cached {@link Encoder} instance that resulted from a call to {@link #getDefaultEncoder()} if not set externally.
+     */
     public static Encoder getEncoder() {
         if (amqpTypeEncoder == null) {
             amqpTypeEncoder = getDefaultEncoder();
@@ -91,6 +94,9 @@ public final class CodecFactory {
         return amqpTypeEncoder;
     }
 
+    /**
+     * @return a cached {@link Decoder} instance that resulted from a call to {@link #getDefaultDecoder()} if not set externally.
+     */
     public static Decoder getDecoder() {
         if (amqpTypeDecoder == null) {
             amqpTypeDecoder = getDefaultDecoder();
@@ -99,6 +105,9 @@ public final class CodecFactory {
         return amqpTypeDecoder;
     }
 
+    /**
+     * @return a cached {@link Encoder} instance that resulted from a call to {@link #getDefaultSaslEncoder()} if not set externally.
+     */
     public static Encoder getSaslEncoder() {
         if (saslTypeEncoder == null) {
             saslTypeEncoder = getDefaultSaslEncoder();
@@ -107,6 +116,9 @@ public final class CodecFactory {
         return saslTypeEncoder;
     }
 
+    /**
+     * @return a cached {@link Decoder} instance that resulted from a call to {@link #getSaslDecoder()} if not set externally.
+     */
     public static Decoder getSaslDecoder() {
         if (saslTypeDecoder == null) {
             saslTypeDecoder = getDefaultSaslDecoder();
@@ -115,18 +127,30 @@ public final class CodecFactory {
         return saslTypeDecoder;
     }
 
+    /**
+     * @return a new instance of the Proton default {@link Encoder} implementation.
+     */
     public static Encoder getDefaultEncoder() {
         return ProtonEncoderFactory.create();
     }
 
+    /**
+     * @return a new instance of the Proton default {@link Decoder} implementation.
+     */
     public static Decoder getDefaultDecoder() {
         return ProtonDecoderFactory.create();
     }
 
+    /**
+     * @return a new instance of the Proton default SASL only {@link Encoder} implementation.
+     */
     public static Encoder getDefaultSaslEncoder() {
         return ProtonEncoderFactory.createSasl();
     }
 
+    /**
+     * @return a new instance of the Proton default SASL only {@link Decoder} implementation.
+     */
     public static Decoder getDefaultSaslDecoder() {
         return ProtonDecoderFactory.createSasl();
     }

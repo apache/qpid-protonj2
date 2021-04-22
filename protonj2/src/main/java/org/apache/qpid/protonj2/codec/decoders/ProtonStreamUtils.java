@@ -32,6 +32,18 @@ public abstract class ProtonStreamUtils {
 
     private static final byte[] EMPTY_ARRAY = new byte[0];
 
+    /**
+     * Write the given {@link Byte} to the target {@link OutputStream}.
+     *
+     * @param value
+     * 		the value to write to the {@link OutputStream}.
+     * @param stream
+     * 		the {@link OutputStream} where the target value is to be written.
+     *
+     * @return the given {@link OutputStream} instance.
+     *
+     * @throws EncodeException if an error occurs while writing to the target {@link OutputStream}.
+     */
     public static OutputStream writeByte(byte value, OutputStream stream) throws EncodeException {
         try {
             stream.write(value);
@@ -42,6 +54,18 @@ public abstract class ProtonStreamUtils {
         return stream;
     }
 
+    /**
+     * Write the given {@link Short} to the target {@link OutputStream}.
+     *
+     * @param value
+     * 		the value to write to the {@link OutputStream}.
+     * @param stream
+     * 		the {@link OutputStream} where the target value is to be written.
+     *
+     * @return the given {@link OutputStream} instance.
+     *
+     * @throws EncodeException if an error occurs while writing to the target {@link OutputStream}.
+     */
     public static OutputStream writeShort(short value, OutputStream stream) throws EncodeException {
         writeByte((byte) (value >>> 8), stream);
         writeByte((byte) (value >>> 0), stream);
@@ -49,6 +73,18 @@ public abstract class ProtonStreamUtils {
         return stream;
     }
 
+    /**
+     * Write the given {@link Integer} to the target {@link OutputStream}.
+     *
+     * @param value
+     * 		the value to write to the {@link OutputStream}.
+     * @param stream
+     * 		the {@link OutputStream} where the target value is to be written.
+     *
+     * @return the given {@link OutputStream} instance.
+     *
+     * @throws EncodeException if an error occurs while writing to the target {@link OutputStream}.
+     */
     public static OutputStream writeInt(int value, OutputStream stream) throws EncodeException {
         writeByte((byte) (value >>> 24), stream);
         writeByte((byte) (value >>> 16), stream);
@@ -58,6 +94,18 @@ public abstract class ProtonStreamUtils {
         return stream;
     }
 
+    /**
+     * Write the given {@link Long} to the target {@link OutputStream}.
+     *
+     * @param value
+     * 		the value to write to the {@link OutputStream}.
+     * @param stream
+     * 		the {@link OutputStream} where the target value is to be written.
+     *
+     * @return the given {@link OutputStream} instance.
+     *
+     * @throws EncodeException if an error occurs while writing to the target {@link OutputStream}.
+     */
     public static OutputStream writeLong(long value, OutputStream stream) throws EncodeException {
         writeByte((byte) (value >>> 56), stream);
         writeByte((byte) (value >>> 48), stream);
@@ -71,6 +119,20 @@ public abstract class ProtonStreamUtils {
         return stream;
     }
 
+    /**
+     * Reads the given number of bytes from the provided {@link InputStream} into an array and
+     * return that to the caller.  If the requested number of bytes cannot be read from the stream
+     * an {@link DecodeException} is thrown to indicate an underflow.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the bytes should be read from.
+     * @param length
+     * 		The number of bytes to read from the given input stream.
+     *
+     * @return a byte array containing the requested number of bytes read from the given {@link InputStream}
+     *
+     * @throws DecodeException if an error occurs reading from the stream or insufficient bytes are available.
+     */
     public static byte[] readBytes(InputStream stream, int length) throws DecodeException {
         try {
             if (length == 0) {
@@ -94,6 +156,17 @@ public abstract class ProtonStreamUtils {
         }
     }
 
+    /**
+     * Reads a single byte from the given {@link InputStream} and thrown a {@link DecodeException} if the
+     * {@link InputStream} indicates an EOF condition was encountered.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the bytes should be read from.
+     *
+     * @return the given byte that was read from the stream.
+     *
+     * @throws DecodeException if an error occurs during the read or EOF is reached.
+     */
     public static byte readEncodingCode(InputStream stream) throws DecodeException {
         try {
             int result = stream.read();
@@ -107,6 +180,17 @@ public abstract class ProtonStreamUtils {
         }
     }
 
+    /**
+     * Reads a single byte from the given {@link InputStream} and thrown a {@link DecodeException} if the
+     * {@link InputStream} indicates an EOF condition was encountered.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the bytes should be read from.
+     *
+     * @return the given byte that was read from the stream.
+     *
+     * @throws DecodeException if an error occurs during the read or EOF is reached.
+     */
     public static byte readByte(InputStream stream) throws DecodeException {
         try {
             int result = stream.read();
@@ -120,11 +204,33 @@ public abstract class ProtonStreamUtils {
         }
     }
 
+    /**
+     * Reads a short value from the given {@link InputStream} and thrown a {@link DecodeException} if the
+     * {@link InputStream} indicates an EOF condition was encountered.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the bytes should be read from.
+     *
+     * @return the given byte that was read from the stream.
+     *
+     * @throws DecodeException if an error occurs during the read or EOF is reached.
+     */
     public static short readShort(InputStream stream) {
         return (short) ((readByte(stream) & 0xFF) << 8 |
                         (readByte(stream) & 0xFF) << 0);
     }
 
+    /**
+     * Reads a integer value from the given {@link InputStream} and thrown a {@link DecodeException} if the
+     * {@link InputStream} indicates an EOF condition was encountered.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the bytes should be read from.
+     *
+     * @return the given byte that was read from the stream.
+     *
+     * @throws DecodeException if an error occurs during the read or EOF is reached.
+     */
     public static int readInt(InputStream stream) {
         return (readByte(stream) & 0xFF) << 24 |
                (readByte(stream) & 0xFF) << 16 |
@@ -132,6 +238,17 @@ public abstract class ProtonStreamUtils {
                (readByte(stream) & 0xFF) << 0;
     }
 
+    /**
+     * Reads a long value from the given {@link InputStream} and thrown a {@link DecodeException} if the
+     * {@link InputStream} indicates an EOF condition was encountered.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the bytes should be read from.
+     *
+     * @return the given byte that was read from the stream.
+     *
+     * @throws DecodeException if an error occurs during the read or EOF is reached.
+     */
     public static long readLong(InputStream stream) {
         return (long) (readByte(stream) & 0xFF) << 56 |
                (long) (readByte(stream) & 0xFF) << 48 |
@@ -143,14 +260,49 @@ public abstract class ProtonStreamUtils {
                (long) (readByte(stream) & 0xFF) << 0;
     }
 
+    /**
+     * Reads a float value from the given {@link InputStream} and thrown a {@link DecodeException} if the
+     * {@link InputStream} indicates an EOF condition was encountered.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the bytes should be read from.
+     *
+     * @return the given byte that was read from the stream.
+     *
+     * @throws DecodeException if an error occurs during the read or EOF is reached.
+     */
     public static float readFloat(InputStream stream) {
         return Float.intBitsToFloat(readInt(stream));
     }
 
+    /**
+     * Reads a double value from the given {@link InputStream} and thrown a {@link DecodeException} if the
+     * {@link InputStream} indicates an EOF condition was encountered.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the bytes should be read from.
+     *
+     * @return the given byte that was read from the stream.
+     *
+     * @throws DecodeException if an error occurs during the read or EOF is reached.
+     */
     public static double readDouble(InputStream stream) {
         return Double.longBitsToDouble(readLong(stream));
     }
 
+    /**
+     * Attempts to skip the given number of bytes from the provided {@link InputStream} instance and
+     * throws a DecodeException if an error occurs during the skip.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the bytes should be read from.
+     * @param amount
+     *      The number of bytes that should be skipped.
+     *
+     * @return the {@link InputStream} instance that was passed.
+     *
+     * @throws DecodeException if an error occurs during the read or EOF is reached.
+     */
     public static InputStream skipBytes(InputStream stream, long amount) {
         try {
             stream.skip(amount);
@@ -162,11 +314,24 @@ public abstract class ProtonStreamUtils {
         return stream;
     }
 
-    public static void reset(InputStream stream) throws DecodeException {
+    /**
+     * Attempts to reset the provided {@link InputStream} to a previously marked point.  If an error occurs
+     * this method throws an DecodeException to describe the error.
+     *
+     * @param stream
+     * 		The {@link InputStream} that is to be reset.
+     *
+     * @return the {@link InputStream} instance that was passed.
+     *
+     * @throws DecodeException if an error occurs during the reset.
+     */
+    public static InputStream reset(InputStream stream) throws DecodeException {
         try {
             stream.reset();
         } catch (IOException ex) {
             throw new DecodeException("Caught IO error when calling reset on provided stream", ex);
         }
+
+        return stream;
     }
 }

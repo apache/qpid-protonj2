@@ -726,6 +726,17 @@ public final class ProtonEncoder implements Encoder {
         return getTypeEncoder(typeClass, null);
     }
 
+    /**
+     * Lookup a {@link TypeEncoder} by first checking the given type {@link Class} and then
+     * if none found to deduce a valid TypeEncoder from the {@link Object} specified.
+     *
+     * @param typeClass
+     * 		The {@link Class} for which a type specific encoder is requested.
+     * @param instance
+     *      An {@link Object} instance to use as a fall back if no encoder found for the {@link Class}
+     *
+     * @return a {@link TypeEncoder} if a match to the given query is found or null of non can be deduced.
+     */
     public TypeEncoder<?> getTypeEncoder(Class<?> typeClass, Object instance) {
         TypeEncoder<?> encoder = typeEncoders.get(typeClass);
 

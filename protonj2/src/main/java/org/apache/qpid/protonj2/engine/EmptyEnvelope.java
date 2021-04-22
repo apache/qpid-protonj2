@@ -23,9 +23,12 @@ import org.apache.qpid.protonj2.types.transport.Performative.PerformativeHandler
  */
 public final class EmptyEnvelope extends IncomingAMQPEnvelope {
 
+	/**
+	 * The singleton instance of the {@link EmptyEnvelope} type.
+	 */
     public static final EmptyEnvelope INSTANCE = new EmptyEnvelope();
 
-    public EmptyEnvelope() {
+    private EmptyEnvelope() {
         super();
     }
 

@@ -17,10 +17,25 @@
 package org.apache.qpid.protonj2.engine;
 
 /**
- * Represents the state of an AMQP Connection.
+ * Represents the state of an AMQP Connection.  Each {@link Connection} provides both
+ * a local and remote connection state that independently reflects the state at each
+ * end.
  */
 public enum ConnectionState {
+
+	/**
+	 * Indicates that the targeted end of the Connection (local or remote) has not yet been opened.
+	 */
     IDLE,
+
+	/**
+	 * Indicates that the targeted end of the Connection (local or remote) is currently open.
+	 */
     ACTIVE,
-    CLOSED,
+
+	/**
+	 * Indicates that the targeted end of the Connection (local or remote) has been closed.
+	 */
+    CLOSED
+
 }

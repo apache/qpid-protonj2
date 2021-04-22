@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 
 /**
@@ -28,6 +29,10 @@ public final class ProtonEncoderState implements EncoderState {
 
     private UTF8Encoder utf8Encoder;
 
+    /**
+     * Creates a new {@link ProtonEncoderState} that is linked to the given {@link ProtonEncoder}.
+     * @param encoder
+     */
     public ProtonEncoderState(ProtonEncoder encoder) {
         this.encoder = encoder;
     }
@@ -37,12 +42,25 @@ public final class ProtonEncoderState implements EncoderState {
         return this.encoder;
     }
 
+    /**
+     * @return the user configured custom {@link UTF8Encoder} instance or null if none set.
+     */
     public UTF8Encoder getUTF8Encoder() {
         return utf8Encoder;
     }
 
-    public void setUTF8Encoder(UTF8Encoder utf8Encoder) {
+    /**
+     * Configures a custom {@link UTF8Encoder} instance that will be used for all String decoding
+     * done by the parent {@link Encoder} instance.
+     *
+     * @param utf8Encoder
+     * 		The user specified {@link UTF8Encoder} or null to clear a previous configuration.
+     *
+     * @return this {@link Encoder} instance.
+     */
+    public ProtonEncoderState setUTF8Encoder(UTF8Encoder utf8Encoder) {
         this.utf8Encoder = utf8Encoder;
+        return this;
     }
 
     @Override

@@ -26,6 +26,9 @@ public abstract class ProtonDeliveryTagGenerator implements DeliveryTagGenerator
 
     private static final ProtonEmptyTagGenerator EMPTY_TAG_GENERATOR = new ProtonEmptyTagGenerator();
 
+    /**
+     * An enumeration of the Proton provided {@link DeliveryTagGenerator} implementations.
+     */
     public enum BUILTIN {
         /**
          * Provides a {@link DeliveryTagGenerator} that creates tags based on an incrementing
@@ -76,6 +79,9 @@ public abstract class ProtonDeliveryTagGenerator implements DeliveryTagGenerator
             }
         };
 
+    	/**
+    	 * @return a new {@link DeliveryTagGenerator} instance as requested from the built in types.
+    	 */
         public abstract DeliveryTagGenerator createGenerator();
 
     }

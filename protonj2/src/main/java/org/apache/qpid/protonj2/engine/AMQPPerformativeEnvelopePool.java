@@ -29,6 +29,9 @@ import org.apache.qpid.protonj2.types.transport.Performative;
  */
 public class AMQPPerformativeEnvelopePool<E extends PerformativeEnvelope<Performative>> {
 
+	/**
+	 * The default maximum pool size to use if not otherwise configured.
+	 */
     public static final int DEFAULT_MAX_POOL_SIZE = 10;
 
     private int maxPoolSize = DEFAULT_MAX_POOL_SIZE;
@@ -36,20 +39,50 @@ public class AMQPPerformativeEnvelopePool<E extends PerformativeEnvelope<Perform
     private final RingQueue<E> pool;
     private final Function<AMQPPerformativeEnvelopePool<E>, E> envelopeBuilder;
 
+    /**
+     * Create a new envelope pool using the default pool size.
+     *
+     * @param envelopeBuilder
+     * 		The builder that will provide new envelope instances when the pool is empty.
+     */
     public AMQPPerformativeEnvelopePool(Function<AMQPPerformativeEnvelopePool<E>, E> envelopeBuilder) {
         this(envelopeBuilder, AMQPPerformativeEnvelopePool.DEFAULT_MAX_POOL_SIZE);
     }
 
+    /**
+     * Create a new envelope pool using the default pool size.
+     *
+     * @param envelopeBuilder
+     * 		The builder that will provide new envelope instances when the pool is empty.
+     * @param maxPoolSize
+     *      The maximum number of envelopes to hold in the pool at any given time.
+     */
     public AMQPPerformativeEnvelopePool(Function<AMQPPerformativeEnvelopePool<E>, E> envelopeBuilder, int maxPoolSize) {
         this.pool = new RingQueue<>(getMaxPoolSize());
         this.maxPoolSize = maxPoolSize;
         this.envelopeBuilder = envelopeBuilder;
     }
 
+    /**
+     * @return the configured maximum pool size.
+     */
     public final int getMaxPoolSize() {
         return maxPoolSize;
     }
 
+    /**
+     * Requests an envelope from the pool and if non is available creates one using the given
+     * builder this pool was created with.
+     *
+     * @param body
+     * 		The body that will be stored in the envelope.
+     * @param channel
+     * 		The channel that is assigned to the envelope until returned to the pool.
+     * @param payload
+     * 		The Binary payload that is to be encoded with the given envelope body.
+     *
+     * @return the envelope instance that was taken from the pool or created if the pool was empty.
+     */
     @SuppressWarnings("unchecked")
     public E take(Performative body, int channel, ProtonBuffer payload) {
         return (E) pool.poll(this::supplyPooledResource).initialize(body, channel, payload);

@@ -25,6 +25,9 @@ import java.util.function.Consumer;
  */
 public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
 
+	/**
+	 * The default maximum capacity for a composite {@link ProtonBuffer}.
+	 */
     public static final int DEFAULT_MAXIMUM_CAPACITY = Integer.MAX_VALUE;
 
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];

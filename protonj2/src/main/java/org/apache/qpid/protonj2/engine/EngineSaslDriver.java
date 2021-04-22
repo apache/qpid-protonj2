@@ -30,6 +30,10 @@ import org.apache.qpid.protonj2.engine.sasl.SaslServerContext;
  */
 public interface EngineSaslDriver {
 
+	/**
+	 * The SASL driver state used to determine at what point the current SASL negotiation process
+	 * is currently in.  If the state is 'none' then no SASL negotiations will be performed.
+	 */
     public enum SaslState {
 
         /**

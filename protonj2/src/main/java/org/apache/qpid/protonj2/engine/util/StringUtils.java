@@ -32,8 +32,19 @@ import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 
+/**
+ * Set of {@link String} utilities used in the proton code.
+ */
 public class StringUtils {
 
+	/**
+	 * Converts the given String[] into a Symbol[] array.
+	 *
+	 * @param stringArray
+	 * 		The given String[] to convert.
+	 *
+	 * @return a new Symbol array that contains Symbol versions of the input Strings.
+	 */
     public static Symbol[] toSymbolArray(String[] stringArray) {
         Symbol[] result = null;
 
@@ -47,6 +58,14 @@ public class StringUtils {
         return result;
     }
 
+	/**
+	 * Converts the given Symbol[] into a String[] array.
+	 *
+	 * @param symbolArray
+	 * 		The given Symbol[] to convert.
+	 *
+	 * @return a new String array that contains String versions of the input Symbol.
+	 */
     public static String[] toStringArray(Symbol[] symbolArray) {
         String[] result = null;
 
@@ -60,6 +79,14 @@ public class StringUtils {
         return result;
     }
 
+	/**
+	 * Converts the given String keyed {@link Map} into a matching Symbol keyed {@link Map}.
+	 *
+	 * @param stringsMap
+	 * 		The given String keyed {@link Map} to convert.
+	 *
+	 * @return a new Symbol keyed {@link Map} that contains Symbol versions of the input String keys.
+	 */
     public static Map<Symbol, Object> toSymbolKeyedMap(Map<String, Object> stringsMap) {
         final Map<Symbol, Object> result;
 
@@ -75,6 +102,14 @@ public class StringUtils {
         return result;
     }
 
+	/**
+	 * Converts the given Symbol keyed {@link Map} into a matching String keyed {@link Map}.
+	 *
+	 * @param symbolMap
+	 * 		The given String keyed {@link Map} to convert.
+	 *
+	 * @return a new String keyed {@link Map} that contains String versions of the input Symbol keys.
+	 */
     public static Map<String, Object> toStringKeyedMap(Map<Symbol, Object> symbolMap) {
         Map<String, Object> result;
 
@@ -90,6 +125,14 @@ public class StringUtils {
         return result;
     }
 
+	/**
+	 * Converts the given String {@link Collection} into a Symbol array.
+	 *
+	 * @param stringsSet
+	 * 		The given String {@link Collection} to convert.
+	 *
+	 * @return a new Symbol array that contains String versions of the input Symbols.
+	 */
     public static Symbol[] toSymbolArray(Collection<String> stringsSet) {
         final Symbol[] result;
 
@@ -106,6 +149,14 @@ public class StringUtils {
         return result;
     }
 
+	/**
+	 * Converts the given String {@link Collection} into a matching Symbol {@link Set}.
+	 *
+	 * @param stringsSet
+	 * 		The given String {@link Collection} to convert.
+	 *
+	 * @return a new Symbol {@link Set} that contains String versions of the input Symbols.
+	 */
     public static Set<Symbol> toSymbolSet(Collection<String> stringsSet) {
         final Set<Symbol> result;
 
@@ -121,6 +172,14 @@ public class StringUtils {
         return result;
     }
 
+	/**
+	 * Converts the given Symbol array into a matching String {@link Set}.
+	 *
+	 * @param symbols
+	 * 		The given Symbol array to convert.
+	 *
+	 * @return a new String {@link Set} that contains String versions of the input Symbols.
+	 */
     public static Set<String> toStringSet(Symbol[] symbols) {
         Set<String> result;
 

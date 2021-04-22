@@ -635,7 +635,7 @@ public abstract class ProtonAbstractBuffer implements ProtonBuffer {
         }
     }
 
-    public static boolean isOutOfBounds(int index, int length, int capacity) {
+    protected static boolean isOutOfBounds(int index, int length, int capacity) {
         return (index | length | (index + length) | (capacity - (index + length))) < 0;
     }
 
