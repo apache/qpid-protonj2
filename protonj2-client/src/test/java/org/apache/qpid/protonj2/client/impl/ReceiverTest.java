@@ -1525,7 +1525,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
-            assertNull(receiver.receive(10, TimeUnit.MILLISECONDS));
+            assertNull(receiver.receive(15, TimeUnit.MILLISECONDS));
 
             peer.expectDetach().respond();
             peer.expectClose().respond();
@@ -1642,7 +1642,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
-            assertNull(receiver.receive(10, TimeUnit.MILLISECONDS));
+            assertNull(receiver.receive(15, TimeUnit.MILLISECONDS));
 
             // Credit window is one and next transfer signals aborted so receiver should
             // top-up the credit window to allow more transfers to arrive.
@@ -2185,7 +2185,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
-            Delivery delivery = receiver.receive(10, TimeUnit.MILLISECONDS);
+            Delivery delivery = receiver.receive(5, TimeUnit.SECONDS);
             assertNotNull(delivery);
 
             Message<String> message = delivery.message();
@@ -2287,7 +2287,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
-            Delivery delivery = receiver.receive(10, TimeUnit.MILLISECONDS);
+            Delivery delivery = receiver.receive(5, TimeUnit.SECONDS);
             assertNotNull(delivery);
             InputStream stream = delivery.rawInputStream();
             assertNotNull(stream);
@@ -2354,7 +2354,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
-            Delivery delivery = receiver.receive(10, TimeUnit.MILLISECONDS);
+            Delivery delivery = receiver.receive(5, TimeUnit.SECONDS);
             assertNotNull(delivery);
 
             AdvancedMessage<?> message = delivery.message().toAdvancedMessage();
@@ -2417,7 +2417,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
-            Delivery delivery = receiver.receive(10, TimeUnit.MILLISECONDS);
+            Delivery delivery = receiver.receive(5, TimeUnit.SECONDS);
             assertNotNull(delivery);
 
             InputStream stream = delivery.rawInputStream();
