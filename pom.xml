@@ -39,7 +39,7 @@
     <!-- Test dependency versions -->
     <junit.jupiter.version>5.7.1</junit.jupiter.version>
     <junit.vintage.version>5.7.1</junit.vintage.version>
-    <mockito.version>3.8.0</mockito.version>
+    <mockito.version>3.9.0</mockito.version>
     <proton.version>0.33.8</proton.version>
     <slf4j.version>1.7.30</slf4j.version>
     <log4j.slf4j.version>2.14.1</log4j.slf4j.version>
