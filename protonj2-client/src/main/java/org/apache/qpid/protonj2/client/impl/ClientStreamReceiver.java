@@ -49,6 +49,9 @@ import org.apache.qpid.protonj2.types.transport.DeliveryState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Client implementation of a {@link StreamReceiver}.
+ */
 public final class ClientStreamReceiver implements StreamReceiver {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientReceiver.class);
@@ -72,7 +75,7 @@ public final class ClientStreamReceiver implements StreamReceiver {
     private volatile Source remoteSource;
     private volatile Target remoteTarget;
 
-    public ClientStreamReceiver(ClientSession session, StreamReceiverOptions options, String receiverId, org.apache.qpid.protonj2.engine.Receiver receiver) {
+    ClientStreamReceiver(ClientSession session, StreamReceiverOptions options, String receiverId, org.apache.qpid.protonj2.engine.Receiver receiver) {
         this.options = options;
         this.session = session;
         this.receiverId = receiverId;

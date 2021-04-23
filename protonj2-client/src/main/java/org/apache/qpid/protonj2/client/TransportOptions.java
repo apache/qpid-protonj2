@@ -146,15 +146,29 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the configured value for the socket level soTimeout option.
+     */
     public int soTimeout() {
         return soTimeout;
     }
 
+    /**
+     * Sets the value to use when configuring the socket level soTimeout option.
+     *
+     * @param soTimeout
+     * 		the soTimeout value to configure on the newly create socket.
+     *
+     * @return this {@link TransportOptions} instance.
+     */
     public TransportOptions soTimeout(int soTimeout) {
         this.soTimeout = soTimeout;
         return this;
     }
 
+    /**
+     * @return the configured value for the socket level tcpNoDelay option.
+     */
     public boolean tcpNoDelay() {
         return tcpNoDelay;
     }
@@ -164,6 +178,9 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the configured value for the socket level soLinger option.
+     */
     public int soLinger() {
         return soLinger;
     }
@@ -173,6 +190,9 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the configured value for the socket level tcpKeepAlive option.
+     */
     public boolean tcpKeepAlive() {
         return tcpKeepAlive;
     }
@@ -182,6 +202,9 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the configured value for the socket level connection timeout option.
+     */
     public int connectTimeout() {
         return connectTimeout;
     }
@@ -191,6 +214,9 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the configured value for the socket level default port to use for connection if none is provided.
+     */
     public int defaultTcpPort() {
         return defaultTcpPort;
     }
@@ -200,6 +226,9 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the configured value for the socket level localAddress option.
+     */
     public String localAddress() {
         return localAddress;
     }
@@ -209,6 +238,9 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the configured value for the socket level localPort option.
+     */
     public int localPort() {
         return localPort;
     }
@@ -276,6 +308,9 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the configured state of WebSockets for client connections.
+     */
     public boolean useWebSockets() {
         return useWebSockets;
     }
@@ -285,6 +320,9 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the configured value for the socket level WebSocket path option.
+     */
     public String webSocketPath() {
         return webSocketPath;
     }
@@ -294,6 +332,9 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the configured value for the socket level WebSocket Headers option.
+     */
     public Map<String, String> webSocketHeaders() {
         return webSocketHeaders;
     }
@@ -303,13 +344,16 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the configured value for the socket level WebSocket max frame size option.
+     */
+    public int webSocketMaxFrameSize() {
+        return webSocketMaxFrameSize;
+    }
+
     public TransportOptions webSocketMaxFrameSize(int maxFrameSize) {
         this.webSocketMaxFrameSize = maxFrameSize;
         return this;
-    }
-
-    public int webSocketMaxFrameSize() {
-        return webSocketMaxFrameSize;
     }
 
     /**

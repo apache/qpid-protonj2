@@ -27,6 +27,9 @@ public class IdGenerator {
     private final String prefix;
     private final AtomicLong sequence = new AtomicLong(1);
 
+    /**
+     * The default Id prefix applied to all new Id values rendered from an {@link IdGenerator}.
+     */
     public static final String DEFAULT_PREFIX = "ID:";
 
     /**

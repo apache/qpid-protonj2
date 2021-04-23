@@ -25,8 +25,20 @@ package org.apache.qpid.protonj2.client.futures;
  */
 public interface ClientSynchronization<V> {
 
+	/**
+	 * Event point used to signal that this future will complete successfully.
+	 *
+	 * @param result
+	 * 		The result that will be returned on completion of this future.
+	 */
     void onPendingSuccess(V result);
 
+    /**
+     * Event point used to signal that this future will complete with a failure outcome.
+     *
+     * @param cause
+     * 		The error that triggered the failure of this future.
+     */
     void onPendingFailure(Throwable cause);
 
 }

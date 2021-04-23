@@ -76,10 +76,21 @@ public class SslOptions implements Cloneable {
         return copyInto(new SslOptions());
     }
 
+    /**
+     * @return true if the client transport will attempt to connect with SSL
+     */
     public boolean sslEnabled() {
         return sslEnabled;
     }
 
+    /**
+     * Enable or disable the transport level SSL encryption layer.
+     *
+     * @param enable
+     * 		boolean that controls if SSL is enabled or disabled.
+     *
+     * @return this {@link SslOptions} instance.
+     */
     public SslOptions sslEnabled(boolean enable) {
         this.sslEnabled = enable;
         return this;

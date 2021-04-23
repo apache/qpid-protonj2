@@ -36,6 +36,9 @@ public interface DeliveryState {
         TRANSACTIONAL
     }
 
+    /**
+     * @return the type that the given {@link DeliveryState} represents.
+     */
     Type getType();
 
     /**
@@ -47,26 +50,76 @@ public interface DeliveryState {
 
     //----- Factory methods for default DeliveryState types
 
+    /**
+     * @return an instance of an AMQP Accepted delivery outcome.
+     */
     static DeliveryState accepted() {
         return ClientAccepted.getInstance();
     }
 
+    /**
+     * @return an instance of an AMQP Released delivery outcome.
+     */
     static DeliveryState released() {
         return ClientReleased.getInstance();
     }
 
+    /**
+     * Create a new Rejected outcome with the given condition and description.
+     *
+     * @param condition
+     * 		the condition that lead to the rejected outcome.
+     * @param description
+     * 		a meaningful description of the reason for the rejection.
+     *
+     * @return an instance of an AMQP Rejected delivery outcome.
+     */
     static DeliveryState rejected(String condition, String description) {
         return new ClientRejected(condition, description);
     }
 
+    /**
+     * Create a new Rejected outcome with the given condition and description.
+     *
+     * @param condition
+     * 		the condition that lead to the rejected outcome.
+     * @param description
+     * 		a meaningful description of the reason for the rejection.
+     * @param info
+     *      a {@link Map} containing additional information about the rejection.
+     *
+     * @return an instance of an AMQP Rejected delivery outcome.
+     */
     static DeliveryState rejected(String condition, String description, Map<String, Object> info) {
         return new ClientRejected(condition, description, info);
     }
 
+    /**
+     * Create a new Modified outcome with the given failure state.
+     *
+     * @param failed
+     * 		boolean indicating if delivery failed or not.
+     * @param undeliverable
+     * 		boolean indicating if the delivery cannot be sent to this receiver again.
+     *
+     * @return an instance of an AMQP Modified delivery outcome.
+     */
     static DeliveryState modified(boolean failed, boolean undeliverable) {
         return new ClientModified(failed, undeliverable);
     }
 
+    /**
+     * Create a new Modified outcome with the given failure state.
+     *
+     * @param failed
+     * 		boolean indicating if delivery failed or not.
+     * @param undeliverable
+     * 		boolean indicating if the delivery cannot be sent to this receiver again.
+     * @param annotations
+     *      updated annotation for the delivery that this outcome applies to.
+     *
+     * @return an instance of an AMQP Modified delivery outcome.
+     */
     static DeliveryState modified(boolean failed, boolean undeliverable, Map<String, Object> annotations) {
         return new ClientModified(failed, undeliverable, annotations);
     }

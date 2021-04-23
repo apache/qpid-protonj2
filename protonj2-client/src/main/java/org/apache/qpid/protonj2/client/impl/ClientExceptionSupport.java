@@ -42,7 +42,7 @@ import org.apache.qpid.protonj2.types.transport.ConnectionError;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.apache.qpid.protonj2.types.transport.LinkError;
 
-public class ClientExceptionSupport {
+class ClientExceptionSupport {
 
     /**
      * Checks the given cause to determine if it's already an ProviderIOException type and

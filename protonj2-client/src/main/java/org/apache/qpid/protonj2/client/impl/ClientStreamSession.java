@@ -36,7 +36,7 @@ import org.apache.qpid.protonj2.engine.Session;
  */
 public final class ClientStreamSession extends ClientSession {
 
-    public ClientStreamSession(ClientConnection connection, SessionOptions options, String sessionId, Session session) {
+    ClientStreamSession(ClientConnection connection, SessionOptions options, String sessionId, Session session) {
         super(connection, options, sessionId, session);
     }
 

@@ -42,6 +42,13 @@ import org.apache.qpid.protonj2.types.messaging.Properties;
 import org.apache.qpid.protonj2.types.messaging.Section;
 import org.apache.qpid.protonj2.types.messaging.Section.SectionType;
 
+/**
+ * Client provided {@link AdvancedMessage} implementation that is used when sending messages
+ * from a {@link ClientSender} or when decoding an AMQP Transfer for which all frames have
+ * arrived.
+ *
+ * @param <E> the body type that the {@link Message} carries
+ */
 public class ClientMessage<E> implements AdvancedMessage<E> {
 
     private Header header;

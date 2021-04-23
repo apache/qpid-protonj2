@@ -30,10 +30,19 @@ import java.util.concurrent.TimeoutException;
 */
 public class ConservativeClientFuture<V> extends ClientFuture<V> {
 
+    /**
+     * Create a new {@link ConservativeClientFuture} instance with no assigned {@link ClientSynchronization}.
+     */
     public ConservativeClientFuture() {
         this(null);
     }
 
+    /**
+     * Create a new {@link ConservativeClientFuture} instance with the assigned {@link ClientSynchronization}.
+     *
+     * @param synchronization
+     * 		the {@link ClientSynchronization} that should be notified upon completion of this future.
+     */
     public ConservativeClientFuture(ClientSynchronization<V> synchronization) {
         super(synchronization);
     }

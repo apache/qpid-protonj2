@@ -43,6 +43,10 @@ import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A {@link StreamDelivery} implementation that provides the mechanics of reading message
+ * types from an incoming split framed transfer.
+ */
 public final class ClientStreamDelivery implements StreamDelivery {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientStreamDelivery.class);
@@ -53,7 +57,7 @@ public final class ClientStreamDelivery implements StreamDelivery {
     private ClientStreamReceiverMessage message;
     private RawDeliveryInputStream rawInputStream;
 
-    public ClientStreamDelivery(ClientStreamReceiver receiver, IncomingDelivery protonDelivery) {
+    ClientStreamDelivery(ClientStreamReceiver receiver, IncomingDelivery protonDelivery) {
         this.receiver = receiver;
         this.protonDelivery = protonDelivery.setLinkedResource(this);
 

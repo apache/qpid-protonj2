@@ -42,7 +42,7 @@ public final class ClientRedirect {
 
     private URI cachedURI;
 
-    public ClientRedirect(Map<Symbol, Object> redirect) {
+    ClientRedirect(Map<Symbol, Object> redirect) {
         this.redirect = redirect;
     }
 

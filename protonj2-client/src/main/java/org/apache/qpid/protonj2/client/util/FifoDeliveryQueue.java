@@ -45,6 +45,12 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
 
     protected final Deque<ClientDelivery> queue;
 
+    /**
+     * Creates a new first in / first out message queue with the given queue depth
+     *
+     * @param queueDepth
+     * 		The Queue depth to configure for this FIFO Message Queue.
+     */
     public FifoDeliveryQueue(int queueDepth) {
         this.queue = new ArrayDeque<ClientDelivery>(Math.max(1, queueDepth));
     }

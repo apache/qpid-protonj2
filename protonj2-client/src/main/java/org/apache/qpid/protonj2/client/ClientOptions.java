@@ -24,8 +24,17 @@ public class ClientOptions {
     private String id;
     private String futureType;
 
+    /**
+     * Create a new ClientOptions instance with defaults set for all options.
+     */
     public ClientOptions() {}
 
+    /**
+     * Create a new ClientOptions instance that copies the configuration from the specified source options.
+     *
+     * @param options
+     * 		The ClientOptions instance whose settings are to be copied into this one.
+     */
     public ClientOptions(ClientOptions options) {
         if (options != null) {
             options.copyInto(this);

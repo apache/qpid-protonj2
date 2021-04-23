@@ -32,7 +32,7 @@ final class ClientSessionBuilder {
 
     private SessionOptions defaultSessionOptions;
 
-    public ClientSessionBuilder(ClientConnection connection) {
+    ClientSessionBuilder(ClientConnection connection) {
         this.connection = connection;
         this.connectionOptions = connection.getOptions();
     }

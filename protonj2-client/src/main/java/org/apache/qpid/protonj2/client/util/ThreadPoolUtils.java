@@ -31,6 +31,9 @@ public final class ThreadPoolUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(ThreadPoolUtils.class);
 
+    /**
+     * Default thread pool shutdown timeout used to await graceful shutdown.
+     */
     public static final long DEFAULT_SHUTDOWN_AWAIT_TERMINATION = 10 * 1000L;
 
     /**

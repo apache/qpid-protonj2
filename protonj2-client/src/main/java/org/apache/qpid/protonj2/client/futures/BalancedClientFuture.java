@@ -34,10 +34,19 @@ public class BalancedClientFuture<V> extends ClientFuture<V> {
     private static final int SPIN_COUNT = 10;
     private static final int YIELD_COUNT = 100;
 
+    /**
+     * Create a new {@link BalancedClientFuture} instance with no assigned {@link ClientSynchronization}.
+     */
     public BalancedClientFuture() {
         this(null);
     }
 
+    /**
+     * Create a new {@link BalancedClientFuture} instance with the assigned {@link ClientSynchronization}.
+     *
+     * @param synchronization
+     * 		the {@link ClientSynchronization} that should be notified upon completion of this future.
+     */
     public BalancedClientFuture(ClientSynchronization<V> synchronization) {
         super(synchronization);
     }

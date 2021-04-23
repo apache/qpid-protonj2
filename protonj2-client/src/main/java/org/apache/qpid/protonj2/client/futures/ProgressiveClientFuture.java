@@ -38,10 +38,19 @@ public class ProgressiveClientFuture<V> extends ClientFuture<V> {
     private static final int SMALL_PARK_COUNT = 101_000;
     private static final int SMALL_PARK_NANOS = 10_000;
 
+    /**
+     * Create a new {@link ProgressiveClientFuture} instance with no assigned {@link ClientSynchronization}.
+     */
     public ProgressiveClientFuture() {
         this(null);
     }
 
+    /**
+     * Create a new {@link ProgressiveClientFuture} instance with the assigned {@link ClientSynchronization}.
+     *
+     * @param synchronization
+     * 		the {@link ClientSynchronization} that should be notified upon completion of this future.
+     */
     public ProgressiveClientFuture(ClientSynchronization<V> synchronization) {
         super(synchronization);
     }

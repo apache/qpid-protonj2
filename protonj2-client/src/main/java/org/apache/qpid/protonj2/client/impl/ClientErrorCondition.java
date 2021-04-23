@@ -31,6 +31,12 @@ public final class ClientErrorCondition implements ErrorCondition {
 
     private final org.apache.qpid.protonj2.types.transport.ErrorCondition error;
 
+    /**
+     * Create a new {@link ClientErrorCondition} that is a copy of the provided instance.
+     *
+     * @param condition
+     * 		The {@link ErrorCondition} whose information should be copied to the new value.
+     */
     public ClientErrorCondition(ErrorCondition condition) {
         Objects.requireNonNull(condition, "The error condition value cannot be null");
 
@@ -38,6 +44,16 @@ public final class ClientErrorCondition implements ErrorCondition {
             Symbol.valueOf(condition.condition()), condition.description(), ClientConversionSupport.toSymbolKeyedMap(condition.info()));
     }
 
+    /**
+     * Create a new {@link ClientErrorCondition} instance with the given error information
+     *
+     * @param condition
+     * 		The condition value that defines the error type.
+     * @param description
+     *      A meaningful description of the error.
+     * @param info
+     *      Any additional information that must accompany the error.
+     */
     public ClientErrorCondition(String condition, String description, Map<String, Object> info) {
         Objects.requireNonNull(condition, "The error condition value cannot be null");
 

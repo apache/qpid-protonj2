@@ -49,7 +49,7 @@ final class ClientSenderBuilder {
     private SenderOptions defaultSenderOptions;
     private StreamSenderOptions defaultStreamSenderOptions;
 
-    public ClientSenderBuilder(ClientSession session) {
+    ClientSenderBuilder(ClientSession session) {
         this.session = session;
         this.sessionOptions = session.options();
     }

@@ -26,11 +26,17 @@ import java.util.Set;
  */
 public class SaslOptions {
 
+	/**
+	 * The client default configuration value for SASL enabled state (default is true)
+	 */
     public static final boolean DEFAULT_SASL_ENABLED = true;
 
     private boolean saslEnabled = DEFAULT_SASL_ENABLED;
     private final Set<String> saslAllowedMechs = new LinkedHashSet<>();
 
+    /**
+     * Create a new {@link SaslOptions} instance configured with default configuration settings.
+     */
     public SaslOptions() {
     }
 

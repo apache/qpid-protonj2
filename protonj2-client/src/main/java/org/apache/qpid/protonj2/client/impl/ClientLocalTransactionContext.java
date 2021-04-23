@@ -73,7 +73,7 @@ final class ClientLocalTransactionContext implements ClientTransactionContext {
     private TransactionalState cachedSenderOutcome;
     private TransactionalState cachedReceiverOutcome;
 
-    public ClientLocalTransactionContext(ClientSession session) {
+    ClientLocalTransactionContext(ClientSession session) {
         this.session = session;
     }
 

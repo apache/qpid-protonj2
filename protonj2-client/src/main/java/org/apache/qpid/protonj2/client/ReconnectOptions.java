@@ -47,7 +47,7 @@ public class ReconnectOptions {
     private double reconnectBackOffMultiplier = DEFAULT_RECONNECT_BACKOFF_MULTIPLIER;
 
     /**
-     * Create a new {@link ConnectionOptions} instance configured with default configuration settings.
+     * Create a new {@link ReconnectOptions} instance configured with default configuration settings.
      */
     public ReconnectOptions() {
     }

@@ -76,7 +76,7 @@ public class ClientSession implements Session {
 
     private org.apache.qpid.protonj2.engine.Session protonSession;
 
-    public ClientSession(ClientConnection connection, SessionOptions options, String sessionId, org.apache.qpid.protonj2.engine.Session session) {
+    ClientSession(ClientConnection connection, SessionOptions options, String sessionId, org.apache.qpid.protonj2.engine.Session session) {
         this.options = new SessionOptions(options);
         this.connection = connection;
         this.protonSession = session.setLinkedResource(this);

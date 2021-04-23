@@ -23,6 +23,9 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
  */
 public class NoOpAsyncResult implements AsyncResult<Void> {
 
+	/**
+	 * A singleton instance of the NoOpAsyncResult for use in client operation.
+	 */
     public final static NoOpAsyncResult INSTANCE = new NoOpAsyncResult();
 
     @Override

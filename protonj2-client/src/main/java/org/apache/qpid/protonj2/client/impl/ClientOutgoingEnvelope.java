@@ -57,7 +57,7 @@ public class ClientOutgoingEnvelope {
      * @param request
      *      The requesting operation that initiated this send.
      */
-    public ClientOutgoingEnvelope(ClientSender sender, int messageFormat, ProtonBuffer payload, ClientFuture<Tracker> request) {
+    ClientOutgoingEnvelope(ClientSender sender, int messageFormat, ProtonBuffer payload, ClientFuture<Tracker> request) {
         this.messageFormat = messageFormat;
         this.payload = payload;
         this.request = request;
@@ -79,7 +79,7 @@ public class ClientOutgoingEnvelope {
      * @param request
      *      The requesting operation that initiated this send.
      */
-    public ClientOutgoingEnvelope(ClientSender sender, int messageFormat, ProtonBuffer payload, boolean complete, ClientFuture<Tracker> request) {
+    ClientOutgoingEnvelope(ClientSender sender, int messageFormat, ProtonBuffer payload, boolean complete, ClientFuture<Tracker> request) {
         this.payload = payload;
         this.request = request;
         this.sender = sender;

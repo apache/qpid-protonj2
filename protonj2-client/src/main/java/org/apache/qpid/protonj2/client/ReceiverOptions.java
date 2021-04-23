@@ -45,9 +45,18 @@ public class ReceiverOptions {
     private String[] desiredCapabilities;
     private Map<String, Object> properties;
 
+    /**
+     * Create a new ReceiverOptions instance with defaults set for all options.
+     */
     public ReceiverOptions() {
     }
 
+    /**
+     * Create a new ReceiverOptions instance that copies the configuration from the specified source options.
+     *
+     * @param options
+     * 		The ReceiverOptions instance whose settings are to be copied into this one.
+     */
     public ReceiverOptions(ReceiverOptions options) {
         if (options != null) {
             options.copyInto(this);

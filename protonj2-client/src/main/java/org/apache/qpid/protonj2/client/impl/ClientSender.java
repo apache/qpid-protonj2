@@ -80,7 +80,7 @@ class ClientSender implements Sender {
     protected volatile Source remoteSource;
     protected volatile Target remoteTarget;
 
-    public ClientSender(ClientSession session, SenderOptions options, String senderId, org.apache.qpid.protonj2.engine.Sender protonSender) {
+    ClientSender(ClientSession session, SenderOptions options, String senderId, org.apache.qpid.protonj2.engine.Sender protonSender) {
         this.options = new SenderOptions(options);
         this.session = session;
         this.senderId = senderId;

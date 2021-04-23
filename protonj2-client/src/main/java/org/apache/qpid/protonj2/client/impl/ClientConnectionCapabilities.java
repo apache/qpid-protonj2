@@ -33,12 +33,15 @@ public class ClientConnectionCapabilities {
     private boolean delayedDeliverySupported;
 
     /**
-     * @return true this the client requested and the remote answered that anonymous relay is supported.
+     * @return true if the remote indicated that it supports anonymous relay links.
      */
     public boolean anonymousRelaySupported() {
         return this.anonymousRelaySupported;
     }
 
+    /**
+     * @return true if the remote indicated that it supports delivery delay annotations from client messages.
+     */
     public boolean deliveryDelaySupported() {
         return this.delayedDeliverySupported;
     }

@@ -71,10 +71,16 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
         }
     }
 
+    /**
+     * @return true if the {@link Future} operation failed.
+     */
     public boolean isFailed() {
         return error != null;
     }
 
+    /**
+     * @return the resulting value of the operation upon successful compeletion.
+     */
     public V getResult() {
         return result;
     }

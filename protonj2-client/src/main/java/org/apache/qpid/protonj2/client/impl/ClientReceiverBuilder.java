@@ -49,7 +49,7 @@ final class ClientReceiverBuilder {
     private ReceiverOptions defaultReceivernOptions;
     private StreamReceiverOptions defaultStreamReceiverOptions;
 
-    public ClientReceiverBuilder(ClientSession session) {
+    ClientReceiverBuilder(ClientSession session) {
         this.session = session;
         this.sessionOptions = session.options();
     }

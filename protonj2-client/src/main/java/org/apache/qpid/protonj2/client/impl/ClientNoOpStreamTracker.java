@@ -29,7 +29,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
  */
 public class ClientNoOpStreamTracker extends ClientNoOpTracker implements StreamTracker {
 
-    public ClientNoOpStreamTracker(ClientStreamSender sender) {
+    ClientNoOpStreamTracker(ClientStreamSender sender) {
         super(sender);
     }
 

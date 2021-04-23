@@ -35,7 +35,7 @@ final class ClientTransportListener implements TransportListener {
 
     private final Engine engine;
 
-    public ClientTransportListener(Engine engine) {
+    ClientTransportListener(Engine engine) {
         this.engine = engine;
     }
 

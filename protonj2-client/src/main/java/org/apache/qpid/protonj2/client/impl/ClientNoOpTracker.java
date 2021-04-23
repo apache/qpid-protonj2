@@ -36,7 +36,7 @@ public class ClientNoOpTracker implements Tracker {
     private DeliveryState state;
     private boolean settled;
 
-    public ClientNoOpTracker(ClientSender sender) {
+    ClientNoOpTracker(ClientSender sender) {
         this.sender = sender;
     }
 

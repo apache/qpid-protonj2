@@ -30,6 +30,9 @@ import org.apache.qpid.protonj2.types.transport.Open;
  */
 public class ConnectionOptions {
 
+	/**
+	 * Default value for the AMQP desired capabilities set in the Open frame.
+	 */
     public static final String[] DEFAULT_DESIRED_CAPABILITIES = new String[] { "ANONYMOUS-RELAY" };
 
     public static final long INFINITE = -1;

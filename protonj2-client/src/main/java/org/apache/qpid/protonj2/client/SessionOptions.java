@@ -44,9 +44,18 @@ public class SessionOptions {
     private String[] desiredCapabilities;
     private Map<String, Object> properties;
 
+    /**
+     * Create a new {@link SessionOptions} instance configured with default configuration settings.
+     */
     public SessionOptions() {
     }
 
+    /**
+     * Create a new SessionOptions instance that copies the configuration from the specified source options.
+     *
+     * @param options
+     * 		The SessionOptions instance whose settings are to be copied into this one.
+     */
     public SessionOptions(SessionOptions options) {
         if (options != null) {
             options.copyInto(this);

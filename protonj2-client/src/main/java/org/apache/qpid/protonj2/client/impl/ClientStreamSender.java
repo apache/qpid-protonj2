@@ -32,11 +32,14 @@ import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 
+/**
+ * Client implementation of a {@link StreamSender}.
+ */
 public final class ClientStreamSender extends ClientSender implements StreamSender {
 
     private final StreamSenderOptions options;
 
-    public ClientStreamSender(ClientSession session, StreamSenderOptions options, String senderId, org.apache.qpid.protonj2.engine.Sender protonSender) {
+    ClientStreamSender(ClientSession session, StreamSenderOptions options, String senderId, org.apache.qpid.protonj2.engine.Sender protonSender) {
         super(session, options, senderId, protonSender);
 
         this.options = new StreamSenderOptions(options);

@@ -44,9 +44,18 @@ public class SenderOptions {
     private String[] desiredCapabilities;
     private Map<String, Object> properties;
 
+    /**
+     * Create a new {@link SenderOptions} instance configured with default configuration settings.
+     */
     public SenderOptions() {
     }
 
+    /**
+     * Create a new SenderOptions instance that copies the configuration from the specified source options.
+     *
+     * @param options
+     * 		The SenderOptions instance whose settings are to be copied into this one.
+     */
     public SenderOptions(SenderOptions options) {
         if (options != null) {
             options.copyInto(this);

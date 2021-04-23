@@ -43,6 +43,15 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> {
         return copyInto(new SourceOptions());
     }
 
+    /**
+     * Copy all options from this {@link SourceOptions} instance into the instance
+     * provided.
+     *
+     * @param other
+     *      the target of this copy operation.
+     *
+     * @return this {@link SourceOptions} instance.
+     */
     public SourceOptions copyInto(SourceOptions other) {
         super.copyInto(other);
         other.distributionMode(distributionMode);

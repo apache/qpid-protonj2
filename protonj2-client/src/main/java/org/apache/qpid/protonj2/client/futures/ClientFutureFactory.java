@@ -30,8 +30,19 @@ public abstract class ClientFutureFactory {
     private static final String WINDOWS_OS_PREFIX = "Windows";
     private static final boolean IS_WINDOWS = isOsNameMatch(OS_NAME, WINDOWS_OS_PREFIX);
 
+    /**
+     * Names a future type that uses a conservative wait for the operation outcome.
+     */
     public static final String CONSERVATIVE = "conservative";
+
+    /**
+     * Names a future type that uses a balanced spin then wait for the operation outcome.
+     */
     public static final String BALANCED = "balanced";
+
+    /**
+     * Names a future type that uses a progressive spin then wait for the operation outcome.
+     */
     public static final String PROGRESSIVE = "progressive";
 
     /**
@@ -66,6 +77,17 @@ public abstract class ClientFutureFactory {
         }
     }
 
+    /**
+     * Creates and returns a {@link Future} type that is already marked completed and will
+     * return the provided result to any caller that requests the future's outcome.
+     *
+     * @param <T> The type that will result from the {@link Future}.
+     *
+     * @param result
+     * 		The value to return as the result of this completed {@link Future}.
+     *
+     * @return the newly created completed {@link Future} instance.
+     */
     public static <T> Future<T> completedFuture(T result) {
         BalancedClientFuture<T> future = new BalancedClientFuture<>();
         future.complete(result);

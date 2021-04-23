@@ -57,10 +57,19 @@ public final class ClientInstance implements Client {
 
     private volatile boolean closed;
 
+    /**
+     * @return a newly create {@link ClientInstance} that uses default configuration.
+     */
     public static ClientInstance create() {
         return new ClientInstance(new ClientOptions());
     }
 
+    /**
+     * @param options
+     * 		The configuration options to apply to the newly create {@link ClientInstance}.
+     *
+     * @return a newly create {@link ClientInstance} that uses the configuration provided.
+     */
     public static ClientInstance create(ClientOptions options) {
         Objects.requireNonNull(options, "Client options must be non-null");
         Objects.requireNonNull(options.id(), "User supplied container Id must be non-null");

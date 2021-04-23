@@ -30,7 +30,7 @@ import org.apache.qpid.protonj2.engine.OutgoingDelivery;
  */
 public final class ClientStreamTracker extends ClientTracker implements StreamTracker {
 
-    public ClientStreamTracker(ClientStreamSender sender, OutgoingDelivery delivery) {
+    ClientStreamTracker(ClientStreamSender sender, OutgoingDelivery delivery) {
         super(sender, delivery);
     }
 
