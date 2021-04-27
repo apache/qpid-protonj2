@@ -293,4 +293,64 @@ class ReconnectSenderTest extends ImperativeClientTestCase {
            finalPeer.waitForScriptToComplete();
        }
     }
+
+    @Test
+    public void testMultipleSenderCreationRecoversAfterDropWithNoAttachResponse() throws Exception {
+        try (ProtonTestServer firstPeer = new ProtonTestServer();
+    		 ProtonTestServer intermediatePeer = new ProtonTestServer();
+             ProtonTestServer finalPeer = new ProtonTestServer()) {
+
+            firstPeer.expectSASLAnonymousConnect();
+            firstPeer.expectOpen().respond();
+            firstPeer.expectBegin().respond();
+            firstPeer.expectAttach().ofSender().respond();
+            firstPeer.expectAttach().ofSender();
+            firstPeer.dropAfterLastHandler(20);
+            firstPeer.start();
+
+            intermediatePeer.expectSASLAnonymousConnect();
+            intermediatePeer.expectOpen().respond();
+            intermediatePeer.expectBegin().respond();
+            intermediatePeer.expectAttach().ofSender();
+            intermediatePeer.dropAfterLastHandler();
+            intermediatePeer.start();
+
+            finalPeer.expectSASLAnonymousConnect();
+            finalPeer.expectOpen().respond();
+            finalPeer.expectBegin().respond();
+            finalPeer.expectAttach().ofSender().respond();
+            finalPeer.expectAttach().ofSender().respond();
+            finalPeer.expectClose().respond();
+            finalPeer.start();
+
+            final URI primaryURI = firstPeer.getServerURI();
+            final URI intermediateURI = intermediatePeer.getServerURI();
+            final URI backupURI = finalPeer.getServerURI();
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.reconnectOptions().reconnectEnabled(true);
+            options.reconnectOptions().addReconnectLocation(intermediateURI.getHost(), intermediateURI.getPort());
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
+
+            Client container = Client.create();
+            Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
+            Session session = connection.openSession();
+
+            Sender sender1 = session.openSender("queue-1");
+            Sender sender2 = session.openSender("queue-2");
+
+            firstPeer.waitForScriptToComplete();
+
+            // Await both being open before doing work to make the outcome predictable
+            sender1.openFuture().get();
+            sender2.openFuture().get();
+
+            assertNull(sender1.trySend(Message.create("test")));
+            assertNull(sender2.trySend(Message.create("test")));
+
+            connection.close();
+
+            finalPeer.waitForScriptToComplete(1000);
+        }
+    }
 }
