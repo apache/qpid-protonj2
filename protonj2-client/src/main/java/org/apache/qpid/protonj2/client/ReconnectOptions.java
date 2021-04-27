@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.protonj2.client;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +33,7 @@ public class ReconnectOptions {
     public static final boolean DEFAULT_USE_RECONNECT_BACKOFF = true;
     public static final double DEFAULT_RECONNECT_BACKOFF_MULTIPLIER = 2.0d;
 
-    private final List<URI> reconnectHosts = new ArrayList<>();
+    private final List<ReconnectLocation> reconnectHosts = new ArrayList<>();
 
     private boolean reconnectEnabled = DEFAULT_RECONNECT_ENABLED;
     private int warnAfterReconnectAttempts = DEFAULT_WARN_AFTER_RECONNECT_ATTEMPTS;
@@ -113,28 +111,25 @@ public class ReconnectOptions {
     }
 
     /**
-     * Adds an additional host location that can be used when attempting to reconnect the client
+     * Adds an additional reconnection location that can be used when attempting to reconnect the client
      * following a connection failure.
      *
-     * @param reconnectHost
+     * @param host
      *      The host name of the remote host to attempt a reconnection to.
      * @param port
      *      The port on the remote host to use when connecting.
      *
      * @return this {@link ReconnectOptions} instance.
      */
-    public ReconnectOptions addReconnectHost(String reconnectHost, int port) {
-        try {
-            reconnectHosts.add(new URI(null, null, reconnectHost, port, null, null, null));
-        } catch (URISyntaxException e) {
-        }
+    public ReconnectOptions addReconnectLocation(String host, int port) {
+        reconnectHosts.add(new ReconnectLocation(host, port));
         return this;
     }
 
     /**
-     * @return an unmodifiable view of the configured reconnect hosts.
+     * @return an unmodifiable view of the configured reconnect locations.
      */
-    public List<URI> reconnectHosts() {
+    public List<ReconnectLocation> reconnectLocations() {
         return Collections.unmodifiableList(reconnectHosts);
     }
 

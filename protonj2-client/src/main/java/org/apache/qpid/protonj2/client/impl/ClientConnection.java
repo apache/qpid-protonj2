@@ -18,8 +18,6 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.Map;
 import java.util.Objects;
@@ -45,6 +43,7 @@ import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
+import org.apache.qpid.protonj2.client.ReconnectLocation;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
@@ -66,7 +65,7 @@ import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.client.futures.ClientFutureFactory;
 import org.apache.qpid.protonj2.client.transport.NettyIOContext;
 import org.apache.qpid.protonj2.client.transport.Transport;
-import org.apache.qpid.protonj2.client.util.ReconnectionURIPool;
+import org.apache.qpid.protonj2.client.util.ReconnectLocationPool;
 import org.apache.qpid.protonj2.client.util.TrackableThreadFactory;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
@@ -98,7 +97,7 @@ public class ClientConnection implements Connection {
     private final ClientConnectionCapabilities capabilities = new ClientConnectionCapabilities();
     private final ClientFutureFactory futureFactory;
     private final ClientSessionBuilder sessionBuilder;
-    private final ReconnectionURIPool reconnectPool = new ReconnectionURIPool();
+    private final ReconnectLocationPool reconnectPool = new ReconnectLocationPool();
     private final NettyIOContext ioContext;
     private final String connectionId;
     private final ScheduledExecutorService executor;
@@ -151,15 +150,8 @@ public class ClientConnection implements Connection {
             new TrackableThreadFactory("protonj2 Client Connection Executor: " + getId(), true));
         notifications.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy());
 
-        try {
-            this.reconnectPool.add(new URI(null, null, host, port, null, null, null));
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Invalid client remote host configured: " + host + ":" + port);
-        }
-
-        for (URI secondary : options.reconnectOptions().reconnectHosts()) {
-            this.reconnectPool.add(secondary);
-        }
+        reconnectPool.add(new ReconnectLocation(host, port));
+        reconnectPool.addAll(options.reconnectOptions().reconnectLocations());
     }
 
     @Override
@@ -539,13 +531,13 @@ public class ClientConnection implements Connection {
 
     ClientConnection connect() throws ClientException {
         try {
-            final URI remoteHost = reconnectPool.getNext();
+            final ReconnectLocation remoteLocation = reconnectPool.getNext();
 
             // Initial configuration validation happens here, if this step fails then the
             // user most likely configured something incorrect or that violates some constraint
             // like an invalid SASL mechanism etc.
-            initializeProtonResources(remoteHost.getHost());
-            scheduleReconnect(remoteHost.getHost(), remoteHost.getPort());
+            initializeProtonResources(remoteLocation);
+            scheduleReconnect(remoteLocation);
 
             return this;
         } catch (Exception ex) {
@@ -739,10 +731,10 @@ public class ClientConnection implements Connection {
             // user most likely configured something incorrect or that violates some constraint
             // like an invalid SASL mechanism etc.
             try {
-                final URI remoteHost = reconnectPool.getNext();
+                final ReconnectLocation remoteLocation = reconnectPool.getNext();
 
-                initializeProtonResources(remoteHost.getHost());
-                scheduleReconnect(remoteHost.getHost(), remoteHost.getPort());
+                initializeProtonResources(remoteLocation);
+                scheduleReconnect(remoteLocation);
             } catch (ClientException initError) {
                 failConnection(ClientExceptionSupport.createOrPassthroughFatal(initError));
             } finally {
@@ -859,7 +851,7 @@ public class ClientConnection implements Connection {
         return engine;
     }
 
-    private void initializeProtonResources(String host) throws ClientException {
+    private void initializeProtonResources(ReconnectLocation location) throws ClientException {
         if (options.saslOptions().saslEnabled()) {
             engine = EngineFactory.PROTON.createEngine();
         } else {
@@ -886,7 +878,7 @@ public class ClientConnection implements Connection {
         protonConnection.setLinkedResource(this);
         protonConnection.setChannelMax(options.channelMax());
         protonConnection.setMaxFrameSize(options.maxFrameSize());
-        protonConnection.setHostname(host);
+        protonConnection.setHostname(location.getHost());
         protonConnection.setIdleTimeout((int) options.idleTimeout());
         protonConnection.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
         protonConnection.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
@@ -958,18 +950,18 @@ public class ClientConnection implements Connection {
 
     //----- Reconnection related internal API
 
-    private void attemptConnection(String host, int port) {
+    private void attemptConnection(ReconnectLocation location) {
         try {
             reconnectAttempts++;
             transport = ioContext.newTransport();
-            LOG.trace("Attempting connection to remote {}:{}", host, port);
-            transport.connect(host, port, new ClientTransportListener(engine));
+            LOG.trace("Attempting connection to remote {}:{}", location.getHost(), location.getPort());
+            transport.connect(location.getHost(), location.getPort(), new ClientTransportListener(engine));
         } catch (Throwable error) {
             engine.engineFailed(ClientExceptionSupport.createOrPassthroughFatal(error));
         }
     }
 
-    private void scheduleReconnect(String host, int port) {
+    private void scheduleReconnect(ReconnectLocation location) {
         // Warn of ongoing connection attempts if configured.
         int warnInterval = options.reconnectOptions().warnAfterReconnectAttempts();
         if (reconnectAttempts > 0 && warnInterval > 0 && (reconnectAttempts % warnInterval) == 0) {
@@ -982,19 +974,19 @@ public class ClientConnection implements Connection {
         if (totalConnections == 0) {
             if (reconnectAttempts == 0) {
                 LOG.trace("Initial connect attempt will be performed immediately");
-                executor.execute(() -> attemptConnection(host, port));
+                executor.execute(() -> attemptConnection(location));
             } else {
                 long delay = nextReconnectDelay();
                 LOG.trace("Next connect attempt will be in {} milliseconds", delay);
-                executor.schedule(() -> attemptConnection(host, port), delay, TimeUnit.MILLISECONDS);
+                executor.schedule(() -> attemptConnection(location), delay, TimeUnit.MILLISECONDS);
             }
         } else if (reconnectAttempts == 0) {
             LOG.trace("Initial reconnect attempt will be performed immediately");
-            executor.execute(() -> attemptConnection(host, port));
+            executor.execute(() -> attemptConnection(location));
         } else {
             long delay = nextReconnectDelay();
             LOG.trace("Next reconnect attempt will be in {} milliseconds", delay);
-            executor.schedule(() -> attemptConnection(host, port), delay, TimeUnit.MILLISECONDS);
+            executor.schedule(() -> attemptConnection(location), delay, TimeUnit.MILLISECONDS);
         }
     }
 

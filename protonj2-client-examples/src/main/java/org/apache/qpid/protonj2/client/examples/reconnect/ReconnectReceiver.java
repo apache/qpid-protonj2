@@ -42,7 +42,7 @@ public class ReconnectReceiver {
         connectionOpts.reconnectEnabled(true);
 
         if (backupServerHost != null) {
-            connectionOpts.reconnectOptions().addReconnectHost(backupServerHost, backupServerPort);
+            connectionOpts.reconnectOptions().addReconnectLocation(backupServerHost, backupServerPort);
         }
 
         try (Connection connection = client.connect(serverHost, serverPort, connectionOpts);

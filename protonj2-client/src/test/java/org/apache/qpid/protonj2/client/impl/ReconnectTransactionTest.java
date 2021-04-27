@@ -64,7 +64,7 @@ class ReconnectTransactionTest extends ImperativeClientTestCase {
 
             ConnectionOptions options = new ConnectionOptions();
             options.reconnectOptions().reconnectEnabled(true);
-            options.reconnectOptions().addReconnectHost(backupURI.getHost(), backupURI.getPort());
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
 
             Client container = Client.create();
             Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);

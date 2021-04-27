@@ -76,7 +76,7 @@ public class ReconnectTest extends ImperativeClientTestCase {
             options.reconnectOptions().maxReconnectAttempts(5);
             options.reconnectOptions().reconnectDelay(10);
             options.reconnectOptions().useReconnectBackOff(false);
-            options.reconnectOptions().addReconnectHost(backupURI.getHost(), backupURI.getPort());
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
             options.connectedHandler((connection, context) -> {
                 connected.countDown();
             });
@@ -210,8 +210,8 @@ public class ReconnectTest extends ImperativeClientTestCase {
             options.user("test");
             options.password("pass");
             options.reconnectOptions().reconnectEnabled(true);
-            options.reconnectOptions().addReconnectHost(secondURI.getHost(), secondURI.getPort())
-                                      .addReconnectHost(thirdURI.getHost(), thirdURI.getPort());
+            options.reconnectOptions().addReconnectLocation(secondURI.getHost(), secondURI.getPort())
+                                      .addReconnectLocation(thirdURI.getHost(), thirdURI.getPort());
             options.connectedHandler((connection, context) -> {
                 connected.countDown();
             });
@@ -269,7 +269,7 @@ public class ReconnectTest extends ImperativeClientTestCase {
             options.user("test");
             options.password("pass");
             options.reconnectOptions().reconnectEnabled(true);
-            options.reconnectOptions().addReconnectHost(backupURI.getHost(), backupURI.getPort());
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
             options.connectedHandler((connection, event) -> {
                 connectedHost.set(event.host());
                 connectedPort.set(event.port());
@@ -373,8 +373,8 @@ public class ReconnectTest extends ImperativeClientTestCase {
 
            ConnectionOptions options = new ConnectionOptions();
            options.reconnectOptions().reconnectEnabled(true);
-           options.reconnectOptions().addReconnectHost(secondURI.getHost(), secondURI.getPort())
-                                     .addReconnectHost(thirdURI.getHost(), thirdURI.getPort());
+           options.reconnectOptions().addReconnectLocation(secondURI.getHost(), secondURI.getPort())
+                                     .addReconnectLocation(thirdURI.getHost(), thirdURI.getPort());
            options.connectedHandler((connection, context) -> {
                connected.countDown();
            });
@@ -447,7 +447,7 @@ public class ReconnectTest extends ImperativeClientTestCase {
 
             ConnectionOptions options = new ConnectionOptions();
             options.reconnectOptions().reconnectEnabled(true);
-            options.reconnectOptions().addReconnectHost(backupURI.getHost(), backupURI.getPort());
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
             options.connectedHandler((connection, event) -> {
                 connectedHost.set(event.host());
                 connectedPort.set(event.port());
@@ -497,7 +497,7 @@ public class ReconnectTest extends ImperativeClientTestCase {
 
             ConnectionOptions options = new ConnectionOptions();
             options.reconnectOptions().reconnectEnabled(true);
-            options.reconnectOptions().addReconnectHost(backupURI.getHost(), backupURI.getPort());
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
             options.connectedHandler((connection, event) -> {
                 connectedHost.set(event.host());
                 connectedPort.set(event.port());
@@ -551,7 +551,7 @@ public class ReconnectTest extends ImperativeClientTestCase {
 
             ConnectionOptions options = new ConnectionOptions();
             options.reconnectOptions().reconnectEnabled(true);
-            options.reconnectOptions().addReconnectHost(backupURI.getHost(), backupURI.getPort());
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
             options.connectedHandler((connection, context) -> {
                 connected.countDown();
             });
