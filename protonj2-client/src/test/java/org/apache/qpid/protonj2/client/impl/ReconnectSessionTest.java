@@ -16,11 +16,14 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import java.net.URI;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
+import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
@@ -72,6 +75,111 @@ class ReconnectSessionTest extends ImperativeClientTestCase {
             connection.close();
 
             finalPeer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testSessionCreationRecoversAfterDropWithNoBeginResponse() throws Exception {
+        try (ProtonTestServer firstPeer = new ProtonTestServer();
+             ProtonTestServer finalPeer = new ProtonTestServer()) {
+
+            firstPeer.expectSASLAnonymousConnect();
+            firstPeer.expectOpen().respond();
+            firstPeer.expectBegin();
+            firstPeer.dropAfterLastHandler(20);
+            firstPeer.start();
+
+            finalPeer.expectSASLAnonymousConnect();
+            finalPeer.expectOpen().respond();
+            finalPeer.expectBegin().respond();
+            finalPeer.expectAttach().ofReceiver().respond();
+            finalPeer.expectFlow();
+            finalPeer.expectClose().respond();
+            finalPeer.start();
+
+            final URI primaryURI = firstPeer.getServerURI();
+            final URI backupURI = finalPeer.getServerURI();
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.reconnectOptions().reconnectEnabled(true);
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
+
+            Client container = Client.create();
+            Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
+            Session session = connection.openSession();
+
+            firstPeer.waitForScriptToComplete();
+
+            Receiver receiver = session.openFuture().get().openReceiver("queue").openFuture().get();
+
+            assertNull(receiver.tryReceive());
+
+            connection.close();
+
+            finalPeer.waitForScriptToComplete(1000);
+        }
+    }
+
+    @Test
+    public void testMultipleSessionCreationRecoversAfterDropWithNoBeginResponse() throws Exception {
+        try (ProtonTestServer firstPeer = new ProtonTestServer();
+    		 ProtonTestServer intermediatePeer = new ProtonTestServer();
+             ProtonTestServer finalPeer = new ProtonTestServer()) {
+
+            firstPeer.expectSASLAnonymousConnect();
+            firstPeer.expectOpen().respond();
+            firstPeer.expectBegin().respond();
+            firstPeer.expectBegin();
+            firstPeer.dropAfterLastHandler(20);
+            firstPeer.start();
+
+            intermediatePeer.expectSASLAnonymousConnect();
+            intermediatePeer.expectOpen().respond();
+            intermediatePeer.expectBegin().respond();
+            intermediatePeer.expectBegin();
+            intermediatePeer.dropAfterLastHandler();
+            intermediatePeer.start();
+
+            finalPeer.expectSASLAnonymousConnect();
+            finalPeer.expectOpen().respond();
+            finalPeer.expectBegin().respond();
+            finalPeer.expectBegin().respond();
+            finalPeer.expectAttach().ofReceiver().respond();
+            finalPeer.expectFlow();
+            finalPeer.expectAttach().ofReceiver().respond();
+            finalPeer.expectFlow();
+            finalPeer.expectClose().respond();
+            finalPeer.start();
+
+            final URI primaryURI = firstPeer.getServerURI();
+            final URI intermediateURI = intermediatePeer.getServerURI();
+            final URI backupURI = finalPeer.getServerURI();
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.reconnectOptions().reconnectEnabled(true);
+            options.reconnectOptions().addReconnectLocation(intermediateURI.getHost(), intermediateURI.getPort());
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
+
+            Client container = Client.create();
+            Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
+            Session session1 = connection.openSession();
+            Session session2 = connection.openSession();
+
+            firstPeer.waitForScriptToComplete();
+
+            // Await both being open before doing work to make the outcome predictable
+            session1.openFuture().get();
+            session2.openFuture().get();
+
+            Receiver receiver1 = session1.openReceiver("queue").openFuture().get();
+            Receiver receiver2 = session2.openReceiver("queue").openFuture().get();
+
+            assertNull(receiver1.tryReceive());
+            assertNull(receiver2.tryReceive());
+
+            connection.close();
+
+            finalPeer.waitForScriptToComplete(1000);
         }
     }
 }
