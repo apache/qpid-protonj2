@@ -340,6 +340,7 @@ class ReconnectSenderTest extends ImperativeClientTestCase {
             Sender sender2 = session.openSender("queue-2");
 
             firstPeer.waitForScriptToComplete();
+            intermediatePeer.waitForScriptToComplete();
 
             // Await both being open before doing work to make the outcome predictable
             sender1.openFuture().get();

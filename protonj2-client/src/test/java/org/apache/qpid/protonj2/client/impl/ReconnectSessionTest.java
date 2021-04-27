@@ -27,6 +27,7 @@ import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -120,7 +121,7 @@ class ReconnectSessionTest extends ImperativeClientTestCase {
         }
     }
 
-    @Test
+    @RepeatedTest(10)
     public void testMultipleSessionCreationRecoversAfterDropWithNoBeginResponse() throws Exception {
         try (ProtonTestServer firstPeer = new ProtonTestServer();
     		 ProtonTestServer intermediatePeer = new ProtonTestServer();
@@ -166,6 +167,7 @@ class ReconnectSessionTest extends ImperativeClientTestCase {
             Session session2 = connection.openSession();
 
             firstPeer.waitForScriptToComplete();
+            intermediatePeer.waitForScriptToComplete();
 
             // Await both being open before doing work to make the outcome predictable
             session1.openFuture().get();
