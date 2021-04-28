@@ -10,8 +10,6 @@ within the overall build by using the 'performance-jmh' maven profile.
 Building the benchmarks
 -------
 
-TODO - Currently just part of the build with deploy disabled.
-
 The benchmarks are maven built and involve some code generation for the JMH part. As such it is required that you
 rebuild upon changing the code. As the codebase is small it is recommended that you do this from the project
 root folder to avoid missing any changes from other modules.

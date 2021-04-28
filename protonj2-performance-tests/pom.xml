@@ -24,7 +24,7 @@
   </parent>
 
   <artifactId>protonj2-performance-tests</artifactId>
-  <name>Qpid ProtonJ2 JMH performance tests</name>
+  <name>Qpid ProtonJ2 JMH Performance Tests</name>
   <description>JMH Tests for the ProtonJ2 library</description>
   <packaging>jar</packaging>
 
@@ -85,4 +85,40 @@
     </plugins>
   </build>
 
+  <profiles>
+    <profile>
+      <id>perform-release-checks</id>
+      <activation>
+        <property>
+          <name>perform-release-checks</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-enforcer-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>enforce-release-version</id>
+                <goals>
+                    <goal>enforce</goal>
+                </goals>
+                <configuration>
+                  <rules>
+                    <requireReleaseVersion>
+                      <message>Module still has a SNAPSHOT version! Ensure release is prepared using "mvn release:prepare -Papache-release"
+                      </message>
+                    </requireReleaseVersion>
+                  </rules>
+                  <fail>true</fail>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

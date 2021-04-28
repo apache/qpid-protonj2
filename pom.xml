@@ -83,7 +83,6 @@
 
   <modules>
     <module>protonj2</module>
-    <module>protonj2-performance-tests</module>
     <module>protonj2-test-driver</module>
     <module>protonj2-client</module>
     <module>protonj2-client-examples</module>
@@ -333,6 +332,8 @@
           <configuration>
             <autoVersionSubmodules>true</autoVersionSubmodules>
             <tagNameFormat>@{project.version}</tagNameFormat>
+            <arguments>-Papache-release -Dperform-release-checks=true ${arguments}</arguments>
+            <pushChanges>true</pushChanges>
           </configuration>
         </plugin>
         <plugin>
@@ -374,6 +375,19 @@
           </plugin>
         </plugins>
       </build>
+      <!-- Enable the optional performance-tests module too, so that it gets
+           the version updated by the maven-release-plugin during release.
+           The module is configured not to deploy anything. -->
+      <modules>
+        <module>protonj2-performance-tests</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>performance-jmh</id>
+      <modules>
+        <module>protonj2-performance-tests</module>
+      </modules>
     </profile>
 
     <profile>
