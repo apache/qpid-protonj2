@@ -2350,7 +2350,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().ofSender().respond();
-            peer.remoteFlow().withIncomingWindow(WRITE_COUNT).withNextIncomingId(1).withLinkCredit(WRITE_COUNT).queue();
+            peer.remoteFlow().withIncomingWindow(WRITE_COUNT).withNextIncomingId(0).withLinkCredit(WRITE_COUNT).queue();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -2388,14 +2388,16 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectTransfer().withNullPayload().withMore(false).accept();
+
+            // grant one more credit for the complete to arrive.
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(WRITE_COUNT).withLinkCredit(1).later(10);
+
+            stream.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDetach().respond();
             peer.expectEnd().respond();
             peer.expectClose().respond();
-
-            // grant one more credit for the complete to arrive.
-            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(WRITE_COUNT + 1).withLinkCredit(1).now();
-
-            stream.close();
 
             sender.closeAsync().get();
             connection.closeAsync().get();
