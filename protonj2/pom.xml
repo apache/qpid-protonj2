@@ -24,7 +24,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>protonj2</artifactId>
-  <name>Qpid ProtonJ2 AMQP protocol library</name>
+  <name>Qpid ProtonJ2 AMQP Protocol Library</name>
   <description>AMQP 1.0 protocol engine and codec library</description>
   <packaging>bundle</packaging>
 
