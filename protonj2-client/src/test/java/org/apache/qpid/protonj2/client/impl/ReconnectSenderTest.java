@@ -312,6 +312,7 @@ class ReconnectSenderTest extends ImperativeClientTestCase {
             intermediatePeer.expectOpen().respond();
             intermediatePeer.expectBegin().respond();
             intermediatePeer.expectAttach().ofSender();
+            intermediatePeer.expectAttach().ofSender();
             intermediatePeer.dropAfterLastHandler();
             intermediatePeer.start();
 
