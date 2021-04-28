@@ -32,9 +32,20 @@ import javax.net.ssl.X509ExtendedKeyManager;
  * key manager.
  */
 public class X509AliasKeyManager extends X509ExtendedKeyManager {
+
     private X509ExtendedKeyManager delegate;
     private String alias;
 
+    /**
+     * Creates a new alias manager with the provided configuration
+     *
+     * @param alias
+     * 		The alias value to be used.
+     * @param delegate
+     *      A delegate that will be used by this manager instance.
+     *
+     * @throws IllegalArgumentException if no alias is provided for this manager.
+     */
     public X509AliasKeyManager(String alias, X509ExtendedKeyManager delegate) throws IllegalArgumentException {
         if (alias == null) {
             throw new IllegalArgumentException("The given key alias must not be null.");

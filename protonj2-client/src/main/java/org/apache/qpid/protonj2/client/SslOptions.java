@@ -358,22 +358,45 @@ public class SslOptions implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the currently configured default SSL port.
+     */
     public int defaultSslPort() {
         return defaultSslPort;
     }
 
+    /**
+     * Sets the default AMQP SSL port that should be used if the user did not provide a port value.
+     *
+     * @param defaultSslPort
+     * 		the default AMQP SSL port to use when none provided by the user.
+     *
+     * @return this {@link SslOptions} instance.
+     */
     public SslOptions defaultSslPort(int defaultSslPort) {
         this.defaultSslPort = defaultSslPort;
         return this;
     }
 
+    /**
+     * @return the currently configured {@link SSLContext} override or null if none set.
+     */
+    public SSLContext sslContextOverride() {
+        return sslContextOverride;
+    }
+
+    /**
+     * Provides a user configured {@link SSLContext} that should be used when performing the
+     * SSL handshake with the remote.
+     *
+     * @param sslContextOverride
+     * 		User defined {@link SSLContext} used for authentication.
+     *
+     * @return this {@link SslOptions} instance.
+     */
     public SslOptions sslContextOverride(SSLContext sslContextOverride) {
         this.sslContextOverride = sslContextOverride;
         return this;
-    }
-
-    public SSLContext sslContextOverride() {
-        return sslContextOverride;
     }
 
     /**

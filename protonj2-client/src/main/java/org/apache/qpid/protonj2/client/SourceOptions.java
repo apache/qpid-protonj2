@@ -31,6 +31,9 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> {
         DeliveryState.Type.ACCEPTED, DeliveryState.Type.REJECTED, DeliveryState.Type.RELEASED, DeliveryState.Type.MODIFIED
     };
 
+    /**
+     * The default AMQP Outcome that will be specified for all new {@link Receiver} instances.
+     */
     public static final ClientDeliveryState DEFAULT_RECEIVER_OUTCOME = new ClientDeliveryState.ClientModified(true, false);
 
     private DistributionMode distributionMode;

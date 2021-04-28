@@ -26,6 +26,9 @@ import org.apache.qpid.protonj2.types.transport.Performative.PerformativeHandler
  */
 public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
 
+	/**
+	 * The frame type value to used when encoding the outgoing AMQP frame.
+	 */
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
 
     private AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> pool;
@@ -63,6 +66,13 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
         return this;
     }
 
+    /**
+     * Called when the encoder determines that the encoding of the {@link Performative} plus any
+     * payload value is to large for a single AMQP frame.  The configured handler should update
+     * the {@link Performative} in preparation for encoding as a split framed AMQP transfer.
+     *
+     * @return this {@link OutgoingAMQPEnvelope} instance
+     */
     public OutgoingAMQPEnvelope handlePayloadToLarge() {
         payloadToLargeHandler.accept(getBody());
         return this;
@@ -82,6 +92,13 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
         return this;
     }
 
+    /**
+     * Called by the encoder when the write of a frame that comprises the transfer of the AMQP {@link Performative}
+     * plus any assigned payload has completed.  If the transfer comprises multiple frame writes this handler should
+     * be invoked as each frame is successfully written by the IO layer.
+     *
+     * @return this {@link OutgoingAMQPEnvelope} instance.
+     */
     public OutgoingAMQPEnvelope handleOutgoingFrameWriteComplete() {
         if (frameWriteCompleteHandler != null) {
             frameWriteCompleteHandler.run();
@@ -109,6 +126,16 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
         }
     }
 
+    /**
+     * Invoke the correct PerformativeHandler event based on the body of this {@link OutgoingAMQPEnvelope}
+     *
+     * @param <E>
+     * 		The type that the {@link Performative} handler expects for the context value.
+     * @param handler
+     * 		The handler that should be used to process the current body value.
+     * @param context
+     * 		The context that should be passed along for the current event.
+     */
     public <E> void invoke(PerformativeHandler<E> handler, E context) {
         getBody().invoke(handler, getPayload(), getChannel(), context);
     }

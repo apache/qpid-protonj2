@@ -24,6 +24,9 @@ import org.apache.qpid.protonj2.types.transport.Performative.PerformativeHandler
  */
 public class IncomingAMQPEnvelope extends PerformativeEnvelope<Performative> {
 
+	/**
+	 * The AMQP Frame type marker value used when processing incoming frames.
+	 */
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
 
     private AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> pool;
@@ -52,6 +55,16 @@ public class IncomingAMQPEnvelope extends PerformativeEnvelope<Performative> {
         }
     }
 
+    /**
+     * Invoke the correct PerformativeHandler event based on the body of this {@link IncomingAMQPEnvelope}
+     *
+     * @param <E>
+     * 		The type that the {@link Performative} handler expects for the context value.
+     * @param handler
+     * 		The handler that should be used to process the current body value.
+     * @param context
+     * 		The context that should be passed along for the current event.
+     */
     public <E> void invoke(PerformativeHandler<E> handler, E context) {
         getBody().invoke(handler, getPayload(), getChannel(), context);
     }

@@ -20,7 +20,20 @@ package org.apache.qpid.protonj2.engine;
  * Represents the state of an AMQP Session.
  */
 public enum SessionState {
+
+	/**
+	 * Indicates that the targeted end of the Session (local or remote) has not yet been opened.
+	 */
     IDLE,
+
+	/**
+	 * Indicates that the targeted end of the Session (local or remote) is currently open.
+	 */
     ACTIVE,
-    CLOSED,
+
+	/**
+	 * Indicates that the targeted end of the Session (local or remote) has been closed.
+	 */
+    CLOSED
+
 }

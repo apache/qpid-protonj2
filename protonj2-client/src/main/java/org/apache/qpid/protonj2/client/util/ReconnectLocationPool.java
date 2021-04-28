@@ -31,10 +31,19 @@ public class ReconnectLocationPool {
 
     private final LinkedList<ReconnectLocation> entries;
 
+    /**
+     * Creates an empty {@link ReconnectLocationPool}.
+     */
     public ReconnectLocationPool() {
         this.entries = new LinkedList<ReconnectLocation>();
     }
 
+    /**
+     * Creates a new {@link ReconnectLocationPool} with the provided {@link ReconnectLocation} values.
+     *
+     * @param backups
+     * 		a list of location where a reconnection attempt should be made.
+     */
     public ReconnectLocationPool(List<ReconnectLocation> backups) {
         this.entries = new LinkedList<ReconnectLocation>();
 

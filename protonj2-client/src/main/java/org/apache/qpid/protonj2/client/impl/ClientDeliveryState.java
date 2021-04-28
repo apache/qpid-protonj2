@@ -121,6 +121,9 @@ public abstract class ClientDeliveryState implements DeliveryState {
 
     //----- Delivery State implementations
 
+    /**
+     * Client defined {@link Accepted} delivery state definition
+     */
     public static class ClientAccepted extends ClientDeliveryState {
 
         private static final ClientAccepted INSTANCE = new ClientAccepted();
@@ -135,11 +138,17 @@ public abstract class ClientDeliveryState implements DeliveryState {
             return Accepted.getInstance();
         }
 
+        /**
+         * @return a singleton instance of the accepted type.
+         */
         public static ClientAccepted getInstance() {
             return INSTANCE;
         }
     }
 
+    /**
+     * Client defined {@link Released} delivery state definition
+     */
     public static class ClientReleased extends ClientDeliveryState {
 
         private static final ClientReleased INSTANCE = new ClientReleased();
@@ -154,11 +163,17 @@ public abstract class ClientDeliveryState implements DeliveryState {
             return Released.getInstance();
         }
 
+        /**
+         * @return a singleton instance of the released type.
+         */
         public static ClientReleased getInstance() {
             return INSTANCE;
         }
     }
 
+    /**
+     * Client defined {@link Rejected} delivery state definition
+     */
     public static class ClientRejected extends ClientDeliveryState {
 
         private final Rejected rejected = new Rejected();
@@ -169,12 +184,30 @@ public abstract class ClientDeliveryState implements DeliveryState {
             }
         }
 
+        /**
+         * Create a new Rejected outcome with the given description of the rejection cause.
+         *
+         * @param condition
+         * 		the condition that defines the rejection outcome.
+         * @param description
+         *      the description of the underlying cause of the rejection.
+         */
         public ClientRejected(String condition, String description) {
             if (condition != null || description != null) {
                 rejected.setError(new ErrorCondition(Symbol.valueOf(condition), description));
             }
         }
 
+        /**
+         * Create a new Rejected outcome with the given description of the rejection cause.
+         *
+         * @param condition
+         * 		the condition that defines the rejection outcome.
+         * @param description
+         *      the description of the underlying cause of the rejection.
+         * @param info
+         * 		additional information to be provide to the remote about the rejection.
+         */
         public ClientRejected(String condition, String description, Map<String, Object> info) {
             if (condition != null || description != null) {
                 rejected.setError(new ErrorCondition(
@@ -192,11 +225,14 @@ public abstract class ClientDeliveryState implements DeliveryState {
             return rejected;
         }
 
-        public static ClientRejected fromProtonType(Rejected rejected) {
+        static ClientRejected fromProtonType(Rejected rejected) {
             return new ClientRejected(rejected);
         }
     }
 
+    /**
+     * Client defined {@link Modified} delivery state definition
+     */
     public static class ClientModified extends ClientDeliveryState {
 
         private final Modified modified = new Modified();
@@ -207,11 +243,29 @@ public abstract class ClientDeliveryState implements DeliveryState {
             this.modified.setMessageAnnotations(new LinkedHashMap<>(modified.getMessageAnnotations()));
         }
 
+        /**
+         * Create a new instance with the given outcome values.
+         *
+         * @param failed
+         * 		has the delivery failed
+         * @param undeliverable
+         *      is the delivery no longer deliverable to this client.
+         */
         public ClientModified(boolean failed, boolean undeliverable) {
             modified.setDeliveryFailed(failed);
             modified.setUndeliverableHere(undeliverable);
         }
 
+        /**
+         * Create a new instance with the given outcome values.
+         *
+         * @param failed
+         * 		has the delivery failed
+         * @param undeliverable
+         *      is the delivery no longer deliverable to this client.
+         * @param annotations
+         *      updated annotation values to provide to the remote.
+         */
         public ClientModified(boolean failed, boolean undeliverable, Map<String, Object> annotations) {
             modified.setDeliveryFailed(failed);
             modified.setUndeliverableHere(undeliverable);
@@ -228,11 +282,14 @@ public abstract class ClientDeliveryState implements DeliveryState {
             return modified;
         }
 
-        public static ClientModified fromProtonType(Modified modified) {
+        static ClientModified fromProtonType(Modified modified) {
             return new ClientModified(modified);
         }
     }
 
+    /**
+     * Client defined {@link TransactionalState} delivery state definition
+     */
     public static class ClientTransactional extends ClientDeliveryState {
 
         private final TransactionalState txnState = new TransactionalState();
@@ -252,7 +309,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
             return txnState;
         }
 
-        public static ClientTransactional fromProtonType(TransactionalState txnState) {
+        static ClientTransactional fromProtonType(TransactionalState txnState) {
             return new ClientTransactional(txnState);
         }
     }

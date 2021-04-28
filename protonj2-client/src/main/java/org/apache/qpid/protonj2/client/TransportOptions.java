@@ -173,6 +173,14 @@ public class TransportOptions implements Cloneable {
         return tcpNoDelay;
     }
 
+    /**
+     * Configure the underlying connection to use the tcpNoDelay option.
+     *
+     * @param tcpNoDelay
+     * 		controls if the underlying connection configures tcpNoDelay.
+     *
+     * @return this {@link TransportOptions} instance.
+     */
     public TransportOptions tcpNoDelay(boolean tcpNoDelay) {
         this.tcpNoDelay = tcpNoDelay;
         return this;
@@ -185,6 +193,14 @@ public class TransportOptions implements Cloneable {
         return soLinger;
     }
 
+    /**
+     * Configures the soLinger value that should be configured on the connection socket.
+     *
+     * @param soLinger
+     * 		The soLinger value to use for the underlying socket.
+     *
+     * @return this {@link TransportOptions} instance.
+     */
     public TransportOptions soLinger(int soLinger) {
         this.soLinger = soLinger;
         return this;
@@ -197,6 +213,14 @@ public class TransportOptions implements Cloneable {
         return tcpKeepAlive;
     }
 
+    /**
+     * Configures the TCP socket keep-alive value that should be used for a connection.
+     *
+     * @param keepAlive
+     * 		The TCP/IP keep-alive value to use for the connection.
+     *
+     * @return this {@link TransportOptions} instance.
+     */
     public TransportOptions tcpKeepAlive(boolean keepAlive) {
         this.tcpKeepAlive = keepAlive;
         return this;
@@ -209,6 +233,15 @@ public class TransportOptions implements Cloneable {
         return connectTimeout;
     }
 
+    /**
+     * A transport layer connection timeout value that controls how long a connection attempt can block
+     * before giving up and throwing a connection error.
+     *
+     * @param connectTimeout
+     * 		connection timeout in milliseconds.
+     *
+     * @return this {@link TransportOptions} instance.
+     */
     public TransportOptions connectTimeout(int connectTimeout) {
         this.connectTimeout = connectTimeout;
         return this;
@@ -221,6 +254,14 @@ public class TransportOptions implements Cloneable {
         return defaultTcpPort;
     }
 
+    /**
+     * The default unsecured connection port to use when none has been specified by the user.
+     *
+     * @param defaultTcpPort
+     * 		the default port to use for non-SSL connection if none provided.
+     *
+     * @return this {@link TransportOptions} instance.
+     */
     public TransportOptions defaultTcpPort(int defaultTcpPort) {
         this.defaultTcpPort = defaultTcpPort;
         return this;
@@ -233,6 +274,14 @@ public class TransportOptions implements Cloneable {
         return localAddress;
     }
 
+    /**
+     * The local address to bind to when attempting a remote connection.
+     *
+     * @param localAddress
+     * 		the local address to bind to.
+     *
+     * @return this {@link TransportOptions} instance.
+     */
     public TransportOptions localAddress(String localAddress) {
         this.localAddress = localAddress;
         return this;
@@ -245,6 +294,15 @@ public class TransportOptions implements Cloneable {
         return localPort;
     }
 
+    /**
+     * Configures the local port value to bind to when connecting to the remote, if that port is
+     * already in use this can lead to a connection error.
+     *
+     * @param localPort
+     * 		local port value to use when making a remote connection.
+     *
+     * @return this {@link TransportOptions} instance.
+     */
     public TransportOptions localPort(int localPort) {
         this.localPort = localPort;
         return this;
@@ -263,7 +321,7 @@ public class TransportOptions implements Cloneable {
      * @param allowNativeIO
      * 		should use of available native transport be allowed if one is available.
      *
-     * @return this options instance.
+     * @return this {@link TransportOptions} instance.
      */
     public TransportOptions allowNativeIO(boolean allowNativeIO) {
         this.allowNativeIO = allowNativeIO;
@@ -301,7 +359,7 @@ public class TransportOptions implements Cloneable {
      * @param traceBytes
      * 		should the transport log the bytes in and out.
      *
-     * @return this options instance.
+     * @return this {@link TransportOptions} instance.
      */
     public TransportOptions traceBytes(boolean traceBytes) {
         this.traceBytes = traceBytes;
@@ -315,6 +373,14 @@ public class TransportOptions implements Cloneable {
         return useWebSockets;
     }
 
+    /**
+     * Set to true to configure the transport layer as a WebSocket based connection.
+     *
+     * @param webSockets
+     * 		should the transport attempt connection using a WebSocket.
+     *
+     * @return this {@link TransportOptions} instance.
+     */
     public TransportOptions useWebSockets(boolean webSockets) {
         this.useWebSockets = webSockets;
         return this;
@@ -327,6 +393,14 @@ public class TransportOptions implements Cloneable {
         return webSocketPath;
     }
 
+    /**
+     * The optional path element to provide when connecting via a WebSocket.
+     *
+     * @param webSocketPath
+     * 		path value to use for WebSocket connections.
+     *
+     * @return this {@link TransportOptions} instance.
+     */
     public TransportOptions webSocketPath(String webSocketPath) {
         this.webSocketPath = webSocketPath;
         return this;
@@ -339,6 +413,16 @@ public class TransportOptions implements Cloneable {
         return webSocketHeaders;
     }
 
+    /**
+     * Additional headers to be passed along to the remote when performing a WebSocket based connect.
+     *
+     * @param key
+     * 		the header key to use with the provided value.
+     * @param value
+     *      the value to store under the provided key.
+     *
+     * @return this {@link TransportOptions} instance.
+     */
     public TransportOptions addWebSocketHeader(String key, String value) {
         this.webSocketHeaders.put(key, value);
         return this;
@@ -351,6 +435,15 @@ public class TransportOptions implements Cloneable {
         return webSocketMaxFrameSize;
     }
 
+    /**
+     * Configures the maximum size of each WebSocket frame, payloads larger than the max frame size are
+     * split into multiple frames during transmission.
+     *
+     * @param maxFrameSize
+     * 		the maximum WebSocket frame size before payloads are split.
+     *
+     * @return this {@link TransportOptions} instance.
+     */
     public TransportOptions webSocketMaxFrameSize(int maxFrameSize) {
         this.webSocketMaxFrameSize = maxFrameSize;
         return this;

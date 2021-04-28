@@ -24,11 +24,18 @@ import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutExcepti
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 
 /**
- * Options that control the behaviour of the {@link Session} created from them.
+ * Options that control the behavior of the {@link Session} created from them.
  */
 public class SessionOptions {
 
+	/**
+	 * The default Session configured incoming capacity limit to provide to the remote
+	 */
     public static final int DEFAULT_SESSION_INCOMING_CAPACITY = 100 * 1024 * 1024;
+
+    /**
+     * The default Session configured outgoing capacity to apply to local pending writes.
+     */
     public static final int DEFAULT_SESSION_OUTGOING_CAPACITY = 100 * 1024 * 1024;
 
     private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;

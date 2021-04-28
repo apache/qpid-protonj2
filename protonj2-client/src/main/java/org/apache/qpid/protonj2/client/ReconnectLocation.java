@@ -29,6 +29,14 @@ public class ReconnectLocation {
 	private final String host;
 	private final int port;
 
+	/**
+	 * Creates a new {@link ReconnectLocation} instance with the fixed host and port values.
+	 *
+	 * @param host
+	 * 		The remote host where the connection will be made
+	 * @param port
+	 *      The port on the remote where the connection attempt will be made.
+	 */
 	public ReconnectLocation(String host, int port) {
 		Objects.requireNonNull(host, "Cannot create a reconnect entry with a null host value");
 

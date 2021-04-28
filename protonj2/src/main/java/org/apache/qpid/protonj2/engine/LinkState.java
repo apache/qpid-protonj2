@@ -20,8 +20,25 @@ package org.apache.qpid.protonj2.engine;
  * Represents the state of an AMQP Link.
  */
 public enum LinkState {
-    IDLE,
+
+	/**
+	 * Indicates that the targeted end of the Link (local or remote) has not yet been opened.
+	 */
+	IDLE,
+
+	/**
+	 * Indicates that the targeted end of the Link (local or remote) is currently open.
+	 */
     ACTIVE,
+
+	/**
+	 * Indicates that the targeted end of the Link (local or remote) has been detached.
+	 */
     DETACHED,
-    CLOSED,
+
+	/**
+	 * Indicates that the targeted end of the Link (local or remote) has been closed.
+	 */
+    CLOSED
+
 }
