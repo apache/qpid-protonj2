@@ -35,8 +35,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Test for the Connection class connecting over WebSockets
- *
- * TODO: Have this just extend the ConnectionTest and make both client and server use WS
  */
 @Timeout(20)
 public class WsConnectionTest extends ConnectionTest {

@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-// TODO: Incomplete Symbol class which should be simplified for the Data codec
 public final class Symbol implements Comparable<Symbol> {
 
     private static final Map<ByteBuffer, Symbol> bufferToSymbols = new ConcurrentHashMap<>(2048);
