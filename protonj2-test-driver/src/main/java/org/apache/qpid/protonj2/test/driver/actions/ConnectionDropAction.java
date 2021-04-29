@@ -19,11 +19,15 @@ package org.apache.qpid.protonj2.test.driver.actions;
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.ProtonTestPeer;
 import org.apache.qpid.protonj2.test.driver.ScriptedAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Action that drops the netty connection to the remote once invoked.
  */
 public class ConnectionDropAction implements ScriptedAction {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ConnectionDropAction.class);
 
     private final ProtonTestPeer peer;
     private int delay = -1;
@@ -34,6 +38,7 @@ public class ConnectionDropAction implements ScriptedAction {
 
     @Override
     public ScriptedAction now() {
+        LOG.info("Connection Drop Action closing test peer as scripted");
         peer.close();
         return this;
     }
