@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.client;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Options class that controls various aspects of a {@link StreamSenderMessage} instance and how
@@ -150,8 +151,18 @@ public class StreamSenderOptions extends SenderOptions {
     }
 
     @Override
+    public StreamSenderOptions closeTimeout(long timeout, TimeUnit units) {
+        return (StreamSenderOptions) super.closeTimeout(timeout, units);
+    }
+
+    @Override
     public StreamSenderOptions openTimeout(long openTimeout) {
         return (StreamSenderOptions) super.openTimeout(openTimeout);
+    }
+
+    @Override
+    public StreamSenderOptions openTimeout(long timeout, TimeUnit units) {
+        return (StreamSenderOptions) super.openTimeout(timeout, units);
     }
 
     @Override
@@ -160,8 +171,18 @@ public class StreamSenderOptions extends SenderOptions {
     }
 
     @Override
+    public StreamSenderOptions sendTimeout(long timeout, TimeUnit units) {
+        return (StreamSenderOptions) super.sendTimeout(timeout, units);
+    }
+
+    @Override
     public StreamSenderOptions requestTimeout(long requestTimeout) {
         return (StreamSenderOptions) super.requestTimeout(requestTimeout);
+    }
+
+    @Override
+    public StreamSenderOptions requestTimeout(long timeout, TimeUnit units) {
+        return (StreamSenderOptions) super.requestTimeout(timeout, units);
     }
 
     @Override

@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.client;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Options class that controls various aspects of a {@link StreamReceiver} instance and how
@@ -132,8 +133,18 @@ public class StreamReceiverOptions extends ReceiverOptions {
     }
 
     @Override
+    public StreamReceiverOptions closeTimeout(long timeout, TimeUnit units) {
+        return (StreamReceiverOptions) super.closeTimeout(timeout, units);
+    }
+
+    @Override
     public StreamReceiverOptions openTimeout(long openTimeout) {
         return (StreamReceiverOptions) super.openTimeout(openTimeout);
+    }
+
+    @Override
+    public StreamReceiverOptions openTimeout(long timeout, TimeUnit untis) {
+        return (StreamReceiverOptions) super.openTimeout(timeout, untis);
     }
 
     @Override
@@ -142,8 +153,18 @@ public class StreamReceiverOptions extends ReceiverOptions {
     }
 
     @Override
+    public StreamReceiverOptions drainTimeout(long timeout, TimeUnit units) {
+        return (StreamReceiverOptions) super.drainTimeout(timeout, units);
+    }
+
+    @Override
     public StreamReceiverOptions requestTimeout(long requestTimeout) {
         return (StreamReceiverOptions) super.requestTimeout(requestTimeout);
+    }
+
+    @Override
+    public StreamReceiverOptions requestTimeout(long timeout, TimeUnit units) {
+        return (StreamReceiverOptions) super.requestTimeout(timeout, units);
     }
 
     @Override

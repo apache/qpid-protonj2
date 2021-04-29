@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.client;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
@@ -148,7 +149,22 @@ public class SenderOptions {
      * @return this {@link SenderOptions} instance.
      */
     public SenderOptions closeTimeout(long closeTimeout) {
-        this.closeTimeout = closeTimeout;
+        return closeTimeout(closeTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to close
+     * the {@link Sender} link.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link SenderOptions} instance.
+     */
+    public SenderOptions closeTimeout(long timeout, TimeUnit units) {
+        this.closeTimeout = units.toMillis(timeout);
         return this;
     }
 
@@ -169,7 +185,22 @@ public class SenderOptions {
      * @return this {@link SenderOptions} instance.
      */
     public SenderOptions openTimeout(long openTimeout) {
-        this.openTimeout = openTimeout;
+        return openTimeout(openTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to open
+     * a {@link Sender} has been honored.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link SenderOptions} instance.
+     */
+    public SenderOptions openTimeout(long timeout, TimeUnit units) {
+        this.openTimeout = units.toMillis(timeout);
         return this;
     }
 
@@ -192,7 +223,24 @@ public class SenderOptions {
      * @return this {@link SenderOptions} instance.
      */
     public SenderOptions sendTimeout(long sendTimeout) {
-        this.sendTimeout = sendTimeout;
+        return sendTimeout(sendTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Configures the timeout used when awaiting a send operation to complete.  A send will block if the
+     * remote has not granted the {@link Sender} or the {@link Session} credit to do so, if the send blocks
+     * for longer than this timeout the send call will fail with an {@link ClientSendTimedOutException}
+     * exception to indicate that the send did not complete.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link SenderOptions} instance.
+     */
+    public SenderOptions sendTimeout(long timeout, TimeUnit units) {
+        this.sendTimeout = units.toMillis(timeout);
         return this;
     }
 
@@ -216,7 +264,25 @@ public class SenderOptions {
      * @return this {@link SenderOptions} instance.
      */
     public SenderOptions requestTimeout(long requestTimeout) {
-        this.requestTimeout = requestTimeout;
+        return requestTimeout(requestTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to
+     * perform some action such as starting a new transaction.  If the remote does not respond
+     * within the configured timeout the resource making the request will mark it as failed and
+     * return an error to the request initiator usually in the form of a
+     * {@link ClientOperationTimedOutException}.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link SenderOptions} instance.
+     */
+    public SenderOptions requestTimeout(long timeout, TimeUnit units) {
+        this.requestTimeout = units.toMillis(timeout);
         return this;
     }
 

@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.client;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 
@@ -188,7 +189,22 @@ public class ReceiverOptions {
      * @return this {@link ReceiverOptions} instance.
      */
     public ReceiverOptions closeTimeout(long closeTimeout) {
-        this.closeTimeout = closeTimeout;
+        return closeTimeout(closeTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to close
+     * the {@link Receiver} link.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link ReceiverOptions} instance.
+     */
+    public ReceiverOptions closeTimeout(long timeout, TimeUnit units) {
+        this.closeTimeout = units.toMillis(timeout);
         return this;
     }
 
@@ -209,7 +225,22 @@ public class ReceiverOptions {
      * @return this {@link ReceiverOptions} instance.
      */
     public ReceiverOptions openTimeout(long openTimeout) {
-        this.openTimeout = openTimeout;
+        return openTimeout(openTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to open
+     * a {@link Receiver} has been honored.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link ReceiverOptions} instance.
+     */
+    public ReceiverOptions openTimeout(long timeout, TimeUnit units) {
+        this.openTimeout = units.toMillis(timeout);
         return this;
     }
 
@@ -230,7 +261,22 @@ public class ReceiverOptions {
      * @return this {@link ReceiverOptions} instance.
      */
     public ReceiverOptions drainTimeout(long drainTimeout) {
-        this.drainTimeout = drainTimeout;
+        return drainTimeout(drainTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Sets the drain timeout value after which a {@link Receiver} request to drain
+     * link credit is considered failed and the request will be marked as such.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link ReceiverOptions} instance.
+     */
+    public ReceiverOptions drainTimeout(long timeout, TimeUnit units) {
+        this.drainTimeout = units.toMillis(timeout);
         return this;
     }
 
@@ -254,7 +300,25 @@ public class ReceiverOptions {
      * @return this {@link ReceiverOptions} instance.
      */
     public ReceiverOptions requestTimeout(long requestTimeout) {
-        this.requestTimeout = requestTimeout;
+        return requestTimeout(requestTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to
+     * perform some action such as starting a new transaction.  If the remote does not respond
+     * within the configured timeout the resource making the request will mark it as failed and
+     * return an error to the request initiator usually in the form of a
+     * {@link ClientOperationTimedOutException}.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link ReceiverOptions} instance.
+     */
+    public ReceiverOptions requestTimeout(long timeout, TimeUnit units) {
+        this.requestTimeout = units.toMillis(timeout);
         return this;
     }
 

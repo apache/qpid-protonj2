@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.client;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
@@ -30,9 +31,9 @@ import org.apache.qpid.protonj2.types.transport.Open;
  */
 public class ConnectionOptions {
 
-	/**
-	 * Default value for the AMQP desired capabilities set in the Open frame.
-	 */
+    /**
+     * Default value for the AMQP desired capabilities set in the Open frame.
+     */
     public static final String[] DEFAULT_DESIRED_CAPABILITIES = new String[] { "ANONYMOUS-RELAY" };
 
     public static final long INFINITE = -1;
@@ -158,7 +159,23 @@ public class ConnectionOptions {
      * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions closeTimeout(long closeTimeout) {
-        this.closeTimeout = closeTimeout;
+        return closeTimeout(closeTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to close
+     * a resource such as a {@link Connection}, {@link Session}, {@link Sender} or {@link Receiver} h
+     * as been honored.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link ConnectionOptions} instance.
+     */
+    public ConnectionOptions closeTimeout(long timeout, TimeUnit units) {
+        this.closeTimeout = units.toMillis(timeout);
         return this;
     }
 
@@ -180,7 +197,23 @@ public class ConnectionOptions {
      * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions openTimeout(long openTimeout) {
-        this.openTimeout = openTimeout;
+        return openTimeout(openTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to open
+     * a resource such as a {@link Connection}, {@link Session}, {@link Sender} or {@link Receiver}
+     * has been honored.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link ConnectionOptions} instance.
+     */
+    public ConnectionOptions openTimeout(long timeout, TimeUnit units) {
+        this.openTimeout = units.toMillis(timeout);
         return this;
     }
 
@@ -203,7 +236,24 @@ public class ConnectionOptions {
      * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions sendTimeout(long sendTimeout) {
-        this.sendTimeout = sendTimeout;
+        return sendTimeout(sendTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Configures the timeout used when awaiting a send operation to complete.  A send will block if the
+     * remote has not granted the {@link Sender} or the {@link Session} credit to do so, if the send blocks
+     * for longer than this timeout the send call will fail with an {@link ClientSendTimedOutException}
+     * exception to indicate that the send did not complete.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link ConnectionOptions} instance.
+     */
+    public ConnectionOptions sendTimeout(long timeout, TimeUnit units) {
+        this.sendTimeout = units.toMillis(timeout);
         return this;
     }
 
@@ -227,7 +277,25 @@ public class ConnectionOptions {
      * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions requestTimeout(long requestTimeout) {
-        this.requestTimeout = requestTimeout;
+        return requestTimeout(requestTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Configures the timeout used when awaiting a response from the remote that a request to
+     * perform some action such as starting a new transaction.  If the remote does not respond
+     * within the configured timeout the resource making the request will mark it as failed and
+     * return an error to the request initiator usually in the form of a
+     * {@link ClientOperationTimedOutException}.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link ConnectionOptions} instance.
+     */
+    public ConnectionOptions requestTimeout(long timeout, TimeUnit units) {
+        this.requestTimeout = units.toMillis(timeout);
         return this;
     }
 
@@ -295,7 +363,23 @@ public class ConnectionOptions {
      * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions idleTimeout(long idleTimeout) {
-        this.idleTimeout = idleTimeout;
+        return idleTimeout(idleTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Sets the idle timeout value after which the connection will be closed
+     * if the peer has not send any data. The provided value will be halved before
+     * being transmitted as our advertised idle-timeout in the AMQP {@link Open} frame.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link ConnectionOptions} instance.
+     */
+    public ConnectionOptions idleTimeout(long timeout, TimeUnit units) {
+        this.idleTimeout = units.toMillis(timeout);
         return this;
     }
 
@@ -316,7 +400,22 @@ public class ConnectionOptions {
      * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions drainTimeout(long drainTimeout) {
-        this.drainTimeout = drainTimeout;
+        return drainTimeout(drainTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Sets the drain timeout value after which a {@link Receiver} request to drain
+     * link credit is considered failed and the request will be marked as such.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link ConnectionOptions} instance.
+     */
+    public ConnectionOptions drainTimeout(long timeout, TimeUnit units) {
+        this.drainTimeout = units.toMillis(timeout);
         return this;
     }
 
