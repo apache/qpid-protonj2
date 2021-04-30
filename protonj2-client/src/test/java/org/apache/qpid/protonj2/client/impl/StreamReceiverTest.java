@@ -3402,7 +3402,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            StreamReceiverOptions options = new StreamReceiverOptions().openTimeout(100);
+            StreamReceiverOptions options = new StreamReceiverOptions().openTimeout(120, TimeUnit.MILLISECONDS);
             Receiver receiver = connection.openStreamReceiver("test-receiver", options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);

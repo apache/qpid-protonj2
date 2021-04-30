@@ -302,9 +302,9 @@ public class SessionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
-            Session session = connection.openSession();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            SessionOptions options = new SessionOptions().openTimeout(120, TimeUnit.MILLISECONDS);
+            Session session = connection.openSession(options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
