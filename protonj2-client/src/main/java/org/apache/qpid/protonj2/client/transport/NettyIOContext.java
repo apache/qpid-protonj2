@@ -64,24 +64,30 @@ public final class NettyIOContext {
 
         if (options.allowNativeIO()) {
             for (String nativeID : nativeIOPreference) {
-                if (EpollSupport.NAME.equalsIgnoreCase(nativeID) && EpollSupport.isAvailable(options)) {
-                    LOG.trace("Netty Transports will be using Epoll mode");
-                    selectedGroup = EpollSupport.createGroup(1, threadFactory);
-                    selectedChannelClass = EpollSupport.getChannelClass();
-                    break;
-                } else if (IOUringSupport.NAME.equalsIgnoreCase(nativeID) && IOUringSupport.isAvailable(options)) {
-                    LOG.trace("Netty Transports will be using IO-Uring mode");
-                    selectedGroup = IOUringSupport.createGroup(1, threadFactory);
-                    selectedChannelClass = IOUringSupport.getChannelClass();
-                    break;
-                } else if (KQueueSupport.NAME.equalsIgnoreCase(nativeID) && KQueueSupport.isAvailable(options)) {
-                    LOG.trace("Netty Transports will be using KQueue mode");
-                    selectedGroup = KQueueSupport.createGroup(1, threadFactory);
-                    selectedChannelClass = KQueueSupport.getChannelClass();
-                    break;
+                if (EpollSupport.NAME.equalsIgnoreCase(nativeID)) {
+                    if (EpollSupport.isAvailable(options)) {
+                        LOG.trace("Netty Transports will be using Epoll mode");
+                        selectedGroup = EpollSupport.createGroup(1, threadFactory);
+                        selectedChannelClass = EpollSupport.getChannelClass();
+                        break;
+                    }
+                } else if (IOUringSupport.NAME.equalsIgnoreCase(nativeID)) {
+                    if (IOUringSupport.isAvailable(options)) {
+                        LOG.trace("Netty Transports will be using IO-Uring mode");
+                        selectedGroup = IOUringSupport.createGroup(1, threadFactory);
+                        selectedChannelClass = IOUringSupport.getChannelClass();
+                        break;
+                    }
+                } else if (KQueueSupport.NAME.equalsIgnoreCase(nativeID)) {
+                    if (KQueueSupport.isAvailable(options)) {
+                        LOG.trace("Netty Transports will be using KQueue mode");
+                        selectedGroup = KQueueSupport.createGroup(1, threadFactory);
+                        selectedChannelClass = KQueueSupport.getChannelClass();
+                        break;
+                    }
                 } else {
                     throw new IllegalArgumentException(
-                        String.format("Provided preferred native trasport type name: %s , is not vliad.", nativeID));
+                        String.format("Provided preferred native trasport type name: %s, is not supported.", nativeID));
                 }
             }
         }
