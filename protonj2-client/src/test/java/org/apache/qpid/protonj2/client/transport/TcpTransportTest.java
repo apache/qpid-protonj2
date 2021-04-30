@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
@@ -964,6 +965,53 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         }
 
         assertTrue(!transportErrored);  // Normal shutdown does not trigger the event.
+        assertTrue(exceptions.isEmpty());
+        assertTrue(data.isEmpty());
+    }
+
+    @Test
+    public void testFallbackToNioWhenNativeIOConfiguredNotSupportedEpoll() throws Exception {
+        assumeFalse(Epoll.isAvailable());
+
+        doTestFallbackToNioWhenNativeLayerNotSupported(EpollSupport.NAME);
+    }
+
+    @Test
+    public void testFallbackToNioWhenNativeIOConfiguredNotSupportedKQueue() throws Exception {
+        assumeFalse(KQueue.isAvailable());
+
+        doTestFallbackToNioWhenNativeLayerNotSupported(KQueueSupport.NAME);
+    }
+
+    private void doTestFallbackToNioWhenNativeLayerNotSupported(String nativeIOLayer) throws Exception {
+        try (NettyEchoServer server = createEchoServer()) {
+            server.start();
+
+            int port = server.getServerPort();
+
+            TransportOptions options = createTransportOptions();
+            options.allowNativeIO(true);
+            options.nativeIOPeference(nativeIOLayer);
+
+            Transport transport = createTransport(options, createSSLOptions());
+            try {
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
+            } catch (Exception e) {
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
+            }
+
+            assertTrue(transport.isConnected());
+            assertEquals(HOSTNAME, transport.getHost(), "Server host is incorrect");
+            assertEquals(port, transport.getPort(), "Server port is incorrect");
+
+            transport.close();
+
+            // Additional close should not fail or cause other problems.
+            transport.close();
+        }
+
+        assertFalse(transportErrored);
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
