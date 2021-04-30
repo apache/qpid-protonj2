@@ -152,11 +152,6 @@ class ReconnectSessionTest extends ImperativeClientTestCase {
             finalPeer.expectOpen().respond();
             finalPeer.expectBegin().respond();
             finalPeer.expectBegin().respond();
-            finalPeer.expectAttach().ofReceiver().respond();
-            finalPeer.expectFlow();
-            finalPeer.expectAttach().ofReceiver().respond();
-            finalPeer.expectFlow();
-            finalPeer.expectClose().respond();
             finalPeer.start();
 
             final URI primaryURI = firstPeer.getServerURI();
@@ -180,6 +175,13 @@ class ReconnectSessionTest extends ImperativeClientTestCase {
             // Await both being open before doing work to make the outcome predictable
             session1.openFuture().get();
             session2.openFuture().get();
+
+            finalPeer.waitForScriptToComplete();
+            finalPeer.expectAttach().ofReceiver().respond();
+            finalPeer.expectFlow();
+            finalPeer.expectAttach().ofReceiver().respond();
+            finalPeer.expectFlow();
+            finalPeer.expectClose().respond();
 
             Receiver receiver1 = session1.openReceiver("queue").openFuture().get();
             Receiver receiver2 = session2.openReceiver("queue").openFuture().get();
