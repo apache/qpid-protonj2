@@ -63,6 +63,7 @@ class ReconnectSessionTest extends ImperativeClientTestCase {
             final URI backupURI = finalPeer.getServerURI();
 
             ConnectionOptions options = new ConnectionOptions();
+            options.idleTimeout(5, TimeUnit.SECONDS);
             options.reconnectOptions().reconnectEnabled(true);
             options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
 
@@ -164,6 +165,7 @@ class ReconnectSessionTest extends ImperativeClientTestCase {
 
             ConnectionOptions options = new ConnectionOptions();
             options.reconnectOptions().reconnectEnabled(true);
+            options.idleTimeout(5, TimeUnit.SECONDS);
             options.reconnectOptions().addReconnectLocation(intermediateURI.getHost(), intermediateURI.getPort());
             options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
 
