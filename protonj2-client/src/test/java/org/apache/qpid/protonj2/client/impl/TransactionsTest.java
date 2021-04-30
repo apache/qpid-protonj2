@@ -177,7 +177,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().requestTimeout(50);
+            ConnectionOptions options = new ConnectionOptions().requestTimeout(150);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
             Session session = connection.openSession().openFuture().get();
 
