@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import static org.hamcrest.Matchers.any;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -55,12 +56,12 @@ public class ReconnectTest extends ImperativeClientTestCase {
              ProtonTestServer finalPeer = new ProtonTestServer()) {
 
             firstPeer.expectSASLAnonymousConnect();
-            firstPeer.expectOpen().respond();
+            firstPeer.expectOpen().withContainerId(any(String.class)).respond();
             firstPeer.dropAfterLastHandler(5);
             firstPeer.start();
 
             finalPeer.expectSASLAnonymousConnect();
-            finalPeer.expectOpen().respond();
+            finalPeer.expectOpen().withContainerId(any(String.class)).respond();
             finalPeer.start();
 
             final URI primaryURI = firstPeer.getServerURI();

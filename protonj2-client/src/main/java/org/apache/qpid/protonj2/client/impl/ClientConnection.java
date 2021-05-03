@@ -873,6 +873,8 @@ public class ClientConnection implements Connection {
 
         if (client.containerId() != null) {
             protonConnection.setContainerId(client.containerId());
+        } else {
+            protonConnection.setContainerId(connectionId);
         }
 
         protonConnection.setLinkedResource(this);

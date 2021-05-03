@@ -103,12 +103,12 @@ public class ConnectionTest extends ImperativeClientTestCase {
              ProtonTestServer secondPeer = new ProtonTestServer(testServerOptions())) {
 
             firstPeer.expectSASLAnonymousConnect();
-            firstPeer.expectOpen().respond();
+            firstPeer.expectOpen().withContainerId(Matchers.any(String.class)).respond();
             firstPeer.expectClose().respond();
             firstPeer.start();
 
             secondPeer.expectSASLAnonymousConnect();
-            secondPeer.expectOpen().respond();
+            secondPeer.expectOpen().withContainerId(Matchers.any(String.class)).respond();
             secondPeer.expectClose().respond();
             secondPeer.start();
 
