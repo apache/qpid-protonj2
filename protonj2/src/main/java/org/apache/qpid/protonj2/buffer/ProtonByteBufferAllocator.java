@@ -23,6 +23,10 @@ import java.nio.ByteBuffer;
  */
 public final class ProtonByteBufferAllocator implements ProtonBufferAllocator {
 
+    /**
+     * Default {@link ProtonByteBufferAllocator} instance that uses defaults for all configuration
+     * when creating new {@link ProtonByteBuffer} instances.
+     */
     public static final ProtonByteBufferAllocator DEFAULT = new ProtonByteBufferAllocator();
 
     @Override

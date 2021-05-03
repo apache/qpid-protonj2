@@ -30,6 +30,9 @@ import io.netty.buffer.Unpooled;
  */
 public class ProtonNettyByteBufferAllocator implements ProtonBufferAllocator {
 
+    /**
+     * A default instance of the {@link ProtonNettyByteBufferAllocator} that uses default configurations.
+     */
     public static final ProtonNettyByteBufferAllocator DEFAULT = new ProtonNettyByteBufferAllocator();
 
     @Override

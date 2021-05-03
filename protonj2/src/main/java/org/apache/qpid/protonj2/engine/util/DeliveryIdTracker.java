@@ -64,10 +64,24 @@ public class DeliveryIdTracker extends Number implements Comparable<DeliveryIdTr
         empty = true;
     }
 
+    /**
+     * @return true if the tracker is not currently tracking a delivery Id.
+     */
     public boolean isEmpty() {
         return empty;
     }
 
+    /**
+     * Compares the tracked delivery id value to the {@link Number} given, if no value is being
+     * tracked this method returns -1.  This method returns 0 if the tracked id is equal to the
+     * value provided, value less than 0 if the tracked id is less than the provided value; and a
+     * value greater than 0 if the tracked id is larger than the value provided.
+     *
+     * @param other
+     * 		The {@link Number} to compare the tracked id with.
+     *
+     * @return the result of comparing the tracked id to the provided number.
+     */
     public int compareTo(Number other) {
         if (isEmpty()) {
             return -1;
@@ -76,6 +90,17 @@ public class DeliveryIdTracker extends Number implements Comparable<DeliveryIdTr
         }
     }
 
+    /**
+     * Compares the tracked delivery id value to the <code>int</code> given, if no value is being
+     * tracked this method returns -1.  This method returns 0 if the tracked id is equal to the
+     * value provided, value less than 0 if the tracked id is less than the provided value; and a
+     * value greater than 0 if the tracked id is larger than the value provided.
+     *
+     * @param other
+     * 		The primitive {@link Integer} to compare the tracked id with.
+     *
+     * @return the result of comparing the tracked id to the provided primitive integer value.
+     */
     public int compareTo(int other) {
         if (isEmpty()) {
             return -1;
@@ -126,6 +151,15 @@ public class DeliveryIdTracker extends Number implements Comparable<DeliveryIdTr
         return false;
     }
 
+    /**
+     * Performs an unsigned comparison between the value being tracked and the integer value
+     * passed, if no id is currently being tracked then this method returns false.
+     *
+     * @param other
+     * 		The value to compare to the currently tracked id.
+     *
+     * @return true if the tracked delivery id matches the integer value provided.
+     */
     public boolean equals(int other) {
         return Integer.compareUnsigned(deliveryId, other) == 0;
     }
@@ -135,6 +169,9 @@ public class DeliveryIdTracker extends Number implements Comparable<DeliveryIdTr
         return Integer.hashCode(deliveryId);
     }
 
+    /**
+     * @return an {@link UnsignedInteger} view of the tracked delivery id, or null if not tracking at this time.
+     */
     public UnsignedInteger toUnsignedInteger() {
         return empty ? null : UnsignedInteger.valueOf(deliveryId);
     }

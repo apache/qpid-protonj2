@@ -98,10 +98,32 @@ public class SequenceNumber extends Number implements Comparable<SequenceNumber>
         return Integer.compareUnsigned(sequence, other.sequence);
     }
 
+    /**
+     * Compares the sequence number value to the {@link Number} given.  This method returns 0 if
+     * the tracked id is equal to the value provided, value less than 0 if the tracked id is less
+     * than the provided value; and a value greater than 0 if the tracked id is larger than the value
+     * provided.
+     *
+     * @param other
+     * 		The {@link Number} to compare the current sequence number with.
+     *
+     * @return the result of comparing the current sequence number to the provided number.
+     */
     public int compareTo(Number other) {
         return Integer.compareUnsigned(sequence, other.intValue());
     }
 
+    /**
+     * Compares the sequence number value to the primitive {@link Integer} given.  This method returns
+     * 0 if the tracked id is equal to the value provided, value less than 0 if the tracked id is less
+     * than the provided value; and a value greater than 0 if the tracked id is larger than the value
+     * provided.
+     *
+     * @param other
+     * 		The {@link Number} to compare the current sequence number with.
+     *
+     * @return the result of comparing the current sequence number to the provided number.
+     */
     public int compareTo(int other) {
         return Integer.compareUnsigned(sequence, other);
     }
@@ -115,6 +137,15 @@ public class SequenceNumber extends Number implements Comparable<SequenceNumber>
         return false;
     }
 
+    /**
+     * Performs an unsigned comparison between the current sequence number and the integer value
+     * passed.
+     *
+     * @param other
+     * 		The value to compare to the currently sequence number.
+     *
+     * @return true if the currently sequence value matches the integer value provided.
+     */
     public boolean equals(int other) {
         return Integer.compareUnsigned(sequence, other) == 0;
     }

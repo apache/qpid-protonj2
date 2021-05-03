@@ -28,10 +28,24 @@ public class ProtonNioByteBuffer extends ProtonAbstractBuffer {
 
     private final ByteBuffer buffer;
 
+    /**
+     * Creates a {@link ProtonNioByteBuffer} that wraps the given ByteBuffer instance.
+     *
+     * @param buffer
+     * 		The ByteBuffer instance to wrap.
+     */
     public ProtonNioByteBuffer(ByteBuffer buffer) {
         this(buffer, buffer.remaining());
     }
 
+    /**
+     * Creates a {@link ProtonNioByteBuffer} that wraps the given ByteBuffer instance.
+     *
+     * @param buffer
+     * 		The ByteBuffer instance to wrap.
+     * @param writeIndex
+     *      The write index to assign to this newly created ByteBuffer wrapper.
+     */
     public ProtonNioByteBuffer(ByteBuffer buffer, int writeIndex) {
         super(buffer.remaining());
 

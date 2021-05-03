@@ -29,10 +29,23 @@ public final class ProtonNettyByteBuffer implements ProtonBuffer {
 
     private final ByteBuf wrapped;
 
+    /**
+     * Creates a new {@link ProtonNettyByteBuffer} which wraps the given Netty {@link ByteBuf}.
+     *
+     * @param toWrap
+     * 		The {@link ByteBuf} to wrap.
+     */
     public ProtonNettyByteBuffer(ByteBuf toWrap) {
         this.wrapped = toWrap;
     }
 
+    /**
+     * Creates a {@link ProtonNettyByteBuffer} that wraps an Netty {@link ByteBuf} that is
+     * not pooled and whose maximum capacity is set to the given value.
+     *
+     * @param maximumCapacity
+     * 		The maximum allowed capacity of the allocated Netty {@link ByteBuf}.
+     */
     public ProtonNettyByteBuffer(int maximumCapacity) {
         wrapped = Unpooled.buffer(1024, maximumCapacity);
     }

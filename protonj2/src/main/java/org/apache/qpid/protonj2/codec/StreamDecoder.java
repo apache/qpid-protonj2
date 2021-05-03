@@ -164,10 +164,52 @@ public interface StreamDecoder {
 
     <V> List<V> readList(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads from the given {@link InputStream} instance and returns a {@link StreamTypeDecoder} that can
+     * read the next encoded AMQP type from the stream's bytes.  If an error occurs attempting to read
+     * and determine the next type decoder an {@link DecodeException} is thrown.
+     *
+     * @param stream
+     * 		The stream to read from to determine the next {@link TypeDecoder} needed.
+     * @param state
+     *      The {@link DecoderState} value that can be used for intermediate decoding tasks.
+     *
+     * @return a {@link StreamTypeDecoder} instance that can read the next type in the buffer.
+     *
+     * @throws DecodeException
+     */
     StreamTypeDecoder<?> readNextTypeDecoder(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Peeks ahead in the given {@link InputStream} instance and returns a {@link TypeDecoder} that can
+     * read the next encoded AMQP type from the stream's bytes.  If an error occurs attempting to read
+     * and determine the next type decoder an {@link DecodeException} is thrown.  The underlying stream
+     * is not modified as a result of the peek operation and the returned {@link TypeDecoder} will fail
+     * to properly read the type until the encoding bytes are read.  If the provided stream does not offer
+     * support for the mark API than this method can throw an {@link UnsupportedOperationException}.
+     *
+     * @param stream
+     * 		The stream to read from to determine the next {@link TypeDecoder} needed.
+     * @param state
+     *      The {@link DecoderState} value that can be used for intermediate decoding tasks.
+     *
+     * @return a {@link TypeDecoder} instance that can provide insight into the next type in the stream.
+     *
+     * @throws DecodeException if an error occurs during decoding.
+     */
     StreamTypeDecoder<?> peekNextTypeDecoder(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Allows custom {@link StreamDescribedTypeDecoder} instances to be registered with this {@link StreamDecoder}
+     * which will be used if the described type encoding is encountered during decode operations.
+     *
+     * @param <V> The type that the decoder reads.
+     *
+     * @param decoder
+     * 		A {@link StreamDescribedTypeDecoder} instance to be registered with this {@link StreamDecoder}
+     *
+     * @return this {@link StreamDecoder} instance.
+     */
     <V> StreamDecoder registerDescribedTypeDecoder(StreamDescribedTypeDecoder<V> decoder);
 
 }

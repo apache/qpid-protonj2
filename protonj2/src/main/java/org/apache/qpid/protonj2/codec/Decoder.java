@@ -163,10 +163,51 @@ public interface Decoder {
 
     <V> List<V> readList(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads from the given {@link ProtonBuffer} instance and returns a {@link TypeDecoder} that can
+     * read the next encoded AMQP type from the buffer's bytes.  If an error occurs attempting to read
+     * and determine the next type decoder an {@link DecodeException} is thrown.
+     *
+     * @param buffer
+     * 		The buffer to read from to determine the next {@link TypeDecoder} needed.
+     * @param state
+     *      The {@link DecoderState} value that can be used for intermediate decoding tasks.
+     *
+     * @return a {@link TypeDecoder} instance that can read the next type in the buffer.
+     *
+     * @throws DecodeException
+     */
     TypeDecoder<?> readNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Peeks ahead in the given {@link ProtonBuffer} instance and returns a {@link TypeDecoder} that can
+     * read the next encoded AMQP type from the buffer's bytes.  If an error occurs attempting to read
+     * and determine the next type decoder an {@link DecodeException} is thrown.  The underlying buffer
+     * is not modified as a result of the peek operation and the returned {@link TypeDecoder} will fail
+     * to properly read the type until the encoding bytes are read.
+     *
+     * @param buffer
+     * 		The buffer to read from to determine the next {@link TypeDecoder} needed.
+     * @param state
+     *      The {@link DecoderState} value that can be used for intermediate decoding tasks.
+     *
+     * @return a {@link TypeDecoder} instance that can provide insight into the next type in the buffer.
+     *
+     * @throws DecodeException
+     */
     TypeDecoder<?> peekNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Allows custom {@link DescribedTypeDecoder} instances to be registered with this {@link Decoder}
+     * which will be used if the described type encoding is encountered during decode operations.
+     *
+     * @param <V> The type that the decoder reads.
+     *
+     * @param decoder
+     * 		A {@link DescribedTypeDecoder} instance to be registered with this {@link Decoder}
+     *
+     * @return this {@link Decoder} instance.
+     */
     <V> Decoder registerDescribedTypeDecoder(DescribedTypeDecoder<V> decoder);
 
 }

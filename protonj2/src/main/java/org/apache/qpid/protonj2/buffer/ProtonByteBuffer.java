@@ -24,19 +24,51 @@ import java.nio.ByteBuffer;
  */
 public class ProtonByteBuffer extends ProtonAbstractBuffer {
 
+    /**
+     * The default initial capacity used for the underlying byte array.
+     */
     public static final int DEFAULT_CAPACITY = 64;
+
+    /**
+     * The default maximum capacity that this buffer can grow to.
+     */
     public static final int DEFAULT_MAXIMUM_CAPACITY = Integer.MAX_VALUE;
 
     private byte[] array;
 
+    /**
+     * Creates a new {@link ProtonByteBuffer} instance that uses default configuration values for
+     * initial capacity and the maximum allowed capacity to which the underlying byte array will
+     * grow before errors will be thrown from operations that would expand the storage.
+     */
     public ProtonByteBuffer() {
         this(DEFAULT_CAPACITY, DEFAULT_MAXIMUM_CAPACITY);
     }
 
+    /**
+     * Creates a new {@link ProtonByteBuffer} with the given initial capacity and uses the default
+     * value for the maximum capacity restriction.
+     *
+     * @param initialCapacity
+     * 		The initial size of the backing byte store.
+     *
+     * @throws IllegalArgumentException if the given value is less than zero.
+     */
     public ProtonByteBuffer(int initialCapacity) {
         this(initialCapacity, DEFAULT_MAXIMUM_CAPACITY);
     }
 
+    /**
+     * Creates a new {@link ProtonByteBuffer} with the given initial capacity and the given maximum
+     * capacity restriction.
+     *
+     * @param initialCapacity
+     * 		The initial size of the backing byte store.
+     * @param maximumCapacity
+     * 		The maximum size the backing byte store is allowed to grow.
+     *
+     * @throws IllegalArgumentException if the given value is less than zero or greater than the maximum.
+     */
     public ProtonByteBuffer(int initialCapacity, int maximumCapacity) {
         super(maximumCapacity);
 
@@ -51,6 +83,16 @@ public class ProtonByteBuffer extends ProtonAbstractBuffer {
         this.array = new byte[initialCapacity];
     }
 
+    /**
+     * Creates a new {@link ProtonByteBuffer} with the given byte array as the backing store to be used
+     * initially.  The buffer uses the default value for maximum capacity meaning as the buffer is written
+     * to the backing store will eventually be reallocated and no longer wrap the original array.  The
+     * resulting buffer will have a read index of zero and a write index set to the size of the backing
+     * array.
+     *
+     * @param array
+     * 		The initial array use use as the backing store for this byte buffer.
+     */
     public ProtonByteBuffer(byte[] array) {
         this(array, DEFAULT_MAXIMUM_CAPACITY);
     }
