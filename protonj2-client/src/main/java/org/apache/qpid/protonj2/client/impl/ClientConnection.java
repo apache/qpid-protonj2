@@ -667,8 +667,10 @@ public class ClientConnection implements Connection {
         capabilities.determineCapabilities(connection);
 
         if (totalConnections == 1) {
+            LOG.info("Connection {} connected to server: {}:{}", getId(), transport.getHost(), transport.getPort());
             submitConnectionEvent(options.connectedHandler(), transport.getHost(), transport.getPort(), null);
         } else {
+            LOG.info("Connection {} reconnected to server: {}:{}", getId(), transport.getHost(), transport.getPort());
             submitConnectionEvent(options.reconnectedHandler(), transport.getHost(), transport.getPort(), null);
         }
 
@@ -725,6 +727,7 @@ public class ClientConnection implements Connection {
         LOG.trace("Engine reports failure with error: {}", failureCause.getMessage());
 
         if (isReconnectAllowed(failureCause)) {
+            LOG.info("Connection {} interrupted to server: {}", getId(), transport.getHost(), transport.getPort());
             submitDisconnectionEvent(options.interruptedHandler(), transport.getHost(), transport.getPort(), failureCause);
 
             // Initial configuration validation happens here, if this step fails then the
@@ -815,6 +818,8 @@ public class ClientConnection implements Connection {
 
         openFuture.failed(failureCause);
         closeFuture.complete(this);
+
+        LOG.info("Connection has failed due to error: {}", failureCause != null ? failureCause.getMessage() : "No error details provided.");
 
         submitDisconnectionEvent(options.disconnectedHandler(), transport.getHost(), transport.getPort(), failureCause);
     }
