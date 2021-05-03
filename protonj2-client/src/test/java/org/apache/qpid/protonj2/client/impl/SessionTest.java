@@ -366,11 +366,10 @@ public class SessionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             connection.openFuture().get();
-
-            Session session = connection.openSession();
+            SessionOptions options = new SessionOptions().openTimeout(125);
+            Session session = connection.openSession(options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
@@ -430,9 +429,9 @@ public class SessionTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
-            Session session = connection.openSession();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            SessionOptions options = new SessionOptions().openTimeout(125);
+            Session session = connection.openSession(options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
@@ -485,15 +484,16 @@ public class SessionTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             ConnectionOptions options = new ConnectionOptions();
-            options.openTimeout(100);
             options.closeTimeout(TimeUnit.HOURS.toMillis(1));  // Test would timeout if waited on.
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
             connection.openFuture().get();
 
+            SessionOptions sessionOptions = new SessionOptions().openTimeout(125, TimeUnit.MILLISECONDS);
+
             try {
-                connection.openSession().closeAsync().get();
+                connection.openSession(sessionOptions).closeAsync().get();
             } catch (ExecutionException error) {
                 fail("Should not fail when waiting on close with quick open timeout");
             }
