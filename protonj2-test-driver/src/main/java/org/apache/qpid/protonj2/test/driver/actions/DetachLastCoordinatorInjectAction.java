@@ -27,6 +27,7 @@ public class DetachLastCoordinatorInjectAction extends DetachInjectAction {
 
     /**
      * @param driver
+     * 		The test driver that is linked to this inject action.
      */
     public DetachLastCoordinatorInjectAction(AMQPTestDriver driver) {
         super(driver);

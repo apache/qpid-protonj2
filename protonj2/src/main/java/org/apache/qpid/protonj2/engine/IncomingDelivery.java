@@ -131,6 +131,8 @@ public interface IncomingDelivery {
     IncomingDelivery setLinkedResource(Object resource);
 
     /**
+     * @param <T> The type that the linked resource should be cast to on return.
+     *
      * @return the user set linked resource for this {@link Endpoint} instance.
      */
     <T> T getLinkedResource();

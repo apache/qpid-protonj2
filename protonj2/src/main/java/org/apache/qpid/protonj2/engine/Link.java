@@ -238,6 +238,8 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
      * a {@link Target} type for a {@link Sender} or {@link Receiver} link or if the link is
      * to be transaction resource then the target type will be a {@link Coordinator} instance.
      *
+     * @param <T> The terminus type that the target should be cast to on return.
+     *
      * @return the link target {@link Terminus} for the local end of this link.
      */
     <T extends Terminus> T getTarget();

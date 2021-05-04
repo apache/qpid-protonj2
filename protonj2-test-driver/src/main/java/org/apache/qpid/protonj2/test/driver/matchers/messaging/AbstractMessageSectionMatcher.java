@@ -103,12 +103,18 @@ public abstract class AbstractMessageSectionMatcher {
     /**
      * sub-classes should implement depending on the expected content of the
      * particular section type.
+     *
+     * @param describedObject
+     * 		the described type instance to validate.
      */
     protected abstract void verifyReceivedDescribedObject(Object describedObject);
 
     /**
      * Utility method for use by sub-classes that expect field-based sections,
      * i.e lists or maps.
+     *
+     * @param valueMap
+     * 		the key / value map of fields that comprise the received section.
      */
     protected void verifyReceivedFields(Map<Object, Object> valueMap) {
         receivedFields = valueMap;
@@ -125,6 +131,8 @@ public abstract class AbstractMessageSectionMatcher {
     /**
      * Intended to be overridden in most cases that use the above method (but
      * not necessarily all - hence not marked as abstract)
+     *
+     * @return the field enumeration value mapped to the provided index.
      */
     protected Enum<?> getField(int fieldIndex) {
         throw new UnsupportedOperationException("getFieldName is expected to be overridden by subclass if it is required");

@@ -654,6 +654,8 @@ public interface Encoder {
     /**
      * Write a {@link List} type encoding to the given buffer.
      *
+     * @param <T> The type that comprises the {@link List} entries.
+     *
      * @param buffer
      * 		The buffer where the write operation is targeted
      * @param state
@@ -667,6 +669,9 @@ public interface Encoder {
 
     /**
      * Write a {@link Map} type encoding to the given buffer.
+     *
+     * @param <K> the type that comprises the {@link Map} keys.
+     * @param <V> the type that comprises the {@link Map} values.
      *
      * @param buffer
      * 		The buffer where the write operation is targeted

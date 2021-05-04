@@ -38,6 +38,7 @@ public class ProtonBufferInputStream extends InputStream implements DataInput {
      * Creates a new {@link InputStream} instance that wraps the given {@link ProtonBuffer}
      *
      * @param buffer
+     * 		The {@link ProtonBuffer} that this {@link InputStream} will read from.
      */
     public ProtonBufferInputStream(ProtonBuffer buffer) {
         Objects.requireNonNull(buffer, "The given ProtonBuffer to wrap cannot be null");

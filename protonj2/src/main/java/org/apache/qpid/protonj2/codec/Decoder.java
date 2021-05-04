@@ -175,7 +175,7 @@ public interface Decoder {
      *
      * @return a {@link TypeDecoder} instance that can read the next type in the buffer.
      *
-     * @throws DecodeException
+     * @throws DecodeException if an error occurs while reading the next type decoder.
      */
     TypeDecoder<?> readNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
@@ -193,7 +193,7 @@ public interface Decoder {
      *
      * @return a {@link TypeDecoder} instance that can provide insight into the next type in the buffer.
      *
-     * @throws DecodeException
+     * @throws DecodeException if an error occurs while peeking ahead for the next type decoder.
      */
     TypeDecoder<?> peekNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 

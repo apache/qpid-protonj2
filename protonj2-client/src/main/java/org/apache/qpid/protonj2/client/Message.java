@@ -39,6 +39,8 @@ public interface Message<E> {
      * Create and return an {@link Message} that will carry no body {@link Section}
      * unless one is assigned by the caller.
      *
+     * @param <E> The type that the message body should be treated as.
+     *
      * @return a new {@link Message} instance with an empty body {@link Section}.
      */
     static <E> Message<E> create() {
@@ -48,6 +50,8 @@ public interface Message<E> {
     /**
      * Create and return an {@link Message} that will wrap the given {@link Object} in
      * an {@link AmqpValue} section.
+     *
+     * @param <E> The type that the message body should be treated as.
      *
      * @param body
      *      An object that will be wrapped in an {@link AmqpValue} body section.
@@ -75,6 +79,8 @@ public interface Message<E> {
      * Create and return an {@link Message} that will wrap the given {@link List} in
      * an {@link AmqpSequence} section.
      *
+     * @param <E> The type that the List elements should be treated as.
+     *
      * @param body
      *      An List that will be wrapped in an {@link AmqpSequence} body section.
      *
@@ -87,6 +93,9 @@ public interface Message<E> {
     /**
      * Create and return an {@link Message} that will wrap the given {@link Map} in
      * an {@link AmqpValue} section.
+     *
+     * @param <K> the type that the {@link Map} keys should be treated as.
+     * @param <V> the type that the {@link Map} values should be treated as.
      *
      * @param body
      *      An Map that will be wrapped in an {@link AmqpValue} body section.
