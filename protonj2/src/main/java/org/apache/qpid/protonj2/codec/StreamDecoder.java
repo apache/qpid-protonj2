@@ -176,7 +176,7 @@ public interface StreamDecoder {
      *
      * @return a {@link StreamTypeDecoder} instance that can read the next type in the buffer.
      *
-     * @throws DecodeException
+     * @throws DecodeException if an error occurs while reading the next type decoder.
      */
     StreamTypeDecoder<?> readNextTypeDecoder(InputStream stream, StreamDecoderState state) throws DecodeException;
 
@@ -195,7 +195,7 @@ public interface StreamDecoder {
      *
      * @return a {@link TypeDecoder} instance that can provide insight into the next type in the stream.
      *
-     * @throws DecodeException if an error occurs during decoding.
+     * @throws DecodeException if an error occurs while peeking ahead for the next type decoder.
      */
     StreamTypeDecoder<?> peekNextTypeDecoder(InputStream stream, StreamDecoderState state) throws DecodeException;
 

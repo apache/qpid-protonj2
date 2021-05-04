@@ -43,7 +43,9 @@ public final class ProtonDecoderState implements DecoderState {
 
     /**
      * Create a new {@link DecoderState} instance that is joined forever to the given {@link Decoder}.
+     *
      * @param decoder
+     * 		The {@link Decoder} that this state instance is assigned to.
      */
     public ProtonDecoderState(ProtonDecoder decoder) {
         this.decoder = decoder;

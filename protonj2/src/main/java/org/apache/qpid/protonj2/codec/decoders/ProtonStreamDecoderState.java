@@ -28,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.Decoder;
+import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 
 /**
@@ -45,7 +46,9 @@ public final class ProtonStreamDecoderState implements StreamDecoderState {
 
     /**
      * Create a new {@link StreamDecoderState} instance that is joined forever to the given {@link Decoder}.
+     *
      * @param decoder
+     * 		The {@link StreamDecoder} that this state instance is assigned to.
      */
     public ProtonStreamDecoderState(ProtonStreamDecoder decoder) {
         this.decoder = decoder;

@@ -163,7 +163,7 @@ public interface IncomingDelivery {
     /**
      * Gets the message-format for this Delivery, representing the 32bit value using an int.
      * <p>
-     * The default value is 0 as per the message format defined in the core AMQP 1.0 specification.<p>
+     * The default value is 0 as per the message format defined in the core AMQP 1.0 specification.
      * <p>
      * See the following for more details:<br>
      * <a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#type-transfer">

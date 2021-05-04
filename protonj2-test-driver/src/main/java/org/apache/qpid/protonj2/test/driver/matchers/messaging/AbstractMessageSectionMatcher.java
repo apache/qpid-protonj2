@@ -132,6 +132,9 @@ public abstract class AbstractMessageSectionMatcher {
      * Intended to be overridden in most cases that use the above method (but
      * not necessarily all - hence not marked as abstract)
      *
+     * @param fieldIndex
+     *     the field index in the list of section fields whose {@link Enum} constant is being looked up.
+     *
      * @return the field enumeration value mapped to the provided index.
      */
     protected Enum<?> getField(int fieldIndex) {

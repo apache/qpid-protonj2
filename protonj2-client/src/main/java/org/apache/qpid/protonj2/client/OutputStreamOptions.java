@@ -91,6 +91,7 @@ public class OutputStreamOptions {
      * caller.
      *
      * @param streamSize
+     * 		The fixed number of bytes that must be written in order for the stream to be complete.
      *
      * @return this {@link OutputStreamOptions} instance.
      */

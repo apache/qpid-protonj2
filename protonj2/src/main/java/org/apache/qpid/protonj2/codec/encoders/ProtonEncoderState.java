@@ -31,7 +31,9 @@ public final class ProtonEncoderState implements EncoderState {
 
     /**
      * Creates a new {@link ProtonEncoderState} that is linked to the given {@link ProtonEncoder}.
+     *
      * @param encoder
+     * 		The {@link Encoder} that this encoder state instance is assigned to.
      */
     public ProtonEncoderState(ProtonEncoder encoder) {
         this.encoder = encoder;
