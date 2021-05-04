@@ -128,22 +128,40 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
 
     //----- View the test driver state
 
+    /**
+     * @return the idle timeout value that will be set on outgoing Open frames.
+     */
     public int getAdvertisedIdleTimeout() {
         return advertisedIdleTimeout;
     }
 
+    /**
+     * Sets the idle timeout which the test driver should supply to remote in its Open frame.
+     *
+     * @param advertisedIdleTimeout
+     * 		The idle timeout value to supply to remote peers.
+     */
     public void setAdvertisedIdleTimeout(int advertisedIdleTimeout) {
         this.advertisedIdleTimeout = advertisedIdleTimeout;
     }
 
+    /**
+     * @return the number of empty frames that the remote has sent for idle timeout processing.
+     */
     public int getEmptyFrameCount() {
         return emptyFrameCount;
     }
 
+    /**
+     * @return the number of performative frames that this test peer has processed from incoming bytes.
+     */
     public int getPerformativeCount() {
         return performativeCount;
     }
 
+    /**
+     * @return the number of SASL performative frames that this test peer has processed from incoming bytes.
+     */
     public int getSaslPerformativeCount() {
         return saslPerformativeCount;
     }
@@ -155,6 +173,12 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         return inboundMaxFrameSize;
     }
 
+    /**
+     * Sets a limiting value on the size of incoming frames after which the peer will signal an error.
+     *
+     * @param maxSize
+     * 		The maximum incoming frame size limit for this peer.
+     */
     public void setInboundMaxFrameSize(int maxSize) {
         this.inboundMaxFrameSize = maxSize;
     }
@@ -166,6 +190,12 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         return outboundMaxFrameSize;
     }
 
+    /**
+     * Sets a limiting value on the size of outgoing frames after which the peer will signal an error.
+     *
+     * @param maxSize
+     * 		The maximum outgoing frame size limit for this peer.
+     */
     public void setOutboundMaxFrameSize(int maxSize) {
         this.outboundMaxFrameSize = maxSize;
     }
@@ -177,6 +207,12 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         accept(Unpooled.wrappedBuffer(buffer));
     }
 
+    /**
+     * Supply incoming bytes read to the test driver via an Netty {@link ByteBuf} instance.
+     *
+     * @param buffer
+     * 		The Netty {@link ByteBuf} that contains new incoming bytes read.
+     */
     public void accept(ByteBuf buffer) {
         LOG.trace("{} processing new inbound buffer of size: {}", driverName, buffer.readableBytes());
 
@@ -281,6 +317,15 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         handlePerformative(HeartBeat.INSTANCE, channel, null);
     }
 
+    /**
+     * Submits a new {@link ScriptedAction} which should be performed after waiting for the
+     * given delay period in milliseconds.
+     *
+     * @param delay
+     * 		The time in milliseconds to wait before performing the action
+     * @param action
+     *      The action that should be performed after the given delay.
+     */
     public synchronized void afterDelay(int delay, ScriptedAction action) {
         Objects.requireNonNull(schedulerSupplier, "This driver cannot schedule delayed events, no scheduler available");
         ScheduledExecutorService scheduler = schedulerSupplier.get();
@@ -294,6 +339,11 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
 
     //----- Test driver actions
 
+    /**
+     * Waits indefinitely for the scripted expectations and actions to be performed.  If the script
+     * execution encounters an error this method will throw an {@link AssertionError} that describes
+     * the error.
+     */
     public void waitForScriptToComplete() {
         checkFailed();
 
@@ -318,6 +368,11 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         checkFailed();
     }
 
+    /**
+     * Waits indefinitely for the scripted expectations and actions to be performed.  If the script
+     * execution encounters an error this method will not throw an {@link AssertionError} that describes
+     * the error but simply ignore it and return.
+     */
     public void waitForScriptToCompleteIgnoreErrors() {
         ScriptCompleteAction possibleWait = null;
 
@@ -337,10 +392,28 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         }
     }
 
+    /**
+     * Waits for the given amount of time for the scripted expectations and actions to be performed.  If
+     * the script execution encounters an error this method will throw an {@link AssertionError} that
+     * describes the error.
+     *
+     * @param timeout
+     * 		The time in milliseconds to wait for the scripted expectations to complete.
+     */
     public void waitForScriptToComplete(long timeout) {
         waitForScriptToComplete(timeout, TimeUnit.SECONDS);
     }
 
+    /**
+     * Waits for the given amount of time for the scripted expectations and actions to be performed.  If
+     * the script execution encounters an error this method will throw an {@link AssertionError} that
+     * describes the error.
+     *
+     * @param timeout
+     * 		The time to wait for the scripted expectations to complete.
+     * @param units
+     * 		The {@link TimeUnit} instance that converts the given time value.
+     */
     public void waitForScriptToComplete(long timeout, TimeUnit units) {
         checkFailed();
 
@@ -365,6 +438,13 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         checkFailed();
     }
 
+    /**
+     * Adds the script element to the list of scripted expectations and actions that should occur
+     * in order to complete the test outcome.
+     *
+     * @param element
+     * 		The element to add to the script.
+     */
     public void addScriptedElement(ScriptedElement element) {
         checkFailed();
         synchronized (script) {

@@ -34,6 +34,9 @@ public class XOauth2Mechanism extends AbstractMechanism {
 
     private final Pattern ACCESS_TOKEN_PATTERN = Pattern.compile("^[\\x20-\\x7F]+$");
 
+    /**
+     * A singleton instance of the symbolic mechanism name.
+     */
     public static final Symbol XOAUTH2 = Symbol.valueOf("XOAUTH2");
 
     private String additionalFailureInformation;

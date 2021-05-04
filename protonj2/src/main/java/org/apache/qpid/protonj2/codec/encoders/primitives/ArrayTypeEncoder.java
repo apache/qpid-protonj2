@@ -166,41 +166,121 @@ public final class ArrayTypeEncoder implements PrimitiveTypeEncoder<Object> {
 
     //----- Write methods for primitive arrays -------------------------------//
 
+    /**
+     * Encodes the given array into the provided buffer for transmission.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the array encoding should be written.
+     * @param state
+     *      The {@link EncoderState} which can be used when encoding the array elements.
+     * @param value
+     *      The array that should be encoded using this {@link ArrayTypeEncoder}.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, boolean[] value) {
         final BooleanTypeEncoder typeEncoder = (BooleanTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
+    /**
+     * Encodes the given array into the provided buffer for transmission.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the array encoding should be written.
+     * @param state
+     *      The {@link EncoderState} which can be used when encoding the array elements.
+     * @param value
+     *      The array that should be encoded using this {@link ArrayTypeEncoder}.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, byte[] value) {
         final ByteTypeEncoder typeEncoder = (ByteTypeEncoder) state.getEncoder().getTypeEncoder(Byte.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
+    /**
+     * Encodes the given array into the provided buffer for transmission.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the array encoding should be written.
+     * @param state
+     *      The {@link EncoderState} which can be used when encoding the array elements.
+     * @param value
+     *      The array that should be encoded using this {@link ArrayTypeEncoder}.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, short[] value) {
         final ShortTypeEncoder typeEncoder = (ShortTypeEncoder) state.getEncoder().getTypeEncoder(Short.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
+    /**
+     * Encodes the given array into the provided buffer for transmission.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the array encoding should be written.
+     * @param state
+     *      The {@link EncoderState} which can be used when encoding the array elements.
+     * @param value
+     *      The array that should be encoded using this {@link ArrayTypeEncoder}.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, int[] value) {
         final IntegerTypeEncoder typeEncoder = (IntegerTypeEncoder) state.getEncoder().getTypeEncoder(Integer.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
+    /**
+     * Encodes the given array into the provided buffer for transmission.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the array encoding should be written.
+     * @param state
+     *      The {@link EncoderState} which can be used when encoding the array elements.
+     * @param value
+     *      The array that should be encoded using this {@link ArrayTypeEncoder}.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, long[] value) {
         final LongTypeEncoder typeEncoder = (LongTypeEncoder) state.getEncoder().getTypeEncoder(Long.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
+    /**
+     * Encodes the given array into the provided buffer for transmission.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the array encoding should be written.
+     * @param state
+     *      The {@link EncoderState} which can be used when encoding the array elements.
+     * @param value
+     *      The array that should be encoded using this {@link ArrayTypeEncoder}.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, float[] value) {
         final FloatTypeEncoder typeEncoder = (FloatTypeEncoder) state.getEncoder().getTypeEncoder(Float.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
+    /**
+     * Encodes the given array into the provided buffer for transmission.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the array encoding should be written.
+     * @param state
+     *      The {@link EncoderState} which can be used when encoding the array elements.
+     * @param value
+     *      The array that should be encoded using this {@link ArrayTypeEncoder}.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, double[] value) {
         final DoubleTypeEncoder typeEncoder = (DoubleTypeEncoder) state.getEncoder().getTypeEncoder(Double.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
+    /**
+     * Encodes the given array into the provided buffer for transmission.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the array encoding should be written.
+     * @param state
+     *      The {@link EncoderState} which can be used when encoding the array elements.
+     * @param value
+     *      The array that should be encoded using this {@link ArrayTypeEncoder}.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, char[] value) {
         final CharacterTypeEncoder typeEncoder = (CharacterTypeEncoder) state.getEncoder().getTypeEncoder(Character.class);
         typeEncoder.writeArray(buffer, state, value);

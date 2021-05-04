@@ -28,8 +28,14 @@ public class ScramSHA512Mechanism extends AbstractScramSHAMechanism {
     public static final String SHA_512 = "SHA-512";
     public static final String HMAC_SHA_512 = "HmacSHA512";
 
+    /**
+     * A singleton instance of the symbolic mechanism name.
+     */
     public static final Symbol SCRAM_SHA_512 = Symbol.valueOf("SCRAM-SHA-512");
 
+    /**
+     * Creates an instance of the {@link ScramSHA512Mechanism} with a generated client Nonce.
+     */
     public ScramSHA512Mechanism() {
         this(UUID.randomUUID().toString());
     }

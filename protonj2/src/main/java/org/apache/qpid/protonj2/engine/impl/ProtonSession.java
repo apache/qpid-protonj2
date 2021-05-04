@@ -86,6 +86,14 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     private EventHandler<Receiver> remoteReceiverOpenEventHandler;
     private EventHandler<TransactionManager> remoteTxnManagerOpenEventHandler;
 
+    /**
+     * Creates a new {@link ProtonSession} instance bound to the given {@link ProtonConnection}.
+     *
+     * @param connection
+     * 		The connection that is the parent of the session instance.
+     * @param localChannel
+     * 		The local channel onto which this session is bound.
+     */
     public ProtonSession(ProtonConnection connection, int localChannel) {
         super(connection.getEngine());
 
@@ -111,10 +119,16 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
         return connection;
     }
 
+    /**
+     * @return the local channel onto which this {@link Session} is bound.
+     */
     public int getLocalChannel() {
         return localChannel;
     }
 
+    /**
+     * @return the remote channel onto which this {@link Session} is bound or -1 if not yet remotely opened.
+     */
     public int getRemoteChannel() {
         return remoteBegin != null ? remoteBegin.getRemoteChannel() : -1;
     }

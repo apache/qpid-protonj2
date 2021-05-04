@@ -23,6 +23,9 @@ import org.apache.qpid.protonj2.types.Symbol;
  */
 public class AnonymousMechanism extends AbstractMechanism {
 
+    /**
+     * A singleton instance of the symbolic mechanism name.
+     */
     public static final Symbol ANONYMOUS = Symbol.valueOf("ANONYMOUS");
 
     @Override

@@ -30,15 +30,27 @@ import org.apache.qpid.protonj2.types.DeliveryTag;
  */
 public class ProtonPooledTagGenerator extends ProtonSequentialTagGenerator {
 
+    /**
+     * The default number of pooled transfer tags for this generator.
+     */
     public static final int DEFAULT_MAX_NUM_POOLED_TAGS = 512;
 
     private final int tagPoolSize;
     private final Queue<ProtonPooledDeliveryTag> tagPool;
 
+    /**
+     * Creates a new {@link ProtonPooledTagGenerator} instance with the default pool size.
+     */
     public ProtonPooledTagGenerator() {
         this(DEFAULT_MAX_NUM_POOLED_TAGS);
     }
 
+    /**
+     * Creates a new {@link ProtonPooledTagGenerator} instance with the given pool size.
+     *
+     * @param poolSize
+     * 		The size of the transfer tag pool that should be allocated for this generator.
+     */
     public ProtonPooledTagGenerator(int poolSize) {
         if (poolSize == 0) {
             throw new IllegalArgumentException("Cannot create a tag pool with zero pool size");

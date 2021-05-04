@@ -46,6 +46,13 @@ public final class ClientRedirect {
         this.redirect = redirect;
     }
 
+    /**
+     * Validate the information conveyed in the redirect and signal an error if it is invalid.
+     *
+     * @return this {@link ClientRedirect} instance which can be assumed carries valid data.
+     *
+     * @throws Exception if an error occurs during validation of the redirect payload.
+     */
     public ClientRedirect validate() throws Exception {
         String networkHost = (String) redirect.get(NETWORK_HOST);
         if (networkHost == null || networkHost.isEmpty()) {

@@ -24,38 +24,78 @@ import org.apache.qpid.protonj2.types.transport.AMQPHeader.HeaderHandler;
  */
 public class HeaderEnvelope extends PerformativeEnvelope<AMQPHeader> {
 
+    /**
+     * The frame type marker used when decoding or encoding AMQP Header frames.
+     */
     public static final byte HEADER_FRAME_TYPE = (byte) 1;
 
+    /**
+     * A singleton instance of an SASL header that can be used to avoid additional allocations.
+     */
     public static final HeaderEnvelope SASL_HEADER_ENVELOPE = new HeaderEnvelope(AMQPHeader.getSASLHeader());
 
+    /**
+     * A singleton instance of an AMQP header that can be used to avoid additional allocations.
+     */
     public static final HeaderEnvelope AMQP_HEADER_ENVELOPE = new HeaderEnvelope(AMQPHeader.getAMQPHeader());
 
+    /**
+     * Create an header envelope with the given AMQHeader body.
+     *
+     * @param body
+     * 		The AMQP header instance that holds the header bytes.
+     */
     public HeaderEnvelope(AMQPHeader body) {
         super(HEADER_FRAME_TYPE);
 
         initialize(body, 0, null);
     }
 
+    /**
+     * @return the protocol id value contained in the header bytes.
+     */
     public int getProtocolId() {
         return getBody().getProtocolId();
     }
 
+    /**
+     * @return the major version number contained in the header bytes.
+     */
     public int getMajor() {
         return getBody().getMajor();
     }
 
+    /**
+     * @return the minor version number contained in the header bytes.
+     */
     public int getMinor() {
         return getBody().getMinor();
     }
 
+    /**
+     * @return the revision version number contained in the header bytes.
+     */
     public int getRevision() {
         return getBody().getRevision();
     }
 
+    /**
+     * @return true if the contained header bytes represents a SASL header.
+     */
     public boolean isSaslHeader() {
         return getBody().isSaslHeader();
     }
 
+    /**
+     * Invoke the correct handler based on whether this header is a SASL or AMQP header instance.
+     *
+     * @param <E> The type of the context object that accompanies the invocation.
+     *
+     * @param handler
+     * 		The {@link HeaderHandler} that should be invoked based on the header type.
+     * @param context
+     * 		The context value to provide when signaling the header handler.
+     */
     public <E> void invoke(HeaderHandler<E> handler, E context) {
         getBody().invoke(handler, context);
     }

@@ -28,8 +28,14 @@ public class ScramSHA256Mechanism extends AbstractScramSHAMechanism {
     public static final String SHA_256 = "SHA-256";
     public static final String HMAC_SHA_256 = "HmacSHA256";
 
+    /**
+     * A singleton instance of the symbolic mechanism name.
+     */
     public static final Symbol SCRAM_SHA_256 = Symbol.valueOf("SCRAM-SHA-256");
 
+    /**
+     * Creates an instance of the {@link ScramSHA256Mechanism} with a generated client Nonce.
+     */
     public ScramSHA256Mechanism() {
         this(UUID.randomUUID().toString());
     }

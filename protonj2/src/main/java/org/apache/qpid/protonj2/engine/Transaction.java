@@ -27,9 +27,24 @@ import org.apache.qpid.protonj2.types.transport.ErrorCondition;
  */
 public interface Transaction<E extends Endpoint<?>> {
 
+    /**
+     * Provides state for this {@link Transaction}.
+     */
     public enum DischargeState {
+
+        /**
+         * The transaction is live and has not yet been committed or rolled back.
+         */
         NONE,
+
+        /**
+         * The transaction has been committed and cannot be rolled back.
+         */
         COMMIT,
+
+        /**
+         * The transaction has been rolled back and cannot be committed.
+         */
         ROLLBACK
     }
 

@@ -20,17 +20,38 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 
+/**
+ * Defines an AMQP Close performative used to end AMQP Connection instances.
+ */
 public final class Close implements Performative {
 
+    /**
+     * The {@link UnsignedLong} descriptor code that defines this AMQP type.
+     */
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000018L);
+
+    /**
+     * The {@link Symbol} descriptor code that defines this AMQP type.
+     */
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:close:list");
 
     private ErrorCondition error;
 
+    /**
+     * @return the {@link ErrorCondition} conveyed in the {@link Close} or null if non set.
+     */
     public ErrorCondition getError() {
         return error;
     }
 
+    /**
+     * Sets the error that should be conveyed with the AMQP {@link Close}.
+     *
+     * @param error
+     * 		The {@link ErrorCondition} to convey with the {@link Close} or null if none.
+     *
+     * @return this {@link Close} instance.
+     */
     public Close setError(ErrorCondition error) {
         this.error = error;
         return this;

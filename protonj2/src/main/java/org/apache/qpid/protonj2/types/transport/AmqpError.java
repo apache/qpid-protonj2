@@ -18,6 +18,9 @@ package org.apache.qpid.protonj2.types.transport;
 
 import org.apache.qpid.protonj2.types.Symbol;
 
+/**
+ * List of {@link Symbol} constants that provide the defined AMQP Error space.
+ */
 public interface AmqpError {
 
     /**

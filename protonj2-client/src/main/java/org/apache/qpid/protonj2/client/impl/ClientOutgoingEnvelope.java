@@ -112,10 +112,19 @@ public class ClientOutgoingEnvelope {
         this.delivery = delivery;
     }
 
+    /**
+     * @return the {@link ScheduledFuture} used to determine when the send should fail if no credit available to write.
+     */
     public ScheduledFuture<?> sendTimeout() {
         return sendTimeout;
     }
 
+    /**
+     * Sets the {@link ScheduledFuture} which should be used when a send cannot be immediately performed.
+     *
+     * @param sendTimeout
+     * 		The {@link ScheduledFuture} that will fail the send if not cancelled once it has been performed.
+     */
     public void sendTimeout(ScheduledFuture<?> sendTimeout) {
         this.sendTimeout = sendTimeout;
     }

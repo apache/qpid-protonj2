@@ -105,6 +105,22 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         }
     }
 
+    /**
+     * Puts the value into the in the {@link Map} at the entry specified by the given key (treated as an
+     * unsigned integer for comparison.
+     *
+     * As a side effect of calling this method the tree that comprises the Map can be modified
+     * to bring up the found key or the last accessed key if the key given is not in the {@link Map}.
+     * For entries at the root of the tree that match the given search key the method returns
+     * immediately without modifying the {@link Map}.
+     *
+     * @param key
+     *      the integer key value to search for and or insert in the {@link SplayMap}.
+     * @param value
+     *      the value to assign to the entry accessed via the given key.
+     *
+     * @return the previous value stored for the given key if found or null if not in the {@link Map}.
+     */
     public E put(int key, E value) {
         E oldValue = null;
 
@@ -140,6 +156,22 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return putIfAbsent(key.intValue(), value);
     }
 
+    /**
+     * If the specified key is not already associated with a value associates it with the given value and
+     * returns null, otherwise returns the current value.
+     *
+     * As a side effect of calling this method the tree that comprises the Map can be modified
+     * to bring up the found key or the last accessed key if the key given is not in the {@link Map}.
+     * For entries at the root of the tree that match the given search key the method returns
+     * immediately without modifying the {@link Map}.
+     *
+     * @param key
+     *      the integer key value to search for and or insert in the {@link SplayMap}.
+     * @param value
+     *      the value to assign to the entry accessed via the given key.
+     *
+     * @return the previous value associated with the given key or null if none was present.
+     */
     public E putIfAbsent(int key, E value) {
         if (root == null) {
             root = entryPool.poll(SplayMap::createEmtry).initialize(key, value);

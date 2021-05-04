@@ -24,6 +24,9 @@ package org.apache.qpid.protonj2.types.transport;
  */
 public interface DeliveryState {
 
+    /**
+     * An enumeration of the valid {@link DeliveryState} types that the library can provide.
+     */
     enum DeliveryStateType {
         Accepted,
         Declared,

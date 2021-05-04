@@ -33,6 +33,9 @@ import org.apache.qpid.protonj2.types.Symbol;
  */
 public class CramMD5Mechanism extends AbstractMechanism {
 
+    /**
+     * A singleton instance of the symbolic mechanism name.
+     */
     public static final Symbol CRAM_MD5 = Symbol.valueOf("CRAM-MD5");
 
     private static final String ASCII = "ASCII";

@@ -26,14 +26,29 @@ import java.util.Map;
  */
 public interface SaslCredentialsProvider {
 
+    /**
+     * @return the virtual host value to use when performing SASL authentication.
+     */
     String vhost();
 
+    /**
+     * @return the user name value to use when performing SASL authentication.
+     */
     String username();
 
+    /**
+     * @return the password value to use when performing SASL authentication.
+     */
     String password();
 
+    /**
+     * @return the local principal value to use when performing SASL authentication.
+     */
     Principal localPrincipal();
 
+    /**
+     * @return a {@link Map} of optional values to use when performing SASL authentication.
+     */
     @SuppressWarnings("unchecked")
     default Map<String, Object> options() {
         return Collections.EMPTY_MAP;

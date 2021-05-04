@@ -23,6 +23,9 @@ import org.apache.qpid.protonj2.types.Symbol;
  */
 public class ExternalMechanism extends AbstractMechanism {
 
+    /**
+     * A singleton instance of the symbolic mechanism name.
+     */
     public static final Symbol EXTERNAL = Symbol.valueOf("EXTERNAL");
 
     @Override

@@ -31,6 +31,9 @@ import org.apache.qpid.protonj2.types.Symbol;
  */
 public class PlainMechanism extends AbstractMechanism {
 
+    /**
+     * A singleton instance of the symbolic mechanism name.
+     */
     public static final Symbol PLAIN = Symbol.valueOf("PLAIN");
 
     @Override
