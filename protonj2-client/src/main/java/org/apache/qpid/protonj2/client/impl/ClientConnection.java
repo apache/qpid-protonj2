@@ -686,7 +686,7 @@ public class ClientConnection implements Connection {
             try {
                 connection.getEngine().shutdown();
             } catch (Throwable ignore) {
-                LOG.warn("Unexpected exception thrown from engine shutdown: ", ignore);
+                LOG.debug("Unexpected exception thrown from engine shutdown: ", ignore);
             }
         } else {
             try {
@@ -727,7 +727,7 @@ public class ClientConnection implements Connection {
         LOG.trace("Engine reports failure with error: {}", failureCause.getMessage());
 
         if (isReconnectAllowed(failureCause)) {
-            LOG.info("Connection {} interrupted to server: {}", getId(), transport.getHost(), transport.getPort());
+            LOG.info("Connection {} interrupted to server: {}:{}", getId(), transport.getHost(), transport.getPort());
             submitDisconnectionEvent(options.interruptedHandler(), transport.getHost(), transport.getPort(), failureCause);
 
             // Initial configuration validation happens here, if this step fails then the
@@ -819,7 +819,8 @@ public class ClientConnection implements Connection {
         openFuture.failed(failureCause);
         closeFuture.complete(this);
 
-        LOG.info("Connection has failed due to error: {}", failureCause != null ? failureCause.getMessage() : "No error details provided.");
+        LOG.warn("Connection {} has failed due to: {}", getId(), failureCause != null ?
+                 failureCause.getClass().getSimpleName() + " -> " + failureCause.getMessage() : "No failure details provided.");
 
         submitDisconnectionEvent(options.disconnectedHandler(), transport.getHost(), transport.getPort(), failureCause);
     }
@@ -866,7 +867,7 @@ public class ClientConnection implements Connection {
         if (options.traceFrames()) {
             engine.configuration().setTraceFrames(true);
             if (!engine.configuration().isTraceFrames()) {
-                LOG.info("Connection frame tracing was enabled but protocol engine does not support it");
+                LOG.warn("Connection {} frame tracing was enabled but protocol engine does not support it", getId());
             }
         }
 
@@ -961,7 +962,7 @@ public class ClientConnection implements Connection {
         try {
             reconnectAttempts++;
             transport = ioContext.newTransport();
-            LOG.trace("Attempting connection to remote {}:{}", location.getHost(), location.getPort());
+            LOG.trace("Connection {} Attempting connection to remote {}:{}", getId(), location.getHost(), location.getPort());
             transport.connect(location.getHost(), location.getPort(), new ClientTransportListener(engine));
         } catch (Throwable error) {
             engine.engineFailed(ClientExceptionSupport.createOrPassthroughFatal(error));
@@ -972,7 +973,7 @@ public class ClientConnection implements Connection {
         // Warn of ongoing connection attempts if configured.
         int warnInterval = options.reconnectOptions().warnAfterReconnectAttempts();
         if (reconnectAttempts > 0 && warnInterval > 0 && (reconnectAttempts % warnInterval) == 0) {
-            LOG.warn("Failed to connect after: {} attempt(s) continuing to retry.", reconnectAttempts);
+            LOG.warn("Connection {}: Failed to connect after: {} attempt(s) continuing to retry.", getId(), reconnectAttempts);
         }
 
         // If no connection recovery required then we have never fully connected to a remote
