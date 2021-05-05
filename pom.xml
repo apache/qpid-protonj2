@@ -25,7 +25,7 @@
 
   <groupId>org.apache.qpid</groupId>
   <artifactId>protonj2-parent</artifactId>
-  <version>1.0.0-M1</version>
+  <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Qpid ProtonJ2 Parent</name>
@@ -71,7 +71,7 @@
     <connection>scm:git:http://git-wip-us.apache.org/repos/asf/qpid-protonj2.git</connection>
     <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/qpid-protonj2.git</developerConnection>
     <url>https://git-wip-us.apache.org/repos/asf?p=qpid-protonj2.git</url>
-    <tag>1.0.0-M1</tag>
+    <tag>HEAD</tag>
   </scm>
   <issueManagement>
     <url>https://issues.apache.org/jira/browse/PROTON</url>
