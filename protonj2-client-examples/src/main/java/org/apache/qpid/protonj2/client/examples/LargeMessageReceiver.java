@@ -25,6 +25,7 @@ import java.util.Arrays;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
+import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
 import org.apache.qpid.protonj2.client.StreamReceiverMessage;
@@ -32,14 +33,19 @@ import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 public class LargeMessageReceiver {
 
     public static void main(String[] args) throws Exception {
-        String serverHost = "localhost";
-        int serverPort = 5672;
-        String address = "large-message-example";
+        final String serverHost = System.getProperty("HOST", "localhost");
+        final int serverPort = Integer.getInteger("PORT", 5672);
+        final String address = System.getProperty("ADDRESS", "large-message-example");
 
-        Client client = Client.create();
+        final Client client = Client.create();
 
-        try (Connection connection = client.connect(serverHost, serverPort)) {
-            StreamReceiver receiver = connection.openStreamReceiver(address);
+        final ConnectionOptions options = new ConnectionOptions();
+        options.user(System.getProperty("USER"));
+        options.password(System.getProperty("PASSWORD"));
+
+        try (Connection connection = client.connect(serverHost, serverPort, options);
+             StreamReceiver receiver = connection.openStreamReceiver(address)) {
+
             StreamDelivery delivery = receiver.receive();
             StreamReceiverMessage message = delivery.message();
             InputStream inputStream = message.body();

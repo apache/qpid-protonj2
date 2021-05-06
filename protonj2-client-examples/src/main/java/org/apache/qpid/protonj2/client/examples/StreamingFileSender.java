@@ -23,6 +23,7 @@ import java.io.OutputStream;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
+import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamSenderMessage;
 
@@ -43,14 +44,18 @@ public class StreamingFileSender {
             System.exit(1);
         }
 
-        String fileNameKey = "filename";
-        String serverHost = System.getProperty("server_host", "localhost");
-        int serverPort = Integer.getInteger("server_port", 5672);
-        String address = System.getProperty("address", "file-transfer");
+        final String fileNameKey = "filename";
+        final String serverHost = System.getProperty("HOST", "localhost");
+        final int serverPort = Integer.getInteger("PORT", 5672);
+        final String address = System.getProperty("ADDRESS", "file-transfer");
 
-        Client client = Client.create();
+        final Client client = Client.create();
 
-        try (Connection connection = client.connect(serverHost, serverPort);
+        final ConnectionOptions options = new ConnectionOptions();
+        options.user(System.getProperty("USER"));
+        options.password(System.getProperty("PASSWORD"));
+
+        try (Connection connection = client.connect(serverHost, serverPort, options);
              StreamSender sender = connection.openStreamSender(address);
              FileInputStream inputStream = new FileInputStream(inputFile)) {
 

@@ -28,16 +28,18 @@ public class ReconnectSender {
 
     private static final int MESSAGE_COUNT = 10;
 
-    private static String serverHost = "localhost";
-    private static int serverPort = 5672;
-    private static String address = "reconnect-sender-example";
-
-    private static String backupServerHost = System.getProperty("backup_server_host");
-    private static int backupServerPort = Integer.getInteger("backup_server_port", 5672);
-
     public static void main(String[] args) throws Exception {
-        Client client = Client.create();
-        ConnectionOptions connectionOpts = new ConnectionOptions();
+        final String serverHost = System.getProperty("HOST", "localhost");
+        final int serverPort = Integer.getInteger("PORT", 5672);
+        final String address = System.getProperty("ADDRESS", "reconnect-examples");
+        final String backupServerHost = System.getProperty("BACKUP_HOST");
+        final int backupServerPort = Integer.getInteger("BACKUP_PORT", 5672);
+
+        final Client client = Client.create();
+
+        final ConnectionOptions connectionOpts = new ConnectionOptions();
+        connectionOpts.user(System.getProperty("USER"));
+        connectionOpts.password(System.getProperty("PASSWORD"));
         connectionOpts.reconnectEnabled(true);
 
         if (backupServerHost != null) {

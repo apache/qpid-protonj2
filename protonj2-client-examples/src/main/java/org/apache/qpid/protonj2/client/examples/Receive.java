@@ -18,24 +18,30 @@ package org.apache.qpid.protonj2.client.examples;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
+import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
 
 public class Receive {
 
+    private static final int MESSAGE_COUNT = 100;
+
     public static void main(String[] args) throws Exception {
-        String serverHost = "localhost";
-        int serverPort = 5672;
-        String address = "send-receive-example";
-        int count = 100;
+        final String serverHost = System.getProperty("HOST", "localhost");
+        final int serverPort = Integer.getInteger("PORT", 5672);
+        final String address = System.getProperty("ADDRESS", "send-receive-example");
 
-        Client client = Client.create();
+        final Client client = Client.create();
 
-        try (Connection connection = client.connect(serverHost, serverPort)) {
-            Receiver receiver = connection.openReceiver(address);
+        final ConnectionOptions options = new ConnectionOptions();
+        options.user(System.getProperty("USER"));
+        options.password(System.getProperty("PASSWORD"));
 
-            for (int i = 0; i < count; ++i) {
+        try (Connection connection = client.connect(serverHost, serverPort, options);
+             Receiver receiver = connection.openReceiver(address)) {
+
+            for (int i = 0; i < MESSAGE_COUNT; ++i) {
                 Delivery delivery = receiver.receive();
                 Message<String> message = delivery.message();
 

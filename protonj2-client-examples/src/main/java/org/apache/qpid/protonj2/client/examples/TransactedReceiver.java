@@ -22,6 +22,7 @@ package org.apache.qpid.protonj2.client.examples;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
+import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
@@ -30,13 +31,17 @@ import org.apache.qpid.protonj2.client.Session;
 public class TransactedReceiver {
 
     public static void main(String[] args) throws Exception {
-        String serverHost = "localhost";
-        int serverPort = 5672;
-        String address = "transaction-example";
+        final String serverHost = System.getProperty("HOST", "localhost");
+        final int serverPort = Integer.getInteger("PORT", 5672);
+        final String address = System.getProperty("ADDRESS", "transaction-example");
 
-        Client client = Client.create();
+        final Client client = Client.create();
 
-        try (Connection connection = client.connect(serverHost, serverPort)) {
+        final ConnectionOptions options = new ConnectionOptions();
+        options.user(System.getProperty("USER"));
+        options.password(System.getProperty("PASSWORD"));
+
+        try (Connection connection = client.connect(serverHost, serverPort, options)) {
             Session session = connection.openSession();
             Receiver receiver = session.openReceiver(address);
 

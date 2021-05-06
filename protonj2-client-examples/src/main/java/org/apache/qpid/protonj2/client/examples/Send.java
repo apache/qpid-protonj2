@@ -18,24 +18,30 @@ package org.apache.qpid.protonj2.client.examples;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
+import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Tracker;
 
 public class Send {
 
+    private static final int MESSAGE_COUNT = 100;
+
     public static void main(String[] argv) throws Exception {
-        String serverHost = "localhost";
-        int serverPort = 5672;
-        String address = "send-receive-example";
-        int count = 100;
+        final String serverHost = System.getProperty("HOST", "localhost");
+        final int serverPort = Integer.getInteger("PORT", 5672);
+        final String address = System.getProperty("ADDRESS", "send-receive-example");
 
-        Client client = Client.create();
+        final Client client = Client.create();
 
-        try (Connection connection = client.connect(serverHost, serverPort)) {
-            Sender sender = connection.openSender(address);
+        final ConnectionOptions options = new ConnectionOptions();
+        options.user(System.getProperty("USER"));
+        options.password(System.getProperty("PASSWORD"));
 
-            for (int i = 0; i < count; ++i) {
+        try (Connection connection = client.connect(serverHost, serverPort, options);
+             Sender sender = connection.openSender(address)) {
+
+            for (int i = 0; i < MESSAGE_COUNT; ++i) {
                 Message<String> message = Message.create(String.format("Hello World! [%s]", i));
                 Tracker tracker = sender.send(message);
                 tracker.awaitSettlement();

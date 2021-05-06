@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
+import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
@@ -32,14 +33,19 @@ import org.apache.qpid.protonj2.client.SenderOptions;
 public class Request {
 
     public static void main(String[] args) throws Exception {
-        String serverHost = "localhost";
-        int serverPort = 5672;
-        String address = "request-respond-example";
+        final String serverHost = System.getProperty("HOST", "localhost");
+        final int serverPort = Integer.getInteger("PORT", 5672);
+        final String address = System.getProperty("ADDRESS", "request-respond-example");
 
-        Client client = Client.create();
+        final Client client = Client.create();
 
-        try (Connection connection = client.connect(serverHost, serverPort)) {
-            Receiver dynamicReceiver = connection.openDynamicReceiver();
+        final ConnectionOptions options = new ConnectionOptions();
+        options.user(System.getProperty("USER"));
+        options.password(System.getProperty("PASSWORD"));
+
+        try (Connection connection = client.connect(serverHost, serverPort, options);
+             Receiver dynamicReceiver = connection.openDynamicReceiver()) {
+
             String dynamicAddress = dynamicReceiver.address();
             System.out.println("Waiting for response to requests on address: " + dynamicAddress);
 

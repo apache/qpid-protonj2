@@ -22,6 +22,7 @@ package org.apache.qpid.protonj2.client.examples;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
+import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
@@ -30,16 +31,20 @@ import org.apache.qpid.protonj2.client.Sender;
 public class HelloWorld {
 
     public static void main(String[] args) throws Exception {
-        String serverHost = "localhost";
-        int serverPort = 5672;
-        String address = "hello-world-example";
+        final String serverHost = System.getProperty("HOST", "localhost");
+        final int serverPort = Integer.getInteger("PORT", 5672);
+        final String address = System.getProperty("ADDRESS", "hello-world-example");
 
-        Client client = Client.create();
+        final Client client = Client.create();
 
-        try (Connection connection = client.connect(serverHost, serverPort)) {
-            Receiver receiver = connection.openReceiver(address);
+        final ConnectionOptions options = new ConnectionOptions();
+        options.user(System.getProperty("USER"));
+        options.password(System.getProperty("PASSWORD"));
 
-            Sender sender = connection.openSender(address);
+        try (Connection connection = client.connect(serverHost, serverPort, options);
+             Receiver receiver = connection.openReceiver(address);
+             Sender sender = connection.openSender(address)) {
+
             sender.send(Message.create("Hello World"));
 
             Delivery delivery = receiver.receive();
