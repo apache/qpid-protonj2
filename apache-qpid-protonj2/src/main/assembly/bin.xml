@@ -77,7 +77,7 @@
             <outputDirectory>examples/</outputDirectory>
             <includes>
               <include>pom.xml</include>
-              <include>README.txt</include>
+              <include>README.md</include>
             </includes>
             <fileMode>0644</fileMode>
             <directoryMode>0755</directoryMode>
@@ -86,7 +86,7 @@
       </sources>
     </moduleSet>
     <moduleSet>
-	  <useAllReactorProjects>true</useAllReactorProjects>
+      <useAllReactorProjects>true</useAllReactorProjects>
       <includes>
         <include>org.apache.qpid:protonj2-client-docs</include>
       </includes>
