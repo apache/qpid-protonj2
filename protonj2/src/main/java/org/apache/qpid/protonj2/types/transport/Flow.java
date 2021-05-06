@@ -438,16 +438,16 @@ public final class Flow implements Performative {
     @Override
     public String toString() {
         return "Flow{" +
-               "nextIncomingId=" + nextIncomingId +
-               ", incomingWindow=" + incomingWindow +
-               ", nextOutgoingId=" + nextOutgoingId +
-               ", outgoingWindow=" + outgoingWindow +
-               ", handle=" + handle +
-               ", deliveryCount=" + deliveryCount +
-               ", linkCredit=" + linkCredit +
-               ", available=" + available +
-               ", drain=" + drain +
-               ", echo=" + echo +
+               "nextIncomingId=" + (hasNextIncomingId() ? nextIncomingId : "null") +
+               ", incomingWindow=" + (hasIncomingWindow() ? incomingWindow : "null") +
+               ", nextOutgoingId=" + (hasNextOutgoingId() ? nextOutgoingId : "null") +
+               ", outgoingWindow=" + (hasOutgoingWindow() ? outgoingWindow : "null") +
+               ", handle=" + (hasHandle() ? handle : "null") +
+               ", deliveryCount=" + (hasDeliveryCount() ? deliveryCount : "null") +
+               ", linkCredit=" + (hasLinkCredit() ? linkCredit : "null") +
+               ", available=" + (hasAvailable() ? available : "null") +
+               ", drain=" + (hasDrain() ? drain : "null") +
+               ", echo=" + (hasEcho() ? echo : "null") +
                ", properties=" + properties +
                '}';
     }

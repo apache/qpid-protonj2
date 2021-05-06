@@ -227,11 +227,12 @@ public final class Header implements Section<Header> {
     @Override
     public String toString() {
         return "Header{ " +
-                "durable=" + durable +
-                ", priority=" + priority +
-                ", ttl=" + timeToLive +
-                ", firstAcquirer=" + firstAcquirer +
-                ", deliveryCount=" + deliveryCount + " }";
+                "durable=" + (hasDurable() ? durable : "null") +
+                ", priority=" + (hasPriority() ? priority : "null") +
+                ", ttl=" + (hasTimeToLive() ? timeToLive : "null") +
+                ", firstAcquirer=" + (hasFirstAcquirer() ? firstAcquirer : "null") +
+                ", deliveryCount=" + (hasDeliveryCount() ? deliveryCount : "null") +
+                " }";
     }
 
     @Override

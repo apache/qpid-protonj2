@@ -410,10 +410,10 @@ public final class Properties implements Section<Properties> {
                 ", correlationId=" + correlationId +
                 ", contentType=" + contentType +
                 ", contentEncoding=" + contentEncoding +
-                ", absoluteExpiryTime=" + absoluteExpiryTime +
-                ", creationTime=" + creationTime +
+                ", absoluteExpiryTime=" + (hasAbsoluteExpiryTime() ? absoluteExpiryTime : "null") +
+                ", creationTime=" + (hasCreationTime() ? creationTime : null) +
                 ", groupId='" + groupId + '\'' +
-                ", groupSequence=" + groupSequence +
+                ", groupSequence=" + (hasGroupSequence() ? groupSequence : null) +
                 ", replyToGroupId='" + replyToGroupId + '\'' + " }";
     }
 

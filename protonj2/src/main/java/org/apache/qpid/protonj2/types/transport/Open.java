@@ -335,13 +335,13 @@ public final class Open implements Performative {
         return "Open{" +
                " containerId='" + containerId + '\'' +
                ", hostname='" + hostname + '\'' +
-               ", maxFrameSize=" + maxFrameSize +
-               ", channelMax=" + channelMax +
-               ", idleTimeOut=" + idleTimeout +
-               ", outgoingLocales=" + (outgoingLocales == null ? null : Arrays.asList(outgoingLocales)) +
-               ", incomingLocales=" + (incomingLocales == null ? null : Arrays.asList(incomingLocales)) +
-               ", offeredCapabilities=" + (offeredCapabilities == null ? null : Arrays.asList(offeredCapabilities)) +
-               ", desiredCapabilities=" + (desiredCapabilities == null ? null : Arrays.asList(desiredCapabilities)) +
+               ", maxFrameSize=" + (hasMaxFrameSize() ? maxFrameSize : "null") +
+               ", channelMax=" + (hasChannelMax() ? channelMax : "null") +
+               ", idleTimeOut=" + (hasIdleTimeout() ? idleTimeout : "null") +
+               ", outgoingLocales=" + (outgoingLocales == null ? "null" : Arrays.asList(outgoingLocales)) +
+               ", incomingLocales=" + (incomingLocales == null ? "null" : Arrays.asList(incomingLocales)) +
+               ", offeredCapabilities=" + (offeredCapabilities == null ? "null" : Arrays.asList(offeredCapabilities)) +
+               ", desiredCapabilities=" + (desiredCapabilities == null ? "null" : Arrays.asList(desiredCapabilities)) +
                ", properties=" + properties +
                '}';
     }

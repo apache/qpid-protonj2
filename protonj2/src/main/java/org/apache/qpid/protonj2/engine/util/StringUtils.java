@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 
@@ -37,14 +36,16 @@ import org.apache.qpid.protonj2.types.Symbol;
  */
 public class StringUtils {
 
-	/**
-	 * Converts the given String[] into a Symbol[] array.
-	 *
-	 * @param stringArray
-	 * 		The given String[] to convert.
-	 *
-	 * @return a new Symbol array that contains Symbol versions of the input Strings.
-	 */
+    private static final int DEFAULT_QUOTED_STRING_LIMIT = 64;
+
+    /**
+     * Converts the given String[] into a Symbol[] array.
+     *
+     * @param stringArray
+     * 		The given String[] to convert.
+     *
+     * @return a new Symbol array that contains Symbol versions of the input Strings.
+     */
     public static Symbol[] toSymbolArray(String[] stringArray) {
         Symbol[] result = null;
 
@@ -58,14 +59,14 @@ public class StringUtils {
         return result;
     }
 
-	/**
-	 * Converts the given Symbol[] into a String[] array.
-	 *
-	 * @param symbolArray
-	 * 		The given Symbol[] to convert.
-	 *
-	 * @return a new String array that contains String versions of the input Symbol.
-	 */
+    /**
+     * Converts the given Symbol[] into a String[] array.
+     *
+     * @param symbolArray
+     * 		The given Symbol[] to convert.
+     *
+     * @return a new String array that contains String versions of the input Symbol.
+     */
     public static String[] toStringArray(Symbol[] symbolArray) {
         String[] result = null;
 
@@ -79,14 +80,14 @@ public class StringUtils {
         return result;
     }
 
-	/**
-	 * Converts the given String keyed {@link Map} into a matching Symbol keyed {@link Map}.
-	 *
-	 * @param stringsMap
-	 * 		The given String keyed {@link Map} to convert.
-	 *
-	 * @return a new Symbol keyed {@link Map} that contains Symbol versions of the input String keys.
-	 */
+    /**
+     * Converts the given String keyed {@link Map} into a matching Symbol keyed {@link Map}.
+     *
+     * @param stringsMap
+     * 		The given String keyed {@link Map} to convert.
+     *
+     * @return a new Symbol keyed {@link Map} that contains Symbol versions of the input String keys.
+     */
     public static Map<Symbol, Object> toSymbolKeyedMap(Map<String, Object> stringsMap) {
         final Map<Symbol, Object> result;
 
@@ -102,14 +103,14 @@ public class StringUtils {
         return result;
     }
 
-	/**
-	 * Converts the given Symbol keyed {@link Map} into a matching String keyed {@link Map}.
-	 *
-	 * @param symbolMap
-	 * 		The given String keyed {@link Map} to convert.
-	 *
-	 * @return a new String keyed {@link Map} that contains String versions of the input Symbol keys.
-	 */
+    /**
+     * Converts the given Symbol keyed {@link Map} into a matching String keyed {@link Map}.
+     *
+     * @param symbolMap
+     * 		The given String keyed {@link Map} to convert.
+     *
+     * @return a new String keyed {@link Map} that contains String versions of the input Symbol keys.
+     */
     public static Map<String, Object> toStringKeyedMap(Map<Symbol, Object> symbolMap) {
         Map<String, Object> result;
 
@@ -125,14 +126,14 @@ public class StringUtils {
         return result;
     }
 
-	/**
-	 * Converts the given String {@link Collection} into a Symbol array.
-	 *
-	 * @param stringsSet
-	 * 		The given String {@link Collection} to convert.
-	 *
-	 * @return a new Symbol array that contains String versions of the input Symbols.
-	 */
+    /**
+     * Converts the given String {@link Collection} into a Symbol array.
+     *
+     * @param stringsSet
+     * 		The given String {@link Collection} to convert.
+     *
+     * @return a new Symbol array that contains String versions of the input Symbols.
+     */
     public static Symbol[] toSymbolArray(Collection<String> stringsSet) {
         final Symbol[] result;
 
@@ -149,14 +150,14 @@ public class StringUtils {
         return result;
     }
 
-	/**
-	 * Converts the given String {@link Collection} into a matching Symbol {@link Set}.
-	 *
-	 * @param stringsSet
-	 * 		The given String {@link Collection} to convert.
-	 *
-	 * @return a new Symbol {@link Set} that contains String versions of the input Symbols.
-	 */
+    /**
+     * Converts the given String {@link Collection} into a matching Symbol {@link Set}.
+     *
+     * @param stringsSet
+     * 		The given String {@link Collection} to convert.
+     *
+     * @return a new Symbol {@link Set} that contains String versions of the input Symbols.
+     */
     public static Set<Symbol> toSymbolSet(Collection<String> stringsSet) {
         final Set<Symbol> result;
 
@@ -172,14 +173,14 @@ public class StringUtils {
         return result;
     }
 
-	/**
-	 * Converts the given Symbol array into a matching String {@link Set}.
-	 *
-	 * @param symbols
-	 * 		The given Symbol array to convert.
-	 *
-	 * @return a new String {@link Set} that contains String versions of the input Symbols.
-	 */
+    /**
+     * Converts the given Symbol array into a matching String {@link Set}.
+     *
+     * @param symbols
+     * 		The given Symbol array to convert.
+     *
+     * @return a new String {@link Set} that contains String versions of the input Symbols.
+     */
     public static Set<String> toStringSet(Symbol[] symbols) {
         Set<String> result;
 
@@ -193,6 +194,33 @@ public class StringUtils {
         }
 
         return result;
+    }
+
+    /**
+     * Converts the Binary to a quoted string using a default max length before truncation value and
+     * appends a truncation indication if the string required truncation.
+     *
+     * @param buffer
+     *        the {@link Binary} to convert into String format.
+     *
+     * @return the converted string
+     */
+    public static String toQuotedString(final Binary buffer) {
+        return toQuotedString(buffer, DEFAULT_QUOTED_STRING_LIMIT, true);
+    }
+
+    /**
+     * Converts the Binary to a quoted string using a default max length before truncation value.
+     *
+     * @param buffer
+     *        the {@link Binary} to convert into String format.
+     * @param appendIfTruncated
+     *        appends "...(truncated)" if not all of the payload is present in the string
+     *
+     * @return the converted string
+     */
+    public static String toQuotedString(final Binary buffer, final boolean appendIfTruncated) {
+        return toQuotedString(buffer, DEFAULT_QUOTED_STRING_LIMIT, appendIfTruncated);
     }
 
     /**
@@ -210,11 +238,36 @@ public class StringUtils {
     public static String toQuotedString(final Binary buffer, final int stringLength, final boolean appendIfTruncated) {
         if (buffer == null) {
             return "\"\"";
+        } else {
+            return toQuotedString(buffer.asProtonBuffer(), stringLength, appendIfTruncated);
         }
+    }
 
-        ProtonBuffer wrapped = ProtonByteBufferAllocator.DEFAULT.wrap(buffer.getArray(), buffer.getArrayOffset(), buffer.getLength());
+    /**
+     * Converts the ProtonBuffer to a quoted string using a default max length before truncation value and
+     * appends a truncation indication if the string required truncation.
+     *
+     * @param buffer
+     *        the {@link ProtonBuffer} to convert into String format.
+     *
+     * @return the converted string
+     */
+    public static String toQuotedString(final ProtonBuffer buffer) {
+        return toQuotedString(buffer, DEFAULT_QUOTED_STRING_LIMIT, true);
+    }
 
-        return toQuotedString(wrapped, stringLength, appendIfTruncated);
+    /**
+     * Converts the ProtonBuffer to a quoted string using a default max length before truncation value.
+     *
+     * @param buffer
+     *        the {@link ProtonBuffer} to convert into String format.
+     * @param appendIfTruncated
+     *        appends "...(truncated)" if not all of the payload is present in the string
+     *
+     * @return the converted string
+     */
+    public static String toQuotedString(final ProtonBuffer buffer, final boolean appendIfTruncated) {
+        return toQuotedString(buffer, DEFAULT_QUOTED_STRING_LIMIT, appendIfTruncated);
     }
 
     /**

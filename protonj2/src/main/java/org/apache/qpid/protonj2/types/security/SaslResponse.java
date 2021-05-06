@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.types.security;
 import java.util.Objects;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -48,7 +49,7 @@ public final class SaslResponse implements SaslPerformative {
 
     @Override
     public String toString() {
-        return "SaslResponse{" + "response=" + response + '}';
+        return "SaslResponse{" + "response=" + (response == null ? null : StringUtils.toQuotedString(response)) + '}';
     }
 
     @Override

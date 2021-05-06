@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.types.security;
 import java.util.Objects;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -57,7 +58,7 @@ public final class SaslChallenge implements SaslPerformative {
 
     @Override
     public String toString() {
-        return "SaslChallenge{" + "challenge=" + challenge + '}';
+        return "SaslChallenge{" + "challenge=" + (challenge == null ? null : StringUtils.toQuotedString(challenge)) + '}';
     }
 
     @Override

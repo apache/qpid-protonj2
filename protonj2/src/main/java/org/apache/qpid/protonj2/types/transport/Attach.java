@@ -451,18 +451,18 @@ public final class Attach implements Performative {
     public String toString() {
         return "Attach{" +
             "name='" + name + '\'' +
-            ", handle=" + handle +
-            ", role=" + role +
-            ", sndSettleMode=" + sndSettleMode +
-            ", rcvSettleMode=" + rcvSettleMode +
+            ", handle=" + (hasHandle() ? handle : "null") +
+            ", role=" + (hasRole() ? role : "null") +
+            ", sndSettleMode=" + (hasSenderSettleMode() ? sndSettleMode : "null") +
+            ", rcvSettleMode=" + (hasReceiverSettleMode() ? rcvSettleMode : "null") +
             ", source=" + source +
             ", target=" + target +
             ", unsettled=" + unsettled +
-            ", incompleteUnsettled=" + incompleteUnsettled +
-            ", initialDeliveryCount=" + initialDeliveryCount +
+            ", incompleteUnsettled=" + (hasIncompleteUnsettled() ? incompleteUnsettled : "null") +
+            ", initialDeliveryCount=" + (hasInitialDeliveryCount() ? initialDeliveryCount : "null") +
             ", maxMessageSize=" + maxMessageSize +
-            ", offeredCapabilities=" + (offeredCapabilities == null ? null : Arrays.asList(offeredCapabilities)) +
-            ", desiredCapabilities=" + (desiredCapabilities == null ? null : Arrays.asList(desiredCapabilities)) +
+            ", offeredCapabilities=" + (offeredCapabilities == null ? "null" : Arrays.asList(offeredCapabilities)) +
+            ", desiredCapabilities=" + (desiredCapabilities == null ? "null" : Arrays.asList(desiredCapabilities)) +
             ", properties=" + properties + '}';
     }
 }

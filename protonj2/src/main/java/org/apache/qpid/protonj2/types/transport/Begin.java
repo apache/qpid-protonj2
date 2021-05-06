@@ -282,13 +282,13 @@ public final class Begin implements Performative {
     @Override
     public String toString() {
         return "Begin{" +
-               "remoteChannel=" + remoteChannel +
-               ", nextOutgoingId=" + nextOutgoingId +
-               ", incomingWindow=" + incomingWindow +
-               ", outgoingWindow=" + outgoingWindow +
-               ", handleMax=" + handleMax +
-               ", offeredCapabilities=" + (offeredCapabilities == null ? null : Arrays.asList(offeredCapabilities)) +
-               ", desiredCapabilities=" + (desiredCapabilities == null ? null : Arrays.asList(desiredCapabilities)) +
+               "remoteChannel=" + (hasRemoteChannel() ? remoteChannel : "null") +
+               ", nextOutgoingId=" + (hasNextOutgoingId() ? nextOutgoingId : "null") +
+               ", incomingWindow=" + (hasIncomingWindow() ? incomingWindow : "null") +
+               ", outgoingWindow=" + (hasOutgoingWindow() ? outgoingWindow : "null") +
+               ", handleMax=" + (hasHandleMax() ? handleMax : "null") +
+               ", offeredCapabilities=" + (offeredCapabilities == null ? "null" : Arrays.asList(offeredCapabilities)) +
+               ", desiredCapabilities=" + (desiredCapabilities == null ? "null" : Arrays.asList(desiredCapabilities)) +
                ", properties=" + properties +
                '}';
     }

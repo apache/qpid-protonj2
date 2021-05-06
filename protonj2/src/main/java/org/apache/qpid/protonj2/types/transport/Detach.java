@@ -130,8 +130,8 @@ public final class Detach implements Performative {
     @Override
     public String toString() {
         return "Detach{" +
-               "handle=" + handle +
-               ", closed=" + closed +
+               "handle=" + (hasHandle() ? handle : "null") +
+               ", closed=" + (hasClosed() ? closed : "null") +
                ", error=" + error +
                '}';
     }

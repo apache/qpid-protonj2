@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.types.security;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -83,7 +84,7 @@ public final class SaslInit implements SaslPerformative {
     public String toString() {
         return "SaslInit{" +
                "mechanism=" + mechanism +
-               ", initialResponse=" + initialResponse +
+               ", initialResponse=" + (initialResponse == null ? null : StringUtils.toQuotedString(initialResponse)) +
                ", hostname='" + hostname + '\'' + '}';
     }
 
