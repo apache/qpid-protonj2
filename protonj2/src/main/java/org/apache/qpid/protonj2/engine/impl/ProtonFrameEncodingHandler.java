@@ -35,7 +35,14 @@ import org.apache.qpid.protonj2.types.transport.Performative;
  */
 public class ProtonFrameEncodingHandler implements EngineHandler {
 
+    /**
+     * Frame type indicator for AMQP protocol frames.
+     */
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
+
+    /**
+     * Frame type indicator for SASL protocol frames.
+     */
     public static final byte SASL_FRAME_TYPE = (byte) 1;
 
     private static final int AMQP_PERFORMATIVE_PAD = 256;

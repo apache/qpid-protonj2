@@ -63,66 +63,559 @@ public interface Decoder {
      */
     DecoderState getCachedDecoderState();
 
+    /**
+     * Reads an encoded {@link Boolean} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Boolean readBoolean(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Byte} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     boolean readBoolean(ProtonBuffer buffer, DecoderState state, boolean defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Byte} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Byte readByte(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Byte} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     byte readByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedByte} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     UnsignedByte readUnsignedByte(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedByte} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     byte readUnsignedByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Character} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Character readCharacter(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Character} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     char readCharacter(ProtonBuffer buffer, DecoderState state, char defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Decimal32} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Decimal32 readDecimal32(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Decimal64} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Decimal64 readDecimal64(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Decimal128} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Decimal128 readDecimal128(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Short} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Short readShort(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Short} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     short readShort(ProtonBuffer buffer, DecoderState state, short defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedShort} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     UnsignedShort readUnsignedShort(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedShort} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     short readUnsignedShort(ProtonBuffer buffer, DecoderState state, short defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedShort} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     int readUnsignedShort(ProtonBuffer buffer, DecoderState state, int defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Integer} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Integer readInteger(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Integer} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     int readInteger(ProtonBuffer buffer, DecoderState state, int defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedInteger} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     UnsignedInteger readUnsignedInteger(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedInteger} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     int readUnsignedInteger(ProtonBuffer buffer, DecoderState state, int defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedInteger} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     long readUnsignedInteger(ProtonBuffer buffer, DecoderState state, long defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Long} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Long readLong(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Long} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     long readLong(ProtonBuffer buffer, DecoderState state, long defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedLong} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     UnsignedLong readUnsignedLong(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedLong} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     long readUnsignedLong(ProtonBuffer buffer, DecoderState state, long defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Float} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Float readFloat(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Float} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     float readFloat(ProtonBuffer buffer, DecoderState state, float defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Double} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Double readDouble(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Double} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     double readDouble(ProtonBuffer buffer, DecoderState state, double defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Binary} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Binary readBinary(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Binary} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source and returned in a {@link ProtonBuffer}.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     ProtonBuffer readBinaryAsBuffer(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
     /**
@@ -141,26 +634,197 @@ public interface Decoder {
      */
     DeliveryTag readDeliveryTag(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link String} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     String readString(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Symbol} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Symbol readSymbol(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link String} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     String readSymbol(ProtonBuffer buffer, DecoderState state, String defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded AMQP time stamp value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source and return a {@link Long} with the time value.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Long readTimestamp(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded AMQP time stamp value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     long readTimestamp(ProtonBuffer buffer, DecoderState state, long defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UUID} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     UUID readUUID(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded value from the given {@link ProtonBuffer} an return it as an {@link Object}
+     * which the caller must then interpret.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not able to be decoded.
+     */
     Object readObject(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded value from the given {@link ProtonBuffer} an return it as an {@link Object}
+     * which the caller must then interpret.
+     *
+     * @param <T> the type that will be used when casting and returning the decoded value.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param clazz
+     * 		The {@link Class} type that should be used to cast the returned value.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not able to be decoded.
+     */
     <T> T readObject(ProtonBuffer buffer, DecoderState state, final Class<T> clazz) throws DecodeException;
 
+    /**
+     * Reads one or more encoded values from the given {@link ProtonBuffer} an return it as an array of
+     * {@link Object} instances which the caller must then interpret.
+     *
+     * @param <T> the type that will be used when casting and returning the decoded value.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param clazz
+     * 		The {@link Class} type that should be used to cast the returned array.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not able to be decoded.
+     */
     <T> T[] readMultiple(ProtonBuffer buffer, DecoderState state, final Class<T> clazz) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Map} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     <K,V> Map<K, V> readMap(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link List} value from the given {@link ProtonBuffer} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     <V> List<V> readList(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
     /**

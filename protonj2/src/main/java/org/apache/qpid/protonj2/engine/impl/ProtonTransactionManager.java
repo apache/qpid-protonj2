@@ -63,6 +63,12 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
 
     private Map<ProtonBuffer, ProtonManagerTransaction> transactions = new HashMap<>();
 
+    /**
+     * Creates a new {@link TransactionManager} instance that wraps the given {@link Receiver} link.
+     *
+     * @param receiverLink
+     * 		The {@link Receiver} link that this {@link TransactionManager} wraps.
+     */
     public ProtonTransactionManager(ProtonReceiver receiverLink) {
         super(receiverLink.getEngine());
 

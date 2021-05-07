@@ -64,6 +64,9 @@ public enum SaslOutcome {
         }
     };
 
+    /**
+     * @return the low level {@link SaslCode} that defines the outcome of the SASL exchange.
+     */
     public abstract SaslCode saslCode();
 
     /**

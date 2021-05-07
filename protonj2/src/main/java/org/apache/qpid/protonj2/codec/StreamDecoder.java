@@ -64,70 +64,563 @@ public interface StreamDecoder {
      */
     StreamDecoderState getCachedDecoderState();
 
+    /**
+     * Reads an encoded {@link Boolean} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Boolean readBoolean(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Byte} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     boolean readBoolean(InputStream stream, StreamDecoderState state, boolean defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Byte} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Byte readByte(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Byte} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     byte readByte(InputStream stream, StreamDecoderState state, byte defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedByte} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     UnsignedByte readUnsignedByte(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedByte} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     byte readUnsignedByte(InputStream stream, StreamDecoderState state, byte defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Character} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Character readCharacter(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Character} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     char readCharacter(InputStream stream, StreamDecoderState state, char defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Decimal32} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Decimal32 readDecimal32(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Decimal64} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Decimal64 readDecimal64(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Decimal128} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Decimal128 readDecimal128(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Short} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Short readShort(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Short} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     short readShort(InputStream stream, StreamDecoderState state, short defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedShort} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     UnsignedShort readUnsignedShort(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedShort} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     short readUnsignedShort(InputStream stream, StreamDecoderState state, short defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedShort} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     int readUnsignedShort(InputStream stream, StreamDecoderState state, int defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Integer} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Integer readInteger(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Integer} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     int readInteger(InputStream stream, StreamDecoderState state, int defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedInteger} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     UnsignedInteger readUnsignedInteger(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedInteger} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     int readUnsignedInteger(InputStream stream, StreamDecoderState state, int defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedInteger} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     long readUnsignedInteger(InputStream stream, StreamDecoderState state, long defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Long} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Long readLong(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Long} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     long readLong(InputStream stream, StreamDecoderState state, long defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedLong} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     UnsignedLong readUnsignedLong(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UnsignedLong} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     long readUnsignedLong(InputStream stream, StreamDecoderState state, long defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Float} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Float readFloat(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Float} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     float readFloat(InputStream stream, StreamDecoderState state, float defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Double} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Double readDouble(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Double} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     double readDouble(InputStream stream, StreamDecoderState state, double defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Binary} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Binary readBinary(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Binary} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source and returned in a {@link ProtonBuffer}.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     ProtonBuffer readBinaryAsBuffer(InputStream stream, StreamDecoderState state) throws DecodeException;
 
     /**
-     * This method expects to read a {@link Binary} encoded type from the provided buffer and
+     * This method expects to read a {@link Binary} encoded type from the provided stream and
      * constructs a {@link DeliveryTag} type that wraps the bytes encoded.  If the encoding is
      * a NULL AMQP type then this method returns <code>null</code>.
      *
@@ -142,26 +635,197 @@ public interface StreamDecoder {
      */
     DeliveryTag readDeliveryTag(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link String} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     String readString(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Symbol} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Symbol readSymbol(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link String} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     String readSymbol(InputStream stream, StreamDecoderState state, String defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded AMQP time stamp value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source and return a {@link Long} with the time value.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     Long readTimestamp(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded AMQP time stamp value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     long readTimestamp(InputStream stream, StreamDecoderState state, long defaultValue) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link UUID} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     UUID readUUID(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded value from the given {@link InputStream} an return it as an {@link Object}
+     * which the caller must then interpret.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not able to be decoded.
+     */
     Object readObject(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded value from the given {@link InputStream} an return it as an {@link Object}
+     * which the caller must then interpret.
+     *
+     * @param <T> the type that will be used when casting and returning the decoded value.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param clazz
+     * 		The {@link Class} type that should be used to cast the returned value.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not able to be decoded.
+     */
     <T> T readObject(InputStream stream, StreamDecoderState state, final Class<T> clazz) throws DecodeException;
 
+    /**
+     * Reads one or more encoded values from the given {@link InputStream} an return it as an array of
+     * {@link Object} instances which the caller must then interpret.
+     *
+     * @param <T> the type that will be used when casting and returning the decoded value.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param clazz
+     * 		The {@link Class} type that should be used to cast the returned array.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not able to be decoded.
+     */
     <T> T[] readMultiple(InputStream stream, StreamDecoderState state, final Class<T> clazz) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link Map} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     <K,V> Map<K, V> readMap(InputStream stream, StreamDecoderState state) throws DecodeException;
 
+    /**
+     * Reads an encoded {@link List} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * mark the and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     <V> List<V> readList(InputStream stream, StreamDecoderState state) throws DecodeException;
 
     /**
@@ -174,7 +838,7 @@ public interface StreamDecoder {
      * @param state
      *      The {@link DecoderState} value that can be used for intermediate decoding tasks.
      *
-     * @return a {@link StreamTypeDecoder} instance that can read the next type in the buffer.
+     * @return a {@link StreamTypeDecoder} instance that can read the next type in the stream.
      *
      * @throws DecodeException if an error occurs while reading the next type decoder.
      */

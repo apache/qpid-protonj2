@@ -16,6 +16,10 @@
  */
 package org.apache.qpid.protonj2.codec;
 
+/**
+ * Provides a set of definitions for the byte value that indicates what the next
+ * AMQP encoding will be when encoding or decoding AMQP types.
+ */
 public interface EncodingCodes {
 
     public static final byte DESCRIBED_TYPE_INDICATOR = (byte) 0x00;
@@ -83,6 +87,15 @@ public interface EncodingCodes {
     public static final byte ARRAY8                   = (byte) 0xe0;
     public static final byte ARRAY32                  = (byte) 0xf0;
 
+    /**
+     * Returns a human readable string that describes a given AMQP type encoding value which can be
+     * used in logging or other informational contexts.
+     *
+     * @param encoding
+     * 		The ANMQP encoding code to be turned into a readable string.
+     *
+     * @return a human readable view of an AMQP type encoding code.
+     */
     static String toString(byte encoding) {
         switch (encoding) {
             case DESCRIBED_TYPE_INDICATOR:

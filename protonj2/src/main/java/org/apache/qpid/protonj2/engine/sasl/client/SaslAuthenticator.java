@@ -73,6 +73,15 @@ public class SaslAuthenticator implements SaslClientListener {
         this.selector = selector;
     }
 
+    /**
+     * Sets a completion handler that will be notified once the SASL exchange has completed.  The notification
+     * includes the {@link SaslOutcome} value which indicates if authentication succeeded or failed.
+     *
+     * @param saslCompleteEventHandler
+     * 		The {@link EventHandler} that will receive notification when SASL authentication has completed.
+     *
+     * @return this {@link SaslAuthenticator} instance.
+     */
     public SaslAuthenticator saslComplete(EventHandler<SaslOutcome> saslCompleteEventHandler) {
         this.saslCompleteHandler = saslCompleteEventHandler;
         return this;

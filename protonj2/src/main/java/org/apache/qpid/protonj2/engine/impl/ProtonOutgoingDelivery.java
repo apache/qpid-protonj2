@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.engine.impl;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.EventHandler;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
+import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
 
@@ -52,6 +53,13 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     private EventHandler<OutgoingDelivery> deliveryUpdatedEventHandler = null;
 
+    /**
+     * Creates an empty outgoing delivery instance that is owned by the given {@link ProtonSender}
+     * instance.
+     *
+     * @param link
+     * 		the {@link Sender} link that owns this outgoing delivery.
+     */
     public ProtonOutgoingDelivery(ProtonSender link) {
         this.link = link;
     }

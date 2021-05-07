@@ -34,8 +34,19 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     ProtonEngineHandlerContext previous;
     ProtonEngineHandlerContext next;
 
+    /**
+     * The context indicator for a handler that wants to be sent read events.
+     */
     public static final int HANDLER_READS = 1 << 1;
+
+    /**
+     * The context indicator for a handler that wants to be sent write events.
+     */
     public static final int HANDLER_WRITES = 1 << 2;
+
+    /**
+     * The context indicator for a handler that wants to be sent all read and write events.
+     */
     public static final int HANDLER_ALL_EVENTS = HANDLER_READS | HANDLER_WRITES;
 
     private final String name;
@@ -44,6 +55,16 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
 
     private int intereskMask = HANDLER_ALL_EVENTS;
 
+    /**
+     * Creates a new {@link ProtonEngineHandlerContext} with the given options.
+     *
+     * @param name
+     * 		The name of this {@link ProtonEngineHandlerContext}.
+     * @param engine
+     * 		The engine that this context is assigned to.
+     * @param handler
+     * 		The {@link EngineHandler} that this {@link EngineHandlerContext} manages.
+     */
     public ProtonEngineHandlerContext(String name, Engine engine, EngineHandler handler) {
         this.name = name;
         this.engine = engine;
@@ -77,6 +98,15 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
         return intereskMask;
     }
 
+    /**
+     * Sets the interest mask for this handler context which controls which events should be routed
+     * here during normal engine handler pipeline operations.
+     *
+     * @param mask
+     * 		The interest mask for this {@link EngineHandlerContext}.
+     *
+     * @return this {@link ProtonEngineHandlerContext} instance.
+     */
     public ProtonEngineHandlerContext interestMask(int mask) {
         this.intereskMask = mask;
         return this;

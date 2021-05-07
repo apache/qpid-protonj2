@@ -25,6 +25,9 @@ import org.apache.qpid.protonj2.types.Symbol;
  */
 public interface SaslContext {
 
+    /**
+     * Indicates the role that this SASL context plays either server or client.
+     */
     enum Role { CLIENT, SERVER }
 
     /**

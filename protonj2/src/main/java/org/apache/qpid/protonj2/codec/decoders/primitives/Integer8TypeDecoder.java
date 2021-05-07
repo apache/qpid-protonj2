@@ -46,10 +46,34 @@ public final class Integer8TypeDecoder extends AbstractPrimitiveTypeDecoder<Inte
         return true;
     }
 
+    /**
+     * Reads the primitive value from the given {@link ProtonBuffer} and returns it.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} where the primitive value should be read from.
+     * @param state
+     * 		The {@link DecoderState} that can be used during decode of the value.
+     *
+     * @return the decoded primitive value.
+     *
+     * @throws DecodeException if an error occurs while reading the encoded value.
+     */
     public int readPrimitiveValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return buffer.readByte();
     }
 
+    /**
+     * Reads the primitive value from the given {@link InputStream} and returns it.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the primitive value should be read from.
+     * @param state
+     * 		The {@link DecoderState} that can be used during decode of the value.
+     *
+     * @return the decoded primitive value.
+     *
+     * @throws DecodeException if an error occurs while reading the encoded value.
+     */
     public int readPrimitiveValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         return ProtonStreamUtils.readByte(stream);
     }

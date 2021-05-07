@@ -47,9 +47,19 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonFrameDecodingHandler.class);
 
+    /**
+     * Frame type indicator for AMQP protocol frames.
+     */
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
+
+    /**
+     * Frame type indicator for SASL protocol frames.
+     */
     public static final byte SASL_FRAME_TYPE = (byte) 1;
 
+    /**
+     * The specified encoding size for the frame size value of each encoded frame.
+     */
     public static final int FRAME_SIZE_BYTES = 4;
 
     private final AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> framePool = AMQPPerformativeEnvelopePool.incomingEnvelopePool();

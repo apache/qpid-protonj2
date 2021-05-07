@@ -27,8 +27,14 @@ import org.apache.qpid.protonj2.engine.sasl.SaslServerContext;
  */
 public final class ProtonEngineNoOpSaslDriver implements EngineSaslDriver {
 
+    /**
+     * Default singleton instance of the No-Op SASL engine driver.
+     */
     public static final ProtonEngineNoOpSaslDriver INSTANCE = new ProtonEngineNoOpSaslDriver();
 
+    /**
+     * AMQP specified default value for maximum SASL frame size.
+     */
     public static final int MIN_MAX_SASL_FRAME_SIZE = 512;
 
     @Override

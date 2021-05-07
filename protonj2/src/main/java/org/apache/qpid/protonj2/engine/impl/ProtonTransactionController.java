@@ -92,6 +92,12 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
 
     private List<EventHandler<TransactionController>> capacityObservers = new ArrayList<>();
 
+    /**
+     * Creates a new {@link TransactionController} instance that wraps the given {@link Sender} link.
+     *
+     * @param senderLink
+     * 		The {@link Sender} that this {@link TransactionController} wraps.
+     */
     public ProtonTransactionController(ProtonSender senderLink) {
         super(senderLink.getEngine());
 
