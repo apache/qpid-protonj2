@@ -140,7 +140,7 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
         if (payload == null) {
             LOG.trace("{}:[{}:{}] {}", prefix, connection, channel, performative);
         } else {
-            LOG.trace("{}:[{}:{}] {} - {}", prefix, connection, performative, StringUtils.toQuotedString(payload, PAYLOAD_STRING_LIMIT, true));
+            LOG.trace("{}:[{}:{}] {} - {}", prefix, connection, channel, performative, StringUtils.toQuotedString(payload, PAYLOAD_STRING_LIMIT, true));
         }
     }
 
