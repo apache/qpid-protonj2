@@ -91,7 +91,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
         final int count = listDecoder.readCount(buffer);
 
         if (count < MIN_OPEN_LIST_ENTRIES) {
-            throw new DecodeException("The container-id field cannot be omitted");
+            throw new DecodeException("The container-id field cannot be omitted from the Open");
         }
 
         if (count > MAX_OPEN_LIST_ENTRIES) {
@@ -105,7 +105,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
             final boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
                 if (index == 0) {
-                    throw new DecodeException("The container-id field cannot be omitted");
+                    throw new DecodeException("The container-id field cannot be omitted from the Open");
                 }
                 buffer.readByte();
                 continue;
@@ -184,7 +184,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
         final int count = listDecoder.readCount(stream);
 
         if (count < MIN_OPEN_LIST_ENTRIES) {
-            throw new DecodeException("The container-id field cannot be omitted");
+            throw new DecodeException("The container-id field cannot be omitted from the Open");
         }
 
         if (count > MAX_OPEN_LIST_ENTRIES) {
@@ -200,7 +200,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
                 final boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
                 if (nullValue) {
                     if (index == 0) {
-                        throw new DecodeException("The container-id field cannot be omitted");
+                        throw new DecodeException("The container-id field cannot be omitted from the Open");
                     }
 
                     continue;

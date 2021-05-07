@@ -240,11 +240,11 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
     private String errorForMissingRequiredFields(int present) {
         switch (present) {
             case 3:
-                return "The outgoing-window field cannot be omitted";
+                return "The outgoing-window field cannot be omitted from the Begin";
             case 2:
-                return "The incoming-window field cannot be omitted";
+                return "The incoming-window field cannot be omitted from the Begin";
             default:
-                return "The next-outgoing-id field cannot be omitted";
+                return "The next-outgoing-id field cannot be omitted from the Begin";
         }
     }
 }

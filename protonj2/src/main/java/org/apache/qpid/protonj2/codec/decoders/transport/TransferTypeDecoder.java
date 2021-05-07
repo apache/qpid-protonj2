@@ -109,7 +109,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
             final boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
                 if (index == 0) {
-                    throw new DecodeException("The handle field cannot be omitted");
+                    throw new DecodeException("The handle field cannot be omitted from the Transfer");
                 }
 
                 buffer.readByte();
@@ -210,7 +210,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
                 final boolean nullValue = ProtonStreamUtils.readByte(stream) == EncodingCodes.NULL;
                 if (nullValue) {
                     if (index == 0) {
-                        throw new DecodeException("The handle field cannot be omitted");
+                        throw new DecodeException("The handle field cannot be omitted from the Transfer");
                     }
 
                     continue;

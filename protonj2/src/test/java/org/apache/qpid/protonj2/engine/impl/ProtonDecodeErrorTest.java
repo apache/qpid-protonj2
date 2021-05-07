@@ -46,7 +46,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
                                      0x00, 0x53, 0x10, (byte) 0xC0, // Described-type, ulong type, open descriptor, list0.
                                      0x03, 0x01, 0x40 }; // size (3), count (1), container-id (null).
 
-        doInvalidOpenProvokesDecodeErrorTestImpl(bytes, "The container-id field cannot be omitted");
+        doInvalidOpenProvokesDecodeErrorTestImpl(bytes, "The container-id field cannot be omitted from the Open");
     }
 
     @Test
@@ -56,7 +56,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
                                      0x02, 0x00, 0x00, 0x00, // DOFF, TYPE, 2x CHANNEL
                                      0x00, 0x53, 0x10, 0x45};// Described-type, ulong type, open descriptor, list0.
 
-        doInvalidOpenProvokesDecodeErrorTestImpl(bytes, "The container-id field cannot be omitted");
+        doInvalidOpenProvokesDecodeErrorTestImpl(bytes, "The container-id field cannot be omitted from the Open");
     }
 
     private void doInvalidOpenProvokesDecodeErrorTestImpl(byte[] bytes, String errorDescription) throws Exception {
@@ -89,7 +89,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
             0x02, 0x00, 0x00, 0x00, // DOFF, TYPE, 2x CHANNEL
             0x00, 0x53, 0x11, 0x45};// Described-type, ulong type, Begin descriptor, list0.
 
-        doInvalidBeginProvokesDecodeErrorTestImpl(bytes, "The next-outgoing-id field cannot be omitted");
+        doInvalidBeginProvokesDecodeErrorTestImpl(bytes, "The next-outgoing-id field cannot be omitted from the Begin");
     }
 
     @Test
@@ -101,7 +101,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
             0x00, 0x53, 0x11, (byte) 0xC0, // Described-type, ulong type, Begin descriptor, list8.
             0x03, 0x01, 0x40 }; // size (3), count (1), remote-channel (null).
 
-        doInvalidBeginProvokesDecodeErrorTestImpl(bytes, "The next-outgoing-id field cannot be omitted");
+        doInvalidBeginProvokesDecodeErrorTestImpl(bytes, "The next-outgoing-id field cannot be omitted from the Begin");
     }
 
     @Test
@@ -113,7 +113,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
             0x00, 0x53, 0x11, (byte) 0xC0, // Described-type, ulong type, Begin descriptor, list8.
             0x05, 0x03, 0x40, 0x43, 0x43 }; // size (5), count (3), remote-channel (null), next-outgoing-id (uint0), incoming-window (uint0).
 
-        doInvalidBeginProvokesDecodeErrorTestImpl(bytes, "The outgoing-window field cannot be omitted");
+        doInvalidBeginProvokesDecodeErrorTestImpl(bytes, "The outgoing-window field cannot be omitted from the Begin");
     }
 
     @Test
@@ -125,7 +125,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
             0x00, 0x53, 0x11, (byte) 0xC0, // Described-type, ulong type, Begin descriptor, list8.
             0x06, 0x04, 0x40, 0x43, 0x43, 0x40 }; // size (5), count (4), remote-channel (null), next-outgoing-id (uint0), incoming-window (uint0), outgoing-window (null).
 
-        doInvalidBeginProvokesDecodeErrorTestImpl(bytes, "The outgoing-window field cannot be omitted");
+        doInvalidBeginProvokesDecodeErrorTestImpl(bytes, "The outgoing-window field cannot be omitted from the Begin");
     }
 
     private void doInvalidBeginProvokesDecodeErrorTestImpl(byte[] bytes, String errorDescription) throws Exception {
@@ -158,7 +158,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
             0x02, 0x00, 0x00, 0x00, // DOFF, TYPE, 2x CHANNEL
             0x00, 0x53, 0x13, 0x45};// Described-type, ulong type, Flow descriptor, list0.
 
-        doInvalidFlowProvokesDecodeErrorTestImpl(bytes, "The incoming-window field cannot be omitted");
+        doInvalidFlowProvokesDecodeErrorTestImpl(bytes, "The incoming-window field cannot be omitted from the Flow");
     }
 
     @Test
@@ -170,7 +170,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
             0x00, 0x53, 0x13, (byte) 0xC0, // Described-type, ulong type, Flow descriptor, list8.
             0x03, 0x01, 0x43 }; // size (3), count (1), next-incoming-id (uint0).
 
-        doInvalidFlowProvokesDecodeErrorTestImpl(bytes, "The incoming-window field cannot be omitted");
+        doInvalidFlowProvokesDecodeErrorTestImpl(bytes, "The incoming-window field cannot be omitted from the Flow");
     }
 
     @Test
@@ -182,7 +182,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
             0x00, 0x53, 0x13, (byte) 0xC0, // Described-type, ulong type, Flow descriptor, list8.
             0x05, 0x03, 0x43, 0x43, 0x43 }; // size (5), count (3), next-incoming-id (0), incoming-window (uint0), next-outgoing-id (uint0).
 
-        doInvalidFlowProvokesDecodeErrorTestImpl(bytes, "The outgoing-window field cannot be omitted");
+        doInvalidFlowProvokesDecodeErrorTestImpl(bytes, "The outgoing-window field cannot be omitted from the Flow");
     }
 
     @Test
@@ -194,7 +194,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
             0x00, 0x53, 0x13, (byte) 0xC0, // Described-type, ulong type, Flow descriptor, list8.
             0x06, 0x04, 0x43, 0x43, 0x43, 0x40 }; // size (5), count (4), next-incoming-id (0), incoming-window (uint0), next-outgoing-id (uint0), outgoing-window (null).
 
-        doInvalidFlowProvokesDecodeErrorTestImpl(bytes, "The outgoing-window field cannot be omitted");
+        doInvalidFlowProvokesDecodeErrorTestImpl(bytes, "The outgoing-window field cannot be omitted from the Flow");
     }
 
     private void doInvalidFlowProvokesDecodeErrorTestImpl(byte[] bytes, String errorDescription) throws Exception {
@@ -238,7 +238,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
             0x00, 0x53, 0x14, (byte) 0xC0, // Described-type, ulong type, Transfer descriptor, list8.
             0x03, 0x01, 0x40 }; // size (3), count (1), handle (null / not-present).
 
-        doInvalidTransferProvokesDecodeErrorTestImpl(bytes, "The handle field cannot be omitted");
+        doInvalidTransferProvokesDecodeErrorTestImpl(bytes, "The handle field cannot be omitted from the Transfer");
     }
 
 
@@ -288,7 +288,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
             0x02, 0x00, 0x00, 0x00, // DOFF, TYPE, 2x CHANNEL
             0x00, 0x53, 0x15, 0x45};// Described-type, ulong type, Disposition descriptor, list0.
 
-        doInvalidDispositionProvokesDecodeErrorTestImpl(bytes, "The role field cannot be omitted");
+        doInvalidDispositionProvokesDecodeErrorTestImpl(bytes, "The role field cannot be omitted from the Disposition");
     }
 
     @Test
@@ -300,7 +300,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
             0x00, 0x53, 0x15, (byte) 0xC0, // Described-type, ulong type, Disposition descriptor, list8.
             0x04, 0x02, 0x41, 0x40 }; // size (4), count (2), role (receiver - the peers perspective), first ( null / not-present)
 
-        doInvalidDispositionProvokesDecodeErrorTestImpl(bytes, "The first field cannot be omitted");
+        doInvalidDispositionProvokesDecodeErrorTestImpl(bytes, "The first field cannot be omitted from the Disposition");
     }
 
     private void doInvalidDispositionProvokesDecodeErrorTestImpl(byte[] bytes, String errorDescription) throws Exception {

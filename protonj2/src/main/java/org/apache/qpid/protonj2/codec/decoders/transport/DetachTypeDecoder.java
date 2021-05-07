@@ -106,7 +106,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
             final boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
                 if (index == 0) {
-                    throw new DecodeException("The handle field is mandatory");
+                    throw new DecodeException("The handle field is mandatory in a Detach");
                 }
                 buffer.readByte();
                 continue;
@@ -164,7 +164,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
         final int count = listDecoder.readCount(stream);
 
         if (count < MIN_DETACH_LIST_ENTRIES) {
-            throw new DecodeException("The handle field is mandatory");
+            throw new DecodeException("The handle field is mandatory in a Detach");
         }
 
         if (count > MAX_DETACH_LIST_ENTRIES) {

@@ -260,11 +260,11 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
     private String errorForMissingRequiredFields(int present) {
         switch (present) {
             case 3:
-                return "The outgoing-window field cannot be omitted";
+                return "The outgoing-window field cannot be omitted from the Flow";
             case 2:
-                return "The next-outgoing-id field cannot be omitted";
+                return "The next-outgoing-id field cannot be omitted from the Flow";
             default:
-                return "The incoming-window field cannot be omitted";
+                return "The incoming-window field cannot be omitted from the Flow";
         }
     }
 }

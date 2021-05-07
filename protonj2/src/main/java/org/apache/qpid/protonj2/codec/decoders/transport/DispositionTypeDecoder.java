@@ -143,9 +143,9 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
     private String errorForMissingRequiredFields(int present) {
         switch (present) {
             case 1:
-                return "The first field cannot be omitted";
+                return "The first field cannot be omitted from the Disposition";
             default:
-                return "The role field cannot be omitted";
+                return "The role field cannot be omitted from the Disposition";
         }
     }
 

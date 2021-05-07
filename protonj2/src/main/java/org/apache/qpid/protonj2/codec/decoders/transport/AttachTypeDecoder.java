@@ -287,11 +287,11 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
     private String errorForMissingRequiredFields(int present) {
         switch (present) {
             case 2:
-                return "The role field cannot be omitted";
+                return "The role field cannot be omitted from the Attach";
             case 1:
-                return "The handle field cannot be omitted";
+                return "The handle field cannot be omitted from the Attach";
             default:
-                return "The name field cannot be omitted";
+                return "The name field cannot be omitted from the Attach";
         }
     }
 }
