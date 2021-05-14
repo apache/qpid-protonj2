@@ -27,7 +27,9 @@ public final class UnsignedShort extends Number implements Comparable<UnsignedSh
         }
     }
 
-    public static final UnsignedShort MAX_VALUE = new UnsignedShort((short) -1);
+    public static final UnsignedShort ZERO = cachedValues[0];
+    public static final UnsignedShort ONE = cachedValues[1];
+    public static final UnsignedShort MAX_VALUE = new UnsignedShort((short) 65535);
 
     private final short underlying;
 

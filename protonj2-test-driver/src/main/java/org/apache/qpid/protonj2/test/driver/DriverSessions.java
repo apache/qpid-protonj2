@@ -78,6 +78,13 @@ public class DriverSessions {
             throw new AssertionError("Received duplicate Begin for already opened session on channel: " + remoteChannel);
         }
 
+        final UnsignedShort localChannelMax = driver.getLocalOpen() == null ? UnsignedShort.ZERO :
+            driver.getLocalOpen().getChannelMax() == null ? UnsignedShort.MAX_VALUE : driver.getLocalOpen().getChannelMax();
+
+        if (remoteChannel.compareTo(localChannelMax) > 0) {
+            throw new AssertionError("Channel Max [" + localChannelMax + "] Exceeded for session Begin: " + remoteChannel);
+        }
+
         final SessionTracker sessionTracker;  // Result that we need to update here once validation is complete.
 
         if (remoteBegin.getRemoteChannel() != null) {

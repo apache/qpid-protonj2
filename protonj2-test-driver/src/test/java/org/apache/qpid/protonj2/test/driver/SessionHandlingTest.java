@@ -247,4 +247,65 @@ class SessionHandlingTest extends TestPeerTestsBase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    public void testPeerEndsConnectionIfRemoteRespondsWithToHighChannelValue() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().withChannelMax(0).respond();
+            peer.expectBegin();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+            client.remoteOpen().withChannelMax(0).now();
+            client.remoteBegin().now();
+
+            // Wait for the above and then script next steps
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.expectBegin();
+
+            // Now we respond to the last begin we saw at the server side.
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.respondToLastBegin().onChannel(42).now();
+
+            assertThrows(AssertionError.class, () -> client.waitForScriptToComplete(5, TimeUnit.SECONDS));
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testPeerEnforcesChannelMaxOfZeroOnPipelinedOpenBegin() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen();
+            peer.expectBegin();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+            client.remoteOpen().now();
+            client.remoteBegin().onChannel(42).now();
+
+            // Wait for the above and then script next steps
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            assertThrows(AssertionError.class, () -> peer.waitForScriptToComplete(5, TimeUnit.SECONDS));
+        }
+    }
 }

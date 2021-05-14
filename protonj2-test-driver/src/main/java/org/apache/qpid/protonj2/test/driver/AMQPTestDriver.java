@@ -31,8 +31,8 @@ import org.apache.qpid.protonj2.test.driver.codec.security.SaslDescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.security.SaslOutcome;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
 import org.apache.qpid.protonj2.test.driver.codec.transport.HeartBeat;
+import org.apache.qpid.protonj2.test.driver.codec.transport.Open;
 import org.apache.qpid.protonj2.test.driver.codec.transport.PerformativeDescribedType;
-import org.apache.qpid.protonj2.test.driver.codec.transport.PerformativeDescribedType.PerformativeType;
 import org.apache.qpid.protonj2.test.driver.exceptions.UnexpectedPerformativeError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +50,9 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
     private final String driverName;
     private final FrameDecoder frameParser;
     private final FrameEncoder frameEncoder;
+
+    private Open localOpen;
+    private Open remoteOpen;
 
     private final DriverSessions sessions = new DriverSessions(this);
 
@@ -228,6 +231,20 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         }
     }
 
+    /**
+     * @return the remote {@link Open} that this peer received (if any).
+     */
+    public Open getRemoteOpen() {
+        return remoteOpen;
+    }
+
+    /**
+     * @return the local {@link Open} that this peer sent (if any).
+     */
+    public Open getLocalOpen() {
+        return localOpen;
+    }
+
     //----- Test driver handling of decoded AMQP frames
 
     void handleHeader(AMQPHeader header) throws AssertionError {
@@ -281,8 +298,14 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
     }
 
     void handlePerformative(PerformativeDescribedType amqp, int channel, ByteBuf payload) throws AssertionError {
-        if (!amqp.getPerformativeType().equals(PerformativeType.HEARTBEAT)) {
-            performativeCount++;
+        switch (amqp.getPerformativeType()) {
+            case HEARTBEAT:
+                break;
+            case OPEN:
+                remoteOpen = (Open) amqp;
+            default:
+                performativeCount++;
+                break;
         }
 
         synchronized (script) {
@@ -465,7 +488,15 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
      */
     public void sendAMQPFrame(int channel, DescribedType performative, ByteBuf payload) {
         LOG.trace("{} Sending performative: {}", driverName, performative);
-        // TODO - handle split frames when frame size requires it
+
+        if (performative instanceof PerformativeDescribedType) {
+            switch (((PerformativeDescribedType) performative).getPerformativeType()) {
+                case OPEN:
+                    localOpen = (Open) performative;
+                default:
+                    break;
+            }
+        }
 
         try {
             final ByteBuf buffer = frameEncoder.handleWrite(performative, channel, payload, null);

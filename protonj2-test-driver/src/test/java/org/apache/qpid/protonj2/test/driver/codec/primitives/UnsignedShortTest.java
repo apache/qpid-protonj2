@@ -45,6 +45,13 @@ public class UnsignedShortTest {
     }
 
     @Test
+    public void testUnsignedShortConstants() {
+        assertEquals((short) 0, UnsignedShort.ZERO.shortValue());
+        assertEquals((short) 65535, UnsignedShort.MAX_VALUE.shortValue());
+        assertEquals((short) 1, UnsignedShort.ONE.shortValue());
+    }
+
+    @Test
     public void testShortValue() {
         assertEquals((short) 0, UnsignedShort.valueOf((short) 0).shortValue());
         assertEquals((short) 65535, UnsignedShort.valueOf((short) 65535).shortValue());
