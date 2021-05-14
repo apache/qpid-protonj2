@@ -27,6 +27,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Attach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Begin;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Detach;
+import org.apache.qpid.protonj2.test.driver.codec.transport.Disposition;
 import org.apache.qpid.protonj2.test.driver.codec.transport.End;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
@@ -215,10 +216,26 @@ public class SessionTracker {
     public LinkTracker handleTransfer(Transfer transfer, ByteBuf payload) {
         LinkTracker tracker = trackerMap.get(transfer.getHandle());
 
-        tracker.handleTransfer(transfer, payload);
-        // TODO - Update session state based on transfer
+        if (tracker.getRole() == Role.SENDER) {
+            throw new AssertionError("Received inbound Transfer addressed to a local Sender link");
+        } else {
+            tracker.handleTransfer(transfer, payload);
+            // TODO - Update session state based on transfer
+        }
 
         return tracker;
+    }
+
+    public void handleDisposition(Disposition disposition) {
+        // TODO Forward to attached links or issue errors if invalid.
+    }
+
+    public void handleLocalDisposition(Disposition disposition) {
+        // TODO Forward to attached links or issue error if invalid.
+    }
+
+    public void handleLocalTransfer(Transfer transfer) {
+        // TODO Forward to attached link or issue error if invalid.
     }
 
     public LinkTracker handleFlow(Flow flow) {

@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
+import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.AmqpSequence;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.AmqpValue;
@@ -38,6 +39,7 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedByte;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transactions.TransactionalState;
 import org.apache.qpid.protonj2.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
@@ -97,9 +99,17 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
             transfer.setHandle(driver.sessions().getLastLocallyOpenedSession().getLastOpenedRemoteReceiver().getHandle());
         }
 
-        // Here we could check if the delivery Id is set and if not grab a valid
-        // next Id from the driver as well as checking for a session and using last
-        // created one if none set.
+        final SessionTracker session = driver.sessions().getSessionFromLocalChannel(UnsignedShort.valueOf(onChannel()));
+
+        // A test might be trying to send Transfer outside of session scope to check for error handling
+        // of unexpected performatives so we just allow no session cases and send what we are told.
+        if (session != null) {
+            // Here we could check if the delivery Id is set and if not grab a valid
+            // next Id from the driver as well as checking for a session and using last
+            // created one if none set.
+
+            session.handleLocalTransfer(transfer);
+        }
     }
 
     public TransferInjectAction withHandle(long handle) {

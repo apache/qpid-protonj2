@@ -37,6 +37,10 @@ public class DetachLastCoordinatorInjectAction extends DetachInjectAction {
     protected void beforeActionPerformed(AMQPTestDriver driver) {
         LinkTracker tracker = driver.sessions().getLastOpenedCoordinator();
 
+        if (tracker == null) {
+            throw new AssertionError("Cannot send coordinator dectach as scripted, no active coordinator found.");
+        }
+
         onChannel(tracker.getSession().getLocalChannel().intValue());
         getPerformative().setHandle(tracker.getHandle());
     }

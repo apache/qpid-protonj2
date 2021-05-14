@@ -62,6 +62,8 @@ public class DeclareExpectation extends TransferExpectation {
         return response;
     }
 
+    //----- Type specific with methods that perform simple equals checks
+
     @Override
     public DeclareExpectation onChannel(int channel) {
         super.onChannel(channel);

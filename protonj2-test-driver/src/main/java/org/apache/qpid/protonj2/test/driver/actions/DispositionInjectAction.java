@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.test.driver.actions;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
+import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Modified;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Rejected;
@@ -24,6 +25,7 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.Released;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transactions.TransactionalState;
 import org.apache.qpid.protonj2.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Disposition;
@@ -116,11 +118,18 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
     protected void beforeActionPerformed(AMQPTestDriver driver) {
         // We fill in a channel using the next available channel id if one isn't set, then
         // report the outbound begin to the session so it can track this new session.
+        final SessionTracker session;
+
         if (onChannel() == CHANNEL_UNSET) {
-            onChannel(driver.sessions().getLastLocallyOpenedSession().getLocalChannel().intValue());
+            session = driver.sessions().getLastLocallyOpenedSession();
+            onChannel(session.getLocalChannel().intValue());
+        } else {
+            session = driver.sessions().getSessionFromLocalChannel(UnsignedShort.valueOf(onChannel()));
         }
 
-        // TODO - Process disposition in the local side of the link when needed for added validation
+        if (session != null) {
+            session.handleLocalDisposition(disposition);
+        }
     }
 
     public final class DeliveryStateBuilder {

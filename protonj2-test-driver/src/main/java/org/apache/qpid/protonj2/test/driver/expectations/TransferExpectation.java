@@ -138,7 +138,7 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
 
         if (session == null) {
             throw new AssertionError(String.format(
-                "Received Detach on channel [%d] that has no matching Session for that remote channel. ", remoteChannel));
+                "Received Transfer on channel [%d] that has no matching Session for that remote channel. ", remoteChannel));
         }
 
         final LinkTracker link = session.handleTransfer(transfer, payload);

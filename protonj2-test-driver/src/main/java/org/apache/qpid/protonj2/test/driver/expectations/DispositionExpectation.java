@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
+import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Modified;
@@ -28,6 +29,7 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.Released;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Disposition;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
@@ -35,6 +37,8 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.matchers.transactions.TransactionalStateMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.DispositionMatcher;
 import org.hamcrest.Matcher;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * Scripted expectation for the AMQP Disposition performative
@@ -56,6 +60,23 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
     public DispositionExpectation onChannel(int channel) {
         super.onChannel(channel);
         return this;
+    }
+
+    //----- Handle the incoming Disposition validation and update local side if able
+
+    @Override
+    public void handleDisposition(Disposition disposition, ByteBuf payload, int channel, AMQPTestDriver context) {
+        super.handleDisposition(disposition, payload, channel, context);
+
+        final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);
+        final SessionTracker session = driver.sessions().getSessionFromRemoteChannel(remoteChannel);
+
+        if (session == null) {
+            throw new AssertionError(String.format(
+                "Received Disposition on channel [%d] that has no matching Session for that remote channel. ", remoteChannel));
+        }
+
+        session.handleDisposition(disposition);
     }
 
     //----- Type specific with methods that perform simple equals checks

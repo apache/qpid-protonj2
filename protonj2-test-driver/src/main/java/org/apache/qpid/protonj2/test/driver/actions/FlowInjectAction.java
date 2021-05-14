@@ -157,6 +157,9 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
             onChannel(session.getLocalChannel().intValue());
         }
 
+        // TODO: The values set in the outbound flow should be read from actively maintained
+        //       values in the parent session / link.
+
         // Auto select last opened sender on last opened session, unless there's no links opened
         // in which case we can assume this is session only flow.  Also check if the test scripted
         // this as null which indicates the test is trying to send session only.
