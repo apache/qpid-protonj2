@@ -322,6 +322,28 @@ class ClientMessageTest {
     }
 
     @Test
+    public void testSetMultipleBodySectionsWithNullClearsOldSingleBodySection() {
+        ClientMessage<String> message = ClientMessage.create();
+
+        assertNull(message.body());
+        assertNotNull(message.bodySections());
+        assertTrue(message.bodySections().isEmpty());
+
+        message.body("test");
+
+        assertNotNull(message.body());
+        assertNotNull(message.bodySections());
+        assertFalse(message.bodySections().isEmpty());
+
+        message.bodySections(null);
+
+        assertNull(message.body());
+        assertNotNull(message.bodySections());
+        assertTrue(message.bodySections().isEmpty());
+        assertEquals(0, message.bodySections().size());
+    }
+
+    @Test
     public void testAddMultipleBodySectionsPreservesOriginal() {
         ClientMessage<byte[]> message = ClientMessage.create();
 
@@ -398,9 +420,10 @@ class ClientMessageTest {
             message.addBodySection(value);
         }
 
+        // setting a single body value should clear any previous sections.
         assertEquals(expected.size(), message.bodySections().size());
         message.body(new byte[] { 3 });
-        assertEquals(expected.size(), message.bodySections().size());
+        assertEquals(1, message.bodySections().size());
         expected.set(0, new Data(new byte[] { 3 }));
 
         Iterator<?> expectations = expected.iterator();

@@ -506,15 +506,8 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
 
     @Override
     public ClientMessage<E> body(E value) {
-        if (bodySections != null) {
-            if (value != null) {
-                bodySections.set(0, ClientMessageSupport.createSectionFromValue(value));
-            } else {
-                bodySections = null;
-            }
-        } else {
-            body = ClientMessageSupport.createSectionFromValue(value);
-        }
+        clearBodySections();
+        body = ClientMessageSupport.createSectionFromValue(value);
 
         return this;
     }
@@ -662,6 +655,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     public ClientMessage<E> bodySections(Collection<Section<?>> sections) {
         if (sections == null || sections.isEmpty()) {
             bodySections = null;
+            body = null;
         } else {
             List<Section<?>> result = new ArrayList<>(sections.size());
             sections.forEach(section -> result.add(validateBodySections(messageFormat, result, section)));
@@ -676,6 +670,8 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     public Collection<Section<?>> bodySections() {
         if (bodySections == null && body == null) {
             return Collections.EMPTY_LIST;
+        } else if (body != null) {
+            return Collections.singletonList(body);
         } else {
             final Collection<Section<?>> result = new ArrayList<>();
             forEachBodySection(section -> result.add(section));

@@ -232,10 +232,11 @@ public interface AdvancedMessage<E> extends Message<E> {
     AdvancedMessage<E> bodySections(Collection<Section<?>> sections) throws ClientException;
 
     /**
-     * Create and return a {@link Collection} that contains the {@link Section} instances currently
-     * assigned to this message.  Changes to the returned Collection are not reflected in the Message.
+     * Create and return an unmodifiable {@link Collection} that contains the {@link Section} instances
+     * currently assigned to this message.  Changes to this message body after calling this will not be
+     * reflected in the returned collection.
      *
-     * @return a {@link Collection} that is a copy of the current sections assigned to this message.
+     * @return an unmodifiable {@link Collection} that is a view of the current sections assigned to this message.
      *
      * @throws ClientException if an error occurs while retrieving the message data.
      */
