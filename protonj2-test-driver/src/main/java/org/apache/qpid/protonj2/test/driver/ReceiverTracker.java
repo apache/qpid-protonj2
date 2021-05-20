@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
-import org.apache.qpid.protonj2.test.driver.codec.transport.Attach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
 
@@ -28,9 +27,8 @@ import io.netty.buffer.ByteBuf;
  */
 public class ReceiverTracker extends LinkTracker {
 
-    public ReceiverTracker(SessionTracker session, Attach attach) {
-        super(session, attach);
-        // TODO Auto-generated constructor stub
+    public ReceiverTracker(SessionTracker session) {
+        super(session);
     }
 
     @Override
@@ -41,5 +39,15 @@ public class ReceiverTracker extends LinkTracker {
     @Override
     protected void handleFlow(Flow flow) {
 
+    }
+
+    @Override
+    public boolean isSender() {
+        return false;
+    }
+
+    @Override
+    public boolean isReceiver() {
+        return true;
     }
 }

@@ -547,37 +547,42 @@ public abstract class ScriptWriter {
     public AttachInjectAction respondToLastAttach() {
         AttachInjectAction response = new AttachInjectAction(getDriver());
 
-        LinkTracker link = getDriver().sessions().getLastRemotelyOpenedSession().getLastOpenedLink();
+        final SessionTracker session = getDriver().sessions().getLastRemotelyOpenedSession();
+        final LinkTracker link = session.getLastRemotelyOpenedLink();
+
         if (link == null) {
             throw new IllegalStateException("Cannot create response to Attach before one has been received.");
         }
 
+        if (link.isLocallyAttached()) {
+            throw new IllegalStateException("Cannot create response to Attach since a local Attach was already sent.");
+        }
+
         // Populate the response using data in the locally opened link, script can override this after return.
         response.onChannel(link.getSession().getLocalChannel());
-        response.withHandle(link.getHandle());
         response.withName(link.getName());
         response.withRole(link.getRole());
-        response.withSndSettleMode(link.getSenderSettleMode());
-        response.withRcvSettleMode(link.getReceiverSettleMode());
+        response.withSndSettleMode(link.getRemoteSenderSettleMode());
+        response.withRcvSettleMode(link.getRemoteReceiverSettleMode());
 
-        if (link.getSource() != null) {
-            response.withSource(new Source(link.getSource()));
-            if (Boolean.TRUE.equals(link.getSource().getDynamic())) {
+        if (link.getRemoteSource() != null) {
+            response.withSource(new Source(link.getRemoteSource()));
+            if (Boolean.TRUE.equals(link.getRemoteSource().getDynamic())) {
                 response.withSource().withAddress(UUID.randomUUID().toString());
             }
         }
-        if (link.getTarget() != null) {
-            response.withTarget(new Target(link.getTarget()));
-            if (Boolean.TRUE.equals(link.getTarget().getDynamic())) {
+        if (link.getRemoteTarget() != null) {
+            response.withTarget(new Target(link.getRemoteTarget()));
+            if (Boolean.TRUE.equals(link.getRemoteTarget().getDynamic())) {
                 response.withTarget().withAddress(UUID.randomUUID().toString());
             }
         }
-        if (link.getCoordinator() != null) {
-            response.withTarget(new Coordinator(link.getCoordinator()));
+        if (link.getRemoteCoordinator() != null) {
+            response.withTarget(new Coordinator(link.getRemoteCoordinator()));
         }
 
         if (response.getPerformative().getInitialDeliveryCount() == null) {
-            if (link.getRole() == Role.SENDER) {
+            if (link.isSender()) {
                 response.withInitialDeliveryCount(0);
             }
         }

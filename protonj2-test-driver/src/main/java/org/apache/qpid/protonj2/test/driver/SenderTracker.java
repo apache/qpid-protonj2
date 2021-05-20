@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
-import org.apache.qpid.protonj2.test.driver.codec.transport.Attach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
 
@@ -28,17 +27,27 @@ import io.netty.buffer.ByteBuf;
  */
 public class SenderTracker extends LinkTracker {
 
-    public SenderTracker(SessionTracker session, Attach attach) {
-        super(session, attach);
+    public SenderTracker(SessionTracker session) {
+        super(session);
     }
 
     @Override
     protected void handleTransfer(Transfer transfer, ByteBuf payload) {
-        throw new AssertionError("Sender links cannot process incoming Transfers");
+        // TODO Handle sender scripted transfer by updating local state.
     }
 
     @Override
     protected void handleFlow(Flow flow) {
-        // TODO Auto-generated method stub
+        // TODO Handle flow update to sender credit state
+    }
+
+    @Override
+    public boolean isSender() {
+        return true;
+    }
+
+    @Override
+    public boolean isReceiver() {
+        return false;
     }
 }

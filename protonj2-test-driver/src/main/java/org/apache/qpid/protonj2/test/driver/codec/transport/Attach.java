@@ -69,6 +69,14 @@ public class Attach extends PerformativeDescribedType {
         super(Field.values().length, described);
     }
 
+    public boolean isSender() {
+        return getRole().booleanValue() == false;
+    }
+
+    public boolean isReceiver() {
+        return getRole().booleanValue() == true;
+    }
+
     @Override
     public Symbol getDescriptor() {
         return DESCRIPTOR_SYMBOL;

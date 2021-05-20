@@ -16,14 +16,12 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
-import org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Attach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Begin;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Detach;
@@ -40,10 +38,11 @@ import io.netty.buffer.ByteBuf;
  */
 public class SessionTracker {
 
-    private final Deque<LinkTracker> remoteSenders = new ArrayDeque<>();
-    private final Deque<LinkTracker> remoteReceivers = new ArrayDeque<>();
+    private final Map<String, LinkTracker> senderByNameMap = new LinkedHashMap<>();
+    private final Map<String, LinkTracker> receiverByNameMap = new LinkedHashMap<>();
 
-    private final Map<UnsignedInteger, LinkTracker> trackerMap = new LinkedHashMap<>();
+    private final Map<UnsignedInteger, LinkTracker> localLinks = new LinkedHashMap<>();
+    private final Map<UnsignedInteger, LinkTracker> remoteLinks = new LinkedHashMap<>();
 
     private UnsignedShort localChannel;
     private UnsignedShort remoteChannel;
@@ -53,8 +52,6 @@ public class SessionTracker {
     private Begin localBegin;
     private End remoteEnd;
     private End localEnd;
-    private LinkTracker lastOpenedLink;
-    private LinkTracker lastOpenedCoordinatorLink;
 
     private final AMQPTestDriver driver;
 
@@ -67,20 +64,90 @@ public class SessionTracker {
     }
 
     public LinkTracker getLastOpenedLink() {
-        return lastOpenedLink;
+        final AtomicReference<LinkTracker> linkTracker = new AtomicReference<>();
+        localLinks.forEach((key, value) -> {
+            linkTracker.set(value);
+        });
+
+        return linkTracker.get();
+    }
+
+    public LinkTracker getLastRemotelyOpenedLink() {
+        final AtomicReference<LinkTracker> linkTracker = new AtomicReference<>();
+        remoteLinks.forEach((key, value) -> {
+            linkTracker.set(value);
+        });
+
+        return linkTracker.get();
     }
 
     public LinkTracker getLastOpenedCoordinatorLink() {
-        return lastOpenedCoordinatorLink;
+        final AtomicReference<LinkTracker> linkTracker = new AtomicReference<>();
+        localLinks.forEach((key, value) -> {
+            if (value.getCoordinator() != null) {
+                linkTracker.set(value);
+            }
+        });
+
+        return linkTracker.get();
+    }
+
+    public LinkTracker getLastRemotelyOpenedCoordinatorLink() {
+        final AtomicReference<LinkTracker> linkTracker = new AtomicReference<>();
+        remoteLinks.forEach((key, value) -> {
+            if (value.getRemoteCoordinator() != null) {
+                linkTracker.set(value);
+            }
+        });
+
+        return linkTracker.get();
     }
 
     public LinkTracker getLastOpenedRemoteSender() {
-        return remoteSenders.getLast();
+        final AtomicReference<LinkTracker> linkTracker = new AtomicReference<>();
+        remoteLinks.forEach((key, value) -> {
+            if (value.isReceiver()) {
+                linkTracker.set(value);
+            }
+        });
+
+        return linkTracker.get();
     }
 
     public LinkTracker getLastOpenedRemoteReceiver() {
-        return remoteReceivers.getLast();
+        final AtomicReference<LinkTracker> linkTracker = new AtomicReference<>();
+        remoteLinks.forEach((key, value) -> {
+            if (value.isSender()) {
+                linkTracker.set(value);
+            }
+        });
+
+        return linkTracker.get();
     }
+
+    public LinkTracker getLastOpenedSender() {
+        final AtomicReference<LinkTracker> linkTracker = new AtomicReference<>();
+        localLinks.forEach((key, value) -> {
+            if (value.isSender()) {
+                linkTracker.set(value);
+            }
+        });
+
+        return linkTracker.get();
+    }
+
+    public LinkTracker getLastOpenedReceiver() {
+        final AtomicReference<LinkTracker> linkTracker = new AtomicReference<>();
+        localLinks.forEach((key, value) -> {
+            if (value.isReceiver()) {
+                linkTracker.set(value);
+            }
+        });
+
+        return linkTracker.get();
+    }
+
+    //----- Session specific access which can provide details for expectations
 
     public End getRemoteEnd() {
         return remoteEnd;
@@ -89,8 +156,6 @@ public class SessionTracker {
     public End getLocalEnd() {
         return localEnd;
     }
-
-    //----- Session specific access which can provide details for expectations
 
     public Begin getRemoteBegin() {
         return remoteBegin;
@@ -145,78 +210,119 @@ public class SessionTracker {
     }
 
     public LinkTracker handleRemoteAttach(Attach attach) {
-        LinkTracker linkTracker = trackerMap.get(attach.getHandle());
+        LinkTracker linkTracker = remoteLinks.get(attach.getHandle());
 
-        // We only populate these remote value here, never in the local side processing
-        // this implies that we need to check if this was remotely initiated and create
-        // the link tracker if none exists yet
-        // TODO: These SenderTracker and ReceiverTracker inversions are confusing and probably
-        //       not going to work for future enhancements.
-        if (attach.getRole().equals(Role.SENDER.getValue())) {
-            if (linkTracker == null) {
-                linkTracker = new ReceiverTracker(this, attach);
-            }
-            remoteSenders.add(linkTracker);
-        } else {
-            if (linkTracker == null) {
-                linkTracker = new SenderTracker(this, attach);
-            }
-            remoteReceivers.add(linkTracker);
+        if (linkTracker != null) {
+            throw new AssertionError(String.format(
+                "Received second attach of link handle %s with name %s", attach.getHandle(), attach.getName()));
         }
 
-        if (attach.getTarget() instanceof Coordinator) {
-            lastOpenedCoordinatorLink = linkTracker;
-            driver.sessions().setLastOpenedCoordinator(lastOpenedCoordinatorLink);
+        final UnsignedInteger localHandleMax = localBegin == null ? UnsignedInteger.ZERO :
+            localBegin.getHandleMax() == null ? UnsignedInteger.MAX_VALUE : localBegin.getHandleMax();
+
+        if (attach.getHandle().compareTo(localHandleMax) > 0) {
+            throw new AssertionError("Session Handle Max [" + localHandleMax + "] Exceeded for link Attach: " + attach.getHandle());
         }
 
-        lastOpenedLink = linkTracker;
-        trackerMap.put(attach.getHandle(), linkTracker);
+        // Check that the remote attach is an original link attach with no corresponding local
+        // attach having already been done or not as there should only ever be one instance of
+        // a link tracker for any given link.
+        linkTracker = findMatchingPendingLinkOpen(attach);
+        if (linkTracker == null) {
+            if (attach.getRole().equals(Role.SENDER.getValue())) {
+                linkTracker = new ReceiverTracker(this);
+                receiverByNameMap.put(attach.getName(), linkTracker);
+            } else {
+                linkTracker = new SenderTracker(this);
+                senderByNameMap.put(attach.getName(), linkTracker);
+            }
+        }
+
+        remoteLinks.put(attach.getHandle(), linkTracker);
+        linkTracker.handlerRemoteAttach(attach);
+
+        if (linkTracker.getRemoteCoordinator() != null) {
+            getDriver().sessions().setLastOpenedCoordinator(linkTracker);
+        }
 
         return linkTracker;
     }
 
     public LinkTracker handleLocalAttach(Attach attach) {
-        LinkTracker linkTracker = trackerMap.get(attach.getHandle());
+        LinkTracker linkTracker = localLinks.get(attach.getHandle());
 
         // Create a tracker for the local side to use to respond to remote
-        // performative or to use when invoking local actions.
+        // performative or to use when invoking local actions but don't validate
+        // that it was already sent one as a test might be checking remote handling.
         if (linkTracker == null) {
             if (attach.getRole().equals(Role.SENDER.getValue())) {
-                linkTracker = new SenderTracker(this, attach);
+                linkTracker = senderByNameMap.get(attach.getName());
+                if (linkTracker == null) {
+                    linkTracker = new SenderTracker(this);
+                    senderByNameMap.put(attach.getName(), linkTracker);
+                }
             } else {
-                linkTracker = new ReceiverTracker(this, attach);
+                linkTracker = receiverByNameMap.get(attach.getName());
+                if (linkTracker == null) {
+                    linkTracker = new ReceiverTracker(this);
+                    receiverByNameMap.put(attach.getName(), linkTracker);
+                }
             }
-        }
 
-        lastOpenedLink = linkTracker;
-        trackerMap.put(attach.getHandle(), linkTracker);
+            localLinks.put(attach.getHandle(), linkTracker);
+            linkTracker.handleLocalAttach(attach);
+        }
 
         return linkTracker;
     }
 
     public LinkTracker handleRemoteDetach(Detach detach) {
-        LinkTracker tracker = trackerMap.get(detach.getHandle());
+        LinkTracker tracker = remoteLinks.get(detach.getHandle());
 
         if (tracker != null) {
-            remoteSenders.remove(tracker);
-            remoteReceivers.remove(tracker);
+            tracker.handleRemoteDetach(detach);
+            remoteLinks.remove(detach.getHandle());
+
+            if (tracker.isLocallyDetached()) {
+                if (tracker.isSender()) {
+                    senderByNameMap.remove(tracker.getName());
+                } else {
+                    receiverByNameMap.remove(tracker.getName());
+                }
+            }
+        } else {
+            throw new AssertionError(String.format(
+                "Received Detach for unknown remote link with handle %s", detach.getHandle()));
         }
 
         return tracker;
     }
 
     public LinkTracker handleLocalDetach(Detach detach) {
-        LinkTracker tracker = trackerMap.get(detach.getHandle());
+        LinkTracker tracker = localLinks.get(detach.getHandle());
 
-        // TODO: Cleanup local state when we start tracking both sides.
+        // Handle the detach and remove if we knew about it, otherwise ignore as
+        // the test might be checked for handling of unexpected End frames etc.
+        if (tracker != null) {
+            tracker.handleLocalDetach(detach);
+            localLinks.remove(detach.getHandle());
+
+            if (tracker.isRemotelyDetached()) {
+                if (tracker.isSender()) {
+                    senderByNameMap.remove(tracker.getName());
+                } else {
+                    receiverByNameMap.remove(tracker.getName());
+                }
+            }
+        }
 
         return tracker;
     }
 
     public LinkTracker handleTransfer(Transfer transfer, ByteBuf payload) {
-        LinkTracker tracker = trackerMap.get(transfer.getHandle());
+        LinkTracker tracker = remoteLinks.get(transfer.getHandle());
 
-        if (tracker.getRole() == Role.SENDER) {
+        if (tracker.isSender()) {
             throw new AssertionError("Received inbound Transfer addressed to a local Sender link");
         } else {
             tracker.handleTransfer(transfer, payload);
@@ -224,6 +330,18 @@ public class SessionTracker {
         }
 
         return tracker;
+    }
+
+    public void handleLocalTransfer(Transfer transfer, ByteBuf payload) {
+        LinkTracker tracker = localLinks.get(transfer.getHandle());
+
+        // Pass along to local sender for processing before sending and ignore if
+        // we aren't tracking a link or the link is a receiver as the test might
+        // be checking how the remote handles invalid frames.
+        if (tracker != null && tracker.isSender()) {
+            tracker.handleTransfer(transfer, payload);
+            // TODO - Update session state based on transfer
+        }
     }
 
     public void handleDisposition(Disposition disposition) {
@@ -234,16 +352,17 @@ public class SessionTracker {
         // TODO Forward to attached links or issue error if invalid.
     }
 
-    public void handleLocalTransfer(Transfer transfer) {
-        // TODO Forward to attached link or issue error if invalid.
-    }
-
     public LinkTracker handleFlow(Flow flow) {
         LinkTracker tracker = null;
 
         if (flow.getHandle() != null) {
-            tracker = trackerMap.get(flow.getHandle());
-            tracker.handleFlow(flow);
+            tracker = remoteLinks.get(flow.getHandle());
+            if (tracker != null) {
+                tracker.handleFlow(flow);
+            } else {
+                throw new AssertionError(String.format(
+                    "Received Flow for unknown remote link with handle %s", flow.getHandle()));
+            }
         }
 
         return tracker;
@@ -254,11 +373,33 @@ public class SessionTracker {
 
         for (long i = 0; i <= HANDLE_MAX.longValue(); ++i) {
             final UnsignedInteger handle = UnsignedInteger.valueOf(i);
-            if (!trackerMap.containsKey(handle)) {
+            if (!localLinks.containsKey(handle)) {
                 return handle;
             }
         }
 
         throw new IllegalStateException("no local handle available for allocation");
+    }
+
+    private LinkTracker findMatchingPendingLinkOpen(Attach remoteAttach) {
+        for (LinkTracker link : senderByNameMap.values()) {
+            if (link.getName().equals(remoteAttach.getName()) &&
+                !link.isRemotelyAttached() &&
+                remoteAttach.isReceiver()) {
+
+                return link;
+            }
+        }
+
+        for (LinkTracker link : receiverByNameMap.values()) {
+            if (link.getName().equals(remoteAttach.getName()) &&
+                !link.isRemotelyAttached() &&
+                remoteAttach.isSender()) {
+
+                return link;
+            }
+        }
+
+        return null;
     }
 }

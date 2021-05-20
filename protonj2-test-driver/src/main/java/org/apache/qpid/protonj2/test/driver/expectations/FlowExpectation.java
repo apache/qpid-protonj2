@@ -112,7 +112,7 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
             }
 
             if (response.getPerformative().getHandle() == null && linkTracker != null) {
-                response.withHandle(linkTracker.getHandle()); //TODO: this is wrong, need a lookup for the local link and then get its remote handle.
+                response.withHandle(linkTracker.getHandle());
             }
 
             // TODO: blow up on response if credit not populated?

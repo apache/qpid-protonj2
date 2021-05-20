@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.qpid.protonj2.test.driver;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,21 +30,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Tests for the test driver session handling from both client and server perspectives.
+ * Tests for the test driver remote sender handling from both client and server perspectives.
  */
 @Timeout(20)
-class SessionHandlingTest extends TestPeerTestsBase {
+class ReceiverHandlingTest extends TestPeerTestsBase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SessionHandlingTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ReceiverHandlingTest.class);
 
     @Test
-    public void testSessionTrackingWithClientOpensSession() throws Exception {
+    public void testReceiverTrackingWithClientOpensReceiver() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
 
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
             peer.expectBegin().onChannel(0).respond();
+            peer.expectAttach().ofReceiver().withHandle(0).onChannel(0).respond();
             peer.expectEnd().onChannel(0).respond();
             peer.start();
 
@@ -53,10 +55,12 @@ class SessionHandlingTest extends TestPeerTestsBase {
             client.expectAMQPHeader();
             client.expectOpen();
             client.expectBegin().onChannel(0);
+            client.expectAttach().ofSender().onChannel(0).withHandle(0);
             client.expectEnd().onChannel(0);
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
             client.remoteOpen().now();
             client.remoteBegin().now();
+            client.remoteAttach().ofReceiver().now();
             client.remoteEnd().now();
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             client.close();
@@ -68,14 +72,15 @@ class SessionHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
-    public void testSessionBeginResponseUsesScriptedChannel() throws Exception {
+    public void testAttachResponseUsesScriptedChannel() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
 
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
-            peer.expectBegin().onChannel(0).respond().onChannel(42);
-            peer.expectEnd().onChannel(0).respond().onChannel(42);
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond().withHandle(42);
+            peer.expectEnd().respond();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -85,11 +90,13 @@ class SessionHandlingTest extends TestPeerTestsBase {
             client.connect(remoteURI.getHost(), remoteURI.getPort());
             client.expectAMQPHeader();
             client.expectOpen();
-            client.expectBegin().withRemoteChannel(0).onChannel(42);
-            client.expectEnd().onChannel(42);
+            client.expectBegin();
+            client.expectAttach().ofReceiver().withHandle(42);
+            client.expectEnd();
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
             client.remoteOpen().now();
             client.remoteBegin().now();
+            client.remoteAttach().ofSender().now();
             client.remoteEnd().now();
 
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -98,14 +105,15 @@ class SessionHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
-    public void testWaitForCompletionFailsWhenRemoteSendEndOnWrongChannel() throws Exception {
+    public void testWaitForCompletionFailsWhenRemoteSendDetacgWithWrongHandle() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
 
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
-            peer.expectBegin().onChannel(0).respond().onChannel(42);
-            peer.expectEnd().onChannel(0).respond().onChannel(43);
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond().withHandle(42);
+            peer.expectDetach().respond().withHandle(43);
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -115,12 +123,14 @@ class SessionHandlingTest extends TestPeerTestsBase {
             client.connect(remoteURI.getHost(), remoteURI.getPort());
             client.expectAMQPHeader();
             client.expectOpen();
-            client.expectBegin().withRemoteChannel(0).onChannel(42);
-            client.expectEnd().onChannel(42);
+            client.expectBegin();
+            client.expectAttach().ofSender().withHandle(42);
+            client.expectDetach().withHandle(42);
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
             client.remoteOpen().now();
             client.remoteBegin().now();
-            client.remoteEnd().now();
+            client.remoteAttach().ofReceiver().now();
+            client.remoteDetach().now();
 
             assertThrows(AssertionError.class, () -> client.waitForScriptToComplete(30, TimeUnit.SECONDS));
 
@@ -129,13 +139,15 @@ class SessionHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
-    public void testServerEndResponseFillsChannelsAutomaticallyIfNoneSpecified() throws Exception {
+    public void testServerDetachResponseFillsHandlesAutomaticallyIfNoneSpecified() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
 
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
-            peer.expectBegin().onChannel(0).respond().onChannel(42);
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond().withHandle(42);
+            peer.expectDetach().respond();
             peer.expectEnd().respond();
             peer.start();
 
@@ -146,11 +158,15 @@ class SessionHandlingTest extends TestPeerTestsBase {
             client.connect(remoteURI.getHost(), remoteURI.getPort());
             client.expectAMQPHeader();
             client.expectOpen();
-            client.expectBegin().withRemoteChannel(0).onChannel(42);
-            client.expectEnd().onChannel(42);
+            client.expectBegin();
+            client.expectAttach().ofSender().withHandle(42);
+            client.expectDetach().withHandle(42);
+            client.expectEnd();
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
             client.remoteOpen().now();
             client.remoteBegin().now();
+            client.remoteAttach().ofReceiver().now();
+            client.remoteDetach().now();
             client.remoteEnd().now();
 
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -159,13 +175,14 @@ class SessionHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
-    public void testServerRespondToLastBeginFeature() throws Exception {
+    public void testServerRespondToLastAttachFeature() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
 
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
-            peer.expectBegin().onChannel(0);
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -175,22 +192,27 @@ class SessionHandlingTest extends TestPeerTestsBase {
             client.connect(remoteURI.getHost(), remoteURI.getPort());
             client.expectAMQPHeader();
             client.expectOpen();
+            client.expectBegin();
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
             client.remoteOpen().now();
             client.remoteBegin().now();
+            client.remoteAttach().ofReceiver().now();
 
             // Wait for the above and then script next steps
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            client.expectBegin().withRemoteChannel(0).onChannel(42);
+            client.expectAttach().ofSender();
 
             // Now we respond to the last begin we saw at the server side.
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
             peer.expectEnd().respond();
-            peer.respondToLastBegin().onChannel(42).now();
+            peer.respondToLastAttach().now();
 
             // Wait for the above and then script next steps
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            client.expectEnd().onChannel(42);
+            client.expectDetach();
+            client.expectEnd();
+            client.remoteDetach().now();
             client.remoteEnd().now();
 
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -199,18 +221,20 @@ class SessionHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
-    public void testOpenAndCloseMultipleSessionsWithAutoChannelHandlingExpected() throws Exception {
+    public void testOpenAndCloseMultipleLinksWithAutoChannelHandlingExpected() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
 
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
-            peer.expectBegin().onChannel(0).respond();
-            peer.expectBegin().onChannel(1).respond();
-            peer.expectBegin().onChannel(2).respond();
-            peer.expectEnd().onChannel(2).respond();
-            peer.expectEnd().onChannel(1).respond();
-            peer.expectEnd().onChannel(0).respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().withHandle(0).respond();
+            peer.expectAttach().ofReceiver().withHandle(1).respond();
+            peer.expectAttach().ofReceiver().withHandle(2).respond();
+            peer.expectDetach().withHandle(2).respond();
+            peer.expectDetach().withHandle(1).respond();
+            peer.expectDetach().withHandle(0).respond();
+            peer.expectEnd().respond();
             peer.expectClose().respond();
             peer.start();
 
@@ -220,24 +244,28 @@ class SessionHandlingTest extends TestPeerTestsBase {
 
             client.expectAMQPHeader();
             client.expectOpen();
-            client.expectBegin().onChannel(0);
-            client.expectBegin().onChannel(1);
-            client.expectBegin().onChannel(2);
+            client.expectBegin();
+            client.expectAttach().ofSender().withHandle(0);
+            client.expectAttach().ofSender().withHandle(1);
+            client.expectAttach().ofSender().withHandle(2);
             client.connect(remoteURI.getHost(), remoteURI.getPort());
 
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
             client.remoteOpen().now();
             client.remoteBegin().now();
-            client.remoteBegin().now();
-            client.remoteBegin().now();
+            client.remoteAttach().ofReceiver().now();
+            client.remoteAttach().ofReceiver().now();
+            client.remoteAttach().ofReceiver().now();
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            client.expectEnd().onChannel(2);
-            client.expectEnd().onChannel(1);
-            client.expectEnd().onChannel(0);
+            client.expectDetach().withHandle(2);
+            client.expectDetach().withHandle(1);
+            client.expectDetach().withHandle(0);
+            client.expectEnd();
 
-            client.remoteEnd().onChannel(2).now();
-            client.remoteEnd().onChannel(1).now();
-            client.remoteEnd().onChannel(0).now();
+            client.remoteDetach().withHandle(2).now();
+            client.remoteDetach().withHandle(1).now();
+            client.remoteDetach().withHandle(0).now();
+            client.remoteEnd().now();
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             client.expectClose();
 
@@ -249,13 +277,14 @@ class SessionHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
-    public void testPeerEndsConnectionIfRemoteRespondsWithToHighChannelValue() throws Exception {
+    public void testPeerEndsConnectionIfRemoteRespondsWithToHighHandleValue() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
 
             peer.expectAMQPHeader().respondWithAMQPHeader();
-            peer.expectOpen().withChannelMax(0).respond();
-            peer.expectBegin();
+            peer.expectOpen().respond();
+            peer.expectBegin().withHandleMax(0).respond();
+            peer.expectAttach().ofReceiver();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -265,17 +294,19 @@ class SessionHandlingTest extends TestPeerTestsBase {
             client.connect(remoteURI.getHost(), remoteURI.getPort());
             client.expectAMQPHeader();
             client.expectOpen();
+            client.expectBegin();
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
-            client.remoteOpen().withChannelMax(0).now();
-            client.remoteBegin().now();
+            client.remoteOpen().now();
+            client.remoteBegin().withHandleMax(0).now();
+            client.remoteAttach().ofReceiver().now();
 
             // Wait for the above and then script next steps
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            client.expectBegin();
+            client.expectAttach().ofSender();
 
-            // Now we respond to the last begin we saw at the server side.
+            // Now we respond to the last attach we saw at the server side.
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.respondToLastBegin().onChannel(42).now();
+            peer.respondToLastAttach().withHandle(42).now();
 
             assertThrows(AssertionError.class, () -> client.waitForScriptToComplete(5, TimeUnit.SECONDS));
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -283,13 +314,14 @@ class SessionHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
-    public void testPeerEnforcesChannelMaxOfZeroOnPipelinedOpenBegin() throws Exception {
+    public void testPeerEnforcesHandleMaxOfZeroOnPipelinedOpenBeginAttach() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
 
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen();
             peer.expectBegin();
+            peer.expectAttach().ofReceiver();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -300,7 +332,8 @@ class SessionHandlingTest extends TestPeerTestsBase {
             client.expectAMQPHeader();
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
             client.remoteOpen().now();
-            client.remoteBegin().onChannel(42).now();
+            client.remoteBegin().now();
+            client.remoteAttach().ofReceiver().withHandle(42).now();
 
             // Wait for the above and then script next steps
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);

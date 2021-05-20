@@ -82,6 +82,11 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
 
         final LinkTracker link = session.handleRemoteDetach(detach);
 
+        if (link == null) {
+            throw new AssertionError(String.format(
+                "Received Detach on channel [%d] that has no matching Attached link for that remote handle. ", detach.getHandle()));
+        }
+
         if (response != null) {
             // Input was validated now populate response with auto values where not configured
             // to say otherwise by the test.
@@ -90,7 +95,7 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
             }
 
             if (response.getPerformative().getHandle() == null) {
-                response.withHandle(detach.getHandle());
+                response.withHandle(link.getHandle());
             }
 
             if (response.getPerformative().getClosed() == null) {

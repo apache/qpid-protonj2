@@ -21,6 +21,7 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.Target;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Attach;
+import org.apache.qpid.protonj2.test.driver.codec.transport.Detach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
@@ -35,11 +36,15 @@ import io.netty.buffer.ByteBuf;
 public abstract class LinkTracker {
 
     private final SessionTracker session;
-    private final Attach attach;
 
-    public LinkTracker(SessionTracker session, Attach attach) {
+    private Attach remoteAttach;
+    private Detach remoteDetach;
+
+    private Attach localAttach;
+    private Detach localDetach;
+
+    public LinkTracker(SessionTracker session) {
         this.session = session;
-        this.attach = attach;
     }
 
     public SessionTracker getSession() {
@@ -47,7 +52,11 @@ public abstract class LinkTracker {
     }
 
     public String getName() {
-        return attach.getName();
+        if (remoteAttach != null) {
+            return remoteAttach.getName();
+        } else {
+            return localAttach.getName();
+        }
     }
 
     public Role getRole() {
@@ -55,39 +64,97 @@ public abstract class LinkTracker {
     }
 
     public SenderSettleMode getSenderSettleMode() {
-        return attach.getSenderSettleMode() != null ? SenderSettleMode.valueOf(attach.getSenderSettleMode()) : SenderSettleMode.MIXED;
+        return localAttach.getSenderSettleMode() != null ? SenderSettleMode.valueOf(localAttach.getSenderSettleMode()) : SenderSettleMode.MIXED;
     }
 
     public ReceiverSettleMode getReceiverSettleMode() {
-        return attach.getReceiverSettleMode() != null ? ReceiverSettleMode.valueOf(attach.getReceiverSettleMode()) : ReceiverSettleMode.FIRST;
+        return localAttach.getReceiverSettleMode() != null ? ReceiverSettleMode.valueOf(localAttach.getReceiverSettleMode()) : ReceiverSettleMode.FIRST;
+    }
+
+    public SenderSettleMode getRemoteSenderSettleMode() {
+        return remoteAttach.getSenderSettleMode() != null ? SenderSettleMode.valueOf(remoteAttach.getSenderSettleMode()) : SenderSettleMode.MIXED;
+    }
+
+    public ReceiverSettleMode getRemoteReceiverSettleMode() {
+        return remoteAttach.getReceiverSettleMode() != null ? ReceiverSettleMode.valueOf(remoteAttach.getReceiverSettleMode()) : ReceiverSettleMode.FIRST;
     }
 
     public UnsignedInteger getHandle() {
-        return attach.getHandle();
+        return localAttach.getHandle();
+    }
+
+    public UnsignedInteger getRemoteHandle() {
+        return remoteAttach.getHandle();
     }
 
     public Source getSource() {
-        return attach.getSource();
+        return localAttach.getSource();
     }
 
     public Target getTarget() {
-        return attach.getTarget() instanceof Target ? (Target) attach.getTarget() : null;
+        return localAttach.getTarget() instanceof Target ? (Target) localAttach.getTarget() : null;
     }
 
     public Coordinator getCoordinator() {
-        return attach.getTarget() instanceof Coordinator ? (Coordinator) attach.getTarget() : null;
+        return localAttach.getTarget() instanceof Coordinator ? (Coordinator) localAttach.getTarget() : null;
     }
 
-    public boolean isSender() {
-        return Role.RECEIVER.getValue() == attach.getRole();
+    public Source getRemoteSource() {
+        return remoteAttach.getSource();
     }
 
-    public boolean isReceiver() {
-        return Role.SENDER.getValue() == attach.getRole();
+    public Target getRemoteTarget() {
+        return remoteAttach.getTarget() instanceof Target ? (Target) remoteAttach.getTarget() : null;
+    }
+
+    public Coordinator getRemoteCoordinator() {
+        return remoteAttach.getTarget() instanceof Coordinator ? (Coordinator) remoteAttach.getTarget() : null;
+    }
+
+    public boolean isRemotelyAttached() {
+        return remoteAttach != null;
+    }
+
+    public boolean isRemotelyDetached() {
+        return remoteDetach != null;
+    }
+
+    public boolean isLocallyAttached() {
+        return localAttach != null;
+    }
+
+    public boolean isLocallyDetached() {
+        return localDetach != null;
+    }
+
+    public LinkTracker handleLocalAttach(Attach localAttach) {
+        this.localAttach = localAttach;
+
+        return this;
+    }
+
+    public LinkTracker handleLocalDetach(Detach localDetach) {
+        this.localDetach = localDetach;
+
+        return this;
+    }
+
+    public void handlerRemoteAttach(Attach remoteAttach) {
+        this.remoteAttach = remoteAttach;
+    }
+
+    public LinkTracker handleRemoteDetach(Detach remoteDetach) {
+        this.remoteDetach = remoteDetach;
+
+        return this;
     }
 
     protected abstract void handleTransfer(Transfer transfer, ByteBuf payload);
 
     protected abstract void handleFlow(Flow flow);
+
+    public abstract boolean isSender();
+
+    public abstract boolean isReceiver();
 
 }

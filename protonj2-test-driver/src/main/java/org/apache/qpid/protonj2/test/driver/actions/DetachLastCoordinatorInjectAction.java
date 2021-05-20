@@ -41,7 +41,13 @@ public class DetachLastCoordinatorInjectAction extends DetachInjectAction {
             throw new AssertionError("Cannot send coordinator dectach as scripted, no active coordinator found.");
         }
 
+        if (!tracker.isLocallyAttached()) {
+            // TODO: We could attempt to create an attach here and send that first
+            throw new AssertionError("Cannot send coordinator dectach as scripted, Coordinator link was not locally attached.");
+        }
+
         onChannel(tracker.getSession().getLocalChannel().intValue());
+
         getPerformative().setHandle(tracker.getHandle());
     }
 }
