@@ -90,4 +90,8 @@ public abstract class PerformativeDescribedType extends ListDescribedType {
 
     public abstract <E> void invoke(PerformativeHandler<E> handler, ByteBuf payload, int channel, E context);
 
+    @Override
+    public String toString() {
+        return getPerformativeType() + " " + getList();
+    }
 }

@@ -311,8 +311,6 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         synchronized (script) {
             final ScriptedElement scriptEntry = script.poll();
             if (scriptEntry == null) {
-                // TODO - Need to ensure a readable error by converting the codec type to a true performative type when
-                //        logging what happened here.
                 signalFailure(new AssertionError("Received performative[" + amqp + "] when not expecting any input."));
             }
 
