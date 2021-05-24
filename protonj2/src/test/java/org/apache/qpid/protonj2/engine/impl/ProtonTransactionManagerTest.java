@@ -468,7 +468,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
         manager.addCredit(2);
 
         peer.waitForScriptToComplete();
-        peer.expectDisposition().withState().transactional().withTxnId(TXN_ID);
+        peer.expectDisposition().withState().declared(TXN_ID);
         peer.remoteDischarge().withTxnId(TXN_ID).withFail(txnFailed).withDeliveryId(1).withDeliveryTag(new byte[] {1}).queue();
         peer.expectDisposition().withState().accepted();
         peer.expectDetach().respond();
@@ -612,7 +612,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
         manager.addCredit(2);
 
         peer.waitForScriptToComplete();
-        peer.expectDisposition().withState().transactional().withTxnId(TXN_ID);
+        peer.expectDisposition().withState().declared(TXN_ID);
         peer.remoteDischarge().withTxnId(TXN_ID).withFail(false).withDeliveryId(1).withDeliveryTag(new byte[] {1}).queue();
         peer.expectDisposition().withState().rejected(failureError.getCondition().toString(), failureError.getDescription());
         peer.expectDetach().respond();
@@ -683,7 +683,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
         manager.addCredit(1);
 
         peer.waitForScriptToComplete();
-        peer.expectDisposition().withState().transactional().withTxnId(TXN_ID).withAccepted();
+        peer.expectDisposition().withState().declared(TXN_ID);
         peer.expectDetach().respond();
         peer.expectEnd().respond();
         peer.expectClose().respond();
@@ -762,7 +762,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
         manager.addCredit(1);
 
         peer.waitForScriptToComplete();
-        peer.expectDisposition().withState().transactional().withTxnId(TXN_ID).withAccepted();
+        peer.expectDisposition().withState().declared(TXN_ID);
         peer.expectDetach().respond();
         peer.expectEnd().respond();
         peer.expectClose().respond();
@@ -864,7 +864,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
         manager2.addCredit(2);
 
         peer.waitForScriptToComplete();
-        peer.expectDisposition().withState().transactional().withTxnId(TXN_ID);
+        peer.expectDisposition().withState().declared(TXN_ID);
         peer.remoteDischarge().withHandle(0).withTxnId(TXN_ID).withFail(false).withDeliveryId(1).withDeliveryTag(new byte[] {1}).queue();
         peer.expectDisposition().withState().accepted();
         peer.expectDetach().withHandle(0).respond();
@@ -1070,7 +1070,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
         manager2.addCredit(2);
 
         peer.waitForScriptToComplete();
-        peer.expectDisposition().withState().transactional().withTxnId(TXN_ID);
+        peer.expectDisposition().withState().declared(TXN_ID);
         peer.remoteDischarge().withHandle(0).withTxnId(TXN_ID).withFail(false).withDeliveryId(1).withDeliveryTag(new byte[] {1}).queue();
 
         // Starts the flow of Transaction frames
@@ -1179,7 +1179,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
         manager2.addCredit(2);
 
         peer.waitForScriptToComplete();
-        peer.expectDisposition().withState().transactional().withTxnId(TXN_ID);
+        peer.expectDisposition().withState().declared(TXN_ID);
         peer.remoteDischarge().withHandle(0).withTxnId(TXN_ID).withFail(false).withDeliveryId(1).withDeliveryTag(new byte[] {1}).queue();
 
         // Starts the flow of Transaction frames
@@ -1261,7 +1261,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
         manager.addCredit(2);
 
         peer.waitForScriptToComplete();
-        peer.expectDisposition().withState().transactional().withTxnId(TXN_ID);
+        peer.expectDisposition().withState().declared(TXN_ID);
         peer.remoteDischarge().withTxnId(TXN_ID_UNKNOWN).withFail(false).withDeliveryId(1).withDeliveryTag(new byte[] {1}).queue();
         peer.expectDisposition().withState().rejected(failureError.getCondition().toString(), failureError.getDescription());
         peer.expectDetach().respond();

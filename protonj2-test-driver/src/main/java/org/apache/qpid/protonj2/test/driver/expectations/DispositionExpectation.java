@@ -19,6 +19,8 @@ package org.apache.qpid.protonj2.test.driver.expectations;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
+import java.util.Random;
+
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
@@ -30,6 +32,7 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
+import org.apache.qpid.protonj2.test.driver.codec.transactions.Declared;
 import org.apache.qpid.protonj2.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Disposition;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
@@ -212,6 +215,22 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
 
         public DispositionExpectation modified(boolean failed, boolean undeliverableHere) {
             withState(new Modified());
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation declared() {
+            final byte[] txnId = new byte[4];
+
+            Random rand = new Random();
+            rand.setSeed(System.nanoTime());
+            rand.nextBytes(txnId);
+
+            withState(new Declared().setTxnId(txnId));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation declared(byte[] txnId) {
+            withState(new Declared().setTxnId(txnId));
             return DispositionExpectation.this;
         }
 

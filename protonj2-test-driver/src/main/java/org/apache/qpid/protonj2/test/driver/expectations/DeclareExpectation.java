@@ -49,7 +49,38 @@ public class DeclareExpectation extends TransferExpectation {
         return accept(txnId);
     }
 
+    /**
+     * Indicates a successful transaction declaration by returning a {@link Declared}
+     * disposition with the given transaction Id.
+     *
+     * @param txnId
+     * 		byte array containing the transaction id that has been declared.
+     *
+     * @return this {@link DispositionInjectAction} instance.
+     */
     public DispositionInjectAction accept(byte[] txnId) {
+        response = new DispositionInjectAction(driver);
+        response.withSettled(true);
+        if (txnId != null) {
+            response.withState(new Declared().setTxnId(new Binary(txnId)));
+        } else {
+            response.withState(new Declared());
+        }
+
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    /**
+     * Indicates a successful transaction declaration by returning a {@link Declared}
+     * disposition with the given transaction Id.
+     *
+     * @param txnId
+     * 		byte array containing the transaction id that has been declared.
+     *
+     * @return this {@link DispositionInjectAction} instance.
+     */
+    public DispositionInjectAction declared(byte[] txnId) {
         response = new DispositionInjectAction(driver);
         response.withSettled(true);
         if (txnId != null) {

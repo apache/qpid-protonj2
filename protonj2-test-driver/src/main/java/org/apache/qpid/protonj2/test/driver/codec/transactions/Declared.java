@@ -56,6 +56,10 @@ public class Declared extends ListDescribedType implements DeliveryState, Outcom
         return DESCRIPTOR_SYMBOL;
     }
 
+    public Declared setTxnId(byte[] array) {
+        return setTxnId(new Binary(array));
+    }
+
     public Declared setTxnId(Binary o) {
         getList().set(Field.TXN_ID.ordinal(), o);
         return this;

@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.test.driver.actions;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.LinkTracker;
+import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 
 /**
  * Detach actions that ignores any other handle or channel configuration
@@ -41,12 +42,40 @@ public class DetachLastCoordinatorInjectAction extends DetachInjectAction {
             throw new AssertionError("Cannot send coordinator dectach as scripted, no active coordinator found.");
         }
 
-        if (!tracker.isLocallyAttached()) {
-            // TODO: We could attempt to create an attach here and send that first
-            throw new AssertionError("Cannot send coordinator dectach as scripted, Coordinator link was not locally attached.");
-        }
-
         onChannel(tracker.getSession().getLocalChannel().intValue());
+
+        if (!tracker.isLocallyAttached()) {
+            AttachInjectAction attach = new AttachInjectAction(driver);
+
+            attach.onChannel(onChannel());
+            attach.withName(tracker.getName());
+            attach.withSource(tracker.getRemoteSource());
+            if (tracker.getRemoteTarget() != null) {
+                attach.withTarget(tracker.getRemoteTarget());
+            } else {
+                attach.withTarget(tracker.getRemoteCoordinator());
+            }
+
+            if (tracker.isSender()) {
+                attach.withRole(Role.SENDER);
+                // Signal that a detach is incoming since an error was set
+                // the action will not override an explicitly null source.
+                if (getPerformative().getError() != null) {
+                    attach.withNullSource();
+                }
+            } else {
+                attach.withRole(Role.RECEIVER);
+                // Signal that a detach is incoming since an error was set
+                // the action will not override an explicitly null target.
+                if (getPerformative().getError() != null) {
+                    if (getPerformative().getError() != null) {
+                        attach.withNullTarget();
+                    }
+                }
+            }
+
+            attach.perform(driver);
+        }
 
         getPerformative().setHandle(tracker.getHandle());
     }

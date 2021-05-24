@@ -41,9 +41,9 @@ import org.apache.qpid.protonj2.types.messaging.Rejected;
 import org.apache.qpid.protonj2.types.messaging.Source;
 import org.apache.qpid.protonj2.types.transactions.Coordinator;
 import org.apache.qpid.protonj2.types.transactions.Declare;
+import org.apache.qpid.protonj2.types.transactions.Declared;
 import org.apache.qpid.protonj2.types.transactions.Discharge;
 import org.apache.qpid.protonj2.types.transactions.TransactionErrors;
-import org.apache.qpid.protonj2.types.transactions.TransactionalState;
 import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 
 /**
@@ -124,8 +124,7 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
         // Start tracking this transaction as active.
         transactions.put(txnId.asProtonBuffer(), txn);
 
-        TransactionalState declaration = new TransactionalState();
-        declaration.setOutcome(Accepted.getInstance());
+        Declared declaration = new Declared();
         declaration.setTxnId(txnId);
 
         txn.getDeclare().disposition(declaration, true);
