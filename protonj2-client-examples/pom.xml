@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.apache.qpid</groupId>
     <artifactId>protonj2-parent</artifactId>
-    <version>1.0.0-M2</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>protonj2-client-examples</artifactId>
