@@ -69,10 +69,10 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleRead(EngineHandlerContext context, HeaderEnvelope envelope) {
         if (traceFrames) {
-            trace(envelope.isSaslHeader() ? SASL_OUT_PREFIX : AMQP_OUT_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
+            trace(envelope.isSaslHeader() ? SASL_IN_PREFIX : AMQP_IN_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
         }
 
-        log(envelope.isSaslHeader() ? SASL_OUT_PREFIX : AMQP_OUT_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
+        log(envelope.isSaslHeader() ? SASL_IN_PREFIX : AMQP_IN_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
 
         context.fireRead(envelope);
     }
