@@ -137,8 +137,18 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
         return this;
     }
 
+    public TransferInjectAction withMessageFormat(int messageFormat) {
+        transfer.setMessageFormat(UnsignedInteger.valueOf(messageFormat));
+        return this;
+    }
+
     public TransferInjectAction withMessageFormat(long messageFormat) {
         transfer.setMessageFormat(UnsignedInteger.valueOf(messageFormat));
+        return this;
+    }
+
+    public TransferInjectAction withMessageFormat(UnsignedInteger messageFormat) {
+        transfer.setMessageFormat(messageFormat);
         return this;
     }
 

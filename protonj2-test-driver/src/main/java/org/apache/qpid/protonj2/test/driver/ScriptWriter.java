@@ -16,11 +16,8 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
@@ -51,6 +48,7 @@ import org.apache.qpid.protonj2.test.driver.actions.TransferInjectAction;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Source;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Target;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.security.SaslCode;
 import org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
@@ -73,6 +71,7 @@ import org.apache.qpid.protonj2.test.driver.expectations.SaslMechanismsExpectati
 import org.apache.qpid.protonj2.test.driver.expectations.SaslOutcomeExpectation;
 import org.apache.qpid.protonj2.test.driver.expectations.SaslResponseExpectation;
 import org.apache.qpid.protonj2.test.driver.expectations.TransferExpectation;
+import org.hamcrest.Matchers;
 
 /**
  * Class used to create test scripts using the {@link AMQPTestDriver}
@@ -174,7 +173,7 @@ public abstract class ScriptWriter {
         expecting.withHandle(notNullValue());
         expecting.withDeliveryId(notNullValue());
         expecting.withDeliveryTag(notNullValue());
-        expecting.withMessageFormat(anyOf(nullValue(), equalTo(0)));
+        expecting.withMessageFormat(Matchers.oneOf(null, 0, UnsignedInteger.ZERO));
 
         getDriver().addScriptedElement(expecting);
         return expecting;
@@ -186,7 +185,7 @@ public abstract class ScriptWriter {
         expecting.withHandle(notNullValue());
         expecting.withDeliveryId(notNullValue());
         expecting.withDeliveryTag(notNullValue());
-        expecting.withMessageFormat(anyOf(nullValue(), equalTo(0)));
+        expecting.withMessageFormat(Matchers.oneOf(null, 0, UnsignedInteger.ZERO));
 
         getDriver().addScriptedElement(expecting);
         return expecting;

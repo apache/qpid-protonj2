@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
 import org.apache.qpid.protonj2.test.driver.utils.TestPeerTestsBase;
 import org.junit.jupiter.api.Test;
@@ -164,7 +165,16 @@ class TransactionHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
-    public void testTxnDeclarationAndDischarge() throws Exception {
+    public void testTxnDeclarationAndDischargeNullMessageFormat() throws Exception {
+        doTestTxnDeclarationAndDischarge(null);
+    }
+
+    @Test
+    public void testTxnDeclarationAndDischargeZeroMessageFormat() throws Exception {
+        doTestTxnDeclarationAndDischarge(UnsignedInteger.ZERO);
+    }
+
+    private void doTestTxnDeclarationAndDischarge(UnsignedInteger messageFormat) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
 
@@ -173,7 +183,7 @@ class TransactionHandlingTest extends TestPeerTestsBase {
             peer.expectBegin().respond();
             peer.expectCoordinatorAttach().ofSender().respond();
             peer.remoteFlow().withLinkCredit(2).queue();
-            peer.expectDeclare().declared(new byte[] { 0, 1, 2, 3 });
+            peer.expectDeclare().withMessageFormat(messageFormat).declared(new byte[] { 0, 1, 2, 3 });
             peer.expectDischarge().accept();
             peer.expectDetach().respond();
             peer.expectEnd().respond();
@@ -198,7 +208,7 @@ class TransactionHandlingTest extends TestPeerTestsBase {
             client.expectFlow().withLinkCredit(2);
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             client.expectDisposition().withState().declared(new byte[] {0, 1, 2, 3});
-            client.remoteDeclare().withDeliveryTag(new byte[] {0}).withDeliveryId(0).now();
+            client.remoteDeclare().withMessageFormat(messageFormat).withDeliveryTag(new byte[] {0}).withDeliveryId(0).now();
 
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             client.expectDisposition().withState().accepted();
