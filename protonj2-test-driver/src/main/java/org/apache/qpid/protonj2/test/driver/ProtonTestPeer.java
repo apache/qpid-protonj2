@@ -105,6 +105,8 @@ public abstract class ProtonTestPeer extends ScriptWriter implements AutoCloseab
 
     protected abstract void processDriverOutput(ByteBuffer frame);
 
+    protected abstract void processConnectionEstablished();
+
     protected void checkClosed() {
         if (closed.get()) {
             throw new IllegalStateException("The test peer is closed");

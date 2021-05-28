@@ -131,6 +131,12 @@ public class ProtonTestServer extends ProtonTestPeer {
             return new SimpleChannelInboundHandler<ByteBuf>() {
 
                 @Override
+                public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                    processConnectionEstablished();
+                    ctx.fireChannelActive();
+                }
+
+                @Override
                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf input) throws Exception {
                     LOG.trace("AMQP Test Server Channel read: {}", input);
 
@@ -229,6 +235,12 @@ public class ProtonTestServer extends ProtonTestPeer {
     protected void processDriverOutput(ByteBuffer frame) {
         LOG.trace("AMQP Server Channel writing: {}", frame);
         server.write(frame);
+    }
+
+    @Override
+    protected void processConnectionEstablished() {
+        LOG.trace("AMQP Server has a client connected.");
+        driver.handleConnectedEstablished();
     }
 
     protected void processDriverAssertion(AssertionError error) {

@@ -247,6 +247,15 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
 
     //----- Test driver handling of decoded AMQP frames
 
+    void handleConnectedEstablished() throws AssertionError {
+        synchronized (script) {
+            ScriptedElement peekNext = script.peek();
+            if (peekNext instanceof ScriptedAction) {
+                prcessScript(peekNext);
+            }
+        }
+    }
+
     void handleHeader(AMQPHeader header) throws AssertionError {
         synchronized (script) {
             final ScriptedElement scriptEntry = script.poll();

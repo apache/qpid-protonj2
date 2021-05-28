@@ -79,6 +79,12 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
     }
 
     @Override
+    protected void processConnectionEstablished() {
+        LOG.trace("AMQP Client connected to remote.");
+        driver.handleConnectedEstablished();
+    }
+
+    @Override
     protected void processCloseRequest() {
         try {
             client.close();
@@ -89,7 +95,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
 
     @Override
     protected void processDriverOutput(ByteBuffer frame) {
-        LOG.trace("AMQP Server Channel writing: {}", frame);
+        LOG.trace("AMQP Client Channel writing: {}", frame);
         client.write(frame);
     }
 
@@ -181,6 +187,12 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
         @Override
         protected ChannelHandler getClientHandler() {
             return new SimpleChannelInboundHandler<ByteBuf>() {
+
+                @Override
+                public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                    processConnectionEstablished();
+                    ctx.fireChannelActive();
+                }
 
                 @Override
                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf input) throws Exception {

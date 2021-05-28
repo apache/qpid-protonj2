@@ -72,4 +72,9 @@ public class ProtonTestConnector extends ProtonTestPeer implements Consumer<Byte
     protected void processDriverOutput(ByteBuffer frame) {
         inputConsumer.accept(frame);
     }
+
+    @Override
+    protected void processConnectionEstablished() {
+        driver.handleConnectedEstablished();
+    }
 }
