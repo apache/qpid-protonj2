@@ -17,7 +17,6 @@
 package org.apache.qpid.protonj2.test.driver.expectations;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.ScriptedExpectation;
@@ -137,8 +136,8 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
     }
 
     protected final void verifyFrameSize(int frameSize) {
-        if (this.frameSize != null) {
-            assertEquals(this.frameSize, UnsignedInteger.valueOf(frameSize), String.format(
+        if (this.frameSize != null && !this.frameSize.equals(UnsignedInteger.valueOf(frameSize))) {
+            throw new AssertionError(String.format(
                 "Expected frame size %s did not match that of the received frame: %d", this.frameSize, frameSize));
         }
     }

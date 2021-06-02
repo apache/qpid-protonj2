@@ -18,7 +18,6 @@ package org.apache.qpid.protonj2.test.driver;
 
 import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -419,7 +418,9 @@ public abstract class ScriptWriter {
      *      The set of mechanisms that the server should offer in the SASL Mechanisms frame
      */
     public void expectFailingSASLPlainConnect(byte saslCode, String... offeredMechanisms) {
-        assertTrue(Arrays.asList(offeredMechanisms).contains("PLAIN"));
+        if (!Arrays.asList(offeredMechanisms).contains("PLAIN")) {
+            throw new AssertionError("Expected offered mechanisms that contains the PLAIN mechanism");
+        }
 
         expectSASLHeader().respondWithSASLPHeader();
         remoteSaslMechanisms().withMechanisms(offeredMechanisms).queue();
