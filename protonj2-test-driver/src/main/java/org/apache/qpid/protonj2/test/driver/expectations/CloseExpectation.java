@@ -55,8 +55,8 @@ public class CloseExpectation extends AbstractExpectation<Close> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleClose(Close close, ByteBuf payload, int channel, AMQPTestDriver context) {
-        super.handleClose(close, payload, channel, context);
+    public void handleClose(int frameSize, Close close, ByteBuf payload, int channel, AMQPTestDriver context) {
+        super.handleClose(frameSize, close, payload, channel, context);
 
         if (response == null) {
             return;

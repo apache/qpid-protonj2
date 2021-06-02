@@ -68,7 +68,7 @@ public class End extends PerformativeDescribedType {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ByteBuf payload, int channel, E context) {
-        handler.handleEnd(this, payload, channel, context);
+    public <E> void invoke(PerformativeHandler<E> handler, int frameSize, ByteBuf payload, int channel, E context) {
+        handler.handleEnd(frameSize, this, payload, channel, context);
     }
 }

@@ -96,8 +96,8 @@ public class OpenExpectation extends AbstractExpectation<Open> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleOpen(Open open, ByteBuf payload, int channel, AMQPTestDriver context) {
-        super.handleOpen(open, payload, channel, context);
+    public void handleOpen(int frameSize, Open open, ByteBuf payload, int channel, AMQPTestDriver context) {
+        super.handleOpen(frameSize, open, payload, channel, context);
 
         if (response != null) {
             // Input was validated now populate response with auto values where not configured

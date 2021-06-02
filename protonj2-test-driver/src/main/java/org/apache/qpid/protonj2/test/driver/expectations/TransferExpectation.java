@@ -130,8 +130,8 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     }
 
     @Override
-    public void handleTransfer(Transfer transfer, ByteBuf payload, int channel, AMQPTestDriver driver) {
-        super.handleTransfer(transfer, payload, channel, driver);
+    public void handleTransfer(int frameSize, Transfer transfer, ByteBuf payload, int channel, AMQPTestDriver driver) {
+        super.handleTransfer(frameSize, transfer, payload, channel, driver);
 
         final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);
         final SessionTracker session = driver.sessions().getSessionFromRemoteChannel(remoteChannel);

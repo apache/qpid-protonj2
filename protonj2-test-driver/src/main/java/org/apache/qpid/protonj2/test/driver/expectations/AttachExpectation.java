@@ -106,8 +106,8 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleAttach(Attach attach, ByteBuf payload, int channel, AMQPTestDriver context) {
-        super.handleAttach(attach, payload, channel, context);
+    public void handleAttach(int frameSize, Attach attach, ByteBuf payload, int channel, AMQPTestDriver context) {
+        super.handleAttach(frameSize, attach, payload, channel, context);
 
         final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);
         final SessionTracker session = driver.sessions().getSessionFromRemoteChannel(remoteChannel);

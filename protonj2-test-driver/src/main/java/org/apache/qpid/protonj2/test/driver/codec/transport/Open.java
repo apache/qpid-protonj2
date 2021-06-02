@@ -162,8 +162,8 @@ public class Open extends PerformativeDescribedType {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ByteBuf payload, int channel, E context) {
-        handler.handleOpen(this, payload, channel, context);
+    public <E> void invoke(PerformativeHandler<E> handler, int frameSize, ByteBuf payload, int channel, E context) {
+        handler.handleOpen(frameSize, this, payload, channel, context);
     }
 
     @Override

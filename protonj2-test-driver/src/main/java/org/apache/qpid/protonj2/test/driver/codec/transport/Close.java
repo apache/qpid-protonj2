@@ -68,7 +68,7 @@ public class Close extends PerformativeDescribedType {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ByteBuf payload, int channel, E context) {
-        handler.handleClose(this, payload, channel, context);
+    public <E> void invoke(PerformativeHandler<E> handler, int frameSize, ByteBuf payload, int channel, E context) {
+        handler.handleClose(frameSize, this, payload, channel, context);
     }
 }

@@ -69,8 +69,8 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleDetach(Detach detach, ByteBuf payload, int channel, AMQPTestDriver context) {
-        super.handleDetach(detach, payload, channel, context);
+    public void handleDetach(int frameSize, Detach detach, ByteBuf payload, int channel, AMQPTestDriver context) {
+        super.handleDetach(frameSize, detach, payload, channel, context);
 
         final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);
         final SessionTracker session = driver.sessions().getSessionFromRemoteChannel(remoteChannel);

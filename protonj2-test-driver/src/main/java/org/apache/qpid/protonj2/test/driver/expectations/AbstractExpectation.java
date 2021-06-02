@@ -17,10 +17,12 @@
 package org.apache.qpid.protonj2.test.driver.expectations;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.ScriptedExpectation;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.security.SaslChallenge;
 import org.apache.qpid.protonj2.test.driver.codec.security.SaslInit;
 import org.apache.qpid.protonj2.test.driver.codec.security.SaslMechanisms;
@@ -58,6 +60,8 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
 
     protected int expectedChannel = ANY_CHANNEL;
     protected final AMQPTestDriver driver;
+
+    private UnsignedInteger frameSize;
     private boolean optional;
 
     public AbstractExpectation(AMQPTestDriver driver) {
@@ -88,6 +92,17 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
     public AbstractExpectation<T> optional() {
         optional = true;
         return this;
+    }
+
+    /**
+     * Configures the expected frame size that this expectation will enforce when processing
+     * a new scripted expectation.
+     *
+     * @param frameSize
+     * 		The expected size of the enclosing frame that carries the incoming data.
+     */
+    public void withFrameSize(int frameSize) {
+        this.frameSize = new UnsignedInteger(frameSize);
     }
 
     //------ Abstract classes use these methods to control validation
@@ -121,6 +136,13 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
         }
     }
 
+    protected final void verifyFrameSize(int frameSize) {
+        if (this.frameSize != null) {
+            assertEquals(this.frameSize, UnsignedInteger.valueOf(frameSize), String.format(
+                "Expected frame size %s did not match that of the received frame: %d", this.frameSize, frameSize));
+        }
+    }
+
     protected abstract Matcher<ListDescribedType> getExpectationMatcher();
 
     protected abstract Class<T> getExpectedTypeClass();
@@ -132,94 +154,95 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
     //----- Base implementation of the handle methods to describe when we get wrong type.
 
     @Override
-    public void handleOpen(Open open, ByteBuf payload, int channel, AMQPTestDriver context) {
-        doVerification(open, payload, channel, context);
+    public void handleOpen(int frameSize, Open open, ByteBuf payload, int channel, AMQPTestDriver context) {
+        doVerification(frameSize, open, payload, channel, context);
     }
 
     @Override
-    public void handleBegin(Begin begin, ByteBuf payload, int channel, AMQPTestDriver context) {
-        doVerification(begin, payload, channel, context);
+    public void handleBegin(int frameSize, Begin begin, ByteBuf payload, int channel, AMQPTestDriver context) {
+        doVerification(frameSize, begin, payload, channel, context);
     }
 
     @Override
-    public void handleAttach(Attach attach, ByteBuf payload, int channel, AMQPTestDriver context) {
-        doVerification(attach, payload, channel, context);
+    public void handleAttach(int frameSize, Attach attach, ByteBuf payload, int channel, AMQPTestDriver context) {
+        doVerification(frameSize, attach, payload, channel, context);
     }
 
     @Override
-    public void handleFlow(Flow flow, ByteBuf payload, int channel, AMQPTestDriver context) {
-        doVerification(flow, payload, channel, context);
+    public void handleFlow(int frameSize, Flow flow, ByteBuf payload, int channel, AMQPTestDriver context) {
+        doVerification(frameSize, flow, payload, channel, context);
     }
 
     @Override
-    public void handleTransfer(Transfer transfer, ByteBuf payload, int channel,AMQPTestDriver context) {
-        doVerification(transfer, payload, channel, context);
+    public void handleTransfer(int frameSize, Transfer transfer, ByteBuf payload, int channel,AMQPTestDriver context) {
+        doVerification(frameSize, transfer, payload, channel, context);
     }
 
     @Override
-    public void handleDisposition(Disposition disposition, ByteBuf payload, int channel, AMQPTestDriver context) {
-        doVerification(disposition, payload, channel, context);
+    public void handleDisposition(int frameSize, Disposition disposition, ByteBuf payload, int channel, AMQPTestDriver context) {
+        doVerification(frameSize, disposition, payload, channel, context);
     }
 
     @Override
-    public void handleDetach(Detach detach, ByteBuf payload, int channel, AMQPTestDriver context) {
-        doVerification(detach, payload, channel, context);
+    public void handleDetach(int frameSize, Detach detach, ByteBuf payload, int channel, AMQPTestDriver context) {
+        doVerification(frameSize, detach, payload, channel, context);
     }
 
     @Override
-    public void handleEnd(End end, ByteBuf payload, int channel, AMQPTestDriver context) {
-        doVerification(end, payload, channel, context);
+    public void handleEnd(int frameSize, End end, ByteBuf payload, int channel, AMQPTestDriver context) {
+        doVerification(frameSize, end, payload, channel, context);
     }
 
     @Override
-    public void handleClose(Close close, ByteBuf payload, int channel, AMQPTestDriver context) {
-        doVerification(close, payload, channel, context);
+    public void handleClose(int frameSize, Close close, ByteBuf payload, int channel, AMQPTestDriver context) {
+        doVerification(frameSize, close, payload, channel, context);
     }
 
     @Override
-    public void handleHeartBeat(HeartBeat thump, ByteBuf payload, int channel, AMQPTestDriver context) {
-        doVerification(thump, payload, channel, context);
+    public void handleHeartBeat(int frameSize, HeartBeat thump, ByteBuf payload, int channel, AMQPTestDriver context) {
+        doVerification(frameSize, thump, payload, channel, context);
     }
 
     @Override
-    public void handleMechanisms(SaslMechanisms saslMechanisms, AMQPTestDriver context) {
-        doVerification(saslMechanisms, null, 0, context);
+    public void handleMechanisms(int frameSize, SaslMechanisms saslMechanisms, AMQPTestDriver context) {
+        doVerification(frameSize, saslMechanisms, null, 0, context);
     }
 
     @Override
-    public void handleInit(SaslInit saslInit, AMQPTestDriver context) {
-        doVerification(saslInit, null, 0, context);
+    public void handleInit(int frameSize, SaslInit saslInit, AMQPTestDriver context) {
+        doVerification(frameSize, saslInit, null, 0, context);
     }
 
     @Override
-    public void handleChallenge(SaslChallenge saslChallenge, AMQPTestDriver context) {
-        doVerification(saslChallenge, null, 0, context);
+    public void handleChallenge(int frameSize, SaslChallenge saslChallenge, AMQPTestDriver context) {
+        doVerification(frameSize, saslChallenge, null, 0, context);
     }
 
     @Override
-    public void handleResponse(SaslResponse saslResponse, AMQPTestDriver context) {
-        doVerification(saslResponse, null, 0, context);
+    public void handleResponse(int frameSize, SaslResponse saslResponse, AMQPTestDriver context) {
+        doVerification(frameSize, saslResponse, null, 0, context);
     }
 
     @Override
-    public void handleOutcome(SaslOutcome saslOutcome, AMQPTestDriver context) {
-        doVerification(saslOutcome, null, 0, context);
+    public void handleOutcome(int frameSize, SaslOutcome saslOutcome, AMQPTestDriver context) {
+        doVerification(frameSize, saslOutcome, null, 0, context);
     }
 
     @Override
     public void handleAMQPHeader(AMQPHeader header, AMQPTestDriver context) {
-        doVerification(header, null, 0, context);
+        doVerification(header.getBuffer().length, header, null, 0, context);
     }
 
     @Override
     public void handleSASLHeader(AMQPHeader header, AMQPTestDriver context) {
-        doVerification(header, null, 0, context);
+        doVerification(header.getBuffer().length, header, null, 0, context);
     }
 
     //----- Internal implementation
 
-    private void doVerification(Object performative, ByteBuf payload, int channel, AMQPTestDriver driver) {
+    private void doVerification(int frameSize, Object performative, ByteBuf payload, int channel, AMQPTestDriver driver) {
         if (getExpectedTypeClass().equals(performative.getClass())) {
+            verifyFrameSize(frameSize);
             verifyPayload(payload);
             verifyChannel(channel);
             verifyPerformative(getExpectedTypeClass().cast(performative));

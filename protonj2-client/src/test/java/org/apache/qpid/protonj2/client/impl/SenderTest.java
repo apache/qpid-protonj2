@@ -1907,13 +1907,13 @@ public class SenderTest extends ImperativeClientTestCase {
             });
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectTransfer().withNonNullPayload().withMore(true);
+            peer.expectTransfer().withNonNullPayload().withMore(true).withFrameSize(1024);
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).queue();
-            peer.expectTransfer().withNonNullPayload().withMore(true);
+            peer.expectTransfer().withNonNullPayload().withMore(true).withFrameSize(1024);
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(2).withLinkCredit(10).queue();
-            peer.expectTransfer().withNonNullPayload().withMore(true);
+            peer.expectTransfer().withNonNullPayload().withMore(true).withFrameSize(1024);
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(3).withLinkCredit(10).queue();
-            peer.expectTransfer().withNonNullPayload().withMore(true);
+            peer.expectTransfer().withNonNullPayload().withMore(true).withFrameSize(1024);
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(4).withLinkCredit(10).queue();
             peer.expectTransfer().withNonNullPayload().withMore(false).accept();
 

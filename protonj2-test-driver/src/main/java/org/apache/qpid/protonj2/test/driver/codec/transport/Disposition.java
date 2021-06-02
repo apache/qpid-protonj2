@@ -120,8 +120,8 @@ public class Disposition extends PerformativeDescribedType {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ByteBuf payload, int channel, E context) {
-        handler.handleDisposition(this, payload, channel, context);
+    public <E> void invoke(PerformativeHandler<E> handler, int frameSize, ByteBuf payload, int channel, E context) {
+        handler.handleDisposition(frameSize, this, payload, channel, context);
     }
 
     @Override

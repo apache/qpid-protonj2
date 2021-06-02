@@ -171,8 +171,8 @@ public class Flow extends PerformativeDescribedType {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ByteBuf payload, int channel, E context) {
-        handler.handleFlow(this, payload, channel, context);
+    public <E> void invoke(PerformativeHandler<E> handler, int frameSize, ByteBuf payload, int channel, E context) {
+        handler.handleFlow(frameSize, this, payload, channel, context);
     }
 
     @Override

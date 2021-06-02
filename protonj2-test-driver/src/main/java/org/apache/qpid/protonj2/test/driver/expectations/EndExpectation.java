@@ -63,8 +63,8 @@ public class EndExpectation extends AbstractExpectation<End> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleEnd(End end, ByteBuf payload, int channel, AMQPTestDriver context) {
-        super.handleEnd(end, payload, channel, context);
+    public void handleEnd(int frameSize, End end, ByteBuf payload, int channel, AMQPTestDriver context) {
+        super.handleEnd(frameSize, end, payload, channel, context);
 
         // Ensure that local session tracking knows that remote ended a Session.
         final SessionTracker session = context.sessions().handleEnd(end, UnsignedShort.valueOf(channel));

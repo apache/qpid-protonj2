@@ -17,8 +17,13 @@
 package org.apache.qpid.protonj2.test.driver;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
 import org.apache.qpid.protonj2.test.driver.utils.TestPeerTestsBase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -34,5 +39,27 @@ public class ProtonTestServerTest extends TestPeerTestsBase {
         peer.start();
         peer.close();
         assertTrue(peer.isClosed());
+    }
+
+    @Test
+    public void testServerFailsTestIfFrameSizeExpectationNotMet() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().withFrameSize(4096);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient();
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+            client.remoteOpen().now();
+
+            assertThrows(AssertionError.class, () -> peer.waitForScriptToComplete(5, TimeUnit.SECONDS));
+
+            client.close();
+        }
     }
 }

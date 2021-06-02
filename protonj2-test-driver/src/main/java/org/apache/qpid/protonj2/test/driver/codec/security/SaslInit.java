@@ -87,7 +87,7 @@ public class SaslInit extends SaslDescribedType {
     }
 
     @Override
-    public <E> void invoke(SaslPerformativeHandler<E> handler, E context) {
-        handler.handleInit(this, context);
+    public <E> void invoke(SaslPerformativeHandler<E> handler, int frameSzie, E context) {
+        handler.handleInit(frameSzie, this, context);
     }
 }

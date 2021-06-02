@@ -91,8 +91,8 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleBegin(Begin begin, ByteBuf payload, int channel, AMQPTestDriver context) {
-        super.handleBegin(begin, payload, channel, context);
+    public void handleBegin(int frameSize, Begin begin, ByteBuf payload, int channel, AMQPTestDriver context) {
+        super.handleBegin(frameSize, begin, payload, channel, context);
 
         context.sessions().handleBegin(begin, UnsignedShort.valueOf(channel));
 

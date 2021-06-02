@@ -294,7 +294,7 @@ class FrameDecoder {
             } else {
                 LOG.trace("{} Read: CH[{}] : {} [{}]", driver.getName(), channel, HeartBeat.INSTANCE, payload);
                 transitionToFrameSizeParsingStage();
-                driver.handleHeartbeat(channel);
+                driver.handleHeartbeat(frameSize, channel);
                 return;
             }
 
@@ -302,12 +302,12 @@ class FrameDecoder {
                 PerformativeDescribedType performative = (PerformativeDescribedType) val;
                 LOG.trace("{} Read: CH[{}] : {} [{}]", driver.getName(), channel, performative, payload);
                 transitionToFrameSizeParsingStage();
-                driver.handlePerformative(performative, channel, payload);
+                driver.handlePerformative(frameSize, performative, channel, payload);
             } else if (type == SASL_FRAME_TYPE) {
                 SaslDescribedType performative = (SaslDescribedType) val;
                 LOG.trace("{} Read: {} [{}]", driver.getName(), performative, payload);
                 transitionToFrameSizeParsingStage();
-                driver.handleSaslPerformative(performative, channel, payload);
+                driver.handleSaslPerformative(frameSize, performative, channel, payload);
             } else {
                 throw new AssertionError(String.format("unknown frame type: %d", type));
             }

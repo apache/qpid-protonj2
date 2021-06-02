@@ -78,7 +78,7 @@ public class SaslOutcome extends SaslDescribedType {
     }
 
     @Override
-    public <E> void invoke(SaslPerformativeHandler<E> handler, E context) {
-        handler.handleOutcome(this, context);
+    public <E> void invoke(SaslPerformativeHandler<E> handler, int frameSzie, E context) {
+        handler.handleOutcome(frameSzie, this, context);
     }
 }

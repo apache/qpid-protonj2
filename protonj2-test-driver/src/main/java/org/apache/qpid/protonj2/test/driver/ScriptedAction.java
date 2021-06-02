@@ -100,72 +100,72 @@ public interface ScriptedAction extends ScriptedElement {
     }
 
     @Override
-    default void handleOpen(Open open, ByteBuf payload, int channel, AMQPTestDriver context) {
+    default void handleOpen(int frameSize, Open open, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Open arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleBegin(Begin begin, ByteBuf payload, int channel, AMQPTestDriver context) {
+    default void handleBegin(int frameSize, Begin begin, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Begin arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleAttach(Attach attach, ByteBuf payload, int channel, AMQPTestDriver context) {
+    default void handleAttach(int frameSize, Attach attach, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Attach arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleFlow(Flow flow, ByteBuf payload, int channel, AMQPTestDriver context) {
+    default void handleFlow(int frameSize, Flow flow, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Flow arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleTransfer(Transfer transfer, ByteBuf payload, int channel, AMQPTestDriver context) {
+    default void handleTransfer(int frameSize, Transfer transfer, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Transfer arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleDisposition(Disposition disposition, ByteBuf payload, int channel, AMQPTestDriver context) {
+    default void handleDisposition(int frameSize, Disposition disposition, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Disposition arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleDetach(Detach detach, ByteBuf payload, int channel, AMQPTestDriver context) {
+    default void handleDetach(int frameSize, Detach detach, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Detach arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleEnd(End end, ByteBuf payload, int channel, AMQPTestDriver context) {
+    default void handleEnd(int frameSize, End end, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("End arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleClose(Close close, ByteBuf payload, int channel, AMQPTestDriver context) {
+    default void handleClose(int frameSize, Close close, ByteBuf payload, int channel, AMQPTestDriver context) {
         throw new AssertionError("Close arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleMechanisms(SaslMechanisms saslMechanisms, AMQPTestDriver context) {
+    default void handleMechanisms(int frameSize, SaslMechanisms saslMechanisms, AMQPTestDriver context) {
         throw new AssertionError("SaslMechanisms arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleInit(SaslInit saslInit, AMQPTestDriver context) {
+    default void handleInit(int frameSize, SaslInit saslInit, AMQPTestDriver context) {
         throw new AssertionError("SaslInit arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleChallenge(SaslChallenge saslChallenge, AMQPTestDriver context) {
+    default void handleChallenge(int frameSize, SaslChallenge saslChallenge, AMQPTestDriver context) {
         throw new AssertionError("SaslChallenge arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleResponse(SaslResponse saslResponse, AMQPTestDriver context) {
+    default void handleResponse(int frameSize, SaslResponse saslResponse, AMQPTestDriver context) {
         throw new AssertionError("SaslResponse arrived when expecting to perform an action");
     }
 
     @Override
-    default void handleOutcome(SaslOutcome saslOutcome, AMQPTestDriver context) {
+    default void handleOutcome(int frameSize, SaslOutcome saslOutcome, AMQPTestDriver context) {
         throw new AssertionError("SaslOutcome arrived when expecting to perform an action");
     }
 }

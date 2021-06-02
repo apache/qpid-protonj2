@@ -52,34 +52,34 @@ public abstract class PerformativeDescribedType extends ListDescribedType {
 
     public interface PerformativeHandler<E> {
 
-        default void handleOpen(Open open, ByteBuf payload, int channel, E context) {
+        default void handleOpen(int frameSize, Open open, ByteBuf payload, int channel, E context) {
             throw new AssertionError("AMQP Open was not handled");
         }
-        default void handleBegin(Begin begin, ByteBuf payload, int channel, E context) {
+        default void handleBegin(int frameSize, Begin begin, ByteBuf payload, int channel, E context) {
             throw new AssertionError("AMQP Begin was not handled");
         }
-        default void handleAttach(Attach attach, ByteBuf payload, int channel, E context) {
+        default void handleAttach(int frameSize, Attach attach, ByteBuf payload, int channel, E context) {
             throw new AssertionError("AMQP Attach was not handled");
         }
-        default void handleFlow(Flow flow, ByteBuf payload, int channel, E context) {
+        default void handleFlow(int frameSize, Flow flow, ByteBuf payload, int channel, E context) {
             throw new AssertionError("AMQP Flow was not handled");
         }
-        default void handleTransfer(Transfer transfer, ByteBuf payload, int channel, E context) {
+        default void handleTransfer(int frameSize, Transfer transfer, ByteBuf payload, int channel, E context) {
             throw new AssertionError("AMQP Transfer was not handled");
         }
-        default void handleDisposition(Disposition disposition, ByteBuf payload, int channel, E context) {
+        default void handleDisposition(int frameSize, Disposition disposition, ByteBuf payload, int channel, E context) {
             throw new AssertionError("AMQP Disposition was not handled");
         }
-        default void handleDetach(Detach detach, ByteBuf payload, int channel, E context) {
+        default void handleDetach(int frameSize, Detach detach, ByteBuf payload, int channel, E context) {
             throw new AssertionError("AMQP Detach was not handled");
         }
-        default void handleEnd(End end, ByteBuf payload, int channel, E context) {
+        default void handleEnd(int frameSize, End end, ByteBuf payload, int channel, E context) {
             throw new AssertionError("AMQP End was not handled");
         }
-        default void handleClose(Close close, ByteBuf payload, int channel, E context) {
+        default void handleClose(int frameSize, Close close, ByteBuf payload, int channel, E context) {
             throw new AssertionError("AMQP Close was not handled");
         }
-        default void handleHeartBeat(HeartBeat thump, ByteBuf payload, int channel, E context) {
+        default void handleHeartBeat(int frameSize, HeartBeat thump, ByteBuf payload, int channel, E context) {
             throw new AssertionError("AMQP Heart Beat frame was not handled");
         }
     }
@@ -88,7 +88,7 @@ public abstract class PerformativeDescribedType extends ListDescribedType {
         return getFieldValue(index);
     }
 
-    public abstract <E> void invoke(PerformativeHandler<E> handler, ByteBuf payload, int channel, E context);
+    public abstract <E> void invoke(PerformativeHandler<E> handler, int frameSize, ByteBuf payload, int channel, E context);
 
     @Override
     public String toString() {

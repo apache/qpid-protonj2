@@ -68,8 +68,8 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
     //----- Handle the incoming Disposition validation and update local side if able
 
     @Override
-    public void handleDisposition(Disposition disposition, ByteBuf payload, int channel, AMQPTestDriver context) {
-        super.handleDisposition(disposition, payload, channel, context);
+    public void handleDisposition(int frameSize, Disposition disposition, ByteBuf payload, int channel, AMQPTestDriver context) {
+        super.handleDisposition(frameSize, disposition, payload, channel, context);
 
         final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);
         final SessionTracker session = driver.sessions().getSessionFromRemoteChannel(remoteChannel);

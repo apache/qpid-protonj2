@@ -280,7 +280,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         }
     }
 
-    void handleSaslPerformative(SaslDescribedType sasl, int channel, ByteBuf payload) throws AssertionError {
+    void handleSaslPerformative(int frameSize, SaslDescribedType sasl, int channel, ByteBuf payload) throws AssertionError {
         synchronized (script) {
             final ScriptedElement scriptEntry = script.poll();
             if (scriptEntry == null) {
@@ -288,10 +288,10 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
             }
 
             try {
-                sasl.invoke(scriptEntry, this);
+                sasl.invoke(scriptEntry, frameSize, this);
             } catch (UnexpectedPerformativeError e) {
                 if (scriptEntry.isOptional()) {
-                    handleSaslPerformative(sasl, channel, payload);
+                    handleSaslPerformative(frameSize, sasl, channel, payload);
                 } else {
                     signalFailure(e);
                     throw e;
@@ -306,7 +306,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         }
     }
 
-    void handlePerformative(PerformativeDescribedType amqp, int channel, ByteBuf payload) throws AssertionError {
+    void handlePerformative(int frameSize, PerformativeDescribedType amqp, int channel, ByteBuf payload) throws AssertionError {
         switch (amqp.getPerformativeType()) {
             case HEARTBEAT:
                 break;
@@ -324,10 +324,10 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
             }
 
             try {
-                amqp.invoke(scriptEntry, payload, channel, this);
+                amqp.invoke(scriptEntry, frameSize, payload, channel, this);
             } catch (UnexpectedPerformativeError e) {
                 if (scriptEntry.isOptional()) {
-                    handlePerformative(amqp, channel, payload);
+                    handlePerformative(frameSize, amqp, channel, payload);
                 } else {
                     signalFailure(e);
                     throw e;
@@ -342,9 +342,9 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         }
     }
 
-    void handleHeartbeat(int channel) {
+    void handleHeartbeat(int frameSize, int channel) {
         emptyFrameCount++;
-        handlePerformative(HeartBeat.INSTANCE, channel, null);
+        handlePerformative(frameSize, HeartBeat.INSTANCE, channel, null);
     }
 
     /**

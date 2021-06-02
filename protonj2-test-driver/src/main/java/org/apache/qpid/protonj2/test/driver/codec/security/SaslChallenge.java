@@ -67,7 +67,7 @@ public class SaslChallenge extends SaslDescribedType {
     }
 
     @Override
-    public <E> void invoke(SaslPerformativeHandler<E> handler, E context) {
-        handler.handleChallenge(this, context);
+    public <E> void invoke(SaslPerformativeHandler<E> handler, int frameSzie, E context) {
+        handler.handleChallenge(frameSzie, this, context);
     }
 }

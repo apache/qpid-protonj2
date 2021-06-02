@@ -40,7 +40,7 @@ public class HeartBeat extends PerformativeDescribedType {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ByteBuf payload, int channel, E context) {
-        handler.handleHeartBeat(INSTANCE, payload, channel, context);
+    public <E> void invoke(PerformativeHandler<E> handler, int frameSize, ByteBuf payload, int channel, E context) {
+        handler.handleHeartBeat(frameSize, INSTANCE, payload, channel, context);
     }
 }
