@@ -142,4 +142,16 @@ public class Disposition extends PerformativeDescribedType {
         }
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "Disposition{" +
+               "role=" + getRole() +
+               ", first=" + getFirst() +
+               ", last=" + getLast() +
+               ", settled=" + getSettled() +
+               ", state=" + getState() +
+               ", batchable=" + getBatchable() +
+               '}';
+    }
 }

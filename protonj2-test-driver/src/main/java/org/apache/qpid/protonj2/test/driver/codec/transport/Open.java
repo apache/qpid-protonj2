@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec.transport;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -183,5 +184,21 @@ public class Open extends PerformativeDescribedType {
             }
         }
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Open{" +
+               " containerId='" + getContainerId() + '\'' +
+               ", hostname='" + getHostname() + '\'' +
+               ", maxFrameSize=" + getMaxFrameSize() +
+               ", channelMax=" + getChannelMax() +
+               ", idleTimeOut=" + getIdleTimeOut() +
+               ", outgoingLocales=" + getOutgoingLocales() +
+               ", incomingLocales=" + getIncomingLocales() +
+               ", offeredCapabilities=" + Arrays.toString(getOfferedCapabilities()) +
+               ", desiredCapabilities=" + Arrays.toString(getDesiredCapabilities()) +
+               ", properties=" + getProperties() +
+               '}';
     }
 }

@@ -102,4 +102,15 @@ public class Header extends ListDescribedType {
     public UnsignedInteger getDeliveryCount() {
         return (UnsignedInteger) getList().get(Field.DELIVERY_COUNT.ordinal());
     }
+
+    @Override
+    public String toString() {
+        return "Header{ " +
+                "durable=" + getDurable() +
+                ", priority=" + getPriority() +
+                ", ttl=" + getTtl() +
+                ", firstAcquirer=" + getFirstAcquirer() +
+                ", deliveryCount=" + getDeliveryCount() +
+                " }";
+    }
 }

@@ -183,4 +183,22 @@ public class Properties extends ListDescribedType {
     public String getReplyToGroupId() {
         return (String) getList().get(Field.REPLY_TO_GROUP_ID.ordinal());
     }
+
+    @Override
+    public String toString() {
+        return "Properties{" +
+                "messageId=" + getMessageId() +
+                ", userId=" + getUserId() +
+                ", to='" + getTo() + '\'' +
+                ", subject='" + getSubject() + '\'' +
+                ", replyTo='" + getReplyTo() + '\'' +
+                ", correlationId=" + getCorrelationId() +
+                ", contentType=" + getContentType() +
+                ", contentEncoding=" + getContentEncoding() +
+                ", absoluteExpiryTime=" + getAbsoluteExpiryTime() +
+                ", creationTime=" + getCreationTime() +
+                ", groupId='" + getGroupId() + '\'' +
+                ", groupSequence=" + getGroupSequence() +
+                ", replyToGroupId='" + getReplyToGroupId() + '\'' + " }";
+    }
 }

@@ -76,4 +76,12 @@ public class Received extends ListDescribedType implements DeliveryState, Outcom
     public DeliveryStateType getType() {
         return DeliveryStateType.Received;
     }
+
+    @Override
+    public String toString() {
+        return "Received{" +
+               "sectionNumber=" + getSectionNumber() +
+               ", sectionOffset=" + getSectionOffset() +
+               '}';
+    }
 }

@@ -107,4 +107,9 @@ public class TransactionalState extends ListDescribedType implements DeliverySta
     public DeliveryStateType getType() {
         return DeliveryStateType.Transactional;
     }
+
+    @Override
+    public String toString() {
+        return "TransactionalState{" + "txnId=" + getTxnId() + ", outcome=" + getOutcome() + '}';
+    }
 }

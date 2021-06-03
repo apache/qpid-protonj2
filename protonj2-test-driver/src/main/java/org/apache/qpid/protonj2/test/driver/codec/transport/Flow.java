@@ -193,4 +193,21 @@ public class Flow extends PerformativeDescribedType {
         }
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "Flow{" +
+               "nextIncomingId=" + getNextIncomingId()+
+               ", incomingWindow=" + getIncomingWindow() +
+               ", nextOutgoingId=" + getNextOutgoingId() +
+               ", outgoingWindow=" + getOutgoingWindow() +
+               ", handle=" + getHandle() +
+               ", deliveryCount=" + getDeliveryCount() +
+               ", linkCredit=" + getLinkCredit() +
+               ", available=" + getAvailable() +
+               ", drain=" + getDrain() +
+               ", echo=" + getEcho() +
+               ", properties=" + getProperties() +
+               '}';
+    }
 }

@@ -86,4 +86,9 @@ public class Released extends ListDescribedType implements DeliveryState, Outcom
     public DeliveryStateType getType() {
         return DeliveryStateType.Released;
     }
+
+    @Override
+    public String toString() {
+        return "Released{}";
+    }
 }

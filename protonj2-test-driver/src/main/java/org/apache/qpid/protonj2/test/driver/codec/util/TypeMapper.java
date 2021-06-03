@@ -19,9 +19,12 @@ package org.apache.qpid.protonj2.test.driver.codec.util;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 
 public abstract class TypeMapper {
+
+    private static final int DEFAULT_QUOTED_STRING_LIMIT = 64;
 
     private TypeMapper() {
     }
@@ -52,5 +55,87 @@ public abstract class TypeMapper {
         }
 
         return result;
+    }
+
+    /**
+     * Converts the Binary to a quoted string using a default max length before truncation value and
+     * appends a truncation indication if the string required truncation.
+     *
+     * @param buffer
+     *        the {@link Binary} to convert into String format.
+     *
+     * @return the converted string
+     */
+    public static String toQuotedString(final Binary buffer) {
+        return toQuotedString(buffer, DEFAULT_QUOTED_STRING_LIMIT, true);
+    }
+
+    /**
+     * Converts the Binary to a quoted string using a default max length before truncation value.
+     *
+     * @param buffer
+     *        the {@link Binary} to convert into String format.
+     * @param appendIfTruncated
+     *        appends "...(truncated)" if not all of the payload is present in the string
+     *
+     * @return the converted string
+     */
+    public static String toQuotedString(final Binary buffer, final boolean appendIfTruncated) {
+        return toQuotedString(buffer, DEFAULT_QUOTED_STRING_LIMIT, appendIfTruncated);
+    }
+
+    /**
+     * Converts the Binary to a quoted string.
+     *
+     * @param buffer
+     *        the {@link Binary} to convert into String format.
+     * @param stringLength
+     *        the maximum length of stringified content (excluding the quotes, and truncated indicator)
+     * @param appendIfTruncated
+     *        appends "...(truncated)" if not all of the payload is present in the string
+     *
+     * @return the converted string
+     */
+    public static String toQuotedString(final Binary buffer, final int stringLength, final boolean appendIfTruncated) {
+        if (buffer == null || buffer.getArray() == null) {
+            return "\"\"";
+        }
+
+        StringBuilder str = new StringBuilder();
+        str.append("\"");
+
+        final int byteToRead = buffer.getLength();
+        int size = 0;
+        boolean truncated = false;
+
+        for (int i = 0; i < byteToRead; ++i) {
+            byte c = buffer.getArray()[i];
+
+            if (c > 31 && c < 127 && c != '\\') {
+                if (size + 1 <= stringLength) {
+                    size += 1;
+                    str.append((char) c);
+                } else {
+                    truncated = true;
+                    break;
+                }
+            } else {
+                if (size + 4 <= stringLength) {
+                    size += 4;
+                    str.append(String.format("\\x%02x", c));
+                } else {
+                    truncated = true;
+                    break;
+                }
+            }
+        }
+
+        str.append("\"");
+
+        if (truncated && appendIfTruncated) {
+            str.append("...(truncated)");
+        }
+
+        return str.toString();
     }
 }

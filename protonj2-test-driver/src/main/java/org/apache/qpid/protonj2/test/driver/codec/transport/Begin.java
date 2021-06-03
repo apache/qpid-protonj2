@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec.transport;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -160,5 +161,19 @@ public class Begin extends PerformativeDescribedType {
             }
         }
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Begin{" +
+               "remoteChannel=" + getRemoteChannel() +
+               ", nextOutgoingId=" + getNextOutgoingId() +
+               ", incomingWindow=" + getIncomingWindow() +
+               ", outgoingWindow=" + getOutgoingWindow() +
+               ", handleMax=" + getHandleMax() +
+               ", offeredCapabilities=" + Arrays.toString(getOfferedCapabilities()) +
+               ", desiredCapabilities=" + Arrays.toString(getDesiredCapabilities()) +
+               ", properties=" + getProperties() +
+               '}';
     }
 }

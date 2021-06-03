@@ -102,4 +102,10 @@ public class Declared extends ListDescribedType implements DeliveryState, Outcom
     public DeliveryStateType getType() {
         return DeliveryStateType.Declared;
     }
+
+    @Override
+    public String toString() {
+        return "Declared{" + "txnId=" + getTxnId() + '}';
+    }
+
 }

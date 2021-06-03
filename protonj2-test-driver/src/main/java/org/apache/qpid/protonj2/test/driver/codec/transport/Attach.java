@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec.transport;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -274,5 +275,24 @@ public class Attach extends PerformativeDescribedType {
             }
         }
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Attach{" +
+            "name='" + getName() + '\'' +
+            ", handle=" + getHandle() +
+            ", role=" + getRole() +
+            ", sndSettleMode=" + getSenderSettleMode() +
+            ", rcvSettleMode=" + getReceiverSettleMode() +
+            ", source=" + getSource() +
+            ", target=" + getTarget() +
+            ", unsettled=" + getUnsettled() +
+            ", incompleteUnsettled=" + getIncompleteUnsettled() +
+            ", initialDeliveryCount=" + getInitialDeliveryCount() +
+            ", maxMessageSize=" + getMaxMessageSize() +
+            ", offeredCapabilities=" + Arrays.toString(getOfferedCapabilities()) +
+            ", desiredCapabilities=" + Arrays.toString(getDesiredCapabilities()) +
+            ", properties=" + getProperties() + '}';
     }
 }

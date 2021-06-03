@@ -40,4 +40,9 @@ public class AmqpValue implements DescribedType {
     public Object getDescribed() {
         return described;
     }
+
+    @Override
+    public String toString() {
+        return "AmqpValue: [ " + getDescribed() + " ]";
+    }
 }

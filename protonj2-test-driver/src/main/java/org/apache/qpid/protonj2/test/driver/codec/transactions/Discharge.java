@@ -101,4 +101,9 @@ public class Discharge extends ListDescribedType {
     public int hashCode() {
         return System.identityHashCode(this);
     }
+
+    @Override
+    public String toString() {
+        return "Discharge{" + "txnId=" + getTxnId() + ", fail=" + getFail() + '}';
+    }
 }

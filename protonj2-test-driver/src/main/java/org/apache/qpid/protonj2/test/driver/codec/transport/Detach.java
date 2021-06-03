@@ -108,4 +108,13 @@ public class Detach extends PerformativeDescribedType {
         }
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "Detach{" +
+               "handle=" + getHandle() +
+               ", closed=" + getClosed() +
+               ", error=" + getError() +
+               '}';
+    }
 }

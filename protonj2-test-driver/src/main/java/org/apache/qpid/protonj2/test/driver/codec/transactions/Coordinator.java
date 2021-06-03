@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec.transactions;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
@@ -59,5 +60,10 @@ public class Coordinator extends ListDescribedType {
 
     public Symbol[] getCapabilities() {
         return (Symbol[]) getList().get(Field.CAPABILITIES.ordinal());
+    }
+
+    @Override
+    public String toString() {
+        return "Coordinator{" + "capabilities=" + Arrays.toString(getCapabilities()) + '}';
     }
 }

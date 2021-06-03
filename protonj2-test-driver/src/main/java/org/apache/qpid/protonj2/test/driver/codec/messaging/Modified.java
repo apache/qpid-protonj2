@@ -118,4 +118,13 @@ public class Modified extends ListDescribedType implements DeliveryState, Outcom
     public DeliveryStateType getType() {
         return DeliveryStateType.Modified;
     }
+
+    @Override
+    public String toString() {
+        return "Modified{" +
+               "deliveryFailed=" + getDeliveryFailed() +
+               ", undeliverableHere=" + getUndeliverableHere() +
+               ", messageAnnotations=" + getMessageAnnotations() +
+               '}';
+    }
 }

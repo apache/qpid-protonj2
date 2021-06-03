@@ -134,4 +134,13 @@ public class ErrorCondition extends ListDescribedType {
             return described.equals(described2);
         }
     }
+
+    @Override
+    public String toString() {
+        return "Error{" +
+               "condition=" + getCondition() +
+               ", description='" + getDescription() + '\'' +
+               ", info=" + getInfo() +
+               '}';
+    }
 }

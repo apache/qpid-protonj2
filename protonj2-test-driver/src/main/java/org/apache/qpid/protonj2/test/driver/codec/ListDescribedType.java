@@ -17,7 +17,6 @@
 package org.apache.qpid.protonj2.test.driver.codec;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
@@ -115,6 +114,6 @@ public abstract class ListDescribedType implements DescribedType {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + " [descriptor=" + getDescriptor() + " fields=" + Arrays.toString(getFields()) + "]";
+        return getClass().getSimpleName() + " [descriptor=" + getDescriptor() + " fields=" + getList() + "]";
     }
 }

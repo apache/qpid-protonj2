@@ -42,4 +42,9 @@ public class AmqpSequence implements DescribedType {
     public Object getDescribed() {
         return described;
     }
+
+    @Override
+    public String toString() {
+        return "AmqpSequence: [ " + getDescribed() + " ]";
+    }
 }

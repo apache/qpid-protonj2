@@ -45,4 +45,9 @@ public class Data implements DescribedType {
     public Binary getDescribed() {
         return described;
     }
+
+    @Override
+    public String toString() {
+        return "Data: [ " + getDescribed() + " ]";
+    }
 }

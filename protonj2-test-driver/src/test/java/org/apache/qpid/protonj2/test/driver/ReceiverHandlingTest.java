@@ -333,7 +333,9 @@ class ReceiverHandlingTest extends TestPeerTestsBase {
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
             client.remoteOpen().now();
             client.remoteBegin().now();
-            client.remoteAttach().ofReceiver().withHandle(42).now();
+            client.remoteAttach().ofReceiver().withHandle(42)
+                                              .withSource().withCapabilities("QUEUE")
+                                              .and().now();
 
             // Wait for the above and then script next steps
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);

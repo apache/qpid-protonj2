@@ -21,6 +21,7 @@ import java.util.List;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
+import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 
 public class SaslChallenge extends SaslDescribedType {
 
@@ -69,5 +70,10 @@ public class SaslChallenge extends SaslDescribedType {
     @Override
     public <E> void invoke(SaslPerformativeHandler<E> handler, int frameSzie, E context) {
         handler.handleChallenge(frameSzie, this, context);
+    }
+
+    @Override
+    public String toString() {
+        return "SaslChallenge{" + "challenge=" + TypeMapper.toQuotedString(getChallenge()) + '}';
     }
 }

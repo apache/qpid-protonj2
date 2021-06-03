@@ -200,4 +200,21 @@ public class Transfer extends PerformativeDescribedType {
         }
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "Transfer{" +
+               "handle=" + getHandle() +
+               ", deliveryId=" + getDeliveryId() +
+               ", deliveryTag=" + getDeliveryTag() +
+               ", messageFormat=" + getMessageFormat() +
+               ", settled=" + getSettled() +
+               ", more=" + getMore() +
+               ", rcvSettleMode=" + getRcvSettleMode() +
+               ", state=" + getState() +
+               ", resume=" + getResume() +
+               ", aborted=" + getAborted() +
+               ", batchable=" + getBatchable() +
+               '}';
+    }
 }

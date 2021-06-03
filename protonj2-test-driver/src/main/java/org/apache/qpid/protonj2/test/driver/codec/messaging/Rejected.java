@@ -97,4 +97,9 @@ public class Rejected extends ListDescribedType implements DeliveryState, Outcom
     public DeliveryStateType getType() {
         return DeliveryStateType.Rejected;
     }
+
+    @Override
+    public String toString() {
+        return "Rejected{" + "error=" + getError() + "}";
+    }
 }

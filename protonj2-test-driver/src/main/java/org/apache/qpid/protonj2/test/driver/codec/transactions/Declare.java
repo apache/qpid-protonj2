@@ -91,4 +91,9 @@ public class Declare extends ListDescribedType {
     public int hashCode() {
         return System.identityHashCode(this);
     }
+
+    @Override
+    public String toString() {
+        return "Declare{" + "globalId=" + getGlobalId() + '}';
+    }
 }

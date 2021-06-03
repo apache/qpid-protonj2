@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec.messaging;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -126,5 +127,18 @@ public class Target extends ListDescribedType {
 
     public Symbol[] getCapabilities() {
         return (Symbol[]) getList().get(Field.CAPABILITIES.ordinal());
+    }
+
+    @Override
+    public String toString() {
+        return "Target{" +
+               "address='" + getAddress() + '\'' +
+               ", durable=" + getDurable() +
+               ", expiryPolicy=" + getExpiryPolicy() +
+               ", timeout=" + getTimeout() +
+               ", dynamic=" + getDynamic() +
+               ", dynamicNodeProperties=" + getDynamicNodeProperties() +
+               ", capabilities=" + Arrays.toString(getCapabilities()) +
+               '}';
     }
 }

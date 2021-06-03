@@ -39,6 +39,6 @@ public abstract class MapDescribedType implements DescribedType {
 
     @Override
     public String toString() {
-        return "MapDescribedType [descriptor=" + getDescriptor() + " fields=" + fields + "]";
+        return getClass().getSimpleName() + " [descriptor=" + getDescriptor() + " fields=" + fields + "]";
     }
 }

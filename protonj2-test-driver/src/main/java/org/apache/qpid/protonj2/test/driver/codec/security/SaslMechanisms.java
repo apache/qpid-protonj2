@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec.security;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
@@ -68,5 +69,10 @@ public class SaslMechanisms extends SaslDescribedType {
     @Override
     public <E> void invoke(SaslPerformativeHandler<E> handler, int frameSzie, E context) {
         handler.handleMechanisms(frameSzie, this, context);
+    }
+
+    @Override
+    public String toString() {
+        return "SaslMechanisms{" + "saslServerMechanisms=" + Arrays.toString(getSaslServerMechanisms()) + '}';
     }
 }
