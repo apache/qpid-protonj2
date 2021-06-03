@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.test.driver.actions;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.SessionTracker;
@@ -68,6 +69,8 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
     private DescribedType body;
     private Footer footer;
 
+    private boolean explicitlyNullDeliveryTag;
+
     public TransferInjectAction(AMQPTestDriver driver) {
         super(driver);
     }
@@ -101,6 +104,10 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
 
         final SessionTracker session = driver.sessions().getSessionFromLocalChannel(UnsignedShort.valueOf(onChannel()));
 
+        if (transfer.getDeliveryTag() == null && !explicitlyNullDeliveryTag) {
+            transfer.setDeliveryTag(new Binary(generateUniqueDeliveryTag()));
+        }
+
         // A test might be trying to send Transfer outside of session scope to check for error handling
         // of unexpected performatives so we just allow no session cases and send what we are told.
         if (session != null) {
@@ -128,12 +135,20 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
     }
 
     public TransferInjectAction withDeliveryTag(byte[] deliveryTag) {
+        explicitlyNullDeliveryTag = deliveryTag == null;
         transfer.setDeliveryTag(new Binary(deliveryTag));
         return this;
     }
 
     public TransferInjectAction withDeliveryTag(Binary deliveryTag) {
+        explicitlyNullDeliveryTag = deliveryTag == null;
         transfer.setDeliveryTag(deliveryTag);
+        return this;
+    }
+
+    public TransferInjectAction withNullDeliveryTag() {
+        explicitlyNullDeliveryTag = true;
+        transfer.setDeliveryTag(null);
         return this;
     }
 
@@ -611,5 +626,28 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
             withOutcome(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere));
             return this;
         }
+    }
+
+    private static byte[] generateUniqueDeliveryTag() {
+        final byte[] tag = new byte[Long.BYTES + Long.BYTES];
+        final UUID uuid = UUID.randomUUID();
+
+        writeLong(uuid.getMostSignificantBits(), tag, 0);
+        writeLong(uuid.getLeastSignificantBits(), tag, Long.BYTES);
+
+        return tag;
+    }
+
+    private static byte[] writeLong(long value, byte[] destination, int offset) {
+        destination[offset++] = (byte) (value >>> 56);
+        destination[offset++] = (byte) (value >>> 48);
+        destination[offset++] = (byte) (value >>> 40);
+        destination[offset++] = (byte) (value >>> 32);
+        destination[offset++] = (byte) (value >>> 24);
+        destination[offset++] = (byte) (value >>> 16);
+        destination[offset++] = (byte) (value >>> 8);
+        destination[offset++] = (byte) (value >>> 0);
+
+        return destination;
     }
 }

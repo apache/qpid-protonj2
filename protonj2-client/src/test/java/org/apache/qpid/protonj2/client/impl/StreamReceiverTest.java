@@ -634,7 +634,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             peer.remoteTransfer().withHandle(0)
                                  .withDeliveryId(0)
-                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withNullDeliveryTag()
                                  .withMore(false)
                                  .withMessageFormat(0)
                                  .withPayload(payload).now();

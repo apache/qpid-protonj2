@@ -197,6 +197,14 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
         return withDeliveryTag(equalTo(deliveryTag));
     }
 
+    public TransferExpectation withNonNullDeliveryTag() {
+        return withDeliveryTag(notNullValue());
+    }
+
+    public TransferExpectation withNullDeliveryTag() {
+        return withDeliveryTag(nullValue());
+    }
+
     public TransferExpectation withMessageFormat(int messageFormat) {
         return withMessageFormat(equalTo(UnsignedInteger.valueOf(messageFormat)));
     }
