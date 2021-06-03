@@ -167,7 +167,7 @@ public abstract class NettyServer implements AutoCloseable {
         return handshakeComplete;
     }
 
-    public URI getConnectionURI() throws Exception {
+    public URI getConnectionURI(String queryString) throws Exception {
         if (!started.get()) {
             throw new IllegalStateException("Cannot get URI of non-started server");
         }
@@ -197,7 +197,11 @@ public abstract class NettyServer implements AutoCloseable {
             path = null;
         }
 
-        return new URI(scheme, null, "localhost", port, path, null, null);
+        if (queryString != null && queryString.startsWith("?")) {
+            queryString = queryString.substring(1);
+        }
+
+        return new URI(scheme, null, "localhost", port, path, queryString, null);
     }
 
     public void start() throws Exception {

@@ -71,6 +71,9 @@ public class ProtonTestServer extends ProtonTestPeer {
         this.server = new NettyTestDriverServer(options);
     }
 
+    /**
+     * Starts the test server and allows acceptance of a new connection.
+     */
     public void start() {
         checkClosed();
         try {
@@ -80,10 +83,41 @@ public class ProtonTestServer extends ProtonTestPeer {
         }
     }
 
+    /**
+     * Returns a connection string that a client can use to connect to this AMQP test server with
+     * typical AMQP scheme values based on server configuration.  The values for the scheme follow the
+     * standard practice of 'amqp', 'amqps', 'amqpws' and 'amqpwss' for connection that use SSL or that
+     * provide WebSocket and secure WebSocket connections.
+     *
+     * The server nust be started prior to a call to this method.
+     *
+     * @return a URI that a client can use to connect to this remote test server.
+     *
+     * @throws IllegalStateException if the server is not started or has been shutdown.
+     */
     public URI getServerURI() {
+        return getServerURI(null);
+    }
+
+    /**
+     * Returns a connection string that a client can use to connect to this AMQP test server with
+     * typical AMQP scheme values based on server configuration.  The values for the scheme follow the
+     * standard practice of 'amqp', 'amqps', 'amqpws' and 'amqpwss' for connection that use SSL or that
+     * provide WebSocket and secure WebSocket connections.
+     *
+     * The server nust be started prior to a call to this method.
+     *
+     * @param query
+     * 		The value that should be populated in the URI query string segment.
+     *
+     * @return a URI that a client can use to connect to this remote test server.
+     *
+     * @throws IllegalStateException if the server is not started or has been shutdown.
+     */
+    public URI getServerURI(String query) {
         checkClosed();
         try {
-            return server.getConnectionURI();
+            return server.getConnectionURI(query);
         } catch (Exception e) {
             throw new RuntimeException("Failed to get connection URI: ", e);
         }

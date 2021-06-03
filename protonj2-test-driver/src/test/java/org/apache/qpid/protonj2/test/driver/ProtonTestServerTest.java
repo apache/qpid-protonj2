@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -39,6 +40,37 @@ public class ProtonTestServerTest extends TestPeerTestsBase {
         peer.start();
         peer.close();
         assertTrue(peer.isClosed());
+    }
+
+    @Test
+    public void testSupplyQueryStringToServerGetURI() throws Exception {
+        doTestSupplyQueryStringToServerGetURI("param=value");
+    }
+
+    @Test
+    public void testSupplyQueryStringToServerGetURIWithLeadingQuestionMark() throws Exception {
+        doTestSupplyQueryStringToServerGetURI("?param=value");
+    }
+
+    @Test
+    public void testSupplyNullQueryStringToServerGetURI() throws Exception {
+        doTestSupplyQueryStringToServerGetURI(null);
+    }
+
+    private void doTestSupplyQueryStringToServerGetURI(String queryString) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().withFrameSize(4096);
+            peer.start();
+
+            final URI remoteURI = peer.getServerURI(queryString);
+
+            if (queryString != null && queryString.startsWith("?")) {
+                queryString = queryString.substring(1);
+            }
+
+            assertEquals(queryString, remoteURI.getQuery());
+        }
     }
 
     @Test
