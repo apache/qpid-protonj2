@@ -59,10 +59,26 @@ public abstract class ProtonLoggerFactory {
         ProtonLoggerFactory.loggerFactory = factory;
     }
 
+    /**
+     * Logger lookup based on the {@link Class} that will host the logger instance.
+     *
+     * @param clazz
+     * 		The {@link Class} that will host the logger instance being requested.
+     *
+     * @return a {@link ProtonLogger} that is tied to the given {@link Class} instance.
+     */
     public static ProtonLogger getLogger(Class<?> clazz) {
         return getLoggerFactory().createLoggerWrapper(clazz.getName());
     }
 
+    /**
+     * Logger lookup based on the given logger name that will host the logger instance.
+     *
+     * @param name
+     * 		The given name that will host the logger instance being requested.
+     *
+     * @return a {@link ProtonLogger} that is tied to the given logger name.
+     */
     public static ProtonLogger getLogger(String name) {
         return getLoggerFactory().createLoggerWrapper(name);
     }

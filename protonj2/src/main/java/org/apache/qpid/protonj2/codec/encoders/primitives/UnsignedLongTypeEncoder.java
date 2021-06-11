@@ -37,6 +37,19 @@ public final class UnsignedLongTypeEncoder extends AbstractPrimitiveTypeEncoder<
         writeType(buffer, state, value.longValue());
     }
 
+    /**
+     * Write the full AMQP type data for the unsigned long to the given byte buffer.
+     *
+     * This can consist of writing both a type constructor value and the bytes that make up the
+     * value of the type being written.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param value
+     * 		The unsigned long primitive value to encode.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, long value) {
         if (value == 0) {
             buffer.writeByte(EncodingCodes.ULONG0);
@@ -49,6 +62,19 @@ public final class UnsignedLongTypeEncoder extends AbstractPrimitiveTypeEncoder<
         }
     }
 
+    /**
+     * Write the full AMQP type data for the unsigned long to the given byte buffer.
+     *
+     * This can consist of writing both a type constructor value and the bytes that make up the
+     * value of the type being written.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param value
+     * 		The byte value to encode as an unsigned long.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, byte value) {
         if (value == 0) {
             buffer.writeByte(EncodingCodes.ULONG0);

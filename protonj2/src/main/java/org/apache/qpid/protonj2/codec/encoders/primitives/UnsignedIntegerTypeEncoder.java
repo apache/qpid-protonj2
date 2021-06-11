@@ -47,6 +47,19 @@ public final class UnsignedIntegerTypeEncoder extends AbstractPrimitiveTypeEncod
         }
     }
 
+    /**
+     * Write the full AMQP type data for the unsigned int to the given byte buffer.
+     *
+     * This can consist of writing both a type constructor value and the bytes that make up the
+     * value of the type being written.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param value
+     * 		The unsigned integer single byte value to encode.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, byte value) {
         if (value == 0) {
             buffer.writeByte(EncodingCodes.UINT0);
@@ -56,6 +69,19 @@ public final class UnsignedIntegerTypeEncoder extends AbstractPrimitiveTypeEncod
         }
     }
 
+    /**
+     * Write the full AMQP type data for the unsigned int to the given byte buffer.
+     *
+     * This can consist of writing both a type constructor value and the bytes that make up the
+     * value of the type being written.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param value
+     * 		The unsigned int value to encode.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, int value) {
         if (value == 0) {
             buffer.writeByte(EncodingCodes.UINT0);
@@ -68,6 +94,19 @@ public final class UnsignedIntegerTypeEncoder extends AbstractPrimitiveTypeEncod
         }
     }
 
+    /**
+     * Write the full AMQP type data for the unsigned integer to the given byte buffer.
+     *
+     * This can consist of writing both a type constructor value and the bytes that make up the
+     * value of the type being written.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param value
+     * 		The long value to encode as an unsigned integer.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, long value) {
         if (value < 0L || value >= (1L << 32)) {
             throw new IllegalArgumentException("Value \"" + value + "\" lies outside the range [" + 0L + "-" + (1L << 32) + ").");

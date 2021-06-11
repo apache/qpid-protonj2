@@ -38,11 +38,37 @@ public final class UnsignedShortTypeEncoder extends AbstractPrimitiveTypeEncoder
         buffer.writeShort(value.shortValue());
     }
 
+    /**
+     * Write the full AMQP type data for the unsigned short to the given byte buffer.
+     *
+     * This can consist of writing both a type constructor value and the bytes that make up the
+     * value of the type being written.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param value
+     * 		The short value to encode as an unsigned short.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, short value) {
         buffer.writeByte(EncodingCodes.USHORT);
         buffer.writeShort(value);
     }
 
+    /**
+     * Write the full AMQP type data for the unsigned short to the given byte buffer.
+     *
+     * This can consist of writing both a type constructor value and the bytes that make up the
+     * value of the type being written.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param value
+     * 		The int value to encode unsigned short.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, int value) {
         if (value < 0 || value > 65535) {
             throw new IllegalArgumentException("Value given is out of range: " + value);

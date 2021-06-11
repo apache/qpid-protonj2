@@ -219,10 +219,31 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         root = newRoot;
     }
 
+    /**
+     * Removes the mapping for the {@link UnsignedInteger} key from this map if it is present
+     * and returns the value to which this map previously associated the key, or null if the
+     * map contained no mapping for the key.
+     *
+     * @param key
+     * 		The {@link UnsignedInteger} key whose value will be removed from the {@link SplayMap}.
+     *
+     * @return the value that was removed if one was present in the {@link Map}.
+     */
     public E remove(UnsignedInteger key) {
         return remove(key.intValue());
     }
 
+    /**
+     * Removes the mapping for the primitive <code>int</code> key from this map if it is present
+     * and returns the value to which this map previously associated the key, or null if the
+     * map contained no mapping for the key.  The integer value is treated as an unsigned int
+     * internally.
+     *
+     * @param key
+     * 		The {@link UnsignedInteger} key whose value will be removed from the {@link SplayMap}.
+     *
+     * @return the value that was removed if one was present in the {@link Map}.
+     */
     public E remove(int key) {
         if (root == null) {
             return null;
@@ -242,6 +263,15 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return removed;
     }
 
+    /**
+     * Searches the map using the given primitive integer key value which will be treated
+     * internally as an unsigned value when comparing against keys in the mapping.
+     *
+     * @param key
+     * 		The key which will be searched for in this mapping.
+     *
+     * @return <code>true</code> if the key mapping is found within this {@link Map}.
+     */
     public boolean containsKey(int key) {
         if (root == null) {
             return false;
@@ -383,6 +413,17 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return remove(numericKey.intValue(), value);
     }
 
+    /**
+     * Removes the entry for the specified primitive int (treated as unsigned) key only if it is
+     * currently mapped to the specified value in the {@link Map}.
+     *
+     * @param key
+     * 		The key whose value will be removed if matched.
+     * @param value
+     * 		The value that must be contained in the mapping for the remove to be performed.
+     *
+     * @return <code>true</code> if an entry was removed from the {@link Map}
+     */
     public boolean remove(int key, Object value) {
         root = splay(root, key);
         if (root == null || root.key != key || !Objects.equals(root.value, value)) {
@@ -398,6 +439,19 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return replace(key.intValue(), oldValue, newValue);
     }
 
+    /**
+     * Replaces the entry for the specified primitive int (treated as unsigned) key only if it is
+     * currently mapped to the specified value in the {@link Map} with the new value provided.
+     *
+     * @param key
+     * 		The key whose value will be removed if matched.
+     * @param oldValue
+     * 		The old value that must be contained in the mapping for the replace to be performed.
+     * @param newValue
+     * 		The value that will replace the old value mapped to the given key if one existed..
+     *
+     * @return <code>true</code> if an entry was replaced in the {@link Map}
+     */
     public boolean replace(int key, E oldValue, E newValue) {
         root = splay(root, key);
         if (root == null || root.key != key || !Objects.equals(root.value, oldValue)) {
@@ -413,6 +467,17 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return replace(key.intValue(), value);
     }
 
+    /**
+     * Replaces the entry for the specified primitive int (treated as unsigned) key only if it is
+     * currently mapped to the a value in the {@link Map} with the new value provided.
+     *
+     * @param key
+     * 		The key whose value will be removed if matched.
+     * @param value
+     * 		The value that will replace the old value mapped to the given key if one existed..
+     *
+     * @return <code>true</code> if an entry was replaced in the {@link Map}
+     */
     public E replace(int key, E value) {
         root = splay(root, key);
         if (root == null || root.key != key || root.value == null) {
@@ -998,10 +1063,20 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         }
     }
 
+    /**
+     * An immutable {@link Map} entry that can be used when exposing raw entry mappings
+     * via the {@link Map} API.
+     */
     public class ImmutableSplayMapEntry implements Map.Entry<UnsignedInteger, E> {
 
         private final SplayedEntry<E> entry;
 
+        /**
+         * Create a new immutable {@link Map} entry.
+         *
+         * @param entry
+         * 		The inner {@link Map} entry that is wrapped.
+         */
         public ImmutableSplayMapEntry(SplayedEntry<E> entry) {
             this.entry = entry;
         }
@@ -1011,6 +1086,9 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
             return entry.getKey();
         }
 
+        /**
+         * @return the primitive integer view of the unsigned key.
+         */
         public int getPrimitiveKey() {
             return entry.getIntKey();
         }

@@ -36,6 +36,19 @@ public final class BooleanTypeEncoder extends AbstractPrimitiveTypeEncoder<Boole
         buffer.writeByte(value == Boolean.TRUE ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
     }
 
+    /**
+     * Write the full AMQP type data for the boolean to the given byte buffer.
+     *
+     * This can consist of writing both a type constructor value and the bytes that make up the
+     * value of the type being written.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param value
+     * 		The boolean value to encode.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, boolean value) {
         buffer.writeByte(value == true ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
     }
@@ -49,6 +62,16 @@ public final class BooleanTypeEncoder extends AbstractPrimitiveTypeEncoder<Boole
         }
     }
 
+    /**
+     * Write the AMQP type data to the given byte buffer without an type encoding metadata
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param values
+     * 		The boolean array value to encode.
+     */
     public void writeRawArray(ProtonBuffer buffer, EncoderState state, boolean[] values) {
         // Write the array elements after writing the array length
         buffer.writeByte(EncodingCodes.BOOLEAN);
@@ -57,6 +80,19 @@ public final class BooleanTypeEncoder extends AbstractPrimitiveTypeEncoder<Boole
         }
     }
 
+    /**
+     * Write the full AMQP type data for the boolean array to the given byte buffer.
+     *
+     * This can consist of writing both a type constructor value and the bytes that make up the
+     * value of the type being written.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param values
+     * 		The primitive boolean array value to encode.
+     */
     public void writeArray(ProtonBuffer buffer, EncoderState state, boolean[] values) {
         if (values.length < 254) {
             writeAsArray8(buffer, state, values);

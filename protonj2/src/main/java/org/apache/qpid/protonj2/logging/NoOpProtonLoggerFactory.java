@@ -21,6 +21,9 @@ package org.apache.qpid.protonj2.logging;
  */
 public class NoOpProtonLoggerFactory extends ProtonLoggerFactory {
 
+    /**
+     * Singleton instance of a no-op logger factory used for all logger creations.
+     */
     public static final NoOpProtonLoggerFactory INSTANCE = new NoOpProtonLoggerFactory();
 
     private NoOpProtonLoggerFactory() {

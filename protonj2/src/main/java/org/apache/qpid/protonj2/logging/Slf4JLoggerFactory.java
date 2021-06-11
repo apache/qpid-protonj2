@@ -32,6 +32,12 @@ public class Slf4JLoggerFactory extends ProtonLoggerFactory {
     private Slf4JLoggerFactory() {
     }
 
+    /**
+     * Static factory method that will create the correct Slf4j logging factory
+     * and return it or throw an {@link NoClassDefFoundError} if none found.
+     *
+     * @return a correct proton based logger factory wrapper.
+     */
     public static ProtonLoggerFactory findLoggerFactory() {
         // We don't support the NO-OP logger and instead will fall back to our own variant
         if (LoggerFactory.getILoggerFactory() instanceof NOPLoggerFactory) {

@@ -37,6 +37,19 @@ public final class ShortTypeEncoder extends AbstractPrimitiveTypeEncoder<Short> 
         buffer.writeShort(value.shortValue());
     }
 
+    /**
+     * Write the full AMQP type data for the short to the given byte buffer.
+     *
+     * This can consist of writing both a type constructor value and the bytes that make up the
+     * value of the type being written.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param value
+     * 		The short value to encode.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, short value) {
         buffer.writeByte(EncodingCodes.SHORT);
         buffer.writeShort(value);

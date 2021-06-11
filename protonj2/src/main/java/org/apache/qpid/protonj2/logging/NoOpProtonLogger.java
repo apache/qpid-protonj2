@@ -21,6 +21,9 @@ package org.apache.qpid.protonj2.logging;
  */
 public class NoOpProtonLogger implements ProtonLogger {
 
+    /**
+     * Singleton logger instance that should be used for all No-op logging operations.
+     */
     public static final NoOpProtonLogger INSTANCE = new NoOpProtonLogger();
 
     private NoOpProtonLogger() {

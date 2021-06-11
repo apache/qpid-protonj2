@@ -24,8 +24,14 @@ package org.apache.qpid.protonj2.logging;
  */
 public interface ProtonLogger {
 
+    /**
+     * @return the name that was given to this logger on creation.
+     */
     public String getName();
 
+    /**
+     * @return if the trace log level is enabled for this {@link ProtonLogger}.
+     */
     public boolean isTraceEnabled();
 
     public void trace(String message);
@@ -36,6 +42,9 @@ public interface ProtonLogger {
 
     public void trace(String message, Object... arguments);
 
+    /**
+     * @return if the debug log level is enabled for this {@link ProtonLogger}.
+     */
     public boolean isDebugEnabled();
 
     public void debug(String message);
@@ -46,6 +55,9 @@ public interface ProtonLogger {
 
     public void debug(String message, Object... arguments);
 
+    /**
+     * @return if the info log level is enabled for this {@link ProtonLogger}.
+     */
     public boolean isInfoEnabled();
 
     public void info(String message);
@@ -56,6 +68,9 @@ public interface ProtonLogger {
 
     public void info(String message, Object... arguments);
 
+    /**
+     * @return if the warn log level is enabled for this {@link ProtonLogger}.
+     */
     public boolean isWarnEnabled();
 
     public void warn(String message);
@@ -66,6 +81,9 @@ public interface ProtonLogger {
 
     public void warn(String message, Object... arguments);
 
+    /**
+     * @return if the error log level is enabled for this {@link ProtonLogger}.
+     */
     public boolean isErrorEnabled();
 
     public void error(String message);

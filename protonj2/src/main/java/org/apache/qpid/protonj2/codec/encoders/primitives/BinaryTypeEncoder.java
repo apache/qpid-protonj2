@@ -37,6 +37,18 @@ public final class BinaryTypeEncoder extends AbstractPrimitiveTypeEncoder<Binary
         writeType(buffer, state, value.asProtonBuffer());
     }
 
+    /**
+     * Shortcut API that allows a {@link ProtonBuffer} to be directly encoded as an AMQP Binary
+     * type without the need to create a {@link Binary} instance.  The encoder will attempt
+     * to write the smallest encoding possible based on the buffer size.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param value
+     * 		The {@link ProtonBuffer} instance that is to be encoded.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, ProtonBuffer value) {
         if (value.getReadableBytes() > 255) {
             buffer.writeByte(EncodingCodes.VBIN32);
@@ -53,6 +65,18 @@ public final class BinaryTypeEncoder extends AbstractPrimitiveTypeEncoder<Binary
         }
     }
 
+    /**
+     * Shortcut API that allows a <code>byte[]</code> to be directly encoded as an AMQP Binary
+     * type without the need to create a {@link Binary} instance.  The encoder will attempt
+     * to write the smallest encoding possible based on the buffer size.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param value
+     * 		The <code>byte[]</code> instance that is to be encoded.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, byte[] value) {
         if (value.length > 255) {
             buffer.writeByte(EncodingCodes.VBIN32);

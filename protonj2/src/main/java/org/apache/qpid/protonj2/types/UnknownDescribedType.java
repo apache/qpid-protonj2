@@ -16,11 +16,26 @@
  */
 package org.apache.qpid.protonj2.types;
 
+import org.apache.qpid.protonj2.codec.DescribedTypeDecoder;
+
+/**
+ * Generic AMQP Described type wrapper that is used whenever a decode encounters
+ * an Described type encoding for which there is no {@link DescribedTypeDecoder}
+ * registered.
+ */
 public class UnknownDescribedType implements DescribedType {
 
     private final Object descriptor;
     private final Object described;
 
+    /**
+     * Creates a new wrapper around the type descriptor and the described value.
+     *
+     * @param descriptor
+     * 		The type descriptor that was used for the encoding of this type.
+     * @param described
+     * 		The value that was encoded into the body of the described type.
+     */
     public UnknownDescribedType(final Object descriptor, final Object described) {
         this.descriptor = descriptor;
         this.described = described;

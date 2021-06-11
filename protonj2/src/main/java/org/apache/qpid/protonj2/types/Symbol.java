@@ -24,6 +24,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 
+/**
+ * Class that represents an AMQP Symbol value.  The creation of a Symbol object
+ * occurs during a lookup operation which cannot find an already stored version
+ * of the string or byte buffer view of the Symbol's ASCII bytes.
+ */
 public final class Symbol implements Comparable<Symbol> {
 
     private static final Map<ProtonBuffer, Symbol> bufferToSymbols = new ConcurrentHashMap<>(2048);
@@ -48,6 +53,9 @@ public final class Symbol implements Comparable<Symbol> {
         this.hashCode = underlying.hashCode();
     }
 
+    /**
+     * @return the number of bytes that comprise the Symbol value.
+     */
     public int getLength() {
         return underlying.getReadableBytes();
     }
@@ -91,18 +99,54 @@ public final class Symbol implements Comparable<Symbol> {
         return false;
     }
 
+    /**
+     * Writes the internal {@link Symbol} bytes to the provided {@link ProtonBuffer}.  This
+     * is a raw ASCII encoding of the Symbol without and AMQP type encoding.
+     *
+     * @param target
+     * 		The buffer where the Symbol bytes should be written to.
+     */
     public void writeTo(ProtonBuffer target) {
         target.writeBytes(underlying, 0, underlying.getReadableBytes());
     }
 
+    /**
+     * Look up a singleton {@link Symbol} instance that matches the given {@link String}
+     * name of the {@link Symbol}.
+     *
+     * @param symbolVal
+     * 		The {@link String} version of the {@link Symbol} value.
+     *
+     * @return a {@link Symbol} that matches the given {@link String}.
+     */
     public static Symbol valueOf(String symbolVal) {
         return getSymbol(symbolVal);
     }
 
+    /**
+     * Look up a singleton {@link Symbol} instance that matches the given {@link ProtonBuffer}
+     * byte view of the {@link Symbol}.
+     *
+     * @param symbolBytes
+     * 		The {@link String} version of the {@link Symbol} value.
+     *
+     * @return a {@link Symbol} that matches the given {@link String}.
+     */
     public static Symbol getSymbol(ProtonBuffer symbolBytes) {
         return getSymbol(symbolBytes, false);
     }
 
+    /**
+     * Look up a singleton {@link Symbol} instance that matches the given {@link ProtonBuffer}
+     * byte view of the {@link Symbol}.
+     *
+     * @param symbolBuffer
+     * 		The {@link ProtonBuffer} version of the {@link Symbol} value.
+     * @param copyOnCreate
+     * 		Should the provided buffer be copied during creation of a new {@link Symbol}.
+     *
+     * @return a {@link Symbol} that matches the given {@link String}.
+     */
     public static Symbol getSymbol(ProtonBuffer symbolBuffer, boolean copyOnCreate) {
         if (symbolBuffer == null) {
             return null;
@@ -134,6 +178,15 @@ public final class Symbol implements Comparable<Symbol> {
         return symbol;
     }
 
+    /**
+     * Look up a singleton {@link Symbol} instance that matches the given {@link String}
+     * name of the {@link Symbol}.
+     *
+     * @param stringValue
+     * 		The {@link String} version of the {@link Symbol} value.
+     *
+     * @return a {@link Symbol} that matches the given {@link String}.
+     */
     public static Symbol getSymbol(String stringValue) {
         if (stringValue == null) {
             return null;

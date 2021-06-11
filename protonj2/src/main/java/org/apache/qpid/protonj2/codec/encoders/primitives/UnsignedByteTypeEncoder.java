@@ -38,6 +38,19 @@ public final class UnsignedByteTypeEncoder extends AbstractPrimitiveTypeEncoder<
         buffer.writeByte(value.byteValue());
     }
 
+    /**
+     * Write the full AMQP type data for the byte to the given byte buffer.
+     *
+     * This can consist of writing both a type constructor value and the bytes that make up the
+     * value of the type being written.
+     *
+     * @param buffer
+     * 		The {@link ProtonBuffer} instance to write the encoding to.
+     * @param state
+     * 		The {@link EncoderState} for use in encoding operations.
+     * @param value
+     * 		The primitive unsigned byte value to encode.
+     */
     public void writeType(ProtonBuffer buffer, EncoderState state, byte value) {
         buffer.writeByte(EncodingCodes.UBYTE);
         buffer.writeByte(value);
