@@ -125,7 +125,7 @@ public interface ProtonBufferAllocator {
      * of the buffer should be that of the length of the wrapped array.
      * <p>
      * The capacity and maximum capacity for the resulting ProtonBuffer should equal
-     * to the length of the wrapped array and the returned array offset is zero.
+     * to the length parameter provided and the returned buffer offset will be zero.
      *
      * @param array
      *      the byte array to wrap.

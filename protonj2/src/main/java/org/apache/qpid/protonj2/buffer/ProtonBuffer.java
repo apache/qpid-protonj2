@@ -964,7 +964,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      * Reads bytes from this buffer and writes them into the destination ProtonBuffer incrementing
      * the read index by the value of the number of bytes written to the target.  The number of bytes
      * written will be the equal to the writable bytes of the target buffer.  The write index of the
-     * target buffer must be incremented number of bytes written into it.
+     * target buffer will be incremented by the number of bytes written into it.
      *
      * @param target
      *      The ProtonBuffer to write into.
@@ -979,8 +979,8 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
 
     /**
      * Reads bytes from this buffer and writes them into the destination ProtonBuffer incrementing
-     * the read index by the number of bytes written.  The write index of the target buffer must be
-     * incremented number of bytes written into it.
+     * the read index by the number of bytes written.  The write index of the target buffer will be
+     * incremented by the number of bytes written into it.
      *
      * @param target
      *      The ProtonBuffer to write into.
@@ -997,7 +997,8 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
     /**
      * Transfers this buffer's data to the specified destination starting at
      * the current {@code readIndex} and increases the {@code readIndex}
-     * by the number of the transferred bytes (= {@code length}).
+     * by the number of the transferred bytes (= {@code length}).  This method
+     * does not modify the write index of the target buffer.
      *
      * @param target
      *      The ProtonBuffer to write into.
@@ -1201,7 +1202,8 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
     /**
      * Transfers the specified source buffer's data to this buffer starting at
      * the current {@code writeIndex} and increases the {@code writeIndex}
-     * by the number of the transferred bytes (= {@code length}).
+     * by the number of the transferred bytes (= {@code length}).  This method
+     * does not modify the read index of the source buffer.
      *
      * @param source
      *      The source buffer from which the bytes are read.
