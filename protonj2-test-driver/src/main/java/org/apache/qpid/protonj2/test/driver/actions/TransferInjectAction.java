@@ -479,6 +479,21 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
             return this;
         }
 
+        public BodySectionBuilder withValue(String body) {
+            TransferInjectAction.this.body = new AmqpValue(body);
+            return this;
+        }
+
+        public BodySectionBuilder withValue(byte[] body) {
+            TransferInjectAction.this.body = new AmqpValue(new Binary(body));
+            return this;
+        }
+
+        public BodySectionBuilder withValue(Binary body) {
+            TransferInjectAction.this.body = new Data(body);
+            return this;
+        }
+
         public BodySectionBuilder withData(byte[] body) {
             TransferInjectAction.this.body = new Data(new Binary(body));
             return this;
