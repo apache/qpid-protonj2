@@ -20,10 +20,24 @@ public class ClientIllegalStateException extends ClientException {
 
     private static final long serialVersionUID = -2188225056209312580L;
 
+    /**
+     * Creates a new connection illegal state exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     */
     public ClientIllegalStateException(String message) {
         super(message);
     }
 
+    /**
+     * Creates a new connection illegal state exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param cause
+     * 		An exception that further defines the reason for the error.
+     */
     public ClientIllegalStateException(String message, Throwable cause) {
         super(message, cause);
     }

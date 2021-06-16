@@ -25,24 +25,59 @@ public class ClientConnectionSecuritySaslException extends ClientConnectionSecur
 
     private boolean temporary;
 
+    /**
+     * Create a new instance of the connection SASL security exception
+     *
+     * @param message
+     * 		The message that describes the error.
+     */
     public ClientConnectionSecuritySaslException(String message) {
         this(message,false, null);
     }
 
+    /**
+     * Create a new instance of the connection SASL security exception
+     *
+     * @param message
+     * 		The message that describes the error.
+     * @param cause
+     * 		The exception that initiated this error.
+     */
     public ClientConnectionSecuritySaslException(String message, Throwable cause) {
         this(message,false, cause);
     }
 
+    /**
+     * Create a new instance of the connection SASL security exception
+     *
+     * @param message
+     * 		The message that describes the error.
+     * @param temporary
+     * 		Boolean that indicates if the error is a temporary (true) or permanent error (false).
+     */
     public ClientConnectionSecuritySaslException(String message, boolean temporary) {
         this(message, temporary, null);
     }
 
+    /**
+     * Create a new instance of the connection SASL security exception
+     *
+     * @param message
+     * 		The message that describes the error.
+     * @param temporary
+     * 		Boolean that indicates if the error is a temporary (true) or permanent error (false).
+     * @param cause
+     * 		The exception that initiated this error.
+     */
     public ClientConnectionSecuritySaslException(String message, boolean temporary, Throwable cause) {
         super(message, cause);
 
         this.temporary = temporary;
     }
 
+    /**
+     * @return true if the error is temporary and reconection may be possible.
+     */
     public boolean isSysTempFailure() {
         return temporary;
     }

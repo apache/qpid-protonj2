@@ -29,10 +29,24 @@ public class ClientException extends Exception {
 
     private static final long serialVersionUID = -5094579928657311571L;
 
+    /**
+     * Creates a new client exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     */
     public ClientException(String message) {
         super(message);
     }
 
+    /**
+     * Creates a new client exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param cause
+     * 		An exception that further defines the reason for the error.
+     */
     public ClientException(String message, Throwable cause) {
         super(message, cause);
     }

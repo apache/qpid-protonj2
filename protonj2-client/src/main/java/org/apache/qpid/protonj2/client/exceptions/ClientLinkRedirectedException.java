@@ -39,6 +39,16 @@ public class ClientLinkRedirectedException extends ClientLinkRemotelyClosedExcep
 
     private final ClientRedirect redirect;
 
+    /**
+     * Create a new instance of the link redirected exception
+     * 
+     * @param reason
+     * 		The reason for the link redirect
+     * @param redirect
+     * 		A ClientRedirect object with redirection information.
+     * @param condition
+     * 		The error condition that was provided from the remote peer.
+     */
     public ClientLinkRedirectedException(String reason, ClientRedirect redirect, ErrorCondition condition) {
         super(reason, condition);
 

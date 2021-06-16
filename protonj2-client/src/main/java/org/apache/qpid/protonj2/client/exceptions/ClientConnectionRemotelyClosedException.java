@@ -31,19 +31,51 @@ public class ClientConnectionRemotelyClosedException extends ClientIOException {
 
     private final ErrorCondition condition;
 
+    /**
+     * Creates a new connection remotely closed exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the remote closure.
+     */
     public ClientConnectionRemotelyClosedException(String message) {
         this(message, (ErrorCondition) null);
     }
 
+    /**
+     * Creates a new connection remotely closed exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the remote closure.
+     * @param cause
+     * 		An exception that further defines the remote close reason.
+     */
     public ClientConnectionRemotelyClosedException(String message, Throwable cause) {
         this(message, cause, null);
     }
 
+    /**
+     * Creates a new connection remotely closed exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the remote closure.
+     * @param condition
+     * 		An {@link ErrorCondition} that provides additional information about the close reason.
+     */
     public ClientConnectionRemotelyClosedException(String message, ErrorCondition condition) {
         super(message);
         this.condition = condition;
     }
 
+    /**
+     * Creates a new connection remotely closed exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the remote closure.
+     * @param cause
+     * 		An exception that further defines the remote close reason.
+     * @param condition
+     * 		An {@link ErrorCondition} that provides additional information about the close reason.
+     */
     public ClientConnectionRemotelyClosedException(String message, Throwable cause, ErrorCondition condition) {
         super(message, cause);
         this.condition = condition;

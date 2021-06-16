@@ -23,10 +23,24 @@ public class ClientTransactionInDoubtException extends ClientIllegalStateExcepti
 
     private static final long serialVersionUID = -5532644122754198664L;
 
+    /**
+     * Creates a new transaction in doubt exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     */
     public ClientTransactionInDoubtException(String message) {
         super(message);
     }
 
+    /**
+     * Creates a new transaction in doubt exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param cause
+     * 		An exception that further defines the reason for the error.
+     */
     public ClientTransactionInDoubtException(String message, Throwable cause) {
         super(message, cause);
     }

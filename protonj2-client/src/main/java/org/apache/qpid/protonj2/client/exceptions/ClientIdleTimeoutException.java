@@ -23,10 +23,24 @@ public class ClientIdleTimeoutException extends ClientIOException {
 
     private static final long serialVersionUID = 7925210908123213499L;
 
+    /**
+     * Creates a new connection idle timeout exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     */
     public ClientIdleTimeoutException(String message) {
         super(message);
     }
 
+    /**
+     * Creates a new connection idle timeout exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param cause
+     * 		An exception that further defines the reason for the error.
+     */
     public ClientIdleTimeoutException(String message, Throwable cause) {
         super(message, cause);
     }

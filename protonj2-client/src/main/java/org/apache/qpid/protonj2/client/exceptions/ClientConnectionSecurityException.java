@@ -25,18 +25,50 @@ public class ClientConnectionSecurityException extends ClientConnectionRemotelyC
 
     private static final long serialVersionUID = -1895132556606592253L;
 
+    /**
+     * Creates a new connection security exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the security error.
+     */
     public ClientConnectionSecurityException(String message) {
         super(message);
     }
 
+    /**
+     * Creates a new connection security exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the security error.
+     * @param cause
+     * 		An exception that further defines the reason for the security error.
+     */
     public ClientConnectionSecurityException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Creates a new connection security exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param errorCondition
+     * 		An {@link ErrorCondition} that provides additional information about the error.
+     */
     public ClientConnectionSecurityException(String message, ErrorCondition errorCondition) {
         super(message, errorCondition);
     }
 
+    /**
+     * Creates a new connection security exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param cause
+     * 		An exception that further defines the reason for the security error.
+     * @param errorCondition
+     * 		An {@link ErrorCondition} that provides additional information about the error.
+     */
     public ClientConnectionSecurityException(String message, Throwable cause, ErrorCondition errorCondition) {
         super(message, cause, errorCondition);
     }

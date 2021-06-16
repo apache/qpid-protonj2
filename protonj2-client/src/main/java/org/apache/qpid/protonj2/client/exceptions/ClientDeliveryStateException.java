@@ -34,11 +34,29 @@ public class ClientDeliveryStateException extends ClientIllegalStateException {
 
     private final DeliveryState outcome;
 
+    /**
+     * Create a new instance of the client delivery state error.
+     *
+     * @param message
+     * 		The message that describes the cause of the error.
+     * @param outcome
+     * 		The {@link DeliveryState} that caused the error.
+     */
     public ClientDeliveryStateException(String message, DeliveryState outcome) {
         super(message);
         this.outcome = outcome;
     }
 
+    /**
+     * Create a new instance of the client delivery state error.
+     *
+     * @param message
+     * 		The message that describes the cause of the error.
+     * @param cause
+     * 		The exception that initially triggered this error.
+     * @param outcome
+     * 		The {@link DeliveryState} that caused the error.
+     */
     public ClientDeliveryStateException(String message, Throwable cause, DeliveryState outcome) {
         super(message, cause);
         this.outcome = outcome;

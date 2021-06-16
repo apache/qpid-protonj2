@@ -23,10 +23,24 @@ public class ClientUnsupportedOperationException extends ClientIllegalStateExcep
 
     private static final long serialVersionUID = -680156277783719903L;
 
+    /**
+     * Creates a new unsupported operation exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     */
     public ClientUnsupportedOperationException(String message) {
         super(message);
     }
 
+    /**
+     * Creates a new unsupported operation exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param cause
+     * 		An exception that further defines the reason for the error.
+     */
     public ClientUnsupportedOperationException(String message, Throwable cause) {
         super(message, cause);
     }

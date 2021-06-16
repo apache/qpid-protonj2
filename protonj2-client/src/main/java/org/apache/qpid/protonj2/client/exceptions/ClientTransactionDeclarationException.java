@@ -23,10 +23,24 @@ public class ClientTransactionDeclarationException extends ClientIllegalStateExc
 
     private static final long serialVersionUID = -5532644122754198664L;
 
+    /**
+     * Creates a new transaction declaration exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     */
     public ClientTransactionDeclarationException(String message) {
         super(message);
     }
 
+    /**
+     * Creates a new transaction declaration exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param cause
+     * 		An exception that further defines the reason for the error.
+     */
     public ClientTransactionDeclarationException(String message, Throwable cause) {
         super(message, cause);
     }

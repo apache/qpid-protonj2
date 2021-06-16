@@ -36,6 +36,16 @@ public class ClientConnectionRedirectedException extends ClientConnectionRemotel
 
     private final ClientRedirect redirect;
 
+    /**
+     * Creates a new connection redirect exception with the provided redirection infromation.
+     *
+     * @param reason
+     * 		The reason for the redirect
+     * @param redirect
+     * 		The {@link ClientRedirect} information object.
+     * @param condition
+     * 		The {@link ErrorCondition} that describes the redirection error.
+     */
     public ClientConnectionRedirectedException(String reason, ClientRedirect redirect, ErrorCondition condition) {
         super(reason, condition);
 

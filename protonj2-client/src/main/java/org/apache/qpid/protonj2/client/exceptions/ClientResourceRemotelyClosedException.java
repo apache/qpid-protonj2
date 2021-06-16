@@ -31,19 +31,51 @@ public class ClientResourceRemotelyClosedException extends ClientIllegalStateExc
 
     private final ErrorCondition condition;
 
+    /**
+     * Creates a new resource remotely closed exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the remote closure.
+     */
     public ClientResourceRemotelyClosedException(String message) {
         this(message, (ErrorCondition) null);
     }
 
+    /**
+     * Creates a new resource remotely closed exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the remote closure.
+     * @param cause
+     * 		An exception that further defines the remote close reason.
+     */
     public ClientResourceRemotelyClosedException(String message, Throwable cause) {
         this(message, cause, null);
     }
 
+    /**
+     * Creates a new resource remotely closed exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the remote closure.
+     * @param condition
+     * 		An {@link ErrorCondition} that provides additional information about the close reason.
+     */
     public ClientResourceRemotelyClosedException(String message, ErrorCondition condition) {
         super(message);
         this.condition = condition;
     }
 
+    /**
+     * Creates a new resource remotely closed exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the remote closure.
+     * @param cause
+     * 		An exception that further defines the remote close reason.
+     * @param condition
+     * 		An {@link ErrorCondition} that provides additional information about the close reason.
+     */
     public ClientResourceRemotelyClosedException(String message, Throwable cause, ErrorCondition condition) {
         super(message, cause);
         this.condition = condition;

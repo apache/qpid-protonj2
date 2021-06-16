@@ -23,10 +23,24 @@ public class ClientTransactionNotActiveException extends ClientIllegalStateExcep
 
     private static final long serialVersionUID = 7854401747821768051L;
 
+    /**
+     * Creates a new transaction not active exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     */
     public ClientTransactionNotActiveException(String message) {
         super(message);
     }
 
+    /**
+     * Creates a new transaction not active exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param cause
+     * 		An exception that further defines the reason for the error.
+     */
     public ClientTransactionNotActiveException(String message, Throwable cause) {
         super(message, cause);
     }

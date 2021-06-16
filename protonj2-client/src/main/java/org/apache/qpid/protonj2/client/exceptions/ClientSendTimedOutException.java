@@ -23,6 +23,12 @@ public class ClientSendTimedOutException extends ClientOperationTimedOutExceptio
 
     private static final long serialVersionUID = 222325890763309867L;
 
+    /**
+     * Creates a new connection send timed out exception.
+     *
+     * @param reason
+     * 		The message that describes the reason for the error.
+     */
     public ClientSendTimedOutException(String reason) {
         super(reason);
     }

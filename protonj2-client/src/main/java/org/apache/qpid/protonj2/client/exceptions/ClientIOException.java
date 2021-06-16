@@ -23,10 +23,24 @@ public class ClientIOException extends ClientException {
 
     private static final long serialVersionUID = 7022573614211991693L;
 
+    /**
+     * Creates a new connection I/O exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     */
     public ClientIOException(String message) {
         super(message);
     }
 
+    /**
+     * Creates a new connection I/O exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param cause
+     * 		An exception that further defines the reason for the error.
+     */
     public ClientIOException(String message, Throwable cause) {
         super(message, cause);
     }

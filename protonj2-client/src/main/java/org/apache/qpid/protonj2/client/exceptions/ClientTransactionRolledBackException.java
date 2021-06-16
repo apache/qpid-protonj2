@@ -23,10 +23,24 @@ public class ClientTransactionRolledBackException extends ClientIllegalStateExce
 
     private static final long serialVersionUID = 222325890763309867L;
 
+    /**
+     * Creates a new transaction rolled back exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     */
     public ClientTransactionRolledBackException(String message) {
         super(message, null);
     }
 
+    /**
+     * Creates a new transaction rolled back exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param cause
+     * 		An exception that further defines the reason for the error.
+     */
     public ClientTransactionRolledBackException(String message, Throwable cause) {
         super(message, cause);
     }

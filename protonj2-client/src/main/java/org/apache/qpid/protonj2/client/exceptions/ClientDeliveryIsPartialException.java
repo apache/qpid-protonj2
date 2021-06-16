@@ -24,10 +24,24 @@ public class ClientDeliveryIsPartialException extends ClientIllegalStateExceptio
 
     private static final long serialVersionUID = 3354944204399500545L;
 
+    /**
+     * Creates a new delivery is partial exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     */
     public ClientDeliveryIsPartialException(String message) {
         super(message);
     }
 
+    /**
+     * Creates a new delivery is partial exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param cause
+     * 		An exception that further defines the reason for the error.
+     */
     public ClientDeliveryIsPartialException(String message, Throwable cause) {
         super(message, cause);
     }

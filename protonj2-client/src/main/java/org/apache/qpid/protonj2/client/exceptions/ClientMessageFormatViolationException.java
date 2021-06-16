@@ -26,10 +26,24 @@ public class ClientMessageFormatViolationException extends ClientException {
 
     private static final long serialVersionUID = -7731216779946825581L;
 
+    /**
+     * Creates a new connection message format violation exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     */
     public ClientMessageFormatViolationException(String message) {
         super(message);
     }
 
+    /**
+     * Creates a new connection message format violation exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param cause
+     * 		An exception that further defines the reason for the error.
+     */
     public ClientMessageFormatViolationException(String message, Throwable cause) {
         super(message, cause);
     }

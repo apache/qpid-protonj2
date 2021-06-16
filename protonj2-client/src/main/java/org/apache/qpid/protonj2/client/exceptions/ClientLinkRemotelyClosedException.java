@@ -28,18 +28,50 @@ public class ClientLinkRemotelyClosedException extends ClientResourceRemotelyClo
 
     private static final long serialVersionUID = 5601827103553513599L;
 
+    /**
+     * Creates a new link remotely closed exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the remote closure.
+     */
     public ClientLinkRemotelyClosedException(String message) {
         this(message, (ErrorCondition) null);
     }
 
+    /**
+     * Creates a new link remotely closed exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the remote closure.
+     * @param cause
+     * 		An exception that further defines the remote close reason.
+     */
     public ClientLinkRemotelyClosedException(String message, Throwable cause) {
         this(message, cause, null);
     }
 
+    /**
+     * Creates a new link remotely closed exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the remote closure.
+     * @param condition
+     * 		An {@link ErrorCondition} that provides additional information about the close reason.
+     */
     public ClientLinkRemotelyClosedException(String message, ErrorCondition condition) {
         super(message, condition);
     }
 
+    /**
+     * Creates a new link remotely closed exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the remote closure.
+     * @param cause
+     * 		An exception that further defines the remote close reason.
+     * @param condition
+     * 		An {@link ErrorCondition} that provides additional information about the close reason.
+     */
     public ClientLinkRemotelyClosedException(String message, Throwable cause, ErrorCondition condition) {
         super(message, cause, condition);
     }

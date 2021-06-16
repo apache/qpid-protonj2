@@ -24,10 +24,24 @@ public class ClientDeliveryAbortedException extends ClientIllegalStateException 
 
     private static final long serialVersionUID = 818288499075794863L;
 
+    /**
+     * Creates a new delivery aborted exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     */
     public ClientDeliveryAbortedException(String message) {
         super(message);
     }
 
+    /**
+     * Creates a new delivery aborted exception.
+     *
+     * @param message
+     * 		The message that describes the reason for the error.
+     * @param cause
+     * 		An exception that further defines the reason for the error.
+     */
     public ClientDeliveryAbortedException(String message, Throwable cause) {
         super(message, cause);
     }
