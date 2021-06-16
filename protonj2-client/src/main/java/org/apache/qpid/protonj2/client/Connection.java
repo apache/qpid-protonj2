@@ -122,7 +122,14 @@ public interface Connection extends AutoCloseable {
 
     /**
      * Creates a receiver used to consume messages from the given node address and configure it
-     * such that the remote create a durable node.
+     * such that the remote create a durable node.  The returned receiver will be configured using
+     * default options and will take its timeout configuration values from those specified in the
+     * parent {@link Connection}.
+     *
+     * The returned receiver may not have been opened on the remote when it is returned.  Some methods of the
+     * {@link Receiver} can block until the remote fully opens the receiver, the user can wait for the remote
+     * to respond to the open request by calling the {@link Receiver#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
      *
      * @param address
      * 			The source address to attach the consumer to.
@@ -137,7 +144,13 @@ public interface Connection extends AutoCloseable {
 
     /**
      * Creates a receiver used to consume messages from the given node address and configure it
-     * such that the remote create a durable node.
+     * such that the remote create a durable node.  The returned receiver will be configured using
+     * provided options.
+     *
+     * The returned receiver may not have been opened on the remote when it is returned.  Some methods of the
+     * {@link Receiver} can block until the remote fully opens the receiver, the user can wait for the remote
+     * to respond to the open request by calling the {@link Receiver#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
      *
      * @param address
      *            The source address to attach the consumer to.
@@ -169,7 +182,7 @@ public interface Connection extends AutoCloseable {
     Receiver openDynamicReceiver() throws ClientException;
 
     /**
-     * Creates a dynamic receiver used to consume messages from the given node address.
+     * Creates a dynamic receiver used to consume messages from a dynamically generated node on the remote..
      *
      * The returned receiver may not have been opened on the remote when it is returned.  Some methods of the
      * {@link Receiver} can block until the remote fully opens the receiver, the user can wait for the remote
@@ -186,7 +199,7 @@ public interface Connection extends AutoCloseable {
     Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties) throws ClientException;
 
     /**
-     * Creates a dynamic receiver used to consume messages from the given node address.
+     * Creates a dynamic receiver used to consume messages from a dynamically generated node on the remote..
      *
      * The returned receiver may not have been opened on the remote when it is returned.  Some methods of the
      * {@link Receiver} can block until the remote fully opens the receiver, the user can wait for the remote

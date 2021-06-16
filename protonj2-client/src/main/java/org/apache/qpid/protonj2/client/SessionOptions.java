@@ -355,8 +355,8 @@ public class SessionOptions {
     }
 
     /**
-     * Sets the incoming capacity for a {@link Session} the created session.  The incoming capacity
-     * control how much buffering a session will allow before applying back pressure to the remote
+     * Sets the incoming capacity for a {@link Session} created with these options.  The incoming capacity
+     * controls how much buffering a session will allow before applying back pressure to the remote
      * thereby preventing excessive memory overhead.
      * <p>
      * This is an advanced option and in most cases the client defaults should be left in place unless
@@ -380,8 +380,8 @@ public class SessionOptions {
     }
 
     /**
-     * Sets the outgoing capacity for a {@link Session} the created session.  The outgoing capacity
-     * control how much buffering a session will allow before applying back pressure to the local
+     * Sets the outgoing capacity for a {@link Session} created with these options.  The outgoing capacity
+     * controls how much buffering a session will allow before applying back pressure to the local
      * thereby preventing excessive memory overhead while writing large amounts of data and the
      * client is experiencing back-pressure due to the remote not keeping pace.
      * <p>

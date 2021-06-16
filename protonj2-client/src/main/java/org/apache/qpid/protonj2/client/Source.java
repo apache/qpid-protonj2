@@ -48,7 +48,7 @@ public interface Source {
     ExpiryPolicy expiryPolicy();
 
     /**
-     * @return true if the Source node dynamically on-demand
+     * @return true if the Source node was created dynamically on-demand
      */
     boolean dynamic();
 

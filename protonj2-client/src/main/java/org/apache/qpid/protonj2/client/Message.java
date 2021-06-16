@@ -167,6 +167,7 @@ public interface Message<E> {
     /**
      * Sets the relative message priority.  Higher numbers indicate higher priority messages.
      * Messages with higher priorities MAY be delivered before those with lower priorities.
+     * For a received message this overwrites any value that was set by the remote sender.
      *
      * @param priority
      * 		The priority value to assign this message.
