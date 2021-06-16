@@ -28,8 +28,8 @@ public class ReconnectOptions {
     public static final boolean DEFAULT_RECONNECT_ENABLED = false;
     public static final int INFINITE = -1;
     public static final int DEFAULT_WARN_AFTER_RECONNECT_ATTEMPTS = 10;
-    public static final int DEFAULT_RECONNECT_DEALY = 10;
-    public static final int DEFAULT_MAX_RECONNECT_DEALY = 30_000;
+    public static final int DEFAULT_RECONNECT_DELAY = 10;
+    public static final int DEFAULT_MAX_RECONNECT_DELAY = 30_000;
     public static final boolean DEFAULT_USE_RECONNECT_BACKOFF = true;
     public static final double DEFAULT_RECONNECT_BACKOFF_MULTIPLIER = 2.0d;
 
@@ -39,8 +39,8 @@ public class ReconnectOptions {
     private int warnAfterReconnectAttempts = DEFAULT_WARN_AFTER_RECONNECT_ATTEMPTS;
     private int maxInitialConnectionAttempts = INFINITE;
     private int maxReconnectAttempts = INFINITE;
-    private int reconnectDelay = DEFAULT_RECONNECT_DEALY;
-    private int maxReconnectDelay = DEFAULT_MAX_RECONNECT_DEALY;
+    private int reconnectDelay = DEFAULT_RECONNECT_DELAY;
+    private int maxReconnectDelay = DEFAULT_RECONNECT_DELAY;
     private boolean useReconnectBackOff = DEFAULT_USE_RECONNECT_BACKOFF;
     private double reconnectBackOffMultiplier = DEFAULT_RECONNECT_BACKOFF_MULTIPLIER;
 
