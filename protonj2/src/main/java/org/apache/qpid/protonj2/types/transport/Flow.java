@@ -30,17 +30,17 @@ public final class Flow implements Performative {
 
     private static final long UINT_MAX = 0xFFFFFFFFL;
 
-    private static int NEXT_INCOMING_ID = 1;
-    private static int INCOMING_WINDOW = 2;
-    private static int NEXT_OUTGOING_ID = 4;
-    private static int OUTGOING_WINDOW = 8;
-    private static int HANDLE = 16;
-    private static int DELIVERY_COUNT = 32;
-    private static int LINK_CREDIT = 64;
-    private static int AVAILABLE = 128;
-    private static int DRAIN = 256;
-    private static int ECHO = 512;
-    private static int PROPERTIES = 1024;
+    private static final int NEXT_INCOMING_ID = 1;
+    private static final int INCOMING_WINDOW = 2;
+    private static final int NEXT_OUTGOING_ID = 4;
+    private static final int OUTGOING_WINDOW = 8;
+    private static final int HANDLE = 16;
+    private static final int DELIVERY_COUNT = 32;
+    private static final int LINK_CREDIT = 64;
+    private static final int AVAILABLE = 128;
+    private static final int DRAIN = 256;
+    private static final int ECHO = 512;
+    private static final int PROPERTIES = 1024;
 
     private int modified = 0;
 

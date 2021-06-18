@@ -28,19 +28,19 @@ public final class Properties implements Section<Properties> {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000073L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:properties:list");
 
-    private static int MESSAGE_ID = 1;
-    private static int USER_ID = 2;
-    private static int TO = 4;
-    private static int SUBJECT = 8;
-    private static int REPLY_TO = 16;
-    private static int CORRELATION_ID = 32;
-    private static int CONTENT_TYPE = 64;
-    private static int CONTENT_ENCODING = 128;
-    private static int ABSOLUTE_EXPIRY = 256;
-    private static int CREATION_TIME = 512;
-    private static int GROUP_ID = 1024;
-    private static int GROUP_SEQUENCE = 2048;
-    private static int REPLY_TO_GROUP_ID = 4096;
+    private static final int MESSAGE_ID = 1;
+    private static final int USER_ID = 2;
+    private static final int TO = 4;
+    private static final int SUBJECT = 8;
+    private static final int REPLY_TO = 16;
+    private static final int CORRELATION_ID = 32;
+    private static final int CONTENT_TYPE = 64;
+    private static final int CONTENT_ENCODING = 128;
+    private static final int ABSOLUTE_EXPIRY = 256;
+    private static final int CREATION_TIME = 512;
+    private static final int GROUP_ID = 1024;
+    private static final int GROUP_SEQUENCE = 2048;
+    private static final int REPLY_TO_GROUP_ID = 4096;
 
     private int modified = 0;
 

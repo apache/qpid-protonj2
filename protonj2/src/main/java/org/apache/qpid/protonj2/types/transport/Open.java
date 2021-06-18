@@ -33,16 +33,16 @@ public final class Open implements Performative {
 
     private static final long UINT_MAX = 0xFFFFFFFFL;
 
-    private static int CONTAINER_ID = 1;
-    private static int HOSTNAME = 2;
-    private static int MAX_FRAME_SIZE = 4;
-    private static int CHANNEL_MAX = 8;
-    private static int IDLE_TIMEOUT = 16;
-    private static int OUTGOING_LOCALES = 32;
-    private static int INCOMING_LOCALES = 64;
-    private static int OFFERED_CAPABILITIES = 128;
-    private static int DESIRED_CAPABILITIES = 256;
-    private static int PROPERTIES = 512;
+    private static final int CONTAINER_ID = 1;
+    private static final int HOSTNAME = 2;
+    private static final int MAX_FRAME_SIZE = 4;
+    private static final int CHANNEL_MAX = 8;
+    private static final int IDLE_TIMEOUT = 16;
+    private static final int OUTGOING_LOCALES = 32;
+    private static final int INCOMING_LOCALES = 64;
+    private static final int OFFERED_CAPABILITIES = 128;
+    private static final int DESIRED_CAPABILITIES = 256;
+    private static final int PROPERTIES = 512;
 
     private int modified = CONTAINER_ID;
 

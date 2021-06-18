@@ -54,13 +54,13 @@ public class AttachTest {
 
         assertEquals(0, attach.getElementCount());
         assertTrue(attach.isEmpty());
-        assertFalse(attach.hasDesiredCapabilites());
+        assertFalse(attach.hasDesiredCapabilities());
         assertFalse(attach.hasHandle());
         assertFalse(attach.hasIncompleteUnsettled());
         assertFalse(attach.hasInitialDeliveryCount());
         assertFalse(attach.hasMaxMessageSize());
         assertFalse(attach.hasName());
-        assertFalse(attach.hasOfferedCapabilites());
+        assertFalse(attach.hasOfferedCapabilities());
         assertFalse(attach.hasProperties());
         assertFalse(attach.hasReceiverSettleMode());
         assertFalse(attach.hasRole());
@@ -249,8 +249,8 @@ public class AttachTest {
         original.setMaxMessageSize(1024);
         original.setProperties(properties);
 
-        assertTrue(original.hasDesiredCapabilites());
-        assertTrue(original.hasOfferedCapabilites());
+        assertTrue(original.hasDesiredCapabilities());
+        assertTrue(original.hasOfferedCapabilities());
         assertTrue(original.hasHandle());
         assertTrue(original.hasIncompleteUnsettled());
         assertTrue(original.hasUnsettled());
@@ -285,8 +285,8 @@ public class AttachTest {
         original.setCoordinator(null);
         assertFalse(original.hasTarget());
         assertFalse(original.hasCoordinator());
-        assertFalse(original.hasDesiredCapabilites());
-        assertFalse(original.hasOfferedCapabilites());
+        assertFalse(original.hasDesiredCapabilities());
+        assertFalse(original.hasOfferedCapabilities());
     }
 
     @Test

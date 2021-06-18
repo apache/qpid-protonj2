@@ -36,20 +36,20 @@ public final class Attach implements Performative {
 
     private static final long UINT_MAX = 0xFFFFFFFFL;
 
-    private static int NAME = 1;
-    private static int HANDLE = 2;
-    private static int ROLE = 4;
-    private static int SENDER_SETTLE_MODE = 8;
-    private static int RECEIVER_SETTLE_MODE = 16;
-    private static int SOURCE = 32;
-    private static int TARGET = 64;
-    private static int UNSETTLED = 128;
-    private static int INCOMPLETE_UNSETTLED = 256;
-    private static int INITIAL_DELIVERY_COUNT = 512;
-    private static int MAX_MESSAGE_SIZE = 1024;
-    private static int OFFERED_CAPABILITIES = 2048;
-    private static int DESIRED_CAPABILITIES = 4096;
-    private static int PROPERTIES = 8192;
+    private static final int NAME = 1;
+    private static final int HANDLE = 2;
+    private static final int ROLE = 4;
+    private static final int SENDER_SETTLE_MODE = 8;
+    private static final int RECEIVER_SETTLE_MODE = 16;
+    private static final int SOURCE = 32;
+    private static final int TARGET = 64;
+    private static final int UNSETTLED = 128;
+    private static final int INCOMPLETE_UNSETTLED = 256;
+    private static final int INITIAL_DELIVERY_COUNT = 512;
+    private static final int MAX_MESSAGE_SIZE = 1024;
+    private static final int OFFERED_CAPABILITIES = 2048;
+    private static final int DESIRED_CAPABILITIES = 4096;
+    private static final int PROPERTIES = 8192;
 
     private int modified = 0;
 
@@ -172,11 +172,11 @@ public final class Attach implements Performative {
         return (modified & MAX_MESSAGE_SIZE) == MAX_MESSAGE_SIZE;
     }
 
-    public boolean hasOfferedCapabilites() {
+    public boolean hasOfferedCapabilities() {
         return (modified & OFFERED_CAPABILITIES) == OFFERED_CAPABILITIES;
     }
 
-    public boolean hasDesiredCapabilites() {
+    public boolean hasDesiredCapabilities() {
         return (modified & DESIRED_CAPABILITIES) == DESIRED_CAPABILITIES;
     }
 

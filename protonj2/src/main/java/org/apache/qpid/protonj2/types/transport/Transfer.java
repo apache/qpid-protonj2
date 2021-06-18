@@ -29,17 +29,17 @@ public final class Transfer implements Performative {
 
     private static final long UINT_MAX = 0xFFFFFFFFL;
 
-    private static int HANDLE = 1;
-    private static int DELIVERY_ID = 2;
-    private static int DELIVERY_TAG = 4;
-    private static int MESSAGE_FORMAT = 8;
-    private static int SETTLED = 16;
-    private static int MORE = 32;
-    private static int RCV_SETTLE_MODE = 64;
-    private static int STATE = 128;
-    private static int RESUME = 256;
-    private static int ABORTED = 512;
-    private static int BATCHABLE = 1024;
+    private static final int HANDLE = 1;
+    private static final int DELIVERY_ID = 2;
+    private static final int DELIVERY_TAG = 4;
+    private static final int MESSAGE_FORMAT = 8;
+    private static final int SETTLED = 16;
+    private static final int MORE = 32;
+    private static final int RCV_SETTLE_MODE = 64;
+    private static final int STATE = 128;
+    private static final int RESUME = 256;
+    private static final int ABORTED = 512;
+    private static final int BATCHABLE = 1024;
 
     private int modified = 0;
 

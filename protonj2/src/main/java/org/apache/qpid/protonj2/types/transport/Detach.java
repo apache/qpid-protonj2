@@ -27,9 +27,9 @@ public final class Detach implements Performative {
 
     private static final long UINT_MAX = 0xFFFFFFFFL;
 
-    private static int HANDLE = 1;
-    private static int CLOSED = 2;
-    private static int ERROR = 4;
+    private static final int HANDLE = 1;
+    private static final int CLOSED = 2;
+    private static final int ERROR = 4;
 
     private int modified = 0;
 

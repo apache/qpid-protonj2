@@ -27,12 +27,12 @@ public final class Disposition implements Performative {
 
     private static final long UINT_MAX = 0xFFFFFFFFL;
 
-    private static int ROLE = 1;
-    private static int FIRST = 2;
-    private static int LAST = 4;
-    private static int SETTLED = 8;
-    private static int STATE = 16;
-    private static int BATCHABLE = 32;
+    private static final int ROLE = 1;
+    private static final int FIRST = 2;
+    private static final int LAST = 4;
+    private static final int SETTLED = 8;
+    private static final int STATE = 16;
+    private static final int BATCHABLE = 32;
 
     private int modified = 0;
 

@@ -125,14 +125,14 @@ public final class AttachTypeEncoder extends AbstractDescribedListTypeEncoder<At
                 }
                 break;
             case 11:
-                if (attach.hasOfferedCapabilites()) {
+                if (attach.hasOfferedCapabilities()) {
                     state.getEncoder().writeArray(buffer, state, attach.getOfferedCapabilities());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 12:
-                if (attach.hasDesiredCapabilites()) {
+                if (attach.hasDesiredCapabilities()) {
                     state.getEncoder().writeArray(buffer, state, attach.getDesiredCapabilities());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);

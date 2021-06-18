@@ -296,10 +296,10 @@ public abstract class CodecToLegacyType {
         if (attach.hasIncompleteUnsettled()) {
             legacyAttach.setIncompleteUnsettled(attach.getIncompleteUnsettled());
         }
-        if (attach.hasOfferedCapabilites()) {
+        if (attach.hasOfferedCapabilities()) {
             legacyAttach.setOfferedCapabilities(convertToLegacyType(attach.getOfferedCapabilities()));
         }
-        if (attach.hasDesiredCapabilites()) {
+        if (attach.hasDesiredCapabilities()) {
             legacyAttach.setDesiredCapabilities(convertToLegacyType(attach.getDesiredCapabilities()));
         }
         if (attach.hasProperties()) {

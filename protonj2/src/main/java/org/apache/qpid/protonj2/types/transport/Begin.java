@@ -33,14 +33,14 @@ public final class Begin implements Performative {
 
     private static final long UINT_MAX = 0xFFFFFFFFL;
 
-    private static int REMOTE_CHANNEL = 1;
-    private static int NEXT_OUTGOING_ID = 2;
-    private static int INCOMING_WINDOW = 4;
-    private static int OUTGOING_WINDOW = 8;
-    private static int HANDLE_MAX = 16;
-    private static int OFFERED_CAPABILITIES = 32;
-    private static int DESIRED_CAPABILITIES = 64;
-    private static int PROPERTIES = 128;
+    private static final int REMOTE_CHANNEL = 1;
+    private static final int NEXT_OUTGOING_ID = 2;
+    private static final int INCOMING_WINDOW = 4;
+    private static final int OUTGOING_WINDOW = 8;
+    private static final int HANDLE_MAX = 16;
+    private static final int OFFERED_CAPABILITIES = 32;
+    private static final int DESIRED_CAPABILITIES = 64;
+    private static final int PROPERTIES = 128;
 
     private int modified = 0;
 
