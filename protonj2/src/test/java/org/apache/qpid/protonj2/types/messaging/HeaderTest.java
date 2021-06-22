@@ -81,6 +81,8 @@ public class HeaderTest {
         header.setFirstAcquirer(!Header.DEFAULT_FIRST_ACQUIRER);
         header.setDeliveryCount(Header.DEFAULT_DELIVERY_COUNT + 5);
 
+        assertFalse(header.isEmpty());
+
         Header copy = header.copy();
 
         assertEquals(!Header.DEFAULT_DURABILITY, copy.isDurable());
@@ -88,6 +90,8 @@ public class HeaderTest {
         assertEquals(Header.DEFAULT_TIME_TO_LIVE - 10, copy.getTimeToLive());
         assertEquals(!Header.DEFAULT_FIRST_ACQUIRER, copy.isFirstAcquirer());
         assertEquals(Header.DEFAULT_DELIVERY_COUNT + 5, copy.getDeliveryCount());
+
+        assertFalse(header.isEmpty());
     }
 
     @Test

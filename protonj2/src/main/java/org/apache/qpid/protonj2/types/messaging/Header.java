@@ -56,6 +56,7 @@ public final class Header implements Section<Header> {
         this.timeToLive = other.timeToLive;
         this.firstAcquirer = other.firstAcquirer;
         this.deliveryCount = other.deliveryCount;
+        this.modified = other.modified;
     }
 
     public Header copy() {
