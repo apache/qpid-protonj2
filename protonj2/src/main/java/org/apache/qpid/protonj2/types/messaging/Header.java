@@ -33,11 +33,11 @@ public final class Header implements Section<Header> {
 
     private static final long UINT_MAX = 0xFFFFFFFFL;
 
-    private static int DURABLE = 1;
-    private static int PRIORITY = 2;
-    private static int TIME_TO_LIVE = 4;
-    private static int FIRST_ACQUIRER = 8;
-    private static int DELIVERY_COUNT = 16;
+    private static final int DURABLE = 1;
+    private static final int PRIORITY = 2;
+    private static final int TIME_TO_LIVE = 4;
+    private static final int FIRST_ACQUIRER = 8;
+    private static final int DELIVERY_COUNT = 16;
 
     private int modified = 0;
 
