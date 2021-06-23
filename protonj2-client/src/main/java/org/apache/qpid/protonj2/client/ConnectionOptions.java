@@ -68,7 +68,7 @@ public class ConnectionOptions {
     private String virtualHost;
     private boolean traceFrames;
 
-    private BiConsumer<Connection, ConnectionEvent> connectedhedHandler;
+    private BiConsumer<Connection, ConnectionEvent> connectedHandler;
     private BiConsumer<Connection, DisconnectionEvent> disconnectedHandler;
     private BiConsumer<Connection, DisconnectionEvent> interruptedHandler;
     private BiConsumer<Connection, ConnectionEvent> reconnectedHandler;
@@ -118,7 +118,7 @@ public class ConnectionOptions {
         other.user(user);
         other.password(password);
         other.traceFrames(traceFrames);
-        other.connectedHandler(connectedhedHandler);
+        other.connectedHandler(connectedHandler);
         other.interruptedHandler(interruptedHandler);
         other.reconnectedHandler(reconnectedHandler);
         other.disconnectedHandler(disconnectedHandler);
@@ -673,7 +673,7 @@ public class ConnectionOptions {
      * @return the connection established handler that is currently registered
      */
     public BiConsumer<Connection, ConnectionEvent> connectedHandler() {
-        return connectedhedHandler;
+        return connectedHandler;
     }
 
     /**
@@ -692,7 +692,7 @@ public class ConnectionOptions {
      * @see #reconnectedHandler
      */
     public ConnectionOptions connectedHandler(BiConsumer<Connection, ConnectionEvent> connectedHandler) {
-        this.connectedhedHandler = connectedHandler;
+        this.connectedHandler = connectedHandler;
         return this;
     }
 
@@ -715,7 +715,7 @@ public class ConnectionOptions {
      *
      * @return this {@link ReconnectOptions} instance.
      *
-     * @see #connectedhedHandler
+     * @see #connectedHandler
      * @see #reconnectedHandler
      * @see #disconnectedHandler
      */
@@ -741,7 +741,7 @@ public class ConnectionOptions {
      *
      * @return this {@link ReconnectOptions} instance.
      *
-     * @see #connectedhedHandler
+     * @see #connectedHandler
      * @see #interruptedHandler
      * @see #disconnectedHandler
      */
