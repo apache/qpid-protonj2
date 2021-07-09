@@ -97,14 +97,14 @@ public final class OpenTypeEncoder extends AbstractDescribedListTypeEncoder<Open
                 }
                 break;
             case 7:
-                if (open.hasOfferedCapabilites()) {
+                if (open.hasOfferedCapabilities()) {
                     state.getEncoder().writeArray(buffer, state, open.getOfferedCapabilities());
                 } else {
                     state.getEncoder().writeNull(buffer, state);
                 }
                 break;
             case 8:
-                if (open.hasDesiredCapabilites()) {
+                if (open.hasDesiredCapabilities()) {
                     state.getEncoder().writeArray(buffer, state, open.getDesiredCapabilities());
                 } else {
                     state.getEncoder().writeNull(buffer, state);

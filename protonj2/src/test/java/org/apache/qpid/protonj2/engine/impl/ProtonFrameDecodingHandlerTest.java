@@ -166,8 +166,8 @@ public class ProtonFrameDecodingHandlerTest {
         assertFalse(decoded.hasIdleTimeout());
         assertFalse(decoded.hasOutgoingLocales());
         assertFalse(decoded.hasIncomingLocales());
-        assertFalse(decoded.hasOfferedCapabilites());
-        assertFalse(decoded.hasDesiredCapabilites());
+        assertFalse(decoded.hasOfferedCapabilities());
+        assertFalse(decoded.hasDesiredCapabilities());
         assertFalse(decoded.hasProperties());
     }
 
@@ -208,8 +208,8 @@ public class ProtonFrameDecodingHandlerTest {
         assertEquals(30000, decoded.getIdleTimeout());
         assertFalse(decoded.hasOutgoingLocales());
         assertFalse(decoded.hasIncomingLocales());
-        assertFalse(decoded.hasOfferedCapabilites());
-        assertFalse(decoded.hasDesiredCapabilites());
+        assertFalse(decoded.hasOfferedCapabilities());
+        assertFalse(decoded.hasDesiredCapabilities());
         assertFalse(decoded.hasProperties());
     }
 
@@ -250,8 +250,8 @@ public class ProtonFrameDecodingHandlerTest {
         assertEquals(30000, decoded.getIdleTimeout());
         assertFalse(decoded.hasOutgoingLocales());
         assertFalse(decoded.hasIncomingLocales());
-        assertFalse(decoded.hasOfferedCapabilites());
-        assertFalse(decoded.hasDesiredCapabilites());
+        assertFalse(decoded.hasOfferedCapabilities());
+        assertFalse(decoded.hasDesiredCapabilities());
         assertFalse(decoded.hasProperties());
     }
 

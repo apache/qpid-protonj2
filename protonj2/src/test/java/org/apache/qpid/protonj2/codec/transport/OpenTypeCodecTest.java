@@ -493,7 +493,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         assertTrue(open.hasOutgoingLocales());
         assertArrayEquals(new Symbol[] { Symbol.valueOf("test") }, open.getOutgoingLocales());
         open.setOutgoingLocales((Symbol[]) null);
-        assertFalse(open.hasDesiredCapabilites());
+        assertFalse(open.hasDesiredCapabilities());
         assertNull(open.getDesiredCapabilities());
     }
 
@@ -507,7 +507,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         assertTrue(open.hasIncomingLocales());
         assertArrayEquals(new Symbol[] { Symbol.valueOf("test") }, open.getIncomingLocales());
         open.setIncomingLocales((Symbol[]) null);
-        assertFalse(open.hasDesiredCapabilites());
+        assertFalse(open.hasDesiredCapabilities());
         assertNull(open.getDesiredCapabilities());
     }
 
@@ -515,13 +515,13 @@ public class OpenTypeCodecTest extends CodecTestSupport {
     public void testOfferedCapabilities() {
         Open open = new Open();
 
-        assertFalse(open.hasOfferedCapabilites());
+        assertFalse(open.hasOfferedCapabilities());
         assertNull(open.getOfferedCapabilities());
         open.setOfferedCapabilities(Symbol.valueOf("test"));
-        assertTrue(open.hasOfferedCapabilites());
+        assertTrue(open.hasOfferedCapabilities());
         assertArrayEquals(new Symbol[] { Symbol.valueOf("test") }, open.getOfferedCapabilities());
         open.setOfferedCapabilities((Symbol[]) null);
-        assertFalse(open.hasDesiredCapabilites());
+        assertFalse(open.hasDesiredCapabilities());
         assertNull(open.getDesiredCapabilities());
     }
 
@@ -529,13 +529,13 @@ public class OpenTypeCodecTest extends CodecTestSupport {
     public void testDesiredCapabilities() {
         Open open = new Open();
 
-        assertFalse(open.hasDesiredCapabilites());
+        assertFalse(open.hasDesiredCapabilities());
         assertNull(open.getDesiredCapabilities());
         open.setDesiredCapabilities(Symbol.valueOf("test"));
-        assertTrue(open.hasDesiredCapabilites());
+        assertTrue(open.hasDesiredCapabilities());
         assertArrayEquals(new Symbol[] { Symbol.valueOf("test") }, open.getDesiredCapabilities());
         open.setDesiredCapabilities((Symbol[]) null);
-        assertFalse(open.hasDesiredCapabilites());
+        assertFalse(open.hasDesiredCapabilities());
         assertNull(open.getDesiredCapabilities());
     }
 

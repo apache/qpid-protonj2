@@ -48,8 +48,8 @@ public class BeginTest {
 
         assertFalse(begin.hasHandleMax());
         assertFalse(begin.hasNextOutgoingId());
-        assertFalse(begin.hasDesiredCapabilites());
-        assertFalse(begin.hasOfferedCapabilites());
+        assertFalse(begin.hasDesiredCapabilities());
+        assertFalse(begin.hasOfferedCapabilities());
         assertFalse(begin.hasOutgoingWindow());
         assertFalse(begin.hasIncomingWindow());
         assertFalse(begin.hasProperties());
@@ -66,8 +66,8 @@ public class BeginTest {
 
         assertTrue(begin.hasHandleMax());
         assertTrue(begin.hasNextOutgoingId());
-        assertTrue(begin.hasDesiredCapabilites());
-        assertTrue(begin.hasOfferedCapabilites());
+        assertTrue(begin.hasDesiredCapabilities());
+        assertTrue(begin.hasOfferedCapabilities());
         assertTrue(begin.hasOutgoingWindow());
         assertTrue(begin.hasIncomingWindow());
         assertTrue(begin.hasProperties());
@@ -225,8 +225,8 @@ public class BeginTest {
 
         final Begin copied = begin.copy();
 
-        assertTrue(begin.hasDesiredCapabilites());
-        assertTrue(copied.hasDesiredCapabilites());
+        assertTrue(begin.hasDesiredCapabilities());
+        assertTrue(copied.hasDesiredCapabilities());
 
         assertArrayEquals(copied.getDesiredCapabilities(), begin.getDesiredCapabilities());
         assertArrayEquals(copied.getDesiredCapabilities(), desiredCapabilities);
@@ -243,8 +243,8 @@ public class BeginTest {
 
         final Begin copied = begin.copy();
 
-        assertTrue(begin.hasOfferedCapabilites());
-        assertTrue(copied.hasOfferedCapabilites());
+        assertTrue(begin.hasOfferedCapabilities());
+        assertTrue(copied.hasOfferedCapabilities());
 
         assertArrayEquals(copied.getOfferedCapabilities(), begin.getOfferedCapabilities());
         assertArrayEquals(copied.getOfferedCapabilities(), offeredCapabilities);

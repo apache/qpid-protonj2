@@ -116,11 +116,11 @@ public final class Begin implements Performative {
         return (modified & HANDLE_MAX) == HANDLE_MAX;
     }
 
-    public boolean hasOfferedCapabilites() {
+    public boolean hasOfferedCapabilities() {
         return (modified & OFFERED_CAPABILITIES) == OFFERED_CAPABILITIES;
     }
 
-    public boolean hasDesiredCapabilites() {
+    public boolean hasDesiredCapabilities() {
         return (modified & DESIRED_CAPABILITIES) == DESIRED_CAPABILITIES;
     }
 

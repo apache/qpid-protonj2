@@ -169,9 +169,9 @@ public class CodecTestSupport {
 
         assertSame(begin1.hasProperties(), begin2.hasProperties(), "Expected Attach with matching has properties values");
         assertEquals(begin1.getProperties(), begin2.getProperties(), "Properties Map values not equal");
-        assertSame(begin1.hasDesiredCapabilites(), begin2.hasDesiredCapabilites(), "Expected Attach with matching has desired capabilities values");
+        assertSame(begin1.hasDesiredCapabilities(), begin2.hasDesiredCapabilities(), "Expected Attach with matching has desired capabilities values");
         assertArrayEquals(begin1.getDesiredCapabilities(), begin2.getDesiredCapabilities(), "Desired Capabilities are not equal");
-        assertSame(begin2.hasOfferedCapabilites(), begin2.hasOfferedCapabilites(), "Expected Attach with matching has offered capabilities values");
+        assertSame(begin2.hasOfferedCapabilities(), begin2.hasOfferedCapabilities(), "Expected Attach with matching has offered capabilities values");
         assertArrayEquals(begin1.getOfferedCapabilities(), begin2.getOfferedCapabilities(), "Offered Capabilities are not equal");
     }
 

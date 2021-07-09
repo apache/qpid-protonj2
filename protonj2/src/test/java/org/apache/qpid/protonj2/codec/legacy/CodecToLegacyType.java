@@ -236,10 +236,10 @@ public abstract class CodecToLegacyType {
         if (begin.hasRemoteChannel()) {
             legacyBegin.setRemoteChannel(org.apache.qpid.proton.amqp.UnsignedShort.valueOf((short) begin.getRemoteChannel()));
         }
-        if (begin.hasOfferedCapabilites()) {
+        if (begin.hasOfferedCapabilities()) {
             legacyBegin.setOfferedCapabilities(convertToLegacyType(begin.getOfferedCapabilities()));
         }
-        if (begin.hasDesiredCapabilites()) {
+        if (begin.hasDesiredCapabilities()) {
             legacyBegin.setDesiredCapabilities(convertToLegacyType(begin.getDesiredCapabilities()));
         }
         if (begin.hasProperties()) {

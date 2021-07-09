@@ -83,14 +83,14 @@ public final class BeginTypeEncoder extends AbstractDescribedListTypeEncoder<Beg
                 }
                 break;
             case 5:
-                if (begin.hasOfferedCapabilites()) {
+                if (begin.hasOfferedCapabilities()) {
                     state.getEncoder().writeArray(buffer, state, begin.getOfferedCapabilities());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 6:
-                if (begin.hasDesiredCapabilites()) {
+                if (begin.hasDesiredCapabilities()) {
                     state.getEncoder().writeArray(buffer, state, begin.getDesiredCapabilities());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);

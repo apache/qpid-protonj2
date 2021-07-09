@@ -85,10 +85,10 @@ public final class Open implements Performative {
         if (hasIncomingLocales()) {
             copy.setIncomingLocales(Arrays.copyOf(incomingLocales, incomingLocales.length));
         }
-        if (hasOfferedCapabilites()) {
+        if (hasOfferedCapabilities()) {
             copy.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
         }
-        if (hasDesiredCapabilites()) {
+        if (hasDesiredCapabilities()) {
             copy.setOfferedCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
         }
         if (hasProperties()) {
@@ -136,11 +136,11 @@ public final class Open implements Performative {
         return (modified & INCOMING_LOCALES) == INCOMING_LOCALES;
     }
 
-    public boolean hasOfferedCapabilites() {
+    public boolean hasOfferedCapabilities() {
         return (modified & OFFERED_CAPABILITIES) == OFFERED_CAPABILITIES;
     }
 
-    public boolean hasDesiredCapabilites() {
+    public boolean hasDesiredCapabilities() {
         return (modified & DESIRED_CAPABILITIES) == DESIRED_CAPABILITIES;
     }
 
