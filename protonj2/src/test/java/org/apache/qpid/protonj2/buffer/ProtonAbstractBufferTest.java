@@ -1688,6 +1688,20 @@ public abstract class ProtonAbstractBufferTest {
     }
 
     @Test
+    public void testCompareToSameContentsButInOffsetBuffers() {
+        byte[] payload1 = new byte[] { 0, 1, 2, 3, 4 };
+        byte[] payload2 = new byte[] { 9, 9, 9, 0, 1, 2, 3, 4 };
+        ProtonBuffer buffer1 = wrapBuffer(payload1);
+        ProtonBuffer buffer2 = wrapBuffer(payload2);
+
+        buffer2.setReadIndex(3);
+
+        assertEquals(0, buffer1.compareTo(buffer1));
+        assertEquals(0, buffer1.compareTo(buffer2));
+        assertEquals(0, buffer2.compareTo(buffer1));
+    }
+
+    @Test
     public void testCompareToDifferentContents() {
         byte[] payload1 = new byte[] { 1, 2, 3, 4, 5 };
         byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };

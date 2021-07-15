@@ -76,7 +76,7 @@ public final class ProtonNettyByteBuffer implements ProtonBuffer {
     public int compareTo(ProtonBuffer other) {
         int length = getReadIndex() + Math.min(getReadableBytes(), other.getReadableBytes());
 
-        for (int i = this.getReadIndex(), j = getReadIndex(); i < length; i++, j++) {
+        for (int i = getReadIndex(), j = other.getReadIndex(); i < length; i++, j++) {
             int cmp = Integer.compare(getByte(i) & 0xFF, other.getByte(j) & 0xFF);
             if (cmp != 0) {
                 return cmp;
