@@ -822,13 +822,11 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Disabled("Disabled until the io_uring support matures, can cause CI issues")
     @Test
     public void testConnectToServerWithIOUringEnabled() throws Exception {
         doTestIORingSupport(true);
     }
 
-    @Disabled("Disabled until the io_uring support matures, can cause CI issues")
     @Test
     public void testConnectToServerWithIOUringDisabled() throws Exception {
         doTestIORingSupport(false);
