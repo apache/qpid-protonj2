@@ -264,7 +264,6 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
     }
 
     @SuppressWarnings("rawtypes")
-    @Test
     private void doTestEncodeDecodeArray(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         InputStream stream = new ProtonBufferInputStream(buffer);

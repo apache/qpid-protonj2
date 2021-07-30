@@ -333,7 +333,7 @@ public class MapTypeCodecTest extends CodecTestSupport {
             buffer.writeInt(17);
             buffer.writeInt(1);
         } else {
-            buffer.writeByte(17);
+            buffer.writeByte(14);
             buffer.writeByte(1);
         }
         buffer.writeByte(EncodingCodes.STR8);

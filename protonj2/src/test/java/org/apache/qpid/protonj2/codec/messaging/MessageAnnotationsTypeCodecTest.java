@@ -525,4 +525,5 @@ public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
             decoder.readObject(buffer, decoderState);
             fail("Should not decode type with invalid encoding");
         } catch (DecodeException ex) {}
-    }}
+    }
+}

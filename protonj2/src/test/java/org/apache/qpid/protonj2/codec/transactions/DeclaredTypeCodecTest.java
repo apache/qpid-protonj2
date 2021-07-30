@@ -47,7 +47,7 @@ public class DeclaredTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testTypeClassReturnsCorrectType() throws IOException {
-        assertEquals(Declared.class, new DeclaredTypeEncoder().getTypeClass());
+        assertEquals(Declared.class, new DeclaredTypeDecoder().getTypeClass());
         assertEquals(Declared.class, new DeclaredTypeEncoder().getTypeClass());
     }
 

@@ -161,25 +161,25 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeSmallUUIDArray() throws IOException {
-        doTestDecodeUUDIArrayType(SMALL_ARRAY_SIZE, false);
+        doTestDecodeUUIDArrayType(SMALL_ARRAY_SIZE, false);
     }
 
     @Test
-    public void testDecodeLargeUUDIArray() throws IOException {
-        doTestDecodeUUDIArrayType(LARGE_ARRAY_SIZE, false);
+    public void testDecodeLargeUUIDArray() throws IOException {
+        doTestDecodeUUIDArrayType(LARGE_ARRAY_SIZE, false);
     }
 
     @Test
     public void testDecodeSmallUUIDArrayFromStream() throws IOException {
-        doTestDecodeUUDIArrayType(SMALL_ARRAY_SIZE, true);
+        doTestDecodeUUIDArrayType(SMALL_ARRAY_SIZE, true);
     }
 
     @Test
-    public void testDecodeLargeUUDIArrayFromStream() throws IOException {
-        doTestDecodeUUDIArrayType(LARGE_ARRAY_SIZE, true);
+    public void testDecodeLargeUUIDArrayFromStream() throws IOException {
+        doTestDecodeUUIDArrayType(LARGE_ARRAY_SIZE, true);
     }
 
-    private void doTestDecodeUUDIArrayType(int size, boolean fromStream) throws IOException {
+    private void doTestDecodeUUIDArrayType(int size, boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         InputStream stream = new ProtonBufferInputStream(buffer);
 

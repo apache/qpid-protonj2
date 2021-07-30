@@ -62,22 +62,22 @@ public class PropertiesTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeSmallSeriesOfPropertiess() throws IOException {
+    public void testDecodeSmallSeriesOfProperties() throws IOException {
         doTestDecodePropertiesSeries(SMALL_SIZE, false);
     }
 
     @Test
-    public void testDecodeLargeSeriesOfPropertiess() throws IOException {
+    public void testDecodeLargeSeriesOfProperties() throws IOException {
         doTestDecodePropertiesSeries(LARGE_SIZE, false);
     }
 
     @Test
-    public void testDecodeSmallSeriesOfPropertiessFromStream() throws IOException {
+    public void testDecodeSmallSeriesOfPropertiesFromStream() throws IOException {
         doTestDecodePropertiesSeries(SMALL_SIZE, true);
     }
 
     @Test
-    public void testDecodeLargeSeriesOfPropertiessStream() throws IOException {
+    public void testDecodeLargeSeriesOfPropertiesFromStream() throws IOException {
         doTestDecodePropertiesSeries(LARGE_SIZE, true);
     }
 

@@ -48,7 +48,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
     @Test
     public void testTypeClassReturnsCorrectType() throws IOException {
         assertEquals(Discharge.class, new DischargeTypeDecoder().getTypeClass());
-        assertEquals(Discharge.class, new DischargeTypeDecoder().getTypeClass());
+        assertEquals(Discharge.class, new DischargeTypeEncoder().getTypeClass());
     }
 
     @Test
