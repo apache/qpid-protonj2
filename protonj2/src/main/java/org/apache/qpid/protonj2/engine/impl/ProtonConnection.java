@@ -424,7 +424,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public void handleSASLHeader(AMQPHeader header, ProtonEngine context) {
-        context.engineFailed(new ProtocolViolationException("Receivded unexpected SASL Header"));
+        context.engineFailed(new ProtocolViolationException("Received unexpected SASL Header"));
     }
 
     @Override
@@ -722,7 +722,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         }
 
         // We didn't find one that isn't free and also not awaiting remote being / end
-        // so just use an overlap as it should complete in order unles the remote has
+        // so just use an overlap as it should complete in order unless the remote has
         // completely ignored the specification and or gone of the rails.
         for (int i = 0; i <= localOpen.getChannelMax(); ++i) {
             if (!localSessions.containsKey(i)) {

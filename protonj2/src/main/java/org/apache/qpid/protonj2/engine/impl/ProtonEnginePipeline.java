@@ -33,8 +33,8 @@ import org.apache.qpid.protonj2.engine.exceptions.ProtonException;
  */
 public class ProtonEnginePipeline implements EnginePipeline {
 
-    EngineHandlerContextReadBoundry head;
-    EngineHandlerContextWriteBoundry tail;
+    EngineHandlerContextReadBoundary head;
+    EngineHandlerContextWriteBoundary tail;
 
     private final ProtonEngine engine;
 
@@ -45,8 +45,8 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
         this.engine = engine;
 
-        head = new EngineHandlerContextReadBoundry();
-        tail = new EngineHandlerContextWriteBoundry();
+        head = new EngineHandlerContextReadBoundary();
+        tail = new EngineHandlerContextWriteBoundary();
 
         // Ensure Pipeline starts out empty but initialized.
         head.next = tail;
@@ -391,10 +391,10 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
     //----- Synthetic handler context that bounds the pipeline
 
-    private class EngineHandlerContextReadBoundry extends ProtonEngineHandlerContext {
+    private class EngineHandlerContextReadBoundary extends ProtonEngineHandlerContext {
 
-        public EngineHandlerContextReadBoundry() {
-            super("Read Boundry", engine, new BoundryEngineHandler());
+        public EngineHandlerContextReadBoundary() {
+            super("Read Boundary", engine, new BoundaryEngineHandler());
         }
 
         @Override
@@ -418,10 +418,10 @@ public class ProtonEnginePipeline implements EnginePipeline {
         }
     }
 
-    private class EngineHandlerContextWriteBoundry extends ProtonEngineHandlerContext {
+    private class EngineHandlerContextWriteBoundary extends ProtonEngineHandlerContext {
 
-        public EngineHandlerContextWriteBoundry() {
-            super("Write Boundry", engine, new BoundryEngineHandler());
+        public EngineHandlerContextWriteBoundary() {
+            super("Write Boundary", engine, new BoundaryEngineHandler());
         }
 
         @Override
@@ -455,7 +455,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
     //----- Default TransportHandler Used at the pipeline boundary
 
-    private class BoundryEngineHandler implements EngineHandler {
+    private class BoundaryEngineHandler implements EngineHandler {
 
         @Override
         public void engineStarting(EngineHandlerContext context) {

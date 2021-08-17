@@ -83,7 +83,7 @@ public class ProtonEngine implements Engine {
     private BiConsumer<ProtonBuffer, Runnable> outputHandler;
     private EventHandler<Engine> engineShutdownHandler;
     private EventHandler<Engine> engineFailureHandler = (engine) -> {
-        LOG.warn("Engine encounted error and will become inoperable: ", engine.failureCause());
+        LOG.warn("Engine encountered error and will become inoperable: ", engine.failureCause());
     };
 
     @Override
