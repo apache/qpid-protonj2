@@ -542,7 +542,7 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
         // Nothing currently updated on this state change.
     }
 
-    protected void transitionToRemotelyCosed() {
+    protected void transitionToRemotelyClosed() {
         // Nothing currently updated on this state change.
     }
 
@@ -669,7 +669,7 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
         if (detach.getClosed()) {
             remoteState = LinkState.CLOSED;
             operability = LinkOperabilityState.LINK_REMOTELY_CLOSED;
-            transitionToRemotelyCosed();
+            transitionToRemotelyClosed();
             fireRemoteClose();
         } else {
             remoteState = LinkState.DETACHED;

@@ -30,7 +30,7 @@ public class ProtonLinkCreditState implements LinkCreditState {
     private boolean drain;
     private boolean echo;
 
-    private boolean deliveryCountInitalised;
+    private boolean deliveryCountInitialized;
 
     @SuppressWarnings("unused")
     private long remoteDeliveryCount;
@@ -40,7 +40,7 @@ public class ProtonLinkCreditState implements LinkCreditState {
     public ProtonLinkCreditState() {}
 
     public ProtonLinkCreditState(int deliveryCount) {
-        initialiseDeliveryCount(deliveryCount);
+        initializeDeliveryCount(deliveryCount);
     }
 
     @Override
@@ -101,17 +101,17 @@ public class ProtonLinkCreditState implements LinkCreditState {
         return deliveryCount--;
     }
 
-    boolean isDeliveryCountInitalised() {
-        return deliveryCountInitalised;
+    boolean isDeliveryCountInitialized() {
+        return deliveryCountInitialized;
     }
 
-    void initialiseDeliveryCount(int deliveryCount) {
+    void initializeDeliveryCount(int deliveryCount) {
         this.deliveryCount = deliveryCount;
-        deliveryCountInitalised = true;
+        deliveryCountInitialized = true;
     }
 
     public void updateCredit(int effectiveCredit) {
-        // TODO: change credit to a long, or ensure inc/decrements above work fully if it has wrapped.
+        // TODO: change credit to a long, or ensure increments/decrements above work fully if it has wrapped.
         this.credit = effectiveCredit;
     }
 

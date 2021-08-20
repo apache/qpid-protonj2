@@ -211,7 +211,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     protected final ProtonSender handleRemoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
-        throw new IllegalStateException("Sender link should never handle dispsotiions for incoming deliveries");
+        throw new IllegalStateException("Sender link should never handle disposition for incoming deliveries");
     }
 
     @Override
@@ -410,7 +410,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     @Override
-    protected void transitionToRemotelyCosed() {
+    protected void transitionToRemotelyClosed() {
         sendable = false;
     }
 

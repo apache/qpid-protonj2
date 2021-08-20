@@ -566,7 +566,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         if (session == null) {
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Disposition from remote: " + channel));
         } else {
-            session.remoteDispsotion(disposition, channel);
+            session.remoteDisposition(disposition, channel);
         }
     }
 

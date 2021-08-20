@@ -584,7 +584,7 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
         }
     }
 
-    void remoteDispsotion(Disposition disposition, int channel) {
+    void remoteDisposition(Disposition disposition, int channel) {
         if (disposition.getRole() == Role.RECEIVER) {
             outgoingWindow.handleDisposition(disposition);
         } else {

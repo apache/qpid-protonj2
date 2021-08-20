@@ -321,7 +321,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             throw new ProtocolViolationException("Sending peer attach had no initial delivery count");
         }
 
-        getCreditState().initialiseDeliveryCount((int) attach.getInitialDeliveryCount());
+        getCreditState().initializeDeliveryCount((int) attach.getInitialDeliveryCount());
 
         return this;
     }
@@ -436,7 +436,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     protected ProtonReceiver decorateOutgoingFlow(Flow flow) {
         flow.setLinkCredit(getCredit());
         flow.setHandle(getHandle());
-        if (getCreditState().isDeliveryCountInitalised()) {
+        if (getCreditState().isDeliveryCountInitialized()) {
             flow.setDeliveryCount(getCreditState().getDeliveryCount());
         }
         flow.setDrain(isDraining());

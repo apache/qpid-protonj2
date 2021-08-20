@@ -147,7 +147,7 @@ public class ProtonEngine implements Engine {
             writable = false;
 
             if (nextIdleTimeoutCheck != null) {
-                LOG.trace("Cancelling scheduled Idle Timeout Check");
+                LOG.trace("Canceling scheduled Idle Timeout Check");
                 nextIdleTimeoutCheck.cancel(false);
                 nextIdleTimeoutCheck = null;
             }
@@ -245,7 +245,7 @@ public class ProtonEngine implements Engine {
             writable = false;
 
             if (nextIdleTimeoutCheck != null) {
-                LOG.trace("Cancelling scheduled Idle Timeout Check");
+                LOG.trace("Canceling scheduled Idle Timeout Check");
                 nextIdleTimeoutCheck.cancel(false);
                 nextIdleTimeoutCheck = null;
             }
@@ -440,7 +440,7 @@ public class ProtonEngine implements Engine {
 
     private long computeDeadline(long now, long timeout) {
         long deadline = now + timeout;
-        // We use 0 to signal not-initialised and/or no-timeout, so in the
+        // We use 0 to signal not-initialized and/or no-timeout, so in the
         // unlikely event thats to be the actual deadline, return 1 instead
         return deadline != 0 ? deadline : 1;
     }
