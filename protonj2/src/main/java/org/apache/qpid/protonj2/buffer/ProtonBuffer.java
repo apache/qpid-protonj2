@@ -90,7 +90,8 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
     /**
      * Ensures that the requested number of bytes is available for write operations
      * in the current buffer, growing the buffer if needed to meet the requested
-     * writable capacity.
+     * writable capacity. This method will not alter the write offset but may change
+     * the value returned from the capacity method if new buffer space is allocated.
      *
      * @param amount
      *      The number of bytes beyond the current write index needed.
@@ -166,8 +167,9 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
     ProtonBuffer copy(int index, int length);
 
     /**
-     * Reset the position markers of this buffer, this method is not required to reset
-     * the data previously written to this buffer.
+     * Reset the read and write offsets to zero and clears the position markers if
+     * set previously, this method is not required to reset the data previously
+     * written to this buffer.
      *
      * @return this buffer for using in call chaining.
      */
@@ -547,8 +549,8 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *      The index into the buffer where the value should be read.
      * @param destination
      *      The buffer where the bytes read will be written to
-     * @param destinationIndex
-     *      The index into the destination where the write starts
+     * @param offset
+     *      The offset into the destination where the write starts
      * @param length
      *      The number of bytes to transfer
      *
@@ -562,7 +564,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *         if {@code dstIndex + length} is greater than
      *            {@code dst.capacity}
      */
-    ProtonBuffer getBytes(int index, ProtonBuffer destination, int destinationIndex, int length);
+    ProtonBuffer getBytes(int index, ProtonBuffer destination, int offset, int length);
 
     /**
      * Transfers this buffer's data to the specified destination starting at
@@ -642,7 +644,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @return a reference to this ProtonBuffer for chaining.
      *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capcity.
+     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
      */
     ProtonBuffer setByte(int index, int value);
 
@@ -656,7 +658,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @return a reference to this ProtonBuffer for chaining.
      *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capcity.
+     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
      */
     ProtonBuffer setBoolean(int index, boolean value);
 
@@ -670,7 +672,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @return a reference to this ProtonBuffer for chaining.
      *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capcity.
+     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
      */
     ProtonBuffer setChar(int index, int value);
 
@@ -684,7 +686,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @return a reference to this ProtonBuffer for chaining.
      *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capcity.
+     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
      */
     ProtonBuffer setShort(int index, int value);
 
@@ -698,7 +700,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @return a reference to this ProtonBuffer for chaining.
      *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capcity.
+     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
      */
     ProtonBuffer setInt(int index, int value);
 
@@ -806,8 +808,8 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *      The index in this buffer where the write operation starts.
      * @param source
      *      The source buffer from which the bytes are read.
-     * @param sourceIndex
-     *      The first index of the source
+     * @param offset
+     *      The offset into the source where the set begins.
      * @param length
      *      The number of bytes to transfer
      *
@@ -821,7 +823,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *         if {@code sourceIndex + length} is greater than
      *            {@code source.capacity}
      */
-    ProtonBuffer setBytes(int index, ProtonBuffer source, int sourceIndex, int length);
+    ProtonBuffer setBytes(int index, ProtonBuffer source, int offset, int length);
 
     /**
      * Transfers the specified source array's data to this buffer starting at
@@ -853,8 +855,8 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *      The index in this buffer where the write operation starts.
      * @param source
      *      The source buffer from which the bytes are read.
-     * @param sourceIndex
-     *      The first index of the source
+     * @param offset
+     *      The offset into the source where the set begins.
      * @param length
      *      The number of bytes to transfer
      *
@@ -862,12 +864,12 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @throws IndexOutOfBoundsException
      *         if the specified {@code index} is less than {@code 0},
-     *         if the specified {@code srcIndex} is less than {@code 0},
+     *         if the specified {@code offset} is less than {@code 0},
      *         if {@code index + length} is greater than
      *            {@code this.capacity}, or
-     *         if {@code srcIndex + length} is greater than {@code src.length}
+     *         if {@code offset + length} is greater than {@code source.length}
      */
-    ProtonBuffer setBytes(int index, byte[] source, int sourceIndex, int length);
+    ProtonBuffer setBytes(int index, byte[] source, int offset, int length);
 
     /**
      * Transfers the specified source buffer's data to this buffer starting at
@@ -885,7 +887,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @throws IndexOutOfBoundsException
      *         if the specified {@code index} is less than {@code 0} or
-     *         if {@code index + src.remaining()} is greater than
+     *         if {@code index + source.remaining()} is greater than
      *            {@code this.capacity}
      */
     ProtonBuffer setBytes(int index, ByteBuffer source);
@@ -1092,7 +1094,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      * Check if the requested number of bytes can be written into this buffer.
      *
      * @param size
-     *      The number of bytes that is being checked for writability.
+     *      The number writable bytes that is being checked in this buffer.
      *
      * @return true if the buffer has space left for the given number of bytes to be written.
      */
@@ -1172,7 +1174,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      * @return this ProtonBuffer for chaining.
      *
      * @throws IndexOutOfBoundsException
-     *         if {@code src.readableBytes} is greater than
+     *         if {@code source.readableBytes} is greater than
      *            {@code this.writableBytes}
      */
     ProtonBuffer writeBytes(ProtonBuffer source);
@@ -1195,7 +1197,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @throws IndexOutOfBoundsException
      *         if {@code length} is greater than {@code this.writableBytes} or
-     *         if {@code length} is greater then {@code src.readableBytes}
+     *         if {@code length} is greater then {@code source.readableBytes}
      */
     ProtonBuffer writeBytes(ProtonBuffer source, int length);
 
@@ -1207,20 +1209,20 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @param source
      *      The source buffer from which the bytes are read.
-     * @param sourrceIndex
-     *      The first index of the source
+     * @param offset
+     *      The offset in the source buffer to start writing into this buffer.
      * @param length
      *      The number of bytes to transfer
      *
      * @return this buffer for chaining
      *
      * @throws IndexOutOfBoundsException
-     *         if the specified {@code srcIndex} is less than {@code 0},
-     *         if {@code srcIndex + length} is greater than
-     *            {@code src.capacity}, or
+     *         if the specified {@code offset} is less than {@code 0},
+     *         if {@code offset + length} is greater than
+     *            {@code source.capacity}, or
      *         if {@code length} is greater than {@code this.writableBytes}
      */
-    ProtonBuffer writeBytes(ProtonBuffer source, int sourrceIndex, int length);
+    ProtonBuffer writeBytes(ProtonBuffer source, int offset, int length);
 
     /**
      * Transfers the specified source buffer's data to this buffer starting at
@@ -1234,7 +1236,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      * @return this buffer for chaining
      *
      * @throws IndexOutOfBoundsException
-     *         if {@code src.remaining()} is greater than
+     *         if {@code source.remaining()} is greater than
      *            {@code this.writableBytes}
      */
     ProtonBuffer writeBytes(ByteBuffer source);
