@@ -87,7 +87,7 @@ public final class NettyIOContext {
                     }
                 } else {
                     throw new IllegalArgumentException(
-                        String.format("Provided preferred native trasport type name: %s, is not supported.", nativeID));
+                        String.format("Provided preferred native transport type name: %s, is not supported.", nativeID));
                 }
             }
         }

@@ -102,7 +102,7 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
      * @param <V> The type of the body value carried in this message body section.
      *
      * @param body
-     *      The body {@link Section} to assign to the created message isntance.
+     *      The body {@link Section} to assign to the created message instance.
      *
      * @return a new {@link ClientMessage} instance with the given body.
      */

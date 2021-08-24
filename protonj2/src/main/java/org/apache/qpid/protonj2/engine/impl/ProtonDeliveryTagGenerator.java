@@ -55,8 +55,8 @@ public abstract class ProtonDeliveryTagGenerator implements DeliveryTagGenerator
         },
         /**
          * Provides a {@link DeliveryTagGenerator} that uses a pool of {@link DeliveryTag} instances
-         * in an attempt to reduce GC overhead on Delivery sends.  The tags are created using in numeric
-         * base value that is incremented as new tag values are requested and none can be prodices from
+         * in an attempt to reduce GC overhead on Delivery sends.  The tags are created using a numeric
+         * base value that is incremented as new tag values are requested and none can be produced from
          * the tag pool.
          */
         POOLED {

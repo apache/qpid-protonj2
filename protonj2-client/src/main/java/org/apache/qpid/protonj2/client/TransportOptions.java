@@ -334,14 +334,14 @@ public class TransportOptions implements Cloneable {
     }
 
     /**
-     * @return the nativeIOPeference
+     * @return the nativeIOPreference
      */
     public String[] nativeIOPreference() {
         return nativeIOPreference;
     }
 
     /**
-     * @param nativeIOPeference the nativeIOPeference to set
+     * @param nativeIOPreference the nativeIOPreference to set
      */
     public void nativeIOPreference(String... nativeIOPeference) {
         if (nativeIOPeference == null || nativeIOPeference.length == 0 || nativeIOPeference.length == 1 && nativeIOPeference[0] == null) {

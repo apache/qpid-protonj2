@@ -38,7 +38,7 @@ public class LinkedSplayMap<E> extends SplayMap<E> {
 
     /**
      * A dummy entry in the circular linked list of entries in the map.
-     * The first real entry is root.next, and the last is header.pervious.
+     * The first real entry is root.next, and the last is header.previous.
      * If the map is empty, root.next == root && root.previous == root.
      */
     private final transient SplayedEntry<E> entries = new SplayedEntry<>();
@@ -265,7 +265,7 @@ public class LinkedSplayMap<E> extends SplayMap<E> {
 
         @Override
         public void forEach(Consumer<? super E> action) {
-            Objects.requireNonNull(action, "forEach action paremeter cannot be null");
+            Objects.requireNonNull(action, "forEach action parameter cannot be null");
 
             final int initialModCount = modCount;
 
@@ -317,7 +317,7 @@ public class LinkedSplayMap<E> extends SplayMap<E> {
 
         @Override
         public void forEach(Consumer<? super UnsignedInteger> action) {
-            Objects.requireNonNull(action, "forEach action paremeter cannot be null");
+            Objects.requireNonNull(action, "forEach action parameter cannot be null");
 
             final int initialModCount = modCount;
 
@@ -368,7 +368,7 @@ public class LinkedSplayMap<E> extends SplayMap<E> {
 
         @Override
         public void forEach(Consumer<? super Entry<UnsignedInteger, E>> action) {
-            Objects.requireNonNull(action, "forEach action paremeter cannot be null");
+            Objects.requireNonNull(action, "forEach action parameter cannot be null");
 
             final int initialModCount = modCount;
 

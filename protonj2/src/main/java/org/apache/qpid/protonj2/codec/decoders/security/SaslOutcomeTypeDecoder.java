@@ -91,7 +91,7 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_SASL_OUTCOME_LIST_ENTRIES) {
-            throw new DecodeException("Not enougn entries in SASL Outcome list encoding: " + count);
+            throw new DecodeException("Not enough entries in SASL Outcome list encoding: " + count);
         }
 
         if (count > MAX_SASL_OUTCOME_LIST_ENTRIES) {
@@ -149,7 +149,7 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_SASL_OUTCOME_LIST_ENTRIES) {
-            throw new DecodeException("Not enougn entries in SASL Outcome list encoding: " + count);
+            throw new DecodeException("Not enough entries in SASL Outcome list encoding: " + count);
         }
 
         if (count > MAX_SASL_OUTCOME_LIST_ENTRIES) {

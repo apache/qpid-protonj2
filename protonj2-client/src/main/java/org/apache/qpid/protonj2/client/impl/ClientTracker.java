@@ -39,7 +39,7 @@ class ClientTracker implements Tracker {
 
     private final ClientFuture<Tracker> remoteSettlementFuture;
 
-    private volatile boolean remotelySetted;
+    private volatile boolean remotelySettled;
     private volatile DeliveryState remoteDeliveryState;
 
     /**
@@ -78,7 +78,7 @@ class ClientTracker implements Tracker {
 
     @Override
     public boolean remoteSettled() {
-        return remotelySetted;
+        return remotelySettled;
     }
 
     @Override
@@ -200,7 +200,7 @@ class ClientTracker implements Tracker {
     //----- Internal Event hooks for delivery updates
 
     private void processDeliveryUpdated(OutgoingDelivery delivery) {
-        remotelySetted = delivery.isRemotelySettled();
+        remotelySettled = delivery.isRemotelySettled();
         remoteDeliveryState = ClientDeliveryState.fromProtonType(delivery.getRemoteState());
 
         if (delivery.isRemotelySettled()) {

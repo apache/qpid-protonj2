@@ -161,7 +161,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
         final int writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
 
         if (writeSize > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+            throw new IllegalArgumentException("Cannot encode given array, encoded size too large: " + writeSize);
         }
 
         buffer.setInt(startIndex, writeSize);

@@ -62,7 +62,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
 
     @Override
     public SaslServerContext setListener(SaslServerListener listener) {
-        Objects.requireNonNull(listener, "Cannot configure a null SaslServerListnener");
+        Objects.requireNonNull(listener, "Cannot configure a null SaslServerListener");
         this.server = listener;
         return this;
     }
@@ -205,7 +205,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
 
         @Override
         public void handleChallenge(SaslChallenge saslChallenge, EngineHandlerContext context) {
-            throw new ProtocolViolationException("Unexpected SASL Challenege Frame received at SASL Server.");
+            throw new ProtocolViolationException("Unexpected SASL Challenge Frame received at SASL Server.");
         }
 
         @Override

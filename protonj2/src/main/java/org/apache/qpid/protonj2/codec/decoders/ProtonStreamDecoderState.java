@@ -36,11 +36,11 @@ import org.apache.qpid.protonj2.codec.StreamDecoderState;
  */
 public final class ProtonStreamDecoderState implements StreamDecoderState {
 
-    private static final int MAX_CHAR_BUFFER_CAHCE_SIZE = 100;
+    private static final int MAX_CHAR_BUFFER_CACHE_SIZE = 100;
 
     private final CharsetDecoder STRING_DECODER = StandardCharsets.UTF_8.newDecoder();
     private final ProtonStreamDecoder decoder;
-    private final char[] decodeCache = new char[MAX_CHAR_BUFFER_CAHCE_SIZE];
+    private final char[] decodeCache = new char[MAX_CHAR_BUFFER_CACHE_SIZE];
 
     private UTF8StreamDecoder stringDecoder;
 
@@ -88,7 +88,7 @@ public final class ProtonStreamDecoderState implements StreamDecoderState {
     public String decodeUTF8(InputStream stream, int length) throws DecodeException {
         try {
             if (stringDecoder == null) {
-                return internalDecode(stream, length, STRING_DECODER, length > MAX_CHAR_BUFFER_CAHCE_SIZE ? new char[length] : decodeCache);
+                return internalDecode(stream, length, STRING_DECODER, length > MAX_CHAR_BUFFER_CACHE_SIZE ? new char[length] : decodeCache);
             } else {
                 return stringDecoder.decodeUTF8(stream);
             }

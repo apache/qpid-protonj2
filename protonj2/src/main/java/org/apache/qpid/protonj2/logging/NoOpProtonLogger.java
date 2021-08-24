@@ -128,7 +128,7 @@ public class NoOpProtonLogger implements ProtonLogger {
     }
 
     @Override
-    public void erro(String message, Object value) {
+    public void error(String message, Object value) {
     }
 
     @Override

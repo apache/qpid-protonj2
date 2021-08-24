@@ -146,7 +146,7 @@ public class Slf4JLoggerWrapper implements ProtonLogger {
     }
 
     @Override
-    public void erro(String message, Object value) {
+    public void error(String message, Object value) {
         logger.error(message, value);
     }
 

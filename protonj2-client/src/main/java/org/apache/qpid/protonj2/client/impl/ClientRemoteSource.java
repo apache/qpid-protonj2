@@ -30,7 +30,7 @@ import org.apache.qpid.protonj2.client.Source;
 import org.apache.qpid.protonj2.types.Symbol;
 
 /**
- * Wrapper around a remote {@link Source} that provides read-only accees to
+ * Wrapper around a remote {@link Source} that provides read-only access to
  * the remote Source configuration.
  */
 final class ClientRemoteSource implements Source {

@@ -53,7 +53,7 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     private final Engine engine;
     private final EngineHandler handler;
 
-    private int intereskMask = HANDLER_ALL_EVENTS;
+    private int interestMask = HANDLER_ALL_EVENTS;
 
     /**
      * Creates a new {@link ProtonEngineHandlerContext} with the given options.
@@ -95,7 +95,7 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
      * @return the interest mask that should be used to determine if a handler should be signaled.
      */
     public int interestMask() {
-        return intereskMask;
+        return interestMask;
     }
 
     /**
@@ -108,7 +108,7 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
      * @return this {@link ProtonEngineHandlerContext} instance.
      */
     public ProtonEngineHandlerContext interestMask(int mask) {
-        this.intereskMask = mask;
+        this.interestMask = mask;
         return this;
     }
 

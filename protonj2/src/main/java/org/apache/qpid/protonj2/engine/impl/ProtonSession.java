@@ -192,7 +192,7 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
 
     @Override
     public Session setIncomingCapacity(int incomingCapacity) {
-        incomingWindow.setIncomingCapaity(incomingCapacity);
+        incomingWindow.setIncomingCapacity(incomingCapacity);
         return this;
     }
 
@@ -462,7 +462,7 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     void handleEngineShutdown(ProtonEngine protonEngine) {
         try {
             fireEngineShutdown();
-        } catch (Throwable ingore) {}
+        } catch (Throwable ignore) {}
 
         allLinks().forEach(link -> link.handleEngineShutdown(protonEngine));
     }

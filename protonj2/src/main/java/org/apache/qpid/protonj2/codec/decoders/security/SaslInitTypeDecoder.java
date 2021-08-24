@@ -90,7 +90,7 @@ public final class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<Sasl
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_SASL_INIT_LIST_ENTRIES) {
-            throw new DecodeException("Not enougn entries in SaslInit list encoding: " + count);
+            throw new DecodeException("Not enough entries in SaslInit list encoding: " + count);
         }
 
         if (count > MAX_SASL_INIT_LIST_ENTRIES) {
@@ -151,7 +151,7 @@ public final class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<Sasl
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_SASL_INIT_LIST_ENTRIES) {
-            throw new DecodeException("Not enougn entries in SaslInit list encoding: " + count);
+            throw new DecodeException("Not enough entries in SaslInit list encoding: " + count);
         }
 
         if (count > MAX_SASL_INIT_LIST_ENTRIES) {

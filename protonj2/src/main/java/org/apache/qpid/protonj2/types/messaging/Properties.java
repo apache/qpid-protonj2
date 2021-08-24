@@ -181,7 +181,7 @@ public final class Properties implements Section<Properties> {
         }
 
         throw new IllegalArgumentException(
-            "AMQP Message ID type restiction violated, cannot assign type: " + messageId.getClass().getName());
+            "AMQP Message ID type restriction violated, cannot assign type: " + messageId.getClass().getName());
     }
 
     public Binary getUserId() {

@@ -39,6 +39,6 @@ public enum TerminusDurability {
             return UNSETTLED_STATE;
         }
 
-        throw new IllegalArgumentException("Unknown TerminusDurablity: " + value);
+        throw new IllegalArgumentException("Unknown TerminusDurability: " + value);
     }
 }
