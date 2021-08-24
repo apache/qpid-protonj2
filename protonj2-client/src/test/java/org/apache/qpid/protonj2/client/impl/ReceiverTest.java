@@ -1292,9 +1292,9 @@ public class ReceiverTest extends ImperativeClientTestCase {
             receiver.addCredit(10);
 
             try {
-                assertNull(receiver.receive());
+                receiver.receive();
+                fail("Should throw to indicate that receiver was closed");
             } catch (ClientException ise) {
-                // Can happen if receiver closed before the receive call gets executed.
             }
 
             connection.closeAsync().get();
@@ -1305,12 +1305,12 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
     @Test
     public void testBlockingReceiveCancelledWhenReceiverRemotelyClosed() throws Exception {
-        doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(true);
+        doTtestBlockingReceiveCancelledWhenReceiverRemotelyClosedOrDetached(true);
     }
 
     @Test
     public void testBlockingReceiveCancelledWhenReceiverRemotelyDetached() throws Exception {
-        doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(false);
+        doTtestBlockingReceiveCancelledWhenReceiverRemotelyClosedOrDetached(false);
     }
 
     public void doTtestBlockingReceiveCancelledWhenReceiverRemotelyClosedOrDetached(boolean close) throws Exception {
@@ -1338,9 +1338,9 @@ public class ReceiverTest extends ImperativeClientTestCase {
             receiver.openFuture().get();
 
             try {
-                assertNull(receiver.receive());
-            } catch (IllegalStateException ise) {
-                // Can happen if receiver closed before the receive call gets executed.
+                receiver.receive();
+                fail("Client should throw to indicate remote closed the receiver forcibly.");
+            } catch (ClientIllegalStateException ise) {
             }
 
             connection.closeAsync().get();
