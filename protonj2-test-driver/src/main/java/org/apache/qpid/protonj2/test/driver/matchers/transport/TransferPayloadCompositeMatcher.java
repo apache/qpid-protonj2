@@ -59,7 +59,7 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
     private FooterMatcher footersMatcher;
     private String footerMatcherFailureDescription;
     private Matcher<Integer> payloadLengthMatcher;
-    private String payloadLenthMatcherFailureDescription;
+    private String payloadLengthMatcherFailureDescription;
 
     public TransferPayloadCompositeMatcher() {
     }
@@ -74,7 +74,7 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
             try {
                 assertThat("Payload length should match", origLength, payloadLengthMatcher);
             } catch (Throwable t) {
-                payloadLenthMatcherFailureDescription = "\nPayload Lenfth Matcher generated throwable: " + t;
+                payloadLengthMatcherFailureDescription = "\nPayload Length Matcher generated throwable: " + t;
 
                 return false;
             }
@@ -195,9 +195,9 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuf> {
         mismatchDescription.appendText("\nActual encoded form of the full Transfer frame payload: ").appendValue(item);
 
         // Payload Length
-        if (payloadLenthMatcherFailureDescription != null) {
+        if (payloadLengthMatcherFailureDescription != null) {
             mismatchDescription.appendText("\nPayloadLengthMatcherFailed!");
-            mismatchDescription.appendText(payloadLenthMatcherFailureDescription);
+            mismatchDescription.appendText(payloadLengthMatcherFailureDescription);
             return;
         }
 

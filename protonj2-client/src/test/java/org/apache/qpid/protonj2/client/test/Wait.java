@@ -86,18 +86,18 @@ public class Wait {
     public static boolean waitFor(final Condition condition, final long durationMillis, final long sleepMillis) {
         try {
             final long expiry = System.currentTimeMillis() + durationMillis;
-            boolean conditionSatisified = condition.isSatisfied();
+            boolean conditionSatisfied = condition.isSatisfied();
 
-            while (!conditionSatisified && System.currentTimeMillis() < expiry) {
+            while (!conditionSatisfied && System.currentTimeMillis() < expiry) {
                 if (sleepMillis == 0) {
                     Thread.yield();
                 } else {
                     TimeUnit.MILLISECONDS.sleep(sleepMillis);
                 }
-                conditionSatisified = condition.isSatisfied();
+                conditionSatisfied = condition.isSatisfied();
             }
 
-            return conditionSatisified;
+            return conditionSatisfied;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

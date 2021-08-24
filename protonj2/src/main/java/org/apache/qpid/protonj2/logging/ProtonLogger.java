@@ -88,7 +88,7 @@ public interface ProtonLogger {
 
     public void error(String message);
 
-    public void erro(String message, Object value);
+    public void error(String message, Object value);
 
     public void error(String message, Object value1, Object value2);
 

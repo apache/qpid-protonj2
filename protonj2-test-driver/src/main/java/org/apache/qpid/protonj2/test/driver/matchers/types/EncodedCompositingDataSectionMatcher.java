@@ -111,12 +111,12 @@ public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<ByteBu
             } else if (encodingCode == EncodingCodes.VBIN32) {
                 expectedCurrentDataSectionBytes = receivedBinary.readInt();
             } else {
-                decodingErrorDescription = "Expceted to read a Binary Type but read encoding code: " + encodingCode;
+                decodingErrorDescription = "Expected to read a Binary Type but read encoding code: " + encodingCode;
                 return false;
             }
 
             if (expectedCurrentDataSectionBytes > expectedRemainingBytes) {
-                decodingErrorDescription = "Expceted encoded Binary to indicate size of: " + expectedRemainingBytes + ", " +
+                decodingErrorDescription = "Expected encoded Binary to indicate size of: " + expectedRemainingBytes + ", " +
                                            "or less but read an encoded size of: " + expectedCurrentDataSectionBytes;
                 return false;
             }
@@ -175,7 +175,7 @@ public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<ByteBu
                     decodingErrorDescription = "Expected Unsigned Long or Symbol type but found encoding: " +  encodingCode;
             }
         } else {
-            decodingErrorDescription = "Expceted to read a Described Type but read encoding code: " + encodingCode;
+            decodingErrorDescription = "Expected to read a Described Type but read encoding code: " + encodingCode;
         }
 
         return null;

@@ -633,7 +633,7 @@ public final class ClientStreamReceiver implements StreamReceiver {
 
     private boolean notClosedOrFailed(ClientFuture<?> request) {
         if (isClosed()) {
-            request.failed(new ClientIllegalStateException("The Receiver was explicity closed", failureCause));
+            request.failed(new ClientIllegalStateException("The Receiver was explicitly closed", failureCause));
             return false;
         } else if (failureCause != null) {
             request.failed(failureCause);
@@ -645,7 +645,7 @@ public final class ClientStreamReceiver implements StreamReceiver {
 
     protected void checkClosedOrFailed() throws ClientException {
         if (isClosed()) {
-            throw new ClientIllegalStateException("The Receiver was explicity closed", failureCause);
+            throw new ClientIllegalStateException("The Receiver was explicitly closed", failureCause);
         } else if (failureCause != null) {
             throw failureCause;
         }

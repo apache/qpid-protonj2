@@ -89,7 +89,7 @@ public class ProtonTestServer extends ProtonTestPeer {
      * standard practice of 'amqp', 'amqps', 'amqpws' and 'amqpwss' for connection that use SSL or that
      * provide WebSocket and secure WebSocket connections.
      *
-     * The server nust be started prior to a call to this method.
+     * The server must be started prior to a call to this method.
      *
      * @return a URI that a client can use to connect to this remote test server.
      *
@@ -105,7 +105,7 @@ public class ProtonTestServer extends ProtonTestPeer {
      * standard practice of 'amqp', 'amqps', 'amqpws' and 'amqpwss' for connection that use SSL or that
      * provide WebSocket and secure WebSocket connections.
      *
-     * The server nust be started prior to a call to this method.
+     * The server must be started prior to a call to this method.
      *
      * @param query
      * 		The value that should be populated in the URI query string segment.

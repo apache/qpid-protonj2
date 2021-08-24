@@ -83,11 +83,11 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         InputStream stream = new ProtonBufferInputStream(buffer);
 
-        List<Object> listOfUnkowns = new ArrayList<>();
+        List<Object> listOfUnknowns = new ArrayList<>();
 
-        listOfUnkowns.add(NoLocalType.NO_LOCAL);
+        listOfUnknowns.add(NoLocalType.NO_LOCAL);
 
-        encoder.writeList(buffer, encoderState, listOfUnkowns);
+        encoder.writeList(buffer, encoderState, listOfUnknowns);
 
         final Object result;
         if (fromStream) {

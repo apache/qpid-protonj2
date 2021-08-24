@@ -68,7 +68,7 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
      */
     public E timeout(long timeout) {
         if (timeout < 0 || timeout > UnsignedInteger.MAX_VALUE.longValue()) {
-            throw new IllegalArgumentException("Timeout value must be in the range of an unsigned intenger");
+            throw new IllegalArgumentException("Timeout value must be in the range of an unsigned integer");
         }
         this.timeout = timeout;
         return self();

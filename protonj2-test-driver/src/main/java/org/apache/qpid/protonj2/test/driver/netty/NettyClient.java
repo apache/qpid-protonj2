@@ -101,7 +101,7 @@ public abstract class NettyClient implements AutoCloseable {
             if (channel != null) {
                 try {
                     if (!channel.close().await(10, TimeUnit.SECONDS)) {
-                        LOG.info("Channel close timed out wiating for result");
+                        LOG.info("Channel close timed out waiting for result");
                     }
                 } catch (InterruptedException e) {
                     Thread.interrupted();

@@ -436,7 +436,7 @@ public final class ClientStreamDelivery implements StreamDelivery {
 
         private void handleReceiverClosed(ClientStreamReceiver receiver) {
             if (readRequest != null) {
-                readRequest.failed(new ClientResourceRemotelyClosedException("The receliver link has been remotely closed."));
+                readRequest.failed(new ClientResourceRemotelyClosedException("The receiver link has been remotely closed."));
             }
         }
 
@@ -482,7 +482,7 @@ public final class ClientStreamDelivery implements StreamDelivery {
 
         private void checkStreamStateIsValid() throws IOException {
             if (closed.get()) {
-                throw new IOException("The InputStream has been explicity closed");
+                throw new IOException("The InputStream has been explicitly closed");
             }
 
             if (receiver.isClosed()) {

@@ -174,7 +174,7 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     public SourceBuilder withSource() {
         nullSourceRequired = false;
-        return new SourceBuilder(getOrCreateSouce());
+        return new SourceBuilder(getOrCreateSource());
     }
 
     public AttachInjectAction withSource(Source source) {
@@ -307,12 +307,12 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
             }
         } else {
             if (attach.getHandle() == null && !explicitlyNullHandle) {
-                throw new AssertionError("Attach must carry a handle or have an explicity set null handle.");
+                throw new AssertionError("Attach must carry a handle or have an explicitly set null handle.");
             }
         }
     }
 
-    private Source getOrCreateSouce() {
+    private Source getOrCreateSource() {
         if (attach.getSource() == null) {
             attach.setSource(new Source());
         }
@@ -364,8 +364,8 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
             return this;
         }
 
-        public SourceBuilder withExpiryPolicy(TerminusExpiryPolicy expriyPolicy) {
-            source.setExpiryPolicy(expriyPolicy.getPolicy());
+        public SourceBuilder withExpiryPolicy(TerminusExpiryPolicy expiryPolicy) {
+            source.setExpiryPolicy(expiryPolicy.getPolicy());
             return this;
         }
 
@@ -468,8 +468,8 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
             return this;
         }
 
-        public TargetBuilder withExpiryPolicy(TerminusExpiryPolicy expriyPolicy) {
-            target.setExpiryPolicy(expriyPolicy.getPolicy());
+        public TargetBuilder withExpiryPolicy(TerminusExpiryPolicy expiryPolicy) {
+            target.setExpiryPolicy(expiryPolicy.getPolicy());
             return this;
         }
 

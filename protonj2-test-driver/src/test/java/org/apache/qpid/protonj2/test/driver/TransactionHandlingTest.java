@@ -79,7 +79,7 @@ class TransactionHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
-    public void testRemoteDetachLastCoordiantorLink() throws Exception {
+    public void testRemoteDetachLastCoordinatorLink() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
 
@@ -118,7 +118,7 @@ class TransactionHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
-    public void testRemoteDetachLastCoordiantorLinkAttachesFirstIfNeeded() throws Exception {
+    public void testRemoteDetachLastCoordinatorLinkAttachesFirstIfNeeded() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
 

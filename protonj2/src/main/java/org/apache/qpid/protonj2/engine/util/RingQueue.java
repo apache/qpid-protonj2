@@ -122,7 +122,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
             throw new IllegalArgumentException("Cannot add a Queue to itself");
         }
         if (c.size() > backingArray.length - size) {
-            throw new IllegalStateException("Insuficcient sapce to add all elements of the collection to the queue");
+            throw new IllegalStateException("Insufficient space to add all elements of the collection to the queue");
         }
 
         c.forEach(value -> offer(value));

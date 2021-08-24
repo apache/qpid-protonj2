@@ -49,7 +49,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
     }
 
     @Test
-    public void testReadNullFromReadObjectForNullEncodng() throws IOException {
+    public void testReadNullFromReadObjectForNullEncoding() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte(EncodingCodes.NULL);

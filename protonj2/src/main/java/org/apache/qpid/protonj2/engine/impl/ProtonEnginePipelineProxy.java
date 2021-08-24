@@ -41,7 +41,7 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
     private final ProtonEnginePipeline pipeline;
 
     ProtonEnginePipelineProxy(ProtonEnginePipeline pipeline) {
-        Objects.requireNonNull(pipeline, "Must supply a real pipline instance to wrap.");
+        Objects.requireNonNull(pipeline, "Must supply a real pipeline instance to wrap.");
         this.pipeline = pipeline;
     }
 
@@ -129,17 +129,17 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
 
     @Override
     public ProtonEnginePipelineProxy fireEngineStarting() {
-        throw new IllegalAccessError("Cannot trigger starting on Egnine owned Pipeline resource.");
+        throw new IllegalAccessError("Cannot trigger starting on Engine owned Pipeline resource.");
     }
 
     @Override
     public ProtonEnginePipelineProxy fireEngineStateChanged() {
-        throw new IllegalAccessError("Cannot trigger state changed on Egnine owned Pipeline resource.");
+        throw new IllegalAccessError("Cannot trigger state changed on Engine owned Pipeline resource.");
     }
 
     @Override
     public ProtonEnginePipelineProxy fireFailed(EngineFailedException e) {
-        throw new IllegalAccessError("Cannot trigger failed on Egnine owned Pipeline resource.");
+        throw new IllegalAccessError("Cannot trigger failed on Engine owned Pipeline resource.");
     }
 
     @Override

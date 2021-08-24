@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 /**
- * Test for ThreadPoolUtis support class.
+ * Test for ThreadPoolUtils support class.
  */
 @Timeout(10)
 public class ThreadPoolUtilsTest extends ImperativeClientTestCase {

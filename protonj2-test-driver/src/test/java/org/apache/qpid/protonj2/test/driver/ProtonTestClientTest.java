@@ -84,7 +84,7 @@ class ProtonTestClientTest extends TestPeerTestsBase {
     }
 
     @Test
-    public void testClientDetactsUnexpectedPerformativeAndFailsTest() throws Exception {
+    public void testClientDetectsUnexpectedPerformativeAndFailsTest() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen();

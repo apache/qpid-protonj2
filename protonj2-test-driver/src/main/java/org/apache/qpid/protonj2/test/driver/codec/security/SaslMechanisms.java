@@ -67,8 +67,8 @@ public class SaslMechanisms extends SaslDescribedType {
     }
 
     @Override
-    public <E> void invoke(SaslPerformativeHandler<E> handler, int frameSzie, E context) {
-        handler.handleMechanisms(frameSzie, this, context);
+    public <E> void invoke(SaslPerformativeHandler<E> handler, int frameSize, E context) {
+        handler.handleMechanisms(frameSize, this, context);
     }
 
     @Override

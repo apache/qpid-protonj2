@@ -216,7 +216,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
 
         transitionToWritableState();
 
-        appenedDataToBuffer(ClientMessageSupport.encodeSection(bodySection, ProtonByteBufferAllocator.DEFAULT.allocate()));
+        appendDataToBuffer(ClientMessageSupport.encodeSection(bodySection, ProtonByteBufferAllocator.DEFAULT.allocate()));
 
         return this;
     }
@@ -414,7 +414,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
         protected void doFlushPending(boolean complete) throws IOException {
             try {
                 if (streamBuffer.isReadable()) {
-                    appenedDataToBuffer(streamBuffer);
+                    appendDataToBuffer(streamBuffer);
                 }
 
                 if (complete) {
@@ -449,7 +449,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
             preamble.writeBytes(DATA_SECTION_PREAMBLE);
             preamble.writeInt(options.bodyLength());
 
-            appenedDataToBuffer(preamble);
+            appendDataToBuffer(preamble);
         }
     }
 
@@ -469,7 +469,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
                 preamble.writeInt(streamBuffer.getReadableBytes());
 
                 try {
-                    appenedDataToBuffer(preamble);
+                    appendDataToBuffer(preamble);
                 } catch (ClientException e) {
                     throw new IOException(e);
                 }
@@ -918,7 +918,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
 
     //----- Internal API
 
-    private void appenedDataToBuffer(ProtonBuffer incoming) throws ClientException {
+    private void appendDataToBuffer(ProtonBuffer incoming) throws ClientException {
         if (buffer == null) {
             buffer = incoming;
         } else {
@@ -963,19 +963,19 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
         if (currentState == StreamState.PREAMBLE) {
 
             if (header != null) {
-                appenedDataToBuffer(ClientMessageSupport.encodeSection(header, ProtonByteBufferAllocator.DEFAULT.allocate()));
+                appendDataToBuffer(ClientMessageSupport.encodeSection(header, ProtonByteBufferAllocator.DEFAULT.allocate()));
             }
             if (deliveryAnnotations != null) {
-                appenedDataToBuffer(ClientMessageSupport.encodeSection(deliveryAnnotations, ProtonByteBufferAllocator.DEFAULT.allocate()));
+                appendDataToBuffer(ClientMessageSupport.encodeSection(deliveryAnnotations, ProtonByteBufferAllocator.DEFAULT.allocate()));
             }
             if (annotations != null) {
-                appenedDataToBuffer(ClientMessageSupport.encodeSection(annotations, ProtonByteBufferAllocator.DEFAULT.allocate()));
+                appendDataToBuffer(ClientMessageSupport.encodeSection(annotations, ProtonByteBufferAllocator.DEFAULT.allocate()));
             }
             if (properties != null) {
-                appenedDataToBuffer(ClientMessageSupport.encodeSection(properties, ProtonByteBufferAllocator.DEFAULT.allocate()));
+                appendDataToBuffer(ClientMessageSupport.encodeSection(properties, ProtonByteBufferAllocator.DEFAULT.allocate()));
             }
             if (applicationProperties != null) {
-                appenedDataToBuffer(ClientMessageSupport.encodeSection(applicationProperties, ProtonByteBufferAllocator.DEFAULT.allocate()));
+                appendDataToBuffer(ClientMessageSupport.encodeSection(applicationProperties, ProtonByteBufferAllocator.DEFAULT.allocate()));
             }
 
             currentState = StreamState.BODY_WRITABLE;
@@ -991,7 +991,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
             throw new ClientIllegalStateException("Cannot write a Section to an already completed send context");
         }
 
-        appenedDataToBuffer(ClientMessageSupport.encodeSection(section, ProtonByteBufferAllocator.DEFAULT.allocate()));
+        appendDataToBuffer(ClientMessageSupport.encodeSection(section, ProtonByteBufferAllocator.DEFAULT.allocate()));
 
         return this;
     }

@@ -48,7 +48,7 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
 public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     private EventHandler<IncomingDelivery> deliveryReadEventHandler = null;
-    private EventHandler<IncomingDelivery> deliveryAdbortedEventHandler = null;
+    private EventHandler<IncomingDelivery> deliveryAbortedEventHandler = null;
     private EventHandler<IncomingDelivery> deliveryUpdatedEventHandler = null;
     private EventHandler<Receiver> linkCreditUpdatedHandler = null;
 
@@ -265,7 +265,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     @Override
     public Receiver deliveryAbortedHandler(EventHandler<IncomingDelivery> handler) {
-        this.deliveryAdbortedEventHandler = handler;
+        this.deliveryAbortedEventHandler = handler;
         return this;
     }
 
@@ -274,8 +274,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             delivery.deliveryAbortedHandler().handle(delivery);
         } else if (delivery.deliveryReadHandler() != null) {
             delivery.deliveryReadHandler().handle(delivery);
-        } else if (deliveryAdbortedEventHandler != null) {
-            deliveryAdbortedEventHandler.handle(delivery);
+        } else if (deliveryAbortedEventHandler != null) {
+            deliveryAbortedEventHandler.handle(delivery);
         } else if (deliveryReadEventHandler != null) {
             deliveryReadEventHandler.handle(delivery);
         }
@@ -374,7 +374,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     @Override
     protected final ProtonReceiver handleRemoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
-        throw new IllegalStateException("Receiver link should never handle dispsotiions for outgoing deliveries");
+        throw new IllegalStateException("Receiver link should never handle dispositions for outgoing deliveries");
     }
 
     @Override

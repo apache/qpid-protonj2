@@ -148,7 +148,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
     private ParsingErrorStage transitionToErrorStage(ProtonException error) {
         if (!(stage instanceof ParsingErrorStage)) {
-            LOG.trace("Frame decoder encounted error: ", error);
+            LOG.trace("Frame decoder encountered error: ", error);
             stage = new ParsingErrorStage(error);
         }
 

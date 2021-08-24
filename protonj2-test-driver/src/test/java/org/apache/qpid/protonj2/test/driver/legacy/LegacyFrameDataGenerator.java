@@ -26,7 +26,7 @@ import org.apache.qpid.proton.codec.EncoderImpl;
  * Generates test data that can be used to drive comparability tests
  * between new and old codec and framing implementation.
  */
-public class LegacyFrmaeDataGenerator {
+public class LegacyFrameDataGenerator {
 
     private final static DecoderImpl decoder = new DecoderImpl();
     private final static EncoderImpl encoder = new EncoderImpl(decoder);

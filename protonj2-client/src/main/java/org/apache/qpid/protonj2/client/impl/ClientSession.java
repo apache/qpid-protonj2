@@ -467,7 +467,7 @@ public class ClientSession implements Session {
 
     protected void checkClosedOrFailed() throws ClientException {
         if (isClosed()) {
-            throw new ClientIllegalStateException("The Session was explicity closed", failureCause);
+            throw new ClientIllegalStateException("The Session was explicitly closed", failureCause);
         } else if (failureCause != null) {
             throw failureCause;
         }

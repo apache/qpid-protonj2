@@ -298,7 +298,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
                 try {
                     stream.reset();
                 } catch (IOException e) {
-                    throw new DecodeException("Error while reseting marked stream", e);
+                    throw new DecodeException("Error while resetting marked stream", e);
                 }
             }
         } else {

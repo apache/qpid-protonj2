@@ -71,7 +71,7 @@ public class ProtonByteBufferAllocatorTest {
     }
 
     @Test
-    public void testAllocateWithInvalidInitialAndMaximimCapacity() {
+    public void testAllocateWithInvalidInitialAndMaximumCapacity() {
         try {
             ProtonByteBufferAllocator.DEFAULT.allocate(64, 32);
             fail("Should have thrown an IllegalArgumentException");

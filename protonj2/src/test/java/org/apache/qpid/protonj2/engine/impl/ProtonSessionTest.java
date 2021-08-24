@@ -355,7 +355,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testNoSessionPerformativesEmiitedIfConnectionOpenedAndClosedBeforeAnyRemoteResponses() {
+    public void testNoSessionPerformativesEmittedIfConnectionOpenedAndClosedBeforeAnyRemoteResponses() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -848,7 +848,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
 
-        assertTrue(remoteOpened.get(), "Rmote connection should have occured");
+        assertTrue(remoteOpened.get(), "Remote connection should have occurred");
         assertFalse(remoteSession.get(), "Should not have seen a remote session open.");
 
         assertNotNull(failure);
@@ -1124,7 +1124,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.expectClose().respond();
 
         // Inject held responses to get the ball rolling again
-        peer.remoteOpen().withOfferedCapabilities("ANONYMOUS_REALY").now();
+        peer.remoteOpen().withOfferedCapabilities("ANONYMOUS_RELAY").now();
         peer.respondToLastBegin().now();
 
         Sender sender = session.sender("sender-1");
@@ -1142,12 +1142,12 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndRsponse() throws Exception {
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndResponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, true);
     }
 
     @Test
-    public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndNoRsponse() throws Exception {
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndNoResponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, false);
     }
 
@@ -1201,7 +1201,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenAndResponseBeginWrittenAndReponse() throws Exception {
+    public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenAndResponseBeginWrittenAndResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true);
     }
 
@@ -1286,7 +1286,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testSessionStopTrackingDetchedSenders() throws Exception {
+    public void testSessionStopTrackingDetachedSenders() throws Exception {
         doTestSessionTrackingOfLinks(Role.SENDER, true, true, false, false);
     }
 
@@ -1316,7 +1316,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testSessionStopTrackingDetchedReceivers() throws Exception {
+    public void testSessionStopTrackingDetachedReceivers() throws Exception {
         doTestSessionTrackingOfLinks(Role.RECEIVER, true, true, false, false);
     }
 
@@ -2017,7 +2017,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testExpandingOutgoingWindowAfterBecomingNotWritableUpdateSenderAsWritableTwoFramesBiffer() throws Exception {
+    public void testExpandingOutgoingWindowAfterBecomingNotWritableUpdateSenderAsWritableTwoFramesBuffer() throws Exception {
         // Should become writable since low water mark was one but becomes two and we have only two pending.
         testSessionOutgoingWindowExpandedAfterItBecomeNotWritable(4096, true);
     }
@@ -2320,7 +2320,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testReduceAndThenIncreaseOutgoingWindowRemebersPreviouslyPendingWrites() throws Exception {
+    public void testReduceAndThenIncreaseOutgoingWindowRemembersPreviouslyPendingWrites() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();
@@ -2371,7 +2371,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testSenderNotifiedAfterSessionRemoteWindowOpenedAfterLocalCapcityRestored() throws Exception {
+    public void testSenderNotifiedAfterSessionRemoteWindowOpenedAfterLocalCapacityRestored() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();
@@ -2440,7 +2440,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testSenderNotifiedAfterSessionRemoteWindowOpenedBeforeLocalCapcityRestored() throws Exception {
+    public void testSenderNotifiedAfterSessionRemoteWindowOpenedBeforeLocalCapacityRestored() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();

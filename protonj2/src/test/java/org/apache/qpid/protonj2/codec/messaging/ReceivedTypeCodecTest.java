@@ -61,16 +61,16 @@ public class ReceivedTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeRecieved() throws IOException {
-        doTestDecodeRecieved(false);
+    public void testDecodeReceived() throws IOException {
+        doTestDecodeReceived(false);
     }
 
     @Test
-    public void testDecodeRecievedFromStream() throws IOException {
-        doTestDecodeRecieved(true);
+    public void testDecodeReceivedFromStream() throws IOException {
+        doTestDecodeReceived(true);
     }
 
-    private void doTestDecodeRecieved(boolean fromStream) throws IOException {
+    private void doTestDecodeReceived(boolean fromStream) throws IOException {
         final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         final InputStream stream = new ProtonBufferInputStream(buffer);
 

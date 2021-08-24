@@ -45,8 +45,8 @@ import org.mockito.Mockito;
 
 public class SymbolTypeCodecTest extends CodecTestSupport {
 
-    private final String SMALL_SYMBOL_VALUIE = "Small String";
-    private final String LARGE_SYMBOL_VALUIE = "Large String: " +
+    private final String SMALL_SYMBOL_VALUE = "Small String";
+    private final String LARGE_SYMBOL_VALUE = "Large String: " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
@@ -127,12 +127,12 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeSmallSymbol() throws IOException {
-        doTestEncodeDecode(Symbol.valueOf(SMALL_SYMBOL_VALUIE), false);
+        doTestEncodeDecode(Symbol.valueOf(SMALL_SYMBOL_VALUE), false);
     }
 
     @Test
     public void testEncodeLargeSymbol() throws IOException {
-        doTestEncodeDecode(Symbol.valueOf(LARGE_SYMBOL_VALUIE), false);
+        doTestEncodeDecode(Symbol.valueOf(LARGE_SYMBOL_VALUE), false);
     }
 
     @Test
@@ -147,12 +147,12 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeSmallSymbolFS() throws IOException {
-        doTestEncodeDecode(Symbol.valueOf(SMALL_SYMBOL_VALUIE), true);
+        doTestEncodeDecode(Symbol.valueOf(SMALL_SYMBOL_VALUE), true);
     }
 
     @Test
     public void testEncodeLargeSymbolFS() throws IOException {
-        doTestEncodeDecode(Symbol.valueOf(LARGE_SYMBOL_VALUIE), true);
+        doTestEncodeDecode(Symbol.valueOf(LARGE_SYMBOL_VALUE), true);
     }
 
     @Test
@@ -213,7 +213,7 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
         InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (int i = 0; i < size; ++i) {
-            encoder.writeSymbol(buffer, encoderState, Symbol.valueOf(LARGE_SYMBOL_VALUIE));
+            encoder.writeSymbol(buffer, encoderState, Symbol.valueOf(LARGE_SYMBOL_VALUE));
         }
 
         for (int i = 0; i < size; ++i) {
@@ -226,7 +226,7 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
 
             assertNotNull(result);
             assertTrue(result instanceof Symbol);
-            assertEquals(LARGE_SYMBOL_VALUIE, result.toString());
+            assertEquals(LARGE_SYMBOL_VALUE, result.toString());
         }
     }
 

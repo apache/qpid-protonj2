@@ -49,8 +49,8 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
     private static final List<String> TEST_DATA = generateTestData();
 
-    private final String SMALL_STRING_VALUIE = "Small String";
-    private final String LARGE_STRING_VALUIE = "Large String: " +
+    private final String SMALL_STRING_VALUE = "Small String";
+    private final String LARGE_STRING_VALUE = "Large String: " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
@@ -114,12 +114,12 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeSmallString() throws IOException {
-        doTestEncodeDecode(SMALL_STRING_VALUIE, false);
+        doTestEncodeDecode(SMALL_STRING_VALUE, false);
     }
 
     @Test
     public void testEncodeLargeString() throws IOException {
-        doTestEncodeDecode(LARGE_STRING_VALUIE, false);
+        doTestEncodeDecode(LARGE_STRING_VALUE, false);
     }
 
     @Test
@@ -134,12 +134,12 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeSmallStringFS() throws IOException {
-        doTestEncodeDecode(SMALL_STRING_VALUIE, true);
+        doTestEncodeDecode(SMALL_STRING_VALUE, true);
     }
 
     @Test
     public void testEncodeLargeStringFS() throws IOException {
-        doTestEncodeDecode(LARGE_STRING_VALUIE, true);
+        doTestEncodeDecode(LARGE_STRING_VALUE, true);
     }
 
     @Test
@@ -200,7 +200,7 @@ public class StringTypeCodecTest extends CodecTestSupport {
         InputStream stream = new ProtonBufferInputStream(buffer);
 
         for (int i = 0; i < size; ++i) {
-            encoder.writeString(buffer, encoderState, LARGE_STRING_VALUIE);
+            encoder.writeString(buffer, encoderState, LARGE_STRING_VALUE);
         }
 
         for (int i = 0; i < size; ++i) {
@@ -213,7 +213,7 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
             assertNotNull(result);
             assertTrue(result instanceof String);
-            assertEquals(LARGE_STRING_VALUIE, result);
+            assertEquals(LARGE_STRING_VALUE, result);
         }
     }
 

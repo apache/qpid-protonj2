@@ -123,9 +123,9 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
 
     protected final void verifyPayload(ByteBuf payload) {
         if (getPayloadMatcher() != null) {
-            assertThat("Paylod does not match expectation", payload, getPayloadMatcher());
+            assertThat("Payload does not match expectation", payload, getPayloadMatcher());
         } else if (payload != null) {
-            throw new AssertionError("Performative should not have been sent with a paylod: ");
+            throw new AssertionError("Performative should not have been sent with a payload: ");
         }
     }
 
@@ -251,6 +251,6 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
     }
 
     private void reportTypeExpectationError(Object received, Class<T> expected) {
-        throw new UnexpectedPerformativeError("Expeceted type: " + expected + " but received value: " + received);
+        throw new UnexpectedPerformativeError("Expected type: " + expected + " but received value: " + received);
     }
 }

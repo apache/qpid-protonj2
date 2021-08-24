@@ -33,11 +33,11 @@ import org.apache.qpid.protonj2.codec.DecoderState;
  */
 public final class ProtonDecoderState implements DecoderState {
 
-    private static final int MAX_CHAR_BUFFER_CAHCE_SIZE = 100;
+    private static final int MAX_CHAR_BUFFER_CACHE_SIZE = 100;
 
     private final CharsetDecoder STRING_DECODER = StandardCharsets.UTF_8.newDecoder();
     private final ProtonDecoder decoder;
-    private final char[] decodeCache = new char[MAX_CHAR_BUFFER_CAHCE_SIZE];
+    private final char[] decodeCache = new char[MAX_CHAR_BUFFER_CACHE_SIZE];
 
     private UTF8Decoder stringDecoder;
 
@@ -87,7 +87,7 @@ public final class ProtonDecoderState implements DecoderState {
     @Override
     public String decodeUTF8(ProtonBuffer buffer, int length) throws DecodeException {
         if (stringDecoder == null) {
-            return internalDecode(buffer, length, STRING_DECODER, length > MAX_CHAR_BUFFER_CAHCE_SIZE ? new char[length] : decodeCache);
+            return internalDecode(buffer, length, STRING_DECODER, length > MAX_CHAR_BUFFER_CACHE_SIZE ? new char[length] : decodeCache);
         } else {
             final int originalPosition = buffer.getReadIndex();
 

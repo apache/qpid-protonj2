@@ -714,7 +714,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @return a reference to this ProtonBuffer for chaining.
      *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capcity.
+     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
      */
     ProtonBuffer setLong(int index, long value);
 
@@ -728,7 +728,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @return a reference to this ProtonBuffer for chaining.
      *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capcity.
+     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
      */
     ProtonBuffer setFloat(int index, float value);
 
@@ -742,7 +742,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @return a reference to this ProtonBuffer for chaining.
      *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capcity.
+     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
      */
     ProtonBuffer setDouble(int index, double value);
 

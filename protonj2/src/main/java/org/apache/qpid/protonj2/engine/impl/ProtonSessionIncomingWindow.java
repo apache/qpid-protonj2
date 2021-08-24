@@ -65,7 +65,7 @@ public class ProtonSessionIncomingWindow {
         this.maxFrameSize = session.getConnection().getMaxFrameSize();
     }
 
-    public void setIncomingCapaity(int incomingCapacity) {
+    public void setIncomingCapacity(int incomingCapacity) {
         this.incomingCapacity = incomingCapacity;
     }
 

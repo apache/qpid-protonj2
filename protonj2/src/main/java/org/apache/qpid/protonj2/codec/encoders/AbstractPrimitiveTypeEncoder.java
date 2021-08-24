@@ -51,7 +51,7 @@ public abstract class AbstractPrimitiveTypeEncoder<V> implements PrimitiveTypeEn
         long writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
 
         if (writeSize > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+            throw new IllegalArgumentException("Cannot encode given array, encoded size too large: " + writeSize);
         }
 
         buffer.setInt(startIndex, (int) writeSize);

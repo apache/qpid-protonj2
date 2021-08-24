@@ -134,7 +134,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             try {
                 session.beginTransaction();
-                fail("Begin should have timoued out after no response.");
+                fail("Begin should have timed out after no response.");
             } catch (ClientTransactionDeclarationException expected) {
                 // Expect this to time out.
             }
@@ -183,7 +183,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             try {
                 session.beginTransaction();
-                fail("Begin should have timoued out after no response.");
+                fail("Begin should have timed out after no response.");
             } catch (ClientTransactionDeclarationException expected) {
                 // Expect this to time out.
             }
