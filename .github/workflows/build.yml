@@ -44,3 +44,5 @@ jobs:
       - name: RAT check
         run: mvn clean -Papache-release apache-rat:check
 
+      - name: Error Prone
+        run: mvn clean -Pstaticanalysis-errorprone compile
