@@ -24,6 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.util.Arrays;
+
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.junit.jupiter.api.Test;
 
@@ -157,18 +159,18 @@ public class TransportOptionsTest extends ImperativeClientTestCase {
     public void testNativeIOPerferencesCannotBeNulled() {
         TransportOptions options = createNonDefaultOptions();
 
-        assertNotNull(options.nativeIOPeference());
-        assertArrayEquals(TransportOptions.DEFAULT_NATIVEIO_PREFERENCES, options.nativeIOPeference());
+        assertNotNull(options.nativeIOPreference());
+        assertEquals(TransportOptions.DEFAULT_NATIVEIO_PREFERENCES, Arrays.asList(options.nativeIOPreference()));
 
-        options.nativeIOPeference((String) null);
+        options.nativeIOPreference((String) null);
 
-        assertNotNull(options.nativeIOPeference());
-        assertArrayEquals(TransportOptions.DEFAULT_NATIVEIO_PREFERENCES, options.nativeIOPeference());
+        assertNotNull(options.nativeIOPreference());
+        assertEquals(TransportOptions.DEFAULT_NATIVEIO_PREFERENCES, Arrays.asList(options.nativeIOPreference()));
 
-        options.nativeIOPeference("epolling");
+        options.nativeIOPreference("epolling");
 
-        assertNotNull(options.nativeIOPeference());
-        assertArrayEquals(new String[] { "epolling" }, options.nativeIOPeference());
+        assertNotNull(options.nativeIOPreference());
+        assertArrayEquals(new String[] { "epolling" }, options.nativeIOPreference());
     }
 
     @Test

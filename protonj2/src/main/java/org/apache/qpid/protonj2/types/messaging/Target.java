@@ -40,7 +40,7 @@ public final class Target implements Terminus {
     public Target() {
     }
 
-    protected Target(Target other) {
+    private Target(Target other) {
         this.address = other.address;
         this.durable = other.durable;
         this.expiryPolicy = other.expiryPolicy;

@@ -22,7 +22,7 @@ public enum SenderSettleMode {
 
     UNSETTLED(0), SETTLED(1), MIXED(2);
 
-    private UnsignedByte value;
+    private final UnsignedByte value;
 
     private SenderSettleMode(int value) {
         this.value = UnsignedByte.valueOf((byte)value);

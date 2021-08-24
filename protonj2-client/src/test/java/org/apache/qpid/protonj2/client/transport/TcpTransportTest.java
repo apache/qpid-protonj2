@@ -772,7 +772,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
     public void testCreateFailsIfUnknownPerferredNativeIOLayerSelected() throws Exception {
         TransportOptions options = createTransportOptions();
         options.allowNativeIO(true);
-        options.nativeIOPeference("NATIVE-IO");
+        options.nativeIOPreference("NATIVE-IO");
 
         assertThrows(IllegalArgumentException.class, () -> createTransport(options, createSSLOptions()));
     }
@@ -797,7 +797,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             TransportOptions options = createTransportOptions();
             options.allowNativeIO(useEpoll);
-            options.nativeIOPeference("EPOLL");
+            options.nativeIOPreference("EPOLL");
             Transport transport = createTransport(options, createSSLOptions());
             try {
                 transport.connect(HOSTNAME, port, testListener).awaitConnect();
@@ -842,7 +842,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             TransportOptions options = createTransportOptions();
             options.allowNativeIO(useIOUring);
-            options.nativeIOPeference("IO_URING");
+            options.nativeIOPreference("IO_URING");
             Transport transport = createTransport(options, createSSLOptions());
             try {
                 transport.connect(HOSTNAME, port, testListener).awaitConnect();
@@ -989,7 +989,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
 
             TransportOptions options = createTransportOptions();
             options.allowNativeIO(true);
-            options.nativeIOPeference(nativeIOLayer);
+            options.nativeIOPreference(nativeIOLayer);
 
             Transport transport = createTransport(options, createSSLOptions());
             try {

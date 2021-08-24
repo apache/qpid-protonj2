@@ -22,7 +22,7 @@ public enum ReceiverSettleMode {
 
     FIRST(0), SECOND(1);
 
-    private UnsignedByte value;
+    private final UnsignedByte value;
 
     private ReceiverSettleMode(int value) {
         this.value = UnsignedByte.valueOf((byte)value);

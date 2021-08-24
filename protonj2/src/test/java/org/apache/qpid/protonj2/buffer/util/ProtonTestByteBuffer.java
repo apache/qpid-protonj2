@@ -75,7 +75,7 @@ public class ProtonTestByteBuffer extends ProtonByteBuffer {
             throw new UnsupportedOperationException();
         }
 
-        return getArray();
+        return super.getArray();
     }
 
     @Override
@@ -84,6 +84,6 @@ public class ProtonTestByteBuffer extends ProtonByteBuffer {
             throw new UnsupportedOperationException();
         }
 
-        return getArrayOffset();
+        return super.getArrayOffset();
     }
 }

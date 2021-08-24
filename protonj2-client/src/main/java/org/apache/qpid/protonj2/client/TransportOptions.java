@@ -16,7 +16,10 @@
  */
 package org.apache.qpid.protonj2.client;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,7 +41,9 @@ public class TransportOptions implements Cloneable {
     public static final int DEFAULT_LOCAL_PORT = 0;
     public static final boolean DEFAULT_USE_WEBSOCKETS = false;
     public static final int DEFAULT_WEBSOCKET_MAX_FRAME_SIZE = 65535;
-    public static final String[] DEFAULT_NATIVEIO_PREFERENCES = { "EPOLL", "KQUEUE" };
+    private static final String[] DEFAULT_NATIVEIO_PREFERENCES_ARRAY = { "EPOLL", "KQUEUE" };
+    public static final List<String> DEFAULT_NATIVEIO_PREFERENCES =
+        Collections.unmodifiableList(Arrays.asList( DEFAULT_NATIVEIO_PREFERENCES_ARRAY ));
 
     private int sendBufferSize = DEFAULT_SEND_BUFFER_SIZE;
     private int receiveBufferSize = DEFAULT_RECEIVE_BUFFER_SIZE;
@@ -52,7 +57,7 @@ public class TransportOptions implements Cloneable {
     private String localAddress;
     private int localPort = DEFAULT_LOCAL_PORT;
     private boolean allowNativeIO = DEFAULT_ALLOW_NATIVE_IO;
-    private String[] nativeIOPeference = DEFAULT_NATIVEIO_PREFERENCES;
+    private String[] nativeIOPreference = DEFAULT_NATIVEIO_PREFERENCES_ARRAY;
     private boolean traceBytes = DEFAULT_TRACE_BYTES;
     private boolean useWebSockets = DEFAULT_USE_WEBSOCKETS;
     private String webSocketPath;
@@ -331,18 +336,18 @@ public class TransportOptions implements Cloneable {
     /**
      * @return the nativeIOPeference
      */
-    public String[] nativeIOPeference() {
-        return nativeIOPeference;
+    public String[] nativeIOPreference() {
+        return nativeIOPreference;
     }
 
     /**
      * @param nativeIOPeference the nativeIOPeference to set
      */
-    public void nativeIOPeference(String... nativeIOPeference) {
+    public void nativeIOPreference(String... nativeIOPeference) {
         if (nativeIOPeference == null || nativeIOPeference.length == 0 || nativeIOPeference.length == 1 && nativeIOPeference[0] == null) {
-            this.nativeIOPeference = DEFAULT_NATIVEIO_PREFERENCES;
+            this.nativeIOPreference = DEFAULT_NATIVEIO_PREFERENCES_ARRAY;
         } else {
-            this.nativeIOPeference = nativeIOPeference;
+            this.nativeIOPreference = nativeIOPeference;
         }
     }
 
@@ -468,7 +473,7 @@ public class TransportOptions implements Cloneable {
         other.trafficClass(trafficClass());
         other.defaultTcpPort(defaultTcpPort());
         other.allowNativeIO(allowNativeIO());
-        other.nativeIOPeference(nativeIOPeference());
+        other.nativeIOPreference(nativeIOPreference());
         other.traceBytes(traceBytes());
         other.localAddress(localAddress());
         other.localPort(localPort());

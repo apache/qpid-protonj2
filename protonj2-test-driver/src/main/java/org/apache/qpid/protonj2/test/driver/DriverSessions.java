@@ -94,7 +94,7 @@ public class DriverSessions {
             sessionTracker = localSessions.get(remoteBegin.getRemoteChannel());
             if (sessionTracker == null) {
                 throw new AssertionError(String.format(
-                    "Received Begin on channel [%d] that indicated it was a response to a Begin this driver never sent to channel [%d]: ",
+                    "Received Begin on channel [%s] that indicated it was a response to a Begin this driver never sent to channel [%s]: ",
                     remoteChannel, remoteBegin.getRemoteChannel()));
             }
         } else {
@@ -118,7 +118,7 @@ public class DriverSessions {
 
         if (sessionTracker == null) {
             throw new AssertionError(String.format(
-                "Received End on channel [%d] that has no matching Session for that remote channel. ", remoteChannel));
+                "Received End on channel [%s] that has no matching Session for that remote channel. ", remoteChannel));
         } else {
             sessionTracker.handleEnd(remoteEnd);
             remoteSessions.remove(remoteChannel);

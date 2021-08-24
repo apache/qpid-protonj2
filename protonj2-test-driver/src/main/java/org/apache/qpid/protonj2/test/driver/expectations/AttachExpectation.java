@@ -114,7 +114,7 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
 
         if (session == null) {
             throw new AssertionError(String.format(
-                "Received Attach on channel [%d] that has no matching Session for that remote channel. ", remoteChannel));
+                "Received Attach on channel [%s] that has no matching Session for that remote channel. ", remoteChannel));
         }
 
         final LinkTracker link = session.handleRemoteAttach(attach);

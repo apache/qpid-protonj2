@@ -688,7 +688,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             Receiver receiver = session.openDynamicReceiver();
             receiver.openFuture().get(10, TimeUnit.SECONDS);
 
-            assertNotNull("Remote should have assigned the address for the dynamic receiver", receiver.address());
+            assertNotNull(receiver.address(), "Remote should have assigned the address for the dynamic receiver");
             assertEquals("test-dynamic-node", receiver.address());
 
             receiver.closeAsync().get(10, TimeUnit.SECONDS);
@@ -734,7 +734,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             Session session = connection.openSession();
             Receiver receiver = session.openDynamicReceiver(nodeProperties);
 
-            assertNotNull("Remote should have assigned the address for the dynamic receiver", receiver.address());
+            assertNotNull(receiver.address(), "Remote should have assigned the address for the dynamic receiver");
             assertEquals("test-dynamic-node", receiver.address());
 
             receiver.closeAsync().get(10, TimeUnit.SECONDS);
@@ -774,7 +774,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             // sent by the receiver
             session.openSender("test");
 
-            assertNotNull("Remote should have assigned the address for the dynamic receiver", receiver.address());
+            assertNotNull(receiver.address(), "Remote should have assigned the address for the dynamic receiver");
             assertEquals("test-dynamic-node", receiver.address());
 
             receiver.close();
@@ -828,7 +828,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             }
 
             if (attachResponse) {
-                assertNotNull("Remote should have assigned the address for the dynamic receiver", receiver.address());
+                assertNotNull(receiver.address(), "Remote should have assigned the address for the dynamic receiver");
                 assertEquals("test-dynamic-node", receiver.address());
             } else {
                 try {

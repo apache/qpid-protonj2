@@ -28,8 +28,9 @@ public enum TerminusExpiryPolicy {
     CONNECTION_CLOSE("connection-close"),
     NEVER("never");
 
-    private Symbol policy;
     private static final Map<Symbol, TerminusExpiryPolicy> map = new HashMap<>();
+
+    private final Symbol policy;
 
     TerminusExpiryPolicy(String policy) {
         this.policy = Symbol.valueOf(policy);

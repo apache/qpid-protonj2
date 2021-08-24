@@ -77,14 +77,14 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
 
         if (session == null) {
             throw new AssertionError(String.format(
-                "Received Detach on channel [%d] that has no matching Session for that remote channel. ", remoteChannel));
+                "Received Detach on channel [%s] that has no matching Session for that remote channel. ", remoteChannel));
         }
 
         final LinkTracker link = session.handleRemoteDetach(detach);
 
         if (link == null) {
             throw new AssertionError(String.format(
-                "Received Detach on channel [%d] that has no matching Attached link for that remote handle. ", detach.getHandle()));
+                "Received Detach on channel [%s] that has no matching Attached link for that remote handle. ", detach.getHandle()));
         }
 
         if (response != null) {

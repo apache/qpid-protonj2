@@ -60,7 +60,7 @@ class SaslOptionsTest {
 
         assertFalse(options.allowedMechanisms().isEmpty());
 
-        options.allowedMechanisms().contains("PLAIN");
-        options.allowedMechanisms().contains("ANONYMOUS");
+        assertTrue(options.allowedMechanisms().contains("PLAIN"));
+        assertTrue(options.allowedMechanisms().contains("ANONYMOUS"));
     }
 }

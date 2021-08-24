@@ -1000,7 +1000,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             Receiver receiver = connection.openDynamicReceiver();
             receiver.openFuture().get(10, TimeUnit.SECONDS);
 
-            assertNotNull("Remote should have assigned the address for the dynamic receiver", receiver.address());
+            assertNotNull(receiver.address(), "Remote should have assigned the address for the dynamic receiver");
 
             receiver.closeAsync().get(10, TimeUnit.SECONDS);
 

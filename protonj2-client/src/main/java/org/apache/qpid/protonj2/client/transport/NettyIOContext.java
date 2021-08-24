@@ -57,7 +57,7 @@ public final class NettyIOContext {
         this.sslOptions = ssl;
         this.threadFactory = new TrackableThreadFactory(ioThreadName, true);
 
-        final String[] nativeIOPreference = options.nativeIOPeference();
+        final String[] nativeIOPreference = options.nativeIOPreference();
 
         EventLoopGroup selectedGroup = null;
         Class<? extends Channel> selectedChannelClass = null;

@@ -194,8 +194,8 @@ public class Open extends PerformativeDescribedType {
                ", maxFrameSize=" + getMaxFrameSize() +
                ", channelMax=" + getChannelMax() +
                ", idleTimeOut=" + getIdleTimeOut() +
-               ", outgoingLocales=" + getOutgoingLocales() +
-               ", incomingLocales=" + getIncomingLocales() +
+               ", outgoingLocales=" + Arrays.toString(getOutgoingLocales()) +
+               ", incomingLocales=" + Arrays.toString(getIncomingLocales()) +
                ", offeredCapabilities=" + Arrays.toString(getOfferedCapabilities()) +
                ", desiredCapabilities=" + Arrays.toString(getDesiredCapabilities()) +
                ", properties=" + getProperties() +

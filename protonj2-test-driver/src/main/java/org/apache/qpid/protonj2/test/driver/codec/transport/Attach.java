@@ -270,6 +270,7 @@ public class Attach extends PerformativeDescribedType {
                     break;
                 case INCOMPLETE_UNSETTLED:
                     result = Boolean.FALSE;
+                    break;
                 default:
                     break;
             }

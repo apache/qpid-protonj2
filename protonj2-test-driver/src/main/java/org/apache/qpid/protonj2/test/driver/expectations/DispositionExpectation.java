@@ -76,7 +76,7 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
 
         if (session == null) {
             throw new AssertionError(String.format(
-                "Received Disposition on channel [%d] that has no matching Session for that remote channel. ", remoteChannel));
+                "Received Disposition on channel [%s] that has no matching Session for that remote channel. ", remoteChannel));
         }
 
         session.handleDisposition(disposition);

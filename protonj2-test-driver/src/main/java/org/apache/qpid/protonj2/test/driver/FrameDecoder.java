@@ -165,7 +165,7 @@ class FrameDecoder {
         @Override
         public void parse(ByteBuf input) throws AssertionError {
             while (input.isReadable()) {
-                frameSize |= ((input.readByte() & 0xFF) << --multiplier * Byte.SIZE);
+                frameSize |= (input.readByte() & 0xFF) << (--multiplier * Byte.SIZE);
                 if (multiplier == 0) {
                     break;
                 }
@@ -336,7 +336,7 @@ class FrameDecoder {
      * If parsing fails the parser enters the failed state and remains there always throwing the given exception
      * if additional parsing is requested.
      */
-    private class ParsingErrorStage implements FrameParserStage {
+    private static class ParsingErrorStage implements FrameParserStage {
 
         private final AssertionError parsingError;
 

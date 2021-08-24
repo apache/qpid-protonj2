@@ -79,7 +79,7 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
 
         if (session == null) {
             throw new AssertionError(String.format(
-                "Received Flow on channel [%d] that has no matching Session for that remote channel. ", remoteChannel));
+                "Received Flow on channel [%s] that has no matching Session for that remote channel. ", remoteChannel));
         }
 
         final LinkTracker linkTracker = session.handleFlow(flow);  // Can be null if Flow was session level only.
