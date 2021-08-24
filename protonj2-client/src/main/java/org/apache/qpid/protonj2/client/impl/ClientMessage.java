@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
@@ -62,19 +61,15 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     private int messageFormat;
 
     /**
-     * Create a new {@link ClientMessage} instance with no default body section or
-     * section supplier
-     *
-     * @param sectionSupplier
-     *      A {@link Supplier} that will generate Section values for the message body.
+     * Create a new {@link ClientMessage} instance with no default body section.
      */
     ClientMessage() {
         this.body = null;
     }
 
     /**
-     * Create a new {@link ClientMessage} instance with a {@link Supplier} that will
-     * provide the AMQP {@link Section} value for any body that is set on the message.
+     * Create a new {@link ClientMessage} instance with a {@link Section} value that
+     * will comprise the body of this message instance.
      *
      * @param body
      *      The object that comprises the value portion of the body {@link Section}.
