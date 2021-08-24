@@ -600,7 +600,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
             Matcher<Boolean> drainMatcher = anyOf(equalTo(false), nullValue());
             peer.expectFlow().withDrain(drainMatcher).withLinkCredit(credit);
 
-            receiver.addCredit(credit);
+            // Ensure we get the attach response with the initial delivery count.
+            receiver.openFuture().get().addCredit(credit);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
