@@ -237,6 +237,7 @@ public class ExternalMessage<E> implements Message<E> {
     }
 
     @Override
+    @SuppressWarnings("NullTernary")
     public long absoluteExpiryTime() {
         return properties != null ? properties.getAbsoluteExpiryTime() : null;
     }
@@ -248,6 +249,7 @@ public class ExternalMessage<E> implements Message<E> {
     }
 
     @Override
+    @SuppressWarnings("NullTernary")
     public long creationTime() {
         return properties != null ? properties.getCreationTime() : null;
     }
@@ -270,6 +272,7 @@ public class ExternalMessage<E> implements Message<E> {
     }
 
     @Override
+    @SuppressWarnings("NullTernary")
     public int groupSequence() {
         return properties != null ? (int) properties.getGroupSequence() : null;
     }

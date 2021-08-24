@@ -67,6 +67,7 @@ public class SymbolTest {
     }
 
     @Test
+    @SuppressWarnings({"EqualsWithItself", "SelfComparison"})
     public void testCompareTo() {
         String symbolString1 = "Symbol-1";
         String symbolString2 = "Symbol-2";
