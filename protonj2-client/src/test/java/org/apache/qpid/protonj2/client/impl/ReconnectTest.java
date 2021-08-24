@@ -122,20 +122,20 @@ public class ReconnectTest extends ImperativeClientTestCase {
 
     @Test
     public void testConnectThrowsSecurityViolationOnFailureSaslAuth() throws Exception {
-        doTestConnectThrowsSecurityViolationOnFailuredSaslExchange(SaslCode.AUTH.byteValue());
+        doTestConnectThrowsSecurityViolationOnFailureSaslExchange(SaslCode.AUTH.byteValue());
     }
 
     @Test
     public void testConnectThrowsSecurityViolationOnFailureSaslSys() throws Exception {
-        doTestConnectThrowsSecurityViolationOnFailuredSaslExchange(SaslCode.SYS.byteValue());
+        doTestConnectThrowsSecurityViolationOnFailureSaslExchange(SaslCode.SYS.byteValue());
     }
 
     @Test
     public void testConnectThrowsSecurityViolationOnFailureSaslSysPerm() throws Exception {
-        doTestConnectThrowsSecurityViolationOnFailuredSaslExchange(SaslCode.SYS_PERM.byteValue());
+        doTestConnectThrowsSecurityViolationOnFailureSaslExchange(SaslCode.SYS_PERM.byteValue());
     }
 
-    private void doTestConnectThrowsSecurityViolationOnFailuredSaslExchange(byte saslCode) throws Exception {
+    private void doTestConnectThrowsSecurityViolationOnFailureSaslExchange(byte saslCode) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectFailingSASLPlainConnect(saslCode);
             peer.dropAfterLastHandler(10);

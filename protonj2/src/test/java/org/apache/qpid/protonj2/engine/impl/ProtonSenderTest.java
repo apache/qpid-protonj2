@@ -1221,7 +1221,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testSendTramsferWithNonDefaultMessageFormat() throws Exception {
+    public void testSendTransferWithNonDefaultMessageFormat() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -1543,19 +1543,19 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         Sender sender = session.sender("sender-1");
 
-        final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
+        final AtomicBoolean deliverySentAfterSendable = new AtomicBoolean();
         final AtomicReference<OutgoingDelivery> sent = new AtomicReference<>();
 
         sender.creditStateUpdateHandler(handler -> {
             if (handler.isSendable()) {
                 sent.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
-                deliverySentAfterSenable.set(true);
+                deliverySentAfterSendable.set(true);
             }
         });
 
         sender.open();
 
-        assertTrue(deliverySentAfterSenable.get(), "Delivery should have been sent after credit arrived");
+        assertTrue(deliverySentAfterSendable.get(), "Delivery should have been sent after credit arrived");
 
         assertNull(sender.current());
 
@@ -2291,7 +2291,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testUnsttledDispositionOfTransferWithAcceptedOutcome() throws Exception {
+    public void testUnsettledDispositionOfTransferWithAcceptedOutcome() throws Exception {
         DeliveryState state = Accepted.getInstance();
         AcceptedMatcher matcher = new AcceptedMatcher();
         doTestSettleTransferWithSpecifiedOutcome(state, matcher, false);
@@ -2368,16 +2368,16 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         Sender sender = session.sender("sender-1");
 
-        final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
+        final AtomicBoolean deliverySentAfterSendable = new AtomicBoolean();
         final AtomicReference<OutgoingDelivery> sentDelivery = new AtomicReference<>();
         sender.creditStateUpdateHandler(handler -> {
             sentDelivery.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
-            deliverySentAfterSenable.set(sender.isSendable());
+            deliverySentAfterSendable.set(sender.isSendable());
         });
 
         sender.open();
 
-        assertTrue(deliverySentAfterSenable.get(), "Delivery should have been sent after credit arrived");
+        assertTrue(deliverySentAfterSendable.get(), "Delivery should have been sent after credit arrived");
 
         OutgoingDelivery delivery = sender.current();
         assertNull(delivery);
@@ -2391,31 +2391,31 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testAttemptedSecondDispostionOnAlreadySettledDeliveryNull() throws Exception {
-        doTestAttemptedSecondDispostionOnAlreadySettledDelivery(Accepted.getInstance(), null);
+    public void testAttemptedSecondDispositionOnAlreadySettledDeliveryNull() throws Exception {
+        doTestAttemptedSecondDispositionOnAlreadySettledDelivery(Accepted.getInstance(), null);
     }
 
     @Test
-    public void testAttemptedSecondDispostionOnAlreadySettledDeliveryReleased() throws Exception {
-        doTestAttemptedSecondDispostionOnAlreadySettledDelivery(Accepted.getInstance(), Released.getInstance());
+    public void testAttemptedSecondDispositionOnAlreadySettledDeliveryReleased() throws Exception {
+        doTestAttemptedSecondDispositionOnAlreadySettledDelivery(Accepted.getInstance(), Released.getInstance());
     }
 
     @Test
-    public void testAttemptedSecondDispostionOnAlreadySettledDeliveryModiified() throws Exception {
-        doTestAttemptedSecondDispostionOnAlreadySettledDelivery(Released.getInstance(), new Modified().setDeliveryFailed(true));
+    public void testAttemptedSecondDispositionOnAlreadySettledDeliveryModified() throws Exception {
+        doTestAttemptedSecondDispositionOnAlreadySettledDelivery(Released.getInstance(), new Modified().setDeliveryFailed(true));
     }
 
     @Test
-    public void testAttemptedSecondDispostionOnAlreadySettledDeliveryRejected() throws Exception {
-        doTestAttemptedSecondDispostionOnAlreadySettledDelivery(Released.getInstance(), new Rejected());
+    public void testAttemptedSecondDispositionOnAlreadySettledDeliveryRejected() throws Exception {
+        doTestAttemptedSecondDispositionOnAlreadySettledDelivery(Released.getInstance(), new Rejected());
     }
 
     @Test
-    public void testAttemptedSecondDispostionOnAlreadySettledDeliveryTransactional() throws Exception {
-        doTestAttemptedSecondDispostionOnAlreadySettledDelivery(Released.getInstance(), new TransactionalState().setOutcome(Accepted.getInstance()));
+    public void testAttemptedSecondDispositionOnAlreadySettledDeliveryTransactional() throws Exception {
+        doTestAttemptedSecondDispositionOnAlreadySettledDelivery(Released.getInstance(), new TransactionalState().setOutcome(Accepted.getInstance()));
     }
 
-    private void doTestAttemptedSecondDispostionOnAlreadySettledDelivery(DeliveryState first, DeliveryState second) throws Exception {
+    private void doTestAttemptedSecondDispositionOnAlreadySettledDelivery(DeliveryState first, DeliveryState second) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -2451,15 +2451,15 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
         final AtomicReference<OutgoingDelivery> sentDelivery = new AtomicReference<>();
 
-        final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
+        final AtomicBoolean deliverySentAfterSendable = new AtomicBoolean();
         sender.creditStateUpdateHandler(handler -> {
             sentDelivery.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
-            deliverySentAfterSenable.set(sender.isSendable());
+            deliverySentAfterSendable.set(sender.isSendable());
         });
 
         sender.open();
 
-        assertTrue(deliverySentAfterSenable.get(), "Delivery should have been sent after credit arrived");
+        assertTrue(deliverySentAfterSendable.get(), "Delivery should have been sent after credit arrived");
 
         OutgoingDelivery delivery = sender.current();
         assertNull(delivery);
@@ -2470,7 +2470,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         try {
             sentDelivery.get().disposition(second, true);
-            fail("Should not be able to update outcome on already setttled delivery");
+            fail("Should not be able to update outcome on already settled delivery");
         } catch (IllegalStateException ise) {
             // Expected
         }
@@ -2516,11 +2516,11 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         Sender sender = session.sender("sender-1");
 
-        final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
+        final AtomicBoolean deliverySentAfterSendable = new AtomicBoolean();
         final AtomicReference<OutgoingDelivery> sentDelivery = new AtomicReference<>();
         sender.creditStateUpdateHandler(handler -> {
             sentDelivery.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
-            deliverySentAfterSenable.set(sender.isSendable());
+            deliverySentAfterSendable.set(sender.isSendable());
         });
 
         sender.deliveryStateUpdatedHandler((delivery) -> {
@@ -2531,7 +2531,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.open();
 
-        assertTrue(deliverySentAfterSenable.get(), "Delivery should have been sent after credit arrived");
+        assertTrue(deliverySentAfterSendable.get(), "Delivery should have been sent after credit arrived");
 
         assertNull(sender.current());
 
@@ -2577,7 +2577,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectClose().respond();
 
         // Inject held responses to get the ball rolling again
-        peer.remoteOpen().withOfferedCapabilities("ANONYMOUS_REALY").now();
+        peer.remoteOpen().withOfferedCapabilities("ANONYMOUS_RELAY").now();
         peer.respondToLastBegin().now();
         peer.respondToLastAttach().now();
 
@@ -2590,17 +2590,17 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndRsponse() throws Exception {
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndResponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, true, true);
     }
 
     @Test
-    public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndNoRsponse() throws Exception {
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndNoResponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, true, false);
     }
 
     @Test
-    public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndNoRsponse() throws Exception {
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndNoResponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, false, false);
     }
 
@@ -2665,7 +2665,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testCloseAfterFailureThrowsEngineStateExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndReponse() throws Exception {
+    public void testCloseAfterFailureThrowsEngineStateExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, true);
     }
 
@@ -2919,12 +2919,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Session session = connection.session().open();
         Sender sender = session.sender("sender-1");
 
-        final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
+        final AtomicBoolean deliverySentAfterSendable = new AtomicBoolean();
         final AtomicReference<OutgoingDelivery> sentDelivery = new AtomicReference<>();
         sender.creditStateUpdateHandler(link -> {
             if (link.isSendable()) {
                 sentDelivery.set(link.next().setTag(new byte[] {0}).writeBytes(payload));
-                deliverySentAfterSenable.set(true);
+                deliverySentAfterSendable.set(true);
             }
         });
 
@@ -3011,7 +3011,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testSenderAppliedGeneratedDeliveryTagCanBeOverriden() throws Exception {
+    public void testSenderAppliedGeneratedDeliveryTagCanBeOverridden() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -3254,7 +3254,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testNoDispsotionSentWhenNoStateOrSettlementRequested() {
+    public void testNoDispositionSentWhenNoStateOrSettlementRequested() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -3314,7 +3314,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testCannotAlterMessageFormatAfterInitalBytesWritten() throws Exception {
+    public void testCannotAlterMessageFormatAfterInitialBytesWritten() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -3513,7 +3513,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testSenderBecomesSendableAfterRemoteIncomingWindowExpeanded() throws Exception {
+    public void testSenderBecomesSendableAfterRemoteIncomingWindowExpanded() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -3593,7 +3593,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testSenderBecomesSendableAfterRemoteIncomingWindowExpeandedSessionFlowSentBeforeAttach() throws Exception {
+    public void testSenderBecomesSendableAfterRemoteIncomingWindowExpandedSessionFlowSentBeforeAttach() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -3661,7 +3661,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testSessionRevokesIncomingWindowSetsSenderStateToNotSenableViaDirectLinkFlow() throws Exception {
+    public void testSessionRevokesIncomingWindowSetsSenderStateToNotSendableViaDirectLinkFlow() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -3732,7 +3732,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testSessionRevokesIncomingWindowSetsSenderStateToNotSenableViaSessionFlow() throws Exception {
+    public void testSessionRevokesIncomingWindowSetsSenderStateToNotSendableViaSessionFlow() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -4003,21 +4003,21 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testDispositionFilterAppliesToOnlySubsetOfUnsttledMapSettledAndAccepted() {
-        testDispositionFilterAppliesToOnlySubsetOfUnsttledMap(true, true);
+    public void testDispositionFilterAppliesToOnlySubsetOfUnsettledMapSettledAndAccepted() {
+        testDispositionFilterAppliesToOnlySubsetOfUnsettledMap(true, true);
     }
 
     @Test
-    public void testDispositionFilterAppliesToOnlySubsetOfUnsttledMapSettledOnly() {
-        testDispositionFilterAppliesToOnlySubsetOfUnsttledMap(true, false);
+    public void testDispositionFilterAppliesToOnlySubsetOfUnsettledMapSettledOnly() {
+        testDispositionFilterAppliesToOnlySubsetOfUnsettledMap(true, false);
     }
 
     @Test
-    public void testDispositionFilterAppliesToOnlySubsetOfUnsttledMapAcceptedOnly() {
-        testDispositionFilterAppliesToOnlySubsetOfUnsttledMap(false, true);
+    public void testDispositionFilterAppliesToOnlySubsetOfUnsettledMapAcceptedOnly() {
+        testDispositionFilterAppliesToOnlySubsetOfUnsettledMap(false, true);
     }
 
-    private void testDispositionFilterAppliesToOnlySubsetOfUnsttledMap(boolean settled, boolean accepted) {
+    private void testDispositionFilterAppliesToOnlySubsetOfUnsettledMap(boolean settled, boolean accepted) {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -4149,7 +4149,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         for (OutgoingDelivery delivery : deliveries) {
             assertEquals(deliveryTag++, delivery.getTag().tagBuffer().getByte(0), "Delivery not updated in correct order");
-            assertTrue(delivery.isRemotelySettled(), "Delivery should be marked as remotely setted");
+            assertTrue(delivery.isRemotelySettled(), "Delivery should be marked as remotely settled");
         }
 
         peer.waitForScriptToComplete();

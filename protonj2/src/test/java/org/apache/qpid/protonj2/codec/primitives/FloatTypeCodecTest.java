@@ -115,16 +115,16 @@ public class FloatTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testEncodeAndDecodeArrayOfPrimitiveFlosts() throws IOException {
-        doTestEncodeAndDecodeArrayOfPrimitiveFlosts(false);
+    public void testEncodeAndDecodeArrayOfPrimitiveFloats() throws IOException {
+        doTestEncodeAndDecodeArrayOfPrimitiveFloats(false);
     }
 
     @Test
-    public void testEncodeAndDecodeArrayOfPrimitiveFlostsFromStream() throws IOException {
-        doTestEncodeAndDecodeArrayOfPrimitiveFlosts(true);
+    public void testEncodeAndDecodeArrayOfPrimitiveFloatsFromStream() throws IOException {
+        doTestEncodeAndDecodeArrayOfPrimitiveFloats(true);
     }
 
-    private void doTestEncodeAndDecodeArrayOfPrimitiveFlosts(boolean fromStream) throws IOException {
+    private void doTestEncodeAndDecodeArrayOfPrimitiveFloats(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         InputStream stream = new ProtonBufferInputStream(buffer);
 

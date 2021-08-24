@@ -1307,7 +1307,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testEngineShutdownHandlerThrowsIsIngoredAndShutdownCompletes() {
+    public void testEngineShutdownHandlerThrowsIsIgnoredAndShutdownCompletes() {
         ProtonEngine engine = (ProtonEngine) EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
 

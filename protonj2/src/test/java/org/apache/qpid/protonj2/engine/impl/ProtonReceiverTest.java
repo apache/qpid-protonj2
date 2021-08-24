@@ -248,7 +248,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testReceiverRoutesDetachEventToCloseHandlerIfNonSset() throws Exception {
+    public void testReceiverRoutesDetachEventToCloseHandlerIfNoneSet() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -1582,7 +1582,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testReceiverSendsDispostionForTransfer() throws Exception {
+    public void testReceiverSendsDispositionForTransfer() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -1635,7 +1635,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testReceiverSendsDispostionOnlyOnceForTransfer() throws Exception {
+    public void testReceiverSendsDispositionOnlyOnceForTransfer() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -1695,7 +1695,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testReceiverSendsUpdatedDispostionsForTransferBeforeSettlement() throws Exception {
+    public void testReceiverSendsUpdatedDispositionsForTransferBeforeSettlement() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -1755,7 +1755,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testReceiverSendsUpdatedDispostionsForTransferBeforeSettlementThenSettles() throws Exception {
+    public void testReceiverSendsUpdatedDispositionsForTransferBeforeSettlementThenSettles() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -2015,7 +2015,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         for (IncomingDelivery delivery : deliveries) {
             assertEquals(deliveryTag++, delivery.getTag().tagBuffer().getByte(0), "Delivery not updated in correct order");
-            assertTrue(delivery.isRemotelySettled(), "Delivery should be marked as remotely setted");
+            assertTrue(delivery.isRemotelySettled(), "Delivery should be marked as remotely settled");
         }
 
         peer.waitForScriptToComplete();
@@ -2083,7 +2083,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         assertNotNull(payload);
 
-        // We are cheating a bit here as this ins't how the encoding would normally work.
+        // We are cheating a bit here as this isn't how the encoding would normally work.
         Data section1 = decoder.readObject(payload, decoderState, Data.class);
         Data section2 = decoder.readObject(payload, decoderState, Data.class);
 
@@ -2172,7 +2172,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         assertNotNull(payload);
 
-        // We are cheating a bit here as this ins't how the encoding would normally work.
+        // We are cheating a bit here as this isn't how the encoding would normally work.
         Data section1 = decoder.readObject(payload, decoderState, Data.class);
         Data section2 = decoder.readObject(payload, decoderState, Data.class);
 
@@ -2430,7 +2430,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertFalse(deliveryUpdated.get(), "Should not have a delivery updates on receiver");
         assertTrue(receivedDelivery.get().isAborted(), "Should now show that delivery is aborted");
         assertTrue(receivedDelivery.get().isRemotelySettled(), "Should now show that delivery is remotely settled");
-        assertNull(receivedDelivery.get().readAll(), "Aboarted Delivery should discard read bytes");
+        assertNull(receivedDelivery.get().readAll(), "Aborted Delivery should discard read bytes");
 
         // Another delivery now which should arrive just fine, no further frames on this one.
         peer.remoteTransfer().withDeliveryId(1)
@@ -2923,7 +2923,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectClose().respond();
 
         // Inject held responses to get the ball rolling again
-        peer.remoteOpen().withOfferedCapabilities("ANONYMOUS_REALY").now();
+        peer.remoteOpen().withOfferedCapabilities("ANONYMOUS_RELAY").now();
         peer.respondToLastBegin().now();
         peer.respondToLastAttach().now();
 
@@ -2936,17 +2936,17 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndRsponse() throws Exception {
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndResponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, true, true);
     }
 
     @Test
-    public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndNoRsponse() throws Exception {
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndNoResponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, true, false);
     }
 
     @Test
-    public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndNoRsponse() throws Exception {
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndNoResponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, false, false);
     }
 
@@ -3011,7 +3011,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testCloseAfterFailureThrowsEngineStateExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndReponse() throws Exception {
+    public void testCloseAfterFailureThrowsEngineStateExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, true);
     }
 
@@ -3407,7 +3407,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         try {
             receiver.disposition(delivery -> true, Accepted.getInstance(), true);
-            fail("Receiver should not allow dispotiion to be called");
+            fail("Receiver should not allow disposition to be called");
         } catch (IllegalStateException ise) {
             // Expected
         }
@@ -3567,7 +3567,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testReceiveComplexEndodedAMQPMessageAndDecode() throws IOException {
+    public void testReceiveComplexEncodedAMQPMessageAndDecode() throws IOException {
         final String SERIALIZED_JAVA_OBJECT_CONTENT_TYPE = "application/x-java-serialized-object";
         final String JMS_MSG_TYPE = "x-opt-jms-msg-type";
 
@@ -3626,7 +3626,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
             assertNotNull(annotations);
             assertTrue(annotations.getValue().containsKey(Symbol.valueOf(JMS_MSG_TYPE)));
         } catch (Exception ex) {
-            fail("Should not encouter error on decode of MessageAnnotations: " + ex);
+            fail("Should not encounter error on decode of MessageAnnotations: " + ex);
         } finally {
             decoderState.reset();
         }
@@ -3636,7 +3636,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
             assertNotNull(properties);
             assertEquals(SERIALIZED_JAVA_OBJECT_CONTENT_TYPE, properties.getContentType());
         } catch (Exception ex) {
-            fail("Should not encouter error on decode of Properties: " + ex);
+            fail("Should not encounter error on decode of Properties: " + ex);
         } finally {
             decoderState.reset();
         }
@@ -3648,7 +3648,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
             Data payload = (Data) body;
             assertEquals(bytes.length, payload.getBinary().getLength());
         } catch (Exception ex) {
-            fail("Should not encouter error on decode of Body section: " + ex);
+            fail("Should not encounter error on decode of Body section: " + ex);
         } finally {
             decoderState.reset();
         }
@@ -3840,7 +3840,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         for (IncomingDelivery delivery : deliveries) {
             assertEquals(deliveryTag++, delivery.getTag().tagBuffer().getByte(0), "Delivery not updated in correct order");
-            assertTrue(delivery.isRemotelySettled(), "Delivery should be marked as remotely setted");
+            assertTrue(delivery.isRemotelySettled(), "Delivery should be marked as remotely settled");
         }
 
         peer.waitForScriptToComplete();

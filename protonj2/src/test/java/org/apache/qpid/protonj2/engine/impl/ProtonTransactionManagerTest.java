@@ -1209,7 +1209,7 @@ class ProtonTransactionManagerTest extends ProtonEngineTestSupport  {
     }
 
     @Test
-    public void testTransactionManagerRejectsAttemptedDischargeOfUnkownTxnId() {
+    public void testTransactionManagerRejectsAttemptedDischargeOfUnknownTxnId() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);

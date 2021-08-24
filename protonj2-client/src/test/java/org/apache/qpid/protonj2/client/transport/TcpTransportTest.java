@@ -518,7 +518,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
                 sendBuffer.writeByte('A');
             }
 
-            transport.write(sendBuffer, () -> LOG.debug("Netty repprts write complete"));
+            transport.write(sendBuffer, () -> LOG.debug("Netty reports write complete"));
             LOG.trace("Flush of Transport happens now");
             transport.flush();
 
@@ -560,7 +560,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
                 sendBuffer.writeByte('A');
             }
 
-            transport.writeAndFlush(sendBuffer, () -> LOG.debug("Netty repprts write complete"));
+            transport.writeAndFlush(sendBuffer, () -> LOG.debug("Netty reports write complete"));
 
             assertTrue(Wait.waitFor(new Wait.Condition() {
                 @Override
@@ -769,7 +769,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testCreateFailsIfUnknownPerferredNativeIOLayerSelected() throws Exception {
+    public void testCreateFailsIfUnknownPreferredNativeIOLayerSelected() throws Exception {
         TransportOptions options = createTransportOptions();
         options.allowNativeIO(true);
         options.nativeIOPreference("NATIVE-IO");

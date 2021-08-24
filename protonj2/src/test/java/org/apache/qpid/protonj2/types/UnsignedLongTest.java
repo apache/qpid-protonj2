@@ -176,8 +176,8 @@ public class UnsignedLongTest {
 
         // check 2^64 -1 (max) to confirm success
         BigInteger onLimit = new BigInteger(TWO_TO_64_MINUS_ONE_BYTES);
-        String onlimitString = onLimit.toString();
-        UnsignedLong max = UnsignedLong.valueOf(onlimitString);
+        String onLimitString = onLimit.toString();
+        UnsignedLong max = UnsignedLong.valueOf(onLimitString);
         assertEquals(onLimit, max.bigIntegerValue(), "unexpected value");
     }
 

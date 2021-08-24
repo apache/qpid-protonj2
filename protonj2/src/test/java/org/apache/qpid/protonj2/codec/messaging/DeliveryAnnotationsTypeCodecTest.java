@@ -426,16 +426,16 @@ public class DeliveryAnnotationsTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testEncodeAndDecodeAnnoationsWithEmbeddedMaps() throws IOException {
-        doTestEncodeAndDecodeAnnoationsWithEmbeddedMaps(false);
+    public void testEncodeAndDecodeAnnotationsWithEmbeddedMaps() throws IOException {
+        doTestEncodeAndDecodeAnnotationsWithEmbeddedMaps(false);
     }
 
     @Test
-    public void testEncodeAndDecodeAnnoationsWithEmbeddedMapsFromStream() throws IOException {
-        doTestEncodeAndDecodeAnnoationsWithEmbeddedMaps(true);
+    public void testEncodeAndDecodeAnnotationsWithEmbeddedMapsFromStream() throws IOException {
+        doTestEncodeAndDecodeAnnotationsWithEmbeddedMaps(true);
     }
 
-    public void doTestEncodeAndDecodeAnnoationsWithEmbeddedMaps(boolean fromStream) throws IOException {
+    public void doTestEncodeAndDecodeAnnotationsWithEmbeddedMaps(boolean fromStream) throws IOException {
         final Symbol SYMBOL_1 = Symbol.valueOf("x-opt-test1");
         final Symbol SYMBOL_2 = Symbol.valueOf("x-opt-test2");
 

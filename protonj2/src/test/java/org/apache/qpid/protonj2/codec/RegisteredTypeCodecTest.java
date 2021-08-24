@@ -36,16 +36,16 @@ import org.junit.jupiter.api.Test;
 public class RegisteredTypeCodecTest extends CodecTestSupport {
 
     @Test
-    public void testEncodeDecodeRegistredType() throws IOException {
-        doTestEncodeDecodeRegistredType(false);
+    public void testEncodeDecodeRegisteredType() throws IOException {
+        doTestEncodeDecodeRegisteredType(false);
     }
 
     @Test
-    public void testEncodeDecodeRegistredTypeFromStream() throws IOException {
-        doTestEncodeDecodeRegistredType(true);
+    public void testEncodeDecodeRegisteredTypeFromStream() throws IOException {
+        doTestEncodeDecodeRegisteredType(true);
     }
 
-    private void doTestEncodeDecodeRegistredType(boolean fromStream) throws IOException {
+    private void doTestEncodeDecodeRegisteredType(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         InputStream stream = new ProtonBufferInputStream(buffer);
 

@@ -189,15 +189,15 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateReceiverAndCloseWithErrorSync() throws Exception {
-        doTestCreateReceiverAndCloseOrDeatchWithErrorSync(true);
+        doTestCreateReceiverAndCloseOrDetachWithErrorSync(true);
     }
 
     @Test
     public void testCreateReceiverAndDetachWithErrorSync() throws Exception {
-        doTestCreateReceiverAndCloseOrDeatchWithErrorSync(false);
+        doTestCreateReceiverAndCloseOrDetachWithErrorSync(false);
     }
 
-    private void doTestCreateReceiverAndCloseOrDeatchWithErrorSync(boolean close) throws Exception {
+    private void doTestCreateReceiverAndCloseOrDetachWithErrorSync(boolean close) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -844,7 +844,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close whenn connection not closed and detach sent");
+                fail("Should not fail to close when connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -965,7 +965,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close whenn connection not closed and detach sent");
+                fail("Should not fail to close when connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -1032,7 +1032,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close whenn connection not closed and detach sent");
+                fail("Should not fail to close when connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -1101,7 +1101,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close whenn connection not closed and detach sent");
+                fail("Should not fail to close when connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -1170,7 +1170,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close whenn connection not closed and detach sent");
+                fail("Should not fail to close when connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -1239,7 +1239,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
                 receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close whenn connection not closed and detach sent");
+                fail("Should not fail to close when connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -1251,15 +1251,15 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
     @Test
     public void testBlockingReceiveCancelledWhenReceiverClosed() throws Exception {
-        doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(true);
+        doTestBlockingReceiveCancelledWhenReceiverClosedOrDetached(true);
     }
 
     @Test
     public void testBlockingReceiveCancelledWhenReceiverDetached() throws Exception {
-        doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(false);
+        doTestBlockingReceiveCancelledWhenReceiverClosedOrDetached(false);
     }
 
-    public void doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(boolean close) throws Exception {
+    public void doTestBlockingReceiveCancelledWhenReceiverClosedOrDetached(boolean close) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -1306,15 +1306,15 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
     @Test
     public void testBlockingReceiveCancelledWhenReceiverRemotelyClosed() throws Exception {
-        doTtestBlockingReceiveCancelledWhenReceiverRemotelyClosedOrDetached(true);
+        doTestBlockingReceiveCancelledWhenReceiverRemotelyClosedOrDetached(true);
     }
 
     @Test
     public void testBlockingReceiveCancelledWhenReceiverRemotelyDetached() throws Exception {
-        doTtestBlockingReceiveCancelledWhenReceiverRemotelyClosedOrDetached(false);
+        doTestBlockingReceiveCancelledWhenReceiverRemotelyClosedOrDetached(false);
     }
 
-    public void doTtestBlockingReceiveCancelledWhenReceiverRemotelyClosedOrDetached(boolean close) throws Exception {
+    public void doTestBlockingReceiveCancelledWhenReceiverRemotelyClosedOrDetached(boolean close) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();

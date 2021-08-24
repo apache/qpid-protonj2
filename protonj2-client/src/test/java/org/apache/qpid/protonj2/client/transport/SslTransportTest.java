@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Test basic functionality of the Netty based TCP Transport ruuing in secure mode (SSL).
+ * Test basic functionality of the Netty based TCP Transport running in secure mode (SSL).
  */
 @Timeout(30)
 public class SslTransportTest extends TcpTransportTest {
@@ -228,7 +228,7 @@ public class SslTransportTest extends TcpTransportTest {
             assertTrue(transport.isSecure());
 
             // Verify there was a certificate sent to the server
-            assertTrue(server.getSslHandler().handshakeFuture().await(2, TimeUnit.SECONDS), "Server handshake did not complete in alotted time");
+            assertTrue(server.getSslHandler().handshakeFuture().await(2, TimeUnit.SECONDS), "Server handshake did not complete in allotted time");
             assertNotNull(server.getSslHandler().engine().getSession().getPeerCertificates());
 
             transport.close();
@@ -269,7 +269,7 @@ public class SslTransportTest extends TcpTransportTest {
             assertTrue(transport.isConnected());
             assertTrue(transport.isSecure());
 
-            assertTrue(server.getSslHandler().handshakeFuture().await(2, TimeUnit.SECONDS), "Server handshake did not complete in alotted time");
+            assertTrue(server.getSslHandler().handshakeFuture().await(2, TimeUnit.SECONDS), "Server handshake did not complete in allotted time");
 
             Certificate[] peerCertificates = server.getSslHandler().engine().getSession().getPeerCertificates();
             assertNotNull(peerCertificates);

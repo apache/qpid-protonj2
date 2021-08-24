@@ -60,12 +60,12 @@ public class ProtonByteBufferTest extends ProtonAbstractBufferTest {
 
     @Test
     public void testConstructorCapacityAndMaxCapacityAllocatesArray() {
-        int baseCapaity = ProtonByteBuffer.DEFAULT_CAPACITY + 10;
-        ProtonBuffer buffer = new ProtonByteBuffer(baseCapaity, baseCapaity + 100);
+        int baseCapacity = ProtonByteBuffer.DEFAULT_CAPACITY + 10;
+        ProtonBuffer buffer = new ProtonByteBuffer(baseCapacity, baseCapacity + 100);
 
         assertEquals(0, buffer.getReadableBytes());
-        assertEquals(baseCapaity, buffer.capacity());
-        assertEquals(baseCapaity + 100, buffer.maxCapacity());
+        assertEquals(baseCapacity, buffer.capacity());
+        assertEquals(baseCapacity + 100, buffer.maxCapacity());
 
         assertTrue(buffer.hasArray());
         assertNotNull(buffer.getArray());

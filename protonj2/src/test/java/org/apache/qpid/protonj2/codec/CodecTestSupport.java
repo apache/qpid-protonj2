@@ -284,7 +284,7 @@ public class CodecTestSupport {
             assertEquals(target1, target2);
         }
 
-        assertEquals(target1.getAddress(), target2.getAddress(), "Addrress values not equal");
+        assertEquals(target1.getAddress(), target2.getAddress(), "Address values not equal");
         assertEquals(target1.getDurable(), target2.getDurable(), "TerminusDurability values not equal");
         assertEquals(target1.getExpiryPolicy(), target2.getExpiryPolicy(), "TerminusExpiryPolicy values not equal");
         assertEquals(target1.getTimeout(), target2.getTimeout(), "Timeout values not equal");
@@ -332,7 +332,7 @@ public class CodecTestSupport {
             assertEquals(source1, source2);
         }
 
-        assertEquals(source1.getAddress(), source2.getAddress(), "Addrress values not equal");
+        assertEquals(source1.getAddress(), source2.getAddress(), "Address values not equal");
         assertEquals(source1.getDurable(), source2.getDurable(), "TerminusDurability values not equal");
         assertEquals(source1.getExpiryPolicy(), source2.getExpiryPolicy(), "TerminusExpiryPolicy values not equal");
         assertEquals(source1.getTimeout(), source2.getTimeout(), "Timeout values not equal");

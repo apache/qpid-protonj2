@@ -29,7 +29,7 @@ public class LegacyCodecOpenFramesTestDataGenerator {
         // 1: Empty Open - No fields set
         Open emptyOpen = new Open();
         emptyOpen.setContainerId("");
-        String emptyOpenFrameString = LegacyFrmaeDataGenerator.generateUnitTestVariable("emptyOpen", emptyOpen);
+        String emptyOpenFrameString = LegacyFrameDataGenerator.generateUnitTestVariable("emptyOpen", emptyOpen);
         System.out.println(emptyOpenFrameString);
 
         // 2: Basic Open - No capabilities or locals set
@@ -38,7 +38,7 @@ public class LegacyCodecOpenFramesTestDataGenerator {
         basicOpen.setHostname("localhost");
         basicOpen.setMaxFrameSize(UnsignedInteger.valueOf(16384));
         basicOpen.setIdleTimeOut(UnsignedInteger.valueOf(30000));
-        String basicOpenString = LegacyFrmaeDataGenerator.generateUnitTestVariable("basicOpen", basicOpen);
+        String basicOpenString = LegacyFrameDataGenerator.generateUnitTestVariable("basicOpen", basicOpen);
         System.out.println(basicOpenString);
     }
 }

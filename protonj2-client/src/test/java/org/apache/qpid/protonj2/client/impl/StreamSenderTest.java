@@ -535,7 +535,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             try {
                 sender.beginMessage();
-                fail("Should not be able create a new streaming sender message before last one is compelted.");
+                fail("Should not be able create a new streaming sender message before last one is completed.");
             } catch (ClientIllegalStateException ex) {
                 // Expected
             }

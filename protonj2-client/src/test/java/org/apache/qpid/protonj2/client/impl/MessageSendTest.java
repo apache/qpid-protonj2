@@ -593,16 +593,16 @@ class MessageSendTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testSemdMessageWithUUIDPayloadArrivesWithAMQPValueBodySetFromEmpty() throws Exception {
-        doTestSemdMessageWithUUIDPayloadArrivesWithAMQPValueBody(true);
+    public void testSendMessageWithUUIDPayloadArrivesWithAMQPValueBodySetFromEmpty() throws Exception {
+        doTestSendMessageWithUUIDPayloadArrivesWithAMQPValueBody(true);
     }
 
     @Test
-    public void testSemdMessageWithUUIDPayloadArrivesWithAMQPValueBodyPopulateOnCreate() throws Exception {
-        doTestSemdMessageWithUUIDPayloadArrivesWithAMQPValueBody(false);
+    public void testSendMessageWithUUIDPayloadArrivesWithAMQPValueBodyPopulateOnCreate() throws Exception {
+        doTestSendMessageWithUUIDPayloadArrivesWithAMQPValueBody(false);
     }
 
-    private void doTestSemdMessageWithUUIDPayloadArrivesWithAMQPValueBody(boolean useSetter) throws Exception {
+    private void doTestSendMessageWithUUIDPayloadArrivesWithAMQPValueBody(boolean useSetter) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -660,16 +660,16 @@ class MessageSendTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testSemdMessageWithByteArrayPayloadArrivesWithDataSectionSetFromEmpty() throws Exception {
-        doTestSemdMessageWithByteArrayPayloadArrivesWithDataSection(true);
+    public void testSendMessageWithByteArrayPayloadArrivesWithDataSectionSetFromEmpty() throws Exception {
+        doTestSendMessageWithByteArrayPayloadArrivesWithDataSection(true);
     }
 
     @Test
-    public void testSemdMessageWithByteArrayPayloadArrivesWithDataSectionPopulateOnCreate() throws Exception {
-        doTestSemdMessageWithByteArrayPayloadArrivesWithDataSection(false);
+    public void testSendMessageWithByteArrayPayloadArrivesWithDataSectionPopulateOnCreate() throws Exception {
+        doTestSendMessageWithByteArrayPayloadArrivesWithDataSection(false);
     }
 
-    private void doTestSemdMessageWithByteArrayPayloadArrivesWithDataSection(boolean useSetter) throws Exception {
+    private void doTestSendMessageWithByteArrayPayloadArrivesWithDataSection(boolean useSetter) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -727,16 +727,16 @@ class MessageSendTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testSemdMessageWithListPayloadArrivesWithAMQPSequenceBodySetFromEmpty() throws Exception {
-        doTestSemdMessageWithListPayloadArrivesWithAMQPSequenceBody(true);
+    public void testSendMessageWithListPayloadArrivesWithAMQPSequenceBodySetFromEmpty() throws Exception {
+        doTestSendMessageWithListPayloadArrivesWithAMQPSequenceBody(true);
     }
 
     @Test
-    public void testSemdMessageWithListPayloadArrivesWithAMQPSequenceBodyPopulateOnCreate() throws Exception {
-        doTestSemdMessageWithListPayloadArrivesWithAMQPSequenceBody(false);
+    public void testSendMessageWithListPayloadArrivesWithAMQPSequenceBodyPopulateOnCreate() throws Exception {
+        doTestSendMessageWithListPayloadArrivesWithAMQPSequenceBody(false);
     }
 
-    private void doTestSemdMessageWithListPayloadArrivesWithAMQPSequenceBody(boolean useSetter) throws Exception {
+    private void doTestSendMessageWithListPayloadArrivesWithAMQPSequenceBody(boolean useSetter) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -797,16 +797,16 @@ class MessageSendTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testSemdMessageWithMapPayloadArrivesWithAMQPValueBodySetFromEmpty() throws Exception {
-        doTestSemdMessageWithMapPayloadArrivesWithAMQPValueBody(true);
+    public void testSendMessageWithMapPayloadArrivesWithAMQPValueBodySetFromEmpty() throws Exception {
+        doTestSendMessageWithMapPayloadArrivesWithAMQPValueBody(true);
     }
 
     @Test
-    public void testSemdMessageWithMapPayloadArrivesWithAMQPValueBodyPopulateOnCreate() throws Exception {
-        doTestSemdMessageWithMapPayloadArrivesWithAMQPValueBody(false);
+    public void testSendMessageWithMapPayloadArrivesWithAMQPValueBodyPopulateOnCreate() throws Exception {
+        doTestSendMessageWithMapPayloadArrivesWithAMQPValueBody(false);
     }
 
-    private void doTestSemdMessageWithMapPayloadArrivesWithAMQPValueBody(boolean useSetter) throws Exception {
+    private void doTestSendMessageWithMapPayloadArrivesWithAMQPValueBody(boolean useSetter) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -934,22 +934,22 @@ class MessageSendTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testSendOfExternalMessageWithoutAdvancedConverstionSupport() throws Exception {
+    public void testSendOfExternalMessageWithoutAdvancedConversionSupport() throws Exception {
         doTestSendOfExternalMessage(false, false);
     }
 
     @Test
-    public void testSendOfExternalMessageWithAdvancedConverstionSupport() throws Exception {
+    public void testSendOfExternalMessageWithAdvancedConversionSupport() throws Exception {
         doTestSendOfExternalMessage(true, false);
     }
 
     @Test
-    public void testTrySendOfExternalMessageWithoutAdvancedConverstionSupport() throws Exception {
+    public void testTrySendOfExternalMessageWithoutAdvancedConversionSupport() throws Exception {
         doTestSendOfExternalMessage(false, true);
     }
 
     @Test
-    public void testTrySendOfExternalMessageWithAdvancedConverstionSupport() throws Exception {
+    public void testTrySendOfExternalMessageWithAdvancedConversionSupport() throws Exception {
         doTestSendOfExternalMessage(true, true);
     }
 

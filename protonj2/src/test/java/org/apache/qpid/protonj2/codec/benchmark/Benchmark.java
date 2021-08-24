@@ -82,7 +82,7 @@ public class Benchmark implements Runnable {
 
     private void time(String message, BenchmarkResult resultSet) {
         if (!warming) {
-            System.out.println("Benchamrk of type: " + message + ": ");
+            System.out.println("Benchmark of type: " + message + ": ");
             System.out.println("    Encode time = " + resultSet.getEncodeTimeMills());
             System.out.println("    Decode time = " + resultSet.getDecodeTimeMills());
         }

@@ -51,7 +51,7 @@ public class EncodedPartialDataSectionMatcherTest {
     }
 
     @Test
-    public void testValidateImcorrectPartiallyTransmittedDataSectionInvalidSize() {
+    public void testValidateIncorrectPartiallyTransmittedDataSectionInvalidSize() {
         final byte[] PAYLOAD = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         final int EXPECTED_SIZE = 256;
 
@@ -71,7 +71,7 @@ public class EncodedPartialDataSectionMatcherTest {
     }
 
     @Test
-    public void testValidateImcorrectPartiallyTransmittedDataSectionInvalidDescribedType() {
+    public void testValidateIncorrectPartiallyTransmittedDataSectionInvalidDescribedType() {
         final byte[] PAYLOAD = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         final int EXPECTED_SIZE = 256;
 
@@ -91,7 +91,7 @@ public class EncodedPartialDataSectionMatcherTest {
     }
 
     @Test
-    public void testValidateImcorrectPartiallyTransmittedDataSectionDescribedIsNotBinary() {
+    public void testValidateIncorrectPartiallyTransmittedDataSectionDescribedIsNotBinary() {
         final byte[] PAYLOAD = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         final int EXPECTED_SIZE = 256;
 
@@ -111,7 +111,7 @@ public class EncodedPartialDataSectionMatcherTest {
     }
 
     @Test
-    public void testValidateImcorrectPartiallyTransmittedDataSectionInvalidBody() {
+    public void testValidateIncorrectPartiallyTransmittedDataSectionInvalidBody() {
         final byte[] PAYLOAD = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         final byte[] ACTUAL_PAYLOAD = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         final int EXPECTED_SIZE = 256;
