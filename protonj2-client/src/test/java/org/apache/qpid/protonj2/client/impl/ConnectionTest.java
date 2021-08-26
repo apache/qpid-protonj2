@@ -395,7 +395,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
         doTestConnectionCloseGetsResponseWithErrorDoesNotThrow(false);
     }
 
-    protected void doTestConnectionCloseGetsResponseWithErrorDoesNotThrow(boolean tiemout) throws Exception {
+    protected void doTestConnectionCloseGetsResponseWithErrorDoesNotThrow(boolean timeout) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -409,7 +409,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
 
-            if (tiemout) {
+            if (timeout) {
                 connection.openFuture().get(10, TimeUnit.SECONDS);
                 // Should close normally and not throw error as we initiated the close.
                 connection.closeAsync().get(10, TimeUnit.SECONDS);
@@ -695,7 +695,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
                 LOG.info("Session open failed with error: ", error);
                 assertNotNull(error.getMessage(), "Expected exception to have a message");
                 assertTrue(error.getMessage().contains(BREAD_CRUMB), "Expected breadcrumb to be present in message");
-                assertNotNull(error.getCause(), "Execution error should convery the cause");
+                assertNotNull(error.getCause(), "Execution error should convey the cause");
                 assertTrue(error.getCause() instanceof ClientConnectionRemotelyClosedException);
             }
 
@@ -1049,7 +1049,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testConnectionSenderIsSingletion() throws Exception {
+    public void testConnectionSenderIsSingleton() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond().withOfferedCapabilities("ANONYMOUS-RELAY");

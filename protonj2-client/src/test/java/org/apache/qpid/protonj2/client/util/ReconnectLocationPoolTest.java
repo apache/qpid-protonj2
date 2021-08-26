@@ -32,7 +32,7 @@ import org.apache.qpid.protonj2.client.ReconnectLocation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class RecoonectLocationPoolTest {
+public class ReconnectLocationPoolTest {
 
     private List<ReconnectLocation> entries;
 

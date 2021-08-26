@@ -171,7 +171,7 @@ public class ProtonEngine implements Engine {
 
     @Override
     public long tick(long currentTime) throws IllegalStateException, EngineStateException {
-        checkShutdownOrFailed("Cannot tick an Egnine that has been shutdown or failed.");
+        checkShutdownOrFailed("Cannot tick an Engine that has been shutdown or failed.");
 
         if (connection.getState() != ConnectionState.ACTIVE) {
             throw new IllegalStateException("Cannot tick on a Connection that is not opened or an engine that has been shut down.");
@@ -441,7 +441,7 @@ public class ProtonEngine implements Engine {
     private long computeDeadline(long now, long timeout) {
         long deadline = now + timeout;
         // We use 0 to signal not-initialized and/or no-timeout, so in the
-        // unlikely event thats to be the actual deadline, return 1 instead
+        // unlikely event that's to be the actual deadline, return 1 instead
         return deadline != 0 ? deadline : 1;
     }
 

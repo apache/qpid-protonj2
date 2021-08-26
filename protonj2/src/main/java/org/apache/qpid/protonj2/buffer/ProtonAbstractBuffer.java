@@ -717,7 +717,7 @@ public abstract class ProtonAbstractBuffer implements ProtonBuffer {
 
     private int calculateNewCapacity(int minNewCapacity, int maxCapacity) {
         if (minNewCapacity < 0) {
-            throw new IllegalArgumentException("minNewCapacity: " + minNewCapacity + " (expectd: 0+)");
+            throw new IllegalArgumentException("minNewCapacity: " + minNewCapacity + " (expected: 0+)");
         }
 
         if (minNewCapacity > maxCapacity) {

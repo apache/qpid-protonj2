@@ -46,7 +46,7 @@ final class ClientReceiverBuilder {
     private final SessionOptions sessionOptions;
     private final AtomicInteger receiverCounter = new AtomicInteger();
 
-    private ReceiverOptions defaultReceivernOptions;
+    private ReceiverOptions defaultReceiverOptions;
     private StreamReceiverOptions defaultStreamReceiverOptions;
 
     ClientReceiverBuilder(ClientSession session) {
@@ -241,10 +241,10 @@ final class ClientReceiverBuilder {
      * Receiver options used when none specified by the caller creating a new receiver.
      */
     private ReceiverOptions getDefaultReceiverOptions() {
-        ReceiverOptions receiverOptions = defaultReceivernOptions;
+        ReceiverOptions receiverOptions = defaultReceiverOptions;
         if (receiverOptions == null) {
             synchronized (this) {
-                receiverOptions = defaultReceivernOptions;
+                receiverOptions = defaultReceiverOptions;
                 if (receiverOptions == null) {
                     receiverOptions = new ReceiverOptions();
                     receiverOptions.openTimeout(sessionOptions.openTimeout());
@@ -253,7 +253,7 @@ final class ClientReceiverBuilder {
                     receiverOptions.drainTimeout(sessionOptions.drainTimeout());
                 }
 
-                defaultReceivernOptions = receiverOptions;
+                defaultReceiverOptions = receiverOptions;
             }
         }
 

@@ -92,15 +92,15 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateSenderAndClose() throws Exception {
-        doTestCreateSenderAndCloseOrDeatch(true);
+        doTestCreateSenderAndCloseOrDetach(true);
     }
 
     @Test
     public void testCreateSenderAndDetach() throws Exception {
-        doTestCreateSenderAndCloseOrDeatch(false);
+        doTestCreateSenderAndCloseOrDetach(false);
     }
 
-    private void doTestCreateSenderAndCloseOrDeatch(boolean close) throws Exception {
+    private void doTestCreateSenderAndCloseOrDetach(boolean close) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -139,15 +139,15 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateSenderAndCloseSync() throws Exception {
-        doTestCreateSenderAndCloseOrDeatchSync(true);
+        doTestCreateSenderAndCloseOrDetachSync(true);
     }
 
     @Test
     public void testCreateSenderAndDetachSync() throws Exception {
-        doTestCreateSenderAndCloseOrDeatchSync(false);
+        doTestCreateSenderAndCloseOrDetachSync(false);
     }
 
-    private void doTestCreateSenderAndCloseOrDeatchSync(boolean close) throws Exception {
+    private void doTestCreateSenderAndCloseOrDetachSync(boolean close) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -186,15 +186,15 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateSenderAndCloseWithErrorSync() throws Exception {
-        doTestCreateSenderAndCloseOrDeatchWithErrorSync(true);
+        doTestCreateSenderAndCloseOrDetachWithErrorSync(true);
     }
 
     @Test
     public void testCreateSenderAndDetachWithErrorSync() throws Exception {
-        doTestCreateSenderAndCloseOrDeatchWithErrorSync(false);
+        doTestCreateSenderAndCloseOrDetachWithErrorSync(false);
     }
 
-    private void doTestCreateSenderAndCloseOrDeatchWithErrorSync(boolean close) throws Exception {
+    private void doTestCreateSenderAndCloseOrDetachWithErrorSync(boolean close) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -786,15 +786,15 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendAutoSettlesOnceRemoteSettles() throws Exception {
-        doTestSentMessageGetsAutoSettledAfterRemtoeSettles(false);
+        doTestSentMessageGetsAutoSettledAfterRemoteSettles(false);
     }
 
     @Test
     public void testTrySendAutoSettlesOnceRemoteSettles() throws Exception {
-        doTestSentMessageGetsAutoSettledAfterRemtoeSettles(true);
+        doTestSentMessageGetsAutoSettledAfterRemoteSettles(true);
     }
 
-    private void doTestSentMessageGetsAutoSettledAfterRemtoeSettles(boolean trySend) throws Exception {
+    private void doTestSentMessageGetsAutoSettledAfterRemoteSettles(boolean trySend) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -856,15 +856,15 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testSendDoesNotAutoSettlesOnceRemoteSettlesIfAutoSettleOff() throws Exception {
-        doTestSentMessageNotAutoSettledAfterRemtoeSettles(false);
+        doTestSentMessageNotAutoSettledAfterRemoteSettles(false);
     }
 
     @Test
     public void testTrySendDoesNotAutoSettlesOnceRemoteSettlesIfAutoSettleOff() throws Exception {
-        doTestSentMessageNotAutoSettledAfterRemtoeSettles(true);
+        doTestSentMessageNotAutoSettledAfterRemoteSettles(true);
     }
 
-    private void doTestSentMessageNotAutoSettledAfterRemtoeSettles(boolean trySend) throws Exception {
+    private void doTestSentMessageNotAutoSettledAfterRemoteSettles(boolean trySend) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -1285,7 +1285,7 @@ public class SenderTest extends ImperativeClientTestCase {
                 sender.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close when connection not closed and detach sent.");
+                fail("Should not fail to close when connection not closed and detach sent.");
             }
 
             LOG.debug("*** Test read remote properties ***");
@@ -1355,7 +1355,7 @@ public class SenderTest extends ImperativeClientTestCase {
                 sender.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close when connection not closed and detach sent.");
+                fail("Should not fail to close when connection not closed and detach sent.");
             }
 
             peer.expectClose().respond();
@@ -1423,7 +1423,7 @@ public class SenderTest extends ImperativeClientTestCase {
                 sender.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close when connection not closed and detach sent.");
+                fail("Should not fail to close when connection not closed and detach sent.");
             }
 
             peer.expectClose().respond();
@@ -2353,7 +2353,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testWaitForAcceptanceFailsIfRemoteSendsRejceted() throws Exception {
+    void testWaitForAcceptanceFailsIfRemoteSendsRejected() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();

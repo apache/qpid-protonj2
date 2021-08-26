@@ -410,7 +410,7 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
                     delivery.disposition(new Rejected(rejection), true);
                 }
             } else {
-                throw new ProtocolViolationException("TXN Coordinator expects Declare and Dishcahrge Delivery payloads only");
+                throw new ProtocolViolationException("TXN Coordinator expects Declare and Discharge Delivery payloads only");
             }
         }
     }

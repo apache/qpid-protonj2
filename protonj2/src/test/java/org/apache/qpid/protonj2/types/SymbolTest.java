@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 
 public class SymbolTest {
 
-    private final String LARGE_SYMBOL_VALUIE = "Large String: " +
+    private final String LARGE_SYMBOL_VALUE = "Large String: " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
@@ -197,7 +197,7 @@ public class SymbolTest {
     }
 
     @Test
-    public void testToStringProducesSingelton() {
+    public void testToStringProducesSingleton() {
         String symbolString = "Symbol-String";
 
         Symbol symbol1 = Symbol.getSymbol(symbolString);
@@ -211,10 +211,10 @@ public class SymbolTest {
     }
 
     @Test
-    public void testLrageSymbolNotCached() {
-        Symbol symbol1 = Symbol.valueOf(LARGE_SYMBOL_VALUIE);
+    public void testLargeSymbolNotCached() {
+        Symbol symbol1 = Symbol.valueOf(LARGE_SYMBOL_VALUE);
         Symbol symbol2 = Symbol.getSymbol(
-            ProtonByteBufferAllocator.DEFAULT.wrap(LARGE_SYMBOL_VALUIE.getBytes(StandardCharsets.US_ASCII)));
+            ProtonByteBufferAllocator.DEFAULT.wrap(LARGE_SYMBOL_VALUE.getBytes(StandardCharsets.US_ASCII)));
 
         assertNotSame(symbol1, symbol2);
         assertNotSame(symbol1.toString(), symbol2.toString());

@@ -28,7 +28,7 @@ The following options are available for configuration when creating a new **Conn
 
 + **ConnectionOptions.username** User name value used to authenticate the connection
 + **ConnectionOptions.password** The password value used to authenticate the connection
-+ **ConnectionOptions.sslEnabled** A connection level convenience option that enables or disables the transport level SSL functionality.  See the connection transport options for more details on SSL configuration, if nothing is configures the connection will atempt to configure the SSL transport using the standard system level configuration properties.
++ **ConnectionOptions.sslEnabled** A connection level convenience option that enables or disables the transport level SSL functionality.  See the connection transport options for more details on SSL configuration, if nothing is configures the connection will attempt to configure the SSL transport using the standard system level configuration properties.
 + **ConnectionOptions.closeTimeout** Timeout value that controls how long the client connection waits on resource closure before returning. By default the client waits 60 seconds for a normal close completion event.
 + **ConnectionOptions.sendTimeout** Timeout value that controls how long the client connection waits on completion of a synchronous message send before returning an error. By default the client will wait indefinitely for a send to complete.
 + **ConnectionOptions.openTimeout** Timeout value that controls how long the client connection waits on the AMQP Open process to complete  before returning with an error. By default the client waits 15 seconds for a connection to be established before failing.

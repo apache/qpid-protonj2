@@ -45,7 +45,7 @@ public class ProtonBufferInputStreamTest {
     }
 
     @Test
-    public void testBufferWappedExposesAvailableBytes() throws IOException {
+    public void testBufferWrappedExposesAvailableBytes() throws IOException {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
 
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
@@ -145,7 +145,7 @@ public class ProtonBufferInputStreamTest {
     }
 
     @Test
-    public void testReadUTF8StringFromDataOuputWrite() throws IOException {
+    public void testReadUTF8StringFromDataOutputWrite() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(bos);
 

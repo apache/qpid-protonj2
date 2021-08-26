@@ -62,13 +62,13 @@ public abstract class ProtonAbstractBufferTest {
     public void testConstructWithDifferingCapacityAndMaxCapacity() {
         assumeTrue(canBufferCapacityBeChanged());
 
-        final int baseCapaity = DEFAULT_CAPACITY + 10;
+        final int baseCapacity = DEFAULT_CAPACITY + 10;
 
-        ProtonBuffer buffer = allocateBuffer(baseCapaity, baseCapaity + 100);
+        ProtonBuffer buffer = allocateBuffer(baseCapacity, baseCapacity + 100);
 
         assertEquals(0, buffer.getReadableBytes());
-        assertEquals(baseCapaity, buffer.capacity());
-        assertEquals(baseCapaity + 100, buffer.maxCapacity());
+        assertEquals(baseCapacity, buffer.capacity());
+        assertEquals(baseCapacity + 100, buffer.maxCapacity());
     }
 
     @Test
@@ -300,7 +300,7 @@ public abstract class ProtonAbstractBufferTest {
     }
 
     @Test
-    public void testSkipBytesBeyondReable() {
+    public void testSkipBytesBeyondReadable() {
         ProtonBuffer buffer = allocateDefaultBuffer();
         buffer.setWriteIndex(buffer.capacity() / 2);
         assertEquals(0, buffer.getReadIndex());
@@ -1480,7 +1480,7 @@ public abstract class ProtonAbstractBufferTest {
     }
 
     @Test
-    public void testReadUnicodeStringAcrossArrayBoundries() throws IOException {
+    public void testReadUnicodeStringAcrossArrayBoundaries() throws IOException {
         String expected = "\u1f4a9\\u1f4a9\\u1f4a9";
 
         byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
@@ -1500,7 +1500,7 @@ public abstract class ProtonAbstractBufferTest {
     }
 
     @Test
-    public void testReadUnicodeStringAcrossMultipleArrayBoundries() throws IOException {
+    public void testReadUnicodeStringAcrossMultipleArrayBoundaries() throws IOException {
         String expected = "\u1f4a9\\u1f4a9\\u1f4a9";
 
         byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
@@ -1644,7 +1644,7 @@ public abstract class ProtonAbstractBufferTest {
     }
 
     @Test
-    public void testEqualsWithDiffereingContent() {
+    public void testEqualsWithDifferingContent() {
         byte[] payload1 = new byte[] { 1, 2, 3, 4, 5 };
         byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };
         ProtonBuffer buffer1 = wrapBuffer(payload1);

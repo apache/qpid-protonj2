@@ -52,7 +52,7 @@ class IOExceptionSupportTest {
     }
 
     @Test
-    void testCreateFromRuntimeExceptionEmptyStrngInMessage() {
+    void testCreateFromRuntimeExceptionEmptyStringInMessage() {
         RuntimeException cause = new RuntimeException("");
         IOException ex = IOExceptionSupport.create(cause);
 

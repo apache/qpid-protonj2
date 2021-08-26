@@ -62,22 +62,22 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
 
         // Check the full data is available
         assertNotNull(delivery, "expected the delivery to be present");
-        assertEquals(data.length, delivery.available(), "unexpectd available count");
+        assertEquals(data.length, delivery.available(), "unexpected available count");
 
         // Extract some of the data as the receiver link will, check available gets reduced accordingly.
         int partLength = 2;
         int remainderLength = data.length - partLength;
         assertTrue(partLength < data.length);
 
-        byte[] myRecievedData1 = new byte[partLength];
+        byte[] myReceivedData1 = new byte[partLength];
 
-        delivery.readBytes(myRecievedData1, 0, myRecievedData1.length);
+        delivery.readBytes(myReceivedData1, 0, myReceivedData1.length);
         assertEquals(remainderLength, delivery.available(), "Unexpected data length available");
 
         // Extract remainder of the data as the receiver link will, check available hits 0.
-        byte[] myRecievedData2 = new byte[remainderLength];
+        byte[] myReceivedData2 = new byte[remainderLength];
 
-        delivery.readBytes(myRecievedData2, 0, remainderLength);
+        delivery.readBytes(myReceivedData2, 0, remainderLength);
         assertEquals(0, delivery.available(), "Expected no data to remain available");
     }
 

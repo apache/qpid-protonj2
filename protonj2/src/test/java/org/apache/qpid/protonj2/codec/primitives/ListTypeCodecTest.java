@@ -385,7 +385,7 @@ public class ListTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeFailsEarlyOnInvliadLengthList8() throws Exception {
+    public void testDecodeFailsEarlyOnInvalidLengthList8() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
 
         buffer.writeByte(EncodingCodes.LIST8);
@@ -403,7 +403,7 @@ public class ListTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeFailsEarlyOnInvliadLengthList32() throws Exception {
+    public void testDecodeFailsEarlyOnInvalidLengthList32() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
 
         buffer.writeByte(EncodingCodes.LIST32);
@@ -421,7 +421,7 @@ public class ListTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeFailsEarlyOnInvliadElementCountForList8() throws Exception {
+    public void testDecodeFailsEarlyOnInvalidElementCountForList8() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
 
         buffer.writeByte(EncodingCodes.LIST8);
@@ -442,7 +442,7 @@ public class ListTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeFailsEarlyOnInvliadElementLengthList32() throws Exception {
+    public void testDecodeFailsEarlyOnInvalidElementLengthList32() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
 
         buffer.writeByte(EncodingCodes.LIST32);

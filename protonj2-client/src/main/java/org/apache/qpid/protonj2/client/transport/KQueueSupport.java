@@ -43,8 +43,8 @@ public class KQueueSupport {
         }
     }
 
-    public static EventLoopGroup createGroup(int nThreads, ThreadFactory ioThreadfactory) {
-        return new KQueueEventLoopGroup(nThreads, ioThreadfactory);
+    public static EventLoopGroup createGroup(int nThreads, ThreadFactory ioThreadFactory) {
+        return new KQueueEventLoopGroup(nThreads, ioThreadFactory);
     }
 
     public static Class<? extends Channel> getChannelClass() {

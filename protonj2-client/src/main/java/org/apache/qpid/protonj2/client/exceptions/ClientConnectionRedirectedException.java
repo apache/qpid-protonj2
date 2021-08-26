@@ -37,7 +37,7 @@ public class ClientConnectionRedirectedException extends ClientConnectionRemotel
     private final ClientRedirect redirect;
 
     /**
-     * Creates a new connection redirect exception with the provided redirection infromation.
+     * Creates a new connection redirect exception with the provided redirection information.
      *
      * @param reason
      * 		The reason for the redirect

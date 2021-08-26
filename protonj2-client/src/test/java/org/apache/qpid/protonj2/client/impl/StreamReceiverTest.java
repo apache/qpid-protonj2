@@ -85,7 +85,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Tests the {@link ReceiveContext} implementation
+ * Tests the {@link StreamReceiver} implementation
  */
 @Timeout(20)
 class StreamReceiverTest extends ImperativeClientTestCase {
@@ -183,15 +183,15 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateReceiverAndCloseWithErrorSync() throws Exception {
-        doTestCreateReceiverAndCloseOrDeatchWithErrorSync(true);
+        doTestCreateReceiverAndCloseOrDetachWithErrorSync(true);
     }
 
     @Test
     public void testCreateReceiverAndDetachWithErrorSync() throws Exception {
-        doTestCreateReceiverAndCloseOrDeatchWithErrorSync(false);
+        doTestCreateReceiverAndCloseOrDetachWithErrorSync(false);
     }
 
-    private void doTestCreateReceiverAndCloseOrDeatchWithErrorSync(boolean close) throws Exception {
+    private void doTestCreateReceiverAndCloseOrDetachWithErrorSync(boolean close) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -225,16 +225,16 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testCreateReveiverAndCloseWithErrorAsync() throws Exception {
-        doTestCreateReveiverAndCloseOrDeatchWithErrorAsync(true);
+    public void testCreateReceiverAndCloseWithErrorAsync() throws Exception {
+        doTestCreateReceiverAndCloseOrDetachWithErrorAsync(true);
     }
 
     @Test
-    public void testCreateReveiverAndDetachWithErrorAsync() throws Exception {
-        doTestCreateReveiverAndCloseOrDeatchWithErrorAsync(false);
+    public void testCreateReceiverAndDetachWithErrorAsync() throws Exception {
+        doTestCreateReceiverAndCloseOrDetachWithErrorAsync(false);
     }
 
-    private void doTestCreateReveiverAndCloseOrDeatchWithErrorAsync(boolean close) throws Exception {
+    private void doTestCreateReceiverAndCloseOrDetachWithErrorAsync(boolean close) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -3004,7 +3004,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             final StreamReceiverMessage message = delivery.message();
             try {
                 message.body();
-                fail("Should not return a stream since we cannot readl this type");
+                fail("Should not return a stream since we cannot read this type");
             } catch (ClientException cliEx) {
                 // Expected
             }
@@ -3435,7 +3435,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                 receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close whenn connection not closed and detach sent");
+                fail("Should not fail to close when connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -3501,7 +3501,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                 receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close whenn connection not closed and detach sent");
+                fail("Should not fail to close when connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -3567,7 +3567,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                 receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close whenn connection not closed and detach sent");
+                fail("Should not fail to close when connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -3631,7 +3631,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                 receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close whenn connection not closed and detach sent");
+                fail("Should not fail to close when connection not closed and detach sent");
             }
 
             peer.expectClose().respond();
@@ -3696,7 +3696,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                 receiver.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close whenn connection not closed and detach sent");
+                fail("Should not fail to close when connection not closed and detach sent");
             }
 
             peer.expectClose().respond();

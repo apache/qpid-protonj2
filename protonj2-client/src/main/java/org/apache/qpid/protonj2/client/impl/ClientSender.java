@@ -522,7 +522,7 @@ class ClientSender implements Sender {
             protonSender.localDetachHandler(null);
             protonSender.close();
             if (protonSender.hasUnsettled()) {
-                failePendingUnsttledAndBlockedSends(
+                failPendingUnsettledAndBlockedSends(
                     new ClientConnectionRemotelyClosedException("Connection failed and send result is unknown"));
             }
             protonSender = ClientSenderBuilder.recreateSender(session, protonSender, options);
@@ -626,7 +626,7 @@ class ClientSender implements Sender {
 
     protected boolean notClosedOrFailed(ClientFuture<?> request) {
         if (isClosed()) {
-            request.failed(new ClientIllegalStateException("The Sender was explicity closed", failureCause));
+            request.failed(new ClientIllegalStateException("The Sender was explicitly closed", failureCause));
             return false;
         } else if (failureCause != null) {
             request.failed(failureCause);
@@ -638,7 +638,7 @@ class ClientSender implements Sender {
 
     protected void checkClosedOrFailed() throws ClientException {
         if (isClosed()) {
-            throw new ClientIllegalStateException("The Sender was explicity closed", failureCause);
+            throw new ClientIllegalStateException("The Sender was explicitly closed", failureCause);
         } else if (failureCause != null) {
             throw failureCause;
         }
@@ -667,9 +667,9 @@ class ClientSender implements Sender {
         }
 
         if (failureCause != null) {
-            failePendingUnsttledAndBlockedSends(failureCause);
+            failPendingUnsettledAndBlockedSends(failureCause);
         } else {
-            failePendingUnsttledAndBlockedSends(new ClientResourceRemotelyClosedException("The sender link has closed"));
+            failPendingUnsettledAndBlockedSends(new ClientResourceRemotelyClosedException("The sender link has closed"));
         }
 
         if (failureCause != null) {
@@ -681,7 +681,7 @@ class ClientSender implements Sender {
         closeFuture.complete(this);
     }
 
-    private void failePendingUnsttledAndBlockedSends(ClientException cause) {
+    private void failPendingUnsettledAndBlockedSends(ClientException cause) {
         // Cancel all settlement futures for in-flight sends passing an appropriate error to the future
         protonSender.unsettled().forEach((delivery) -> {
             try {

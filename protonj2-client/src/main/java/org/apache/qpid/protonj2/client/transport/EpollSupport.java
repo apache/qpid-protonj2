@@ -43,8 +43,8 @@ public class EpollSupport {
         }
     }
 
-    public static EventLoopGroup createGroup(int nThreads, ThreadFactory ioThreadfactory) {
-        return new EpollEventLoopGroup(nThreads, ioThreadfactory);
+    public static EventLoopGroup createGroup(int nThreads, ThreadFactory ioThreadFactory) {
+        return new EpollEventLoopGroup(nThreads, ioThreadFactory);
     }
 
     public static Class<? extends Channel> getChannelClass() {

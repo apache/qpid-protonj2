@@ -249,7 +249,7 @@ public class SessionTest extends ImperativeClientTestCase {
         doTestSessionCloseGetsResponseWithErrorThrows(false);
     }
 
-    protected void doTestSessionCloseGetsResponseWithErrorThrows(boolean tiemout) throws Exception {
+    protected void doTestSessionCloseGetsResponseWithErrorThrows(boolean timeout) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -266,7 +266,7 @@ public class SessionTest extends ImperativeClientTestCase {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession().openFuture().get();
 
-            if (tiemout) {
+            if (timeout) {
                 // Should close normally and not throw error as we initiated the close.
                 session.closeAsync().get(10, TimeUnit.SECONDS);
             } else {
@@ -334,7 +334,7 @@ public class SessionTest extends ImperativeClientTestCase {
                 session.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close when connection not closed and end was sent");
+                fail("Should not fail to close when connection not closed and end was sent");
             }
 
             peer.expectClose().respond();
@@ -397,7 +397,7 @@ public class SessionTest extends ImperativeClientTestCase {
                 session.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close when connection not closed and end was sent");
+                fail("Should not fail to close when connection not closed and end was sent");
             }
 
             peer.expectClose().respond();
@@ -459,7 +459,7 @@ public class SessionTest extends ImperativeClientTestCase {
                 session.closeAsync().get();
             } catch (ExecutionException ex) {
                 LOG.debug("Caught unexpected exception from close call", ex);
-                fail("Should not fail close to when connection not closed and end sent");
+                fail("Should not fail to close when connection not closed and end sent");
             }
 
             peer.expectClose().respond();

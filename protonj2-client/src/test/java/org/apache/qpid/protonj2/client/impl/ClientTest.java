@@ -74,7 +74,7 @@ public class ClientTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testCoseClientAndConnectShouldFail() throws ClientException {
+    public void testCloseClientAndConnectShouldFail() throws ClientException {
         Client client = Client.create();
         assertTrue(client.closeAsync().isDone());
 

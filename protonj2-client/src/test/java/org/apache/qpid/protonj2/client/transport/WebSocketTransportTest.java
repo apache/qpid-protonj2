@@ -193,7 +193,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
         testConnectionReceivesFragmentedData(false);
     }
 
-    private void testConnectionReceivesFragmentedData(boolean writeAndFllush) throws Exception {
+    private void testConnectionReceivesFragmentedData(boolean writeAndFlush) throws Exception {
 
         final int FRAME_SIZE = 5317;
 
@@ -222,7 +222,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
             try {
                 transport.connect(HOSTNAME, port, wsListener).awaitConnect();
                 transports.add(transport);
-                if (writeAndFllush) {
+                if (writeAndFlush) {
                     transport.writeAndFlush(ProtonByteBufferAllocator.DEFAULT.allocate());
                     transport.writeAndFlush(sendBuffer.copy());
                 } else {
@@ -247,7 +247,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             transport.close();
 
-            assertEquals(2, data.size(), "Expected 2 data packets due to seperate websocket frames");
+            assertEquals(2, data.size(), "Expected 2 data packets due to separate websocket frames");
 
             ProtonBuffer receivedBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(FRAME_SIZE);
             for (ProtonBuffer buf : data) {

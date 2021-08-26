@@ -156,7 +156,7 @@ public class TransportOptionsTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testNativeIOPerferencesCannotBeNulled() {
+    public void testNativeIOPreferencesCannotBeNulled() {
         TransportOptions options = createNonDefaultOptions();
 
         assertNotNull(options.nativeIOPreference());

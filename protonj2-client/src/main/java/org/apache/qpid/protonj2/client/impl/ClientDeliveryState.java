@@ -36,7 +36,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
     //----- Abstract methods for nested types
 
     /**
-     * Returns the Proton version of the specific {@link org.apache.qpid.protonj2.amqp.transport.DeliveryState} that
+     * Returns the Proton version of the specific {@link org.apache.qpid.protonj2.client.DeliveryState} that
      * this type represents.
      *
      * @return the Proton state object that this type maps to.

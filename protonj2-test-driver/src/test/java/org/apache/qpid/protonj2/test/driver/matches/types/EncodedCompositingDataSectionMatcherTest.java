@@ -39,14 +39,14 @@ class EncodedCompositingDataSectionMatcherTest {
 
         Random bytesGenerator = new Random(SEED);
         bytesGenerator.nextBytes(PAYLOAD);
-        ByteBuf incmoingBytes = Unpooled.buffer();
+        ByteBuf incomingBytes = Unpooled.buffer();
 
-        incmoingBytes.writeBytes(PAYLOAD);
+        incomingBytes.writeBytes(PAYLOAD);
 
         EncodedCompositingDataSectionMatcher matcher =
             new EncodedCompositingDataSectionMatcher(PAYLOAD);
 
-        assertFalse(matcher.matches(incmoingBytes));
+        assertFalse(matcher.matches(incomingBytes));
     }
 
     @Test
@@ -189,7 +189,7 @@ class EncodedCompositingDataSectionMatcherTest {
     }
 
     @Test
-    public void testUnevenTransferOfBytesSplitStillPassesValiation() {
+    public void testUnevenTransferOfBytesSplitStillPassesValidation() {
         final byte[] PAYLOAD = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
         final byte[] CHUNK1 = new byte[] { 0, 1, 2 };
         final byte[] CHUNK2 = new byte[] { 3, 4, 5, 6, 7, 8, 9 };
@@ -320,7 +320,7 @@ class EncodedCompositingDataSectionMatcherTest {
     }
 
     @Test
-    public void testMultipleDataSectionsThatSupplyUnxpectedBytes() {
+    public void testMultipleDataSectionsThatSupplyUnexpectedBytes() {
         final long SEED = System.nanoTime();
         final int EXPECTED_SIZE = 256;
         final byte[] PAYLOAD = new byte[EXPECTED_SIZE];

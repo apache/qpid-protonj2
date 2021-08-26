@@ -79,7 +79,7 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
     }
 
     /**
-     * @return the resulting value of the operation upon successful compeletion.
+     * @return the resulting value of the operation upon successful completion.
      */
     public V getResult() {
         return result;

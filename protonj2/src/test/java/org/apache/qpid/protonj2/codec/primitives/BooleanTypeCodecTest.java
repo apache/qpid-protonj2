@@ -303,16 +303,16 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeBooleanEncodedBytesAsPrimtives() throws Exception {
-        testDecodeBooleanEncodedBytesAsPrimtives(false);
+    public void testDecodeBooleanEncodedBytesAsPrimitives() throws Exception {
+        testDecodeBooleanEncodedBytesAsPrimitives(false);
     }
 
     @Test
-    public void testDecodeBooleanEncodedBytesAsPrimtivesFS() throws Exception {
-        testDecodeBooleanEncodedBytesAsPrimtives(true);
+    public void testDecodeBooleanEncodedBytesAsPrimitivesFS() throws Exception {
+        testDecodeBooleanEncodedBytesAsPrimitives(true);
     }
 
-    private void testDecodeBooleanEncodedBytesAsPrimtives(boolean fromStream) throws Exception {
+    private void testDecodeBooleanEncodedBytesAsPrimitives(boolean fromStream) throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         InputStream stream = new ProtonBufferInputStream(buffer);
 

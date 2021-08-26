@@ -343,7 +343,7 @@ final class ClientLocalTransactionContext implements ClientTransactionContext {
 
     private void handleTransactionDeclared(Transaction<TransactionController> transaction) {
         ClientFuture<Session> future = transaction.getAttachments().get(DECLARE_FUTURE_NAME);
-        LOG.trace("Declare of trasaction:{} completed", transaction);
+        LOG.trace("Declare of transaction:{} completed", transaction);
 
         if (future.isComplete() || future.isCancelled()) {
             // The original declare operation cancelled the future likely due to timeout
@@ -359,14 +359,14 @@ final class ClientLocalTransactionContext implements ClientTransactionContext {
 
     private void handleTransactionDeclareFailed(Transaction<TransactionController> transaction) {
         ClientFuture<Session> future = transaction.getAttachments().get(DECLARE_FUTURE_NAME);
-        LOG.trace("Declare of trasaction:{} failed", transaction);
+        LOG.trace("Declare of transaction:{} failed", transaction);
         ClientException cause = ClientExceptionSupport.convertToNonFatalException(transaction.getCondition());
         future.failed(new ClientTransactionDeclarationException(cause.getMessage(), cause));
     }
 
     private void handleTransactionDischarged(Transaction<TransactionController> transaction) {
         ClientFuture<Session> future = transaction.getAttachments().get(DISCHARGE_FUTURE_NAME);
-        LOG.trace("Discharge of trasaction:{} completed", transaction);
+        LOG.trace("Discharge of transaction:{} completed", transaction);
         future.complete(session);
 
         if (Boolean.TRUE.equals(transaction.getAttachments().get(START_TRANSACTION_MARKER))) {
@@ -376,7 +376,7 @@ final class ClientLocalTransactionContext implements ClientTransactionContext {
 
     private void handleTransactionDischargeFailed(Transaction<TransactionController> transaction) {
         ClientFuture<Session> future = transaction.getAttachments().get(DISCHARGE_FUTURE_NAME);
-        LOG.trace("Discharge of trasaction:{} failed", transaction);
+        LOG.trace("Discharge of transaction:{} failed", transaction);
         ClientException cause = ClientExceptionSupport.convertToNonFatalException(transaction.getCondition());
         future.failed(new ClientTransactionRolledBackException(cause.getMessage(), cause));
     }

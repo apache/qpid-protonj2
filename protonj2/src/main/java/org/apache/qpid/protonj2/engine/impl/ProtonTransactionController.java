@@ -155,7 +155,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     @Override
     public Transaction<TransactionController> declare() {
         if (!senderLink.isSendable()) {
-            throw new IllegalStateException("Cannot Declare due to current capicity restrictions.");
+            throw new IllegalStateException("Cannot Declare due to current capacity restrictions.");
         }
 
         final ProtonControllerTransaction transaction = newTransaction();
@@ -168,7 +168,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     @Override
     public TransactionController declare(Transaction<TransactionController> transaction) {
         if (!senderLink.isSendable()) {
-            throw new IllegalStateException("Cannot Declare due to current capicity restrictions.");
+            throw new IllegalStateException("Cannot Declare due to current capacity restrictions.");
         }
 
         if (transaction.getState() != TransactionState.IDLE) {
@@ -206,7 +206,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         }
 
         if (!senderLink.isSendable()) {
-            throw new IllegalStateException("Cannot discharge transaction due to current capicity restrictions.");
+            throw new IllegalStateException("Cannot discharge transaction due to current capacity restrictions.");
         }
 
         ProtonTransaction<TransactionController> protonTxn = (ProtonTransaction<TransactionController>) transaction;

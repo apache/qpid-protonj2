@@ -100,7 +100,7 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
             }
 
             if (response.getPerformative().getIncomingWindow() == null) {
-                response.withIncomingWindow(Integer.MAX_VALUE); //TODO: shouldnt be hard coded
+                response.withIncomingWindow(Integer.MAX_VALUE); //TODO: shouldn't be hard coded
             }
 
             if (response.getPerformative().getNextOutgoingId() == null) {
@@ -108,7 +108,7 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
             }
 
             if (response.getPerformative().getOutgoingWindow() == null) {
-                response.withOutgoingWindow(0); //TODO: shouldnt be hard coded, session might have senders on it as well as receivers
+                response.withOutgoingWindow(0); //TODO: shouldn't be hard coded, session might have senders on it as well as receivers
             }
 
             if (response.getPerformative().getHandle() == null && linkTracker != null) {

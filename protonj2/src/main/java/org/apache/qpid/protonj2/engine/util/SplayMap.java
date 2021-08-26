@@ -125,14 +125,14 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         E oldValue = null;
 
         if (root == null) {
-            root = entryPool.poll(SplayMap::createEmtry).initialize(key, value);
+            root = entryPool.poll(SplayMap::createEntry).initialize(key, value);
         } else {
             root = splay(root, key);
             if (root.key == key) {
                 oldValue = root.value;
                 root.value = value;
             } else {
-                final SplayedEntry<E> node = entryPool.poll(SplayMap::createEmtry).initialize(key, value);
+                final SplayedEntry<E> node = entryPool.poll(SplayMap::createEntry).initialize(key, value);
 
                 if (compare(key, root.key) < 0) {
                     shiftRootRightOf(node);
@@ -174,13 +174,13 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      */
     public E putIfAbsent(int key, E value) {
         if (root == null) {
-            root = entryPool.poll(SplayMap::createEmtry).initialize(key, value);
+            root = entryPool.poll(SplayMap::createEntry).initialize(key, value);
         } else {
             root = splay(root, key);
             if (root.key == key) {
                 return root.value;
             } else {
-                final SplayedEntry<E> node = entryPool.poll(SplayMap::createEmtry).initialize(key, value);
+                final SplayedEntry<E> node = entryPool.poll(SplayMap::createEntry).initialize(key, value);
 
                 if (compare(key, root.key) < 0) {
                     shiftRootRightOf(node);
@@ -751,7 +751,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return Integer.compareUnsigned(lhs, rhs);
     }
 
-    private static <E> SplayedEntry<E> createEmtry() {
+    private static <E> SplayedEntry<E> createEntry() {
         return new SplayedEntry<>();
     }
 

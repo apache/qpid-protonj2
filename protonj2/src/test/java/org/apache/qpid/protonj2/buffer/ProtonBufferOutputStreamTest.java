@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 public class ProtonBufferOutputStreamTest {
 
     @Test
-    public void testBufferWappedExposesWrittenBytes() throws IOException {
+    public void testBufferWrappedExposesWrittenBytes() throws IOException {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
 
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(payload.length);

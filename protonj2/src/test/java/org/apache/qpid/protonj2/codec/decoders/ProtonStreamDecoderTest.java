@@ -52,7 +52,7 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
     }
 
     @Test
-    public void testReadNullFromReadObjectForNullEncodng() throws IOException {
+    public void testReadNullFromReadObjectForNullEncoding() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         InputStream stream = new ProtonBufferInputStream(buffer);
 
@@ -273,7 +273,7 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
         ((ProtonStreamDecoderState) streamDecoderState).setStringDecoder(new UTF8StreamDecoder() {
 
             @Override
-            public String decodeUTF8(InputStream tream) {
+            public String decodeUTF8(InputStream stream) {
                 return "string-decoder";
             }
         });
@@ -298,7 +298,7 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
         ((ProtonStreamDecoderState) streamDecoderState).setStringDecoder(new UTF8StreamDecoder() {
 
             @Override
-            public String decodeUTF8(InputStream tream) {
+            public String decodeUTF8(InputStream stream) {
                 throw new IndexOutOfBoundsException();
             }
         });
@@ -423,7 +423,7 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeErrorWhenMarkNotSupportedAndUnkownEncodingCodeFoundInDescribedType() throws IOException {
+    public void testDecodeErrorWhenMarkNotSupportedAndUnknownEncodingCodeFoundInDescribedType() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
 

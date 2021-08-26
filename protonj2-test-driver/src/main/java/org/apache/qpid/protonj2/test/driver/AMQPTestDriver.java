@@ -251,7 +251,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         synchronized (script) {
             ScriptedElement peekNext = script.peek();
             if (peekNext instanceof ScriptedAction) {
-                prcessScript(peekNext);
+                processScript(peekNext);
             }
         }
     }
@@ -276,7 +276,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
                 }
             }
 
-            prcessScript(scriptEntry);
+            processScript(scriptEntry);
         }
     }
 
@@ -302,7 +302,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
                 throw assertion;
             }
 
-            prcessScript(scriptEntry);
+            processScript(scriptEntry);
         }
     }
 
@@ -338,7 +338,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
                 throw assertion;
             }
 
-            prcessScript(scriptEntry);
+            processScript(scriptEntry);
         }
     }
 
@@ -649,7 +649,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         });
     }
 
-    private void prcessScript(ScriptedElement current) {
+    private void processScript(ScriptedElement current) {
         while (current.performAfterwards() != null && failureCause == null) {
             current.performAfterwards().perform(this);
         }

@@ -150,7 +150,7 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     }
 
     /**
-     * @return the total number of {@link ProtonBuffer} segments in this composite buffer isntance.
+     * @return the total number of {@link ProtonBuffer} segments in this composite buffer instance.
      */
     public int numberOfBuffers() {
         return totalChunks;
@@ -198,7 +198,7 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     }
 
     /**
-     * For any buffer that preceeds the buffer pointed to by the current read index
+     * For any buffer that precedes the buffer pointed to by the current read index
      * remove that buffer from to composite and discard.
      *
      * @return this {@link ProtonCompositeBuffer} instance.

@@ -143,8 +143,8 @@ public class StreamReceiverOptions extends ReceiverOptions {
     }
 
     @Override
-    public StreamReceiverOptions openTimeout(long timeout, TimeUnit untis) {
-        return (StreamReceiverOptions) super.openTimeout(timeout, untis);
+    public StreamReceiverOptions openTimeout(long timeout, TimeUnit units) {
+        return (StreamReceiverOptions) super.openTimeout(timeout, units);
     }
 
     @Override

@@ -244,7 +244,7 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeFailsEarlyOnInvliadBinaryLengthVBin8() throws Exception {
+    public void testDecodeFailsEarlyOnInvalidBinaryLengthVBin8() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
 
         buffer.writeByte(EncodingCodes.VBIN8);
@@ -259,7 +259,7 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeFailsEarlyOnInvliadBinaryLengthVBin32() throws Exception {
+    public void testDecodeFailsEarlyOnInvalidBinaryLengthVBin32() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
 
         buffer.writeByte(EncodingCodes.VBIN32);
@@ -274,7 +274,7 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeAsBufferFailsEarlyOnInvliadBinaryLengthVBin32() throws Exception {
+    public void testDecodeAsBufferFailsEarlyOnInvalidBinaryLengthVBin32() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
 
         buffer.writeByte(EncodingCodes.VBIN32);
@@ -289,7 +289,7 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeOfBinaryTagFailsEarlyOnInvliadBinaryLengthVBin32() throws Exception {
+    public void testDecodeOfBinaryTagFailsEarlyOnInvalidBinaryLengthVBin32() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte(EncodingCodes.VBIN32);
@@ -303,7 +303,7 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testSkipFailsEarlyOnInvliadBinaryLengthVBin8() throws Exception {
+    public void testSkipFailsEarlyOnInvalidBinaryLengthVBin8() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
 
         buffer.writeByte(EncodingCodes.VBIN8);
@@ -323,7 +323,7 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testSkipFailsEarlyOnInvliadBinaryLengthVBin8FromStream() throws Exception {
+    public void testSkipFailsEarlyOnInvalidBinaryLengthVBin8FromStream() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
         InputStream stream = new ProtonBufferInputStream(buffer);
 
@@ -345,7 +345,7 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testSkipFailsEarlyOnInvliadBinaryLengthVBin32() throws Exception {
+    public void testSkipFailsEarlyOnInvalidBinaryLengthVBin32() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
 
         buffer.writeByte(EncodingCodes.VBIN32);
@@ -365,7 +365,7 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testSkipFailsEarlyOnInvliadBinaryLengthVBin32FromStream() throws Exception {
+    public void testSkipFailsEarlyOnInvalidBinaryLengthVBin32FromStream() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
         InputStream stream = new ProtonBufferInputStream(buffer);
 

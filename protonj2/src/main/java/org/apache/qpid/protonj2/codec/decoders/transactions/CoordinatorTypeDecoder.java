@@ -90,7 +90,7 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_COORDINATOR_LIST_ENTRIES) {
-            throw new DecodeException("Not enougn entries in Coordinator list encoding: " + count);
+            throw new DecodeException("Not enough entries in Coordinator list encoding: " + count);
         } else if (count > MAX_COORDINATOR_LIST_ENTRIES) {
             throw new DecodeException("To many entries in Coordinator list encoding: " + count);
         } else if (count == 1) {
@@ -137,7 +137,7 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_COORDINATOR_LIST_ENTRIES) {
-            throw new DecodeException("Not enougn entries in Coordinator list encoding: " + count);
+            throw new DecodeException("Not enough entries in Coordinator list encoding: " + count);
         } else if (count > MAX_COORDINATOR_LIST_ENTRIES) {
             throw new DecodeException("To many entries in Coordinator list encoding: " + count);
         } else if (count == 1) {

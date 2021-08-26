@@ -762,7 +762,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
                     ensureStreamDecodedTo(StreamState.FOOTER_READ);
                 }
             } catch (ClientException e) {
-                throw new IOException("Caught error while attempting to advabce past remaining message body");
+                throw new IOException("Caught error while attempting to advance past remaining message body");
             } finally {
                 this.closed = true;
                 super.close();

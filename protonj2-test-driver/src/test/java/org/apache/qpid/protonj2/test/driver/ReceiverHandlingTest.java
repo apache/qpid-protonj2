@@ -105,7 +105,7 @@ class ReceiverHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
-    public void testWaitForCompletionFailsWhenRemoteSendDetacgWithWrongHandle() throws Exception {
+    public void testWaitForCompletionFailsWhenRemoteSendDetachWithWrongHandle() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
 

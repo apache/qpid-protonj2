@@ -427,7 +427,7 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
     }
 
     @Test
-    public void testGetByteBufferStateAfterLimtedGet() {
+    public void testGetByteBufferStateAfterLimitedGet() {
         ByteBuffer dst = ByteBuffer.allocate(4);
 
         ByteBuf netty = Unpooled.buffer(CAPACITY);

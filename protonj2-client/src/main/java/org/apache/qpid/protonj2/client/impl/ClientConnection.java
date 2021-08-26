@@ -677,7 +677,7 @@ public class ClientConnection implements Connection {
         openFuture.complete(this);
     }
 
-    private void handleRemotecClose(org.apache.qpid.protonj2.engine.Connection connection) {
+    private void handleRemoteClose(org.apache.qpid.protonj2.engine.Connection connection) {
         // When the connection is already locally closed this implies the application requested
         // a close of this connection so this is normal, if not then the remote is closing for
         // some reason and we should react as if the connection has failed which we will determine
@@ -894,7 +894,7 @@ public class ClientConnection implements Connection {
         protonConnection.localOpenHandler(this::handleLocalOpen)
                         .localCloseHandler(this::handleLocalClose)
                         .openHandler(this::handleRemoteOpen)
-                        .closeHandler(this::handleRemotecClose);
+                        .closeHandler(this::handleRemoteClose);
 
         configureEngineSaslSupport();
     }
@@ -935,7 +935,7 @@ public class ClientConnection implements Connection {
 
     protected void checkClosedOrFailed() throws ClientException {
         if (closed > 0) {
-            throw new ClientIllegalStateException("The Connection was explicity closed", failureCause);
+            throw new ClientIllegalStateException("The Connection was explicitly closed", failureCause);
         } else if (failureCause != null) {
             throw failureCause;
         }

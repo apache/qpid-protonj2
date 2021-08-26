@@ -258,9 +258,9 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
 
 
     @Override
-    public L setTarget(Coordinator coordinatior) throws IllegalStateException {
+    public L setTarget(Coordinator coordinator) throws IllegalStateException {
         checkNotOpened("Cannot set Coordinator on already opened Link");
-        localAttach.setTarget(coordinatior);
+        localAttach.setTarget(coordinator);
         return self();
     }
 

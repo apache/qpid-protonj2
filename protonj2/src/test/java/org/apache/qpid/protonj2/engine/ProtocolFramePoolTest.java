@@ -72,7 +72,7 @@ class ProtocolFramePoolTest {
     }
 
     @Test
-    void testInomingPoolClearsReleasedFramePayloads() {
+    void testIncomingPoolClearsReleasedFramePayloads() {
         AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> pool = AMQPPerformativeEnvelopePool.incomingEnvelopePool();
         IncomingAMQPEnvelope frame1 = pool.take(new Transfer(), 2, ProtonByteBufferAllocator.DEFAULT.allocate());
 

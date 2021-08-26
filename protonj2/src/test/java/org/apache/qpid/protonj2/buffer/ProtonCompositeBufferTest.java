@@ -1717,7 +1717,7 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
     }
 
     @Test
-    public void testReclaimFirstReadChunksWithMultplePendingBuffers() {
+    public void testReclaimFirstReadChunksWithMultiplePendingBuffers() {
         ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
         ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0  });
         ProtonBuffer buffer3 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
@@ -1855,7 +1855,7 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
     }
 
     @Test
-    public void testReadStringFromUTF8InMulitpleArrays() throws CharacterCodingException {
+    public void testReadStringFromUTF8InMultipleArrays() throws CharacterCodingException {
         ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
 
         final String testString = "Test String to Decode!!";
@@ -1897,7 +1897,7 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
 
     @Override
     @Test
-    public void testReadUnicodeStringAcrossArrayBoundries() throws IOException {
+    public void testReadUnicodeStringAcrossArrayBoundaries() throws IOException {
         String expected = "\u1f4a9\u1f4a9\u1f4a9";
 
         byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
@@ -1918,7 +1918,7 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
 
     @Override
     @Test
-    public void testReadUnicodeStringAcrossMultipleArrayBoundries() throws IOException {
+    public void testReadUnicodeStringAcrossMultipleArrayBoundaries() throws IOException {
         String expected = "\u1f4a9\u1f4a9\u1f4a9";
 
         byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);

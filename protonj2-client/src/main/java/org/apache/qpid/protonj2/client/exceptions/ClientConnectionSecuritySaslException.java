@@ -76,7 +76,7 @@ public class ClientConnectionSecuritySaslException extends ClientConnectionSecur
     }
 
     /**
-     * @return true if the error is temporary and reconection may be possible.
+     * @return true if the error is temporary and reconnection may be possible.
      */
     public boolean isSysTempFailure() {
         return temporary;

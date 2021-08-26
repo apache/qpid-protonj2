@@ -41,7 +41,7 @@ import io.netty.handler.ssl.OpenSslEngine;
 import io.netty.handler.ssl.SslHandler;
 
 /**
- * Test basic functionality of the Netty based TCP Transport ruuing in secure mode (SSL).
+ * Test basic functionality of the Netty based TCP Transport running in secure mode (SSL).
  */
 @Timeout(30)
 public class OpenSslTransportTest extends SslTransportTest {

@@ -377,7 +377,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testTransactionControllerBeginComiitBeginRollback() {
+    public void testTransactionControllerBeginCommitBeginRollback() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -565,14 +565,14 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         txnController.setSource(source);
         txnController.setCoordinator(coordinator);
 
-        final AtomicBoolean decalreFailure = new AtomicBoolean();
+        final AtomicBoolean declareFailure = new AtomicBoolean();
         final AtomicReference<Transaction<TransactionController>> failedTxn = new AtomicReference<>();
 
         final ErrorCondition failureError =
             new ErrorCondition(AmqpError.INTERNAL_ERROR, "Cannot Declare Transaction at this time");
 
         txnController.declareFailureHandler(result -> {
-            decalreFailure.set(true);
+            declareFailure.set(true);
             failedTxn.set(result);
         });
 
@@ -588,7 +588,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         peer.expectEnd().respond();
         peer.expectClose().respond();
 
-        assertTrue(decalreFailure.get());
+        assertTrue(declareFailure.get());
         assertSame(txn, failedTxn.get());
         assertEquals(TransactionState.DECLARE_FAILED, txn.getState());
         assertEquals(failureError, txn.getCondition());

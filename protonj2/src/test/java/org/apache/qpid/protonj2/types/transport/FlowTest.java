@@ -97,7 +97,7 @@ public class FlowTest {
     }
 
     @Test
-    public void testSetAvaiableEnforcesLimits() {
+    public void testSetAvailableEnforcesLimits() {
         Flow flow = new Flow();
 
         assertThrows(IllegalArgumentException.class, () -> flow.setAvailable(Long.MAX_VALUE));

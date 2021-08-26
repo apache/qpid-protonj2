@@ -43,8 +43,8 @@ public class IOUringSupport {
         }
     }
 
-    public static EventLoopGroup createGroup(int nThreads, ThreadFactory ioThreadfactory) {
-        return new IOUringEventLoopGroup(nThreads, ioThreadfactory);
+    public static EventLoopGroup createGroup(int nThreads, ThreadFactory ioThreadFactory) {
+        return new IOUringEventLoopGroup(nThreads, ioThreadFactory);
     }
 
     public static Class<? extends Channel> getChannelClass() {

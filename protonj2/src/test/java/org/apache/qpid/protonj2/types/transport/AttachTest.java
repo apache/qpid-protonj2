@@ -290,7 +290,7 @@ public class AttachTest {
     }
 
     @Test
-    public void testSetTargetAndCoordinatorThrowIllegalArguementErrorOnBadInput() {
+    public void testSetTargetAndCoordinatorThrowIllegalArgumentErrorOnBadInput() {
         Attach original = new Attach();
 
         assertThrows(IllegalArgumentException.class, () -> original.setTarget(new Source()));
