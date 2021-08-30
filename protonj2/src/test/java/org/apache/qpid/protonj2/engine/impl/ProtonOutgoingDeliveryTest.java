@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.engine.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -54,7 +55,7 @@ public class ProtonOutgoingDeliveryTest extends ProtonEngineTestSupport {
         assertEquals(newFormat, delivery.getMessageFormat(), "Unexpected message format");
 
         // Highest value
-        newFormat = (1 << 32) - 1;
+        newFormat = UnsignedInteger.MAX_VALUE.intValue();
         delivery.setMessageFormat(newFormat);
         assertEquals(newFormat, delivery.getMessageFormat(), "Unexpected message format");
     }

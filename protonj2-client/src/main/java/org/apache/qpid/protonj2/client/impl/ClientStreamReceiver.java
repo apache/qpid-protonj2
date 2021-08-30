@@ -643,7 +643,7 @@ public final class ClientStreamReceiver implements StreamReceiver {
         }
     }
 
-    protected void checkClosedOrFailed() throws ClientException {
+    private void checkClosedOrFailed() throws ClientException {
         if (isClosed()) {
             throw new ClientIllegalStateException("The Receiver was explicitly closed", failureCause);
         } else if (failureCause != null) {

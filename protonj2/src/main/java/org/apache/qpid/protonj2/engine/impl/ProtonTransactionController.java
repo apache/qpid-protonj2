@@ -514,7 +514,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
 
     //----- The Controller specific Transaction implementation
 
-    private final class ProtonControllerTransaction extends ProtonTransaction<TransactionController> implements Transaction<TransactionController> {
+    private static final class ProtonControllerTransaction extends ProtonTransaction<TransactionController> implements Transaction<TransactionController> {
 
         private final ProtonTransactionController controller;
 

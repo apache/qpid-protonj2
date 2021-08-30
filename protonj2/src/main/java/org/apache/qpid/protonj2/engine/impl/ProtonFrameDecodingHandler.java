@@ -394,7 +394,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
      * If parsing fails the parser enters the failed state and remains there always throwing the given exception
      * if additional parsing is requested.
      */
-    private class ParsingErrorStage implements FrameParserStage {
+    private static class ParsingErrorStage implements FrameParserStage {
 
         private final ProtonException parsingError;
 

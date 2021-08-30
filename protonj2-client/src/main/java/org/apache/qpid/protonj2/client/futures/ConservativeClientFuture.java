@@ -51,8 +51,6 @@ public class ConservativeClientFuture<V> extends ClientFuture<V> {
     public V get(long amount, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         if (isNotComplete() && amount > 0) {
             final long timeout = unit.toNanos(amount);
-            long maxParkNanos = timeout / 8;
-            maxParkNanos = maxParkNanos > 0 ? maxParkNanos : timeout;
             final long startTime = System.nanoTime();
 
             while (isNotComplete()) {

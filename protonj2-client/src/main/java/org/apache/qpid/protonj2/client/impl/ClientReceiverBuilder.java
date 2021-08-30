@@ -46,8 +46,8 @@ final class ClientReceiverBuilder {
     private final SessionOptions sessionOptions;
     private final AtomicInteger receiverCounter = new AtomicInteger();
 
-    private ReceiverOptions defaultReceiverOptions;
-    private StreamReceiverOptions defaultStreamReceiverOptions;
+    private volatile ReceiverOptions defaultReceiverOptions;
+    private volatile StreamReceiverOptions defaultStreamReceiverOptions;
 
     ClientReceiverBuilder(ClientSession session) {
         this.session = session;

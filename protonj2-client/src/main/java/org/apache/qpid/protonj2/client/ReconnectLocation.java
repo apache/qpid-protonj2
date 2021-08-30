@@ -26,78 +26,78 @@ import java.util.Objects;
  */
 public class ReconnectLocation {
 
-	private final String host;
-	private final int port;
+    private final String host;
+    private final int port;
 
-	/**
-	 * Creates a new {@link ReconnectLocation} instance with the fixed host and port values.
-	 *
-	 * @param host
-	 * 		The remote host where the connection will be made
-	 * @param port
-	 *      The port on the remote where the connection attempt will be made.
-	 */
-	public ReconnectLocation(String host, int port) {
-		Objects.requireNonNull(host, "Cannot create a reconnect entry with a null host value");
+    /**
+     * Creates a new {@link ReconnectLocation} instance with the fixed host and port values.
+     *
+     * @param host
+     * 		The remote host where the connection will be made
+     * @param port
+     *      The port on the remote where the connection attempt will be made.
+     */
+    public ReconnectLocation(String host, int port) {
+        Objects.requireNonNull(host, "Cannot create a reconnect entry with a null host value");
 
-		if (host.isBlank()) {
-			throw new IllegalArgumentException("Cannot create a reconnect entry with a blank host value");
-		}
+        if (host.isBlank()) {
+            throw new IllegalArgumentException("Cannot create a reconnect entry with a blank host value");
+        }
 
-		this.host = host;
-		this.port = port;
-	}
+        this.host = host;
+        this.port = port;
+    }
 
-	/**
-	 * @return the host where the reconnect should attempt its reconnection.
-	 */
-	public String getHost() {
-		return host;
-	}
+    /**
+     * @return the host where the reconnect should attempt its reconnection.
+     */
+    public String getHost() {
+        return host;
+    }
 
-	/**
-	 * @return the port where the reconnect should attempt its connection.
-	 */
-	public int getPort() {
-		return port;
-	}
+    /**
+     * @return the port where the reconnect should attempt its connection.
+     */
+    public int getPort() {
+        return port;
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((host == null) ? 0 : host.hashCode());
-		result = prime * result + port;
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((host == null) ? 0 : host.hashCode());
+        result = prime * result + port;
+        return result;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
 
-		if (obj == null) {
-			return false;
-		}
+        if (obj == null) {
+            return false;
+        }
 
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
+        if (!(obj instanceof ReconnectLocation)) {
+            return false;
+        }
 
-		ReconnectLocation other = (ReconnectLocation) obj;
-		if (host == null) {
-			if (other.host != null) {
-				return false;
-			}
-		} else if (!host.equalsIgnoreCase(other.host)) {
-			return false;
-		}
+        ReconnectLocation other = (ReconnectLocation) obj;
+        if (host == null) {
+            if (other.host != null) {
+                return false;
+            }
+        } else if (!host.equalsIgnoreCase(other.host)) {
+            return false;
+        }
 
-		if (port != other.port) {
-			return false;
-		}
+        if (port != other.port) {
+            return false;
+        }
 
-		return true;
-	}
+        return true;
+    }
 }

@@ -33,7 +33,7 @@ public final class Coordinator implements Terminus {
         super();
     }
 
-    protected Coordinator(Coordinator other) {
+    private Coordinator(Coordinator other) {
         if (other.capabilities != null) {
             this.capabilities = other.capabilities.clone();
         }

@@ -30,7 +30,7 @@ final class ClientSessionBuilder {
     private final ClientConnection connection;
     private final ConnectionOptions connectionOptions;
 
-    private SessionOptions defaultSessionOptions;
+    private volatile SessionOptions defaultSessionOptions;
 
     ClientSessionBuilder(ClientConnection connection) {
         this.connection = connection;

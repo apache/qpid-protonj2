@@ -31,19 +31,19 @@ import org.apache.qpid.protonj2.client.impl.ClientDelivery;
  */
 public final class FifoDeliveryQueue implements DeliveryQueue {
 
-    protected static final AtomicIntegerFieldUpdater<FifoDeliveryQueue> STATE_FIELD_UPDATER =
+    private static final AtomicIntegerFieldUpdater<FifoDeliveryQueue> STATE_FIELD_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(FifoDeliveryQueue.class, "state");
 
-    protected static final int CLOSED = 0;
-    protected static final int STOPPED = 1;
-    protected static final int RUNNING = 2;
+    private static final int CLOSED = 0;
+    private static final int STOPPED = 1;
+    private static final int RUNNING = 2;
 
     private volatile int state = STOPPED;
 
-    protected final ReentrantLock lock = new ReentrantLock();
-    protected final Condition condition = lock.newCondition();
+    private final ReentrantLock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
 
-    protected final Deque<ClientDelivery> queue;
+    private final Deque<ClientDelivery> queue;
 
     /**
      * Creates a new first in / first out message queue with the given queue depth

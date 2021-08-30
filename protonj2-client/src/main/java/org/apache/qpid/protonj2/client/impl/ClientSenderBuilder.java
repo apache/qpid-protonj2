@@ -46,8 +46,8 @@ final class ClientSenderBuilder {
     private final SessionOptions sessionOptions;
     private final AtomicInteger senderCounter = new AtomicInteger();
 
-    private SenderOptions defaultSenderOptions;
-    private StreamSenderOptions defaultStreamSenderOptions;
+    private volatile SenderOptions defaultSenderOptions;
+    private volatile StreamSenderOptions defaultStreamSenderOptions;
 
     ClientSenderBuilder(ClientSession session) {
         this.session = session;

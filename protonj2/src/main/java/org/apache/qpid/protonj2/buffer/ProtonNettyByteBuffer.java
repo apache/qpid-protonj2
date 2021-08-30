@@ -667,7 +667,7 @@ public final class ProtonNettyByteBuffer implements ProtonBuffer {
 
     //----- Internal Bounds Checking Utilities
 
-    protected final void checkReadableBytes(int minimumReadableBytes) {
+    private final void checkReadableBytes(int minimumReadableBytes) {
         if (minimumReadableBytes < 0) {
             throw new IllegalArgumentException("minimumReadableBytes: " + minimumReadableBytes + " (expected: >= 0)");
         }
@@ -685,18 +685,18 @@ public final class ProtonNettyByteBuffer implements ProtonBuffer {
         }
     }
 
-    protected static boolean isOutOfBounds(int index, int length, int capacity) {
+    private static boolean isOutOfBounds(int index, int length, int capacity) {
         return (index | length | (index + length) | (capacity - (index + length))) < 0;
     }
 
-    protected final void checkIndex(int index, int fieldLength) {
+    private final void checkIndex(int index, int fieldLength) {
         if (isOutOfBounds(index, fieldLength, capacity())) {
             throw new IndexOutOfBoundsException(String.format(
                 "index: %d, length: %d (expected: range(0, %d))", index, fieldLength, capacity()));
         }
     }
 
-    protected final void checkSourceIndex(int index, int length, int srcIndex, int srcCapacity) {
+    private final void checkSourceIndex(int index, int length, int srcIndex, int srcCapacity) {
         checkIndex(index, length);
         if (isOutOfBounds(srcIndex, length, srcCapacity)) {
             throw new IndexOutOfBoundsException(String.format(
@@ -704,7 +704,7 @@ public final class ProtonNettyByteBuffer implements ProtonBuffer {
         }
     }
 
-    protected final void checkDestinationIndex(int index, int length, int dstIndex, int dstCapacity) {
+    private final void checkDestinationIndex(int index, int length, int dstIndex, int dstCapacity) {
         checkIndex(index, length);
         if (isOutOfBounds(dstIndex, length, dstCapacity)) {
             throw new IndexOutOfBoundsException(String.format(

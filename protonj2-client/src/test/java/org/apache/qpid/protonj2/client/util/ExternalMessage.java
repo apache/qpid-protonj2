@@ -238,7 +238,7 @@ public class ExternalMessage<E> implements Message<E> {
 
     @Override
     public long absoluteExpiryTime() {
-        return properties != null ? properties.getAbsoluteExpiryTime() : null;
+        return properties != null ? properties.getAbsoluteExpiryTime() : 0;
     }
 
     @Override
@@ -249,7 +249,7 @@ public class ExternalMessage<E> implements Message<E> {
 
     @Override
     public long creationTime() {
-        return properties != null ? properties.getCreationTime() : null;
+        return properties != null ? properties.getCreationTime() : 0;
     }
 
     @Override
@@ -271,7 +271,7 @@ public class ExternalMessage<E> implements Message<E> {
 
     @Override
     public int groupSequence() {
-        return properties != null ? (int) properties.getGroupSequence() : null;
+        return properties != null ? (int) properties.getGroupSequence() : 0;
     }
 
     @Override

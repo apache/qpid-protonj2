@@ -94,6 +94,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
      * Create a new unbound Connection instance.
      *
      * @param engine
+     * 		Parent engine that created and owns this {@link Connection} insatnce.
      */
     ProtonConnection(ProtonEngine engine) {
         super(engine);

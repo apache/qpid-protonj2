@@ -280,12 +280,12 @@ public final class ProtonStreamDecoder implements StreamDecoder {
                 throw new DecodeException("Expected Descriptor type but found encoding: " + EncodingCodes.toString(encodingCode));
         }
 
-        StreamTypeDecoder<?> StreamTypeDecoder = describedTypeDecoders.get(descriptor);
-        if (StreamTypeDecoder == null) {
-            StreamTypeDecoder = handleUnknownDescribedType(descriptor);
+        StreamTypeDecoder<?> streamTypeDecoder = describedTypeDecoders.get(descriptor);
+        if (streamTypeDecoder == null) {
+            streamTypeDecoder = handleUnknownDescribedType(descriptor);
         }
 
-        return StreamTypeDecoder;
+        return streamTypeDecoder;
     }
 
     @Override
@@ -943,7 +943,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
     }
 
     private StreamTypeDecoder<?> handleUnknownDescribedType(final Object descriptor) {
-        StreamTypeDecoder<?> StreamTypeDecoder = new UnknownDescribedTypeDecoder() {
+        StreamTypeDecoder<?> streamTypeDecoder = new UnknownDescribedTypeDecoder() {
 
             @Override
             public Object getDescriptor() {
@@ -951,8 +951,8 @@ public final class ProtonStreamDecoder implements StreamDecoder {
             }
         };
 
-        describedTypeDecoders.put(descriptor, (UnknownDescribedTypeDecoder) StreamTypeDecoder);
+        describedTypeDecoders.put(descriptor, (UnknownDescribedTypeDecoder) streamTypeDecoder);
 
-        return StreamTypeDecoder;
+        return streamTypeDecoder;
     }
 }

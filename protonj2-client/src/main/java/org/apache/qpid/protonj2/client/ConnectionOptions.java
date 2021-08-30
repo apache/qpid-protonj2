@@ -17,7 +17,9 @@
 package org.apache.qpid.protonj2.client;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -34,7 +36,10 @@ public class ConnectionOptions {
     /**
      * Default value for the AMQP desired capabilities set in the Open frame.
      */
-    public static final String[] DEFAULT_DESIRED_CAPABILITIES = new String[] { "ANONYMOUS-RELAY" };
+    private static final String[] DEFAULT_DESIRED_CAPABILITIES_ARRAY = new String[] { "ANONYMOUS-RELAY" };
+
+    public static final List<String> DEFAULT_DESIRED_CAPABILITIES =
+        Collections.unmodifiableList(Arrays.asList( DEFAULT_DESIRED_CAPABILITIES_ARRAY ));
 
     public static final long INFINITE = -1;
     public static final long DEFAULT_OPEN_TIMEOUT = 15000;
@@ -63,7 +68,7 @@ public class ConnectionOptions {
     private int channelMax = DEFAULT_CHANNEL_MAX;
     private int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
     private String[] offeredCapabilities;
-    private String[] desiredCapabilities = DEFAULT_DESIRED_CAPABILITIES;
+    private String[] desiredCapabilities = DEFAULT_DESIRED_CAPABILITIES_ARRAY;
     private Map<String, Object> properties;
     private String virtualHost;
     private boolean traceFrames;

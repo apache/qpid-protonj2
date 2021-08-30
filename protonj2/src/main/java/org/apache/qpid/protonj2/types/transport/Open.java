@@ -228,20 +228,20 @@ public final class Open implements Performative {
         return idleTimeout;
     }
 
-    public Open setIdleTimeout(int idleTimeOut) {
+    public Open setIdleTimeout(int idleTimeout) {
         modified |= IDLE_TIMEOUT;
-        this.idleTimeout = Integer.toUnsignedLong(idleTimeOut);
+        this.idleTimeout = Integer.toUnsignedLong(idleTimeout);
         return this;
     }
 
-    public Open setIdleTimeout(long idleTimeOut) {
-        if (idleTimeOut < 0 || idleTimeOut > UINT_MAX) {
-            throw new IllegalArgumentException("The Idle Timeout value given is out of range: " + idleTimeOut);
+    public Open setIdleTimeout(long idleTimeout) {
+        if (idleTimeout < 0 || idleTimeout > UINT_MAX) {
+            throw new IllegalArgumentException("The Idle Timeout value given is out of range: " + idleTimeout);
         } else {
             modified |= IDLE_TIMEOUT;
         }
 
-        this.idleTimeout = idleTimeOut;
+        this.idleTimeout = idleTimeout;
         return this;
     }
 
