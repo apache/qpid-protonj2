@@ -236,6 +236,29 @@ public class ConnectionTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testCreateConnectionWithUnconfiguredContainerId() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withContainerId(Matchers.any(String.class)).respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            ClientOptions options = new ClientOptions();
+            Client container = Client.create(options);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testCreateConnectionStringWithDefaultTcpPort() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
             peer.expectSASLAnonymousConnect();

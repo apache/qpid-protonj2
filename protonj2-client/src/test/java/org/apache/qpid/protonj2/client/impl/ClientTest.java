@@ -42,21 +42,17 @@ import org.junit.jupiter.api.Timeout;
 @Timeout(20)
 public class ClientTest extends ImperativeClientTestCase {
 
-    /**
-     * Tests that when using the ClientOptions you need to configure a
-     * container id as that is mandatory and the only reason one would
-     * be supplying ClientOptions instances.
-     */
     @Test
-    public void testCreateWithNoContainerIdFails() {
+    public void testCreateWithNoContainerIdIsAllowed() {
         ClientOptions options = new ClientOptions();
         assertNull(options.id());
 
         try {
-            Client.create(options);
-            fail("Should enforce user supplied container Id");
+            Client instance = Client.create(options);
+
+            assertNull(instance.containerId());
         } catch (NullPointerException npe) {
-            // Expected
+            fail("Should not enforce user supplied container Id");
         }
     }
 

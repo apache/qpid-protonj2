@@ -72,7 +72,6 @@ public final class ClientInstance implements Client {
      */
     public static ClientInstance create(ClientOptions options) {
         Objects.requireNonNull(options, "Client options must be non-null");
-        Objects.requireNonNull(options.id(), "User supplied container Id must be non-null");
 
         return new ClientInstance(new ClientOptions(options));
     }
