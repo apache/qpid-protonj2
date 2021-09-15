@@ -330,7 +330,7 @@ public abstract class ScriptWriter {
      * header to arrive and a header response will be sent.
      */
     public void expectSASLAnonymousConnect() {
-        expectSASLHeader().respondWithSASLPHeader();
+        expectSASLHeader().respondWithSASLHeader();
         remoteSaslMechanisms().withMechanisms("ANONYMOUS").queue();
         expectSaslInit().withMechanism("ANONYMOUS");
         remoteSaslOutcome().withCode(SaslCode.OK).queue();
@@ -354,7 +354,7 @@ public abstract class ScriptWriter {
      *      The password that is expected in the SASL Plain initial response.
      */
     public void expectSASLPlainConnect(String username, String password) {
-        expectSASLHeader().respondWithSASLPHeader();
+        expectSASLHeader().respondWithSASLHeader();
         remoteSaslMechanisms().withMechanisms("PLAIN").queue();
         expectSaslInit().withMechanism("PLAIN").withInitialResponse(saslPlainInitialResponse(username, password));
         remoteSaslOutcome().withCode(SaslCode.OK).queue();
@@ -378,7 +378,7 @@ public abstract class ScriptWriter {
      *      The password that is expected in the SASL initial response.
      */
     public void expectSaslXOauth2Connect(String username, String password) {
-        expectSASLHeader().respondWithSASLPHeader();
+        expectSASLHeader().respondWithSASLHeader();
         remoteSaslMechanisms().withMechanisms("XOAUTH2").queue();
         expectSaslInit().withMechanism("XOAUTH2").withInitialResponse(saslXOauth2InitialResponse(username, password));
         remoteSaslOutcome().withCode(SaslCode.OK).queue();
@@ -422,7 +422,7 @@ public abstract class ScriptWriter {
             throw new AssertionError("Expected offered mechanisms that contains the PLAIN mechanism");
         }
 
-        expectSASLHeader().respondWithSASLPHeader();
+        expectSASLHeader().respondWithSASLHeader();
         remoteSaslMechanisms().withMechanisms(offeredMechanisms).queue();
         expectSaslInit().withMechanism("PLAIN");
 
@@ -445,7 +445,7 @@ public abstract class ScriptWriter {
      * header to arrive and a header response will be sent.
      */
     public void expectSaslExternalConnect() {
-        expectSASLHeader().respondWithSASLPHeader();
+        expectSASLHeader().respondWithSASLHeader();
         remoteSaslMechanisms().withMechanisms("EXTERNAL").queue();
         expectSaslInit().withMechanism("EXTERNAL").withInitialResponse(new byte[0]);
         remoteSaslOutcome().withCode(SaslCode.OK).queue();
@@ -461,7 +461,7 @@ public abstract class ScriptWriter {
      *      The set of SASL Mechanisms to advertise as available on the peer.
      */
     public void expectSaslMechanismNegotiationFailure(String... offeredMechanisms) {
-        expectSASLHeader().respondWithSASLPHeader();
+        expectSASLHeader().respondWithSASLHeader();
         remoteSaslMechanisms().withMechanisms(offeredMechanisms).queue();
     }
 
@@ -476,7 +476,7 @@ public abstract class ScriptWriter {
      *      The SASL Mechanism that the client should select and respond with.
      */
     public void expectSaslConnectThatAlwaysFailsAuthentication(String[] offeredMechanisms, String chosenMechanism) {
-        expectSASLHeader().respondWithSASLPHeader();
+        expectSASLHeader().respondWithSASLHeader();
         remoteSaslMechanisms().withMechanisms(offeredMechanisms).queue();
         expectSaslInit().withMechanism(chosenMechanism);
         remoteSaslOutcome().withCode(SaslCode.AUTH).queue();

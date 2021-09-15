@@ -47,7 +47,7 @@ public class AMQPHeaderExpectation implements ScriptedExpectation {
         return response;
     }
 
-    public AMQPHeaderInjectAction respondWithSASLPHeader() {
+    public AMQPHeaderInjectAction respondWithSASLHeader() {
         AMQPHeaderInjectAction response = new AMQPHeaderInjectAction(driver, AMQPHeader.getSASLHeader());
         driver.addScriptedElement(response);
         return response;

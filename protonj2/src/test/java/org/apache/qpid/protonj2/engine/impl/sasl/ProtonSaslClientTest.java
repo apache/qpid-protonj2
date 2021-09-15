@@ -96,7 +96,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
 
-        peer.expectSASLHeader().respondWithSASLPHeader();
+        peer.expectSASLHeader().respondWithSASLHeader();
         peer.remoteSaslMechanisms().withMechanisms("PLAIN", "ANONYMOUS").queue();
         peer.expectSaslInit().withMechanism("ANONYMOUS");
         peer.remoteSaslOutcome().withCode(SaslCode.OK.byteValue()).queue();
@@ -150,7 +150,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         String user = "user";
         String pass = "qwerty123456";
 
-        peer.expectSASLHeader().respondWithSASLPHeader();
+        peer.expectSASLHeader().respondWithSASLHeader();
         peer.remoteSaslMechanisms().withMechanisms("UNKNOWN", "PLAIN", "ANONYMOUS").queue();
         peer.expectSaslInit().withMechanism("PLAIN").withInitialResponse(peer.saslPlainInitialResponse(user, pass));
         peer.remoteSaslOutcome().withCode(SaslCode.OK.byteValue()).queue();
@@ -176,7 +176,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
 
-        peer.expectSASLHeader().respondWithSASLPHeader();
+        peer.expectSASLHeader().respondWithSASLHeader();
         peer.remoteSaslMechanisms().withMechanisms("PLAIN").queue();
 
         // Default client only know about ANONYMOUS
@@ -235,7 +235,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
 
-        peer.expectSASLHeader().respondWithSASLPHeader();
+        peer.expectSASLHeader().respondWithSASLHeader();
         peer.remoteSaslMechanisms().withMechanisms("PLAIN", "ANONYMOUS").queue();
         peer.expectSaslInit().withMechanism("PLAIN");
         peer.remoteSaslOutcome().withCode(saslFailureCode.byteValue()).queue();

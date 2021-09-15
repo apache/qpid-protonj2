@@ -384,7 +384,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     @Test
     public void testCreateConnectionWithSASLDisabledToSASLEnabledHost() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
-            peer.expectAMQPHeader().respondWithSASLPHeader();
+            peer.expectAMQPHeader().respondWithSASLHeader();
             peer.start();
 
             URI remoteURI = peer.getServerURI();

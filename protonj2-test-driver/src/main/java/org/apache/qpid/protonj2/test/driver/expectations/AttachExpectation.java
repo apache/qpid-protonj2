@@ -161,16 +161,14 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
 
             if (response.getPerformative().getTarget() == null && !response.isNullTargetRequired()) {
                 if (attach.getTarget() != null) {
-                    if (attach.getTarget() instanceof org.apache.qpid.protonj2.test.driver.codec.messaging.Target) {
-                        org.apache.qpid.protonj2.test.driver.codec.messaging.Target target =
-                            (org.apache.qpid.protonj2.test.driver.codec.messaging.Target) attach.getTarget();
+                    if (attach.getTarget() instanceof Target) {
+                        Target target = (Target) attach.getTarget();
                         response.withTarget(target);
                         if (target != null && Boolean.TRUE.equals(target.getDynamic())) {
                             target.setAddress(UUID.randomUUID().toString());
                         }
                     } else {
-                        org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator coordinator =
-                            (org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator) attach.getTarget();
+                        Coordinator coordinator = (Coordinator) attach.getTarget();
                         response.withTarget(coordinator);
                     }
                 }
@@ -261,11 +259,11 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         return withRcvSettleMode(rcvSettleMode == null ? nullValue() : equalTo(rcvSettleMode.getValue()));
     }
 
-    public AttachExpectation withReceivervSettlesFirst() {
+    public AttachExpectation withReceiverSettlesFirst() {
         return withRcvSettleMode(equalTo(ReceiverSettleMode.FIRST.getValue()));
     }
 
-    public AttachExpectation withReceivervSettlesSecond() {
+    public AttachExpectation withReceiverSettlesSecond() {
         return withRcvSettleMode(equalTo(ReceiverSettleMode.SECOND.getValue()));
     }
 

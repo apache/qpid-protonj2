@@ -940,7 +940,7 @@ public class SenderTest extends ImperativeClientTestCase {
             peer.expectBegin().respond();
             peer.expectAttach().ofSender()
                                .withSenderSettleModeSettled()
-                               .withReceivervSettlesFirst()
+                               .withReceiverSettlesFirst()
                                .respond()
                                .withSenderSettleModeSettled()
                                .withReceivervSettlesFirst();
@@ -1163,7 +1163,7 @@ public class SenderTest extends ImperativeClientTestCase {
             peer.expectOpen().respond().withOfferedCapabilities("ANONYMOUS-RELAY");
             peer.expectBegin().respond();
             peer.expectAttach().ofSender().withSenderSettleModeSettled()
-                                          .withReceivervSettlesFirst()
+                                          .withReceiverSettlesFirst()
                                           .withTarget().withAddress(Matchers.nullValue()).and().respond();
             peer.expectClose().respond();
             peer.start();
