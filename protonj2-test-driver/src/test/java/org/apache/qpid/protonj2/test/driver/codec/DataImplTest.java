@@ -16,15 +16,19 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Source;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Target;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Attach;
@@ -182,6 +186,47 @@ public class DataImplTest {
         Attach performative = (Attach) decoded;
         assertEquals(performative.getHandle(), UnsignedInteger.valueOf(1));
         assertEquals(performative.getName(), "test");
+    }
+
+    @Test
+    public void testDecodeOfComplexOpenEncoding() throws IOException {
+        // Frame data for: Open
+        //   Open{ containerId='container', hostname='localhost', maxFrameSize=16384, channelMax=65535,
+        //         idleTimeOut=36000, outgoingLocales=null, incomingLocales=null, offeredCapabilities=[SOMETHING],
+        //         desiredCapabilities=[ANONYMOUS-RELAY, DELAYED-DELIVERY], properties={queue-prefix=queue://}}
+        final byte[] completeOpen = new byte[] {0, 83, 16, -64, 116, 10, -95, 9, 99, 111, 110, 116, 97, 105, 110,
+                                                101, 114, -95, 9, 108, 111, 99, 97, 108, 104, 111, 115, 116, 112,
+                                                0, 0, 64, 0, 96, -1, -1, 112, 0, 0, -116, -96, 64, 64, -32, 12, 1,
+                                                -93, 9, 83, 79, 77, 69, 84, 72, 73, 78, 71, -32, 35, 2, -93, 15,
+                                                65, 78, 79, 78, 89, 77, 79, 85, 83, 45, 82, 69, 76, 65, 89, 16, 68,
+                                                69, 76, 65, 89, 69, 68, 45, 68, 69, 76, 73, 86, 69, 82, 89, -63, 25,
+                                                2, -95, 12, 113, 117, 101, 117, 101, 45, 112, 114, 101, 102, 105,
+                                                120, -95, 8, 113, 117, 101, 117, 101, 58, 47, 47};
+
+        ByteBuf encoded = Unpooled.wrappedBuffer(completeOpen);
+
+        DescribedType decoded = decodeProtonPerformative(encoded);
+        assertNotNull(decoded);
+        assertTrue(decoded instanceof Open);
+
+        Open performative = (Open) decoded;
+
+        assertEquals("container", performative.getContainerId());
+        assertEquals("localhost", performative.getHostname());
+        assertEquals(UnsignedInteger.valueOf(16384), performative.getMaxFrameSize());
+        assertEquals(UnsignedInteger.valueOf(36000), performative.getIdleTimeOut());
+        assertEquals(UnsignedShort.valueOf(65535), performative.getChannelMax());
+
+        Symbol[] offered = performative.getOfferedCapabilities();
+        Symbol[] desired = performative.getDesiredCapabilities();
+
+        assertArrayEquals(new Symbol[] { Symbol.valueOf("SOMETHING") }, offered);
+        assertArrayEquals(new Symbol[] { Symbol.valueOf("ANONYMOUS-RELAY"), Symbol.valueOf("DELAYED-DELIVERY") }, desired);
+
+        Map<String, Object> expected = new HashMap<String, Object>();
+        expected.put("queue-prefix", "queue://");
+
+        assertEquals(expected, performative.getProperties());
     }
 
     private DescribedType decodeProtonPerformative(ByteBuf buffer) throws IOException {

@@ -16,6 +16,10 @@
  */
 package org.apache.qpid.protonj2.test.driver.legacy;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.UnsignedInteger;
 import org.apache.qpid.proton.amqp.transport.Open;
 
@@ -40,5 +44,22 @@ public class LegacyCodecOpenFramesTestDataGenerator {
         basicOpen.setIdleTimeOut(UnsignedInteger.valueOf(30000));
         String basicOpenString = LegacyFrameDataGenerator.generateUnitTestVariable("basicOpen", basicOpen);
         System.out.println(basicOpenString);
+
+        // 2: Complete Open - No capabilities or locals set
+        Open complete = new Open();
+        complete.setContainerId("container");
+        complete.setHostname("localhost");
+        complete.setMaxFrameSize(UnsignedInteger.valueOf(16384));
+        complete.setIdleTimeOut(UnsignedInteger.valueOf(36000));
+        complete.setDesiredCapabilities(Symbol.valueOf("ANONYMOUS-RELAY"), Symbol.valueOf("DELAYED-DELIVERY"));
+        complete.setOfferedCapabilities(Symbol.valueOf("SOMETHING"));
+
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("queue-prefix", "queue://");
+
+        complete.setProperties(properties);
+
+        String completeOpenString = LegacyFrameDataGenerator.generateUnitTestVariable("completeOpen", complete);
+        System.out.println(completeOpenString);
     }
 }
