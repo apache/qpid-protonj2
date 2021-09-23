@@ -54,8 +54,8 @@ public class LegacyCodecOpenFramesTestDataGenerator {
         complete.setDesiredCapabilities(Symbol.valueOf("ANONYMOUS-RELAY"), Symbol.valueOf("DELAYED-DELIVERY"));
         complete.setOfferedCapabilities(Symbol.valueOf("SOMETHING"));
 
-        Map<String, Object> properties = new HashMap<>();
-        properties.put("queue-prefix", "queue://");
+        Map<Symbol, Object> properties = new HashMap<>();
+        properties.put(Symbol.valueOf("queue-prefix"), "queue://");
 
         complete.setProperties(properties);
 

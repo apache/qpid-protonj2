@@ -44,7 +44,7 @@ public class DriverSessions {
     }
 
     public SessionTracker getLastRemotelyOpenedSession() {
-        return localSessions.get(lastRemotelyOpenedSession);
+        return remoteSessions.get(lastRemotelyOpenedSession);
     }
 
     public SessionTracker getLastLocallyOpenedSession() {
@@ -101,14 +101,12 @@ public class DriverSessions {
             // Remote has requested that the driver create a new session which will require a scripted
             // response in order to complete the begin cycle.  Start tracking now for future
             sessionTracker = new SessionTracker(driver);
-
-            localSessions.put(sessionTracker.getLocalChannel(), sessionTracker);
         }
 
         sessionTracker.handleBegin(remoteBegin, remoteChannel);
 
         remoteSessions.put(remoteChannel, sessionTracker);
-        lastRemotelyOpenedSession = sessionTracker.getLocalChannel();
+        lastRemotelyOpenedSession = sessionTracker.getRemoteChannel();
 
         return sessionTracker;
     }
