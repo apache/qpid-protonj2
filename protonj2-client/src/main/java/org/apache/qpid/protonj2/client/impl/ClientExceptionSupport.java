@@ -45,13 +45,13 @@ import org.apache.qpid.protonj2.types.transport.LinkError;
 class ClientExceptionSupport {
 
     /**
-     * Checks the given cause to determine if it's already an ProviderIOException type and
+     * Checks the given cause to determine if it's already an ClientIOException type and
      * if not creates a new ProviderIOException to wrap it.
      *
      * @param cause
      *        The initiating exception that should be cast or wrapped.
      *
-     * @return an ProviderIOException instance.
+     * @return an ClientIOException instance.
      */
     public static ClientIOException createOrPassthroughFatal(Throwable cause) {
         if (cause instanceof ClientIOException) {
@@ -71,15 +71,15 @@ class ClientExceptionSupport {
     }
 
     /**
-     * Checks the given cause to determine if it's already an ProviderException type and
-     * if not creates a new ProviderException to wrap it.  If the inbound exception is a
+     * Checks the given cause to determine if it's already an ClientException type and
+     * if not creates a new ClientException to wrap it.  If the inbound exception is a
      * fatal type then it will pass through this method untouched to preserve the fatal
      * status of the error.
      *
      * @param cause
      *        The initiating exception that should be cast or wrapped.
      *
-     * @return an ProviderException instance.
+     * @return an ClientException instance.
      */
     public static ClientException createNonFatalOrPassthrough(Throwable cause) {
         if (cause instanceof ClientException) {
@@ -162,7 +162,7 @@ class ClientExceptionSupport {
 
     /**
      * Given an ErrorCondition instance create a new Exception that best matches
-     * the error type that indicates the connection creation failed for some reason.
+     * the error type that indicates the session creation failed for some reason.
      *
      * @param errorCondition
      *      The ErrorCondition returned from the remote peer.
@@ -188,7 +188,7 @@ class ClientExceptionSupport {
 
     /**
      * Given an ErrorCondition instance create a new Exception that best matches
-     * the error type that indicates the connection creation failed for some reason.
+     * the error type that indicates the link creation failed for some reason.
      *
      * @param errorCondition
      *      The ErrorCondition returned from the remote peer.
