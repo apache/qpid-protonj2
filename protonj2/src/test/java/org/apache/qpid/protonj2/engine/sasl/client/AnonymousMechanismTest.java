@@ -65,19 +65,19 @@ public class AnonymousMechanismTest extends MechanismTestBase {
     @Test
     public void testIsApplicableWithEmtpyUser() {
         assertTrue(SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("", "pass", false)),
-            "Should be applicable with empty username");
+            "Should be applicable with  username");
     }
 
     @Test
     public void testIsApplicableWithEmtpyPassword() {
         assertTrue(SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("user", "", false)),
-            "Should be applicable with empty password");
+            "Should be applicable with  password");
     }
 
     @Test
     public void testIsApplicableWithEmtpyUserAndPassword() {
         assertTrue(SaslMechanisms.ANONYMOUS.createMechanism().isApplicable(credentials("", "", false)),
-            "Should be applicable with empty user and password");
+            "Should be applicable with  user and password");
     }
 
     @Test

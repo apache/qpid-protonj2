@@ -433,7 +433,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.RECEIVER.getValue())
-                           .withTarget(notNullValue())
+                           .withSource(notNullValue())
                            .withTarget(notNullValue())
                            .respond();
         peer.expectDetach().respond();

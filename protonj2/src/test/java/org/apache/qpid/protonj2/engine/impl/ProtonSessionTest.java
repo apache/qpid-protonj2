@@ -169,7 +169,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         }
 
         if (remotelyClosed && !locallyClosed) {
-            peer.remoteEnd();
+            peer.remoteEnd().now();
         }
 
         engine.shutdown();
@@ -307,15 +307,16 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNotNull(connection);
 
         connection.open();
-        connection.openHandler((result) -> {
-            remoteOpened.set(true);
-        });
 
         Session session = connection.session();
+        session.openHandler((result) -> {
+            remoteOpened.set(true);
+        });
         session.open();
 
         peer.waitForScriptToComplete();
 
+        assertTrue(remoteOpened.get());
         assertNull(failure);
     }
 

@@ -64,19 +64,19 @@ public class PlainMechanismTest extends MechanismTestBase {
     }
 
     @Test
-    public void testIsNotApplicableWithEmtpyUser() {
+    public void testIsNotApplicableWithEmptyUser() {
         assertFalse(SaslMechanisms.PLAIN.createMechanism().isApplicable(credentials("", "pass", false)),
             "Should not be applicable with empty username");
     }
 
     @Test
-    public void testIsNotApplicableWithEmtpyPassword() {
+    public void testIsNotApplicableWithEmptyPassword() {
         assertFalse(SaslMechanisms.PLAIN.createMechanism().isApplicable(credentials("user", "", false)),
             "Should not be applicable with empty password");
     }
 
     @Test
-    public void testIsNotApplicableWithEmtpyUserAndPassword() {
+    public void testIsNotApplicableWithEmptyUserAndPassword() {
         assertFalse(SaslMechanisms.PLAIN.createMechanism().isApplicable(credentials("", "", false)),
             "Should not be applicable with empty user and password");
     }

@@ -195,6 +195,8 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         txnController.open();
         txnController.declare();
 
+        assertTrue(openedWithCoordinatorTarget.get());
+
         session.close();
         connection.close();
 
@@ -253,6 +255,8 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         txnController.open();
         txnController.declare();
 
+        assertTrue(openedWithCoordinatorTarget.get());
+
         connection.close();
 
         peer.waitForScriptToComplete();
@@ -309,6 +313,8 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         txnController.open();
         txnController.declare();
 
+        assertTrue(openedWithCoordinatorTarget.get());
+
         engine.shutdown();
 
         peer.waitForScriptToComplete();
@@ -316,7 +322,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         assertTrue(engineShutdown.get());
         assertNull(failure);
     }
-
+    
     @Test
     public void testTransactionControllerDoesNotSignalsWhenParentConnectionClosedIfAlreadyClosed() {
         final byte[] TXN_ID = new byte[] { 1, 2, 3, 4 };
@@ -367,6 +373,8 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         txnController.open();
         txnController.declare();
         txnController.close();
+
+        assertTrue(openedWithCoordinatorTarget.get());
 
         connection.close();
 

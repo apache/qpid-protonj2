@@ -4207,7 +4207,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    void testWriteThatExceedConfiguredSessionIncomingCreditLimitOnTransfer() throws Exception {
+    public void testWriteThatExceedConfiguredSessionIncomingCreditLimitOnTransfer() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
@@ -4283,7 +4283,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    void testWriteThatExceedsConfiguredSessionIncomingCreditLimitOnTransferFromCreditUpdatedhandler() throws Exception {
+    public void testWriteThatExceedsConfiguredSessionIncomingCreditLimitOnTransferFromCreditUpdatedhandler() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
