@@ -326,12 +326,12 @@ public class ClientConnection implements Connection {
 
     @Override
     public Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties) throws ClientException {
-        return openDynamicReceiver(null, null);
+        return openDynamicReceiver(dynamicNodeProperties, null);
     }
 
     @Override
     public Receiver openDynamicReceiver(ReceiverOptions receiverOptions) throws ClientException {
-        return openDynamicReceiver(null, null);
+        return openDynamicReceiver(null, receiverOptions);
     }
 
     @Override

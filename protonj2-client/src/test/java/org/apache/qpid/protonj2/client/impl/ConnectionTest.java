@@ -38,6 +38,7 @@ import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
+import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.Tracker;
@@ -1021,6 +1022,85 @@ public class ConnectionTest extends ImperativeClientTestCase {
             connection.openFuture().get(10, TimeUnit.SECONDS);
 
             Receiver receiver = connection.openDynamicReceiver();
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertNotNull(receiver.address(), "Remote should have assigned the address for the dynamic receiver");
+
+            receiver.closeAsync().get(10, TimeUnit.SECONDS);
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateDynamicReceiverWithNodeProperties() throws Exception {
+        Map<String, Object> dynamicNodeProperties = new HashMap<>();
+        dynamicNodeProperties.put("test", "vale");
+
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue())
+                               .withSource()
+                               .withDynamic(true)
+                               .withAddress(nullValue())
+                               .withDynamicNodeProperties(dynamicNodeProperties)
+                               .also()
+                               .respond();
+            peer.expectFlow();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Receiver receiver = connection.openDynamicReceiver(dynamicNodeProperties);
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertNotNull(receiver.address(), "Remote should have assigned the address for the dynamic receiver");
+
+            receiver.closeAsync().get(10, TimeUnit.SECONDS);
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateDynamicReceiverWithReceiverOptions() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue())
+                               .withDesiredCapabilities("queue")
+                               .respond();
+            peer.expectFlow();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            ReceiverOptions options = new ReceiverOptions();
+            options.desiredCapabilities("queue");
+            Receiver receiver = connection.openDynamicReceiver(options);
             receiver.openFuture().get(10, TimeUnit.SECONDS);
 
             assertNotNull(receiver.address(), "Remote should have assigned the address for the dynamic receiver");
