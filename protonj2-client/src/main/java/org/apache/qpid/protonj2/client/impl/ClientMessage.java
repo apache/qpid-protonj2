@@ -650,12 +650,13 @@ public class ClientMessage<E> implements AdvancedMessage<E> {
     public ClientMessage<E> bodySections(Collection<Section<?>> sections) {
         if (sections == null || sections.isEmpty()) {
             bodySections = null;
-            body = null;
         } else {
             List<Section<?>> result = new ArrayList<>(sections.size());
             sections.forEach(section -> result.add(validateBodySections(messageFormat, result, section)));
             bodySections = result;
         }
+
+        body = null; // Body is always cleared by this assignment.
 
         return this;
     }

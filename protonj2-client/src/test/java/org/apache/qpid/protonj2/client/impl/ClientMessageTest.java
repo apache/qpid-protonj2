@@ -534,6 +534,24 @@ class ClientMessageTest {
     }
 
     @Test
+    public void testReplaceOriginalWithSetBodySectionClearsOriginal() {
+        ClientMessage<Object> message = ClientMessage.create();
+
+        message.body("string");  // AmqpValue
+
+        List<Section<?>> expected = new ArrayList<>();
+        expected.add(new Data(new byte[] { 0 }));
+        expected.add(new Data(new byte[] { 1 }));
+
+        assertEquals("string", message.body());
+        assertEquals(1, message.bodySections().size());
+
+        message.bodySections(expected);
+
+        assertEquals(expected.size(), message.bodySections().size());
+    }
+
+    @Test
     public void testReplaceOriginalWithSetBodySectionDoesThrowValidationErrorIfInValid() {
         ClientMessage<Object> message = ClientMessage.create();
 
