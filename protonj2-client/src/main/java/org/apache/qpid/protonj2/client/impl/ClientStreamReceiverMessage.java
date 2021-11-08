@@ -903,7 +903,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
 
         @Override
         protected void validateAndScanNextSection() throws ClientException {
-            throw new DecodeException("Cannot read the payload of an AMQP Sequence payload.");
+            throw new DecodeException("Cannot read the binary payload of an AMQP Sequence body.");
         }
     }
 
@@ -922,7 +922,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
 
         @Override
         protected void validateAndScanNextSection() throws ClientException {
-            throw new DecodeException("Cannot read the payload of an AMQP Sequence payload.");
+            throw new DecodeException("Cannot read the binary payload of an AMQP Value body.");
         }
     }
 }
