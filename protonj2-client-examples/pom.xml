@@ -37,12 +37,9 @@
       <groupId>org.apache.qpid</groupId>
       <artifactId>protonj2-client</artifactId>
     </dependency>
-
-    <!-- Provide a logging implementation to avoid
-         notice from SLF4J that none was found -->
     <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-slf4j-impl</artifactId>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
     </dependency>
   </dependencies>
 
