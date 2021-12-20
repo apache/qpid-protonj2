@@ -64,6 +64,7 @@
       <groupId>io.netty.incubator</groupId>
       <artifactId>netty-incubator-transport-native-io_uring</artifactId>
       <classifier>${netty-transport-native-io-uring-classifier}</classifier>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
