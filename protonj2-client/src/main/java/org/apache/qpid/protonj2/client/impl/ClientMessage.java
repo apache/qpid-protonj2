@@ -48,7 +48,7 @@ import org.apache.qpid.protonj2.types.messaging.Section.SectionType;
  *
  * @param <E> the body type that the {@link Message} carries
  */
-public class ClientMessage<E> implements AdvancedMessage<E> {
+public final class ClientMessage<E> implements AdvancedMessage<E> {
 
     private Header header;
     private MessageAnnotations messageAnnotations;

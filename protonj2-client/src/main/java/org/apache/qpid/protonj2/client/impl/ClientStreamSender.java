@@ -19,7 +19,6 @@ package org.apache.qpid.protonj2.client.impl;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamSenderOptions;
@@ -117,11 +116,11 @@ public final class ClientStreamSender extends ClientSender implements StreamSend
         return (ClientStreamSender) super.open();
     }
 
-    StreamTracker sendMessage(ClientStreamSenderMessage context, AdvancedMessage<?> message) throws ClientException {
+    StreamTracker sendMessage(ClientStreamSenderMessage context, ProtonBuffer payload, int messageFormat) throws ClientException {
         final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
-        final ProtonBuffer buffer = message.encode(null);
+        final ProtonBuffer buffer = payload;
         final ClientOutgoingEnvelope envelope = new ClientOutgoingEnvelope(
-            this, context.getProtonDelivery(), message.messageFormat(), buffer, context.completed(), operation);
+            this, context.getProtonDelivery(), messageFormat, buffer, context.completed(), operation);
 
         executor.execute(() -> {
             if (notClosedOrFailed(operation)) {

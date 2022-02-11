@@ -77,7 +77,6 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
     private final ClientStreamSender sender;
     private final DeliveryAnnotations deliveryAnnotations;
     private final int writeBufferSize;
-    private final StreamMessagePacket streamMessagePacket = new StreamMessagePacket();
     private final ClientStreamTracker tracker;
 
     private Header header;
@@ -136,7 +135,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
     private void doFlush() throws ClientException {
         if (buffer != null && buffer.isReadable()) {
             try {
-                sender.sendMessage(this, streamMessagePacket);
+                sender.sendMessage(this, buffer, messageFormat);
             } finally {
                 buffer = null;
             }
@@ -939,23 +938,10 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
 
         if (buffer.getReadableBytes() >= writeBufferSize) {
             try {
-                sender.sendMessage(this, streamMessagePacket);
+                sender.sendMessage(this, buffer, messageFormat);
             } finally {
                 buffer = null;
             }
-        }
-    }
-
-    private final class StreamMessagePacket extends ClientMessage<byte[]> {
-
-        @Override
-        public int messageFormat() {
-            return messageFormat;
-        }
-
-        @Override
-        public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) {
-            return buffer;
         }
     }
 
