@@ -169,7 +169,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             peer.expectCoordinatorAttach().respond();
             peer.remoteFlow().withLinkCredit(2).queue();
             peer.expectDeclare();
-            peer.expectDetach().respond().afterDelay(5);
+            peer.expectDetach().respond();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
