@@ -128,7 +128,7 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
 
             // Populate the fields of the response with defaults if non set by the test script
             if (response.getPerformative().getHandle() == null) {
-                response.withHandle(attach.getHandle());
+                response.withHandle(session.findFreeLocalHandle());
             }
             if (response.getPerformative().getName() == null) {
                 response.withName(attach.getName());
