@@ -415,6 +415,18 @@ final class ClientLocalTransactionContext implements ClientTransactionContext {
     }
 
     private void handleCoordinatorLocalClose(TransactionController controller) {
+        // Disconnect from the controllers event points since we could create a new
+        // controller if a new transaction is requested by the client.
+        controller.declaredHandler(null)
+                  .declareFailureHandler(null)
+                  .dischargedHandler(null)
+                  .dischargeFailureHandler(null)
+                  .openHandler(null)
+                  .closeHandler(null)
+                  .localCloseHandler(null)
+                  .parentEndpointClosedHandler(null)
+                  .engineShutdownHandler(null);
+
         if (currentTxn != null) {
             ClientFuture<Session> future = null;
 

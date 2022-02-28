@@ -63,11 +63,10 @@ import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.transactions.TransactionErrors;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Timeout(30)
+//@Timeout(30)
 public class TransactionsTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionsTest.class);
@@ -202,7 +201,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 // Expect this to fail since transaction not declared
             }
 
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(500, TimeUnit.SECONDS);
             peer.expectCoordinatorAttach().respond();
             peer.remoteFlow().withLinkCredit(2).queue();
             peer.expectDeclare().accept();
@@ -215,7 +214,66 @@ public class TransactionsTest extends ImperativeClientTestCase {
             session.closeAsync();
             connection.closeAsync().get();
 
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(500, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testTimedOutExceptionOnBeginWithNoResponseThenRecoverWithNextBeginAndDelayedDetachResponse() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare();
+            peer.expectDetach().respond().afterDelay(20);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().requestTimeout(150);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            Session session = connection.openSession().openFuture().get();
+
+            try {
+                session.beginTransaction();
+                fail("Begin should have timed out after no response.");
+            } catch (ClientTransactionDeclarationException expected) {
+                // Expect this to time out.
+            }
+
+            try {
+                session.commitTransaction();
+                fail("Commit should have failed due to no active transaction.");
+            } catch (ClientIllegalStateException expected) {
+                // Expect this to fail since transaction not declared
+            }
+
+            try {
+                session.rollbackTransaction();
+                fail("Rollback should have failed due to no active transaction.");
+            } catch (ClientIllegalStateException expected) {
+                // Expect this to fail since transaction not declared
+            }
+
+            peer.waitForScriptToComplete(500, TimeUnit.SECONDS);
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept();
+            peer.expectDischarge().accept();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            session.beginTransaction();
+            session.commitTransaction();
+            session.closeAsync();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(500, TimeUnit.SECONDS);
         }
     }
 
