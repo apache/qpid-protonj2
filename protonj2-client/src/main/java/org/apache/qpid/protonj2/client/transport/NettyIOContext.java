@@ -42,6 +42,8 @@ public final class NettyIOContext {
     private static final Logger LOG = LoggerFactory.getLogger(NettyIOContext.class);
 
     private static final int SHUTDOWN_TIMEOUT = 50;
+    private static final int ASYNC_SHUTDOWN_TIMEOUT = 100;
+    private static final int ASYNC_SHUTDOWN_QUIET_PERIOD = 10;
 
     private final EventLoopGroup group;
     private final Class<? extends Channel> channelClass;
@@ -108,6 +110,17 @@ public final class NettyIOContext {
             if (!fut.awaitUninterruptibly(2 * SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS)) {
                 LOG.trace("Connection IO Event Loop shutdown failed to complete in allotted time");
             }
+        }
+    }
+
+    /**
+     * Shutdown the event loop asynchronously with a grace period for work that might be in-bound
+     * at the time of termination.  This is safe to call from inside the event loop where the
+     * standard blocking shutdown API is not.
+     */
+    public void shutdownAsync() {
+        if (!group.isShutdown()) {
+            group.shutdownGracefully(ASYNC_SHUTDOWN_QUIET_PERIOD, ASYNC_SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS);
         }
     }
 

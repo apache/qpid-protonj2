@@ -247,6 +247,7 @@ public final class ClientReceiver implements Receiver {
 
     private ClientFuture<Receiver> doCloseOrDetach(boolean close, ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
+            // Already closed by failure or shutdown so no need to queue task
             if (!closeFuture.isDone()) {
                 executor.execute(() -> {
                     if (protonReceiver.isLocallyOpen()) {

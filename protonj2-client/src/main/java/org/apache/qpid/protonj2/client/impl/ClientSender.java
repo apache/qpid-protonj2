@@ -206,21 +206,24 @@ class ClientSender implements Sender {
 
     private ClientFuture<Sender> doCloseOrDetach(boolean close, ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
-            executor.execute(() -> {
-                if (protonSender.isLocallyOpen()) {
-                    try {
-                        protonSender.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+            // Already closed by failure or shutdown so no need to queue task
+            if (!closeFuture.isDone()) {
+                executor.execute(() -> {
+                    if (protonSender.isLocallyOpen()) {
+                        try {
+                            protonSender.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
 
-                        if (close) {
-                            protonSender.close();
-                        } else {
-                            protonSender.detach();
+                            if (close) {
+                                protonSender.close();
+                            } else {
+                                protonSender.detach();
+                            }
+                        } catch (Throwable ignore) {
+                            closeFuture.complete(this);
                         }
-                    } catch (Throwable ignore) {
-                        closeFuture.complete(this);
                     }
-                }
-            });
+                });
+            }
         }
         return closeFuture;
     }

@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
@@ -47,6 +48,8 @@ public final class ClientInstance implements Client {
 
     private static final IdGenerator CONTAINER_ID_GENERATOR = new IdGenerator();
     private static final ClientFutureFactory FUTURES = ClientFutureFactory.create(ClientFutureFactory.CONSERVATIVE);
+    private static final AtomicIntegerFieldUpdater<ClientInstance> CLOSED_UPDATER =
+            AtomicIntegerFieldUpdater.newUpdater(ClientInstance.class, "closed");
 
     private final AtomicInteger CONNECTION_COUNTER = new AtomicInteger();
     private final ClientOptions options;
@@ -55,7 +58,7 @@ public final class ClientInstance implements Client {
     private final String clientUniqueId = CONTAINER_ID_GENERATOR.generateId();
     private final ClientFuture<Client> closedFuture = FUTURES.createFuture();
 
-    private volatile boolean closed;
+    private volatile int closed;
 
     /**
      * @return a newly create {@link ClientInstance} that uses default configuration.
@@ -136,22 +139,20 @@ public final class ClientInstance implements Client {
 
     @Override
     public synchronized Future<Client> closeAsync() {
-        if (!closed) {
-            closed = true;
-
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             if (connections.isEmpty()) {
                 closedFuture.complete(this);
             } else {
+                // Make a copy as the connection close will modify the connections
+                // Map as each connection closes and removes itself from the container.
                 List<Connection> connectionsView = new ArrayList<>(connections.values());
-                connectionsView.forEach((connection) -> connection.close());
-
-                for (Connection connection : connectionsView) {
+                connectionsView.forEach((connection) -> {
                     try {
-                        connection.close();
+                        connection.closeAsync();
                     } catch (Throwable ignored) {
                         LOG.trace("Error while closing connection, ignoring", ignored);
                     }
-                }
+                });
             }
         }
 
@@ -160,8 +161,12 @@ public final class ClientInstance implements Client {
 
     //----- Internal API
 
+    boolean isClosed() {
+        return closed > 0;
+    }
+
     private void checkClosed() throws ClientIllegalStateException {
-        if (closed) {
+        if (isClosed()) {
             throw new ClientIllegalStateException("Cannot create new connections, the Client has been closed.");
         }
     }
@@ -170,17 +175,15 @@ public final class ClientInstance implements Client {
         return getClientUniqueId() + ":" + CONNECTION_COUNTER.incrementAndGet();
     }
 
-    private ClientConnection addConnection(ClientConnection connection) {
+    private synchronized ClientConnection addConnection(ClientConnection connection) {
         connections.put(connection.getId(), connection);
         return connection;
     }
 
-    void unregisterConnection(ClientConnection connection) {
-        synchronized (connections) {
-            connections.remove(connection.getId());
-            if (closed && connections.isEmpty()) {
-                closedFuture.complete(this);
-            }
+    synchronized void unregisterConnection(ClientConnection connection) {
+        connections.remove(connection.getId());
+        if (isClosed() && connections.isEmpty()) {
+            closedFuture.complete(this);
         }
     }
 }

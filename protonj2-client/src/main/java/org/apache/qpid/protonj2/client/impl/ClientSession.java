@@ -136,7 +136,7 @@ public class ClientSession implements Session {
 
     private Future<Session> doClose(ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
-            // Already closed by failure or shutdown so no need to
+            // Already closed by failure or shutdown so no need to queue task
             if (!closeFuture.isDone()) {
                 serializer.execute(() -> {
                     if (protonSession.isLocallyOpen()) {

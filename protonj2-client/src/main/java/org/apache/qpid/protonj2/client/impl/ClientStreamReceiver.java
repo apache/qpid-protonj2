@@ -175,21 +175,24 @@ public final class ClientStreamReceiver implements StreamReceiver {
 
     private ClientFuture<Receiver> doCloseOrDetach(boolean close, ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
-            executor.execute(() -> {
-                if (protonReceiver.isLocallyOpen()) {
-                    try {
-                        protonReceiver.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+            // Already closed by failure or shutdown so no need to queue task
+            if (!closeFuture.isDone()) {
+                executor.execute(() -> {
+                    if (protonReceiver.isLocallyOpen()) {
+                        try {
+                            protonReceiver.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
 
-                        if (close) {
-                            protonReceiver.close();
-                        } else {
-                            protonReceiver.detach();
+                            if (close) {
+                                protonReceiver.close();
+                            } else {
+                                protonReceiver.detach();
+                            }
+                        } catch (Throwable ignore) {
+                            closeFuture.complete(this);
                         }
-                    } catch (Throwable ignore) {
-                        closeFuture.complete(this);
                     }
-                }
-            });
+                });
+            }
         }
 
         return closeFuture;
@@ -652,6 +655,8 @@ public final class ClientStreamReceiver implements StreamReceiver {
     }
 
     private void immediateLinkShutdown(ClientException failureCause) {
+        CLOSED_UPDATER.set(this, 1);
+
         if (this.failureCause == null) {
             this.failureCause = failureCause;
         }

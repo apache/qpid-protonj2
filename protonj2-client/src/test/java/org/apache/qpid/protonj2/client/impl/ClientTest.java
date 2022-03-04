@@ -23,7 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.URI;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
@@ -35,12 +37,16 @@ import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test the Client API implementation
  */
 @Timeout(20)
 public class ClientTest extends ImperativeClientTestCase {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ClientTest.class);
 
     @Test
     public void testCreateWithNoContainerIdIsAllowed() {
@@ -109,6 +115,40 @@ public class ClientTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testCloseAsyncDoesNotBlockWaitingOnConnectionClose() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectClose();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openFuture().get();
+
+            Future<Client> closedFuture = container.closeAsync();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            try {
+                closedFuture.get(50, TimeUnit.MILLISECONDS);
+                fail("should have timed out waiting on close.");
+            } catch (TimeoutException ex) {
+            }
+
+            peer.remoteClose().now();
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            assertNotNull(closedFuture.get(1, TimeUnit.SECONDS));
+        }
+    }
+
+    @Test
     public void testCloseAllConnectionAndWait() throws Exception {
         try (ProtonTestServer firstPeer = new ProtonTestServer();
              ProtonTestServer secondPeer = new ProtonTestServer()) {
@@ -135,7 +175,7 @@ public class ClientTest extends ImperativeClientTestCase {
             secondPeer.waitForScriptToComplete();
 
             firstPeer.expectClose().respond().afterDelay(10);
-            secondPeer.expectClose().respond().afterDelay(11);
+            secondPeer.expectClose().respond().afterDelay(15);
 
             container.closeAsync().get(5, TimeUnit.SECONDS);
 

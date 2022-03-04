@@ -117,6 +117,8 @@ public final class ClientStreamSender extends ClientSender implements StreamSend
     }
 
     StreamTracker sendMessage(ClientStreamSenderMessage context, ProtonBuffer payload, int messageFormat) throws ClientException {
+        checkClosedOrFailed();
+
         final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
         final ProtonBuffer buffer = payload;
         final ClientOutgoingEnvelope envelope = new ClientOutgoingEnvelope(

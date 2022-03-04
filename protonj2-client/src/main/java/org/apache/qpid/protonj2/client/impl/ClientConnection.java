@@ -89,8 +89,8 @@ public class ClientConnection implements Connection {
     // later on we may decide this is overly optimized.
     private static final AtomicIntegerFieldUpdater<ClientConnection> CLOSED_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(ClientConnection.class, "closed");
-    private static final AtomicReferenceFieldUpdater<ClientConnection, ClientException> FAILURE_CAUSE_UPDATER =
-            AtomicReferenceFieldUpdater.newUpdater(ClientConnection.class, ClientException.class, "failureCause");
+    private static final AtomicReferenceFieldUpdater<ClientConnection, ClientIOException> FAILURE_CAUSE_UPDATER =
+            AtomicReferenceFieldUpdater.newUpdater(ClientConnection.class, ClientIOException.class, "failureCause");
 
     private final ClientInstance client;
     private final ConnectionOptions options;
@@ -113,7 +113,7 @@ public class ClientConnection implements Connection {
     private ClientFuture<Connection> openFuture;
     private ClientFuture<Connection> closeFuture;
     private volatile int closed;
-    private volatile ClientException failureCause;
+    private volatile ClientIOException failureCause;
     private long totalConnections;
     private long reconnectAttempts;
     private long nextReconnectDelay = -1;
@@ -197,6 +197,7 @@ public class ClientConnection implements Connection {
     private Future<Connection> doClose(ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             try {
+                // Already closed by failure or shutdown so no need to queue task
                 if (!closeFuture.isDone()) {
                     executor.execute(() -> {
                         LOG.trace("Close requested for connection: {}", this);
@@ -215,19 +216,9 @@ public class ClientConnection implements Connection {
                     });
                 }
             } catch (RejectedExecutionException rje) {
+                // If the engine already shutdown due to the remote dropping then we
+                // can just ignore that and continue as if everything already was closed.
                 LOG.trace("Close task rejected from the event loop", rje);
-            } finally {
-                try {
-                    closeFuture.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    // Ignore error as we are closed regardless
-                } finally {
-                    try {
-                        transport.close();
-                    } catch (Exception ignore) {}
-
-                    ioContext.shutdown();
-                }
             }
         }
 
@@ -727,6 +718,11 @@ public class ClientConnection implements Connection {
         LOG.trace("Engine reports failure with error: {}", failureCause.getMessage());
 
         if (isReconnectAllowed(failureCause)) {
+            // Disconnect the failed engine for this connection's event handling
+            // to prevent cleanup processing of that engine instance from triggering
+            // normal connection shutdown processing.
+            engine.shutdownHandler(null);
+
             LOG.info("Connection {} interrupted to server: {}:{}", getId(), transport.getHost(), transport.getPort());
             submitDisconnectionEvent(options.interruptedHandler(), transport.getHost(), transport.getPort(), failureCause);
 
@@ -739,12 +735,14 @@ public class ClientConnection implements Connection {
                 initializeProtonResources(remoteLocation);
                 scheduleReconnect(remoteLocation);
             } catch (ClientException initError) {
-                failConnection(ClientExceptionSupport.createOrPassthroughFatal(initError));
+                FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ClientExceptionSupport.createOrPassthroughFatal(initError));
+                this.engine.shutdown();  // Close down the engine created for reconnect
             } finally {
-                engine.shutdown();
+                engine.shutdown(); // Failed instance gets cleaned up.
             }
         } else {
-            failConnection(failureCause);
+            FAILURE_CAUSE_UPDATER.compareAndSet(this, null, failureCause);
+            engine.shutdown();
         }
     }
 
@@ -754,23 +752,33 @@ public class ClientConnection implements Connection {
      * with reconnect cases and avoid this event unless reconnect cannot proceed.
      */
     private void handleEngineShutdown(Engine engine) {
-        // Only handle this on normal shutdown failure will perform its own controlled shutdown
-        // and or reconnection logic which this method should avoid interfering with.
-        if (engine.failureCause() == null) {
-            try {
-                protonConnection.close();
-            } catch (Exception ignore) {
-            }
+        try {
+            protonConnection.close();
+        } catch (Exception ignore) {}
 
-            try {
-                transport.close();
-            } catch (Exception ignored) {}
+        try {
+            transport.close();
+        } catch (Exception ignore) {}
 
-            client.unregisterConnection(this);
+        ioContext.shutdownAsync();
 
+        if (failureCause != null)
+        {
+            openFuture.failed(failureCause);
+            closeFuture.complete(this);
+
+            LOG.warn("Connection {} has failed due to: {}", getId(), failureCause != null ?
+                    failureCause.getClass().getSimpleName() + " -> " + failureCause.getMessage() : "No failure details provided.");
+
+           submitDisconnectionEvent(options.disconnectedHandler(), transport.getHost(), transport.getPort(), failureCause);
+        }
+        else
+        {
             openFuture.complete(this);
             closeFuture.complete(this);
         }
+
+        client.unregisterConnection(this);
     }
 
     private void submitConnectionEvent(BiConsumer<Connection, ConnectionEvent> handler, String host, int port, ClientIOException cause) {
@@ -803,26 +811,6 @@ public class ClientConnection implements Connection {
                 LOG.trace("Error thrown while attempting to submit event notification ", ex);
             }
         }
-    }
-
-    private void failConnection(ClientIOException failureCause) {
-        FAILURE_CAUSE_UPDATER.compareAndSet(this, null, failureCause);
-
-        try {
-            protonConnection.close();
-        } catch (Exception ignore) {}
-
-        try {
-            engine.shutdown();
-        } catch (Exception ignore) {}
-
-        openFuture.failed(failureCause);
-        closeFuture.complete(this);
-
-        LOG.warn("Connection {} has failed due to: {}", getId(), failureCause != null ?
-                 failureCause.getClass().getSimpleName() + " -> " + failureCause.getMessage() : "No failure details provided.");
-
-        submitDisconnectionEvent(options.disconnectedHandler(), transport.getHost(), transport.getPort(), failureCause);
     }
 
     private Engine configureEngineSaslSupport() {
