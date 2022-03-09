@@ -628,11 +628,26 @@ class ClientSender implements Sender {
     }
 
     protected boolean notClosedOrFailed(ClientFuture<?> request) {
+        return notClosedOrFailed(request, protonSender);
+    }
+
+    protected boolean notClosedOrFailed(ClientFuture<?> request, org.apache.qpid.protonj2.engine.Sender sender) {
         if (isClosed()) {
             request.failed(new ClientIllegalStateException("The Sender was explicitly closed", failureCause));
             return false;
         } else if (failureCause != null) {
             request.failed(failureCause);
+            return false;
+        } else if (sender.isLocallyClosedOrDetached()) {
+            if (sender.getConnection().getRemoteCondition() != null) {
+                request.failed(ClientExceptionSupport.convertToConnectionClosedException(sender.getConnection().getRemoteCondition()));
+            } else if (sender.getSession().getRemoteCondition() != null) {
+                request.failed(ClientExceptionSupport.convertToSessionClosedException(sender.getSession().getRemoteCondition()));
+            } else if (sender.getEngine().failureCause() != null) {
+                request.failed(ClientExceptionSupport.convertToConnectionClosedException(sender.getEngine().failureCause()));
+            } else {
+                request.failed(new ClientIllegalStateException("Sender closed without a specific error condition"));
+            }
             return false;
         } else {
             return true;
