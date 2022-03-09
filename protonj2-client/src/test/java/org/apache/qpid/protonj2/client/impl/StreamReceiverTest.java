@@ -68,6 +68,7 @@ import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.DeliveryAnnotations;
+import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
@@ -3091,7 +3092,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         properties.setAbsoluteExpiryTime(Integer.MAX_VALUE);
         properties.setContentEncoding("utf8");
         properties.setContentType("text/plain");
-        properties.setCorrelationId(new byte[] { 1, 2, 3 });
+        properties.setCorrelationId(new Binary(new byte[] { 1, 2, 3 }));
         properties.setCreationTime(Short.MAX_VALUE);
         properties.setGroupId("Group");
         properties.setGroupSequence(UnsignedInteger.MAX_VALUE.longValue());
@@ -3148,7 +3149,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertEquals(Integer.MAX_VALUE, message.absoluteExpiryTime());
             assertEquals("utf8", message.contentEncoding());
             assertEquals("text/plain", message.contentType());
-            assertArrayEquals(new byte[] { 1, 2, 3 }, (byte[]) message.correlationId());
+            assertEquals(new Binary(new byte[] { 1, 2, 3 }), message.correlationId());
             assertEquals("utf8", message.contentEncoding());
             assertEquals("utf8", message.contentEncoding());
             assertEquals("utf8", message.contentEncoding());

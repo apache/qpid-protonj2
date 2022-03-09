@@ -342,9 +342,26 @@ public class PropertiesTypeTest {
         assertTrue(properties.hasCorrelationId());
         assertNotNull(properties.getCorrelationId());
 
+        properties.setCorrelationId(UUID.randomUUID());
+        assertTrue(properties.hasCorrelationId());
+        assertNotNull(properties.getCorrelationId());
+
+        properties.setCorrelationId(new Binary(new byte[] { 1 }));
+        assertTrue(properties.hasCorrelationId());
+        assertNotNull(properties.getCorrelationId());
+
+        properties.setCorrelationId(UnsignedLong.ZERO);
+        assertTrue(properties.hasCorrelationId());
+        assertNotNull(properties.getCorrelationId());
+
         properties.setCorrelationId(null);
         assertFalse(properties.hasCorrelationId());
         assertNull(properties.getCorrelationId());
+
+        try {
+            properties.setCorrelationId(new HashMap<String, String>());
+            fail("Not a valid CorrelationId type.");
+        } catch (IllegalArgumentException iae) {}
     }
 
     @Test

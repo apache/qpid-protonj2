@@ -259,7 +259,7 @@ public final class Properties implements Section<Properties> {
     }
 
     public Properties setCorrelationId(Object correlationId) {
-        validateIsMessageIdType(messageId);
+        validateIsMessageIdType(correlationId);
 
         if (correlationId == null) {
             modified &= ~CORRELATION_ID;
