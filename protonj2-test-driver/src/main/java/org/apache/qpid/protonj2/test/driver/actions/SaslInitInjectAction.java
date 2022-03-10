@@ -43,12 +43,12 @@ public class SaslInitInjectAction extends AbstractSaslPerformativeInjectAction<S
         return this;
     }
 
-    public SaslInitInjectAction withMechanism(byte[] response) {
+    public SaslInitInjectAction withInitialResponse(byte[] response) {
         saslInit.setInitialResponse(new Binary(response));
         return this;
     }
 
-    public SaslInitInjectAction withMechanism(Binary response) {
+    public SaslInitInjectAction withInitialResponse(Binary response) {
         saslInit.setInitialResponse(response);
         return this;
     }

@@ -70,7 +70,7 @@ public class ProtonFrameDecodingHandlerTest {
     @Test
     public void testReadValidHeaderInSingleByteChunks() throws Exception {
         ProtonFrameDecodingHandler handler = createFrameDecoder();
-        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'A' }));
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'M' }));
@@ -82,16 +82,30 @@ public class ProtonFrameDecodingHandlerTest {
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0 }));
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         Mockito.verifyNoMoreInteractions(context);
     }
 
     @Test
     public void testReadValidHeaderInSplitChunks() throws Exception {
         ProtonFrameDecodingHandler handler = createFrameDecoder();
-        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'A', 'M', 'Q', 'P' }));
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 0, 0 }));
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
+        Mockito.verifyNoMoreInteractions(context);
+    }
+
+    @Test
+    public void testReadOfSaslHeaderDoesNotDisableWritesMonitoring() throws Exception {
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
+
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'A', 'M', 'Q', 'P' }));
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 3, 1, 0, 0 }));
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
         Mockito.verifyNoMoreInteractions(context);
@@ -145,12 +159,13 @@ public class ProtonFrameDecodingHandlerTest {
         ArgumentCaptor<IncomingAMQPEnvelope> argument = ArgumentCaptor.forClass(IncomingAMQPEnvelope.class);
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
-        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(emptyOpen));
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         Mockito.verify(context).fireRead(argument.capture());
         Mockito.verifyNoMoreInteractions(context);
 
@@ -183,9 +198,10 @@ public class ProtonFrameDecodingHandlerTest {
         ArgumentCaptor<IncomingAMQPEnvelope> argument = ArgumentCaptor.forClass(IncomingAMQPEnvelope.class);
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
-        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen));
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
@@ -226,11 +242,12 @@ public class ProtonFrameDecodingHandlerTest {
         ArgumentCaptor<IncomingAMQPEnvelope> argument = ArgumentCaptor.forClass(IncomingAMQPEnvelope.class);
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
-        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen));
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         Mockito.verify(context).fireRead(argument.capture());
         Mockito.verifyNoMoreInteractions(context);
 
@@ -265,11 +282,12 @@ public class ProtonFrameDecodingHandlerTest {
         byte[] emptyFrame = new byte[] { (byte) 0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00 };
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
-        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         Mockito.verifyNoMoreInteractions(context);
 
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(emptyFrame));
@@ -293,11 +311,12 @@ public class ProtonFrameDecodingHandlerTest {
                                           (byte) 0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00 };
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
-        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         Mockito.verifyNoMoreInteractions(context);
 
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(emptyFrames));
@@ -324,11 +343,12 @@ public class ProtonFrameDecodingHandlerTest {
         byte[] undersizedFrameHeader = new byte[] { (byte) 0x00, 0x00, 0x00, 0x07, 0x02, 0x00, 0x00, 0x00 };
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
-        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         Mockito.verifyNoMoreInteractions(context);
 
         try {
@@ -352,11 +372,12 @@ public class ProtonFrameDecodingHandlerTest {
         byte[] underMinDoffFrameHeader = new byte[] { (byte) 0x00, 0x00, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00 };
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
-        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         Mockito.verifyNoMoreInteractions(context);
 
         try {
@@ -380,11 +401,12 @@ public class ProtonFrameDecodingHandlerTest {
         byte[] overFrameSizeDoffFrameHeader = new byte[] { (byte) 0x00, 0x00, 0x00, 0x08, 0x03, 0x00, 0x00, 0x00 };
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
-        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         Mockito.verifyNoMoreInteractions(context);
 
         try {
@@ -406,11 +428,12 @@ public class ProtonFrameDecodingHandlerTest {
         byte[] overFrameSizeLimitFrameHeader = new byte[] { (byte) 0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00 };
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
-        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         Mockito.verifyNoMoreInteractions(context);
 
         try {
@@ -431,7 +454,7 @@ public class ProtonFrameDecodingHandlerTest {
         ProtonEngine engine = Mockito.mock(ProtonEngine.class);
         Mockito.when(engine.configuration()).thenReturn(configuration);
         Mockito.when(engine.isWritable()).thenReturn(Boolean.TRUE);
-        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
         Mockito.when(context.engine()).thenReturn(engine);
 
         ProtonFrameDecodingHandler handler = new ProtonFrameDecodingHandler();

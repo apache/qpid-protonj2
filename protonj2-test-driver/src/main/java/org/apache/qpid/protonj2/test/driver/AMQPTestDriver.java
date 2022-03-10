@@ -288,6 +288,12 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
             }
 
             try {
+                // When the outcome of SASL is read the decoder should revert to initial state
+                // as the only valid next incoming value is an AMQP header.
+                if (sasl instanceof SaslOutcome) {
+                    frameParser.resetToExpectingHeader();
+                }
+
                 sasl.invoke(scriptEntry, frameSize, this);
             } catch (UnexpectedPerformativeError e) {
                 if (scriptEntry.isOptional()) {

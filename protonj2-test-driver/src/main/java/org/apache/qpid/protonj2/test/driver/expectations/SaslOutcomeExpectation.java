@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedByte;
 import org.apache.qpid.protonj2.test.driver.codec.security.SaslCode;
 import org.apache.qpid.protonj2.test.driver.codec.security.SaslOutcome;
 import org.apache.qpid.protonj2.test.driver.matchers.security.SaslOutcomeMatcher;
@@ -39,8 +40,12 @@ public class SaslOutcomeExpectation extends AbstractExpectation<SaslOutcome> {
 
     //----- Type specific with methods that perform simple equals checks
 
+    public SaslOutcomeExpectation withCode(byte code) {
+        return withCode(equalTo(UnsignedByte.valueOf(code)));
+    }
+
     public SaslOutcomeExpectation withCode(SaslCode code) {
-        return withCode(equalTo(code));
+        return withCode(equalTo(code.getValue()));
     }
 
     public SaslOutcomeExpectation withAdditionalData(byte[] additionalData) {

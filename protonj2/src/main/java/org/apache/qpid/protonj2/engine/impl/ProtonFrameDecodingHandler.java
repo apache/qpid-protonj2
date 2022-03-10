@@ -112,14 +112,12 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
     @Override
     public void handleRead(EngineHandlerContext context, SASLEnvelope envelope) {
         envelope.getBody().invoke(this, context);
-        ((ProtonEngineHandlerContext) context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         context.fireRead(envelope);
     }
 
     @Override
     public void handleWrite(EngineHandlerContext context, SASLEnvelope envelope) {
         envelope.invoke(this, context);
-        ((ProtonEngineHandlerContext) context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         context.fireWrite(envelope);
     }
 
@@ -210,7 +208,6 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 // Transition to parsing the frames if any pipelined into this buffer.
                 transitionToFrameSizeParsingStage();
 
-                // This probably isn't right as this fires to next not current.
                 if (header.isSaslHeader()) {
                     decoder = CodecFactory.getSaslDecoder();
                     decoderState = decoder.newDecoderState();
@@ -218,6 +215,10 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 } else {
                     decoder = CodecFactory.getDecoder();
                     decoderState = decoder.newDecoderState();
+                    // Once we've read an AMQP header we no longer care if any SASL work
+                    // occurs as that would be erroneous behavior which this handler doesn't
+                    // deal with.
+                    ((ProtonEngineHandlerContext) context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
                     context.fireRead(HeaderEnvelope.AMQP_HEADER_ENVELOPE);
                 }
             }
