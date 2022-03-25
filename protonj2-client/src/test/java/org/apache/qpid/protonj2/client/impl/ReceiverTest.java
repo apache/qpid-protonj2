@@ -2680,8 +2680,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
           peer.waitForScriptToComplete();
           if (autoAccept)
           {
-              peer.expectDisposition();
-              peer.expectDisposition();
+              peer.expectDisposition().withFirst(0);
+              peer.expectDisposition().withFirst(1);
           }
 
           // Consume messages 1 and 2 which should not provoke credit replenishment
@@ -2692,7 +2692,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
           peer.waitForScriptToComplete();
           if (autoAccept)
           {
-              peer.expectDisposition();
+              peer.expectDisposition().withFirst(2);
           }
           peer.expectFlow().withLinkCredit(3);
 
@@ -2703,8 +2703,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
           peer.waitForScriptToComplete();
           if (autoAccept)
           {
-              peer.expectDisposition();
-              peer.expectDisposition();
+              peer.expectDisposition().withFirst(3);
+              peer.expectDisposition().withFirst(4);
           }
 
           // Consume messages 4 and 5 which should not provoke credit replenishment
@@ -2716,7 +2716,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
           peer.waitForScriptToComplete();
           if (autoAccept)
           {
-              peer.expectDisposition();
+              peer.expectDisposition().withFirst(5);
           }
           peer.expectFlow().withLinkCredit(6);
 
@@ -2729,8 +2729,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
           peer.waitForScriptToComplete();
           if (autoAccept)
           {
-              peer.expectDisposition();
-              peer.expectDisposition();
+              peer.expectDisposition().withFirst(6);
+              peer.expectDisposition().withFirst(7);
           }
 
           // Consume deliveries 7 and 8 which should not flow as we should be
@@ -2742,8 +2742,8 @@ public class ReceiverTest extends ImperativeClientTestCase {
           peer.waitForScriptToComplete();
           if (autoAccept)
           {
-              peer.expectDisposition();
-              peer.expectDisposition();
+              peer.expectDisposition().withFirst(8);
+              peer.expectDisposition().withFirst(9);
           }
 
           // Now consume 9 and 10 but we still shouldn't flow more credit because

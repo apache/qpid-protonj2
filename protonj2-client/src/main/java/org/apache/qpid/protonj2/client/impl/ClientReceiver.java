@@ -41,6 +41,7 @@ import org.apache.qpid.protonj2.client.util.FifoDeliveryQueue;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
 import org.slf4j.Logger;
@@ -146,7 +147,7 @@ public final class ClientReceiver implements Receiver {
             ClientDelivery delivery = messageQueue.dequeue(units.toMillis(timeout));
             if (delivery != null) {
                 if (options.autoAccept()) {
-                    delivery.disposition(org.apache.qpid.protonj2.client.DeliveryState.accepted(), options.autoSettle());
+                    asyncApplyDisposition(delivery.protonDelivery(), Accepted.getInstance(), options.autoSettle());
                 } else {
                     asyncReplenishCreditIfNeeded();
                 }
