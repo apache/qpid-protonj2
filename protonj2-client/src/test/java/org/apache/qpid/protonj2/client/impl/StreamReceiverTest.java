@@ -516,7 +516,8 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             final Client container = Client.create();
             final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamReceiverOptions options = new StreamReceiverOptions().autoAccept(false);
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue", options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
@@ -574,6 +575,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectBegin().respond();
             peer.expectAttach().ofSender().respond();
+            peer.expectDisposition().withState().accepted().withSettled(true);
 
             // Ensures that stream receiver has the delivery in its queue.
             connection.openSender("test-sender").openFuture().get();
@@ -632,6 +634,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertFalse(delivery.completed());
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDisposition().withSettled(true);
 
             peer.remoteTransfer().withHandle(0)
                                  .withDeliveryId(0)
@@ -728,6 +731,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                  .withMore(false)
                                  .withMessageFormat(0)
                                  .withPayload(payload).queue();
+            peer.expectDisposition().withState().accepted().withSettled(true);
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -1207,9 +1211,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             // An initial frame has arrived but no reads have been performed and then if closed
             // the delivery will be consumed to allow the session window to be opened and prevent
-            // a stall due to an un-consumed delivery.  The stream delivery will not auto accept
-            // or auto settle the delivery as the user closed early which should indicate they
-            // are rejecting the message otherwise it is a programming error on their part.
+            // a stall due to an un-consumed delivery.
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectFlow().withDeliveryCount(0).withIncomingWindow(1).withLinkCredit(10);
             peer.remoteTransfer().withHandle(0)
@@ -1218,6 +1220,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                  .withMessageFormat(0)
                                  .withPayload(payload2).queue();
             peer.expectFlow().withDeliveryCount(1).withIncomingWindow(1).withLinkCredit(9);
+            peer.expectDisposition().withSettled(true).withState().accepted();
 
             rawStream.close();
 
@@ -1262,7 +1265,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             Client container = Client.create();
             ConnectionOptions connectionOptions = new ConnectionOptions().maxFrameSize(1000);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions);
-            StreamReceiverOptions streamOptions = new StreamReceiverOptions().readBufferSize(2000);
+            StreamReceiverOptions streamOptions = new StreamReceiverOptions().readBufferSize(2000).autoAccept(false);
             StreamReceiver receiver = connection.openStreamReceiver("test-queue", streamOptions);
             StreamDelivery delivery = receiver.receive();
             assertNotNull(delivery);
@@ -1508,6 +1511,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                  .withMore(false)
                                  .withMessageFormat(0)
                                  .withPayload(payload).queue();
+            peer.expectDisposition().withSettled(true).withState().accepted();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -2270,6 +2274,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                  .withMore(false)
                                  .withMessageFormat(0)
                                  .withPayload(payload2).queue();
+            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
 
             InputStream bodyStream = message.body();
             assertNotNull(bodyStream);
@@ -2279,7 +2284,6 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             // mode and there is nothing more to read.
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectFlow().withDeliveryCount(1).withIncomingWindow(1).withLinkCredit(9);
-            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
 
             byte[] combinedPayloads = new byte[body1.length + body2.length];
             bodyStream.read(combinedPayloads);
@@ -2340,7 +2344,9 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             // Creating the input stream instance should read the first chunk of data from the incoming
             // delivery which should result in a new credit being available to expand the session window.
             // An additional transfer should be placed into the delivery buffer but not yet read since
-            // the user hasn't read anything.
+            // the user hasn't read anything. Since we are in auto settle the completed transfer should
+            // trigger settlement and also open the credit window but the session window should not be
+            // expanded since we haven't read the data yet.
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectFlow().withDeliveryCount(0).withIncomingWindow(1).withLinkCredit(1);
             peer.remoteTransfer().withHandle(0)
@@ -2348,20 +2354,23 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                  .withMore(false)
                                  .withMessageFormat(0)
                                  .withPayload(payload2).queue();
+            peer.expectDisposition().withSettled(true).withState().accepted();
+            peer.expectFlow().withDeliveryCount(1).withIncomingWindow(0).withLinkCredit(1);
 
             InputStream bodyStream = message.body();
             assertNotNull(bodyStream);
 
-            // Once the read of all data completes the session window should be opened and the
-            // stream should mark the delivery as accepted and settled since we are in auto settle
-            // mode and there is nothing more to read.
+            // Once the read of all data completes the session window should be opened
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectFlow().withDeliveryCount(1).withIncomingWindow(1).withLinkCredit(0);
-            peer.expectDisposition().withFirst(0).withState().accepted().withSettled(true);
             peer.expectFlow().withDeliveryCount(1).withIncomingWindow(1).withLinkCredit(1);
 
             byte[] combinedPayloads = new byte[body1.length + body2.length];
             bodyStream.read(combinedPayloads);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            // No frames should be triggered by closing the stream since we already auto settled
+            // and updated the session window on the remote.
 
             assertTrue(Arrays.equals(body1, 0, body1.length, combinedPayloads, 0, body1.length));
             assertTrue(Arrays.equals(body2, 0, body2.length, combinedPayloads, body1.length, body1.length + body2.length));
@@ -2412,7 +2421,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             Client container = Client.create();
             ConnectionOptions connectionOptions = new ConnectionOptions().maxFrameSize(1000);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions);
-            StreamReceiverOptions streamOptions = new StreamReceiverOptions().readBufferSize(2000);
+            StreamReceiverOptions streamOptions = new StreamReceiverOptions().readBufferSize(2000).autoAccept(false);
             StreamReceiver receiver = connection.openStreamReceiver("test-queue", streamOptions);
             StreamDelivery delivery = receiver.receive();
             assertNotNull(delivery);
@@ -2467,6 +2476,8 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                 assertEquals(value, "test");
             });
 
+            delivery.accept();
+
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDetach().respond();
             peer.expectEnd().respond();
@@ -2498,11 +2509,6 @@ class StreamReceiverTest extends ImperativeClientTestCase {
                                  .withMore(false)
                                  .withMessageFormat(0)
                                  .withPayload(payload).queue();
-            peer.expectCoordinatorAttach().respond();
-            peer.remoteFlow().withLinkCredit(2).queue();
-            peer.expectDeclare().accept(txnId);
-            peer.expectDisposition().withSettled(true).withState().transactional().withTxnId(txnId).withAccepted();
-            peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -2512,9 +2518,17 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             final Client container = Client.create();
             final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
-            final StreamDelivery delivery = receiver.receive();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept(txnId);
+            peer.expectDisposition().withSettled(true).withState().transactional().withTxnId(txnId).withAccepted();
+            peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
 
             receiver.session().beginTransaction();
+
+            final StreamDelivery delivery = receiver.receive();
 
             assertNotNull(delivery);
             assertTrue(delivery.completed());
@@ -2539,6 +2553,8 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             assertEquals(-1, bodyStream.read());
 
             receiver.session().commitTransaction();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             peer.expectDetach().respond();
             peer.expectEnd().respond();
@@ -2575,7 +2591,8 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             final Client container = Client.create();
             final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamReceiverOptions options = new StreamReceiverOptions().autoAccept(false);
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue", options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDisposition().withState().rejected("decode-error", "failed reading message header");
@@ -2623,7 +2640,8 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             final Client container = Client.create();
             final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamReceiverOptions options = new StreamReceiverOptions().autoAccept(false);
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue", options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDisposition().withState().rejected("decode-error", "failed reading message header");
@@ -2671,7 +2689,8 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             final Client container = Client.create();
             final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamReceiverOptions options = new StreamReceiverOptions().autoAccept(false);
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue", options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDisposition().withState().rejected("decode-error", "failed reading message header");
@@ -2719,7 +2738,8 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             final Client container = Client.create();
             final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamReceiverOptions options = new StreamReceiverOptions().autoAccept(false);
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue", options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDisposition().withState().rejected("decode-error", "failed reading message header");
@@ -2767,7 +2787,8 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             final Client container = Client.create();
             final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamReceiverOptions options = new StreamReceiverOptions().autoAccept(false);
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue", options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDisposition().withState().rejected("decode-error", "failed reading message header");
@@ -2815,7 +2836,8 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             final Client container = Client.create();
             final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            final StreamReceiver receiver = connection.openStreamReceiver("test-queue");
+            final StreamReceiverOptions options = new StreamReceiverOptions().autoAccept(false);
+            final StreamReceiver receiver = connection.openStreamReceiver("test-queue", options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDisposition().withState().rejected("decode-error", "failed reading message header");
@@ -3705,6 +3727,131 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
+    }
+
+    @Test
+    public void testReceiverCreditReplenishedAfterSyncReceiveAutoAccept() throws Exception {
+       doTestReceiverCreditReplenishedAfterSyncReceive(true);
+    }
+
+    @Test
+    public void testReceiverCreditReplenishedAfterSyncReceiveManualAccept() throws Exception {
+       doTestReceiverCreditReplenishedAfterSyncReceive(false);
+    }
+
+    public void doTestReceiverCreditReplenishedAfterSyncReceive(boolean autoAccept) throws Exception {
+       byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+       try (ProtonTestServer peer = new ProtonTestServer()) {
+          peer.expectSASLAnonymousConnect();
+          peer.expectOpen().respond();
+          peer.expectBegin().respond();
+          peer.expectAttach().ofReceiver().respond();
+          peer.expectFlow().withLinkCredit(10);
+          for (int i = 0; i < 10; ++i) {
+             peer.remoteTransfer().withDeliveryId(i)
+                                  .withMore(false)
+                                  .withMessageFormat(0)
+                                  .withPayload(payload).queue();
+          }
+          peer.start();
+
+          URI remoteURI = peer.getServerURI();
+
+          LOG.info("Test started, peer listening on: {}", remoteURI);
+
+          Client container = Client.create();
+          Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+          StreamReceiverOptions options = new StreamReceiverOptions();
+          options.autoAccept(autoAccept);
+          options.creditWindow(10);
+
+          StreamReceiver receiver = connection.openStreamReceiver("test-receiver", options);
+
+          Wait.waitFor(() -> receiver.queuedDeliveries() == 10);
+
+          peer.waitForScriptToComplete();
+          if (autoAccept)
+          {
+              peer.expectDisposition();
+              peer.expectDisposition();
+          }
+
+          // Consume messages 1 and 2 which should not provoke credit replenishment
+          // as there are still 8 outstanding which is above the 70% mark
+          assertNotNull(receiver.receive()); // #1
+          assertNotNull(receiver.receive()); // #2
+
+          peer.waitForScriptToComplete();
+          if (autoAccept)
+          {
+              peer.expectDisposition();
+          }
+          peer.expectFlow().withLinkCredit(3);
+
+          // Now consume message 3 which will trip the replenish barrier and the
+          // credit should be updated to reflect that we still have 7 queued
+          assertNotNull(receiver.receive());  // #3
+
+          peer.waitForScriptToComplete();
+          if (autoAccept)
+          {
+              peer.expectDisposition();
+              peer.expectDisposition();
+          }
+
+          // Consume messages 4 and 5 which should not provoke credit replenishment
+          // as there are still 5 outstanding plus the credit we sent last time
+          // which is above the 70% mark
+          assertNotNull(receiver.receive()); // #4
+          assertNotNull(receiver.receive()); // #5
+
+          peer.waitForScriptToComplete();
+          if (autoAccept)
+          {
+              peer.expectDisposition();
+          }
+          peer.expectFlow().withLinkCredit(6);
+
+          // Consume number 6 which means we only have 4 outstanding plus the three
+          // that we sent last time we flowed which is 70% of possible prefetch so
+          // we should flow to top off credit which would be 6 since we have four
+          // still pending
+          assertNotNull(receiver.receive()); // #6
+
+          peer.waitForScriptToComplete();
+          if (autoAccept)
+          {
+              peer.expectDisposition();
+              peer.expectDisposition();
+          }
+
+          // Consume deliveries 7 and 8 which should not flow as we should be
+          // above the threshold of 70% since we would now have 2 outstanding
+          // and 6 credits on the link
+          assertNotNull(receiver.receive()); // #7
+          assertNotNull(receiver.receive()); // #8
+
+          peer.waitForScriptToComplete();
+          if (autoAccept)
+          {
+              peer.expectDisposition();
+              peer.expectDisposition();
+          }
+
+          // Now consume 9 and 10 but we still shouldn't flow more credit because
+          // the link credit is above the 50% mark for overall credit windowing.
+          assertNotNull(receiver.receive()); // #9
+          assertNotNull(receiver.receive()); // #10
+
+          peer.waitForScriptToComplete();
+
+          peer.expectClose().respond();
+          connection.close();
+
+          peer.waitForScriptToComplete();
+       }
     }
 
     private byte[] createInvalidHeaderEncoding() {

@@ -240,6 +240,7 @@ public final class ClientStreamReceiver implements StreamReceiver {
                     }
                 } else {
                     receive.complete(new ClientStreamDelivery(this, delivery));
+                    asyncReplenishCreditIfNeeded();
                 }
             }
         });
@@ -555,6 +556,7 @@ public final class ClientStreamReceiver implements StreamReceiver {
                     entry.getKey().complete(new ClientStreamDelivery(this, delivery));
                 } finally {
                     entries.remove();
+                    asyncReplenishCreditIfNeeded();
                 }
             }
         }
@@ -598,12 +600,21 @@ public final class ClientStreamReceiver implements StreamReceiver {
         });
     }
 
+    private void asyncReplenishCreditIfNeeded() {
+        int creditWindow = options.creditWindow();
+        if (creditWindow > 0) {
+            executor.execute(() -> replenishCreditIfNeeded());
+        }
+    }
+
     private void replenishCreditIfNeeded() {
         int creditWindow = options.creditWindow();
         if (creditWindow > 0) {
             int currentCredit = protonReceiver.getCredit();
             if (currentCredit <= creditWindow * 0.5) {
-                int potentialPrefetch = currentCredit + protonReceiver.unsettled().size();
+                //int potentialPrefetch = currentCredit + protonReceiver.unsettled().size();
+                int potentialPrefetch = currentCredit +
+                    (int)protonReceiver.unsettled().stream().filter((delivery) -> delivery.getLinkedResource() == null).count();
 
                 if (potentialPrefetch <= creditWindow * 0.7) {
                     int additionalCredit = creditWindow - potentialPrefetch;

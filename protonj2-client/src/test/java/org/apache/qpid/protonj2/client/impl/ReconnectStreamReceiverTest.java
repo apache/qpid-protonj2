@@ -68,6 +68,7 @@ class ReconnectStreamReceiverTest extends ImperativeClientTestCase {
                                       .withMore(false)
                                       .withMessageFormat(0)
                                       .withPayload(payload).queue();
+            finalPeer.expectDisposition().withSettled(true).withState().accepted();
             finalPeer.start();
 
             final URI primaryURI = firstPeer.getServerURI();

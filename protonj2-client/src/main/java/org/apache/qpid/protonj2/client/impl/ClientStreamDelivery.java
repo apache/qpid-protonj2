@@ -61,6 +61,9 @@ public final class ClientStreamDelivery implements StreamDelivery {
         this.receiver = receiver;
         this.protonDelivery = protonDelivery.setLinkedResource(this);
 
+        // Already fully received delivery could be settled now
+        autoAcceptDeliveryIfNecessary();
+
         // Capture inbound events and route to an active stream or message
         protonDelivery.deliveryReadHandler(this::handleDeliveryRead)
                       .deliveryAbortedHandler(this::handleDeliveryAborted);
@@ -184,20 +187,43 @@ public final class ClientStreamDelivery implements StreamDelivery {
     //----- Event Handlers for Delivery updates
 
     void handleDeliveryRead(IncomingDelivery delivery) {
-        if (rawInputStream != null) {
-            rawInputStream.handleDeliveryRead(delivery);
+        try {
+            if (rawInputStream != null) {
+                rawInputStream.handleDeliveryRead(delivery);
+            }
+        } finally {
+            autoAcceptDeliveryIfNecessary();
         }
     }
 
     void handleDeliveryAborted(IncomingDelivery delivery) {
-        if (rawInputStream != null) {
-            rawInputStream.handleDeliveryAborted(delivery);
+        try {
+            if (rawInputStream != null) {
+                rawInputStream.handleDeliveryAborted(delivery);
+            }
+        } finally {
+            try {
+                receiver.disposition(delivery, null, true);
+            } catch (Exception error) {
+            }
         }
     }
 
     void handleReceiverClosed(ClientStreamReceiver receiver) {
         if (rawInputStream != null) {
             rawInputStream.handleReceiverClosed(receiver);
+        }
+    }
+
+    //----- Private stream delivery API
+
+    private void autoAcceptDeliveryIfNecessary() {
+        if (receiver.receiverOptions().autoAccept() && !protonDelivery.isSettled() && !protonDelivery.isPartial()) {
+            try {
+                receiver.disposition(protonDelivery, Accepted.getInstance(), receiver.receiverOptions().autoSettle());
+            } catch (Exception error) {
+                LOG.trace("Caught error while attempting to auto accept the fully read delivery.", error);
+            }
         }
     }
 
@@ -226,8 +252,6 @@ public final class ClientStreamDelivery implements StreamDelivery {
 
                 try {
                     executor.execute(() -> {
-                        autoAcceptDeliveryIfNecessary();
-
                         // If the deliver wasn't fully read either because there are remaining
                         // bytes locally we need to discard those to aid in retention avoidance.
                         // and to potentially open the session window to allow for fully reading
@@ -417,7 +441,6 @@ public final class ClientStreamDelivery implements StreamDelivery {
                         buffer.append(protonDelivery.readAll());
                         readRequest.complete(buffer.getReadableBytes());
                     } else if (!delivery.isPartial()) {
-                        autoAcceptDeliveryIfNecessary();
                         readRequest.complete(-1);
                     }
 
@@ -430,8 +453,6 @@ public final class ClientStreamDelivery implements StreamDelivery {
             if (readRequest != null) {
                 readRequest.failed(new ClientDeliveryAbortedException("The remote sender has aborted this delivery"));
             }
-
-            delivery.settle();
         }
 
         private void handleReceiverClosed(ClientStreamReceiver receiver) {
@@ -453,7 +474,6 @@ public final class ClientStreamDelivery implements StreamDelivery {
                     } else if (protonDelivery.isAborted()) {
                         request.failed(new ClientDeliveryAbortedException("The remote sender has aborted this delivery"));
                     } else if (!protonDelivery.isPartial()) {
-                        autoAcceptDeliveryIfNecessary();
                         request.complete(-1);
                     } else {
                         readRequest = request;
@@ -463,20 +483,6 @@ public final class ClientStreamDelivery implements StreamDelivery {
                 return receiver.session().request(receiver, request);
             } catch (Exception e) {
                 throw new IOException("Error reading requested data", e);
-            }
-        }
-
-        private void autoAcceptDeliveryIfNecessary() {
-            if (receiver.receiverOptions().autoAccept() && !protonDelivery.isSettled()) {
-                if (!buffer.isReadable() && protonDelivery.available() == 0 &&
-                    (protonDelivery.isAborted() || !protonDelivery.isPartial())) {
-
-                    try {
-                        receiver.disposition(protonDelivery, Accepted.getInstance(), receiver.receiverOptions().autoSettle());
-                    } catch (Exception error) {
-                        LOG.trace("Caught error while attempting to auto accept the fully read delivery.", error);
-                    }
-                }
             }
         }
 
