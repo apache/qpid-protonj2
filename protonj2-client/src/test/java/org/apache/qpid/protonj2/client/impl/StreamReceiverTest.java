@@ -2217,6 +2217,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             assertArrayEquals(regeneratedPayload, receivedBody);
 
+            bodyStream.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
             peer.expectDetach().respond();
             peer.expectEnd().respond();
             peer.expectClose().respond();
