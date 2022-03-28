@@ -258,6 +258,13 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         return deliveryUpdatedEventHandler;
     }
 
+    @Override
+    public String toString() {
+        return "ProtonOutgoingDelivery { " +
+                "deliveryId = " + deliveryId + ", " +
+                "deliveryTag = " + deliveryTag + " };";
+    }
+
     //----- Internal methods meant only for use by Proton resources
 
     private void tryRetireDeliveryTag() {

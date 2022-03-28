@@ -2690,11 +2690,16 @@ public class ReceiverTest extends ImperativeClientTestCase {
           assertNotNull(receiver.receive()); // #2
 
           peer.waitForScriptToComplete();
+          peer.expectAttach().ofSender().respond();
+          peer.expectDetach().respond();
           if (autoAccept)
           {
               peer.expectDisposition().withFirst(2);
           }
           peer.expectFlow().withLinkCredit(3);
+
+          // Ensure that no additional frames from last receive overlap with this one
+          connection.openSender("test").openFuture().get().close();
 
           // Now consume message 3 which will trip the replenish barrier and the
           // credit should be updated to reflect that we still have 7 queued
@@ -2714,11 +2719,16 @@ public class ReceiverTest extends ImperativeClientTestCase {
           assertNotNull(receiver.receive()); // #5
 
           peer.waitForScriptToComplete();
+          peer.expectAttach().ofSender().respond();
+          peer.expectDetach().respond();
           if (autoAccept)
           {
               peer.expectDisposition().withFirst(5);
           }
           peer.expectFlow().withLinkCredit(6);
+
+          // Ensure that no additional frames from last receive overlap with this one
+          connection.openSender("test").openFuture().get().close();
 
           // Consume number 6 which means we only have 4 outstanding plus the three
           // that we sent last time we flowed which is 70% of possible prefetch so

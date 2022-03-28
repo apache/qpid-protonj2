@@ -57,12 +57,9 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     private EventHandler<IncomingDelivery> deliveryUpdatedEventHandler = null;
 
     /**
-     * @param link
-     *      The link that this delivery is associated with
-     * @param deliveryId
-     *      The Delivery Id that is assigned to this delivery.
-     * @param deliveryTag
-     *      The delivery tag assigned to this delivery
+     * @param link        The link that this delivery is associated with
+     * @param deliveryId  The Delivery Id that is assigned to this delivery.
+     * @param deliveryTag The delivery tag assigned to this delivery
      */
     public ProtonIncomingDelivery(ProtonReceiver link, long deliveryId, DeliveryTag deliveryTag) {
         this.deliveryId = deliveryId;
@@ -180,7 +177,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
         return disposition(localState, true);
     }
 
-    //----- Payload access
+    // ----- Payload access
 
     @Override
     public int available() {
@@ -259,7 +256,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
         return this;
     }
 
-    //----- Incoming Delivery event handlers
+    // ----- Incoming Delivery event handlers
 
     @Override
     public ProtonIncomingDelivery deliveryReadHandler(EventHandler<IncomingDelivery> handler) {
@@ -291,7 +288,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
         return deliveryUpdatedEventHandler;
     }
 
-    //----- Internal methods to manage the Delivery
+    // ----- Internal methods to manage the Delivery
 
     @Override
     public int getTransferCount() {
@@ -364,5 +361,12 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
         }
 
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "ProtonIncomingDelivery { " +
+                    "deliveryId = " + deliveryId + ", " +
+                    "deliveryTag = " + deliveryTag + " };";
     }
 }
