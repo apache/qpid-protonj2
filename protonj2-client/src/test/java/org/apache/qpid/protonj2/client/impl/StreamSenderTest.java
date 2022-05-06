@@ -1751,7 +1751,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.expectClose().respond();
 
             assertNotNull(message.tracker());
-            assertFalse(message.tracker().settlementFuture().isDone());
+            Wait.assertTrue(() -> message.tracker().settlementFuture().isDone());
             assertTrue(message.tracker().settlementFuture().get().settled());
 
             sender.closeAsync().get(10, TimeUnit.SECONDS);

@@ -51,8 +51,6 @@ public interface StreamDelivery {
      * @return a {@link Message} instance that wraps the decoded payload.
      *
      * @throws ClientException if an error occurs while decoding the payload.
-     *
-     * @param <E> The type of message body that should be contained in the returned {@link Message}.
      */
     StreamReceiverMessage message() throws ClientException;
 
