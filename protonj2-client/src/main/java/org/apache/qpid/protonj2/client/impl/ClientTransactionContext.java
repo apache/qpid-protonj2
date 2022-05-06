@@ -30,6 +30,31 @@ import org.apache.qpid.protonj2.types.transport.DeliveryState;
  */
 public interface ClientTransactionContext {
 
+    public interface Sendable {
+
+        /**
+         * Performs the actual send of delivery data which might be enlisted in a transaction
+         * or may simply be a passed through based on the context and its state. The sender need
+         * not be aware of this though as the context will provide a delivery state that is
+         * appropriate for this send which would encapsulate any sender provided delivery state.
+         *
+         * @param state
+         * 		Sender provided delivery state or context decorated version.
+         * @param settled
+         * 		If the send should be sent settled or not.
+         */
+        void send(DeliveryState state, boolean settled);
+
+        /**
+         * If the context that is overseeing this send is in a failed state it can request that
+         * the send be discarded without notification to the sender that it failed, this occurs
+         * most often in an in-doubt transaction context where all work will be dropped once the
+         * user attempt to retire the transaction.
+         */
+        void discard();
+
+    }
+
     /**
      * Begin a new transaction if one is not already in play.
      *
@@ -86,7 +111,7 @@ public interface ClientTransactionContext {
      * in a roll-back only state.  If the transaction is failed the context should discard the
      * envelope which should appear to the caller as if the send was successful.
      *
-     * @param envelope
+     * @param sendable
      *      The envelope containing the details and mechanisms for sending the message.
      * @param state
      *      The delivery state that is being applied as the outcome of the delivery.
@@ -95,7 +120,7 @@ public interface ClientTransactionContext {
      *
      * @return this {@link ClientTransactionContext} instance.
      */
-    ClientTransactionContext send(ClientOutgoingEnvelope envelope, DeliveryState state, boolean settled);
+    ClientTransactionContext send(Sendable sendable, DeliveryState state, boolean settled);
 
     /**
      * Apply a disposition to the given delivery wrapping it with a {@link TransactionalState} outcome

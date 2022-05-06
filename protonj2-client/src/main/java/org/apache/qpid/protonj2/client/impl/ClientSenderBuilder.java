@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.client.impl;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.qpid.protonj2.client.LinkOptions;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.SessionOptions;
 import org.apache.qpid.protonj2.client.SourceOptions;
@@ -78,7 +79,7 @@ final class ClientSenderBuilder {
         return new ClientStreamSender(session, options, senderId, protonSender);
     }
 
-    private static Sender createSender(Session protonSession, String address, SenderOptions options, String senderId) {
+    private static Sender createSender(Session protonSession, String address, LinkOptions<?> options, String senderId) {
         final String linkName;
 
         if (options.linkName() != null) {
@@ -116,7 +117,7 @@ final class ClientSenderBuilder {
         return protonSender;
     }
 
-    private static Source createSource(String address, SenderOptions options) {
+    private static Source createSource(String address, LinkOptions<?> options) {
         final SourceOptions sourceOptions = options.sourceOptions();
         final Source source = new Source();
 
@@ -151,7 +152,7 @@ final class ClientSenderBuilder {
         return source;
     }
 
-    private static Target createTarget(String address, SenderOptions options) {
+    private static Target createTarget(String address, LinkOptions<?> options) {
         final TargetOptions targetOptions = options.targetOptions();
         final Target target = new Target();
 
@@ -171,7 +172,7 @@ final class ClientSenderBuilder {
         return target;
     }
 
-    public static Sender recreateSender(ClientSession session, Sender previousSender, SenderOptions options) {
+    public static Sender recreateSender(ClientSession session, Sender previousSender, LinkOptions<?> options) {
         final Sender protonSender = session.getProtonSession().sender(previousSender.getName());
 
         protonSender.setSource(previousSender.getSource());

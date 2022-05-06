@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.client.impl;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.qpid.protonj2.client.LinkOptions;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.SessionOptions;
 import org.apache.qpid.protonj2.client.SourceOptions;
@@ -105,7 +106,7 @@ final class ClientReceiverBuilder {
         return new ClientStreamReceiver(session, options, receiverId, protonReceiver);
     }
 
-    public static Receiver recreateReceiver(ClientSession session, Receiver previousReceiver, ReceiverOptions options) {
+    public static Receiver recreateReceiver(ClientSession session, Receiver previousReceiver, LinkOptions<?> options) {
         final Receiver protonReceiver = session.getProtonSession().receiver(previousReceiver.getName());
 
         protonReceiver.setSource(previousReceiver.getSource());
@@ -129,7 +130,7 @@ final class ClientReceiverBuilder {
         return session.id() + ":" + receiverCounter.incrementAndGet();
     }
 
-    private Receiver createReceiver(String address, ReceiverOptions options, String receiverId) {
+    private Receiver createReceiver(String address, LinkOptions<?> options, String receiverId) {
         final String linkName;
 
         if (options.linkName() != null) {
@@ -159,7 +160,7 @@ final class ClientReceiverBuilder {
         return protonReceiver;
     }
 
-    private Source createSource(String address, ReceiverOptions options) {
+    private Source createSource(String address, LinkOptions<?> options) {
         final SourceOptions sourceOptions = options.sourceOptions();
 
         Source source = new Source();
@@ -195,7 +196,7 @@ final class ClientReceiverBuilder {
         return source;
     }
 
-    private Source createDurableSource(String address, ReceiverOptions options) {
+    private Source createDurableSource(String address, LinkOptions<?> options) {
         final SourceOptions sourceOptions = options.sourceOptions();
         final Source source = new Source();
 
@@ -217,7 +218,7 @@ final class ClientReceiverBuilder {
         return source;
     }
 
-    private Target createTarget(String address, ReceiverOptions options) {
+    private Target createTarget(String address, LinkOptions<?> options) {
         final TargetOptions targetOptions = options.targetOptions();
         final Target target = new Target();
 

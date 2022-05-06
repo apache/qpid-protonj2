@@ -354,23 +354,23 @@ public class ClientSession implements Session {
     //----- Internal resource open APIs expected to be called from the connection event loop
 
     ClientReceiver internalOpenReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
-        return receiverBuilder.receiver(address, receiverOptions).open();
+        return (ClientReceiver) receiverBuilder.receiver(address, receiverOptions).open();
     }
 
     ClientStreamReceiver internalOpenStreamReceiver(String address, StreamReceiverOptions receiverOptions) throws ClientException {
-        return receiverBuilder.streamReceiver(address, receiverOptions).open();
+        return (ClientStreamReceiver) receiverBuilder.streamReceiver(address, receiverOptions).open();
     }
 
     ClientReceiver internalOpenDurableReceiver(String address, String subscriptionName, ReceiverOptions receiverOptions) throws ClientException {
-        return receiverBuilder.durableReceiver(address, subscriptionName, receiverOptions).open();
+        return (ClientReceiver) receiverBuilder.durableReceiver(address, subscriptionName, receiverOptions).open();
     }
 
     ClientReceiver internalOpenDynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException {
-        return receiverBuilder.dynamicReceiver(dynamicNodeProperties, receiverOptions).open();
+        return (ClientReceiver) receiverBuilder.dynamicReceiver(dynamicNodeProperties, receiverOptions).open();
     }
 
     ClientSender internalOpenSender(String address, SenderOptions senderOptions) throws ClientException {
-        return senderBuilder.sender(address, senderOptions).open();
+        return (ClientSender) senderBuilder.sender(address, senderOptions).open();
     }
 
     ClientSender internalOpenAnonymousSender(SenderOptions senderOptions) throws ClientException {
@@ -378,14 +378,14 @@ public class ClientSession implements Session {
         // and open the sender if so, otherwise we need to wait.
         if (connection.openFuture().isDone()) {
             connection.checkAnonymousRelaySupported();
-            return senderBuilder.anonymousSender(senderOptions).open();
+            return (ClientSender) senderBuilder.anonymousSender(senderOptions).open();
         } else {
             return senderBuilder.anonymousSender(senderOptions);
         }
     }
 
     ClientStreamSender internalOpenStreamSender(String address, StreamSenderOptions senderOptions) throws ClientException {
-        return senderBuilder.streamSender(address, senderOptions).open();
+        return (ClientStreamSender) senderBuilder.streamSender(address, senderOptions).open();
     }
 
     //----- Internal API accessible for use within the package
@@ -521,7 +521,7 @@ public class ClientSession implements Session {
 
         session.senders().forEach(sender -> {
             if (!sender.isLocallyOpen()) {
-                ClientSender clientSender = sender.getLinkedResource();
+                ClientSenderLinkType<?> clientSender = sender.getLinkedResource();
                 if (connection.getCapabilities().anonymousRelaySupported()) {
                     clientSender.open();
                 } else {

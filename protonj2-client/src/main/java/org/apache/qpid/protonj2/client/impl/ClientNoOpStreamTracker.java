@@ -16,36 +16,47 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamTracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.futures.ClientFutureFactory;
 
 /**
  * A dummy Tracker instance that always indicates remote settlement and
  * acceptance for {@link StreamSender} instances.
  */
-public class ClientNoOpStreamTracker extends ClientNoOpTracker implements StreamTracker {
+public class ClientNoOpStreamTracker implements StreamTracker {
+
+    private final ClientStreamSender sender;
+
+    private DeliveryState state;
+    private boolean settled;
 
     ClientNoOpStreamTracker(ClientStreamSender sender) {
-        super(sender);
+        this.sender = sender;
     }
 
     @Override
     public StreamSender sender() {
-        return (StreamSender) super.sender();
+        return sender;
     }
 
     @Override
     public StreamTracker settle() throws ClientException {
-        return (StreamTracker) super.settle();
+        this.settled = true;
+        return this;
     }
 
     @Override
     public StreamTracker disposition(DeliveryState state, boolean settle) throws ClientException {
-        return (StreamTracker) super.disposition(state, settle);
+        this.state = state;
+        this.settled = settle;
+
+        return this;
     }
 
     @Override
@@ -55,6 +66,41 @@ public class ClientNoOpStreamTracker extends ClientNoOpTracker implements Stream
 
     @Override
     public StreamTracker awaitSettlement(long timeout, TimeUnit unit) throws ClientException {
+        return this;
+    }
+
+    @Override
+    public boolean settled() {
+        return settled;
+    }
+
+    @Override
+    public DeliveryState state() {
+        return state;
+    }
+
+    @Override
+    public DeliveryState remoteState() {
+        return ClientDeliveryState.ClientAccepted.getInstance();
+    }
+
+    @Override
+    public boolean remoteSettled() {
+        return true;
+    }
+
+    @Override
+    public Future<StreamTracker> settlementFuture() {
+        return ClientFutureFactory.completedFuture(this);
+    }
+
+    @Override
+    public StreamTracker awaitAccepted() throws ClientException {
+        return this;
+    }
+
+    @Override
+    public StreamTracker awaitAccepted(long timeout, TimeUnit unit) throws ClientException {
         return this;
     }
 }

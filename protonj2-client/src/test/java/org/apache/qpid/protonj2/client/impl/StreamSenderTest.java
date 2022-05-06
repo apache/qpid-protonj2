@@ -56,11 +56,12 @@ import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamSenderMessage;
 import org.apache.qpid.protonj2.client.StreamSenderOptions;
-import org.apache.qpid.protonj2.client.Tracker;
+import org.apache.qpid.protonj2.client.StreamTracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
+import org.apache.qpid.protonj2.client.test.Wait;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.ApplicationPropertiesMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.DeliveryAnnotationsMatcher;
@@ -162,7 +163,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             Message<String> message = Message.create("Hello World");
 
-            final Tracker tracker;
+            final StreamTracker tracker;
             if (trySend) {
                 if (addDeliveryAnnotations) {
                     tracker = sender.trySend(message, deliveryAnnotations);
@@ -376,8 +377,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             assertNotNull(message.tracker());
             assertEquals(17, message.messageFormat());
-            assertNotNull(message.tracker().settlementFuture().isDone());
-            assertNotNull(message.tracker().settlementFuture().get().settled());
+            Wait.assertTrue(() -> message.tracker().settlementFuture().isDone());
+            assertTrue(message.tracker().settlementFuture().get().settled());
             assertThrows(ClientIllegalStateException.class, () -> message.addBodySection(new AmqpValue<>("three")));
             assertThrows(ClientIllegalStateException.class, () -> message.body());
             assertThrows(ClientIllegalStateException.class, () -> message.rawOutputStream());
@@ -448,8 +449,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             message.complete();
 
-            assertNotNull(message.tracker().settlementFuture().isDone());
-            assertNotNull(message.tracker().settlementFuture().get().settled());
+            assertTrue(message.tracker().settlementFuture().isDone());
+            assertTrue(message.tracker().settlementFuture().get().settled());
             assertThrows(ClientIllegalStateException.class, () -> message.body());
             assertThrows(ClientIllegalStateException.class, () -> message.rawOutputStream());
 
@@ -530,7 +531,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
 
-            StreamSender sender = (StreamSender) connection.openStreamSender("test-qos").openFuture().get();
+            StreamSender sender = connection.openStreamSender("test-qos").openFuture().get();
             StreamSenderMessage message = sender.beginMessage();
 
             try {
@@ -571,7 +572,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
 
-            StreamSender sender = (StreamSender) connection.openStreamSender("test-qos").openFuture().get();
+            StreamSender sender = connection.openStreamSender("test-qos").openFuture().get();
             StreamSenderMessage message = sender.beginMessage();
 
             try {
@@ -612,7 +613,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
 
-            StreamSender sender = (StreamSender) connection.openStreamSender("test-qos").openFuture().get();
+            StreamSender sender = connection.openStreamSender("test-qos").openFuture().get();
             StreamSenderMessage message = sender.beginMessage();
 
             message.durable(true);
@@ -1658,8 +1659,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.expectClose().respond();
 
             assertNotNull(message.tracker());
-            assertNotNull(message.tracker().settlementFuture().isDone());
-            assertNotNull(message.tracker().settlementFuture().get().settled());
+            assertFalse(message.tracker().settlementFuture().isDone());
+            assertTrue(message.tracker().settlementFuture().get().settled());
 
             sender.closeAsync().get(10, TimeUnit.SECONDS);
 
@@ -1750,8 +1751,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.expectClose().respond();
 
             assertNotNull(message.tracker());
-            assertNotNull(message.tracker().settlementFuture().isDone());
-            assertNotNull(message.tracker().settlementFuture().get().settled());
+            assertFalse(message.tracker().settlementFuture().isDone());
+            assertTrue(message.tracker().settlementFuture().get().settled());
 
             sender.closeAsync().get(10, TimeUnit.SECONDS);
 
@@ -1841,8 +1842,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.expectClose().respond();
 
             assertNotNull(message.tracker());
-            assertNotNull(message.tracker().settlementFuture().isDone());
-            assertNotNull(message.tracker().settlementFuture().get().settled());
+            Wait.assertTrue(() -> message.tracker().settlementFuture().isDone());
+            assertTrue(message.tracker().settlementFuture().get().settled());
 
             sender.closeAsync().get(10, TimeUnit.SECONDS);
 
@@ -1946,7 +1947,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             ForkJoinPool.commonPool().execute(() -> {
                 try {
                     LOG.info("Test send 1 is preparing to fire:");
-                    Tracker tracker = sender.send(Message.create(payload));
+                    StreamTracker tracker = sender.send(Message.create(payload));
                     tracker.awaitSettlement(10, TimeUnit.SECONDS);
                 } catch (Exception e) {
                     LOG.info("Test send 1 failed with error: ", e);
@@ -1957,7 +1958,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             ForkJoinPool.commonPool().execute(() -> {
                 try {
                     LOG.info("Test send 2 is preparing to fire:");
-                    Tracker tracker = sender.send(Message.create(payload));
+                    StreamTracker tracker = sender.send(Message.create(payload));
                     tracker.awaitSettlement(10, TimeUnit.SECONDS);
                 } catch (Exception e) {
                     LOG.info("Test send 2 failed with error: ", e);
@@ -2018,7 +2019,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
                 try {
                     assertTrue(send1Started.await(10, TimeUnit.SECONDS));
                     LOG.info("Test send 2 is preparing to fire:");
-                    Tracker tracker = sender.send(Message.create(payload));
+                    StreamTracker tracker = sender.send(Message.create(payload));
                     tracker.awaitSettlement(10, TimeUnit.SECONDS);
                     send2Completed.countDown();
                 } catch (Exception e) {
@@ -2089,7 +2090,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
                 try {
                     assertTrue(send1Started.await(10, TimeUnit.SECONDS));
                     LOG.info("Test send 2 is preparing to fire:");
-                    Tracker tracker = sender.send(Message.create(payload));
+                    StreamTracker tracker = sender.send(Message.create(payload));
                     tracker.awaitSettlement(10, TimeUnit.SECONDS);
                     send2Completed.countDown();
                 } catch (Exception e) {
@@ -2777,8 +2778,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             message.complete();
 
             assertEquals(message, message.complete()); // Should no-op at this point
-            assertNotNull(message.tracker().settlementFuture().isDone());
-            assertNotNull(message.tracker().settlementFuture().get().settled());
+            Wait.assertTrue(() ->message.tracker().settlementFuture().isDone());
+            assertTrue(message.tracker().settlementFuture().get().settled());
 
             sender.closeAsync().get(10, TimeUnit.SECONDS);
 

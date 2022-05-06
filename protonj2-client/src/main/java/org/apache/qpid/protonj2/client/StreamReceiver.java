@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.client;
 
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -25,7 +26,34 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
  * A receiver of large message content that is delivered in multiple {@link Transfer} frames from
  * the remote.
  */
-public interface StreamReceiver extends Receiver {
+public interface StreamReceiver extends Link<StreamReceiver> {
+
+    /**
+     * Adds credit to the {@link StreamReceiver} link for use when the receiver has not been configured
+     * with a credit window.  When credit window is configured credit replenishment is automatic and
+     * calling this method will result in an exception indicating that the operation is invalid.
+     * <p>
+     * If the {@link Receiver} is draining and this method is called an exception will be thrown
+     * to indicate that credit cannot be replenished until the remote has drained the existing link
+     * credit.
+     *
+     * @param credits
+     *      The number of credits to add to the {@link Receiver} link.
+     *
+     * @return this {@link StreamReceiver} instance.
+     *
+     * @throws ClientException if an error occurs while attempting to add new {@link StreamReceiver} link credit.
+     */
+    StreamReceiver addCredit(int credits) throws ClientException;
+
+    /**
+     * Requests the remote to drain previously granted credit for this {@link StreamReceiver} link.
+     *
+     * @return a {@link Future} that will be completed when the remote drains this {@link StreamReceiver} link.
+     *
+     * @throws ClientException if an error occurs while attempting to drain the link credit.
+     */
+    Future<StreamReceiver> drain() throws ClientException;
 
     /**
      * Blocking receive method that waits forever for the remote to provide a {@link StreamReceiverMessage} for consumption.
@@ -39,7 +67,6 @@ public interface StreamReceiver extends Receiver {
      *
      * @throws ClientException if the {@link StreamReceiver} or its parent is closed when the call to receive is made.
      */
-    @Override
     StreamDelivery receive() throws ClientException;
 
     /**
@@ -64,7 +91,6 @@ public interface StreamReceiver extends Receiver {
      *
      * @throws ClientException if the {@link StreamReceiver} or its parent is closed when the call to receive is made.
      */
-    @Override
     StreamDelivery receive(long timeout, TimeUnit unit) throws ClientException;
 
     /**
@@ -75,20 +101,17 @@ public interface StreamReceiver extends Receiver {
      *
      * @throws ClientException if the {@link StreamReceiver} or its parent is closed when the call to try to receive is made.
      */
-    @Override
     StreamDelivery tryReceive() throws ClientException;
 
     /**
-     * {@inheritDoc}
+     * Returns the number of Deliveries that are currently held in the {@link Receiver} delivery
+     * queue.  This number is likely to change immediately following the call as more deliveries
+     * arrive but can be used to determine if any pending {@link Delivery} work is ready.
      *
-     * @param credits
-     *      credit The number of credits to add to the {@link StreamReceiver} link.
+     * @return the number of deliveries that are currently buffered locally.
      *
-     * @return this {@link StreamReceiver} instance.
-     *
-     * @throws ClientException if an error occurs while attempting to add new {@link StreamReceiver} link credit.
+     * @throws ClientException if an error occurs while attempting to fetch the queue count.
      */
-    @Override
-    StreamReceiver addCredit(int credits) throws ClientException;
+    long queuedDeliveries() throws ClientException;
 
 }

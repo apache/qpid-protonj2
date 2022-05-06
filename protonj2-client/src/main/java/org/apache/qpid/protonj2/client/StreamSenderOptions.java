@@ -16,14 +16,15 @@
  */
 package org.apache.qpid.protonj2.client;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 
 /**
  * Options class that controls various aspects of a {@link StreamSenderMessage} instance and how
  * a streamed message transfer is written.
  */
-public class StreamSenderOptions extends SenderOptions {
+public class StreamSenderOptions extends LinkOptions<StreamSenderOptions> {
 
     /**
      * Defines the default pending write buffering size which is used to control how much outgoing
@@ -31,6 +32,8 @@ public class StreamSenderOptions extends SenderOptions {
      * out of memory conditions due to overly large pending batched writes.
      */
     public static final int DEFAULT_PENDING_WRITES_BUFFER_SIZE = SessionOptions.DEFAULT_SESSION_OUTGOING_CAPACITY;
+
+    private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
 
     private int pendingWritesBufferSize = DEFAULT_PENDING_WRITES_BUFFER_SIZE;
 
@@ -79,6 +82,8 @@ public class StreamSenderOptions extends SenderOptions {
         super.copyInto(other);
 
         other.writeBufferSize(writeBufferSize);
+        other.sendTimeout(sendTimeout);
+        other.pendingWritesBufferSize(pendingWritesBufferSize);
 
         return this;
     }
@@ -128,75 +133,48 @@ public class StreamSenderOptions extends SenderOptions {
         return this;
     }
 
-    //----- Override super methods to return this options type for ease of use
-
-    @Override
-    public StreamSenderOptions linkName(String linkName) {
-        return (StreamSenderOptions) super.linkName(linkName);
+    /**
+     * @return the timeout used when awaiting a response from the remote when a resource is message send.
+     */
+    public long sendTimeout() {
+        return sendTimeout;
     }
 
-    @Override
-    public StreamSenderOptions autoSettle(boolean autoSettle) {
-        return (StreamSenderOptions) super.autoSettle(autoSettle);
-    }
-
-    @Override
-    public StreamSenderOptions deliveryMode(DeliveryMode deliveryMode) {
-        return (StreamSenderOptions) super.deliveryMode(deliveryMode);
-    }
-
-    @Override
-    public StreamSenderOptions closeTimeout(long closeTimeout) {
-        return (StreamSenderOptions) super.closeTimeout(closeTimeout);
-    }
-
-    @Override
-    public StreamSenderOptions closeTimeout(long timeout, TimeUnit units) {
-        return (StreamSenderOptions) super.closeTimeout(timeout, units);
-    }
-
-    @Override
-    public StreamSenderOptions openTimeout(long openTimeout) {
-        return (StreamSenderOptions) super.openTimeout(openTimeout);
-    }
-
-    @Override
-    public StreamSenderOptions openTimeout(long timeout, TimeUnit units) {
-        return (StreamSenderOptions) super.openTimeout(timeout, units);
-    }
-
-    @Override
+    /**
+     * Configures the timeout used when awaiting a send operation to complete.  A send will block if the
+     * remote has not granted the {@link Sender} or the {@link Session} credit to do so, if the send blocks
+     * for longer than this timeout the send call will fail with an {@link ClientSendTimedOutException}
+     * exception to indicate that the send did not complete.
+     *
+     * @param sendTimeout
+     *      Timeout value in milliseconds to wait for a remote response.
+     *
+     * @return this {@link StreamSenderOptions} instance.
+     */
     public StreamSenderOptions sendTimeout(long sendTimeout) {
-        return (StreamSenderOptions) super.sendTimeout(sendTimeout);
+        return sendTimeout(sendTimeout, TimeUnit.MILLISECONDS);
     }
 
-    @Override
+    /**
+     * Configures the timeout used when awaiting a send operation to complete.  A send will block if the
+     * remote has not granted the {@link Sender} or the {@link Session} credit to do so, if the send blocks
+     * for longer than this timeout the send call will fail with an {@link ClientSendTimedOutException}
+     * exception to indicate that the send did not complete.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link StreamSenderOptions} instance.
+     */
     public StreamSenderOptions sendTimeout(long timeout, TimeUnit units) {
-        return (StreamSenderOptions) super.sendTimeout(timeout, units);
+        this.sendTimeout = units.toMillis(timeout);
+        return this;
     }
 
     @Override
-    public StreamSenderOptions requestTimeout(long requestTimeout) {
-        return (StreamSenderOptions) super.requestTimeout(requestTimeout);
-    }
-
-    @Override
-    public StreamSenderOptions requestTimeout(long timeout, TimeUnit units) {
-        return (StreamSenderOptions) super.requestTimeout(timeout, units);
-    }
-
-    @Override
-    public StreamSenderOptions offeredCapabilities(String... offeredCapabilities) {
-        return (StreamSenderOptions) super.offeredCapabilities(offeredCapabilities);
-    }
-
-    @Override
-    public StreamSenderOptions desiredCapabilities(String... desiredCapabilities) {
-        return (StreamSenderOptions) super.desiredCapabilities(desiredCapabilities);
-    }
-
-    @Override
-    public StreamSenderOptions properties(Map<String, Object> properties) {
-        return (StreamSenderOptions) super.properties(properties);
+    protected StreamSenderOptions self() {
+        return this;
     }
 }

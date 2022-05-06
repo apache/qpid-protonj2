@@ -910,7 +910,7 @@ public class SenderTest extends ImperativeClientTestCase {
             }
 
             assertNotNull(tracker);
-            assertNotNull(tracker.settlementFuture().get(5, TimeUnit.SECONDS));
+            assertTrue(tracker.settlementFuture().get(5, TimeUnit.SECONDS).remoteSettled());
             assertEquals(tracker.remoteState().getType(), DeliveryState.Type.ACCEPTED);
             assertNull(tracker.state());
             assertFalse(tracker.settled());
@@ -977,8 +977,9 @@ public class SenderTest extends ImperativeClientTestCase {
             }
 
             assertNotNull(tracker);
-            assertNotNull(tracker.settlementFuture().isDone());
-            assertNotNull(tracker.settlementFuture().get().settled());
+            assertTrue(tracker.settlementFuture().isDone());
+            assertTrue(tracker.settlementFuture().get().settled());
+            assertFalse(tracker.settlementFuture().get().remoteSettled());
 
             sender.closeAsync().get(10, TimeUnit.SECONDS);
 

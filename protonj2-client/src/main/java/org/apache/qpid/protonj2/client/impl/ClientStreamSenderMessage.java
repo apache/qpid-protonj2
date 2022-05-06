@@ -98,7 +98,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
             writeBufferSize = Math.max(StreamSenderOptions.MIN_BUFFER_SIZE_LIMIT, sender.options().writeBufferSize());
         } else {
             writeBufferSize = Math.max(StreamSenderOptions.MIN_BUFFER_SIZE_LIMIT,
-                                  (int) sender.getProtonSender().getConnection().getMaxFrameSize());
+                                  (int) sender.protonLink().getConnection().getMaxFrameSize());
         }
     }
 

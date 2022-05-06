@@ -49,7 +49,6 @@ import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.ErrorCondition;
-import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.StreamDelivery;
@@ -3288,7 +3287,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             StreamReceiverOptions receiverOptions = new StreamReceiverOptions().drainTimeout(15);
-            Receiver receiver = connection.openStreamReceiver("test-queue", receiverOptions).openFuture().get();
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue", receiverOptions).openFuture().get();
 
             try {
                 receiver.drain().get();
@@ -3323,7 +3322,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             Client container = Client.create();
             ConnectionOptions connectionOptions = new ConnectionOptions().drainTimeout(20);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions);
-            Receiver receiver = connection.openStreamReceiver("test-queue").openFuture().get();
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue").openFuture().get();
 
             try {
                 receiver.drain().get();
@@ -3354,12 +3353,12 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            Receiver receiver = connection.openStreamReceiver("test-queue", new StreamReceiverOptions().creditWindow(0));
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue", new StreamReceiverOptions().creditWindow(0));
             receiver.openFuture().get(5, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
-            Future<? extends Receiver> draining = receiver.drain();
+            Future<StreamReceiver> draining = receiver.drain();
             draining.get(5, TimeUnit.SECONDS);
 
             // Close things down
@@ -3389,7 +3388,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             StreamReceiverOptions receiverOptions = new StreamReceiverOptions();
-            Receiver receiver = connection.openStreamReceiver("test-queue", receiverOptions).openFuture().get();
+            StreamReceiver receiver = connection.openStreamReceiver("test-queue", receiverOptions).openFuture().get();
 
             receiver.drain();
 

@@ -177,19 +177,19 @@ final class ClientLocalTransactionContext implements ClientTransactionContext {
     }
 
     @Override
-    public ClientTransactionContext send(ClientOutgoingEnvelope envelope, DeliveryState outcome, boolean settled) {
+    public ClientTransactionContext send(Sendable sendable, DeliveryState outcome, boolean settled) {
         if (isInTransaction()) {
             if (isRollbackOnly()) {
-                envelope.discard();
+                sendable.discard();
             } else if (outcome == null) {
                 DeliveryState txnOutcome = cachedSenderOutcome != null ?
                     cachedSenderOutcome : (cachedSenderOutcome = new TransactionalState().setTxnId(currentTxn.getTxnId()));
-                envelope.sendPayload(txnOutcome, settled);
+                sendable.send(txnOutcome, settled);
             } else {
-                envelope.sendPayload(new TransactionalState().setTxnId(currentTxn.getTxnId()).setOutcome((Outcome) outcome), settled);
+                sendable.send(new TransactionalState().setTxnId(currentTxn.getTxnId()).setOutcome((Outcome) outcome), settled);
             }
         } else {
-            envelope.sendPayload(outcome, settled);
+            sendable.send(outcome, settled);
         }
 
         return this;

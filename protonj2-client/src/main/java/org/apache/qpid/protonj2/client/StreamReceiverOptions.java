@@ -16,14 +16,13 @@
  */
 package org.apache.qpid.protonj2.client;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Options class that controls various aspects of a {@link StreamReceiver} instance and how
  * a streamed message transfer is written.
  */
-public class StreamReceiverOptions extends ReceiverOptions {
+public class StreamReceiverOptions extends LinkOptions<StreamReceiverOptions> {
 
     /**
      * Defines the default read buffering size which is used to control how much incoming
@@ -33,6 +32,9 @@ public class StreamReceiverOptions extends ReceiverOptions {
     public static final int DEFAULT_READ_BUFFER_SIZE = SessionOptions.DEFAULT_SESSION_INCOMING_CAPACITY;
 
     private int readBufferSize = DEFAULT_READ_BUFFER_SIZE;
+    private long drainTimeout = ConnectionOptions.DEFAULT_DRAIN_TIMEOUT;
+    private boolean autoAccept = true;
+    private int creditWindow = 10;
 
     /**
      * Creates a {@link StreamReceiverOptions} instance with default values for all options
@@ -71,6 +73,9 @@ public class StreamReceiverOptions extends ReceiverOptions {
         super.copyInto(other);
 
         other.readBufferSize(readBufferSize);
+        other.autoAccept(autoAccept);
+        other.creditWindow(creditWindow);
+        other.drainTimeout(drainTimeout);
 
         return this;
     }
@@ -100,90 +105,91 @@ public class StreamReceiverOptions extends ReceiverOptions {
         return this;
     }
 
-    //----- Override super methods to customize the return type
-
-    @Override
+    /**
+     * Controls if the created Receiver will automatically accept the deliveries that have
+     * been received by the application (default is <code>true</code>).
+     *
+     * @param autoAccept
+     *      The value to assign for auto delivery acceptance.
+     *
+     * @return this {@link StreamReceiverOptions} instance.
+     */
     public StreamReceiverOptions autoAccept(boolean autoAccept) {
-        return (StreamReceiverOptions) super.autoAccept(autoAccept);
+        this.autoAccept = autoAccept;
+        return this;
     }
 
-    @Override
-    public StreamReceiverOptions autoSettle(boolean autoSettle) {
-        return (StreamReceiverOptions) super.autoSettle(autoSettle);
+    /**
+     * @return the current value of the {@link Receiver} auto accept setting.
+     */
+    public boolean autoAccept() {
+        return autoAccept;
     }
 
-    @Override
-    public StreamReceiverOptions deliveryMode(DeliveryMode deliveryMode) {
-        return (StreamReceiverOptions) super.deliveryMode(deliveryMode);
+    /**
+     * @return the credit window configuration that will be applied to created {@link Receiver} instances.
+     */
+    public int creditWindow() {
+        return creditWindow;
     }
 
-    @Override
-    public StreamReceiverOptions linkName(String linkName) {
-        return (StreamReceiverOptions) super.linkName(linkName);
-    }
-
-    @Override
+    /**
+     * A credit window value that will be used to maintain an window of credit for Receiver instances
+     * that are created.  The {@link Receiver} will allow up to the credit window amount of incoming
+     * deliveries to be queued and as they are read from the {@link Receiver} the window will be extended
+     * to maintain a consistent backlog of deliveries.  The default is to configure a credit window of 10.
+     * <p>
+     * To disable credit windowing and allow the client application to control the credit on the {@link Receiver}
+     * link the credit window value should be set to zero.
+     *
+     * @param creditWindow
+     *      The assigned credit window value to use.
+     *
+     * @return this {@link StreamReceiverOptions} instance.
+     */
     public StreamReceiverOptions creditWindow(int creditWindow) {
-        return (StreamReceiverOptions) super.creditWindow(creditWindow);
+        this.creditWindow = creditWindow;
+        return this;
     }
 
-    @Override
-    public StreamReceiverOptions closeTimeout(long closeTimeout) {
-        return (StreamReceiverOptions) super.closeTimeout(closeTimeout);
+    /**
+     * @return the configured drain timeout value that will use to fail a pending drain request.
+     */
+    public long drainTimeout() {
+        return drainTimeout;
     }
 
-    @Override
-    public StreamReceiverOptions closeTimeout(long timeout, TimeUnit units) {
-        return (StreamReceiverOptions) super.closeTimeout(timeout, units);
-    }
-
-    @Override
-    public StreamReceiverOptions openTimeout(long openTimeout) {
-        return (StreamReceiverOptions) super.openTimeout(openTimeout);
-    }
-
-    @Override
-    public StreamReceiverOptions openTimeout(long timeout, TimeUnit units) {
-        return (StreamReceiverOptions) super.openTimeout(timeout, units);
-    }
-
-    @Override
+    /**
+     * Sets the drain timeout (in milliseconds) after which a {@link Receiver} request to drain
+     * link credit is considered failed and the request will be marked as such.
+     *
+     * @param drainTimeout
+     *      the drainTimeout to use for receiver links.
+     *
+     * @return this {@link StreamReceiverOptions} instance.
+     */
     public StreamReceiverOptions drainTimeout(long drainTimeout) {
-        return (StreamReceiverOptions) super.drainTimeout(drainTimeout);
+        return drainTimeout(drainTimeout, TimeUnit.MILLISECONDS);
     }
 
-    @Override
+    /**
+     * Sets the drain timeout value after which a {@link Receiver} request to drain
+     * link credit is considered failed and the request will be marked as such.
+     *
+     * @param timeout
+     *      Timeout value to wait for a remote response.
+     * @param units
+     * 		The {@link TimeUnit} that defines the timeout span.
+     *
+     * @return this {@link StreamReceiverOptions} instance.
+     */
     public StreamReceiverOptions drainTimeout(long timeout, TimeUnit units) {
-        return (StreamReceiverOptions) super.drainTimeout(timeout, units);
+        this.drainTimeout = units.toMillis(timeout);
+        return this;
     }
 
     @Override
-    public StreamReceiverOptions requestTimeout(long requestTimeout) {
-        return (StreamReceiverOptions) super.requestTimeout(requestTimeout);
-    }
-
-    @Override
-    public StreamReceiverOptions requestTimeout(long timeout, TimeUnit units) {
-        return (StreamReceiverOptions) super.requestTimeout(timeout, units);
-    }
-
-    @Override
-    public StreamReceiverOptions offeredCapabilities(String... offeredCapabilities) {
-        return (StreamReceiverOptions) super.offeredCapabilities(offeredCapabilities);
-    }
-
-    @Override
-    public StreamReceiverOptions desiredCapabilities(String... desiredCapabilities) {
-        return (StreamReceiverOptions) super.desiredCapabilities(desiredCapabilities);
-    }
-
-    @Override
-    public StreamReceiverOptions properties(Map<String, Object> properties) {
-        return (StreamReceiverOptions) super.properties(properties);
-    }
-
-    @Override
-    protected StreamReceiverOptions copyInto(ReceiverOptions other) {
-        return (StreamReceiverOptions) super.copyInto(other);
+    protected StreamReceiverOptions self() {
+        return this;
     }
 }

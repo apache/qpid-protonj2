@@ -19,58 +19,133 @@ package org.apache.qpid.protonj2.client;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.types.messaging.Accepted;
+import org.apache.qpid.protonj2.types.transport.Disposition;
 
 /**
  * Special StreamSender related {@link Tracker} that is linked to any {@link StreamSenderMessage}
  * instance and provides the {@link Tracker} functions for those types of messages.
  */
-public interface StreamTracker extends Tracker {
+public interface StreamTracker {
 
     /**
-     * {@inheritDoc}
-     *
-     * @return the {@link StreamSender} that is associated with this {@link StreamTracker}.
+     * @return the {@link StreamSender} that was used to send the delivery that is being tracked.
      */
-    @Override
     StreamSender sender();
 
     /**
-     * {@inheritDoc}
+     * Settles the delivery locally, if not {@link SenderOptions#autoSettle() auto-settling}.
      *
-     * @return this {@link StreamTracker} instance.
+     * @return this {@link Tracker} instance.
+     *
+     * @throws ClientException if an error occurs while performing the settlement.
      */
-    @Override
     StreamTracker settle() throws ClientException;
 
     /**
-     * {@inheritDoc}
+     * @return true if the sent message has been locally settled.
      */
-    @Override
-    Future<Tracker> settlementFuture();
+    boolean settled();
 
     /**
-     * {@inheritDoc}
+     * Gets the current local state for the tracked delivery.
      *
-     * @return this {@link StreamTracker} instance.
+     * @return the delivery state
      */
-    @Override
+    DeliveryState state();
+
+    /**
+     * Gets the current remote state for the tracked delivery.
+     *
+     * @return the remote {@link DeliveryState} once a value is received from the remote.
+     */
+    DeliveryState remoteState();
+
+    /**
+     * Gets whether the delivery was settled by the remote peer yet.
+     *
+     * @return whether the delivery is remotely settled
+     */
+    boolean remoteSettled();
+
+    /**
+     * Updates the DeliveryState, and optionally settle the delivery as well.
+     *
+     * @param state
+     *            the delivery state to apply
+     * @param settle
+     *            whether to {@link #settle()} the delivery at the same time
+     *
+     * @return this {@link Tracker} instance.
+     *
+     * @throws ClientException if an error occurs while applying the given disposition
+     */
     StreamTracker disposition(DeliveryState state, boolean settle) throws ClientException;
 
     /**
-     * {@inheritDoc}
+     * Returns a future that can be used to wait for the remote to acknowledge receipt of
+     * a sent message by settling it.
      *
-     * @return this {@link StreamTracker} instance.
+     * @return a {@link Future} that can be used to wait on remote settlement.
      */
-    @Override
+    Future<StreamTracker> settlementFuture();
+
+    /**
+     * Waits if necessary for the remote to settle the sent delivery unless it has
+     * either already been settled or the original delivery was sent settled in which
+     * case the remote will not send a {@link Disposition} back.
+     *
+     * @return this {@link Tracker} instance.
+     *
+     * @throws ClientException if an error occurs while awaiting the remote settlement.
+     */
     StreamTracker awaitSettlement() throws ClientException;
 
     /**
-     * {@inheritDoc}
+     * Waits if necessary for the remote to settle the sent delivery unless it has
+     * either already been settled or the original delivery was sent settled in which
+     * case the remote will not send a {@link Disposition} back.
      *
-     * @return this {@link StreamTracker} instance.
+     * @param timeout
+     *      the maximum time to wait for the remote to settle.
+     * @param unit
+     *      the time unit of the timeout argument.
+     *
+     * @return this {@link Tracker} instance.
+     *
+     * @throws ClientException if an error occurs while awaiting the remote settlement.
      */
-    @Override
     StreamTracker awaitSettlement(long timeout, TimeUnit unit) throws ClientException;
+
+    /**
+     * Waits if necessary for the remote to settle the sent delivery with an {@link Accepted}
+     * disposition unless it has either already been settled and accepted or the original delivery
+     * was sent settled in which case the remote will not send a {@link Disposition} back.
+     *
+     * @return this {@link Tracker} instance.
+     *
+     * @throws ClientDeliveryStateException if the remote sends a disposition other than Accepted.
+     * @throws ClientException if an error occurs while awaiting the remote settlement.
+     */
+    StreamTracker awaitAccepted() throws ClientException;
+
+    /**
+     * Waits if necessary for the remote to settle the sent delivery with an {@link Accepted}
+     * disposition unless it has either already been settled and accepted or the original delivery
+     * was sent settled in which case the remote will not send a {@link Disposition} back.
+     *
+     * @param timeout
+     *      the maximum time to wait for the remote to settle.
+     * @param unit
+     *      the time unit of the timeout argument.
+     *
+     * @return this {@link Tracker} instance.
+     *
+     * @throws ClientDeliveryStateException if the remote sends a disposition other than Accepted.
+     * @throws ClientException if an error occurs while awaiting the remote settlement.
+     */
+    StreamTracker awaitAccepted(long timeout, TimeUnit unit) throws ClientException;
 
 }

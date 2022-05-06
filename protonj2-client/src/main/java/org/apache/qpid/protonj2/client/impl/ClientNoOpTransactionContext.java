@@ -40,7 +40,7 @@ final class ClientNoOpTransactionContext implements ClientTransactionContext {
 
     @Override
     public ClientTransactionContext rollback(ClientFuture<Session> rollbackFuture, boolean startNew) throws ClientIllegalStateException {
-        throw new ClientIllegalStateException("Cannot rollback from a no-op transaction context");
+        throw new ClientIllegalStateException("Cannot roll back from a no-op transaction context");
     }
 
     @Override
@@ -54,8 +54,8 @@ final class ClientNoOpTransactionContext implements ClientTransactionContext {
     }
 
     @Override
-    public ClientTransactionContext send(ClientOutgoingEnvelope envelope, DeliveryState outcome, boolean settled) {
-        envelope.sendPayload(outcome, settled);
+    public ClientTransactionContext send(Sendable sendable, DeliveryState outcome, boolean settled) {
+        sendable.send(outcome, settled);
         return this;
     }
 
