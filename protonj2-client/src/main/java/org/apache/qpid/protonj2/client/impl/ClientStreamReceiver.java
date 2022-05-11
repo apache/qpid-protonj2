@@ -33,7 +33,6 @@ import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutExcepti
 import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
-import org.apache.qpid.protonj2.engine.Receiver;
 import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
 import org.slf4j.Logger;
@@ -42,7 +41,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Client implementation of a {@link StreamReceiver}.
  */
-public final class ClientStreamReceiver extends ClientLinkType<StreamReceiver, org.apache.qpid.protonj2.engine.Receiver> implements StreamReceiver {
+public final class ClientStreamReceiver extends ClientReceiverLinkType<StreamReceiver> implements StreamReceiver {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientReceiver.class);
 
@@ -51,13 +50,10 @@ public final class ClientStreamReceiver extends ClientLinkType<StreamReceiver, o
     private final StreamReceiverOptions options;
     private final Map<ClientFuture<StreamDelivery>, ScheduledFuture<?>> receiveRequests = new LinkedHashMap<>();
 
-    private org.apache.qpid.protonj2.engine.Receiver protonReceiver;
-
     ClientStreamReceiver(ClientSession session, StreamReceiverOptions options, String receiverId, org.apache.qpid.protonj2.engine.Receiver receiver) {
-        super(session, receiverId, options);
+        super(session, receiverId, options, receiver);
 
         this.options = options;
-        this.protonReceiver = receiver.setLinkedResource(this);
 
         if (options.creditWindow() > 0) {
             protonReceiver.addCredit(options.creditWindow());
@@ -259,6 +255,7 @@ public final class ClientStreamReceiver extends ClientLinkType<StreamReceiver, o
 
     //----- Private implementation details
 
+    @Override
     void disposition(IncomingDelivery delivery, DeliveryState state, boolean settle) throws ClientException {
         checkClosedOrFailed();
         asyncApplyDisposition(delivery, state, settle);
@@ -339,11 +336,6 @@ public final class ClientStreamReceiver extends ClientLinkType<StreamReceiver, o
     @Override
     protected StreamReceiver self() {
         return this;
-    }
-
-    @Override
-    protected Receiver protonLink() {
-        return protonReceiver;
     }
 
     @Override

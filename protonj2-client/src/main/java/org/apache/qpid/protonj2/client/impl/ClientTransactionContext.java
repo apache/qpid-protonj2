@@ -28,7 +28,7 @@ import org.apache.qpid.protonj2.types.transport.DeliveryState;
  * to mask from the senders and receivers the work of deciding transaction
  * specific behaviors.
  */
-public interface ClientTransactionContext {
+interface ClientTransactionContext {
 
     public interface Sendable {
 

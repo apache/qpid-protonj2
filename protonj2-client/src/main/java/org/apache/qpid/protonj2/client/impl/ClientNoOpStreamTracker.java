@@ -29,7 +29,7 @@ import org.apache.qpid.protonj2.client.futures.ClientFutureFactory;
  * A dummy Tracker instance that always indicates remote settlement and
  * acceptance for {@link StreamSender} instances.
  */
-public class ClientNoOpStreamTracker implements StreamTracker {
+public final class ClientNoOpStreamTracker implements StreamTracker {
 
     private final ClientStreamSender sender;
 

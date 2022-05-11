@@ -36,7 +36,6 @@ import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.client.futures.ClientSynchronization;
 import org.apache.qpid.protonj2.engine.OutgoingDelivery;
-import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
@@ -47,22 +46,17 @@ import org.slf4j.LoggerFactory;
 /**
  * Client implementation of a {@link StreamSender}.
  */
-public final class ClientStreamSender extends ClientLinkType<StreamSender, Sender> implements StreamSender {
+public final class ClientStreamSender extends ClientSenderLinkType<StreamSender> implements StreamSender {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientStreamSender.class);
 
     private final StreamSenderOptions options;
-    private final boolean sendsSettled;
     private final Deque<ClientOutgoingEnvelope> blocked = new ArrayDeque<>();
 
-    private org.apache.qpid.protonj2.engine.Sender protonSender;
-
     ClientStreamSender(ClientSession session, StreamSenderOptions options, String senderId, org.apache.qpid.protonj2.engine.Sender protonSender) {
-        super(session, senderId, options);
+        super(session, senderId, options, protonSender);
 
         this.options = new StreamSenderOptions(options);
-        this.protonSender = protonSender.setLinkedResource(this);
-        this.sendsSettled = protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED;
     }
 
     @Override
@@ -127,10 +121,6 @@ public final class ClientStreamSender extends ClientLinkType<StreamSender, Sende
 
     //----- Internal API
 
-    boolean isSendingSettled() {
-        return sendsSettled;
-    }
-
     StreamSenderOptions options() {
         return this.options;
     }
@@ -138,15 +128,6 @@ public final class ClientStreamSender extends ClientLinkType<StreamSender, Sende
     @Override
     protected StreamSender self() {
         return this;
-    }
-
-    Sender getProtonSender() {
-        return protonSender;
-    }
-
-    @Override
-    protected Sender protonLink() {
-        return protonSender;
     }
 
     private void addToTailOfBlockedQueue(ClientOutgoingEnvelope send) {
@@ -227,6 +208,7 @@ public final class ClientStreamSender extends ClientLinkType<StreamSender, Sende
         return new ClientNoOpStreamTracker(this);
     }
 
+    @Override
     void disposition(OutgoingDelivery delivery, DeliveryState state, boolean settled) throws ClientException {
         checkClosedOrFailed();
         executor.execute(() -> {

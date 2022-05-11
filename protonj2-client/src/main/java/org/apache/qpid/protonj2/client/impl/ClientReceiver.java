@@ -17,7 +17,6 @@
 package org.apache.qpid.protonj2.client.impl;
 
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -40,7 +39,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Client {@link Receiver} implementation.
  */
-public final class ClientReceiver extends ClientLinkType<Receiver, org.apache.qpid.protonj2.engine.Receiver> implements Receiver {
+public final class ClientReceiver extends ClientReceiverLinkType<Receiver> implements Receiver {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientReceiver.class);
 
@@ -48,17 +47,12 @@ public final class ClientReceiver extends ClientLinkType<Receiver, org.apache.qp
     private ScheduledFuture<?> drainingTimeout;
 
     private final ReceiverOptions options;
-    private final ScheduledExecutorService executor;
     private final FifoDeliveryQueue messageQueue;
 
-    private org.apache.qpid.protonj2.engine.Receiver protonReceiver;
-
     ClientReceiver(ClientSession session, ReceiverOptions options, String receiverId, org.apache.qpid.protonj2.engine.Receiver receiver) {
-        super(session, receiverId, options);
+        super(session, receiverId, options, receiver);
 
         this.options = options;
-        this.executor = session.getScheduler();
-        this.protonReceiver = receiver.setLinkedResource(this);
 
         if (options.creditWindow() > 0) {
             protonReceiver.addCredit(options.creditWindow());
@@ -177,6 +171,7 @@ public final class ClientReceiver extends ClientLinkType<Receiver, org.apache.qp
 
     //----- Internal API for the ClientReceiver and other Client objects
 
+    @Override
     void disposition(IncomingDelivery delivery, DeliveryState state, boolean settle) throws ClientException {
         checkClosedOrFailed();
         asyncApplyDisposition(delivery, state, settle);
@@ -190,11 +185,6 @@ public final class ClientReceiver extends ClientLinkType<Receiver, org.apache.qp
     @Override
     protected Receiver self() {
         return this;
-    }
-
-    @Override
-    protected org.apache.qpid.protonj2.engine.Receiver protonLink() {
-        return protonReceiver;
     }
 
     //----- Handlers for proton receiver events

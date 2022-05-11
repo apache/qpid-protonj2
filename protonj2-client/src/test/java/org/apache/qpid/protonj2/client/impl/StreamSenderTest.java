@@ -245,7 +245,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             senderOptions.targetOptions().capabilities("queue");
             ClientStreamSender sender = (ClientStreamSender) connection.openStreamSender("test-queue", senderOptions);
 
-            assertEquals(StreamSenderOptions.DEFAULT_PENDING_WRITES_BUFFER_SIZE, sender.getProtonSender().getSession().getOutgoingCapacity());
+            assertEquals(StreamSenderOptions.DEFAULT_PENDING_WRITES_BUFFER_SIZE, sender.protonLink().getSession().getOutgoingCapacity());
 
             sender.openFuture().get();
             sender.close();
@@ -282,7 +282,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             senderOptions.targetOptions().capabilities("queue");
             ClientStreamSender sender = (ClientStreamSender) connection.openStreamSender("test-queue", senderOptions);
 
-            assertEquals(PENDING_WRITES_BUFFER_SIZE, sender.getProtonSender().getSession().getOutgoingCapacity());
+            assertEquals(PENDING_WRITES_BUFFER_SIZE, sender.protonLink().getSession().getOutgoingCapacity());
 
             sender.openFuture().get();
             sender.close();

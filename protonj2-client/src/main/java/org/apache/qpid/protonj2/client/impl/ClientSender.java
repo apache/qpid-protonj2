@@ -42,22 +42,17 @@ import org.slf4j.LoggerFactory;
 /**
  * Proton based AMQP Sender
  */
-final class ClientSender extends ClientSenderLinkType<Sender> implements Sender {
+public final class ClientSender extends ClientSenderLinkType<Sender> implements Sender {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientSender.class);
 
-    private final boolean sendsSettled;
     private final Deque<ClientOutgoingEnvelope> blocked = new ArrayDeque<>();
     private final SenderOptions options;
 
-    private org.apache.qpid.protonj2.engine.Sender protonSender;
-
     ClientSender(ClientSession session, SenderOptions options, String senderId, org.apache.qpid.protonj2.engine.Sender protonSender) {
-        super(session, senderId, options);
+        super(session, senderId, options, protonSender);
 
         this.options = new SenderOptions(options);
-        this.protonSender = protonSender.setLinkedResource(this);
-        this.sendsSettled = protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED;
     }
 
     @Override
@@ -90,19 +85,12 @@ final class ClientSender extends ClientSenderLinkType<Sender> implements Sender 
         return this.options;
     }
 
+    @Override
     void disposition(OutgoingDelivery delivery, DeliveryState state, boolean settled) throws ClientException {
         checkClosedOrFailed();
         executor.execute(() -> {
             delivery.disposition(state, settled);
         });
-    }
-
-    org.apache.qpid.protonj2.engine.Sender getProtonSender() {
-        return protonSender;
-    }
-
-    boolean isSendingSettled() {
-        return sendsSettled;
     }
 
     //----- Handlers for proton receiver events
@@ -139,11 +127,6 @@ final class ClientSender extends ClientSenderLinkType<Sender> implements Sender 
     @Override
     protected Sender self() {
         return this;
-    }
-
-    @Override
-    protected org.apache.qpid.protonj2.engine.Sender protonLink() {
-        return protonSender;
     }
 
     private void addToTailOfBlockedQueue(ClientOutgoingEnvelope send) {
@@ -352,7 +335,7 @@ final class ClientSender extends ClientSenderLinkType<Sender> implements Sender 
         @Override
         public void send(DeliveryState state, boolean settled) {
             if (delivery == null) {
-                delivery = sender.getProtonSender().next();
+                delivery = sender.protonLink().next();
                 delivery.setLinkedResource(sender.createTracker(delivery));
             }
 

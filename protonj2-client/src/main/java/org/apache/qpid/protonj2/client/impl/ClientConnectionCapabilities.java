@@ -27,7 +27,7 @@ import org.apache.qpid.protonj2.types.Symbol;
  * Tracks available known capabilities for the connection to allow the client
  * to know what features are supported on the current connection.
  */
-public class ClientConnectionCapabilities {
+public final class ClientConnectionCapabilities {
 
     private boolean anonymousRelaySupported;
     private boolean delayedDeliverySupported;

@@ -29,7 +29,7 @@ import org.apache.qpid.protonj2.client.futures.ClientFutureFactory;
  * A dummy Tracker instance that always indicates remote settlement and
  * acceptance.
  */
-public class ClientNoOpTracker implements Tracker {
+public final class ClientNoOpTracker implements Tracker {
 
     private final ClientSender sender;
 

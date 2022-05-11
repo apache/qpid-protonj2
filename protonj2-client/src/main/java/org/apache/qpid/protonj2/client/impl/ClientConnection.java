@@ -78,7 +78,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A {@link Connection} implementation that uses the Proton engine for AMQP protocol support.
  */
-public class ClientConnection implements Connection {
+public final class ClientConnection implements Connection {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientConnection.class);
 
