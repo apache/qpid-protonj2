@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -34,7 +35,6 @@ import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedEx
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.types.messaging.Released;
-import org.apache.qpid.protonj2.types.transport.DeliveryState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  */
 public final class ClientStreamReceiver extends ClientReceiverLinkType<StreamReceiver> implements StreamReceiver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClientReceiver.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private ClientFuture<StreamReceiver> drainingFuture;
     private ScheduledFuture<?> drainingTimeout;
@@ -102,7 +102,9 @@ public final class ClientStreamReceiver extends ClientReceiverLinkType<StreamRec
                     }
                 } else {
                     receive.complete(new ClientStreamDelivery(this, delivery));
-                    asyncReplenishCreditIfNeeded();
+                    if (options.creditWindow() > 0) {
+                        executor.execute(() -> replenishCreditIfNeeded());
+                    }
                 }
             }
         });
@@ -177,17 +179,10 @@ public final class ClientStreamReceiver extends ClientReceiverLinkType<StreamRec
 
         executor.execute(() -> {
             if (notClosedOrFailed(request)) {
-                int queued = 0;
-
                 // Scan for an unsettled delivery that isn't yet assigned to a client delivery
                 // either it is a complete delivery or the initial stage of the next incoming
-                for (IncomingDelivery unsettled : protonReceiver.unsettled()) {
-                    if (unsettled.getLinkedResource() == null) {
-                        queued++;
-                    }
-                }
-
-                request.complete(queued);
+                request.complete((int)
+                    protonReceiver.unsettled().stream().filter(delivery -> delivery.getLinkedResource() == null).count());
             }
         });
 
@@ -200,9 +195,15 @@ public final class ClientStreamReceiver extends ClientReceiverLinkType<StreamRec
         return options;
     }
 
+    @Override
+    protected StreamReceiver self() {
+        return this;
+    }
+
     //----- Handlers for proton receiver events
 
-    private void handleDeliveryRead(IncomingDelivery delivery) {
+    @Override
+    protected void handleDeliveryRead(IncomingDelivery delivery) {
         LOG.trace("Delivery data was received: {}", delivery);
         if (delivery.getDefaultDeliveryState() == null) {
             delivery.setDefaultDeliveryState(Released.getInstance());
@@ -223,31 +224,9 @@ public final class ClientStreamReceiver extends ClientReceiverLinkType<StreamRec
                     entry.getKey().complete(new ClientStreamDelivery(this, delivery));
                 } finally {
                     entries.remove();
-                    asyncReplenishCreditIfNeeded();
-                }
-            }
-        }
-    }
-
-    private void handleDeliveryAborted(IncomingDelivery delivery) {
-        LOG.trace("Delivery data was aborted: {}", delivery);
-        delivery.settle();
-        replenishCreditIfNeeded();
-    }
-
-    private void handleDeliveryStateRemotelyUpdated(IncomingDelivery delivery) {
-        LOG.trace("Delivery remote state was updated: {}", delivery);
-    }
-
-    private void handleReceiverCreditUpdated(org.apache.qpid.protonj2.engine.Receiver receiver) {
-        LOG.trace("Receiver credit update by remote: {}", receiver);
-
-        if (drainingFuture != null) {
-            if (receiver.getCredit() == 0) {
-                drainingFuture.complete(this);
-                if (drainingTimeout != null) {
-                    drainingTimeout.cancel(false);
-                    drainingTimeout = null;
+                    if (options.creditWindow() > 0) {
+                        executor.execute(() -> replenishCreditIfNeeded());
+                    }
                 }
             }
         }
@@ -256,26 +235,7 @@ public final class ClientStreamReceiver extends ClientReceiverLinkType<StreamRec
     //----- Private implementation details
 
     @Override
-    void disposition(IncomingDelivery delivery, DeliveryState state, boolean settle) throws ClientException {
-        checkClosedOrFailed();
-        asyncApplyDisposition(delivery, state, settle);
-    }
-
-    private void asyncApplyDisposition(IncomingDelivery delivery, DeliveryState state, boolean settle) throws ClientException {
-        executor.execute(() -> {
-            session.getTransactionContext().disposition(delivery, state, settle);
-            replenishCreditIfNeeded();
-        });
-    }
-
-    private void asyncReplenishCreditIfNeeded() {
-        int creditWindow = options.creditWindow();
-        if (creditWindow > 0) {
-            executor.execute(() -> replenishCreditIfNeeded());
-        }
-    }
-
-    private void replenishCreditIfNeeded() {
+    protected void replenishCreditIfNeeded() {
         int creditWindow = options.creditWindow();
         if (creditWindow > 0) {
             int currentCredit = protonReceiver.getCredit();
@@ -325,40 +285,7 @@ public final class ClientStreamReceiver extends ClientReceiverLinkType<StreamRec
             }
         });
 
-        if (drainingTimeout != null) {
-            drainingFuture.failed(
-                failureCause != null ? failureCause : new ClientResourceRemotelyClosedException("The Receiver has been closed"));
-            drainingTimeout.cancel(false);
-            drainingTimeout = null;
-        }
-    }
-
-    @Override
-    protected StreamReceiver self() {
-        return this;
-    }
-
-    @Override
-    protected void linkSpecificLocalOpenHandler() {
-        protonReceiver.deliveryStateUpdatedHandler(this::handleDeliveryStateRemotelyUpdated)
-                      .deliveryReadHandler(this::handleDeliveryRead)
-                      .deliveryAbortedHandler(this::handleDeliveryAborted)
-                      .creditStateUpdateHandler(this::handleReceiverCreditUpdated);
-    }
-
-    @Override
-    protected void linkSpecificLocalCloseHandler() {
-        // Nothing needed for local close handling
-    }
-
-    @Override
-    protected void linkSpecificRemoteOpenHandler() {
-        replenishCreditIfNeeded();
-    }
-
-    @Override
-    protected void linkSpecificRemoteCloseHandler() {
-        // Nothing needed for remote close handling
+        super.linkSpecificCleanupHandler(failureCause);
     }
 
     @Override

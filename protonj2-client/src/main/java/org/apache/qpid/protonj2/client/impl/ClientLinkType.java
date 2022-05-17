@@ -17,6 +17,7 @@
 
 package org.apache.qpid.protonj2.client.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -47,7 +48,7 @@ import org.slf4j.LoggerFactory;
 public abstract class ClientLinkType<LinkType extends Link<LinkType>,
                                      ProtonType extends org.apache.qpid.protonj2.engine.Link<ProtonType>> implements Link<LinkType> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClientLinkType.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     @SuppressWarnings("rawtypes")
     protected static final AtomicIntegerFieldUpdater<ClientLinkType> CLOSED_UPDATER =
@@ -246,20 +247,20 @@ public abstract class ClientLinkType<LinkType extends Link<LinkType>,
         return openFuture;
     }
 
-    LinkType remotelyClosedHandler(Consumer<LinkType> handler) {
+    final LinkType remotelyClosedHandler(Consumer<LinkType> handler) {
         this.linkRemotelyClosedHandler = handler;
         return self();
     }
 
-    String getId() {
+    final String getId() {
         return linkId;
     }
 
-    void setFailureCause(ClientException failureCause) {
+    final void setFailureCause(ClientException failureCause) {
         this.failureCause = failureCause;
     }
 
-    ClientException getFailureCause() {
+    final ClientException getFailureCause() {
         if (failureCause == null) {
             return session.getFailureCause();
         } else {
@@ -267,11 +268,11 @@ public abstract class ClientLinkType<LinkType extends Link<LinkType>,
         }
     }
 
-    boolean isClosed() {
+    final boolean isClosed() {
         return closed > 0;
     }
 
-    boolean isDynamic() {
+    final boolean isDynamic() {
         if (protonLink().isSender()) {
             return protonLink().getTarget() != null && protonLink().<org.apache.qpid.protonj2.types.messaging.Target>getTarget().isDynamic();
         } else {

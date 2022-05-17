@@ -17,18 +17,30 @@
 
 package org.apache.qpid.protonj2.client.impl;
 
+import java.lang.invoke.MethodHandles;
+import java.util.concurrent.ScheduledFuture;
+
 import org.apache.qpid.protonj2.client.Link;
 import org.apache.qpid.protonj2.client.LinkOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
+import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.engine.Receiver;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base class for client link types that wrap a proton receiver to provide
  * delivery dispatch in some manner.
  */
 public abstract class ClientReceiverLinkType<ReceiverType extends Link<ReceiverType>> extends ClientLinkType<ReceiverType, Receiver> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+    protected ClientFuture<ReceiverType> drainingFuture;
+    protected ScheduledFuture<?> drainingTimeout;
 
     protected Receiver protonReceiver;
 
@@ -55,6 +67,78 @@ public abstract class ClientReceiverLinkType<ReceiverType extends Link<ReceiverT
      *
      * @throws ClientException if an error occurs while applying the disposition to the delivery.
      */
-    abstract void disposition(IncomingDelivery delivery, DeliveryState state, boolean settle) throws ClientException;
+    void disposition(IncomingDelivery delivery, DeliveryState state, boolean settle) throws ClientException {
+        checkClosedOrFailed();
+        executor.execute(() -> {
+            session.getTransactionContext().disposition(delivery, state, settle);
+            replenishCreditIfNeeded();
+        });
+    }
 
+    //----- Abstract API that receiver must implement as they are implementation specific
+
+    protected abstract void replenishCreditIfNeeded();
+
+    protected abstract void handleDeliveryRead(IncomingDelivery delivery);
+
+    //----- API that receiver may override if they need additional handling
+
+    protected void handleDeliveryAborted(IncomingDelivery delivery) {
+        LOG.trace("Delivery data was aborted: {}", delivery);
+        delivery.settle();
+        replenishCreditIfNeeded();
+    }
+
+    protected void handleDeliveryStateRemotelyUpdated(IncomingDelivery delivery) {
+        LOG.trace("Delivery remote state was updated: {}", delivery);
+    }
+
+    protected void handleReceiverCreditUpdated(org.apache.qpid.protonj2.engine.Receiver receiver) {
+        LOG.trace("Receiver credit update by remote: {}", receiver);
+
+        if (drainingFuture != null) {
+            if (receiver.getCredit() == 0) {
+                drainingFuture.complete(self());
+                if (drainingTimeout != null) {
+                    drainingTimeout.cancel(false);
+                    drainingTimeout = null;
+                }
+            }
+        }
+    }
+
+    //----- Default receiver link handling of proton engine events
+
+    @Override
+    protected void linkSpecificLocalOpenHandler() {
+        protonLink().deliveryStateUpdatedHandler(this::handleDeliveryStateRemotelyUpdated)
+                    .deliveryReadHandler(this::handleDeliveryRead)
+                    .deliveryAbortedHandler(this::handleDeliveryAborted)
+                    .creditStateUpdateHandler(this::handleReceiverCreditUpdated);
+    }
+
+    @Override
+    protected void linkSpecificRemoteOpenHandler() {
+        replenishCreditIfNeeded();
+    }
+
+    @Override
+    protected void linkSpecificLocalCloseHandler() {
+        // Nothing needed for local close handling
+    }
+
+    @Override
+    protected void linkSpecificRemoteCloseHandler() {
+        // Nothing needed for receiver link remote close
+    }
+
+    @Override
+    protected void linkSpecificCleanupHandler(ClientException failureCause) {
+        if (drainingTimeout != null) {
+            drainingFuture.failed(
+                failureCause != null ? failureCause : new ClientResourceRemotelyClosedException("The Receiver has been closed"));
+            drainingTimeout.cancel(false);
+            drainingTimeout = null;
+        }
+    }
 }
