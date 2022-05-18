@@ -2588,4 +2588,41 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNotNull(failure);
         assertTrue(failure instanceof ProtocolViolationException);
     }
+
+    @Test
+    public void testSessionWideDeliveryMonitoringHandler() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        final AtomicBoolean deliveryReadByReceiver = new AtomicBoolean();
+        final AtomicBoolean deliveryReadBySession = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().ofReceiver().respond();
+        peer.expectFlow().withLinkCredit(1);
+        peer.remoteTransfer().withHandle(0)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {1})
+                             .onChannel(0)
+                             .queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+
+        session.deliveryReadHandler((delivery) -> deliveryReadBySession.set(true));
+
+        Receiver receiver = session.receiver("test");
+        receiver.deliveryReadHandler((delivery) -> deliveryReadByReceiver.set(true));
+        receiver.open().addCredit(1);
+
+        peer.waitForScriptToComplete();
+
+        assertTrue(deliveryReadByReceiver.get());
+        assertTrue(deliveryReadBySession.get());
+
+        assertNull(failure);
+    }
 }

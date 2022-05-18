@@ -41,6 +41,7 @@ import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.DisconnectionEvent;
 import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Message;
+import org.apache.qpid.protonj2.client.NextReceiverPolicy;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.ReconnectLocation;
@@ -485,6 +486,30 @@ public final class ClientConnection implements Connection {
         });
 
         return request(this, result).send(message);
+    }
+
+    @Override
+    public Receiver nextReceiver() throws ClientException {
+        checkClosedOrFailed();
+        return defaultSession().nextReceiver();
+    }
+
+    @Override
+    public Receiver nextReceiver(long timeout, TimeUnit unit) throws ClientException {
+        checkClosedOrFailed();
+        return defaultSession().nextReceiver(timeout, unit);
+    }
+
+    @Override
+    public Receiver nextReceiver(NextReceiverPolicy policy) throws ClientException {
+        checkClosedOrFailed();
+        return defaultSession().nextReceiver(policy);
+    }
+
+    @Override
+    public Receiver nextReceiver(NextReceiverPolicy policy, long timeout, TimeUnit unit) throws ClientException {
+        checkClosedOrFailed();
+        return defaultSession().nextReceiver(policy, timeout, unit);
     }
 
     @Override

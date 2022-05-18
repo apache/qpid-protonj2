@@ -260,6 +260,12 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             deliveryReadEventHandler.handle(delivery);
         }
 
+        // Allow session owner to monitor deliveries passing through the session
+        // but only after the receiver handlers have had a chance to handle it.
+        if (session.deliveryReadHandler() != null) {
+            session.deliveryReadHandler().handle(delivery);
+        }
+
         return this;
     }
 

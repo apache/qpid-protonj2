@@ -2649,124 +2649,120 @@ public class ReceiverTest extends ImperativeClientTestCase {
        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
 
        try (ProtonTestServer peer = new ProtonTestServer()) {
-          peer.expectSASLAnonymousConnect();
-          peer.expectOpen().respond();
-          peer.expectBegin().respond();
-          peer.expectAttach().ofReceiver().respond();
-          peer.expectFlow().withLinkCredit(10);
-          for (int i = 0; i < 10; ++i) {
-             peer.remoteTransfer().withDeliveryId(i)
-                                  .withMore(false)
-                                  .withMessageFormat(0)
-                                  .withPayload(payload).queue();
-          }
-          peer.start();
+           peer.expectSASLAnonymousConnect();
+           peer.expectOpen().respond();
+           peer.expectBegin().respond();
+           peer.expectAttach().ofReceiver().respond();
+           peer.expectFlow().withLinkCredit(10);
+           for (int i = 0; i < 10; ++i) {
+               peer.remoteTransfer().withDeliveryId(i)
+                                    .withMore(false)
+                                    .withMessageFormat(0)
+                                    .withPayload(payload).queue();
+           }
+           peer.start();
 
-          URI remoteURI = peer.getServerURI();
+           URI remoteURI = peer.getServerURI();
 
-          LOG.info("Test started, peer listening on: {}", remoteURI);
+           LOG.info("Test started, peer listening on: {}", remoteURI);
 
-          Client container = Client.create();
-          Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+           Client container = Client.create();
+           Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
 
-          ReceiverOptions options = new ReceiverOptions();
-          options.autoAccept(autoAccept);
-          options.creditWindow(10);
+           ReceiverOptions options = new ReceiverOptions();
+           options.autoAccept(autoAccept);
+           options.creditWindow(10);
 
-          Receiver receiver = connection.openReceiver("test-receiver", options);
+           Receiver receiver = connection.openReceiver("test-receiver", options);
 
-          Wait.waitFor(() -> receiver.queuedDeliveries() == 10);
+           Wait.waitFor(() -> receiver.queuedDeliveries() == 10);
 
-          peer.waitForScriptToComplete();
-          if (autoAccept)
-          {
-              peer.expectDisposition().withFirst(0);
-              peer.expectDisposition().withFirst(1);
-          }
+           peer.waitForScriptToComplete();
+           if (autoAccept)
+           {
+               peer.expectDisposition().withFirst(0);
+               peer.expectDisposition().withFirst(1);
+           }
 
-          // Consume messages 1 and 2 which should not provoke credit replenishment
-          // as there are still 8 outstanding which is above the 70% mark
-          assertNotNull(receiver.receive()); // #1
-          assertNotNull(receiver.receive()); // #2
+           // Consume messages 1 and 2 which should not provoke credit replenishment
+           // as there are still 8 outstanding which is above the 70% mark
+           assertNotNull(receiver.receive()); // #1
+           assertNotNull(receiver.receive()); // #2
 
-          peer.waitForScriptToComplete();
-          peer.expectAttach().ofSender().respond();
-          peer.expectDetach().respond();
-          if (autoAccept)
-          {
-              peer.expectDisposition().withFirst(2);
-          }
-          peer.expectFlow().withLinkCredit(3);
+           peer.waitForScriptToComplete();
+           peer.expectAttach().ofSender().respond();
+           peer.expectDetach().respond();
+           if (autoAccept)
+           {
+               peer.expectDisposition().withFirst(2);
+           }
+           peer.expectFlow().withLinkCredit(3);
 
-          // Ensure that no additional frames from last receive overlap with this one
-          connection.openSender("test").openFuture().get().close();
+           // Ensure that no additional frames from last receive overlap with this one
+           connection.openSender("test").openFuture().get().close();
 
-          // Now consume message 3 which will trip the replenish barrier and the
-          // credit should be updated to reflect that we still have 7 queued
-          assertNotNull(receiver.receive());  // #3
+           // Now consume message 3 which will trip the replenish barrier and the
+           // credit should be updated to reflect that we still have 7 queued
+           assertNotNull(receiver.receive());  // #3
 
-          peer.waitForScriptToComplete();
-          if (autoAccept)
-          {
-              peer.expectDisposition().withFirst(3);
-              peer.expectDisposition().withFirst(4);
-          }
+           peer.waitForScriptToComplete();
+           if (autoAccept) {
+               peer.expectDisposition().withFirst(3);
+               peer.expectDisposition().withFirst(4);
+           }
 
-          // Consume messages 4 and 5 which should not provoke credit replenishment
-          // as there are still 5 outstanding plus the credit we sent last time
-          // which is above the 70% mark
-          assertNotNull(receiver.receive()); // #4
-          assertNotNull(receiver.receive()); // #5
+           // Consume messages 4 and 5 which should not provoke credit replenishment
+           // as there are still 5 outstanding plus the credit we sent last time
+           // which is above the 70% mark
+           assertNotNull(receiver.receive()); // #4
+           assertNotNull(receiver.receive()); // #5
 
-          peer.waitForScriptToComplete();
-          peer.expectAttach().ofSender().respond();
-          peer.expectDetach().respond();
-          if (autoAccept)
-          {
-              peer.expectDisposition().withFirst(5);
-          }
-          peer.expectFlow().withLinkCredit(6);
+           peer.waitForScriptToComplete();
+           peer.expectAttach().ofSender().respond();
+           peer.expectDetach().respond();
+           if (autoAccept) {
+               peer.expectDisposition().withFirst(5);
+           }
+           peer.expectFlow().withLinkCredit(6);
 
-          // Ensure that no additional frames from last receive overlap with this one
-          connection.openSender("test").openFuture().get().close();
+           // Ensure that no additional frames from last receive overlap with this one
+           connection.openSender("test").openFuture().get().close();
 
-          // Consume number 6 which means we only have 4 outstanding plus the three
-          // that we sent last time we flowed which is 70% of possible prefetch so
-          // we should flow to top off credit which would be 6 since we have four
-          // still pending
-          assertNotNull(receiver.receive()); // #6
+           // Consume number 6 which means we only have 4 outstanding plus the three
+           // that we sent last time we flowed which is 70% of possible prefetch so
+           // we should flow to top off credit which would be 6 since we have four
+           // still pending
+           assertNotNull(receiver.receive()); // #6
 
-          peer.waitForScriptToComplete();
-          if (autoAccept)
-          {
-              peer.expectDisposition().withFirst(6);
-              peer.expectDisposition().withFirst(7);
-          }
+           peer.waitForScriptToComplete();
+           if (autoAccept) {
+               peer.expectDisposition().withFirst(6);
+               peer.expectDisposition().withFirst(7);
+           }
 
-          // Consume deliveries 7 and 8 which should not flow as we should be
-          // above the threshold of 70% since we would now have 2 outstanding
-          // and 6 credits on the link
-          assertNotNull(receiver.receive()); // #7
-          assertNotNull(receiver.receive()); // #8
+           // Consume deliveries 7 and 8 which should not flow as we should be
+           // above the threshold of 70% since we would now have 2 outstanding
+           // and 6 credits on the link
+           assertNotNull(receiver.receive()); // #7
+           assertNotNull(receiver.receive()); // #8
 
-          peer.waitForScriptToComplete();
-          if (autoAccept)
-          {
-              peer.expectDisposition().withFirst(8);
-              peer.expectDisposition().withFirst(9);
-          }
+           peer.waitForScriptToComplete();
+           if (autoAccept) {
+               peer.expectDisposition().withFirst(8);
+               peer.expectDisposition().withFirst(9);
+           }
 
-          // Now consume 9 and 10 but we still shouldn't flow more credit because
-          // the link credit is above the 50% mark for overall credit windowing.
-          assertNotNull(receiver.receive()); // #9
-          assertNotNull(receiver.receive()); // #10
+           // Now consume 9 and 10 but we still shouldn't flow more credit because
+           // the link credit is above the 50% mark for overall credit windowing.
+           assertNotNull(receiver.receive()); // #9
+           assertNotNull(receiver.receive()); // #10
 
-          peer.waitForScriptToComplete();
-          peer.expectClose().respond();
+           peer.waitForScriptToComplete();
+           peer.expectClose().respond();
 
-          connection.close();
+           connection.close();
 
-          peer.waitForScriptToComplete();
-       }
+           peer.waitForScriptToComplete();
+        }
     }
 }

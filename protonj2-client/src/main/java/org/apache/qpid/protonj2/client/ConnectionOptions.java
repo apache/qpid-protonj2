@@ -50,6 +50,7 @@ public class ConnectionOptions {
     public static final long DEFAULT_DRAIN_TIMEOUT = 60000;
     public static final int DEFAULT_CHANNEL_MAX = 65535;
     public static final int DEFAULT_MAX_FRAME_SIZE = 65536;
+    public static final NextReceiverPolicy DEFAULT_NEXT_RECEIVER_POLICY = NextReceiverPolicy.ROUND_ROBIN;
 
     private long sendTimeout = DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
@@ -72,6 +73,7 @@ public class ConnectionOptions {
     private Map<String, Object> properties;
     private String virtualHost;
     private boolean traceFrames;
+    private NextReceiverPolicy nextReceiverPolicy = DEFAULT_NEXT_RECEIVER_POLICY;
 
     private BiConsumer<Connection, ConnectionEvent> connectedHandler;
     private BiConsumer<Connection, DisconnectionEvent> disconnectedHandler;
@@ -127,6 +129,7 @@ public class ConnectionOptions {
         other.interruptedHandler(interruptedHandler);
         other.reconnectedHandler(reconnectedHandler);
         other.disconnectedHandler(disconnectedHandler);
+        other.defaultNextReceiverPolicy(nextReceiverPolicy);
 
         if (offeredCapabilities != null) {
             other.offeredCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
@@ -643,6 +646,27 @@ public class ConnectionOptions {
      */
     public ConnectionOptions sslEnabled(boolean sslEnabled) {
         ssl.sslEnabled(sslEnabled);
+        return this;
+    }
+
+    /**
+     * @return the configured default next receiver policy for the connection.
+     */
+    public NextReceiverPolicy defaultNextReceiverPolicy() {
+        return nextReceiverPolicy;
+    }
+
+    /**
+     * Configures the default next receiver policy for this connection and any session
+     * that is created without specifying user defined session default options.
+     *
+     * @param policy
+     * 		The next receiver policy to assign as the default.
+     *
+     * @return this {@link ConnectionOptions} instance.
+     */
+    public ConnectionOptions defaultNextReceiverPolicy(NextReceiverPolicy policy) {
+        this.nextReceiverPolicy = policy;
         return this;
     }
 

@@ -303,7 +303,7 @@ public abstract class ClientLinkType<LinkType extends Link<LinkType>,
         if (options.openTimeout() > 0) {
             executor.schedule(() -> {
                 if (!openFuture.isDone()) {
-                    immediateLinkShutdown(new ClientOperationTimedOutException("Receiver open timed out waiting for remote to respond"));
+                    immediateLinkShutdown(new ClientOperationTimedOutException("Link open timed out waiting for remote to respond"));
                 }
             }, options.openTimeout(), TimeUnit.MILLISECONDS);
         }
@@ -462,7 +462,8 @@ public abstract class ClientLinkType<LinkType extends Link<LinkType>,
 
     protected boolean notClosedOrFailed(ClientFuture<?> request, ProtonType protonLink) {
         if (isClosed()) {
-            request.failed(new ClientIllegalStateException("The Sender was explicitly closed", failureCause));
+            request.failed(new ClientIllegalStateException(
+                String.format("The %s was explicitly closed", protonLink().isReceiver() ? "Receiver" : "Sender"), failureCause));
             return false;
         } else if (failureCause != null) {
             request.failed(failureCause);
@@ -486,7 +487,8 @@ public abstract class ClientLinkType<LinkType extends Link<LinkType>,
 
     protected void checkClosedOrFailed() throws ClientException {
         if (isClosed()) {
-            throw new ClientIllegalStateException("The Sender was explicitly closed", failureCause);
+            throw new ClientIllegalStateException(
+                String.format("The %s was explicitly closed", protonLink().isReceiver() ? "Receiver" : "Sender"), failureCause);
         } else if (failureCause != null) {
             throw failureCause;
         }

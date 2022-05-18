@@ -18,6 +18,9 @@ package org.apache.qpid.protonj2.client.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -25,13 +28,19 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
+import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.ErrorCondition;
+import org.apache.qpid.protonj2.client.NextReceiverPolicy;
+import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.SenderOptions;
 import org.apache.qpid.protonj2.client.Session;
@@ -40,7 +49,9 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
+import org.apache.qpid.protonj2.client.test.Wait;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
+import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -587,6 +598,985 @@ public class SessionTest extends ImperativeClientTestCase {
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testNextReceiverFromDefaultSessionReturnsSameReceiverForQueuedDeliveries() throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            for (int i = 0; i < 10; ++i) {
+                peer.remoteTransfer().withDeliveryId(i)
+                                     .withMore(false)
+                                     .withMessageFormat(0)
+                                     .withPayload(payload).queue();
+            }
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions connOptions = new ConnectionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.FIRST_AVAILABLE);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connOptions);
+
+            ReceiverOptions options = new ReceiverOptions().creditWindow(0).autoAccept(false);
+            Receiver receiver = connection.openReceiver("test-receiver", options);
+            receiver.addCredit(10);
+
+            Wait.waitFor(() -> receiver.queuedDeliveries() == 10);
+
+            peer.waitForScriptToComplete();
+
+            for (int i = 0; i < 10; ++i) {
+                 Receiver nextReceiver = connection.nextReceiver();
+                 assertSame(receiver, nextReceiver);
+                 Delivery delivery = nextReceiver.receive();
+                 assertNotNull(delivery);
+            }
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testNextReceiverTimesOut() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openReceiver("test-receiver").openFuture().get();
+
+            peer.waitForScriptToComplete();
+
+            assertNull(connection.nextReceiver(10, TimeUnit.MILLISECONDS));
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testNextReceiverReturnsAllReceiversEventually() throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(1)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(2)
+                                 .withDeliveryId(2)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            ReceiverOptions options = new ReceiverOptions().creditWindow(10).autoAccept(false);
+            connection.openReceiver("test-receiver1", options).openFuture().get();
+            connection.openReceiver("test-receiver2", options).openFuture().get();
+            connection.openReceiver("test-receiver3", options).openFuture().get();
+
+            peer.waitForScriptToComplete();
+
+            Receiver receiver1 = connection.nextReceiver(NextReceiverPolicy.FIRST_AVAILABLE);
+            assertNotNull(receiver1.receive());
+            Receiver receiver2 = connection.nextReceiver(NextReceiverPolicy.FIRST_AVAILABLE);
+            assertNotNull(receiver2.receive());
+            Receiver receiver3 = connection.nextReceiver(NextReceiverPolicy.FIRST_AVAILABLE);
+            assertNotNull(receiver3.receive());
+
+            assertNotSame(receiver1, receiver2);
+            assertNotSame(receiver1, receiver3);
+            assertNotSame(receiver2, receiver3);
+
+            peer.waitForScriptToComplete();
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testConnectionOptionsConfiguresLargestBacklogNextReceiverPolicy() throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(1)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(2)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(2)
+                                 .withDeliveryId(3)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.LARGEST_BACKLOG);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10).autoAccept(false);
+            Receiver receiver1 = connection.openReceiver("test-receiver1", receiverOptions).openFuture().get();
+            Receiver receiver2 = connection.openReceiver("test-receiver2", receiverOptions).openFuture().get();
+            Receiver receiver3 = connection.openReceiver("test-receiver3", receiverOptions).openFuture().get();
+
+            peer.waitForScriptToComplete();
+
+            Wait.waitFor(() -> receiver1.queuedDeliveries() == 1);
+            Wait.waitFor(() -> receiver2.queuedDeliveries() == 2);
+            Wait.waitFor(() -> receiver3.queuedDeliveries() == 1);
+
+            Receiver next = connection.nextReceiver();
+            assertSame(next, receiver2);
+
+            peer.waitForScriptToComplete();
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testSessionOptionsConfiguresLargestBacklogNextReceiverPolicy() throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(1)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(2)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(2)
+                                 .withDeliveryId(3)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.RANDOM);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            SessionOptions sessionOptions = new SessionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.LARGEST_BACKLOG);
+            Session session = connection.openSession(sessionOptions);
+
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10).autoAccept(false);
+            Receiver receiver1 = session.openReceiver("test-receiver1", receiverOptions).openFuture().get();
+            Receiver receiver2 = session.openReceiver("test-receiver2", receiverOptions).openFuture().get();
+            Receiver receiver3 = session.openReceiver("test-receiver3", receiverOptions).openFuture().get();
+
+            peer.waitForScriptToComplete();
+
+            Wait.waitFor(() -> receiver1.queuedDeliveries() == 1);
+            Wait.waitFor(() -> receiver2.queuedDeliveries() == 2);
+            Wait.waitFor(() -> receiver3.queuedDeliveries() == 1);
+
+            Receiver next = session.nextReceiver();
+            assertSame(next, receiver2);
+
+            peer.waitForScriptToComplete();
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testUserSpeicifedNextReceiverPolicyOverridesConfiguration() throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(1)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(2)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(2)
+                                 .withDeliveryId(3)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.RANDOM);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            SessionOptions sessionOptions = new SessionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.SMALLEST_BACKLOG);
+            Session session = connection.openSession(sessionOptions);
+
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10).autoAccept(false);
+            Receiver receiver1 = session.openReceiver("test-receiver1", receiverOptions).openFuture().get();
+            Receiver receiver2 = session.openReceiver("test-receiver2", receiverOptions).openFuture().get();
+            Receiver receiver3 = session.openReceiver("test-receiver3", receiverOptions).openFuture().get();
+
+            peer.waitForScriptToComplete();
+
+            Wait.waitFor(() -> receiver1.queuedDeliveries() == 1);
+            Wait.waitFor(() -> receiver2.queuedDeliveries() == 2);
+            Wait.waitFor(() -> receiver3.queuedDeliveries() == 1);
+
+            Receiver next = session.nextReceiver(NextReceiverPolicy.LARGEST_BACKLOG);
+            assertSame(next, receiver2);
+
+            peer.waitForScriptToComplete();
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testSessionOptionsConfiguresSmallestBacklogNextReceiverPolicy() throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(1)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(2)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(3)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(4)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(2)
+                                 .withDeliveryId(5)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.RANDOM);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            SessionOptions sessionOptions = new SessionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.SMALLEST_BACKLOG);
+            Session session = connection.openSession(sessionOptions);
+
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10).autoAccept(false);
+            Receiver receiver1 = session.openReceiver("test-receiver1", receiverOptions).openFuture().get();
+            Receiver receiver2 = session.openReceiver("test-receiver2", receiverOptions).openFuture().get();
+            Receiver receiver3 = session.openReceiver("test-receiver3", receiverOptions).openFuture().get();
+
+            peer.waitForScriptToComplete();
+
+            Wait.waitFor(() -> receiver1.queuedDeliveries() == 3);
+            Wait.waitFor(() -> receiver2.queuedDeliveries() == 2);
+            Wait.waitFor(() -> receiver3.queuedDeliveries() == 1);
+
+            Receiver next = session.nextReceiver();
+            assertSame(next, receiver3);
+
+            peer.waitForScriptToComplete();
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testNextReceiverCompletesAfterDeliveryArrivesRoundRobin() throws Exception {
+        doTestNextReceiverCompletesAfterDeliveryArrives(NextReceiverPolicy.ROUND_ROBIN);
+    }
+
+    @Test
+    public void testNextReceiverCompletesAfterDeliveryArrivesRandom() throws Exception {
+        doTestNextReceiverCompletesAfterDeliveryArrives(NextReceiverPolicy.RANDOM);
+    }
+
+    @Test
+    public void testNextReceiverCompletesAfterDeliveryArrivesLargestBacklog() throws Exception {
+        doTestNextReceiverCompletesAfterDeliveryArrives(NextReceiverPolicy.LARGEST_BACKLOG);
+    }
+
+    @Test
+    public void testNextReceiverCompletesAfterDeliveryArrivesSmallestBacklog() throws Exception {
+        doTestNextReceiverCompletesAfterDeliveryArrives(NextReceiverPolicy.SMALLEST_BACKLOG);
+    }
+
+    @Test
+    public void testNextReceiverCompletesAfterDeliveryArrivesFirstAvailable() throws Exception {
+        doTestNextReceiverCompletesAfterDeliveryArrives(NextReceiverPolicy.FIRST_AVAILABLE);
+    }
+
+    public void doTestNextReceiverCompletesAfterDeliveryArrives(NextReceiverPolicy policy) throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final CountDownLatch done = new CountDownLatch(1);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().defaultNextReceiverPolicy(policy);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10).autoAccept(false);
+            connection.openReceiver("test-receiver1", receiverOptions).openFuture().get();
+
+            peer.waitForScriptToComplete();
+
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    Receiver receiver = connection.nextReceiver();
+                    Delivery delivery = receiver.receive();
+                    LOG.info("Next receiver returned delivery with body: {}", delivery.message().body());
+                    done.countDown();
+                } catch (ClientException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).later(15);
+
+            peer.waitForScriptToComplete();
+
+            assertTrue(done.await(10, TimeUnit.SECONDS));
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testNextReceiverThrowsAfterSessionClosedRoundRobin() throws Exception {
+        doTestNextReceiverThrowsAfterSessionClosed(NextReceiverPolicy.ROUND_ROBIN);
+    }
+
+    @Test
+    public void testNextReceiverThrowsAfterSessionClosedRandom() throws Exception {
+        doTestNextReceiverThrowsAfterSessionClosed(NextReceiverPolicy.RANDOM);
+    }
+
+    @Test
+    public void testNextReceiverThrowsAfterSessionClosedLargestBacklog() throws Exception {
+        doTestNextReceiverThrowsAfterSessionClosed(NextReceiverPolicy.LARGEST_BACKLOG);
+    }
+
+    @Test
+    public void testNextReceiverThrowsAfterSessionClosedSmallestBacklog() throws Exception {
+        doTestNextReceiverThrowsAfterSessionClosed(NextReceiverPolicy.SMALLEST_BACKLOG);
+    }
+
+    @Test
+    public void testNextReceiverThrowsAfterSessionClosedFirstAvailable() throws Exception {
+        doTestNextReceiverThrowsAfterSessionClosed(NextReceiverPolicy.FIRST_AVAILABLE);
+    }
+
+    public void doTestNextReceiverThrowsAfterSessionClosed(NextReceiverPolicy policy) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final CountDownLatch started = new CountDownLatch(1);
+            final CountDownLatch done = new CountDownLatch(1);
+            final AtomicReference<Exception> error = new AtomicReference<>();
+
+            final Client container = Client.create();
+            final ConnectionOptions options = new ConnectionOptions().defaultNextReceiverPolicy(policy);
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            final Session session = connection.openSession().openFuture().get();
+
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    started.countDown();
+                    session.nextReceiver();
+                } catch (ClientException e) {
+                    error.set(e);
+                } finally {
+                    done.countDown();
+                }
+            });
+
+            peer.waitForScriptToComplete();
+
+            assertTrue(started.await(10, TimeUnit.SECONDS));
+
+            peer.expectEnd().respond();
+
+            session.closeAsync();
+
+            assertTrue(done.await(10, TimeUnit.SECONDS));
+            assertTrue(error.get() instanceof ClientIllegalStateException);
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testNextReceiverCompletesWhenCalledBeforeReceiverCreateRoundRobin() throws Exception {
+        doTestNextReceiverCompletesWhenCalledBeforeReceiverCreate(NextReceiverPolicy.ROUND_ROBIN);
+    }
+
+    @Test
+    public void testNextReceiverCompletesWhenCalledBeforeReceiverCreateRandom() throws Exception {
+        doTestNextReceiverCompletesWhenCalledBeforeReceiverCreate(NextReceiverPolicy.RANDOM);
+    }
+
+    @Test
+    public void testNextReceiverCompletesWhenCalledBeforeReceiverCreateLargestBacklog() throws Exception {
+        doTestNextReceiverCompletesWhenCalledBeforeReceiverCreate(NextReceiverPolicy.LARGEST_BACKLOG);
+    }
+
+    @Test
+    public void testNextReceiverCompletesWhenCalledBeforeReceiverCreateSmallestBacklog() throws Exception {
+        doTestNextReceiverCompletesWhenCalledBeforeReceiverCreate(NextReceiverPolicy.SMALLEST_BACKLOG);
+    }
+
+    @Test
+    public void testNextReceiverCompletesWhenCalledBeforeReceiverCreateFirstAvailable() throws Exception {
+        doTestNextReceiverCompletesWhenCalledBeforeReceiverCreate(NextReceiverPolicy.FIRST_AVAILABLE);
+    }
+
+    public void doTestNextReceiverCompletesWhenCalledBeforeReceiverCreate(NextReceiverPolicy policy) throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final CountDownLatch started = new CountDownLatch(1);
+            final CountDownLatch done = new CountDownLatch(1);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().defaultNextReceiverPolicy(policy);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    started.countDown();
+                    Receiver receiver = connection.nextReceiver();
+                    Delivery delivery = receiver.receive();
+                    LOG.info("Next receiver returned delivery with body: {}", delivery.message().body());
+                    done.countDown();
+                } catch (ClientException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            assertTrue(started.await(10, TimeUnit.SECONDS));
+
+            connection.openFuture().get();
+
+            peer.waitForScriptToComplete();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue().afterDelay(10);
+
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10).autoAccept(false);
+            connection.openReceiver("test-receiver1", receiverOptions).openFuture().get();
+
+            peer.waitForScriptToComplete();
+
+            assertTrue(done.await(10, TimeUnit.SECONDS));
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testNextReceiverRoundRobinReturnsNextReceiverAfterLast() throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(1)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(2)
+                                 .withDeliveryId(2)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.RANDOM);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            SessionOptions sessionOptions = new SessionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.ROUND_ROBIN);
+            Session session = connection.openSession(sessionOptions);
+
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10).autoAccept(false);
+            Receiver receiver1 = session.openReceiver("test-receiver1", receiverOptions).openFuture().get();
+            Receiver receiver2 = session.openReceiver("test-receiver2", receiverOptions).openFuture().get();
+            Receiver receiver3 = session.openReceiver("test-receiver3", receiverOptions).openFuture().get();
+
+            peer.waitForScriptToComplete();
+
+            Wait.waitFor(() -> receiver2.queuedDeliveries() == 2);
+            Wait.waitFor(() -> receiver3.queuedDeliveries() == 1);
+
+            assertEquals(0, receiver1.queuedDeliveries());
+
+            Receiver next = session.nextReceiver();
+            assertSame(next, receiver2);
+            next = session.nextReceiver();
+            assertSame(next, receiver3);
+
+            peer.waitForScriptToComplete();
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testNextReceiverRoundRobinPolicyWrapsAround() throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(1)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(2)
+                                 .withDeliveryId(2)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.RANDOM);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            SessionOptions sessionOptions = new SessionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.ROUND_ROBIN);
+            Session session = connection.openSession(sessionOptions);
+
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10).autoAccept(false);
+            Receiver receiver1 = session.openReceiver("test-receiver1", receiverOptions).openFuture().get();
+            Receiver receiver2 = session.openReceiver("test-receiver2", receiverOptions).openFuture().get();
+            Receiver receiver3 = session.openReceiver("test-receiver3", receiverOptions).openFuture().get();
+
+            peer.waitForScriptToComplete();
+
+            Wait.waitFor(() -> receiver2.queuedDeliveries() == 2);
+            Wait.waitFor(() -> receiver3.queuedDeliveries() == 1);
+
+            assertEquals(0, receiver1.queuedDeliveries());
+
+            Receiver next = session.nextReceiver();
+            assertSame(next, receiver2);
+            next = session.nextReceiver();
+            assertSame(next, receiver3);
+
+            peer.waitForScriptToComplete();
+
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(3)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).now();
+
+            Wait.waitFor(() -> receiver1.queuedDeliveries() == 1);
+
+            next = session.nextReceiver();
+            assertSame(next, receiver1);
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testNextReceiverRoundRobinPolicyRestartsWhenLastReceiverClosed() throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(1)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(2)
+                                 .withDeliveryId(2)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.RANDOM);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            SessionOptions sessionOptions = new SessionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.ROUND_ROBIN);
+            Session session = connection.openSession(sessionOptions);
+
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10).autoAccept(false);
+            Receiver receiver1 = session.openReceiver("test-receiver1", receiverOptions).openFuture().get();
+            Receiver receiver2 = session.openReceiver("test-receiver2", receiverOptions).openFuture().get();
+            Receiver receiver3 = session.openReceiver("test-receiver3", receiverOptions).openFuture().get();
+
+            peer.waitForScriptToComplete();
+            peer.expectDetach().respond();
+
+            Wait.waitFor(() -> receiver2.queuedDeliveries() == 2);
+            Wait.waitFor(() -> receiver3.queuedDeliveries() == 1);
+
+            assertEquals(0, receiver1.queuedDeliveries());
+
+            Receiver next = session.nextReceiver();
+            assertSame(next, receiver2);
+            next.close();
+
+            peer.waitForScriptToComplete();
+
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(3)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).now();
+
+            Wait.waitFor(() -> receiver1.queuedDeliveries() == 1);
+
+            next = session.nextReceiver();
+            assertSame(next, receiver1);
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testNextReceiverRoundRobinPolicySkipsEmptyReceivers() throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(3)
+                                 .withDeliveryId(1)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.RANDOM);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            SessionOptions sessionOptions = new SessionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.ROUND_ROBIN);
+            Session session = connection.openSession(sessionOptions);
+
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10).autoAccept(false);
+            Receiver receiver1 = session.openReceiver("test-receiver1", receiverOptions).openFuture().get();
+            Receiver receiver2 = session.openReceiver("test-receiver2", receiverOptions).openFuture().get();
+            Receiver receiver3 = session.openReceiver("test-receiver3", receiverOptions).openFuture().get();
+            Receiver receiver4 = session.openReceiver("test-receiver4", receiverOptions).openFuture().get();
+
+            peer.waitForScriptToComplete();
+
+            Wait.waitFor(() -> receiver1.queuedDeliveries() == 1);
+            Wait.waitFor(() -> receiver4.queuedDeliveries() == 1);
+
+            assertEquals(0, receiver2.queuedDeliveries());
+            assertEquals(0, receiver3.queuedDeliveries());
+
+            Receiver next = session.nextReceiver();
+            assertSame(next, receiver1);
+            next = session.nextReceiver();
+            assertSame(next, receiver4);
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
         }
     }
 }

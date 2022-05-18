@@ -29,7 +29,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.ClientOptions;
@@ -37,6 +39,7 @@ import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.ErrorCondition;
 import org.apache.qpid.protonj2.client.Message;
+import org.apache.qpid.protonj2.client.NextReceiverPolicy;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Sender;
@@ -48,11 +51,13 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
+import org.apache.qpid.protonj2.client.test.Wait;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusDurability;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.SourceMatcher;
+import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.ConnectionError;
@@ -1603,6 +1608,139 @@ public class ConnectionTest extends ImperativeClientTestCase {
             connection.closeAsync().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testUserSpeicifedNextReceiverPolicyOverridesConfiguration() throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(1)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(1)
+                                 .withDeliveryId(2)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.remoteTransfer().withHandle(2)
+                                 .withDeliveryId(3)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().defaultNextReceiverPolicy(NextReceiverPolicy.SMALLEST_BACKLOG);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10).autoAccept(false);
+            Receiver receiver1 = connection.openReceiver("test-receiver1", receiverOptions).openFuture().get();
+            Receiver receiver2 = connection.openReceiver("test-receiver2", receiverOptions).openFuture().get();
+            Receiver receiver3 = connection.openReceiver("test-receiver3", receiverOptions).openFuture().get();
+
+            peer.waitForScriptToComplete();
+
+            Wait.waitFor(() -> receiver1.queuedDeliveries() == 1);
+            Wait.waitFor(() -> receiver2.queuedDeliveries() == 2);
+            Wait.waitFor(() -> receiver3.queuedDeliveries() == 1);
+
+            Receiver next = connection.nextReceiver(NextReceiverPolicy.LARGEST_BACKLOG);
+            assertSame(next, receiver2);
+
+            peer.waitForScriptToComplete();
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testNextReceiverThrowsAfterConnectionClosedRandom() throws Exception {
+        doTestNextReceiverThrowsAfterSessionClosed(NextReceiverPolicy.RANDOM);
+    }
+
+    @Test
+    public void testNextReceiverThrowsAfterConnectionClosedLargestBacklog() throws Exception {
+        doTestNextReceiverThrowsAfterSessionClosed(NextReceiverPolicy.LARGEST_BACKLOG);
+    }
+
+    @Test
+    public void testNextReceiverThrowsAfterConnectionClosedSmallestBacklog() throws Exception {
+        doTestNextReceiverThrowsAfterSessionClosed(NextReceiverPolicy.SMALLEST_BACKLOG);
+    }
+
+    @Test
+    public void testNextReceiverThrowsAfterConnectionClosedFirstAvailable() throws Exception {
+        doTestNextReceiverThrowsAfterSessionClosed(NextReceiverPolicy.FIRST_AVAILABLE);
+    }
+
+    public void doTestNextReceiverThrowsAfterSessionClosed(NextReceiverPolicy policy) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final CountDownLatch started = new CountDownLatch(1);
+            final CountDownLatch done = new CountDownLatch(1);
+            final AtomicReference<Exception> error = new AtomicReference<>();
+
+            final Client container = Client.create();
+            final ConnectionOptions options = new ConnectionOptions().defaultNextReceiverPolicy(policy);
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    started.countDown();
+                    connection.nextReceiver();
+                } catch (ClientException e) {
+                    error.set(e);
+                } finally {
+                    done.countDown();
+                }
+            });
+
+            peer.waitForScriptToComplete();
+            peer.expectClose().respond();
+
+            assertTrue(started.await(10, TimeUnit.SECONDS));
+
+            connection.closeAsync();
+
+            assertTrue(done.await(10, TimeUnit.SECONDS));
+            assertTrue(error.get() instanceof ClientConnectionRemotelyClosedException);
+
+            peer.waitForScriptToComplete();
         }
     }
 

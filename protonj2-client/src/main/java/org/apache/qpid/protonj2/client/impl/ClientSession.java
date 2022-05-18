@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -27,6 +28,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Supplier;
 
 import org.apache.qpid.protonj2.client.ErrorCondition;
+import org.apache.qpid.protonj2.client.NextReceiverPolicy;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Sender;
@@ -52,7 +54,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ClientSession implements Session {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClientSession.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private static final long INFINITE = -1;
 
@@ -70,6 +72,7 @@ public class ClientSession implements Session {
     private final ClientSenderBuilder senderBuilder;
     private final ClientReceiverBuilder receiverBuilder;
 
+    private ClientNextReceiverSelector nextReceiverSelector;
     private volatile int closed;
     private volatile ClientException failureCause;
     private ClientTransactionContext txnContext = NO_OP_TXN_CONTEXT;
@@ -351,6 +354,38 @@ public class ClientSession implements Session {
         return connection.request(this, rollbackFuture);
     }
 
+    @Override
+    public Receiver nextReceiver() throws ClientException {
+        return nextReceiver(options.defaultNextReceiverPolicy(), -1, TimeUnit.MICROSECONDS);
+    }
+
+    @Override
+    public Receiver nextReceiver(long timeout, TimeUnit unit) throws ClientException {
+        return nextReceiver(options.defaultNextReceiverPolicy(), timeout, unit);
+    }
+
+    @Override
+    public Receiver nextReceiver(NextReceiverPolicy policy) throws ClientException {
+        return nextReceiver(policy, -1, TimeUnit.MICROSECONDS);
+    }
+
+    @Override
+    public Receiver nextReceiver(NextReceiverPolicy policy, long timeout, TimeUnit unit) throws ClientException {
+        checkClosedOrFailed();
+        final ClientFuture<Receiver> nextPending = getFutureFactory().createFuture();
+
+        serializer.execute(() -> {
+            try {
+                checkClosedOrFailed();
+                getNextReceiverSelector().nextReceiver(nextPending, policy, unit.toMillis(timeout));
+            } catch (Throwable error) {
+                nextPending.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return connection.request(this, nextPending);
+    }
+
     //----- Internal resource open APIs expected to be called from the connection event loop
 
     ClientReceiver internalOpenReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
@@ -488,6 +523,14 @@ public class ClientSession implements Session {
         }
     }
 
+    private ClientNextReceiverSelector getNextReceiverSelector() {
+        if (nextReceiverSelector == null) {
+            nextReceiverSelector = new ClientNextReceiverSelector(this);
+        }
+
+        return nextReceiverSelector;
+    }
+
     //----- Handle Events from the Proton Session
 
     private void handleLocalOpen(org.apache.qpid.protonj2.engine.Session session) {
@@ -550,6 +593,10 @@ public class ClientSession implements Session {
             protonSession.close();
             protonSession = configureSession(ClientSessionBuilder.recreateSession(connection, protonSession, options));
 
+            if (nextReceiverSelector != null) {
+                nextReceiverSelector.handleReconnect();
+            }
+
             open();
         } else {
             final Connection connection = engine.connection();
@@ -578,6 +625,10 @@ public class ClientSession implements Session {
         try {
             protonSession.close();
         } catch (Exception ignore) {
+        }
+
+        if (nextReceiverSelector != null) {
+            nextReceiverSelector.handleShutdown();
         }
 
         if (failureCause != null) {

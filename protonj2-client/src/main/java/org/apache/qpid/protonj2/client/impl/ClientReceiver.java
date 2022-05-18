@@ -42,7 +42,7 @@ public final class ClientReceiver extends ClientReceiverLinkType<Receiver> imple
     private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private final ReceiverOptions options;
-    private final FifoDeliveryQueue messageQueue;
+    private final FifoDeliveryQueue deliveryQueue;
 
     ClientReceiver(ClientSession session, ReceiverOptions options, String receiverId, org.apache.qpid.protonj2.engine.Receiver receiver) {
         super(session, receiverId, options, receiver);
@@ -53,8 +53,8 @@ public final class ClientReceiver extends ClientReceiverLinkType<Receiver> imple
             protonReceiver.addCredit(options.creditWindow());
         }
 
-        messageQueue = new FifoDeliveryQueue(options.creditWindow());
-        messageQueue.start();
+        deliveryQueue = new FifoDeliveryQueue(options.creditWindow());
+        deliveryQueue.start();
     }
 
     @Override
@@ -67,7 +67,7 @@ public final class ClientReceiver extends ClientReceiverLinkType<Receiver> imple
         checkClosedOrFailed();
 
         try {
-            ClientDelivery delivery = messageQueue.dequeue(units.toMillis(timeout));
+            ClientDelivery delivery = deliveryQueue.dequeue(units.toMillis(timeout));
             if (delivery != null) {
                 if (options.autoAccept()) {
                     disposition(delivery.protonDelivery(), Accepted.getInstance(), options.autoSettle());
@@ -91,7 +91,7 @@ public final class ClientReceiver extends ClientReceiverLinkType<Receiver> imple
     public Delivery tryReceive() throws ClientException {
         checkClosedOrFailed();
 
-        Delivery delivery = messageQueue.dequeueNoWait();
+        Delivery delivery = deliveryQueue.dequeueNoWait();
         if (delivery != null) {
             if (options.autoAccept()) {
                 delivery.disposition(org.apache.qpid.protonj2.client.DeliveryState.accepted(), options.autoSettle());
@@ -107,7 +107,7 @@ public final class ClientReceiver extends ClientReceiverLinkType<Receiver> imple
 
     @Override
     public long queuedDeliveries() {
-        return messageQueue.size();
+        return deliveryQueue.size();
     }
 
     @Override
@@ -182,8 +182,8 @@ public final class ClientReceiver extends ClientReceiverLinkType<Receiver> imple
         }
 
         if (!delivery.isPartial()) {
-            LOG.trace("Receiver {} has incoming Message(s).", linkId);
-            messageQueue.enqueue(new ClientDelivery(this, delivery));
+            LOG.trace("{} has incoming Message(s).", this);
+            deliveryQueue.enqueue(new ClientDelivery(this, delivery));
         } else {
             delivery.claimAvailableBytes();
         }
@@ -197,7 +197,7 @@ public final class ClientReceiver extends ClientReceiverLinkType<Receiver> imple
         if (creditWindow > 0) {
             int currentCredit = protonReceiver.getCredit();
             if (currentCredit <= creditWindow * 0.5) {
-                int potentialPrefetch = currentCredit + messageQueue.size();
+                int potentialPrefetch = currentCredit + deliveryQueue.size();
 
                 if (potentialPrefetch <= creditWindow * 0.7) {
                     int additionalCredit = creditWindow - potentialPrefetch;
@@ -214,10 +214,16 @@ public final class ClientReceiver extends ClientReceiverLinkType<Receiver> imple
     }
 
     @Override
-    protected void recreateLinkForReconnect() {
-        int previousCredit = protonReceiver.getCredit() + messageQueue.size();
+    protected void linkSpecificLocalCloseHandler() {
+        deliveryQueue.stop();  // Ensure blocked receivers are all unblocked.
+        deliveryQueue.clear();
+    }
 
-        messageQueue.clear();  // Prefetched messages should be discarded.
+    @Override
+    protected void recreateLinkForReconnect() {
+        int previousCredit = protonReceiver.getCredit() + deliveryQueue.size();
+
+        deliveryQueue.clear();  // Prefetched messages should be discarded.
 
         if (drainingFuture != null) {
             drainingFuture.complete(this);
@@ -233,11 +239,5 @@ public final class ClientReceiver extends ClientReceiverLinkType<Receiver> imple
         protonReceiver = ClientReceiverBuilder.recreateReceiver(session, protonReceiver, options);
         protonReceiver.setLinkedResource(this);
         protonReceiver.addCredit(previousCredit);
-    }
-
-    @Override
-    protected void linkSpecificLocalCloseHandler() {
-        messageQueue.stop();  // Ensure blocked receivers are all unblocked.
-        messageQueue.clear();
     }
 }

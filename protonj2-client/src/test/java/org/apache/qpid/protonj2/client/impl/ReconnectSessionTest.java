@@ -17,19 +17,27 @@
 package org.apache.qpid.protonj2.client.impl;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.URI;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
+import org.apache.qpid.protonj2.client.Delivery;
+import org.apache.qpid.protonj2.client.NextReceiverPolicy;
 import org.apache.qpid.protonj2.client.Receiver;
+import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.SessionOptions;
+import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
+import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -254,6 +262,98 @@ class ReconnectSessionTest extends ImperativeClientTestCase {
 
             firstPeer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             finalPeer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testNextReceiverCompletesAfterDeliveryArrivesRandom() throws Exception {
+        doTestNextReceiverCompletesAfterDeliveryArrives(NextReceiverPolicy.RANDOM);
+    }
+
+    @Test
+    public void testNextReceiverCompletesAfterDeliveryArrivesLargestBacklog() throws Exception {
+        doTestNextReceiverCompletesAfterDeliveryArrives(NextReceiverPolicy.LARGEST_BACKLOG);
+    }
+
+    @Test
+    public void testNextReceiverCompletesAfterDeliveryArrivesSmallestBacklog() throws Exception {
+        doTestNextReceiverCompletesAfterDeliveryArrives(NextReceiverPolicy.SMALLEST_BACKLOG);
+    }
+
+    @Test
+    public void testNextReceiverCompletesAfterDeliveryArrivesFirstAvailable() throws Exception {
+        doTestNextReceiverCompletesAfterDeliveryArrives(NextReceiverPolicy.FIRST_AVAILABLE);
+    }
+
+    public void doTestNextReceiverCompletesAfterDeliveryArrives(NextReceiverPolicy policy) throws Exception {
+        byte[] payload = createEncodedMessage(new AmqpValue<String>("Hello World"));
+
+        try (ProtonTestServer firstPeer = new ProtonTestServer();
+             ProtonTestServer finalPeer = new ProtonTestServer()) {
+
+            firstPeer.expectSASLAnonymousConnect();
+            firstPeer.expectOpen().respond();
+            firstPeer.expectBegin().respond();
+            firstPeer.expectAttach().ofReceiver().respond();
+            firstPeer.expectFlow().withLinkCredit(10);
+            firstPeer.dropAfterLastHandler();
+            firstPeer.start();
+
+            finalPeer.expectSASLAnonymousConnect();
+            finalPeer.expectOpen().respond();
+            finalPeer.expectBegin().respond();
+            finalPeer.expectAttach().ofReceiver().respond();
+            finalPeer.expectFlow().withLinkCredit(10);
+            finalPeer.start();
+
+            final URI firstURI = firstPeer.getServerURI();
+            final URI finalURI = finalPeer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", firstURI);
+
+            final CountDownLatch done = new CountDownLatch(1);
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.defaultNextReceiverPolicy(policy);
+            options.reconnectOptions().reconnectEnabled(true);
+            options.reconnectOptions().addReconnectLocation(finalURI.getHost(), finalURI.getPort());
+
+            Client container = Client.create();
+            Connection connection = container.connect(firstURI.getHost(), firstURI.getPort(), options);
+
+            ForkJoinPool.commonPool().execute(() -> {
+                try {
+                    Receiver receiver = connection.nextReceiver();
+                    Delivery delivery = receiver.receive();
+                    LOG.info("Next receiver returned delivery with body: {}", delivery.message().body());
+                    done.countDown();
+                } catch (ClientException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10).autoAccept(false);
+            connection.openReceiver("test-receiver1", receiverOptions).openFuture().get();
+
+            firstPeer.waitForScriptToComplete();
+            finalPeer.waitForScriptToComplete();
+
+            finalPeer.remoteTransfer().withHandle(0)
+                                      .withDeliveryId(0)
+                                      .withMore(false)
+                                      .withMessageFormat(0)
+                                      .withPayload(payload).later(15);
+
+            finalPeer.waitForScriptToComplete();
+
+            assertTrue(done.await(10, TimeUnit.SECONDS));
+
+            finalPeer.waitForScriptToComplete();
+            finalPeer.expectClose().respond();
+
+            connection.close();
+
+            finalPeer.waitForScriptToComplete();
         }
     }
 }

@@ -51,6 +51,7 @@ public class SessionOptions {
     private String[] offeredCapabilities;
     private String[] desiredCapabilities;
     private Map<String, Object> properties;
+    private NextReceiverPolicy nextReceiverPolicy = ConnectionOptions.DEFAULT_NEXT_RECEIVER_POLICY;
 
     /**
      * Create a new {@link SessionOptions} instance configured with default configuration settings.
@@ -92,6 +93,7 @@ public class SessionOptions {
         other.requestTimeout(requestTimeout);
         other.incomingCapacity(incomingCapacity);
         other.outgoingCapacity(outgoingCapacity);
+        other.defaultNextReceiverPolicy(nextReceiverPolicy);
 
         if (offeredCapabilities != null) {
             other.offeredCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
@@ -396,6 +398,27 @@ public class SessionOptions {
      */
     public SessionOptions outgoingCapacity(int outgoingCapacity) {
         this.outgoingCapacity = outgoingCapacity;
+        return this;
+    }
+
+    /**
+     * @return the configured default next receiver policy for a session created using these options.
+     */
+    public NextReceiverPolicy defaultNextReceiverPolicy() {
+        return nextReceiverPolicy;
+    }
+
+    /**
+     * Configures the default next receiver policy for the session created with these
+     * configuration options.
+     *
+     * @param policy
+     * 		The default next receiver policy to assign to a new session.
+     *
+     * @return this {@link SessionOptions} instance.
+     */
+    public SessionOptions defaultNextReceiverPolicy(NextReceiverPolicy policy) {
+        this.nextReceiverPolicy = policy;
         return this;
     }
 }

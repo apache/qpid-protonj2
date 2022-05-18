@@ -48,6 +48,7 @@ public abstract class ClientReceiverLinkType<ReceiverType extends Link<ReceiverT
         super(session, linkId, options);
 
         this.protonReceiver = protonReceiver;
+        this.protonReceiver.setLinkedResource(self());
     }
 
     @Override

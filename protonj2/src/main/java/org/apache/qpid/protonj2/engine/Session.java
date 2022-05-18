@@ -221,8 +221,25 @@ public interface Session extends Endpoint<Session> {
      * @param remoteTxnManagerOpenEventHandler
      *          the EventHandler that will be signaled when a {@link TransactionController} link is remotely opened.
      *
-     * @return this session for chaining
+     * @return this {@linkplain Session} for chaining
      */
     Session transactionManagerOpenHandler(EventHandler<TransactionManager> remoteTxnManagerOpenEventHandler);
+
+    //----- Session monitoring handlers
+
+    /**
+     * Allows monitoring of incoming deliveries to receivers attached to this {@link Session}. The
+     * {@link Receiver} that is the target of the incoming delivery will be notified first of the
+     * incoming delivery and any processing should be done using the {@link Receiver#deliveryReadHandler(EventHandler)}.
+     * This event point will be trigger only after the {@link Receiver} level handler and should be
+     * used to monitor deliveries passing through a session for logging or other state related actions
+     * performed by the service managing this session.
+     *
+     * @param delivery
+     * 		The delivery that was read which contains
+     *
+     * @return this {@linkplain Session} for chaining
+     */
+    Session deliveryReadHandler(EventHandler<IncomingDelivery> delivery);
 
 }

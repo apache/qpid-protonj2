@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.client;
 
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionNotActiveException;
@@ -325,5 +326,71 @@ public interface Session extends AutoCloseable {
      * @throws ClientException if an error occurs while attempting to roll back the current transaction.
      */
     Session rollbackTransaction() throws ClientException;
+
+    /**
+     * Waits indefinitely for a receiver created from this session to have a delivery ready for
+     * receipt. The selection of the next receiver when more than one exits which has pending
+     * deliveries is based upon the configured value of the {@link SessionOptions#defaultNextReceiverPolicy()}
+     * used to create this session or if none was provided then the value is taken from the value
+     * of the {@link ConnectionOptions#defaultNextReceiverPolicy()}.
+     *
+     * @return the next receiver that has a pending delivery available based on policy.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver nextReceiver() throws ClientException;
+
+    /**
+     * Waits indefinitely for a receiver created from this session to have a delivery ready for
+     * receipt. The selection of the next receiver when more than one exits which has pending
+     * deliveries is based upon the value of the {@link NextReceiverPolicy} that is provided by
+     * the caller.
+     *
+     * @param policy
+     *      The policy to apply when selecting the next receiver.
+     *
+     * @return the next receiver that has a pending delivery available based on policy.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver nextReceiver(NextReceiverPolicy policy) throws ClientException;
+
+    /**
+     * Waits for the given duration for a receiver created from this session to have a delivery ready
+     * for receipt. The selection of the next receiver when more than one exits which has pending
+     * deliveries is based upon the configured value of the {@link SessionOptions#defaultNextReceiverPolicy()}
+     * used to create this session or if none was provided then the value is taken from the value
+     * of the {@link ConnectionOptions#defaultNextReceiverPolicy()}. If no receiver has an available
+     * delivery within the given timeout this method returns null.
+     *
+     * @param timeout
+     *      The timeout value used to control how long the method waits for a new {@link Delivery} to be available.
+     * @param unit
+     *      The unit of time that the given timeout represents.
+     *
+     * @return the next receiver that has a pending delivery available based on policy.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver nextReceiver(long timeout, TimeUnit unit) throws ClientException;
+
+    /**
+     * Waits for the given duration for a receiver created from this session to have a delivery ready
+     * for receipt. The selection of the next receiver when more than one exits which has pending
+     * deliveries is based upon the value of the {@link NextReceiverPolicy} provided by the caller. If
+     * no receiver has an available delivery within the given timeout this method returns null.
+     *
+     * @param policy
+     *      The policy to apply when selecting the next receiver.
+     * @param timeout
+     *      The timeout value used to control how long the method waits for a new {@link Delivery} to be available.
+     * @param unit
+     *      The unit of time that the given timeout represents.
+     *
+     * @return the next receiver that has a pending delivery available based on policy.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver nextReceiver(NextReceiverPolicy policy, long timeout, TimeUnit unit) throws ClientException;
 
 }

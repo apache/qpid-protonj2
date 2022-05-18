@@ -18,15 +18,16 @@ package org.apache.qpid.protonj2.engine.impl;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.ConnectionState;
 import org.apache.qpid.protonj2.engine.EventHandler;
+import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.engine.Link;
 import org.apache.qpid.protonj2.engine.LinkState;
 import org.apache.qpid.protonj2.engine.Receiver;
@@ -65,8 +66,8 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     private final ProtonSessionOutgoingWindow outgoingWindow;
     private final ProtonSessionIncomingWindow incomingWindow;
 
-    private final Map<String, ProtonSender> senderByNameMap = new HashMap<>();
-    private final Map<String, ProtonReceiver> receiverByNameMap = new HashMap<>();
+    private final Map<String, ProtonSender> senderByNameMap = new LinkedHashMap<>();
+    private final Map<String, ProtonReceiver> receiverByNameMap = new LinkedHashMap<>();
 
     private final SplayMap<ProtonLink<?>> localLinks = new SplayMap<>();
     private final SplayMap<ProtonLink<?>> remoteLinks = new SplayMap<>();
@@ -85,6 +86,7 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     private EventHandler<Sender> remoteSenderOpenEventHandler;
     private EventHandler<Receiver> remoteReceiverOpenEventHandler;
     private EventHandler<TransactionManager> remoteTxnManagerOpenEventHandler;
+    private EventHandler<IncomingDelivery> deliveryReadHandler;
 
     /**
      * Creates a new {@link ProtonSession} instance bound to the given {@link ProtonConnection}.
@@ -314,7 +316,7 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
         if (senderByNameMap.isEmpty()) {
             result = Collections.EMPTY_SET;
         } else {
-            result = new HashSet<>(senderByNameMap.values());
+            result = new LinkedHashSet<>(senderByNameMap.values());
         }
 
         return result;
@@ -328,7 +330,7 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
         if (receiverByNameMap.isEmpty()) {
             result = Collections.EMPTY_SET;
         } else {
-            result = new HashSet<>(receiverByNameMap.values());
+            result = new LinkedHashSet<>(receiverByNameMap.values());
         }
 
         return result;
@@ -447,6 +449,16 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
 
     EventHandler<TransactionManager> transactionManagerOpenHandler() {
         return remoteTxnManagerOpenEventHandler;
+    }
+
+    @Override
+    public ProtonSession deliveryReadHandler(EventHandler<IncomingDelivery> deliveryReadHandler) {
+        this.deliveryReadHandler = deliveryReadHandler;
+        return this;
+    }
+
+    EventHandler<IncomingDelivery> deliveryReadHandler() {
+        return deliveryReadHandler;
     }
 
     //----- Respond to Connection and Engine state changes

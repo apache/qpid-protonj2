@@ -19,9 +19,8 @@ package org.apache.qpid.protonj2.engine.impl;
 import java.lang.ref.SoftReference;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -69,8 +68,8 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     private Open remoteOpen;
     private AMQPHeader remoteHeader;
 
-    private Map<Integer, ProtonSession> localSessions = new HashMap<>();
-    private Map<Integer, ProtonSession> remoteSessions = new HashMap<>();
+    private Map<Integer, ProtonSession> localSessions = new LinkedHashMap<>();
+    private Map<Integer, ProtonSession> remoteSessions = new LinkedHashMap<>();
 
     // These would be sessions that were begun and ended before the remote ever
     // responded with a matching being and end.  The remote is required to complete
@@ -707,7 +706,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         if (localSessions.isEmpty() && remoteSessions.isEmpty()) {
             result = Collections.EMPTY_SET;
         } else {
-            result = new HashSet<>(localSessions.size());
+            result = new LinkedHashSet<>(localSessions.size());
             result.addAll(localSessions.values());
             result.addAll(remoteSessions.values());
         }
