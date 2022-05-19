@@ -98,7 +98,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
         this.receiver = receiver;
         this.delivery = delivery;
         this.deliveryStream = deliveryStream;
-        this.protonDelivery = delivery.getProtonDelivery();
+        this.protonDelivery = delivery.protonDelivery();
     }
 
     @Override

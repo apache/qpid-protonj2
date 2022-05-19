@@ -25,7 +25,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
-import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.exceptions.ClientDeliveryAbortedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -36,10 +35,6 @@ import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
-import org.apache.qpid.protonj2.types.messaging.Modified;
-import org.apache.qpid.protonj2.types.messaging.Rejected;
-import org.apache.qpid.protonj2.types.messaging.Released;
-import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * A {@link StreamDelivery} implementation that provides the mechanics of reading message
  * types from an incoming split framed transfer.
  */
-public final class ClientStreamDelivery implements StreamDelivery {
+public final class ClientStreamDelivery extends ClientDeliverable<ClientStreamDelivery, ClientStreamReceiver> implements StreamDelivery {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientStreamDelivery.class);
 
@@ -58,6 +53,8 @@ public final class ClientStreamDelivery implements StreamDelivery {
     private RawDeliveryInputStream rawInputStream;
 
     ClientStreamDelivery(ClientStreamReceiver receiver, IncomingDelivery protonDelivery) {
+        super(receiver, protonDelivery);
+
         this.receiver = receiver;
         this.protonDelivery = protonDelivery.setLinkedResource(this);
 
@@ -69,8 +66,9 @@ public final class ClientStreamDelivery implements StreamDelivery {
                       .deliveryAbortedHandler(this::handleDeliveryAborted);
     }
 
-    IncomingDelivery getProtonDelivery() {
-        return protonDelivery;
+    @Override
+    protected ClientStreamDelivery self() {
+        return this;
     }
 
     @Override
@@ -86,11 +84,6 @@ public final class ClientStreamDelivery implements StreamDelivery {
     @Override
     public boolean completed() {
         return !protonDelivery.isPartial();
-    }
-
-    @Override
-    public int messageFormat() {
-        return protonDelivery.getMessageFormat();
     }
 
     @Override
@@ -126,62 +119,6 @@ public final class ClientStreamDelivery implements StreamDelivery {
         }
 
         return rawInputStream;
-    }
-
-    @Override
-    public StreamDelivery accept() throws ClientException {
-        receiver.disposition(protonDelivery, Accepted.getInstance(), true);
-        return this;
-    }
-
-    @Override
-    public StreamDelivery release() throws ClientException {
-        receiver.disposition(protonDelivery, Released.getInstance(), true);
-        return this;
-    }
-
-    @Override
-    public StreamDelivery reject(String condition, String description) throws ClientException {
-        receiver.disposition(protonDelivery, new Rejected().setError(new ErrorCondition(condition, description)), true);
-        return this;
-    }
-
-    @Override
-    public StreamDelivery modified(boolean deliveryFailed, boolean undeliverableHere) throws ClientException {
-        receiver.disposition(protonDelivery, new Modified().setDeliveryFailed(deliveryFailed).setUndeliverableHere(undeliverableHere), true);
-        return this;
-    }
-
-    @Override
-    public StreamDelivery disposition(DeliveryState state, boolean settle) throws ClientException {
-        receiver.disposition(protonDelivery, ClientDeliveryState.asProtonType(state), settle);
-        return this;
-    }
-
-    @Override
-    public StreamDelivery settle() throws ClientException {
-        receiver.disposition(protonDelivery, null, true);
-        return this;
-    }
-
-    @Override
-    public DeliveryState state() {
-        return ClientDeliveryState.fromProtonType(protonDelivery.getState());
-    }
-
-    @Override
-    public boolean settled() {
-        return protonDelivery.isSettled();
-    }
-
-    @Override
-    public DeliveryState remoteState() {
-        return ClientDeliveryState.fromProtonType(protonDelivery.getRemoteState());
-    }
-
-    @Override
-    public boolean remoteSettled() {
-        return protonDelivery.isRemotelySettled();
     }
 
     //----- Event Handlers for Delivery updates

@@ -22,27 +22,19 @@ import java.util.Map;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
 import org.apache.qpid.protonj2.client.Delivery;
-import org.apache.qpid.protonj2.client.DeliveryState;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
-import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
-import org.apache.qpid.protonj2.types.messaging.Modified;
-import org.apache.qpid.protonj2.types.messaging.Rejected;
-import org.apache.qpid.protonj2.types.messaging.Released;
-import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 
 /**
  * Client inbound delivery object.
  */
-public final class ClientDelivery implements Delivery {
+public final class ClientDelivery extends ClientDeliverable<ClientDelivery, ClientReceiver> implements Delivery {
 
-    private final ClientReceiver receiver;
-    private final IncomingDelivery delivery;
     private final ProtonBuffer payload;
 
     private DeliveryAnnotations deliveryAnnotations;
@@ -59,10 +51,19 @@ public final class ClientDelivery implements Delivery {
      *      The proton incoming delivery that backs this client delivery facade.
      */
     ClientDelivery(ClientReceiver receiver, IncomingDelivery delivery) {
-        this.receiver = receiver;
-        this.delivery = delivery;
-        this.delivery.setLinkedResource(this);
+        super(receiver, delivery);
+
         this.payload = delivery.readAll();
+    }
+
+    @Override
+    protected ClientDelivery self() {
+        return this;
+    }
+
+    @Override
+    public Receiver receiver() {
+        return receiver;
     }
 
     @SuppressWarnings("unchecked")
@@ -104,77 +105,7 @@ public final class ClientDelivery implements Delivery {
         }
     }
 
-    @Override
-    public Delivery accept() throws ClientException {
-        receiver.disposition(delivery, Accepted.getInstance(), true);
-        return this;
-    }
-
-    @Override
-    public Delivery release() throws ClientException {
-        receiver.disposition(delivery, Released.getInstance(), true);
-        return this;
-    }
-
-    @Override
-    public Delivery reject(String condition, String description) throws ClientException {
-        receiver.disposition(delivery, new Rejected().setError(new ErrorCondition(condition, description)), true);
-        return this;
-    }
-
-    @Override
-    public Delivery modified(boolean deliveryFailed, boolean undeliverableHere) throws ClientException {
-        receiver.disposition(delivery, new Modified().setDeliveryFailed(deliveryFailed).setUndeliverableHere(undeliverableHere), true);
-        return this;
-    }
-
-    @Override
-    public Delivery disposition(DeliveryState state, boolean settle) throws ClientException {
-        receiver.disposition(delivery, ClientDeliveryState.asProtonType(state), settle);
-        return this;
-    }
-
-    @Override
-    public Delivery settle() throws ClientException {
-        receiver.disposition(delivery, null, true);
-        return this;
-    }
-
-    @Override
-    public DeliveryState state() {
-        return ClientDeliveryState.fromProtonType(delivery.getState());
-    }
-
-    @Override
-    public DeliveryState remoteState() {
-        return ClientDeliveryState.fromProtonType(delivery.getRemoteState());
-    }
-
-    @Override
-    public boolean remoteSettled() {
-        return delivery.isRemotelySettled();
-    }
-
-    @Override
-    public int messageFormat() {
-        return delivery.getMessageFormat();
-    }
-
-    @Override
-    public Receiver receiver() {
-        return receiver;
-    }
-
-    @Override
-    public boolean settled() {
-        return delivery.isSettled();
-    }
-
     //----- Internal API not meant to be used from outside the client package.
-
-    IncomingDelivery protonDelivery() {
-        return delivery;
-    }
 
     void deliveryAnnotations(DeliveryAnnotations deliveryAnnotations) {
         this.deliveryAnnotations = deliveryAnnotations;
