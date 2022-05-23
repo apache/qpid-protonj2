@@ -25,7 +25,7 @@
 
   <groupId>org.apache.qpid</groupId>
   <artifactId>protonj2-parent</artifactId>
-  <version>1.0.0-M6</version>
+  <version>1.0.0-M7-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Qpid ProtonJ2 Parent</name>
