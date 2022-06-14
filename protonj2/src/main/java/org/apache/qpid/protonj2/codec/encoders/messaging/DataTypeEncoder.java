@@ -20,7 +20,6 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedTypeEncoder;
-import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.apache.qpid.protonj2.types.messaging.Data;
@@ -51,7 +50,7 @@ public final class DataTypeEncoder extends AbstractDescribedTypeEncoder<Data> {
         buffer.writeByte(EncodingCodes.SMALLULONG);
         buffer.writeByte(Data.DESCRIPTOR_CODE.byteValue());
 
-        state.getEncoder().writeBinary(buffer, state, value.getValue());
+        state.getEncoder().writeBinary(buffer, state, value.getBuffer());
     }
 
     @Override
@@ -85,9 +84,9 @@ public final class DataTypeEncoder extends AbstractDescribedTypeEncoder<Data> {
 
         buffer.writeByte(EncodingCodes.VBIN32);
         for (Object value : values) {
-            final Binary binary = ((Data) value).getBinary();
-            buffer.writeInt(binary.getLength());
-            buffer.writeBytes(binary.getArray(), binary.getArrayOffset(), binary.getLength());
+            final ProtonBuffer binary = ((Data) value).getBuffer();
+            buffer.writeInt(binary.getReadableBytes());
+            buffer.writeBytes(binary.getArray(), binary.getArrayOffset(), binary.getReadableBytes());
         }
     }
 }

@@ -366,6 +366,7 @@ class ClientMessageTest {
         message.bodySections().forEach(section -> {
             assertTrue(section instanceof Data);
             final Data dataView = (Data) section;
+            assertEquals(counter.get(), dataView.getBuffer().getArray()[0]);
             assertEquals(counter.getAndIncrement(), dataView.getBinary().getArray()[0]);
         });
     }

@@ -34,7 +34,6 @@ import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
-import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedByte;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
@@ -367,9 +366,9 @@ public class Benchmark implements Runnable {
     }
 
     private void benchmarkData() throws IOException {
-        Data data1 = new Data(new Binary(new byte[] {1, 2, 3}));
-        Data data2 = new Data(new Binary(new byte[] {4, 5, 6}));
-        Data data3 = new Data(new Binary(new byte[] {7, 8, 9}));
+        Data data1 = new Data(new byte[] {1, 2, 3});
+        Data data2 = new Data(new byte[] {4, 5, 6});
+        Data data3 = new Data(new byte[] {7, 8, 9});
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {

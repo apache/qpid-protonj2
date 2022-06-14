@@ -17,8 +17,6 @@
 package org.apache.qpid.protonj2.codec.encoders.primitives;
 
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.EncodeException;
@@ -62,25 +60,21 @@ public final class MapTypeEncoder extends AbstractPrimitiveTypeEncoder<Map> {
         buffer.writeInt(value.size() * 2);
 
         // Write the list elements and then compute total size written.
-        Set<Map.Entry> entries = value.entrySet();
-        for (Entry entry : entries) {
-            Object entryKey = entry.getKey();
-            Object entryValue = entry.getValue();
-
-            TypeEncoder keyEncoder = state.getEncoder().getTypeEncoder(entryKey);
+        value.forEach((key, entry) -> {
+            TypeEncoder keyEncoder = state.getEncoder().getTypeEncoder(key);
             if (keyEncoder == null) {
-                throw new EncodeException("Cannot find encoder for type " + entryKey);
+                throw new EncodeException("Cannot find encoder for type " + key);
             }
 
-            keyEncoder.writeType(buffer, state, entryKey);
+            keyEncoder.writeType(buffer, state, key);
 
-            TypeEncoder valueEncoder = state.getEncoder().getTypeEncoder(entryValue);
+            TypeEncoder valueEncoder = state.getEncoder().getTypeEncoder(entry);
             if (valueEncoder == null) {
-                throw new EncodeException("Cannot find encoder for type " + entryValue);
+                throw new EncodeException("Cannot find encoder for type " + entry);
             }
 
-            valueEncoder.writeType(buffer, state, entryValue);
-        }
+            valueEncoder.writeType(buffer, state, entry);
+        });
 
         // Move back and write the size
         int endIndex = buffer.getWriteIndex();

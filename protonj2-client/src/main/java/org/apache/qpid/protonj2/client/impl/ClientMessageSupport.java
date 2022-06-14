@@ -54,6 +54,11 @@ public abstract class ClientMessageSupport {
     private static final Encoder DEFAULT_ENCODER = CodecFactory.getDefaultEncoder();
     private static final Decoder DEFAULT_DECODER = CodecFactory.getDefaultDecoder();
 
+    private static final ThreadLocal<EncoderState> THREAD_LOCAL_ENCODER_STATE =
+        ThreadLocal.withInitial(() -> DEFAULT_ENCODER.newEncoderState());
+    private static final ThreadLocal<DecoderState> THREAD_LOCAL_DECODER_STATE =
+            ThreadLocal.withInitial(() -> DEFAULT_DECODER.newDecoderState());
+
     //----- Message Conversion
 
     /**
@@ -92,7 +97,7 @@ public abstract class ClientMessageSupport {
     //----- Message Encoding
 
     public static ProtonBuffer encodeMessage(AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
-        return encodeMessage(DEFAULT_ENCODER, DEFAULT_ENCODER.newEncoderState(), ProtonByteBufferAllocator.DEFAULT, message, deliveryAnnotations);
+        return encodeMessage(DEFAULT_ENCODER, THREAD_LOCAL_ENCODER_STATE.get(), ProtonByteBufferAllocator.DEFAULT, message, deliveryAnnotations);
     }
 
     public static ProtonBuffer encodeMessage(Encoder encoder, ProtonBufferAllocator allocator, AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
@@ -136,7 +141,7 @@ public abstract class ClientMessageSupport {
     //----- Message Decoding
 
     public static Message<?> decodeMessage(ProtonBuffer buffer, Consumer<DeliveryAnnotations> daConsumer) throws ClientException {
-        return decodeMessage(DEFAULT_DECODER, DEFAULT_DECODER.newDecoderState(), buffer, daConsumer);
+        return decodeMessage(DEFAULT_DECODER, THREAD_LOCAL_DECODER_STATE.get(), buffer, daConsumer);
     }
 
     public static Message<?> decodeMessage(Decoder decoder, ProtonBuffer buffer, Consumer<DeliveryAnnotations> daConsumer) throws ClientException {

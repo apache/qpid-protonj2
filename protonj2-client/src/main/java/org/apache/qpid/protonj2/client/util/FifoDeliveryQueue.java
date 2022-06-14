@@ -20,8 +20,6 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.impl.ClientDelivery;
@@ -40,9 +38,6 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
 
     private volatile int state = STOPPED;
 
-    private final ReentrantLock lock = new ReentrantLock();
-    private final Condition condition = lock.newCondition();
-
     private final Deque<ClientDelivery> queue;
 
     /**
@@ -57,38 +52,30 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
 
     @Override
     public void enqueueFirst(ClientDelivery envelope) {
-        lock.lock();
-        try {
+        synchronized (queue) {
             queue.addFirst(envelope);
-            condition.signal();
-        } finally {
-            lock.unlock();
+            queue.notify();
         }
     }
 
     @Override
     public void enqueue(ClientDelivery envelope) {
-        lock.lock();
-        try {
+        synchronized (queue) {
             queue.addLast(envelope);
-            condition.signal();
-        } finally {
-            lock.unlock();
+            queue.notify();
         }
     }
 
-
     @Override
     public ClientDelivery dequeue(long timeout) throws InterruptedException {
-        lock.lock();
-        try {
+        synchronized (queue) {
             // Wait until the receiver is ready to deliver messages.
             while (timeout != 0 && isRunning() && queue.isEmpty()) {
                 if (timeout == -1) {
-                    condition.await();
+                    queue.wait();
                 } else {
                     long start = System.currentTimeMillis();
-                    condition.await(timeout, TimeUnit.MILLISECONDS);
+                    queue.wait(TimeUnit.MILLISECONDS.toMillis(timeout));
                     timeout = Math.max(timeout + start - System.currentTimeMillis(), 0);
                 }
             }
@@ -98,33 +85,25 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
             }
 
             return queue.pollFirst();
-        } finally {
-            lock.unlock();
         }
     }
 
     @Override
     public ClientDelivery dequeueNoWait() {
-        lock.lock();
-        try {
+        synchronized (queue) {
             if (!isRunning()) {
                 return null;
             }
 
             return queue.pollFirst();
-        } finally {
-            lock.unlock();
         }
     }
 
     @Override
     public void start() {
         if (STATE_FIELD_UPDATER.compareAndSet(this, STOPPED, RUNNING)) {
-            lock.lock();
-            try {
-                condition.signalAll();
-            } finally {
-                lock.unlock();
+            synchronized (queue) {
+                queue.notifyAll();
             }
         }
     }
@@ -132,11 +111,8 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
     @Override
     public void stop() {
         if (STATE_FIELD_UPDATER.compareAndSet(this, RUNNING, STOPPED)) {
-            lock.lock();
-            try {
-                condition.signalAll();
-            } finally {
-                lock.unlock();
+            synchronized (queue) {
+                queue.notifyAll();
             }
         }
     }
@@ -144,11 +120,8 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
     @Override
     public void close() {
         if (STATE_FIELD_UPDATER.getAndSet(this, CLOSED) > CLOSED) {
-            lock.lock();
-            try {
-                condition.signalAll();
-            } finally {
-                lock.unlock();
+            synchronized (queue) {
+                queue.notifyAll();
             }
         }
     }
@@ -165,41 +138,29 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
 
     @Override
     public boolean isEmpty() {
-        lock.lock();
-        try {
+        synchronized (queue) {
             return queue.isEmpty();
-        } finally {
-            lock.unlock();
         }
     }
 
     @Override
     public int size() {
-        lock.lock();
-        try {
+        synchronized (queue) {
             return queue.size();
-        } finally {
-            lock.unlock();
         }
     }
 
     @Override
     public void clear() {
-        lock.lock();
-        try {
+        synchronized (queue) {
             queue.clear();
-        } finally {
-            lock.unlock();
         }
     }
 
     @Override
     public String toString() {
-        lock.lock();
-        try {
+        synchronized (queue) {
             return queue.toString();
-        } finally {
-            lock.unlock();
         }
     }
 }

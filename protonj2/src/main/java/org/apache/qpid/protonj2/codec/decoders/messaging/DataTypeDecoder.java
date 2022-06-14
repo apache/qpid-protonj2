@@ -39,7 +39,7 @@ import org.apache.qpid.protonj2.types.messaging.Data;
  */
 public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
 
-    private static final Data EMPTY_DATA = new Data((Binary) null);
+    private static final Data EMPTY_DATA = new Data((ProtonBuffer) null);
 
     @Override
     public Class<Data> getTypeClass() {
@@ -86,7 +86,7 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
         data.setWriteIndex(size);
         buffer.setReadIndex(position + size);
 
-        return new Data(new Binary(data));
+        return new Data(data);
     }
 
     @Override
@@ -130,7 +130,7 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
                 throw new DecodeException("Expected Binary type but found encoding: " + encodingCode);
         }
 
-        return new Data(new Binary(ProtonStreamUtils.readBytes(stream, size)));
+        return new Data(ProtonStreamUtils.readBytes(stream, size));
     }
 
     @Override

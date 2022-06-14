@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.types.messaging;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -26,30 +27,51 @@ public final class Data implements Section<byte[]> {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000075L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:data:binary");
 
-    private final Binary value;
+    private final ProtonBuffer buffer;
 
-    public Data(Binary value) {
-        this.value = value;
+    private Binary cachedBinary;
+
+    public Data(Binary binary) {
+        this.buffer = binary != null ? binary.asProtonBuffer() : null;
+        this.cachedBinary = binary;
     }
 
-    public Data(ProtonBuffer value) {
-        this.value = value != null ? new Binary(value) : null;
+    public Data(ProtonBuffer buffer) {
+        this.buffer = buffer;
     }
 
     public Data(byte[] value) {
-        this.value = value != null ? new Binary(value) : null;
+        this.buffer = value != null ? ProtonByteBufferAllocator.DEFAULT.wrap(value) : null;
     }
 
     public Data(byte[] value, int offset, int length) {
-        this.value = value != null ? new Binary(value, offset, length) : null;
+        this.buffer = value != null ? ProtonByteBufferAllocator.DEFAULT.wrap(value, offset, length) : null;
     }
 
     public Data copy() {
-        return new Data(value == null ? null : value.copy());
+        return new Data(buffer == null ? null : buffer.copy());
     }
 
     public Binary getBinary() {
-        return value;
+        if (cachedBinary != null || buffer == null) {
+            return cachedBinary;
+        } else {
+            return cachedBinary = new Binary(buffer);
+        }
+    }
+
+    /**
+     * Returns the {@link ProtonBuffer} that contains the bytes carried in the {@link Data} section.
+     * If the section carries no bytes then this method returns null.  This method allows the {@link Data}
+     * section to be considered a carrier of {@link ProtonBuffer} types instead of the {@link Binary}
+     * value it will encode as part of its body and avoids creation of a Binary object when one is not
+     * needed. If a Binary instance is required then calling the {@link #getBinary()} method will create
+     * an instance that wraps the internal {@link ProtonBuffer}.
+     *
+     * @return the {@link ProtonBuffer} that back this Data section.
+     */
+    public ProtonBuffer getBuffer() {
+        return buffer;
     }
 
     /**
@@ -61,16 +83,42 @@ public final class Data implements Section<byte[]> {
      */
     @Override
     public byte[] getValue() {
-        if (value != null && value.hasArray() && value.getArrayOffset() == 0 && value.getLength() == value.getArray().length) {
-            return value.getArray();
+        if (buffer != null && buffer.hasArray() && buffer.getArrayOffset() == 0 && buffer.getReadableBytes() == buffer.getArray().length) {
+            return buffer.getArray();
         } else {
-            return value != null ? value.arrayCopy() : null;
+            byte[] dataCopy = null;
+            if (buffer != null) {
+                dataCopy = new byte[buffer.getReadableBytes()];
+                buffer.getBytes(buffer.getReadIndex(), dataCopy);
+            }
+
+            return dataCopy;
         }
     }
 
     @Override
     public String toString() {
-        return "Data{ " + value + " }";
+        if (buffer == null) {
+            return "";
+        }
+
+        StringBuilder str = new StringBuilder();
+
+        str.append("Data{ ");
+
+        for (int i = 0; i < buffer.getReadableBytes(); i++) {
+            byte c = buffer.getByte(i);
+
+            if (c > 31 && c < 127 && c != '\\') {
+                str.append((char) c);
+            } else {
+                str.append(String.format("\\x%02x", c));
+            }
+        }
+
+        str.append(" }");
+
+        return str.toString();
     }
 
     @Override
@@ -82,7 +130,7 @@ public final class Data implements Section<byte[]> {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((value == null) ? 0 : value.hashCode());
+        result = prime * result + ((buffer == null) ? 0 : buffer.hashCode());
         return result;
     }
 
@@ -99,14 +147,10 @@ public final class Data implements Section<byte[]> {
         }
 
         Data other = (Data) obj;
-        if (value == null) {
-            if (other.value != null) {
-                return false;
-            }
-        } else if (!value.equals(other.value)) {
-            return false;
+        if (buffer == null) {
+            return other.buffer == null;
         }
 
-        return true;
+        return buffer.equals(other.buffer);
     }
 }

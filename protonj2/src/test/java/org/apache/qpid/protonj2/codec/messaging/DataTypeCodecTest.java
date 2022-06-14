@@ -98,7 +98,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
         InputStream stream = new ProtonBufferInputStream(buffer);
 
-        Data data = new Data(new Binary(new byte[] { 1, 2, 3}));
+        Data data = new Data(new byte[] { 1, 2, 3});
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, data);

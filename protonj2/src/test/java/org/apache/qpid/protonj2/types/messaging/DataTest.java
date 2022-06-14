@@ -43,6 +43,11 @@ public class DataTest {
     }
 
     @Test
+    public void testCopyFromEmptyProtonBuffer() {
+        assertNull(new Data((ProtonBuffer) null).copy().getBinary());
+    }
+
+    @Test
     public void testCopyFromEmpty() {
         assertNull(new Data((Binary) null).copy().getBinary());
     }
@@ -79,6 +84,25 @@ public class DataTest {
     }
 
     @Test
+    public void testHashCodeWithProtonBuffer() {
+        byte[] bytes = new byte[] { 1 };
+        Data data = new Data(bytes);
+        Data copy = data.copy();
+
+        assertNotNull(copy.getValue());
+        assertNotSame(data.getValue(), copy.getValue());
+
+        assertEquals(data.hashCode(), copy.hashCode());
+
+        Data second = new Data(new byte[] { 1, 2, 3 });
+
+        assertNotEquals(data.hashCode(), second.hashCode());
+
+        assertNotEquals(new Data((ProtonBuffer) null).hashCode(), data.hashCode());
+        assertEquals(new Data((ProtonBuffer) null).hashCode(), new Data((ProtonBuffer) null).hashCode());
+    }
+
+    @Test
     public void testEquals() {
         byte[] bytes = new byte[] { 1 };
         Binary binary = new Binary(bytes);
@@ -105,6 +129,34 @@ public class DataTest {
         assertNotEquals(data, new Data((Binary) null));
         assertNotEquals(new Data((Binary) null), data);
         assertEquals(new Data((Binary) null), new Data((ProtonBuffer) null));
+    }
+
+    @Test
+    public void testEqualsWithoutBinary() {
+        byte[] bytes = new byte[] { 1 };
+        Data data = new Data(bytes);
+        Data copy = data.copy();
+
+        assertNotNull(copy.getValue());
+        assertNotSame(data.getValue(), copy.getValue());
+
+        assertEquals(data, data);
+        assertEquals(data, copy);
+
+        Data second = new Data(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1, 2, 3 }));
+        Data third = new Data(new byte[] { 1, 2, 3 }, 0, 3);
+        Data fourth = new Data(new byte[] { 1, 2, 3 }, 0, 1);
+        Data fifth = new Data(null, 0, 0);
+
+        assertNotEquals(data, second);
+        assertNotEquals(data, third);
+        assertNotEquals(data, fifth);
+        assertEquals(data, fourth);
+        assertFalse(data.equals(null));
+        assertNotEquals(data, "not a data");
+        assertNotEquals(data, new Data((byte[]) null));
+        assertNotEquals(new Data((ProtonBuffer) null), data);
+        assertEquals(new Data((byte[]) null), new Data((ProtonBuffer) null));
     }
 
     @Test
