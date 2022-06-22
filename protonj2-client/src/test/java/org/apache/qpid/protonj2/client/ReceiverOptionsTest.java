@@ -24,45 +24,28 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-class SaslOptionsTest {
+public class ReceiverOptionsTest {
 
     @Test
     void testCreate() {
-        SaslOptions options = new SaslOptions();
+        ReconnectOptions options = new ReconnectOptions();
 
-        assertNotNull(options.allowedMechanisms());
-        assertTrue(options.allowedMechanisms().isEmpty());
-        assertTrue(options.saslEnabled());
+        assertNotNull(options.reconnectLocations());
+        assertTrue(options.reconnectLocations().isEmpty());
+        assertFalse(options.reconnectEnabled());
     }
 
     @Test
     void testCopy() {
-        SaslOptions options = new SaslOptions();
+        ReconnectOptions options = new ReconnectOptions();
 
-        options.addAllowedMechanism("PLAIN");
-        options.addAllowedMechanism("ANONYMOUS");
-        options.saslEnabled(false);
+        options.addReconnectLocation("test1", 5672);
+        options.reconnectEnabled(true);
 
-        SaslOptions copy = options.clone();
+        ReconnectOptions copy = options.clone();
 
         assertNotSame(copy, options);
-        assertEquals(options.allowedMechanisms(), copy.allowedMechanisms());
-        assertEquals(options.saslEnabled(), copy.saslEnabled());
-    }
-
-    @Test
-    void testAllowedOptions() {
-        SaslOptions options = new SaslOptions();
-
-        assertNotNull(options.allowedMechanisms());
-        assertTrue(options.allowedMechanisms().isEmpty());
-
-        options.addAllowedMechanism("PLAIN");
-        options.addAllowedMechanism("ANONYMOUS");
-
-        assertFalse(options.allowedMechanisms().isEmpty());
-
-        assertTrue(options.allowedMechanisms().contains("PLAIN"));
-        assertTrue(options.allowedMechanisms().contains("ANONYMOUS"));
+        assertEquals(options.reconnectLocations(), copy.reconnectLocations());
+        assertEquals(options.reconnectEnabled(), copy.reconnectEnabled());
     }
 }

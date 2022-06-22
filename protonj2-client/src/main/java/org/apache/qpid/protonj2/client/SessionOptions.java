@@ -27,7 +27,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 /**
  * Options that control the behavior of the {@link Session} created from them.
  */
-public class SessionOptions {
+public class SessionOptions implements Cloneable {
 
     /**
      * The default Session configured incoming capacity limit to provide to the remote
@@ -83,7 +83,7 @@ public class SessionOptions {
      * @param other
      *      the target of this copy operation.
      *
-     * @return this options class for chaining.
+     * @return the {@link SessionOptions} instance that was given.
      */
     protected SessionOptions copyInto(SessionOptions other) {
         other.closeTimeout(closeTimeout);
@@ -105,7 +105,7 @@ public class SessionOptions {
             other.properties(new HashMap<>(properties));
         }
 
-        return this;
+        return other;
     }
 
     /**

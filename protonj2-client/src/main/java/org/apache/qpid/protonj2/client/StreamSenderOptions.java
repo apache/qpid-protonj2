@@ -24,7 +24,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
  * Options class that controls various aspects of a {@link StreamSenderMessage} instance and how
  * a streamed message transfer is written.
  */
-public class StreamSenderOptions extends LinkOptions<StreamSenderOptions> {
+public class StreamSenderOptions extends LinkOptions<StreamSenderOptions> implements Cloneable {
 
     /**
      * Defines the default pending write buffering size which is used to control how much outgoing
@@ -76,7 +76,7 @@ public class StreamSenderOptions extends LinkOptions<StreamSenderOptions> {
      * @param other
      *      the target of this copy operation.
      *
-     * @return this {@link StreamSenderOptions} class for chaining.
+     * @return the {@link StreamSenderOptions} instance that was given.
      */
     protected StreamSenderOptions copyInto(StreamSenderOptions other) {
         super.copyInto(other);
@@ -85,7 +85,7 @@ public class StreamSenderOptions extends LinkOptions<StreamSenderOptions> {
         other.sendTimeout(sendTimeout);
         other.pendingWritesBufferSize(pendingWritesBufferSize);
 
-        return this;
+        return other;
     }
 
     /**

@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Options that control the reconnection behavior of a client {@link Connection}.
  */
-public class ReconnectOptions {
+public class ReconnectOptions implements Cloneable {
 
     public static final boolean DEFAULT_RECONNECT_ENABLED = false;
     public static final int INFINITE = -1;
@@ -62,6 +62,11 @@ public class ReconnectOptions {
         }
     }
 
+    @Override
+    public ReconnectOptions clone() {
+        return copyInto(new ReconnectOptions());
+    }
+
     /**
      * Copy all options from this {@link ReconnectOptions} instance into the instance
      * provided.
@@ -69,7 +74,7 @@ public class ReconnectOptions {
      * @param other
      *      the target of this copy operation.
      *
-     * @return this {@link ReconnectOptions} instance.
+     * @return the {@link ReconnectOptions} instance that was given.
      */
     protected ReconnectOptions copyInto(ReconnectOptions other) {
         other.reconnectEnabled(reconnectEnabled());
@@ -82,7 +87,7 @@ public class ReconnectOptions {
         other.reconnectBackOffMultiplier(reconnectBackOffMultiplier);
         other.reconnectHosts.addAll(reconnectHosts);
 
-        return this;
+        return other;
     }
 
     /**

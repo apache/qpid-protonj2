@@ -24,7 +24,7 @@ import org.apache.qpid.protonj2.types.messaging.Footer;
  * Options class that controls various aspects of a {@link OutputStream} instance created to write
  * the contents of a section of a {@link StreamSenderMessage}.
  */
-public class OutputStreamOptions {
+public class OutputStreamOptions implements Cloneable {
 
     /**
      * Defines the default value for the complete parent {@link StreamSenderMessage} on close option
@@ -65,13 +65,13 @@ public class OutputStreamOptions {
      * @param other
      *      the target of this copy operation.
      *
-     * @return this {@link OutputStreamOptions} class for chaining.
+     * @return the {@link OutputStreamOptions} that was given.
      */
     protected OutputStreamOptions copyInto(OutputStreamOptions other) {
         other.bodyLength(streamSize);
         other.completeSendOnClose(completeSendOnClose);
 
-        return this;
+        return other;
     }
 
     /**

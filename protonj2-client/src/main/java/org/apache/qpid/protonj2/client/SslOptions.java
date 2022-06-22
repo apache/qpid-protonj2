@@ -425,7 +425,7 @@ public class SslOptions implements Cloneable {
      *
      * @return the options instance that was copied into.
      */
-    public SslOptions copyInto(SslOptions other) {
+    protected SslOptions copyInto(SslOptions other) {
         other.sslEnabled(sslEnabled());
         other.keyStoreLocation(keyStoreLocation());
         other.keyStorePassword(keyStorePassword());

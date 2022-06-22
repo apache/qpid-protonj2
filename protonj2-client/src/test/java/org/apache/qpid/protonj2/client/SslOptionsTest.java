@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -99,8 +100,10 @@ public class SslOptionsTest extends ImperativeClientTestCase {
 
     @Test
     public void testClone() {
-        SslOptions options = createNonDefaultOptions().clone();
+        SslOptions original = createNonDefaultOptions();
+        SslOptions options = original.clone();
 
+        assertNotSame(original, options);
         assertTrue(options.sslEnabled());
         assertEquals(TEST_DEFAULT_SSL_PORT, options.defaultSslPort());
         assertEquals(CLIENT_KEYSTORE, options.keyStoreLocation());

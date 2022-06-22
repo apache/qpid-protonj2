@@ -16,29 +16,33 @@
  */
 package org.apache.qpid.protonj2.client;
 
-/**
- * Options type that carries configuration for link Target types.
- */
-public final class TargetOptions extends TerminusOptions<TargetOptions> implements Cloneable {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-    /**
-     * @param other
-     * 		The instance which should receive the configuration from this options instance.
-     *
-     * @return the given {@link TargetOptions} instance with all configuration copied from this instance.
-     */
-    protected TargetOptions copyInto(TargetOptions other) {
-        super.copyInto(other);
-        return other;
+import org.junit.jupiter.api.Test;
+
+public class ClientOptionsTest {
+
+    @Test
+    void testCreate() {
+        ClientOptions options = new ClientOptions();
+
+        assertNull(options.id());
+        assertNull(options.futureType());
     }
 
-    @Override
-    public TargetOptions clone() {
-        return copyInto(new TargetOptions());
-    }
+    @Test
+    void testCopy() {
+        ClientOptions options = new ClientOptions();
 
-    @Override
-    TargetOptions self() {
-        return this;
+        options.id("test");
+        options.futureType("past-present");
+
+        ClientOptions copy = options.clone();
+
+        assertNotSame(copy, options);
+        assertEquals(options.id(), copy.id());
+        assertEquals(options.futureType(), copy.futureType());
     }
 }

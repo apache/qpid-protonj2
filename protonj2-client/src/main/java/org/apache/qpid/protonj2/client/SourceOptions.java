@@ -25,7 +25,7 @@ import org.apache.qpid.protonj2.client.impl.ClientDeliveryState;
 /**
  * Options type that carries configuration for link Source types.
  */
-public final class SourceOptions extends TerminusOptions<SourceOptions> {
+public final class SourceOptions extends TerminusOptions<SourceOptions> implements Cloneable {
 
     private static final DeliveryState.Type[] DEFAULT_OUTCOMES = new DeliveryState.Type[] {
         DeliveryState.Type.ACCEPTED, DeliveryState.Type.REJECTED, DeliveryState.Type.RELEASED, DeliveryState.Type.MODIFIED
@@ -55,14 +55,14 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> {
      *
      * @return this {@link SourceOptions} instance.
      */
-    public SourceOptions copyInto(SourceOptions other) {
+    protected SourceOptions copyInto(SourceOptions other) {
         super.copyInto(other);
         other.distributionMode(distributionMode);
         if (filters != null) {
             other.filters(new HashMap<>(filters));
         }
 
-        return this;
+        return other;
     }
 
     /**

@@ -23,7 +23,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 /**
  * Options that control the behavior of a {@link Sender} created from them.
  */
-public class SenderOptions extends LinkOptions<SenderOptions>{
+public class SenderOptions extends LinkOptions<SenderOptions> implements Cloneable {
 
     private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
 
@@ -97,14 +97,14 @@ public class SenderOptions extends LinkOptions<SenderOptions>{
      * @param other
      *      the target of this copy operation.
      *
-     * @return this options class for chaining.
+     * @return the {@link SenderOptions} instance that was given.
      */
     protected SenderOptions copyInto(SenderOptions other) {
         super.copyInto(other);
 
         other.sendTimeout(sendTimeout);
 
-        return this;
+        return other;
     }
 
     @Override

@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -82,7 +83,10 @@ public class TransportOptionsTest extends ImperativeClientTestCase {
 
     @Test
     public void testClone() {
-        TransportOptions options = createNonDefaultOptions().clone();
+        TransportOptions original = createNonDefaultOptions();
+        TransportOptions options = original.clone();
+
+        assertNotSame(original, options);
 
         assertEquals(TEST_SEND_BUFFER_SIZE, options.sendBufferSize());
         assertEquals(TEST_RECEIVE_BUFFER_SIZE, options.receiveBufferSize());

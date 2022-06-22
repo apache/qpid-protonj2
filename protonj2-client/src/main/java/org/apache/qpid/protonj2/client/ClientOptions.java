@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.client;
 /**
  * Container Options for customizing the behavior of the Container
  */
-public class ClientOptions {
+public class ClientOptions implements Cloneable {
 
     private String id;
     private String futureType;
@@ -95,12 +95,12 @@ public class ClientOptions {
      * @param other
      *      the target of this copy operation.
      *
-     * @return this options class for chaining.
+     * @return the {@link ClientOptions} instance that was given.
      */
-    public ClientOptions copyInto(ClientOptions other) {
+    protected ClientOptions copyInto(ClientOptions other) {
         other.id(id);
         other.futureType(futureType);
 
-        return this;
+        return other;
     }
 }

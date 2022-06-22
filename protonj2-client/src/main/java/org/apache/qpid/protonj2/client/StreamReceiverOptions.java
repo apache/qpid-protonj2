@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
  * Options class that controls various aspects of a {@link StreamReceiver} instance and how
  * a streamed message transfer is written.
  */
-public class StreamReceiverOptions extends LinkOptions<StreamReceiverOptions> {
+public final class StreamReceiverOptions extends LinkOptions<StreamReceiverOptions> implements Cloneable {
 
     /**
      * Defines the default read buffering size which is used to control how much incoming
@@ -67,7 +67,7 @@ public class StreamReceiverOptions extends LinkOptions<StreamReceiverOptions> {
      * @param other
      *      the target of this copy operation.
      *
-     * @return this {@link StreamReceiverOptions} class for chaining.
+     * @return the {@link StreamReceiverOptions} instance that was given.
      */
     protected StreamReceiverOptions copyInto(StreamReceiverOptions other) {
         super.copyInto(other);
@@ -77,7 +77,7 @@ public class StreamReceiverOptions extends LinkOptions<StreamReceiverOptions> {
         other.creditWindow(creditWindow);
         other.drainTimeout(drainTimeout);
 
-        return this;
+        return other;
     }
 
     /**

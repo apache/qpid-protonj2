@@ -29,9 +29,9 @@ import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 import org.apache.qpid.protonj2.types.transport.Open;
 
 /**
- * Options that control the behaviour of the {@link Connection} created from them.
+ * Options that control the behavior of the {@link Connection} created from them.
  */
-public class ConnectionOptions {
+public class ConnectionOptions implements Cloneable {
 
     /**
      * Default value for the AMQP desired capabilities set in the Open frame.
@@ -111,7 +111,7 @@ public class ConnectionOptions {
      * @param other
      *      the target of this copy operation.
      *
-     * @return this {@link ConnectionOptions} instance.
+     * @return the {@link ConnectionOptions} instance that was given.
      */
     protected ConnectionOptions copyInto(ConnectionOptions other) {
         other.closeTimeout(closeTimeout);
@@ -146,7 +146,7 @@ public class ConnectionOptions {
         sasl.copyInto(other.saslOptions());
         reconnect.copyInto(other.reconnectOptions());
 
-        return this;
+        return other;
     }
 
     /**

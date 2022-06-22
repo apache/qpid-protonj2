@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Options that control the behavior of the {@link Receiver} created from them.
  */
-public class ReceiverOptions extends LinkOptions<ReceiverOptions> {
+public class ReceiverOptions extends LinkOptions<ReceiverOptions> implements Cloneable {
 
     private long drainTimeout = ConnectionOptions.DEFAULT_DRAIN_TIMEOUT;
     private boolean autoAccept = true;
@@ -140,7 +140,7 @@ public class ReceiverOptions extends LinkOptions<ReceiverOptions> {
      * @param other
      *      the target of this copy operation.
      *
-     * @return this options class for chaining.
+     * @return the {@link ReceiverOptions} instance that was given.
      */
     protected ReceiverOptions copyInto(ReceiverOptions other) {
         super.copyInto(other);
@@ -149,7 +149,7 @@ public class ReceiverOptions extends LinkOptions<ReceiverOptions> {
         other.creditWindow(creditWindow);
         other.drainTimeout(drainTimeout);
 
-        return this;
+        return other;
     }
 
     @Override
