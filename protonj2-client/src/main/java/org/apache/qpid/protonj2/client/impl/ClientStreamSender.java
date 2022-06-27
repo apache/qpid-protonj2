@@ -518,7 +518,7 @@ public final class ClientStreamSender extends ClientSenderLinkType<StreamSender>
                 delivery.abort();
                 succeeded();
             } else {
-                sender.connection().autoFlushOff();
+                boolean wasAutoFlushOn = sender.connection().autoFlushOff();
                 try {
                     delivery.streamBytes(payload, complete);
                     if (payload != null && payload.isReadable()) {
@@ -526,9 +526,11 @@ public final class ClientStreamSender extends ClientSenderLinkType<StreamSender>
                     } else {
                         succeeded();
                     }
-                    sender.connection().flush();
                 } finally {
-                    sender.connection().autoFlushOn();
+                    if (wasAutoFlushOn) {
+                        sender.connection().flush();
+                        sender.connection().autoFlushOn();
+                    }
                 }
             }
         }

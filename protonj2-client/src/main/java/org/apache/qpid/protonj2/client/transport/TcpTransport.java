@@ -451,6 +451,11 @@ public class TcpTransport implements Transport {
         }
 
         @Override
+        public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+            ctx.flush();
+        }
+
+        @Override
         public void channelInactive(ChannelHandlerContext context) throws Exception {
             handleTransportFailure(context.channel(), new IOException("Remote closed connection unexpectedly"));
         }

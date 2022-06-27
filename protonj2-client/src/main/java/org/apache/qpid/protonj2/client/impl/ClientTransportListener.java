@@ -34,9 +34,11 @@ final class ClientTransportListener implements TransportListener {
     private static final Logger LOG = LoggerFactory.getLogger(ClientTransportListener.class);
 
     private final Engine engine;
+    private final ClientConnection connection;
 
-    ClientTransportListener(Engine engine) {
+    ClientTransportListener(ClientConnection connection, Engine engine) {
         this.engine = engine;
+        this.connection = connection;
     }
 
     @Override
@@ -52,6 +54,7 @@ final class ClientTransportListener implements TransportListener {
     @Override
     public void transportRead(ProtonBuffer incoming) {
         try {
+            connection.autoFlushOff();
             do {
                 engine.ingest(incoming);
             } while (incoming.isReadable() && engine.isWritable());
@@ -59,6 +62,8 @@ final class ClientTransportListener implements TransportListener {
         } catch (EngineStateException e) {
             LOG.warn("Caught problem during incoming data processing: {}", e.getMessage(), e);
             engine.engineFailed(ClientExceptionSupport.createOrPassthroughFatal(e));
+        } finally {
+            connection.autoFlushOn();
         }
     }
 

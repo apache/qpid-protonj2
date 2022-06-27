@@ -615,8 +615,10 @@ public final class ClientConnection implements Connection {
         });
     }
 
-    void autoFlushOff() {
+    boolean autoFlushOff() {
+        boolean oldState = autoFlush;
         autoFlush = false;
+        return oldState;
     }
 
     void autoFlushOn() {
@@ -779,6 +781,10 @@ public final class ClientConnection implements Connection {
     private void handleEngineShutdown(Engine engine) {
         try {
             protonConnection.close();
+        } catch (Exception ignore) {}
+
+        try {
+            transport.flush();
         } catch (Exception ignore) {}
 
         try {
@@ -976,7 +982,7 @@ public final class ClientConnection implements Connection {
             reconnectAttempts++;
             transport = ioContext.newTransport();
             LOG.trace("Connection {} Attempting connection to remote {}:{}", getId(), location.getHost(), location.getPort());
-            transport.connect(location.getHost(), location.getPort(), new ClientTransportListener(engine));
+            transport.connect(location.getHost(), location.getPort(), new ClientTransportListener(this, engine));
         } catch (Throwable error) {
             engine.engineFailed(ClientExceptionSupport.createOrPassthroughFatal(error));
         }

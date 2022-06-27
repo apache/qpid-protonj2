@@ -337,14 +337,11 @@ public final class ClientSender extends ClientSenderLinkType<Sender> implements 
             if (delivery == null) {
                 delivery = sender.protonLink().next();
                 delivery.setLinkedResource(sender.createTracker(delivery));
-            }
-
-            if (delivery.getTransferCount() == 0) {
                 delivery.setMessageFormat(messageFormat);
                 delivery.disposition(state, settled);
             }
 
-            sender.connection().autoFlushOff();
+            boolean wasAutoFlushOn = sender.connection().autoFlushOff();
             try {
                 delivery.streamBytes(payload, true);
                 if (payload != null && payload.isReadable()) {
@@ -352,9 +349,11 @@ public final class ClientSender extends ClientSenderLinkType<Sender> implements 
                 } else {
                     succeeded();
                 }
-                sender.connection().flush();
             } finally {
-                sender.connection().autoFlushOn();
+                if (wasAutoFlushOn) {
+                    sender.connection().flush();
+                    sender.connection().autoFlushOn();
+                }
             }
         }
 
