@@ -427,6 +427,7 @@ public class SplayMapTest {
     }
 
     @Test
+    @SuppressWarnings({"SuspiciousMethodCalls", "CollectionIncompatibleType"})
     public void testRemoveWithInvalidType() {
         SplayMap<String> map = createMap();
 
@@ -456,6 +457,7 @@ public class SplayMapTest {
     }
 
     @Test
+    @SuppressWarnings({"SuspiciousMethodCalls", "CollectionIncompatibleType"})
     public void testRemoveInteger() {
         SplayMap<String> map = createMap();
 

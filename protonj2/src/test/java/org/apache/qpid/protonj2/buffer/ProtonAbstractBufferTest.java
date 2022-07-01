@@ -1675,6 +1675,7 @@ public abstract class ProtonAbstractBufferTest {
         assertNotEquals(buffer.hashCode(), System.identityHashCode(buffer));
     }
 
+    @SuppressWarnings({"EqualsWithItself", "SelfComparison"})
     @Test
     public void testCompareToSameContents() {
         byte[] payload1 = new byte[] { 0, 1, 2, 3, 4 };
@@ -1688,6 +1689,7 @@ public abstract class ProtonAbstractBufferTest {
     }
 
     @Test
+    @SuppressWarnings({"EqualsWithItself", "SelfComparison"})
     public void testCompareToSameContentsButInOffsetBuffers() {
         byte[] payload1 = new byte[] { 0, 1, 2, 3, 4 };
         byte[] payload2 = new byte[] { 9, 9, 9, 0, 1, 2, 3, 4 };

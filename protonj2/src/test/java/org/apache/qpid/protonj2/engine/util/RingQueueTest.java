@@ -86,6 +86,7 @@ public class RingQueueTest {
     }
 
     @Test
+    @SuppressWarnings({"CollectionAddedToSelf", "ModifyingCollectionWithItself"})
     public void testAddAllWithSelf() {
         Queue<String> testQ = new RingQueue<>(3);
         assertThrows(IllegalArgumentException.class, () -> testQ.addAll(testQ));

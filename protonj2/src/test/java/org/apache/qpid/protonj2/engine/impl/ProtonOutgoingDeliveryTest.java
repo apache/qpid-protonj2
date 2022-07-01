@@ -42,6 +42,7 @@ public class ProtonOutgoingDeliveryTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    @SuppressWarnings("BadShiftAmount")
     public void testSetGetMessageFormat() throws Exception {
         ProtonOutgoingDelivery delivery = new ProtonOutgoingDelivery(Mockito.mock(ProtonSender.class));
 
@@ -54,6 +55,7 @@ public class ProtonOutgoingDeliveryTest extends ProtonEngineTestSupport {
         delivery.setMessageFormat(newFormat);
         assertEquals(newFormat, delivery.getMessageFormat(), "Unexpected message format");
 
+        // todo, that's 0, unlikely it is the highest value ;P
         // Highest value
         newFormat = UnsignedInteger.MAX_VALUE.intValue();
         delivery.setMessageFormat(newFormat);
