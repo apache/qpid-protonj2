@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
@@ -52,14 +53,6 @@ public class LinkedSplayMap<E> extends SplayMap<E> {
     }
 
     @Override
-    public Set<UnsignedInteger> keySet() {
-        if (keySet == null) {
-            keySet = new LinkedSplayMapKeySet();
-        }
-        return keySet;
-    }
-
-    @Override
     public Collection<E> values() {
         if (values == null) {
             values = new LinkedSplayMapValues();
@@ -73,6 +66,14 @@ public class LinkedSplayMap<E> extends SplayMap<E> {
             entrySet = new LinkedSplayMapEntrySet();
         }
         return entrySet;
+    }
+
+    @Override
+    public NavigableSet<UnsignedInteger> navigableKeySet() {
+        if (keySet == null) {
+            keySet = new LinkedSplayMapKeySet();
+        }
+        return keySet;
     }
 
     @Override
@@ -285,21 +286,11 @@ public class LinkedSplayMap<E> extends SplayMap<E> {
         }
     }
 
-    private final class LinkedSplayMapKeySet extends AbstractSet<UnsignedInteger> {
+    private final class LinkedSplayMapKeySet extends SplayMapKeySet {
 
         @Override
         public Iterator<UnsignedInteger> iterator() {
             return new LinkedSplayMapKeyIterator(entries.linkNext);
-        }
-
-        @Override
-        public int size() {
-            return LinkedSplayMap.this.size;
-        }
-
-        @Override
-        public boolean contains(Object o) {
-            return LinkedSplayMap.this.containsKey(o);
         }
 
         @Override
@@ -329,11 +320,6 @@ public class LinkedSplayMap<E> extends SplayMap<E> {
             if (modCount != initialModCount) {
                 throw new ConcurrentModificationException();
             }
-        }
-
-        @Override
-        public void clear() {
-            LinkedSplayMap.this.clear();
         }
     }
 

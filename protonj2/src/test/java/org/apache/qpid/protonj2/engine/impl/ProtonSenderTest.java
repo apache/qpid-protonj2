@@ -4158,6 +4158,75 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testSenderReportsDeliveryUpdatedOnDispositionForMultipleTransfersInsideTheRange() throws Exception {
+        final Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        final ProtonTestConnector peer = createTestPeer(engine);
+        final byte[] payload = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(10).queue();
+        for (int i = 0; i < 10; ++i) {
+            peer.expectTransfer().withDeliveryId(i)
+                                 .withDeliveryTag(new byte[] {(byte) i})
+                                 .withMore(false)
+                                 .withPayload(payload);
+        }
+        peer.remoteDisposition().withSettled(true)
+                                .withRole(Role.RECEIVER.getValue())
+                                .withState().accepted()
+                                .withFirst(1)
+                                .withLast(3).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("test");
+
+        final AtomicInteger dispositionCounter = new AtomicInteger();
+
+        final ArrayList<OutgoingDelivery> deliveries = new ArrayList<>();
+
+        sender.deliveryStateUpdatedHandler(delivery -> {
+            if (delivery.isRemotelySettled()) {
+                dispositionCounter.incrementAndGet();
+                deliveries.add(delivery);
+                delivery.settle();
+            }
+        });
+
+        sender.open();
+
+        for (int i = 0; i < 10; ++i) {
+            OutgoingDelivery delivery = sender.next();
+            delivery.setTag(new byte[] { (byte) i });
+            delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        }
+
+        peer.waitForScriptToComplete();
+        peer.expectDetach().respond();
+
+        assertEquals(7, sender.unsettled().size());
+
+        sender.close();
+
+        assertEquals(3, deliveries.size(), "Not all deliveries received dispositions");
+
+        byte deliveryTag = 1;
+
+        for (OutgoingDelivery delivery : deliveries) {
+            assertEquals(deliveryTag++, delivery.getTag().tagBuffer().getByte(0), "Delivery not updated in correct order");
+            assertTrue(delivery.isRemotelySettled(), "Delivery should be marked as remotely settled");
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testSenderReportsIsSendableAfterOpenedIfRemoteSendsFlowBeforeLocallyOpened() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());

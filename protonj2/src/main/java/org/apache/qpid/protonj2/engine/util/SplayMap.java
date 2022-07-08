@@ -17,8 +17,10 @@
 package org.apache.qpid.protonj2.engine.util;
 
 import java.util.AbstractCollection;
+import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
@@ -29,6 +31,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -49,7 +52,8 @@ import org.apache.qpid.protonj2.types.UnsignedInteger;
  */
 public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
-    private static final UnsignedComparator COMPARATOR = new UnsignedComparator();
+    protected static final Comparator<UnsignedInteger> COMPARATOR = new UnsignedComparator();
+    protected static final Comparator<UnsignedInteger> REVERSE_COMPARATOR = Collections.reverseOrder(COMPARATOR);
 
     protected final RingQueue<SplayedEntry<E>> entryPool = new RingQueue<>(64);
 
@@ -106,6 +110,31 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     /**
+     * Gets the value of the element stored in the {@link Map} with the key (treated as an
+     * unsigned integer for comparison.
+     *
+     * As a side effect of calling this method the tree that comprises the Map can be modified
+     * to bring up the found key or the last accessed key if the key given is not in the {@link Map}.
+     * For entries at the root of the tree that match the given search key the method returns
+     * immediately without modifying the {@link Map}.
+     *
+     * @param key
+     *      the integer key value to search for in the {@link SplayMap}.
+     * @param defaultValue
+     *      the default value to return if the key is not stored in this {@link Map}.
+     *
+     * @return the value stored for the given key if found the default value if not in the {@link Map}.
+     */
+    public E getOrDefault(int key, E defaultValue) {
+        E result = get(key);
+        if (result == null && root != null && root.key == key) {
+            return null;
+        }
+
+        return defaultValue;
+    }
+
+    /**
      * Puts the value into the in the {@link Map} at the entry specified by the given key (treated as an
      * unsigned integer for comparison.
      *
@@ -149,11 +178,6 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         modCount++;
 
         return oldValue;
-    }
-
-    @Override
-    public E putIfAbsent(UnsignedInteger key, E value) {
-        return putIfAbsent(key.intValue(), value);
     }
 
     /**
@@ -293,8 +317,18 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     @Override
+    public E putIfAbsent(UnsignedInteger key, E value) {
+        return putIfAbsent(key.intValue(), value);
+    }
+
+    @Override
     public E get(Object key) {
         return get(Number.class.cast(key).intValue());
+    }
+
+    @Override
+    public E getOrDefault(Object key, E defaultValue) {
+        return getOrDefault(Number.class.cast(key).intValue(), defaultValue);
     }
 
     @Override
@@ -332,21 +366,63 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return false;
     }
 
-    // Once requested we will create an store a single instance to a collection
-    // with no state for each of the key, values and entries types.  Since the
-    // types are stateless the trivial race on create is not important to the
-    // eventual outcome of having a cached instance.
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        for (SplayedEntry<E> entry = firstEntry(root); entry != null; entry = successor(entry)) {
+            hash += entry.hashCode();
+        }
+        return hash;
+    }
 
-    protected Set<UnsignedInteger> keySet;
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof Map)) {
+            return false;
+        }
+
+        Map<?,?> m = (Map<?,?>) o;
+        if (m.size() != size()) {
+            return false;
+        }
+
+        try {
+            for (SplayedEntry<E> entry = firstEntry(root); entry != null; entry = successor(entry)) {
+                UnsignedInteger key = entry.getKey();
+                E value = entry.getValue();
+                if (value == null) {
+                    if (!(m.get(key) == null && m.containsKey(key))) {
+                        return false;
+                    }
+                } else {
+                    if (!value.equals(m.get(key))) {
+                        return false;
+                    }
+                }
+            }
+        } catch (ClassCastException | NullPointerException ignored) {
+            return false;
+        }
+
+        return true;
+    }
+
+    // Once requested we will create an store a single instance to a collection
+    // with no state for each of the key, values ,entries types and the descending
+    // Map view. Since the types are stateless the trivial race on create is not
+    // important to the eventual outcome of having a cached instance.
+
+    protected NavigableSet<UnsignedInteger> keySet;
     protected Collection<E> values;
     protected Set<Entry<UnsignedInteger, E>> entrySet;
+    protected NavigableMap<UnsignedInteger, E> descendingMapView;
 
     @Override
     public Set<UnsignedInteger> keySet() {
-        if (keySet == null) {
-            keySet = new SplayMapKeySet();
-        }
-        return keySet;
+        return navigableKeySet();
     }
 
     @Override
@@ -511,7 +587,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      *
      */
 
-    private SplayedEntry<E> rightRotate(SplayedEntry<E> node) {
+    private static <E> SplayedEntry<E> rightRotate(SplayedEntry<E> node) {
         SplayedEntry<E> rotated = node.left;
         node.left = rotated.right;
         rotated.right = node;
@@ -526,7 +602,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return rotated;
     }
 
-    private SplayedEntry<E> leftRotate(SplayedEntry<E> node) {
+    private static <E> SplayedEntry<E> leftRotate(SplayedEntry<E> node) {
         SplayedEntry<E> rotated = node.right;
         node.right = rotated.left;
         rotated.left = node;
@@ -547,7 +623,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      * as it is likely it will be the next accessed or one of the neighboring nodes which
      * reduces the search time for that cluster.
      */
-    private SplayedEntry<E> splay(SplayedEntry<E> root, int key) {
+    private static <E> SplayedEntry<E> splay(SplayedEntry<E> root, int key) {
         if (root == null || root.key == key) {
             return root;
         }
@@ -653,6 +729,9 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         if (node.left != null) {
             replacement = splay(node.left, node.key);
             replacement.right = node.right;
+            if (replacement.right != null) {
+                replacement.right.parent = replacement;
+            }
         }
 
         if (replacement != null) {
@@ -679,7 +758,23 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         modCount++;
     }
 
-    private SplayedEntry<E> firstEntry(SplayedEntry<E> node) {
+    private SplayedEntry<E> findEntry(int key) {
+        if (root == null) {
+            return null;
+        } else if (root.key == key) {
+            return root;
+        } else {
+            root = splay(root, key);
+
+            if (root.key == key) {
+                return root;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    private static <E> SplayedEntry<E> firstEntry(SplayedEntry<E> node) {
         SplayedEntry<E> firstEntry = node;
         if (firstEntry != null) {
             while (firstEntry.left != null) {
@@ -690,7 +785,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return firstEntry;
     }
 
-    private SplayedEntry<E> lastEntry(SplayedEntry<E> node) {
+    private static <E> SplayedEntry<E> lastEntry(SplayedEntry<E> node) {
         SplayedEntry<E> lastEntry = node;
         if (lastEntry != null) {
             while (lastEntry.right != null) {
@@ -701,7 +796,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return lastEntry;
     }
 
-    private SplayedEntry<E> successor(SplayedEntry<E> node) {
+    private static <E> SplayedEntry<E> successor(SplayedEntry<E> node) {
         if (node == null) {
             return null;
         } else if (node.right != null) {
@@ -724,7 +819,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         }
     }
 
-    private SplayedEntry<E> predecessor(SplayedEntry<E> node) {
+    private static <E> SplayedEntry<E> predecessor(SplayedEntry<E> node) {
         if (node == null) {
             return null;
         } else if (node.left != null) {
@@ -747,6 +842,17 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         }
     }
 
+    /**
+     * Unsigned comparison of two integer values
+     *
+     * @param lhs
+     * 		the left hand side value for comparison.
+     * @param rhs
+     *      the right hand side value for comparison.
+     *
+     * @return a negative integer, zero, or a positive integer as the first argument is less than,
+     * 		   equal to, or greater than the second.
+     */
     private static int compare(int lhs, int rhs) {
         return Integer.compareUnsigned(lhs, rhs);
     }
@@ -760,10 +866,10 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     // Base class iterator that can be used for the collections returned from the Map
     private abstract class SplayMapIterator<T> implements Iterator<T> {
 
-        private SplayedEntry<E> nextNode;
-        private SplayedEntry<E> lastReturned;
+        protected SplayedEntry<E> nextNode;
+        protected SplayedEntry<E> lastReturned;
 
-        private int expectedModCount;
+        protected int expectedModCount;
 
         public SplayMapIterator(SplayedEntry<E> startAt) {
             this.nextNode = startAt;
@@ -791,8 +897,6 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
             return lastReturned;
         }
 
-        // Unused as of now but can be used for NavigableMap amongst other things
-        @SuppressWarnings("unused")
         protected SplayedEntry<E> previousNode() {
             final SplayedEntry<E> entry = nextNode;
 
@@ -849,6 +953,17 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         }
     }
 
+    final class ReverseSplayMapKeyIterator extends SplayMapIterator<UnsignedInteger> {
+        public ReverseSplayMapKeyIterator(SplayedEntry<E> startAt) {
+            super(startAt);
+        }
+
+        @Override
+        public UnsignedInteger next() {
+            return previousNode().getKey();
+        }
+    }
+
     private class SplayMapValueIterator extends SplayMapIterator<E> {
 
         public SplayMapValueIterator(SplayedEntry<E> startAt) {
@@ -897,7 +1012,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         }
     }
 
-    private final class SplayMapKeySet extends AbstractSet<UnsignedInteger> {
+    protected class SplayMapKeySet extends AbstractSet<UnsignedInteger> implements NavigableSet<UnsignedInteger> {
 
         @Override
         public Iterator<UnsignedInteger> iterator() {
@@ -907,6 +1022,11 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         @Override
         public int size() {
             return SplayMap.this.size;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return SplayMap.this.size == 0;
         }
 
         @Override
@@ -926,8 +1046,131 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         }
 
         @Override
+        public boolean retainAll(Collection<?> c) {
+            Objects.requireNonNull(c);
+            boolean modified = false;
+
+            for (SplayedEntry<E> e = firstEntry(root); e != null;) {
+                if (c.contains(e.getKey())) {
+                    e = successor(e);
+                } else {
+                    final SplayedEntry<E> target = e;
+                    e = successor(e);
+
+                    delete(target);
+                    modified = true;
+                }
+            }
+
+            return modified;
+        }
+
+        @Override
+        public Object[] toArray() {
+            Object[] result = new Object[size()];
+            int i = 0;
+
+            for (SplayedEntry<E> e = firstEntry(root); e != null; e = successor(e), ++i) {
+                result[i] = e.getKey();
+            }
+
+            return result;
+        }
+
+        @Override
         public void clear() {
             SplayMap.this.clear();
+        }
+
+        @Override
+        public Comparator<? super UnsignedInteger> comparator() {
+            return SplayMap.COMPARATOR;
+        }
+
+        @Override
+        public UnsignedInteger first() {
+            return firstKey();
+        }
+
+        @Override
+        public UnsignedInteger last() {
+            return lastKey();
+        }
+
+        @Override
+        public UnsignedInteger lower(UnsignedInteger key) {
+            return lowerKey(key);
+        }
+
+        @Override
+        public UnsignedInteger floor(UnsignedInteger key) {
+            return floorKey(key);
+        }
+
+        @Override
+        public UnsignedInteger ceiling(UnsignedInteger key) {
+            return ceilingKey(key);
+        }
+
+        @Override
+        public UnsignedInteger higher(UnsignedInteger key) {
+            return higherKey(key);
+        }
+
+        @Override
+        public UnsignedInteger pollFirst() {
+            Map.Entry<UnsignedInteger, ?> first = pollFirstEntry();
+            return first == null ? null : first.getKey();
+        }
+
+        @Override
+        public UnsignedInteger pollLast() {
+            Map.Entry<UnsignedInteger, ?> first = pollLastEntry();
+            return first == null ? null : first.getKey();
+        }
+
+        @Override
+        public NavigableSet<UnsignedInteger> descendingSet() {
+            return descendingMap().navigableKeySet();
+        }
+
+        @Override
+        public Iterator<UnsignedInteger> descendingIterator() {
+            return descendingMap().keySet().iterator();
+        }
+
+        @Override
+        public NavigableSet<UnsignedInteger> subSet(UnsignedInteger fromElement, boolean fromInclusive, UnsignedInteger toElement, boolean toInclusive) {
+            return new AscendingSubMap<>(SplayMap.this,
+                                         false, fromElement.intValue(), fromInclusive,
+                                         false, toElement.intValue(), toInclusive).navigableKeySet();
+        }
+
+        @Override
+        public NavigableSet<UnsignedInteger> headSet(UnsignedInteger toElement, boolean inclusive) {
+            return new AscendingSubMap<>(SplayMap.this,
+                true, 0, true, false, toElement.intValue(), inclusive).navigableKeySet();
+        }
+
+        @Override
+        public NavigableSet<UnsignedInteger> tailSet(UnsignedInteger fromElement, boolean inclusive) {
+            return new AscendingSubMap<>(SplayMap.this,
+                false, fromElement.intValue(), inclusive, true, 0, true).navigableKeySet();
+        }
+
+        @Override
+        public SortedSet<UnsignedInteger> subSet(UnsignedInteger fromElement, UnsignedInteger toElement) {
+            return subSet(fromElement, true, toElement, true);
+        }
+
+        @Override
+        public SortedSet<UnsignedInteger> headSet(UnsignedInteger toElement) {
+            return headSet(toElement, false);
+        }
+
+        @Override
+        public SortedSet<UnsignedInteger> tailSet(UnsignedInteger fromElement) {
+            return tailSet(fromElement, false);
         }
     }
 
@@ -945,13 +1188,11 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
         @Override
         public boolean contains(Object o) {
-            if (!(o instanceof Map.Entry) || SplayMap.this.root == null) {
-                return false;
-            }
-
-            for (SplayedEntry<E> e = firstEntry(root); e != null; e = successor(e)) {
-                if (e.equals(o)) {
-                    return true;
+            if ((o instanceof Map.Entry) && SplayMap.this.root != null) {
+                for (SplayedEntry<E> e = firstEntry(root); e != null; e = successor(e)) {
+                    if (e.equals(o)) {
+                        return true;
+                    }
                 }
             }
 
@@ -1067,7 +1308,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      * An immutable {@link Map} entry that can be used when exposing raw entry mappings
      * via the {@link Map} API.
      */
-    public class ImmutableSplayMapEntry implements Map.Entry<UnsignedInteger, E> {
+    public static class ImmutableSplayMapEntry<E> implements Map.Entry<UnsignedInteger, E> {
 
         private final SplayedEntry<E> entry;
 
@@ -1104,8 +1345,8 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         }
     }
 
-    protected ImmutableSplayMapEntry export(SplayedEntry<E> entry) {
-        return entry == null ? null : new ImmutableSplayMapEntry(entry);
+    protected static <V> ImmutableSplayMapEntry<V> export(SplayedEntry<V> entry) {
+        return entry == null ? null : new ImmutableSplayMapEntry<>(entry);
     }
 
     //----- Unsigned Integer comparator for Navigable Maps
@@ -1116,6 +1357,10 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         public int compare(UnsignedInteger uint1, UnsignedInteger uint2) {
             return uint1.compareTo(uint2);
         }
+    }
+
+    protected static Comparator<? super UnsignedInteger> reverseComparator() {
+        return REVERSE_COMPARATOR;
     }
 
     //----- Navigable and Sorted Map implementation methods
@@ -1136,17 +1381,17 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     @Override
-    public ImmutableSplayMapEntry firstEntry() {
+    public ImmutableSplayMapEntry<E> firstEntry() {
         return export(firstEntry(root));
     }
 
     @Override
-    public ImmutableSplayMapEntry lastEntry() {
+    public ImmutableSplayMapEntry<E> lastEntry() {
         return export(lastEntry(root));
     }
 
     @Override
-    public ImmutableSplayMapEntry pollFirstEntry() {
+    public ImmutableSplayMapEntry<E> pollFirstEntry() {
         SplayedEntry<E> firstEntry = firstEntry(root);
         if (firstEntry != null) {
             delete(firstEntry);
@@ -1155,7 +1400,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     @Override
-    public ImmutableSplayMapEntry pollLastEntry() {
+    public ImmutableSplayMapEntry<E> pollLastEntry() {
         SplayedEntry<E> lastEntry = lastEntry(root);
         if (lastEntry != null) {
             delete(lastEntry);
@@ -1164,23 +1409,37 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     @Override
-    public ImmutableSplayMapEntry lowerEntry(UnsignedInteger key) {
-        return export(lowerEntry(key.intValue()));
+    public ImmutableSplayMapEntry<E> lowerEntry(UnsignedInteger key) {
+        return export(splayToLowerEntry(key.intValue()));
     }
 
     @Override
     public UnsignedInteger lowerKey(UnsignedInteger key) {
-        final SplayedEntry<E> result = lowerEntry(key.intValue());
+        final SplayedEntry<E> result = splayToLowerEntry(key.intValue());
 
         return result == null ? null : result.getKey();
     }
 
-    private SplayedEntry<E> lowerEntry(int key) {
+    /**
+     * Splay to a key-value mapping associated with the greatest key strictly less than the given
+     * key, or null if there is no such key.
+     *
+     * @param key
+     * 		The key whose next lower entry match is being queried.
+     *
+     * @return the next lower entry or null if no keys lower than the given value.
+     */
+    private SplayedEntry<E> splayToLowerEntry(int key) {
         root = splay(root, key);
 
         while (root != null) {
             if (compare(root.getIntKey(), key) >= 0) {
-                root = predecessor(root);
+                SplayedEntry<E> pred = predecessor(root);
+                if (pred != null) {
+                    root = splay(root, pred.key);
+                } else {
+                    return null;
+                }
             } else {
                 break;
             }
@@ -1190,23 +1449,37 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     @Override
-    public ImmutableSplayMapEntry higherEntry(UnsignedInteger key) {
-        return export(higherEntry(key.intValue()));
+    public ImmutableSplayMapEntry<E> higherEntry(UnsignedInteger key) {
+        return export(splayToHigherEntry(key.intValue()));
     }
 
     @Override
     public UnsignedInteger higherKey(UnsignedInteger key) {
-        final SplayedEntry<E> result = higherEntry(key.intValue());
+        final SplayedEntry<E> result = splayToHigherEntry(key.intValue());
 
         return result == null ? null : result.getKey();
     }
 
-    private SplayedEntry<E> higherEntry(int key) {
+    /**
+     * Splay to a key-value mapping associated with the least key strictly greater than the given
+     * key, or null if there is no such key.
+     *
+     * @param key
+     * 		The key whose next higher entry match is being queried.
+     *
+     * @return the next highest entry or null if no keys higher than the given value.
+     */
+    private SplayedEntry<E> splayToHigherEntry(int key) {
         root = splay(root, key);
 
         while (root != null) {
             if (compare(root.getIntKey(), key) <= 0) {
-                root = successor(root);
+                SplayedEntry<E> succ = successor(root);
+                if (succ != null) {
+                    root = splay(root, succ.key);
+                } else {
+                    return null;
+                }
             } else {
                 break;
             }
@@ -1216,23 +1489,37 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     @Override
-    public ImmutableSplayMapEntry floorEntry(UnsignedInteger key) {
-        return export(floorEntry(key.intValue()));
+    public ImmutableSplayMapEntry<E> floorEntry(UnsignedInteger key) {
+        return export(splayToFloorEntry(key.intValue()));
     }
 
     @Override
     public UnsignedInteger floorKey(UnsignedInteger key) {
-        final SplayedEntry<E> result = floorEntry(key.intValue());
+        final SplayedEntry<E> result = splayToFloorEntry(key.intValue());
 
         return result == null ? null : result.getKey();
     }
 
-    private SplayedEntry<E> floorEntry(int key) {
+    /**
+     * Splay to a key-value mapping associated with the greatest key less than or equal to
+     * the given key, or null if there is no such key.
+     *
+     * @param key
+     * 		The key whose floor entry match is being queried.
+     *
+     * @return the entry or next lowest entry or null if no keys less then or equal to the given value.
+     */
+    private SplayedEntry<E> splayToFloorEntry(int key) {
         root = splay(root, key);
 
         while (root != null) {
             if (compare(root.getIntKey(), key) > 0) {
-                root = predecessor(root);
+                SplayedEntry<E> pred = predecessor(root);
+                if (pred != null) {
+                    root = splay(root, pred.key);
+                } else {
+                    return null;
+                }
             } else {
                 break;
             }
@@ -1242,23 +1529,37 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     @Override
-    public ImmutableSplayMapEntry ceilingEntry(UnsignedInteger key) {
-        return export(ceilingEntry(key.intValue()));
+    public ImmutableSplayMapEntry<E> ceilingEntry(UnsignedInteger key) {
+        return export(splayToCeilingEntry(key.intValue()));
     }
 
     @Override
     public UnsignedInteger ceilingKey(UnsignedInteger key) {
-        final SplayedEntry<E> result = ceilingEntry(key.intValue());
+        final SplayedEntry<E> result = splayToCeilingEntry(key.intValue());
 
         return result == null ? null : result.getKey();
     }
 
-    private SplayedEntry<E> ceilingEntry(int key) {
+    /**
+     * Splay to a key-value mapping associated with the least key greater than or equal
+     * to the given key, or null if there is no such key.
+     *
+     * @param key
+     * 		The key whose ceiling entry match is being queried.
+     *
+     * @return the entry or next highest entry or null if no keys higher than or equal to the given value.
+     */
+    private SplayedEntry<E> splayToCeilingEntry(int key) {
         root = splay(root, key);
 
         while (root != null) {
             if (compare(root.getIntKey(), key) < 0) {
-                root = successor(root);
+                SplayedEntry<E> succ = successor(root);
+                if (succ != null) {
+                    root = splay(root, succ.key);
+                } else {
+                    return null;
+                }
             } else {
                 break;
             }
@@ -1269,55 +1570,1134 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     @Override
     public NavigableMap<UnsignedInteger, E> descendingMap() {
-        // TODO Auto-generated method stub
-        return null;
+        return (descendingMapView != null) ? descendingMapView :
+               (descendingMapView = new DescendingSubMap<>(this,
+                    true, 0, true,
+                    true, UnsignedInteger.MAX_VALUE.intValue(), true));
     }
 
     @Override
     public NavigableSet<UnsignedInteger> navigableKeySet() {
-        // TODO Auto-generated method stub
-        return null;
+        if (keySet == null) {
+            keySet = new SplayMapKeySet();
+        }
+        return keySet;
     }
 
     @Override
     public NavigableSet<UnsignedInteger> descendingKeySet() {
-        // TODO Auto-generated method stub
-        return null;
+        return descendingMap().navigableKeySet();
     }
 
     @Override
     public NavigableMap<UnsignedInteger, E> subMap(UnsignedInteger fromKey, boolean fromInclusive, UnsignedInteger toKey, boolean toInclusive) {
-        // TODO Auto-generated method stub
-        return null;
+        return new AscendingSubMap<>(this, false, fromKey.intValue(), fromInclusive, false, toKey.intValue(), toInclusive);
     }
 
     @Override
     public NavigableMap<UnsignedInteger, E> headMap(UnsignedInteger toKey, boolean inclusive) {
-        // TODO Auto-generated method stub
-        return null;
+        return new AscendingSubMap<>(this, true, 0, true, false, toKey.intValue(), inclusive);
     }
 
     @Override
     public NavigableMap<UnsignedInteger, E> tailMap(UnsignedInteger fromKey, boolean inclusive) {
-        // TODO Auto-generated method stub
-        return null;
+        return new AscendingSubMap<>(this, false, fromKey.intValue(), inclusive, true, UnsignedInteger.MAX_VALUE.intValue(), true);
     }
 
     @Override
     public SortedMap<UnsignedInteger, E> subMap(UnsignedInteger fromKey, UnsignedInteger toKey) {
-        // TODO Auto-generated method stub
-        return null;
+        return subMap(fromKey, true, toKey, false);
     }
 
     @Override
     public SortedMap<UnsignedInteger, E> headMap(UnsignedInteger toKey) {
-        // TODO Auto-generated method stub
-        return null;
+        return headMap(toKey, false);
     }
 
     @Override
     public SortedMap<UnsignedInteger, E> tailMap(UnsignedInteger fromKey) {
-        // TODO Auto-generated method stub
+        return tailMap(fromKey, true);
+    }
+
+    /**
+     * Gets a key-value mapping associated with the given key or its successor.
+     * This method does not splay the tree so it will not bring the result to the root.
+     *
+     * @param key
+     * 		The key to search for in the mappings
+     *
+     * @return the entry that matches the search criteria or null if no valid match.
+     */
+    private SplayedEntry<E> getCeilingEntry(int key) {
+        SplayedEntry<E> result = this.root;
+
+        while (result != null) {
+            final int comparison = SplayMap.compare(key, result.key);
+            if (comparison < 0) {
+                // search key is less than current go left to get a smaller value
+                if (result.left != null) {
+                    result = result.left;
+                } else {
+                    return result; // nothing smaller exists
+                }
+            } else if (comparison > 0) {
+                // search key is greater than current go right to get a bigger one
+                // or go back up to the root of this branch
+                if (result.right != null) {
+                    result = result.right;
+                } else {
+                    SplayedEntry<E> parent = result.parent;
+                    SplayedEntry<E> current = result;
+                    while (parent != null && current == parent.right) {
+                        current = parent;
+                        parent = parent.parent;
+                    }
+                    return parent;
+                }
+            } else {
+                return result; // Found it.
+            }
+        }
+
         return null;
+    }
+
+    /**
+     * Gets a key-value mapping associated with the given key or its predecessor.
+     * This method does not splay the tree so it will not bring the result to the root.
+     *
+     * @param key
+     * 		The key to search for in the mappings
+     *
+     * @return the entry that matches the search criteria or null if no valid match.
+     */
+    private SplayedEntry<E> getFloorEntry(int key) {
+        SplayedEntry<E> result = this.root;
+
+        while (result != null) {
+            final int comparison = SplayMap.compare(key, result.key);
+            if (comparison > 0) {
+                // search key is greater than current go right to get a bigger value
+                if (result.right != null) {
+                    result = result.right;
+                } else {
+                    return result; // nothing bigger exists
+                }
+            } else if (comparison < 0) {
+                // search key is less than current go left to get a smaller one
+                // or go back up to the root of this branch
+                if (result.left != null) {
+                    result = result.left;
+                } else {
+                    SplayedEntry<E> parent = result.parent;
+                    SplayedEntry<E> current = result;
+                    while (parent != null && current == parent.left) {
+                        current = parent;
+                        parent = parent.parent;
+                    }
+                    return parent;
+                }
+            } else {
+                return result; // Found it.
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets a key-value mapping associated with the next entry higher than the given
+     * key or null if no entries exists with a higher key value. This method does not
+     * splay the tree so it will not bring the result to the root.
+     *
+     * @param key
+     * 		The key to search for in the mappings
+     *
+     * @return the entry that matches the search criteria or null if no valid match.
+     */
+    private SplayedEntry<E> getHigherEntry(int key) {
+        SplayedEntry<E> result = this.root;
+
+        while (result != null) {
+            final int comparison = SplayMap.compare(key, result.key);
+            if (comparison < 0) {
+                // search key is less than current go left to get a smaller value
+                if (result.left != null) {
+                    result = result.left;
+                } else {
+                    return result; // nothing smaller exists
+                }
+            } else {
+                // search key is greater than current go right to get a bigger one
+                // or go back up to the root of this branch
+                if (result.right != null) {
+                    result = result.right;
+                } else {
+                    SplayedEntry<E> parent = result.parent;
+                    SplayedEntry<E> current = result;
+                    while (parent != null && current == parent.right) {
+                        current = parent;
+                        parent = parent.parent;
+                    }
+                    return parent;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets a key-value mapping associated with next smallest entry below the given key
+     * or null if no smaller entries exist. This method does not splay the tree so it
+     * will not bring the result to the root.
+     *
+     * @param key
+     * 		The key to search for in the mappings
+     *
+     * @return the entry that matches the search criteria or null if no valid match.
+     */
+    private SplayedEntry<E> getLowerEntry(int key) {
+        SplayedEntry<E> result = this.root;
+
+        while (result != null) {
+            final int comparison = SplayMap.compare(key, result.key);
+            if (comparison > 0) {
+                // search key is greater than current go right to get a bigger value
+                if (result.right != null) {
+                    result = result.right;
+                } else {
+                    return result; // nothing bigger exists
+                }
+            } else {
+                // search key is less than current go left to get a smaller one
+                // or go back up to the root of this branch
+                if (result.left != null) {
+                    result = result.left;
+                } else {
+                    SplayedEntry<E> parent = result.parent;
+                    SplayedEntry<E> current = result;
+                    while (parent != null && current == parent.left) {
+                        current = parent;
+                        parent = parent.parent;
+                    }
+                    return parent;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    protected static class NavigableSubMapKeySet extends AbstractSet<UnsignedInteger> implements NavigableSet<UnsignedInteger> {
+
+        private final NavigableSubMap<?> backingMap;
+
+        public NavigableSubMapKeySet(NavigableSubMap<?> backingMap) {
+            this.backingMap = backingMap;
+        }
+
+        @Override
+        public Iterator<UnsignedInteger> iterator() {
+            return backingMap.keyIterator();
+        }
+
+        @Override
+        public Iterator<UnsignedInteger> descendingIterator() {
+            return ((NavigableSubMap<?>)backingMap.descendingMap()).descendingKeyIterator();
+        }
+
+        @Override
+        public int size() {
+            return backingMap.size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return backingMap.isEmpty();
+        }
+
+        @Override
+        public boolean contains(Object o) {
+            return backingMap.containsKey(o);
+        }
+
+        @Override
+        public boolean remove(Object target) {
+            int oldSize = backingMap.size();
+            backingMap.remove(target);
+            return oldSize != backingMap.size();
+        }
+
+        @Override
+        public void clear() {
+            backingMap.clear();
+        }
+
+        @Override
+        public Comparator<? super UnsignedInteger> comparator() {
+            return backingMap.comparator();
+        }
+
+        @Override
+        public UnsignedInteger first() {
+            return backingMap.firstKey();
+        }
+
+        @Override
+        public UnsignedInteger last() {
+            return backingMap.lastKey();
+        }
+
+        @Override
+        public UnsignedInteger lower(UnsignedInteger key) {
+            return backingMap.lowerKey(key);
+        }
+
+        @Override
+        public UnsignedInteger floor(UnsignedInteger key) {
+            return backingMap.floorKey(key);
+        }
+
+        @Override
+        public UnsignedInteger ceiling(UnsignedInteger key) {
+            return backingMap.ceilingKey(key);
+        }
+
+        @Override
+        public UnsignedInteger higher(UnsignedInteger key) {
+            return backingMap.higherKey(key);
+        }
+
+        @Override
+        public UnsignedInteger pollFirst() {
+            Map.Entry<UnsignedInteger, ?> first = backingMap.pollFirstEntry();
+            return first == null ? null : first.getKey();
+        }
+
+        @Override
+        public UnsignedInteger pollLast() {
+            Map.Entry<UnsignedInteger, ?> first = backingMap.pollLastEntry();
+            return first == null ? null : first.getKey();
+        }
+
+        @Override
+        public NavigableSet<UnsignedInteger> descendingSet() {
+            return backingMap.descendingMap().navigableKeySet();
+        }
+
+        @Override
+        public NavigableSet<UnsignedInteger> subSet(UnsignedInteger fromElement, boolean fromInclusive, UnsignedInteger toElement, boolean toInclusive) {
+            return backingMap.subMap(fromElement, fromInclusive, toElement, toInclusive).navigableKeySet();
+        }
+
+        @Override
+        public NavigableSet<UnsignedInteger> headSet(UnsignedInteger toElement, boolean inclusive) {
+            return backingMap.headMap(toElement, inclusive).navigableKeySet();
+        }
+
+        @Override
+        public NavigableSet<UnsignedInteger> tailSet(UnsignedInteger fromElement, boolean inclusive) {
+            return backingMap.tailMap(fromElement, inclusive).navigableKeySet();
+        }
+
+        @Override
+        public SortedSet<UnsignedInteger> subSet(UnsignedInteger fromElement, UnsignedInteger toElement) {
+            return subSet(fromElement, true, toElement, true);
+        }
+
+        @Override
+        public SortedSet<UnsignedInteger> headSet(UnsignedInteger toElement) {
+            return headSet(toElement, false);
+        }
+
+        @Override
+        public SortedSet<UnsignedInteger> tailSet(UnsignedInteger fromElement) {
+            return tailSet(fromElement, false);
+        }
+    }
+
+    /**
+     * Utility base class for the {@link SplayMap} that allows access to a sub region of the
+     * backing map.
+     * <p>
+     * If the from start directive is <code>true</code> then the map ignores the start key
+     * and the start key inclusive directive and assigns the start key as zero and the
+     * start key inclusive value to true.
+     * <p>
+     * If the to end directive is <code>true</code> then the map ignores the end key
+     * and the end key inclusive directive and assigns the end key to {@link UnsignedInteger#MAX_VALUE}
+     * and the end key inclusive flag to true.
+     *
+     * @param <E> The value type for this {@link NavigableSubMap}
+     */
+    private abstract static class NavigableSubMap<E> extends AbstractMap<UnsignedInteger, E> implements NavigableMap<UnsignedInteger, E> {
+
+        protected final SplayMap<E> backingMap;
+
+        final int startKey;
+        final int endKey;
+        final boolean fromStart;
+        final boolean toEnd;
+        final boolean startInclusive;
+        final boolean endInclusive;
+
+        private transient NavigableSubMapKeySet navigableSubMapKeySet;
+
+        NavigableSubMap(final SplayMap<E> map,
+                        final boolean fromStart, final int start, final boolean startInclusive,
+                        final boolean toEnd, final int end, final boolean endInclusive) {
+
+            if (SplayMap.compare(start, end) > 0) {
+                throw new IllegalArgumentException("The start key cannot be greater than the end key");
+            }
+
+            this.backingMap = map;
+            this.fromStart = fromStart;
+            this.toEnd = toEnd;
+            this.startKey = fromStart ? 0 : start;
+            this.endKey = toEnd ? UnsignedInteger.MAX_VALUE.intValue() : end;
+            this.startInclusive = fromStart ? true : startInclusive;
+            this.endInclusive = toEnd ? true : endInclusive;
+        }
+
+        //----- Basic Map implementation that defers to backing when possible
+
+        @Override
+        public boolean isEmpty() {
+            return (fromStart && toEnd) ? backingMap.size == 0 : entrySet().isEmpty();
+        }
+
+        @Override
+        public int size() {
+            return (fromStart && toEnd) ? backingMap.size : entrySet().size();
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            Number numericKey = (Number) key;
+            return containsKey(numericKey.intValue());
+        }
+
+        public boolean containsKey(int key) {
+            return isInRange(key) && backingMap.containsKey(key);
+        }
+
+        @Override
+        public final E put(UnsignedInteger key, E value) {
+            return put(key.intValue(), value);
+        }
+
+        public final E put(int key, E value) {
+            if (!isInRange(key)) {
+                throw new IllegalArgumentException("The given key is out of range for this ranged sub-map");
+            }
+
+            return backingMap.put(key, value);
+        }
+
+        @Override
+        public final E get(Object key) {
+            Number numericKey = (Number) key;
+            return get(numericKey.intValue());
+        }
+
+        public final E get(int key) {
+            return !isInRange(key) ? null :  backingMap.get(key);
+        }
+
+        @Override
+        public final E remove(Object key) {
+            Number numericKey = (Number) key;
+            return remove(numericKey.intValue());
+        }
+
+        public final E remove(int key) {
+            return !isInRange(key) ? null : backingMap.remove(key);
+        }
+
+        @Override
+        public final Map.Entry<UnsignedInteger, E> ceilingEntry(UnsignedInteger key) {
+            return SplayMap.export(getCeilingEntry(key.intValue()));
+        }
+
+        @Override
+        public final UnsignedInteger ceilingKey(UnsignedInteger key) {
+            SplayedEntry<E> result = getCeilingEntry(key.intValue());
+            return result == null ? null : result.getKey();
+        }
+
+        @Override
+        public final Map.Entry<UnsignedInteger, E> higherEntry(UnsignedInteger key) {
+            return SplayMap.export(getHigherEntry(key.intValue()));
+        }
+
+        @Override
+        public final UnsignedInteger higherKey(UnsignedInteger key) {
+            SplayedEntry<E> result = getHigherEntry(key.intValue());
+            return result == null ? null : result.getKey();
+        }
+
+        @Override
+        public final Map.Entry<UnsignedInteger, E> floorEntry(UnsignedInteger key) {
+            return SplayMap.export(getFloorEntry(key.intValue()));
+        }
+
+        @Override
+        public final UnsignedInteger floorKey(UnsignedInteger key) {
+            SplayedEntry<E> result = getFloorEntry(key.intValue());
+            return result == null ? null : result.getKey();
+        }
+
+        @Override
+        public final Map.Entry<UnsignedInteger, E> lowerEntry(UnsignedInteger key) {
+            return SplayMap.export(getLowerEntry(key.intValue()));
+        }
+
+        @Override
+        public final UnsignedInteger lowerKey(UnsignedInteger key) {
+            SplayedEntry<E> result = getLowerEntry(key.intValue());
+            return result == null ? null : result.getKey();
+        }
+
+        @Override
+        public final UnsignedInteger firstKey() {
+            SplayedEntry<E> result = getLowestEntry();
+            if (result != null) {
+                return result.getKey();
+            }
+
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public final UnsignedInteger lastKey() {
+            SplayedEntry<E> result = getHighestEntry();
+            if (result != null) {
+                return result.getKey();
+            }
+
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public final Map.Entry<UnsignedInteger, E> firstEntry() {
+            return SplayMap.export(getLowestEntry());
+        }
+
+        @Override
+        public final Map.Entry<UnsignedInteger, E> lastEntry() {
+            return SplayMap.export(getHighestEntry());
+        }
+
+        @Override
+        public final Map.Entry<UnsignedInteger, E> pollFirstEntry() {
+            SplayedEntry<E> result = getLowestEntry();
+            Map.Entry<UnsignedInteger, E> exported = SplayMap.export(result);
+            if (exported != null) {
+                backingMap.delete(result);
+            }
+
+            return exported;
+        }
+
+        @Override
+        public final Map.Entry<UnsignedInteger, E> pollLastEntry() {
+            SplayedEntry<E> result = getHighestEntry();
+            Map.Entry<UnsignedInteger, E> exported = SplayMap.export(result);
+            if (exported != null) {
+                backingMap.delete(result);
+            }
+
+            return exported;
+        }
+
+        @Override
+        public SortedMap<UnsignedInteger, E> subMap(UnsignedInteger fromKey, UnsignedInteger toKey) {
+            return subMap(fromKey, true, toKey, false);
+        }
+
+        @Override
+        public SortedMap<UnsignedInteger, E> headMap(UnsignedInteger toKey) {
+            return headMap(toKey, false);
+        }
+
+        @Override
+        public SortedMap<UnsignedInteger, E> tailMap(UnsignedInteger fromKey) {
+            return tailMap(fromKey, true);
+        }
+
+        @Override
+        public final Set<UnsignedInteger> keySet() {
+            return navigableKeySet();
+        }
+
+        @Override
+        public NavigableSet<UnsignedInteger> descendingKeySet() {
+            return descendingMap().navigableKeySet();
+        }
+
+        @Override
+        public final NavigableSet<UnsignedInteger> navigableKeySet() {
+            return (navigableSubMapKeySet != null) ?
+                navigableSubMapKeySet : (navigableSubMapKeySet = new NavigableSubMapKeySet(this));
+        }
+
+        //----- The abstract API that sub-classes will define
+
+        /**
+         * Returns an iterator appropriate to the sub map implementation
+         * which may be ascending or descending but must be the inverse of
+         * the direction of iterator returned from the {@link #descendingKeyIterator()}
+         * method.
+         *
+         * @return an iterator that operates over the keys in this sub map range.
+         */
+        abstract Iterator<UnsignedInteger> keyIterator();
+
+        /**
+         * Returns an iterator appropriate to the sub map implementation
+         * which may be ascending or descending but must be the inverse of
+         * the direction of iterator returned from the {@link #keyIterator()}
+         * method.
+         *
+         * @return an iterator that operates over the keys in this sub map range.
+         */
+        abstract Iterator<UnsignedInteger> descendingKeyIterator();
+
+        //----- Sub Map collection types
+
+        /**
+         * Specialized iterator for the sub-map type that iterators on a generic type
+         * but internally contains splayed entries from the splay map tree.
+         *
+         * @param <T>
+         */
+        protected abstract class NavigableSubMapIterator<T> implements Iterator<T> {
+            SplayedEntry<E> lastReturned;
+            SplayedEntry<E> next;
+            final int limitKey;
+            int expectedModCount;
+
+            NavigableSubMapIterator(SplayedEntry<E> start, SplayedEntry<E> limit) {
+                expectedModCount = backingMap.modCount;
+                lastReturned = null;
+                next = start;
+                limitKey = limit != null ? limit.key : UnsignedInteger.MAX_VALUE.intValue();
+            }
+
+            @Override
+            public abstract boolean hasNext();
+
+            @Override
+            public abstract T next();
+
+            @Override
+            public final void remove() {
+                if (lastReturned == null) {
+                    throw new IllegalStateException();
+                }
+                if (backingMap.modCount != expectedModCount) {
+                    throw new ConcurrentModificationException();
+                }
+
+                backingMap.delete(lastReturned);
+                lastReturned = null;
+                expectedModCount = backingMap.modCount;
+            }
+
+            final boolean hasNextEntry() {
+                return next != null && SplayMap.compare(next.key, limitKey) <= 0;
+            }
+
+            final SplayedEntry<E> nextEntry() {
+                SplayedEntry<E> e = next;
+
+                if (e == null || SplayMap.compare(next.key, limitKey) > 0) {
+                    throw new NoSuchElementException();
+                }
+                if (backingMap.modCount != expectedModCount) {
+                    throw new ConcurrentModificationException();
+                }
+
+                next = successor(e);
+                lastReturned = e;
+                return e;
+            }
+
+            final boolean hasPrevEntry() {
+                return next != null && SplayMap.compare(next.key, limitKey) >= 0;
+            }
+
+            final SplayedEntry<E> previousEntry() {
+                SplayedEntry<E> e = next;
+
+                if (e == null || SplayMap.compare(next.key, limitKey) < 0) {
+                    throw new NoSuchElementException();
+                }
+                if (backingMap.modCount != expectedModCount) {
+                    throw new ConcurrentModificationException();
+                }
+
+                next = predecessor(e);
+                lastReturned = e;
+                return e;
+            }
+        }
+
+        final class NavigableSubMapEntryIterator extends NavigableSubMapIterator<Map.Entry<UnsignedInteger, E>> {
+            NavigableSubMapEntryIterator(SplayedEntry<E> first, SplayedEntry<E> fence) {
+                super(first, fence);
+            }
+
+            @Override
+            public boolean hasNext() {
+                return hasNextEntry();
+            }
+
+            @Override
+            public Map.Entry<UnsignedInteger, E> next() {
+                return nextEntry();
+            }
+        }
+
+        final class DescendingNavigableSubMapEntryIterator extends NavigableSubMapIterator<Map.Entry<UnsignedInteger, E>> {
+            DescendingNavigableSubMapEntryIterator(SplayedEntry<E> first, SplayedEntry<E> fence) {
+                super(first, fence);
+            }
+
+            @Override
+            public boolean hasNext() {
+                return hasPrevEntry();
+            }
+
+            @Override
+            public Map.Entry<UnsignedInteger, E> next() {
+                return previousEntry();
+            }
+        }
+
+        final class NavigableSubMapKeyIterator extends NavigableSubMapIterator<UnsignedInteger> {
+            NavigableSubMapKeyIterator(SplayedEntry<E> first, SplayedEntry<E> fence) {
+                super(first, fence);
+            }
+
+            @Override
+            public boolean hasNext() {
+                return hasNextEntry();
+            }
+
+            @Override
+            public UnsignedInteger next() {
+                return nextEntry().getKey();
+            }
+        }
+
+        final class DescendingNavigableSubMapKeyIterator extends NavigableSubMapIterator<UnsignedInteger> {
+            DescendingNavigableSubMapKeyIterator(SplayedEntry<E> first, SplayedEntry<E> fence) {
+                super(first, fence);
+            }
+
+            @Override
+            public boolean hasNext() {
+                return hasPrevEntry();
+            }
+
+            @Override
+            public UnsignedInteger next() {
+                return previousEntry().getKey();
+            }
+        }
+
+        protected abstract class NavigableSubMapEntrySet extends AbstractSet<Map.Entry<UnsignedInteger, E>> {
+            private transient int size = -1;
+            private transient int sizeModCount;
+
+            @Override
+            public int size() {
+                if ((!fromStart || !toEnd) && (size == -1 || sizeModCount != backingMap.modCount)) {
+                    sizeModCount = backingMap.modCount;
+                    size = 0;
+                    Iterator<?> i = iterator();
+                    while (i.hasNext()) {
+                        size++;
+                        i.next();
+                    }
+
+                    return size;
+                }
+
+                return backingMap.size;
+            }
+
+            @Override
+            public boolean isEmpty() {
+                SplayedEntry<E> n = getLowestEntry();
+                return n == null || isToHigh(n.key);
+            }
+
+            @Override
+            public boolean contains(Object o) {
+                if (o instanceof Map.Entry) {
+                    Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
+                    Number key = Number.class.cast(entry.getKey());
+
+                    if (!isInRange(key.intValue())) {
+                        return false;
+                    }
+
+                    SplayedEntry<E> node = backingMap.findEntry(key.intValue());
+
+                    if (node != null) {
+                        return Objects.equals(node.getValue(), entry.getValue());
+                    }
+                }
+
+                return false;
+            }
+
+            @Override
+            public boolean remove(Object o) {
+                if (o instanceof Map.Entry) {
+                    Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
+                    Number key = Number.class.cast(entry.getKey());
+
+                    if (!isInRange(key.intValue())) {
+                        return false;
+                    }
+
+                    SplayedEntry<E> node = backingMap.findEntry(key.intValue());
+
+                    if (node != null) {
+                        backingMap.delete(node);
+                        return Objects.equals(node.getValue(), entry.getValue());
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        //----- Abstract access API which will be inverted based on sub map type
+
+        abstract SplayedEntry<E> getLowestEntry();
+
+        abstract SplayedEntry<E> getHighestEntry();
+
+        abstract SplayedEntry<E> getCeilingEntry(int key);
+
+        abstract SplayedEntry<E> getHigherEntry(int key);
+
+        abstract SplayedEntry<E> getFloorEntry(int key);
+
+        abstract SplayedEntry<E> getLowerEntry(int key);
+
+        //----- Internal API that aids this and other sub-classes
+
+        protected final SplayedEntry<E> lowestPossibleEntry() {
+            SplayedEntry<E> e =
+                startInclusive ? backingMap.getCeilingEntry(startKey) : backingMap.getHigherEntry(startKey);
+
+            return (e == null || isToHigh(e.key)) ? null : e;
+        }
+
+        protected final SplayedEntry<E> highestPossibleEntry() {
+            SplayedEntry<E> e =
+                endInclusive ? backingMap.getFloorEntry(endKey) : backingMap.getLowerEntry(endKey);
+
+            return (e == null || isToLow(e.key)) ? null : e;
+        }
+
+        protected final SplayedEntry<E> entryOrSuccessor(int key) {
+            if (isToLow(key)) {
+                return lowestPossibleEntry();
+            }
+            SplayedEntry<E> e = backingMap.getCeilingEntry(key);
+
+            return (e == null || isToHigh(e.key)) ? null : e;
+        }
+
+        protected final SplayedEntry<E> entrySuccessor(int key) {
+            if (isToLow(key)) {
+                return lowestPossibleEntry();
+            }
+            SplayedEntry<E> e = backingMap.getHigherEntry(key);
+
+            return (e == null || isToHigh(e.key)) ? null : e;
+        }
+
+        protected final SplayedEntry<E> entryOrPredecessor(int key) {
+            if (isToHigh(key)) {
+                return highestPossibleEntry();
+            }
+            SplayedEntry<E> e = backingMap.getFloorEntry(key);
+
+            return (e == null || isToLow(e.key)) ? null : e;
+        }
+
+        protected final SplayedEntry<E> entryPredecessor(int key) {
+            if (isToHigh(key)) {
+                return highestPossibleEntry();
+            }
+            SplayedEntry<E> e = backingMap.getLowerEntry(key);
+
+            return (e == null || isToLow(e.key)) ? null : e;
+        }
+
+        protected final void checkInRange(int fromKey, boolean fromInclusive, int toKey, boolean toInclusive) {
+            if (!isInRange(fromKey, fromInclusive)) {
+                throw new IllegalArgumentException("Given from key is out of range of this sub map view: " + fromKey);
+            }
+            if (!isInRange(toKey, toInclusive)) {
+                throw new IllegalArgumentException("Given to key is out of range of this sub map view: " + toKey);
+            }
+        }
+
+        protected final boolean isInRange(int key) {
+            return !isToLow(key) && !isToHigh(key);
+        }
+
+        final boolean isInCapturedRange(int key) {
+            return SplayMap.compare(key, startKey) >= 0 && SplayMap.compare(endKey, key) >= 0;
+        }
+
+        final boolean isInRange(int key, boolean inclusive) {
+            return inclusive ? isInRange(key) : isInCapturedRange(key);
+        }
+
+        protected final boolean isToLow(int key) {
+            int result = SplayMap.compare(key, startKey);
+            if (result < 0 || result == 0 && !startInclusive) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        protected final boolean isToHigh(int key) {
+            int result = SplayMap.compare(key, endKey);
+            if (result > 0 || result == 0 && !endInclusive) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    protected static final class AscendingSubMap<V> extends NavigableSubMap<V> {
+
+        AscendingSubMap(SplayMap<V> m,
+                        boolean fromStart, int fromKey, boolean startInclusive,
+                        boolean toEnd, int endKey, boolean endInclusive) {
+            super(m, fromStart, fromKey, startInclusive, toEnd, endKey, endInclusive);
+        }
+
+        private transient NavigableMap<UnsignedInteger, V> descendingMapView;
+        private transient NavigableSubMapEntrySet navigableEntrySet;
+
+        @Override
+        public Comparator<? super UnsignedInteger> comparator() {
+            return COMPARATOR;
+        }
+
+        @Override
+        public NavigableMap<UnsignedInteger, V> descendingMap() {
+            return descendingMapView != null ? descendingMapView :
+                (descendingMapView = new DescendingSubMap<>(backingMap,
+                    fromStart, startKey, startInclusive, toEnd, endKey, endInclusive));
+        }
+
+        @Override
+        public NavigableMap<UnsignedInteger, V> subMap(UnsignedInteger fromKey, boolean fromInclusive,
+                                                       UnsignedInteger toKey, boolean toInclusive) {
+            checkInRange(fromKey.intValue(), fromInclusive, toKey.compareTo(0), toInclusive);
+            return new AscendingSubMap<>(backingMap,
+                false, fromKey.intValue(), fromInclusive, false, toKey.intValue(), toInclusive);
+        }
+
+        @Override
+        public NavigableMap<UnsignedInteger, V> headMap(UnsignedInteger toKey, boolean inclusive) {
+            isInRange(toKey.intValue(), inclusive);
+            return new AscendingSubMap<>(backingMap,
+                fromStart, startKey, startInclusive, false, toKey.intValue(), inclusive);
+        }
+
+        @Override
+        public NavigableMap<UnsignedInteger, V> tailMap(UnsignedInteger fromKey, boolean inclusive) {
+            isInRange(fromKey.intValue(), inclusive);
+            return new AscendingSubMap<>(backingMap,
+                false, fromKey.intValue(), inclusive, toEnd, endKey, endInclusive);
+        }
+
+        @Override
+        public Set<Entry<UnsignedInteger, V>> entrySet() {
+            return navigableEntrySet != null ?
+                navigableEntrySet : (navigableEntrySet = new AscendingNavigableSubMapEntrySet());
+        }
+
+        @Override
+        Iterator<UnsignedInteger> keyIterator() {
+            return new NavigableSubMapKeyIterator(getLowestEntry(), getHighestEntry());
+        }
+
+        @Override
+        Iterator<UnsignedInteger> descendingKeyIterator() {
+            return new DescendingNavigableSubMapKeyIterator(getLowestEntry(), getHighestEntry());
+        }
+
+        @Override
+        SplayedEntry<V> getLowestEntry() {
+            return super.lowestPossibleEntry();
+        }
+
+        @Override
+        SplayedEntry<V> getHighestEntry() {
+            return super.highestPossibleEntry();
+        }
+
+        @Override
+        SplayedEntry<V> getCeilingEntry(int key) {
+            return super.entryOrSuccessor(key);
+        }
+
+        @Override
+        SplayedEntry<V> getHigherEntry(int key) {
+            return super.entrySuccessor(key);
+        }
+
+        @Override
+        SplayedEntry<V> getFloorEntry(int key) {
+            return super.entryOrPredecessor(key);
+        }
+
+        @Override
+        SplayedEntry<V> getLowerEntry(int key) {
+            return super.entryPredecessor(key);
+        }
+
+        private final class AscendingNavigableSubMapEntrySet extends NavigableSubMapEntrySet {
+
+            @Override
+            public Iterator<Entry<UnsignedInteger, V>> iterator() {
+                return new NavigableSubMapEntryIterator(lowestPossibleEntry(), highestPossibleEntry());
+            }
+        }
+    }
+
+    protected static final class DescendingSubMap<V> extends NavigableSubMap<V> {
+
+        DescendingSubMap(SplayMap<V> m,
+                        boolean fromStart, int fromKey, boolean startInclusive,
+                        boolean toEnd, int endKey, boolean endInclusive) {
+            super(m, fromStart, fromKey, startInclusive, toEnd, endKey, endInclusive);
+        }
+
+        private transient NavigableMap<UnsignedInteger, V> ascendingMapView;
+        private transient NavigableSubMapEntrySet navigableEntrySet;
+
+        @Override
+        public Comparator<? super UnsignedInteger> comparator() {
+            return REVERSE_COMPARATOR;
+        }
+
+        @Override
+        public NavigableMap<UnsignedInteger, V> descendingMap() {
+            return ascendingMapView != null ? ascendingMapView :
+                (ascendingMapView = new AscendingSubMap<>(backingMap,
+                    fromStart, startKey, startInclusive, toEnd, endKey, endInclusive));
+        }
+
+        @Override
+        public NavigableMap<UnsignedInteger, V> subMap(UnsignedInteger fromKey, boolean fromInclusive,
+                                                       UnsignedInteger toKey, boolean toInclusive) {
+            checkInRange(fromKey.intValue(), fromInclusive, toKey.intValue(), toInclusive);
+            return new DescendingSubMap<>(backingMap,
+                false, toKey.intValue(), toInclusive, false, fromKey.intValue(), fromInclusive);
+        }
+
+        @Override
+        public NavigableMap<UnsignedInteger, V> headMap(UnsignedInteger toKey, boolean inclusive) {
+            isInRange(toKey.intValue(), inclusive);
+            return new DescendingSubMap<>(backingMap,
+                false, toKey.intValue(), inclusive, toEnd, endKey, endInclusive);
+        }
+
+        @Override
+        public NavigableMap<UnsignedInteger, V> tailMap(UnsignedInteger fromKey, boolean inclusive) {
+            isInRange(fromKey.intValue(), inclusive);
+            return new DescendingSubMap<>(backingMap,
+                fromStart, startKey, startInclusive, false, fromKey.intValue(), inclusive);
+        }
+
+        @Override
+        public Set<Entry<UnsignedInteger, V>> entrySet() {
+            return navigableEntrySet != null ?
+                navigableEntrySet : (navigableEntrySet = new DescendingNavigableSubMapEntrySet());
+        }
+
+        @Override
+        Iterator<UnsignedInteger> keyIterator() {
+            return new DescendingNavigableSubMapKeyIterator(getHighestEntry(), getLowestEntry());
+        }
+
+        @Override
+        Iterator<UnsignedInteger> descendingKeyIterator() {
+            return new NavigableSubMapKeyIterator(getHighestEntry(), getLowestEntry());
+        }
+
+        @Override
+        SplayedEntry<V> getLowestEntry() {
+            return super.highestPossibleEntry();
+        }
+
+        @Override
+        SplayedEntry<V> getHighestEntry() {
+            return super.lowestPossibleEntry();
+        }
+
+        @Override
+        SplayedEntry<V> getCeilingEntry(int key) {
+            return super.entryPredecessor(key);
+        }
+
+        @Override
+        SplayedEntry<V> getHigherEntry(int key) {
+            return super.entryPredecessor(key);
+        }
+
+        @Override
+        SplayedEntry<V> getFloorEntry(int key) {
+            return super.entryOrSuccessor(key);
+        }
+
+        @Override
+        SplayedEntry<V> getLowerEntry(int key) {
+            return super.entryOrSuccessor(key);
+        }
+
+        @Override
+        public void forEach(BiConsumer<? super UnsignedInteger, ? super V> action) {
+            Objects.requireNonNull(action);
+            for (Map.Entry<UnsignedInteger, V> entry : entrySet()) {
+                UnsignedInteger k;
+                V v;
+                try {
+                    k = entry.getKey();
+                    v = entry.getValue();
+                } catch (IllegalStateException ise) {
+                    // this usually means the entry is no longer in the map.
+                    throw new ConcurrentModificationException(ise);
+                }
+                action.accept(k, v);
+            }
+        }
+
+        private final class DescendingNavigableSubMapEntrySet extends NavigableSubMapEntrySet {
+
+            @Override
+            public Iterator<Entry<UnsignedInteger, V>> iterator() {
+                return new DescendingNavigableSubMapEntryIterator(highestPossibleEntry(), lowestPossibleEntry());
+            }
+        }
     }
 }

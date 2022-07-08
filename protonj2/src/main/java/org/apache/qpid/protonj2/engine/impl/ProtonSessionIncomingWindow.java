@@ -16,6 +16,10 @@
  */
 package org.apache.qpid.protonj2.engine.impl;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NavigableMap;
+
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.util.SequenceNumber;
@@ -157,7 +161,7 @@ public class ProtonSessionIncomingWindow {
         final int first = (int) disposition.getFirst();
 
         if (disposition.hasLast() && disposition.getLast() != first) {
-            handleRangedDisposition(disposition);
+            handleRangedDisposition(unsettled, disposition);
         } else {
             final ProtonIncomingDelivery delivery = disposition.getSettled() ?
                 unsettled.remove(first) : unsettled.get(first);
@@ -170,23 +174,34 @@ public class ProtonSessionIncomingWindow {
         return disposition;
     }
 
-    private void handleRangedDisposition(Disposition disposition) {
-        final int first = (int) disposition.getFirst();
-        final int last = (int) disposition.getLast();
+    private static void handleRangedDisposition(NavigableMap<UnsignedInteger, ProtonIncomingDelivery> unsettled, Disposition disposition) {
+        final UnsignedInteger first = UnsignedInteger.valueOf(disposition.getFirst());
+        final UnsignedInteger last = UnsignedInteger.valueOf(disposition.getLast());
+
+        // Dispositions cover a contiguous range in the map requires a single sub-map
+        // which we can iterate whereas a range that wraps requires two iterations over
+        // a split between the higher portion and the lower portion of the map.
+        if (first.compareTo(last) <= 0) {
+            handleDispositions(unsettled.subMap(first, true, last, true), disposition);
+        } else {
+            handleDispositions(unsettled.tailMap(first, true), disposition);
+            handleDispositions(unsettled.headMap(last, true), disposition);
+        }
+    }
+
+    private static void handleDispositions(Map<UnsignedInteger, ProtonIncomingDelivery> deliveries, Disposition disposition) {
         final boolean settled = disposition.getSettled();
 
-        int index = first;
-        ProtonIncomingDelivery delivery;
+        Iterator<ProtonIncomingDelivery> deliveriesIter = deliveries.values().iterator();
+        while (deliveriesIter.hasNext()) {
+            ProtonIncomingDelivery delivery = deliveriesIter.next();
 
-        // TODO: If SplayMap gets a subMap that works we could get the ranged view which would
-        //       be more efficient.
-        do {
-            delivery = settled ? unsettled.remove(index) : unsettled.get(index);
-
-            if (delivery != null) {
-                delivery.getLink().remoteDisposition(disposition, delivery);
+            if (settled) {
+                deliveriesIter.remove();
             }
-        } while (index++ != last);
+
+            delivery.getLink().remoteDisposition(disposition, delivery);
+        }
     }
 
     long updateIncomingWindow() {

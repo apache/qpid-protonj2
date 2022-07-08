@@ -112,6 +112,35 @@ public class LinkedSplayMapTest extends SplayMapTest {
      */
     @Override
     @Test
+    public void testNavigableKeysIterationFollowsUnsignedOrderingExpectations() {
+        LinkedSplayMap<String> map = createMap();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+        final int[] expectedOrder = {3, 0, -1, 1, -2, 2};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        Collection<UnsignedInteger> keys = map.navigableKeySet();
+        Iterator<UnsignedInteger> iterator = keys.iterator();
+        assertNotNull(iterator);
+        assertTrue(iterator.hasNext());
+
+        int counter = 0;
+        while (iterator.hasNext()) {
+            assertEquals(UnsignedInteger.valueOf(expectedOrder[counter++]), iterator.next());
+        }
+
+        // Check that we really did iterate.
+        assertEquals(inputValues.length, counter);
+    }
+
+    /**
+     * Test differs from parent as order is insertion based.
+     */
+    @Override
+    @Test
     public void testEntryIterationFollowsUnsignedOrderingExpectations() {
         LinkedSplayMap<String> map = createMap();
 

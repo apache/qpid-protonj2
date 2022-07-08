@@ -18,21 +18,28 @@ package org.apache.qpid.protonj2.engine.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedMap;
 
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
@@ -49,12 +56,22 @@ public class SplayMapTest {
 
     protected long seed;
     protected Random random;
+    protected UnsignedInteger uintArray[] = new UnsignedInteger[1000];
+    protected String objArray[] = new String[1000];
+    protected SplayMap<String> testMap = new SplayMap<>();
 
     @BeforeEach
     public void setUp() {
         seed = System.nanoTime();
         random = new Random();
         random.setSeed(seed);
+
+        testMap = new SplayMap<>();
+        for (int i = 0; i < objArray.length; i++) {
+            UnsignedInteger x = uintArray[i] = UnsignedInteger.valueOf(i);
+            String y = objArray[i] = UnsignedInteger.valueOf(i).toString();
+            testMap.put(x, y);
+        }
     }
 
     protected <E> SplayMap<E> createMap() {
@@ -120,6 +137,26 @@ public class SplayMapTest {
         assertEquals(1, map.size());
         map.remove(1);
         assertEquals(0, map.size());
+    }
+
+    @Test
+    public void testSizeWithSubMaps() {
+        assertEquals(1000, testMap.size(), "Returned incorrect size");
+        assertEquals(500, testMap.headMap(UnsignedInteger.valueOf(500)).size(), "Returned incorrect size");
+        assertEquals(0, testMap.headMap(UnsignedInteger.valueOf(0)).size(), "Returned incorrect size");
+        assertEquals(1, testMap.headMap(UnsignedInteger.valueOf(1)).size(), "Returned incorrect size");
+        assertEquals(501, testMap.headMap(UnsignedInteger.valueOf(501)).size(), "Returned incorrect size");
+        assertEquals(500, testMap.tailMap(UnsignedInteger.valueOf(500)).size(), "Returned incorrect size");
+        assertEquals(1000, testMap.tailMap(UnsignedInteger.valueOf(0)).size(), "Returned incorrect size");
+        assertEquals(500, testMap.tailMap(UnsignedInteger.valueOf(500)).size(), "Returned incorrect size");
+        assertEquals(100, testMap.subMap(UnsignedInteger.valueOf(500), UnsignedInteger.valueOf(600)).size(), "Returned incorrect size");
+
+        assertThrows(NullPointerException.class, () -> testMap.subMap(null, UnsignedInteger.valueOf(600)));
+        assertThrows(NullPointerException.class, () -> testMap.subMap(UnsignedInteger.valueOf(600), null));
+        assertThrows(NullPointerException.class, () -> testMap.subMap(null, null));
+        assertThrows(NullPointerException.class, () -> testMap.subMap(null, true, null, true));
+        assertThrows(NullPointerException.class, () -> testMap.headMap(null));
+        assertThrows(NullPointerException.class, () -> testMap.tailMap(null));
     }
 
     @Test
@@ -725,6 +762,27 @@ public class SplayMapTest {
     }
 
     @Test
+    public void testKeysIterationRemoveContract() {
+        Set<UnsignedInteger> set = testMap.keySet();
+        Iterator<UnsignedInteger> iter = set.iterator();
+        iter.next();
+        iter.remove();
+
+        // No remove allowed again until next is called
+        assertThrows(IllegalStateException.class, () -> iter.remove());
+
+        iter.next();
+        iter.remove();
+
+        assertEquals(998, testMap.size());
+
+        iter.next();
+        assertNotNull(testMap.remove(999));
+
+        assertThrows(ConcurrentModificationException.class, () -> iter.remove());
+    }
+
+    @Test
     public void testKeysIteration() {
         SplayMap<String> map = createMap();
 
@@ -811,6 +869,194 @@ public class SplayMapTest {
             fail("Should have thrown a NoSuchElementException");
         } catch (NoSuchElementException nse) {
         }
+    }
+
+    @Test
+    public void testKeySetRetainAllFromCollection() throws Exception {
+        final Collection<UnsignedInteger> collection = new ArrayList<>();
+        collection.add(UnsignedInteger.valueOf(200));
+
+        assertEquals(1000, testMap.size());
+
+        final Set<UnsignedInteger> keys = testMap.keySet();
+
+        keys.retainAll(collection);
+        assertEquals(1, testMap.size());
+        keys.removeAll(collection);
+        assertEquals(0, testMap.size());
+        testMap.put(1, "one");
+        assertEquals(1, testMap.size());
+        keys.clear();
+        assertEquals(0, testMap.size());
+    }
+
+    @Test
+    public void testNavigableKeySetReturned() {
+        SplayMap<String> map = createMap();
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(2, "two");
+        map.put(3, "three");
+
+        Set<UnsignedInteger> keys = map.navigableKeySet();
+        assertNotNull(keys);
+        assertEquals(4, keys.size());
+        assertFalse(keys.isEmpty());
+        assertSame(keys, map.keySet());
+    }
+
+    @Test
+    public void testNavigableKeysIterationRemove() {
+        SplayMap<String> map = createMap();
+
+        final int[] intValues = {0, 1, 2, 3};
+
+        for (int entry : intValues) {
+            map.put(entry, "" + entry);
+        }
+
+        Collection<UnsignedInteger> keys = map.navigableKeySet();
+        Iterator<UnsignedInteger> iterator = keys.iterator();
+        assertNotNull(iterator);
+        assertTrue(iterator.hasNext());
+
+        int counter = 0;
+        while (iterator.hasNext()) {
+            assertEquals(UnsignedInteger.valueOf(intValues[counter++]), iterator.next());
+        }
+
+        // Check that we really did iterate.
+        assertEquals(intValues.length, counter);
+    }
+
+    @Test
+    public void testNavigableKeysIterationRemoveContract() {
+        Set<UnsignedInteger> set = testMap.navigableKeySet();
+        Iterator<UnsignedInteger> iter = set.iterator();
+        iter.next();
+        iter.remove();
+
+        // No remove allowed again until next is called
+        assertThrows(IllegalStateException.class, () -> iter.remove());
+
+        iter.next();
+        iter.remove();
+
+        assertEquals(998, testMap.size());
+
+        iter.next();
+        assertNotNull(testMap.remove(999));
+
+        assertThrows(ConcurrentModificationException.class, () -> iter.remove());
+    }
+
+    @Test
+    public void testNavigableKeysIteration() {
+        SplayMap<String> map = createMap();
+
+        final int[] intValues = {0, 1, 2, 3};
+
+        for (int entry : intValues) {
+            map.put(entry, "" + entry);
+        }
+
+        Collection<UnsignedInteger> keys = map.navigableKeySet();
+        Iterator<UnsignedInteger> iterator = keys.iterator();
+        assertNotNull(iterator);
+        assertTrue(iterator.hasNext());
+
+        int counter = 0;
+        while (iterator.hasNext()) {
+            assertEquals(UnsignedInteger.valueOf(intValues[counter++]), iterator.next());
+            iterator.remove();
+        }
+
+        // Check that we really did iterate.
+        assertEquals(intValues.length, counter);
+        assertTrue(map.isEmpty());
+        assertEquals(0, map.size());
+    }
+
+    @Test
+    public void testNavigableKeysIterationFollowsUnsignedOrderingExpectations() {
+        SplayMap<String> map = createMap();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+        final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        Collection<UnsignedInteger> keys = map.navigableKeySet();
+        Iterator<UnsignedInteger> iterator = keys.iterator();
+        assertNotNull(iterator);
+        assertTrue(iterator.hasNext());
+
+        int counter = 0;
+        while (iterator.hasNext()) {
+            assertEquals(UnsignedInteger.valueOf(expectedOrder[counter++]), iterator.next());
+        }
+
+        // Check that we really did iterate.
+        assertEquals(inputValues.length, counter);
+    }
+
+    @Test
+    public void testNavigableKeysIterationFailsWhenConcurrentlyModified() {
+        SplayMap<String> map = createMap();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        Collection<UnsignedInteger> keys = map.navigableKeySet();
+        Iterator<UnsignedInteger> iterator = keys.iterator();
+        assertNotNull(iterator);
+        assertTrue(iterator.hasNext());
+
+        map.remove(3);
+
+        try {
+            iterator.next();
+            fail("Should not iterate when modified outside of iterator");
+        } catch (ConcurrentModificationException cme) {}
+    }
+
+    @Test
+    public void testNavigableKeysIterationOnEmptyTree() {
+        SplayMap<String> map = createMap();
+        Collection<UnsignedInteger> keys = map.navigableKeySet();
+        Iterator<UnsignedInteger> iterator = keys.iterator();
+
+        assertFalse(iterator.hasNext());
+        try {
+            iterator.next();
+            fail("Should have thrown a NoSuchElementException");
+        } catch (NoSuchElementException nse) {
+        }
+    }
+
+    @Test
+    public void testNavigableKeySetRetainAllFromCollection() throws Exception {
+        final Collection<UnsignedInteger> collection = new ArrayList<>();
+        collection.add(UnsignedInteger.valueOf(200));
+
+        assertEquals(1000, testMap.size());
+
+        final Set<UnsignedInteger> keys = testMap.navigableKeySet();
+
+        keys.retainAll(collection);
+        assertEquals(1, testMap.size());
+        keys.removeAll(collection);
+        assertEquals(0, testMap.size());
+        testMap.put(1, "one");
+        assertEquals(1, testMap.size());
+        keys.clear();
+        assertEquals(0, testMap.size());
     }
 
     @Test
@@ -1040,6 +1286,10 @@ public class SplayMapTest {
             map.put(entry, "" + entry);
         }
 
+        assertEquals(UnsignedInteger.valueOf(0), map.firstKey());
+        SortedMap<UnsignedInteger, String> descending = map.descendingMap();
+        assertEquals(UnsignedInteger.valueOf(-1), descending.firstKey());
+
         for (int expected : expectedOrder) {
             assertEquals(expected, map.pollFirstEntry().getPrimitiveKey());
         }
@@ -1064,12 +1314,37 @@ public class SplayMapTest {
             map.put(entry, "" + entry);
         }
 
+        assertEquals(UnsignedInteger.valueOf(-1), map.lastKey());
+        SortedMap<UnsignedInteger, String> descending = map.descendingMap();
+        assertEquals(UnsignedInteger.valueOf(0), descending.lastKey());
+
         for (int expected : expectedOrder) {
             assertEquals(expected, map.lastKey().intValue());
             map.remove(expected);
         }
 
         assertNull(map.lastKey());
+    }
+
+    @Test
+    public void testLastKeyAfterSubMap() {
+        SplayMap<String> tm = new SplayMap<String>();
+        tm.put(1, "VAL001");
+        tm.put(3, "VAL003");
+        tm.put(2, "VAL002");
+        SortedMap<UnsignedInteger, String> sm = tm;
+        UnsignedInteger firstKey = sm.firstKey();
+        UnsignedInteger lastKey = null;
+
+        for (int i = 1; i <= tm.size(); i++) {
+            try {
+                lastKey = sm.lastKey();
+            } catch (NoSuchElementException excep) {
+                assertTrue(sm.isEmpty());
+                fail("NoSuchElementException thrown when there are elements in the map");
+            }
+            sm = sm.subMap(firstKey, lastKey);
+        }
     }
 
     @Test
@@ -1139,6 +1414,28 @@ public class SplayMapTest {
         });
 
         assertEquals(index.intValue(), inputValues.length);
+
+        NavigableMap<UnsignedInteger, String> descemding = map.descendingMap();
+
+        assertEquals(map.size(), descemding.size());
+
+        descemding.forEach((k, v) -> {
+            int value = index.decrement().intValue();
+            assertEquals(expectedOrder[value], k.intValue());
+        });
+
+        assertEquals(index.intValue(), 0);
+
+        NavigableMap<UnsignedInteger, String> ascending = descemding.descendingMap();
+
+        assertEquals(map.size(), ascending.size());
+
+        ascending.forEach((k, v) -> {
+            int value = index.getAndIncrement().intValue();
+            assertEquals(expectedOrder[value], k.intValue());
+        });
+
+        assertEquals(index.intValue(), expectedOrder.length);
     }
 
     @Test
@@ -1339,6 +1636,10 @@ public class SplayMapTest {
         assertEquals(UnsignedInteger.valueOf(2), map.floorEntry(UnsignedInteger.valueOf(2)).getKey());
         assertEquals(UnsignedInteger.valueOf(1), map.floorEntry(UnsignedInteger.valueOf(1)).getKey());
         assertEquals(UnsignedInteger.valueOf(0), map.floorEntry(UnsignedInteger.valueOf(0)).getKey());
+
+        map.remove(0);
+
+        assertNull(map.floorEntry(UnsignedInteger.valueOf(0)));
     }
 
     @Test
@@ -1360,6 +1661,10 @@ public class SplayMapTest {
         assertEquals(UnsignedInteger.valueOf(2), map.floorKey(UnsignedInteger.valueOf(2)));
         assertEquals(UnsignedInteger.valueOf(1), map.floorKey(UnsignedInteger.valueOf(1)));
         assertEquals(UnsignedInteger.valueOf(0), map.floorKey(UnsignedInteger.valueOf(0)));
+
+        map.remove(0);
+
+        assertNull(map.floorEntry(UnsignedInteger.valueOf(0)));
     }
 
     @Test
@@ -1381,6 +1686,10 @@ public class SplayMapTest {
         assertEquals(UnsignedInteger.valueOf(-2), map.ceilingEntry(UnsignedInteger.valueOf(-3)).getKey());
         assertEquals(UnsignedInteger.valueOf(-2), map.ceilingEntry(UnsignedInteger.valueOf(-2)).getKey());
         assertEquals(UnsignedInteger.valueOf(-1), map.ceilingEntry(UnsignedInteger.valueOf(-1)).getKey());
+
+        map.remove(-1);
+
+        assertNull(map.ceilingEntry(UnsignedInteger.valueOf(-1)));
     }
 
     @Test
@@ -1402,6 +1711,472 @@ public class SplayMapTest {
         assertEquals(UnsignedInteger.valueOf(-2), map.ceilingKey(UnsignedInteger.valueOf(-3)));
         assertEquals(UnsignedInteger.valueOf(-2), map.ceilingKey(UnsignedInteger.valueOf(-2)));
         assertEquals(UnsignedInteger.valueOf(-1), map.ceilingKey(UnsignedInteger.valueOf(-1)));
+
+        map.remove(-1);
+
+        assertNull(map.ceilingKey(UnsignedInteger.valueOf(-1)));
+    }
+
+    @Test
+    public void testHeadMapForBasicTestMap() {
+        Map<UnsignedInteger, String> head = testMap.headMap(UnsignedInteger.valueOf(99));
+        assertEquals(99, head.size(), "Returned map of incorrect size");
+        assertTrue(head.containsKey(UnsignedInteger.valueOf(0)));
+        assertTrue(head.containsValue("1"));
+        assertTrue(head.containsKey(UnsignedInteger.valueOf(10)));
+
+        SortedMap<UnsignedInteger, Integer> intMap;
+        SortedMap<UnsignedInteger, Integer> sub;
+
+        int size = 16;
+        intMap = new SplayMap<Integer>();
+        for (int i = 1; i <= size; i++) {
+            intMap.put(UnsignedInteger.valueOf(i), i);
+        }
+        sub = intMap.headMap(UnsignedInteger.valueOf(0));
+        assertEquals(sub.size(), 0, "size should be zero");
+        assertTrue(sub.isEmpty(), "The SubMap should be empty");
+        try {
+            sub.firstKey();
+            fail("java.util.NoSuchElementException should be thrown");
+        } catch (java.util.NoSuchElementException e) {
+        }
+
+        SplayMap<Integer> t = new SplayMap<Integer>();
+        try {
+            @SuppressWarnings("unused")
+            SortedMap<UnsignedInteger, Integer> th = t.headMap(null);
+            fail("Should throw a NullPointerException");
+        } catch (NullPointerException npe) {
+            // expected
+        }
+
+        try {
+            sub.lastKey();
+            fail("java.util.NoSuchElementException should be thrown");
+        } catch (java.util.NoSuchElementException e) {
+        }
+
+        size = 256;
+        intMap = new SplayMap<Integer>();
+        for (int i = 0; i < size; i++) {
+            intMap.put(UnsignedInteger.valueOf(i), i);
+        }
+        sub = intMap.headMap(UnsignedInteger.valueOf(0));
+        assertEquals(sub.size(), 0, "size should be zero");
+        assertTrue(sub.isEmpty(), "SubMap should be empty");
+        try {
+            sub.firstKey();
+            fail("java.util.NoSuchElementException should be thrown");
+        } catch (java.util.NoSuchElementException e) {
+        }
+
+        try {
+            sub.lastKey();
+            fail("java.util.NoSuchElementException should be thrown");
+        } catch (java.util.NoSuchElementException e) {
+        }
+    }
+
+    @Test
+    public void testSubMapTwoArgVariant() {
+        SortedMap<UnsignedInteger, String> subMap = testMap.subMap(uintArray[100], uintArray[109]);
+
+        assertEquals(9, subMap.size(), "SubMap returned is of incorrect size");
+        for (int counter = 100; counter < 109; counter++) {
+            assertTrue(subMap.get(uintArray[counter]).equals(objArray[counter]), "SubMap contains incorrect elements");
+        }
+
+        assertThrows(IllegalArgumentException.class, () -> testMap.subMap(uintArray[9], uintArray[1]));
+
+        SortedMap<UnsignedInteger, String> map = new SplayMap<String>();
+        map.put(UnsignedInteger.valueOf(1), "one");
+        map.put(UnsignedInteger.valueOf(2), "two");
+        map.put(UnsignedInteger.valueOf(3), "three");
+        assertEquals(UnsignedInteger.valueOf(3), map.lastKey());
+        SortedMap<UnsignedInteger, String> sub = map.subMap(UnsignedInteger.valueOf(1), UnsignedInteger.valueOf(3));
+        assertEquals(UnsignedInteger.valueOf(2), sub.lastKey());
+
+        SortedMap<UnsignedInteger, String> t = new SplayMap<String>();
+        assertThrows(NullPointerException.class, () -> t.subMap(null, UnsignedInteger.valueOf(1)));
+    }
+
+    @Test
+    public void testSubMapIterator() {
+        SplayMap<String> map = new SplayMap<String>();
+
+        UnsignedInteger[] keys = { UnsignedInteger.valueOf(1), UnsignedInteger.valueOf(2), UnsignedInteger.valueOf(3) };
+        String[] values = { "one", "two", "three" };
+        for (int i = 0; i < keys.length; i++) {
+            map.put(keys[i], values[i]);
+        }
+
+        assertEquals(3, map.size());
+
+        SortedMap<UnsignedInteger, String> subMap = map.subMap(UnsignedInteger.valueOf(0), UnsignedInteger.valueOf(4));
+        assertEquals(3, subMap.size());
+
+        Set<Map.Entry<UnsignedInteger, String>> entrySet = subMap.entrySet();
+        Iterator<Map.Entry<UnsignedInteger, String>> iter = entrySet.iterator();
+        int size = 0;
+        while (iter.hasNext()) {
+            Map.Entry<UnsignedInteger, String> entry = iter.next();
+            assertTrue(map.containsKey(entry.getKey()));
+            assertTrue(map.containsValue(entry.getValue()));
+            size++;
+        }
+        assertEquals(map.size(), size);
+
+        Set<UnsignedInteger> keySet = subMap.keySet();
+        Iterator<UnsignedInteger> keyIter = keySet.iterator();
+        size = 0;
+        while (keyIter.hasNext()) {
+            UnsignedInteger key = keyIter.next();
+            assertTrue(map.containsKey(key));
+            size++;
+        }
+        assertEquals(map.size(), size);
+    }
+
+    @Test
+    public void testTailMapWithSingleArgument() {
+        SortedMap<UnsignedInteger, String> tail = testMap.tailMap(uintArray[900]);
+        assertEquals(tail.size(), (uintArray.length - 900), "Returned map of incorrect size : " + tail.size());
+        for (int i = 900; i < objArray.length; i++) {
+            assertTrue(tail.containsValue(objArray[i]), "Map contains incorrect entries");
+        }
+
+        SortedMap<UnsignedInteger, Integer> intMap;
+
+        int size = 16;
+        intMap = new SplayMap<Integer>();
+
+        for (int i = 0; i < size; i++) {
+            intMap.put(UnsignedInteger.valueOf(i), i);
+        }
+
+        final SortedMap<UnsignedInteger, Integer> sub = intMap.tailMap(UnsignedInteger.valueOf(size));
+        assertEquals(sub.size(),0, "size should be zero");
+        assertTrue(sub.isEmpty(), "SubMap should be empty");
+
+        assertThrows(NoSuchElementException.class, () -> sub.firstKey());
+        assertThrows(NullPointerException.class, () -> new SplayMap<String>().tailMap(null));
+        assertThrows(NoSuchElementException.class, () -> sub.lastKey());
+
+        // Try with larger more complex tree structure.
+
+        size = 256;
+        intMap = new SplayMap<Integer>();
+        for (int i = 0; i < size; i++) {
+            intMap.put(UnsignedInteger.valueOf(i), i);
+        }
+        final SortedMap<UnsignedInteger, Integer> sub1 = intMap.tailMap(UnsignedInteger.valueOf(size));
+
+        assertThrows(NoSuchElementException.class, () -> sub1.firstKey());
+        assertThrows(NullPointerException.class, () -> new SplayMap<String>().tailMap(null));
+        assertThrows(NoSuchElementException.class, () -> sub1.lastKey());
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Test
+    public void testNavigableKeySetOperationInteractions() throws Exception {
+        UnsignedInteger testint9999 = UnsignedInteger.valueOf(9999);
+        UnsignedInteger testint10000 = UnsignedInteger.valueOf(10000);
+        UnsignedInteger testint100 = UnsignedInteger.valueOf(100);
+        UnsignedInteger testint0 = UnsignedInteger.valueOf(0);
+
+        final NavigableSet untypedSet = testMap.navigableKeySet();
+        final NavigableSet<UnsignedInteger> set = testMap.navigableKeySet();
+
+        assertFalse(set.contains(testint9999));
+        testMap.put(testint9999, testint9999.toString());
+        assertTrue(set.contains(testint9999));
+        testMap.remove(testint9999);
+        assertFalse(set.contains(testint9999));
+
+        assertThrows(UnsupportedOperationException.class, () -> untypedSet.add(new Object()));
+        assertThrows(UnsupportedOperationException.class, () -> untypedSet.add(null));
+        assertThrows(NullPointerException.class, () -> untypedSet.addAll(null));
+
+        final Collection collection = new ArrayList();
+        set.addAll(collection);
+        try {
+            collection.add(new Object());
+            set.addAll(collection);
+            fail("should throw UnsupportedOperationException");
+        } catch (UnsupportedOperationException e) {
+            // expected
+        }
+        set.remove(testint100);
+        assertFalse(testMap.containsKey(testint100));
+        assertTrue(testMap.containsKey(testint0));
+
+        final Iterator iter = set.iterator();
+        iter.next();
+        iter.remove();
+        assertFalse(testMap.containsKey(testint0));
+        collection.add(UnsignedInteger.valueOf(2));
+        set.retainAll(collection);
+        assertEquals(1, testMap.size());
+        set.removeAll(collection);
+        assertEquals(0, testMap.size());
+        testMap.put(testint10000, testint10000.toString());
+        assertEquals(1, testMap.size());
+        set.clear();
+        assertEquals(0, testMap.size());
+    }
+
+    @Test
+    public void testEmptySubMap() throws Exception {
+        SplayMap<List<Integer>> tm = new SplayMap<>();
+        SortedMap<UnsignedInteger, List<Integer>> sm = tm.tailMap(UnsignedInteger.valueOf(1));
+        assertTrue(sm.values().size() == 0);
+
+        NavigableMap<UnsignedInteger, List<Integer>> sm1 = tm.descendingMap();
+        assertTrue(sm1.values().size() == 0);
+
+        NavigableMap<UnsignedInteger, List<Integer>> sm2 = sm1.tailMap(UnsignedInteger.valueOf(1), true);
+        assertTrue(sm2.values().size() == 0);
+    }
+
+    @Test
+    public void testValuesOneEntrySubMap() {
+        SplayMap<String> tm = new SplayMap<String>();
+        tm.put(1, "VAL001");
+        tm.put(3, "VAL003");
+        tm.put(2, "VAL002");
+
+        UnsignedInteger firstKey = tm.firstKey();
+        SortedMap<UnsignedInteger, String> subMap = tm.subMap(firstKey, firstKey);
+        Iterator<String> iter = subMap.values().iterator();
+        assertNotNull(iter);
+    }
+
+    @Test
+    public void testDescendingMapSubMap() throws Exception {
+        SplayMap<Object> tm = new SplayMap<>();
+        for (int i = 0; i < 10; ++i) {
+            tm.put(i, new Object());
+        }
+
+        NavigableMap<UnsignedInteger, Object> descMap = tm.descendingMap();
+        assertEquals(7, descMap.subMap(UnsignedInteger.valueOf(8), true, UnsignedInteger.valueOf(1), false).size());
+        assertEquals(4, descMap.headMap(UnsignedInteger.valueOf(6), true).size());
+        assertEquals(2, descMap.tailMap(UnsignedInteger.valueOf(2), false).size());
+
+        // sub map of sub map of descendingMap
+        NavigableMap<UnsignedInteger, Object> mapUIntObj = new SplayMap<Object>();
+        for (int i = 0; i < 10; ++i) {
+            mapUIntObj.put(UnsignedInteger.valueOf(i), new Object());
+        }
+        mapUIntObj = mapUIntObj.descendingMap();
+        NavigableMap<UnsignedInteger, Object> subMapUIntObj =
+            mapUIntObj.subMap(UnsignedInteger.valueOf(9), true, UnsignedInteger.valueOf(5), false);
+
+        assertEquals(4, subMapUIntObj.size());
+        subMapUIntObj = subMapUIntObj.subMap(UnsignedInteger.valueOf(9), true, UnsignedInteger.valueOf(5), false);
+        assertEquals(4, subMapUIntObj.size());
+        subMapUIntObj = subMapUIntObj.subMap(UnsignedInteger.valueOf(6), false, UnsignedInteger.valueOf(5), false);
+        assertEquals(0, subMapUIntObj.size());
+
+        subMapUIntObj = mapUIntObj.headMap(UnsignedInteger.valueOf(5), false);
+        assertEquals(4, subMapUIntObj.size());
+        subMapUIntObj = subMapUIntObj.headMap(UnsignedInteger.valueOf(5), false);
+        assertEquals(4, subMapUIntObj.size());
+        subMapUIntObj = subMapUIntObj.tailMap(UnsignedInteger.valueOf(5), false);
+        assertEquals(0, subMapUIntObj.size());
+
+        subMapUIntObj = mapUIntObj.tailMap(UnsignedInteger.valueOf(5), false);
+        assertEquals(5, subMapUIntObj.size());
+        subMapUIntObj = subMapUIntObj.tailMap(UnsignedInteger.valueOf(5), false);
+        assertEquals(5, subMapUIntObj.size());
+        subMapUIntObj = subMapUIntObj.headMap(UnsignedInteger.valueOf(5), false);
+        assertEquals(0, subMapUIntObj.size());
+    }
+
+    @Test
+    public void testEqualsJDKMapTypes() throws Exception {
+        // comparing SplayMap with different object types
+        Map<UnsignedInteger, String> m1 = new SplayMap<>();
+        Map<UnsignedInteger, String> m2 = new SplayMap<>();
+
+        m1.put(UnsignedInteger.valueOf(1), "val1");
+        m1.put(UnsignedInteger.valueOf(2), "val2");
+        m2.put(UnsignedInteger.valueOf(3), "val1");
+        m2.put(UnsignedInteger.valueOf(4), "val2");
+
+        assertNotEquals(m1, m2, "Maps should not be equal 1");
+        assertNotEquals(m2, m1, "Maps should not be equal 2");
+
+        // comparing SplayMap with HashMap with equal values
+        m1 = new SplayMap<>();
+        m2 = new HashMap<>();
+        m1.put(UnsignedInteger.valueOf(1), "val");
+        m2.put(UnsignedInteger.valueOf(2), "val");
+        assertNotEquals(m1, m2, "Maps should not be equal 3");
+        assertNotEquals(m2, m1, "Maps should not be equal 4");
+
+        // comparing SplayMap with differing objects inside values
+        m1 = new SplayMap<>();
+        m2 = new SplayMap<>();
+        m1.put(UnsignedInteger.valueOf(1), "val1");
+        m2.put(UnsignedInteger.valueOf(1), "val2");
+        assertNotEquals(m1, m2, "Maps should not be equal 5");
+        assertNotEquals(m2, m1, "Maps should not be equal 6");
+
+        // comparing SplayMap with same objects inside values
+        m1 = new SplayMap<>();
+        m2 = new SplayMap<>();
+        m1.put(UnsignedInteger.valueOf(1), "val1");
+        m2.put(UnsignedInteger.valueOf(1), "val1");
+        assertTrue(m1.equals(m2), "Maps should be equal 7");
+        assertTrue(m2.equals(m1), "Maps should be equal 7");
+    }
+
+    @Test
+    public void testEntrySetContains() throws Exception {
+        SplayMap<String> first = new SplayMap<>();
+        SplayMap<String> second = new SplayMap<>();
+
+        first.put(UnsignedInteger.valueOf(1), "one");
+        Object[] entry = first.entrySet().toArray();
+        assertFalse(second.entrySet().contains(entry[0]),
+                    "Empty map should not contain anything from first map");
+
+        Map<UnsignedInteger, String> submap = second.subMap(UnsignedInteger.valueOf(0), UnsignedInteger.valueOf(1));
+        entry = first.entrySet().toArray();
+        assertFalse(submap.entrySet().contains(entry[0]),
+                    "Empty SubMap should not contain the first map's entry");
+
+        second.put(UnsignedInteger.valueOf(1), "one");
+        assertTrue(second.entrySet().containsAll(first.entrySet()),
+                   "entrySet().containsAll(...) should work with values");
+
+        first.clear();
+        first.put(UnsignedInteger.valueOf(1), "two");
+        entry = first.entrySet().toArray();
+        assertFalse(second.entrySet().contains(entry[0]),
+                    "new valued entry should not equal old valued entry");
+    }
+
+    @Test
+    public void testValues() {
+        Collection<String> vals = testMap.values();
+        vals.iterator();
+        assertEquals(vals.size(), objArray.length, "Returned collection of incorrect size");
+        for (String element : objArray) {
+            assertTrue(vals.contains(element), "Collection contains incorrect elements");
+        }
+
+        assertEquals(1000, vals.size());
+        int j = 0;
+        for (Iterator<String> iter = vals.iterator(); iter.hasNext(); j++) {
+            String element = iter.next();
+            assertNotNull(element);
+        }
+        assertEquals(1000, j);
+
+        vals = testMap.descendingMap().values();
+        assertNotNull(vals.iterator());
+        assertEquals(vals.size(), objArray.length, "Returned collection of incorrect size");
+        for (String element : objArray) {
+            assertTrue(vals.contains(element), "Collection contains incorrect elements");
+        }
+        assertEquals(1000, vals.size());
+        j = 0;
+        for (Iterator<String> iter = vals.iterator(); iter.hasNext(); j++) {
+            String element = iter.next();
+            assertNotNull(element);
+        }
+        assertEquals(1000, j);
+
+        SplayMap<String> myMap = new SplayMap<String>();
+        for (int i = 0; i < 100; i++) {
+            myMap.put(uintArray[i], objArray[i]);
+        }
+        Collection<String> values = myMap.values();
+        values.remove(UnsignedInteger.ZERO.toString());
+        assertTrue(!myMap.containsKey(UnsignedInteger.ZERO), "Removing from the values collection should remove from the original map");
+        assertTrue(!myMap.containsValue(UnsignedInteger.ZERO.toString()), "Removing from the values collection should remove from the original map");
+        assertEquals(99, values.size());
+        j = 0;
+        for (Iterator<String> iter = values.iterator(); iter.hasNext(); j++) {
+            iter.next();
+        }
+        assertEquals(99, j);
+    }
+
+    @Test
+    public void testSubMapValuesSizeMetrics() {
+        SplayMap<String> myMap = new SplayMap<>();
+        for (int i = 0; i < 1000; i++) {
+            myMap.put(i, objArray[i]);
+        }
+
+        // Test for method values() in subMaps
+        Collection<String> vals = myMap.subMap(UnsignedInteger.valueOf(200), UnsignedInteger.valueOf(400)).values();
+        assertEquals(200, vals.size(), "Returned collection of incorrect size");
+        for (int i = 200; i < 400; i++) {
+            assertTrue(vals.contains(objArray[i]), "Collection contains incorrect elements" + i);
+        }
+        assertEquals(200, vals.toArray().length);
+        vals.remove(objArray[300]);
+        assertTrue(!myMap.containsValue(objArray[300]),
+            "Removing from the values collection should remove from the original map");
+        assertTrue(vals.size() == 199, "Returned collection of incorrect size");
+        assertEquals(199, vals.toArray().length);
+
+        myMap.put(300, objArray[300]);
+        // Test for method values() in subMaps
+        vals = myMap.headMap(UnsignedInteger.valueOf(400)).values();
+        assertEquals(vals.size(), 400, "Returned collection of incorrect size");
+        for (int i = 0; i < 400; i++) {
+            assertTrue(vals.contains(objArray[i]), "Collection contains incorrect elements " + i);
+        }
+        assertEquals(400,vals.toArray().length);
+        vals.remove(objArray[300]);
+        assertTrue(!myMap.containsValue(objArray[300]), "Removing from the values collection should remove from the original map");
+        assertEquals(vals.size(), 399, "Returned collection of incorrect size");
+        assertEquals(399, vals.toArray().length);
+
+        myMap.put(300, objArray[300]);
+        // Test for method values() in subMaps
+        vals = myMap.tailMap(UnsignedInteger.valueOf(400)).values();
+        assertEquals(vals.size(), 600, "Returned collection of incorrect size");
+        for (int i = 400; i < 1000; i++) {
+            assertTrue(vals.contains(objArray[i]), "Collection contains incorrect elements " + i);
+        }
+        assertEquals(600, vals.toArray().length);
+        vals.remove(objArray[600]);
+        assertTrue(!myMap.containsValue(objArray[600]), "Removing from the values collection should remove from the original map");
+        assertEquals(vals.size(), 599, "Returned collection of incorrect size");
+        assertEquals(599,vals.toArray().length);
+
+        myMap.put(600, objArray[600]);
+        // Test for method values() in subMaps
+        vals = myMap.descendingMap().headMap(UnsignedInteger.valueOf(400)).values();
+        assertEquals(vals.size(), 599, "Returned collection of incorrect size");
+        for (int i = 401; i < 1000; i++) {
+            assertTrue(vals.contains(objArray[i]), "Collection contains incorrect elements " + i);
+        }
+        assertEquals(599,vals.toArray().length);
+        vals.remove(objArray[600]);
+        assertTrue(!myMap.containsValue(objArray[600]), "Removing from the values collection should remove from the original map");
+        assertEquals(vals.size(), 598, "Returned collection of incorrect size");
+        assertEquals(598,vals.toArray().length);
+
+        myMap.put(600, objArray[600]);
+        // Test for method values() in subMaps
+        vals = myMap.descendingMap().tailMap(UnsignedInteger.valueOf(400)).values();
+        assertEquals(vals.size(), 401, "Returned collection of incorrect size");
+        for (int i = 0; i <= 400; i++) {
+            assertTrue(vals.contains(objArray[i]), "Collection contains incorrect elements " + i);
+        }
+        assertEquals(401, vals.toArray().length);
+        vals.remove(objArray[300]);
+        assertTrue(!myMap.containsValue(objArray[300]), "Removing from the values collection should remove from the original map");
+        assertEquals(vals.size(), 400, "Returned collection of incorrect size");
+        assertEquals(400,vals.toArray().length);
     }
 
     protected void dumpRandomDataSet(int iterations, boolean bounded) {
