@@ -54,6 +54,8 @@ public abstract class ClientMessageSupport {
     private static final Encoder DEFAULT_ENCODER = CodecFactory.getDefaultEncoder();
     private static final Decoder DEFAULT_DECODER = CodecFactory.getDefaultDecoder();
 
+    private static final int DEFAULT_BUFFER_ALLOCATION = 256;
+
     private static final ThreadLocal<EncoderState> THREAD_LOCAL_ENCODER_STATE =
         ThreadLocal.withInitial(() -> DEFAULT_ENCODER.newEncoderState());
     private static final ThreadLocal<DecoderState> THREAD_LOCAL_DECODER_STATE =
@@ -105,7 +107,7 @@ public abstract class ClientMessageSupport {
     }
 
     public static ProtonBuffer encodeMessage(Encoder encoder, EncoderState encoderState, ProtonBufferAllocator allocator, AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
-        ProtonBuffer buffer = allocator.allocate();
+        ProtonBuffer buffer = allocator.allocate(DEFAULT_BUFFER_ALLOCATION);
 
         Header header = message.header();
         MessageAnnotations messageAnnotations = message.annotations();
