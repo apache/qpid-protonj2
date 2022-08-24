@@ -36,6 +36,7 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
 
     private int channel = CHANNEL_UNSET;
     private int delay = -1;
+    private boolean splitWrite = false;
 
     public AbstractPerformativeInjectAction(AMQPTestDriver driver) {
         this.driver = driver;
@@ -45,7 +46,7 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
     public final AbstractPerformativeInjectAction<P> now() {
         // Give actors a chance to prepare.
         beforeActionPerformed(driver);
-        driver.sendAMQPFrame(onChannel(), getPerformative(), getPayload());
+        driver.sendAMQPFrame(onChannel(), getPerformative(), getPayload(), splitWrite);
         return this;
     }
 
@@ -118,6 +119,15 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
 
     public AbstractPerformativeInjectAction<?> onChannel(UnsignedShort channel) {
         this.channel = channel.intValue();
+        return this;
+    }
+
+    public boolean splitWrite() {
+        return this.splitWrite;
+    }
+
+    public AbstractPerformativeInjectAction<?> splitWrite(boolean value) {
+        this.splitWrite = value;
         return this;
     }
 

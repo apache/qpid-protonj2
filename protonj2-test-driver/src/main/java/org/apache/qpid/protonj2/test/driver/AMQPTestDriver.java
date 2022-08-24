@@ -499,7 +499,23 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
      * @param payload
      *      The payload to include in the encoded frame.
      */
-    public void sendAMQPFrame(int channel, DescribedType performative, ByteBuf payload) {
+    public final void sendAMQPFrame(int channel, DescribedType performative, ByteBuf payload) {
+        sendAMQPFrame(channel, performative, payload, false);
+    }
+
+    /**
+     * Encodes the given frame data into a ProtonBuffer and injects it into the configured consumer.
+     *
+     * @param channel
+     *      The channel to use when writing the frame
+     * @param performative
+     *      The AMQP Performative to write
+     * @param payload
+     *      The payload to include in the encoded frame.
+     * @param splitWrite
+     * 		Should the data be written in multiple chunks
+     */
+    public void sendAMQPFrame(int channel, DescribedType performative, ByteBuf payload, boolean splitWrite) {
         LOG.trace("{} Sending performative: {}", driverName, performative);
 
         if (performative instanceof PerformativeDescribedType) {
@@ -514,7 +530,18 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         try {
             final ByteBuf buffer = frameEncoder.handleWrite(performative, channel, payload, null);
             LOG.trace("{} Writing out buffer {} to consumer: {}", driverName, buffer, frameConsumer);
-            frameConsumer.accept(buffer.nioBuffer());
+
+            if (splitWrite) {
+                final int bufferSplitPoint = buffer.readableBytes() / 2;
+
+                final ByteBuf front = buffer.slice(buffer.readerIndex(), bufferSplitPoint);
+                final ByteBuf rear = buffer.slice(bufferSplitPoint, buffer.readableBytes() - bufferSplitPoint);
+
+                frameConsumer.accept(front.nioBuffer());
+                frameConsumer.accept(rear.nioBuffer());
+            } else {
+                frameConsumer.accept(buffer.nioBuffer());
+            }
         } catch (Throwable t) {
             signalFailure(new AssertionError("Frame was not written due to error.", t));
         }

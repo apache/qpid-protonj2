@@ -128,13 +128,13 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
         // other driver resources being used on two different threads.
 
         @Override
-        public void sendAMQPFrame(int channel, DescribedType performative, ByteBuf payload) {
+        public void sendAMQPFrame(int channel, DescribedType performative, ByteBuf payload, boolean splitWrite) {
             EventLoop loop = client.eventLoop();
             if (loop.inEventLoop()) {
-                super.sendAMQPFrame(channel, performative, payload);
+                super.sendAMQPFrame(channel, performative, payload, splitWrite);
             } else {
                 loop.execute(() -> {
-                    super.sendAMQPFrame(channel, performative, payload);
+                    super.sendAMQPFrame(channel, performative, payload, splitWrite);
                 });
             }
         }

@@ -2765,4 +2765,49 @@ public class ReceiverTest extends ImperativeClientTestCase {
            peer.waitForScriptToComplete();
         }
     }
+
+    @Test
+    public void testReceiveTransferWhenRemoteSendsInSplitChunks() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World!"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withSettled(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue().splitWrite(true);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            Delivery delivery = receiver.receive(5, TimeUnit.SECONDS);
+            assertNotNull(delivery);
+
+            Message<?> message = delivery.message();
+            assertEquals("Hello World!", message.body());
+
+            receiver.closeAsync();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }
