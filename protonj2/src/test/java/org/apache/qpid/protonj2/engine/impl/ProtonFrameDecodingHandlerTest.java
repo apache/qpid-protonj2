@@ -323,6 +323,61 @@ public class ProtonFrameDecodingHandlerTest {
     }
 
     @Test
+    public void testDecodePipelinedHeaderAndOpenEncodedFrameSizeSplitAcrossTwoReads() throws Exception {
+        // Frame data for: Open
+        //   Open{ containerId='container', hostname='localhost', maxFrameSize=16384, channelMax=65535,
+        //         idleTimeOut=30000, outgoingLocales=null, incomingLocales=null, offeredCapabilities=null,
+        //         desiredCapabilities=null, properties=null}
+        final byte[] basicOpen1 = new byte[] {
+                'A', 'M', 'Q', 'P', 0, 1, 0, 0, 0 }; // HEADER + first frame byte
+        final byte[] basicOpen2 = new byte[] { 0 };
+        final byte[] basicOpen3 = new byte[] { 0, 49 };
+        final byte[] basicOpen4 = new byte[] {
+                2, 0, 0, 0, 0, 83, 16, -64, 36, 5, -95, 9, 99, 111,
+                110, 116, 97, 105, 110, 101, 114, -95, 9, 108, 111, 99, 97, 108,
+                104, 111, 115, 116, 112, 0, 0, 64, 0, 96, -1, -1, 112, 0, 0, 117, 48 };
+        ArgumentCaptor<IncomingAMQPEnvelope> argument = ArgumentCaptor.forClass(IncomingAMQPEnvelope.class);
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
+
+        final ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen1);
+        final ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen2);
+        final ProtonBuffer buffer3 = ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen3);
+        final ProtonBuffer buffer4 = ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen4);
+
+        handler.handleRead(context, buffer1);
+        handler.handleRead(context, buffer2);
+        handler.handleRead(context, buffer3);
+        handler.handleRead(context, buffer4);
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
+        Mockito.verify(context).fireRead(argument.capture());
+        Mockito.verifyNoMoreInteractions(context);
+
+        assertNotNull(argument.getValue());
+        assertTrue(argument.getValue().getBody() instanceof Open);
+
+        Open decoded = (Open) argument.getValue().getBody();
+
+        assertTrue(decoded.hasContainerId());
+        assertEquals("container", decoded.getContainerId());
+        assertTrue(decoded.hasHostname());
+        assertEquals("localhost", decoded.getHostname());
+        assertTrue(decoded.hasMaxFrameSize());
+        assertEquals(16384, decoded.getMaxFrameSize());
+        assertTrue(decoded.hasChannelMax());
+        assertTrue(decoded.hasIdleTimeout());
+        assertEquals(30000, decoded.getIdleTimeout());
+        assertFalse(decoded.hasOutgoingLocales());
+        assertFalse(decoded.hasIncomingLocales());
+        assertFalse(decoded.hasOfferedCapabilities());
+        assertFalse(decoded.hasDesiredCapabilities());
+        assertFalse(decoded.hasProperties());
+    }
+
+    @Test
     public void testDecodePipelinedHeaderAndOpenEncodedFrameSplitAcrossThreeReads() throws Exception {
         // Frame data for: Open
         //   Open{ containerId='container', hostname='localhost', maxFrameSize=16384, channelMax=65535,
