@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import org.apache.qpid.proton.codec.AMQPDefinedTypes;
 import org.apache.qpid.proton.codec.DecoderImpl;
 import org.apache.qpid.proton.codec.EncoderImpl;
+import org.apache.qpid.proton.codec.ReadableBuffer;
 
 /**
  * Generates test data that can be used to drive comparability tests
@@ -50,23 +51,44 @@ public class LegacyFrameDataGenerator {
         builder.append("    final byte[] ")
                .append(varName)
                .append(" = new byte[] {")
-               .append(generateFrameEncoding(protonType))
+               .append(generateFrameEncoding(protonType, null))
                .append("};");
 
         return builder.toString();
     }
 
-    public static String generateFrameEncoding(Object protonType) {
+    public static String generateUnitTestVariable(String varName, Object protonType, ReadableBuffer payload) {
         StringBuilder builder = new StringBuilder();
-        generateFrameEncodingFromProtonType(protonType, builder);
+
+        builder.append("    // ").append("Frame data for: ")
+               .append(protonType.getClass().getSimpleName()).append("\n");
+        builder.append("    // ").append("  ").append(protonType.toString()).append("\n");
+
+        if (payload != null) {
+            builder.append("    // ").append("  payload of size: ").append(payload.remaining()).append("\n");
+        }
+
+        // Create variable for test
+        builder.append("    final byte[] ")
+               .append(varName)
+               .append(" = new byte[] {")
+               .append(generateFrameEncoding(protonType, payload))
+               .append("};");
+
         return builder.toString();
     }
 
-    private static void generateFrameEncodingFromProtonType(Object instance, StringBuilder builder) {
+    public static String generateFrameEncoding(Object protonType, ReadableBuffer payload) {
+        StringBuilder builder = new StringBuilder();
+        generateFrameEncodingFromProtonType(protonType, builder, payload);
+        return builder.toString();
+    }
+
+    private static void generateFrameEncodingFromProtonType(Object instance, StringBuilder builder, ReadableBuffer payload) {
         FrameWriter writer = new FrameWriter(encoder, DEFAULT_MAX_FRAME_SIZE, AMQP_FRAME);
         ByteBuffer buffer = ByteBuffer.allocate(DEFAULT_MAX_FRAME_SIZE);
 
-        writer.writeFrame(0, instance, null, null);
+        writer.writeFrame(0, instance, payload, null);
         int frameSize = writer.readBytes(buffer);
 
         for (int i = 0; i < frameSize; i++) {

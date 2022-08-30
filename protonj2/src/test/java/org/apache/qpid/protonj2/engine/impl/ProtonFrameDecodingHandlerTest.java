@@ -18,11 +18,13 @@ package org.apache.qpid.protonj2.engine.impl;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.times;
 
 import java.util.List;
 
@@ -39,6 +41,7 @@ import org.apache.qpid.protonj2.engine.util.FrameRecordingTransportHandler;
 import org.apache.qpid.protonj2.engine.util.FrameWriteSinkTransportHandler;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.Open;
+import org.apache.qpid.protonj2.types.transport.Transfer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -603,6 +606,228 @@ public class ProtonFrameDecodingHandlerTest {
         }
 
         Mockito.verifyNoMoreInteractions(context);
+    }
+
+    @Test
+    public void testDecodeTransferFrameWithAttachedPayload() {
+        // Frame data for: Transfer
+        //   Transfer{handle=2, deliveryId=1, deliveryTag=\x00\x01, messageFormat=null, settled=true, more=false, rcvSettleMode=null, state=null, resume=false, aborted=false, batchable=false}
+        //   payload of size: 169
+        final byte[] completedTransfer = new byte[] {
+            0, 0, 0, -63, 2, 0, 0, 0, 0, 83, 20, -64, 11, 5, 82, 2, 82, 1, -96, 2, 0, 1, 64, 65, 0, 83, 115,
+            -48, 0, 0, 0, 28, 0, 0, 0, 3, -104, -107, -75, 19, 123, 103, 50, 77, 43, -73, 93, 29, 105, 64,
+            -84, 45, 110, 64, -95, 4, 116, 101, 115, 116, 0, 83, 116, -63, 23, 2, -95, 9, 116, 105, 109, 101,
+            115, 116, 97, 109, 112, -95, 9, 49, 50, 51, 52, 53, 54, 55, 56, 57, 0, 83, 117, -96, 100, 65, 65,
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65};
+
+        ArgumentCaptor<IncomingAMQPEnvelope> argument = ArgumentCaptor.forClass(IncomingAMQPEnvelope.class);
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
+
+        handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer));
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
+        Mockito.verify(context).fireRead(argument.capture());
+        Mockito.verifyNoMoreInteractions(context);
+
+        assertNotNull(argument.getValue());
+        assertTrue(argument.getValue().getBody() instanceof Transfer);
+        assertNotNull(argument.getValue().getPayload());
+        assertTrue(argument.getValue().getPayload().isReadable());
+        assertEquals(169, argument.getValue().getPayload().getReadableBytes());
+
+        Transfer decoded = (Transfer) argument.getValue().getBody();
+
+        assertEquals(2, decoded.getHandle());
+        assertEquals(1, decoded.getDeliveryId());
+        assertArrayEquals(new byte[] { 0, 1 }, decoded.getDeliveryTag().tagBytes());
+    }
+
+    @Test
+    public void testDecodeTransferFrameWithAttachedPayloadSplitAcrossBuffers() {
+        // Frame data for: Transfer
+        //   Transfer{handle=2, deliveryId=1, deliveryTag=\x00\x01, messageFormat=null, settled=true, more=false, rcvSettleMode=null, state=null, resume=false, aborted=false, batchable=false}
+        //   payload of size: 169
+        final byte[] completedTransfer1 = new byte[] {
+            0, 0, 0, -63, 2, 0, 0, 0, 0, 83, 20, -64, 11, 5, 82, 2, 82, 1, -96, 2, 0, 1, 64, 65, 0, 83, 115,
+            -48, 0, 0, 0, 28, 0, 0, 0, 3, -104, -107, -75, 19, 123, 103, 50, 77, 43, -73, 93, 29, 105, 64};
+        final byte[] completedTransfer2 = new byte[] {
+            -84, 45, 110, 64, -95, 4, 116, 101, 115, 116, 0, 83, 116, -63, 23, 2, -95, 9, 116, 105, 109, 101,
+            115, 116, 97, 109, 112, -95, 9, 49, 50, 51, 52, 53, 54, 55, 56, 57, 0, 83, 117, -96, 100, 65, 65};
+        final byte[] completedTransfer3 = new byte[] {
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65};
+
+        ArgumentCaptor<IncomingAMQPEnvelope> argument = ArgumentCaptor.forClass(IncomingAMQPEnvelope.class);
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
+
+        handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+
+        final ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer1);
+        final ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer2);
+        final ProtonBuffer buffer3 = ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer3);
+
+        handler.handleRead(context, buffer1);
+        handler.handleRead(context, buffer2);
+        handler.handleRead(context, buffer3);
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
+        Mockito.verify(context).fireRead(argument.capture());
+        Mockito.verifyNoMoreInteractions(context);
+
+        assertNotNull(argument.getValue());
+        assertTrue(argument.getValue().getBody() instanceof Transfer);
+        assertNotNull(argument.getValue().getPayload());
+        assertTrue(argument.getValue().getPayload().isReadable());
+        assertEquals(169, argument.getValue().getPayload().getReadableBytes());
+
+        Transfer decoded = (Transfer) argument.getValue().getBody();
+
+        assertEquals(2, decoded.getHandle());
+        assertEquals(1, decoded.getDeliveryId());
+        assertArrayEquals(new byte[] { 0, 1 }, decoded.getDeliveryTag().tagBytes());
+    }
+
+    @Test
+    public void testDecodeTransferFrameWithAttachedPayloadSplitAcrossBuffersAsContinuationOfPreviousProcessedRead() {
+        // Frame data for: Transfer
+        //   Transfer{handle=2, deliveryId=1, deliveryTag=\x00\x01, messageFormat=null, settled=true, more=false, rcvSettleMode=null, state=null, resume=false, aborted=false, batchable=false}
+        //   payload of size: 169
+        final byte[] completedTransfer1 = new byte[] {
+            0, 0, 0, -63, 2, 0, 0, 0, 0, 83, 20, -64, 11, 5, 82, 2, 82, 1, -96, 2, 0, 1, 64, 65, 0, 83, 115,
+            -48, 0, 0, 0, 28, 0, 0, 0, 3, -104, -107, -75, 19, 123, 103, 50, 77, 43, -73, 93, 29, 105, 64};
+        final byte[] completedTransfer2 = new byte[] {
+            -84, 45, 110, 64, -95, 4, 116, 101, 115, 116, 0, 83, 116, -63, 23, 2, -95, 9, 116, 105, 109, 101,
+            115, 116, 97, 109, 112, -95, 9, 49, 50, 51, 52, 53, 54, 55, 56, 57, 0, 83, 117, -96, 100, 65, 65};
+        final byte[] completedTransfer3 = new byte[] {
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65};
+
+        ArgumentCaptor<IncomingAMQPEnvelope> argument = ArgumentCaptor.forClass(IncomingAMQPEnvelope.class);
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
+
+        handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+
+        final ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.allocate(completedTransfer1.length + 100);
+        buffer1.setIndex(100, 100);
+        buffer1.writeBytes(completedTransfer1);
+
+        final ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer2);
+        final ProtonBuffer buffer3 = ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer3);
+
+        handler.handleRead(context, buffer1);
+        handler.handleRead(context, buffer2);
+        handler.handleRead(context, buffer3);
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
+        Mockito.verify(context).fireRead(argument.capture());
+        Mockito.verifyNoMoreInteractions(context);
+
+        assertNotNull(argument.getValue());
+        assertTrue(argument.getValue().getBody() instanceof Transfer);
+        assertNotNull(argument.getValue().getPayload());
+        assertTrue(argument.getValue().getPayload().isReadable());
+        assertEquals(169, argument.getValue().getPayload().getReadableBytes());
+
+        Transfer decoded = (Transfer) argument.getValue().getBody();
+
+        assertEquals(2, decoded.getHandle());
+        assertEquals(1, decoded.getDeliveryId());
+        assertArrayEquals(new byte[] { 0, 1 }, decoded.getDeliveryTag().tagBytes());
+    }
+
+    @Test
+    public void testDecodeTransferFrameWithAttachedPayloadSplitAcrossBuffersAsContinuationOfPreviousProcessedReadAndAnotherFrameFollowing() {
+        // Frame data for: Transfer
+        //   Transfer{handle=2, deliveryId=1, deliveryTag=\x00\x01, messageFormat=null, settled=true, more=false, rcvSettleMode=null, state=null, resume=false, aborted=false, batchable=false}
+        //   payload of size: 169
+        final byte[] completedTransfer1 = new byte[] {
+            0, 0, 0, -63, 2, 0, 0, 0, 0, 83, 20, -64, 11, 5, 82, 2, 82, 1, -96, 2, 0, 1, 64, 65, 0, 83, 115,
+            -48, 0, 0, 0, 28, 0, 0, 0, 3, -104, -107, -75, 19, 123, 103, 50, 77, 43, -73, 93, 29, 105, 64};
+        final byte[] completedTransfer2 = new byte[] {
+            -84, 45, 110, 64, -95, 4, 116, 101, 115, 116, 0, 83, 116, -63, 23, 2, -95, 9, 116, 105, 109, 101,
+            115, 116, 97, 109, 112, -95, 9, 49, 50, 51, 52, 53, 54, 55, 56, 57, 0, 83, 117, -96, 100, 65, 65};
+        final byte[] completedTransfer3 = new byte[] {
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+            65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65};
+        // Frame data for: Open
+        //   Open{ containerId="", hostname='null', maxFrameSize=4294967295, channelMax=65535,
+        //         idleTimeOut=null, outgoingLocales=null, incomingLocales=null, offeredCapabilities=null,
+        //         desiredCapabilities=null, properties=null}
+        final byte[] emptyOpen = new byte[] {0, 0, 0, 16, 2, 0, 0, 0, 0, 83, 16, -64, 3, 1, -95, 0};
+
+        ArgumentCaptor<IncomingAMQPEnvelope> argument = ArgumentCaptor.forClass(IncomingAMQPEnvelope.class);
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
+
+        handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+
+        final ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.allocate(completedTransfer1.length + 100);
+        buffer1.setIndex(100, 100);
+        buffer1.writeBytes(completedTransfer1);
+
+        final ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer2);
+        final ProtonBuffer buffer3 = ProtonByteBufferAllocator.DEFAULT.allocate(completedTransfer3.length + emptyOpen.length);
+        buffer3.writeBytes(completedTransfer3);
+        buffer3.writeBytes(emptyOpen);
+
+        handler.handleRead(context, buffer1);
+        handler.handleRead(context, buffer2);
+        handler.handleRead(context, buffer3);
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
+        Mockito.verify(context, times(2)).fireRead(argument.capture());
+        Mockito.verifyNoMoreInteractions(context);
+
+        List<IncomingAMQPEnvelope> arguments = argument.getAllValues();
+
+        assertNotNull(arguments.get(0));
+        assertTrue(arguments.get(0).getBody() instanceof Transfer);
+        assertNotNull(arguments.get(0).getPayload());
+        assertTrue(arguments.get(0).getPayload().isReadable());
+        assertEquals(169, arguments.get(0).getPayload().getReadableBytes());
+
+        Transfer transfer = (Transfer) arguments.get(0).getBody();
+
+        assertEquals(2, transfer.getHandle());
+        assertEquals(1, transfer.getDeliveryId());
+        assertArrayEquals(new byte[] { 0, 1 }, transfer.getDeliveryTag().tagBytes());
+
+        assertNotNull(arguments.get(1));
+        assertTrue(arguments.get(1).getBody() instanceof Open);
+
+        Open open = (Open) arguments.get(1).getBody();
+
+        assertTrue(open.hasContainerId());  // Defaults to empty string from proton-j
+        assertFalse(open.hasHostname());
+        assertFalse(open.hasMaxFrameSize());
+        assertFalse(open.hasChannelMax());
+        assertFalse(open.hasIdleTimeout());
+        assertFalse(open.hasOutgoingLocales());
+        assertFalse(open.hasIncomingLocales());
+        assertFalse(open.hasOfferedCapabilities());
+        assertFalse(open.hasDesiredCapabilities());
+        assertFalse(open.hasProperties());
     }
 
     private ProtonFrameDecodingHandler createFrameDecoder() {
