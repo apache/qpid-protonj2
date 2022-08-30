@@ -36,6 +36,9 @@
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
 
+    <minimalMavenBuildVersion>3.5.0</minimalMavenBuildVersion>
+    <minimalJavaBuildVersion>11</minimalJavaBuildVersion>
+
     <!-- Test dependency versions -->
     <junit.jupiter.version>5.9.0</junit.jupiter.version>
     <junit.vintage.version>5.9.0</junit.vintage.version>
@@ -49,8 +52,7 @@
 
     <!-- Plugin versions -->
     <maven.bundle.plugin.version>5.1.1</maven.bundle.plugin.version>
-    <jacoco.plugin.version>0.8.7</jacoco.plugin.version>
-    <maven.enforcer.plugin.version>3.0.0-M3</maven.enforcer.plugin.version>
+    <jacoco.plugin.version>0.8.8</jacoco.plugin.version>
 
     <!-- Test properties -->
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
@@ -304,26 +306,6 @@
               </pluginExecutions>
             </lifecycleMappingMetadata>
           </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-enforcer-plugin</artifactId>
-          <version>${maven.enforcer.plugin.version}</version>
-          <executions>
-            <execution>
-              <id>enforce-java-version</id>
-              <goals>
-                <goal>enforce</goal>
-              </goals>
-              <configuration>
-                <rules>
-                  <requireJavaVersion>
-                    <version>[11,)</version>
-                  </requireJavaVersion>
-                </rules>
-              </configuration>
-            </execution>
-          </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
