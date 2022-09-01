@@ -62,6 +62,8 @@ public class ProtonSessionOutgoingWindow {
     private long remoteIncomingWindow;
     private int remoteNextIncomingId = nextOutgoingId;
 
+    private Runnable outgoingFrameWriteComplete = this::handleOutgoingFrameWriteComplete;
+
     private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
     public ProtonSessionOutgoingWindow(ProtonSession session) {
@@ -270,8 +272,8 @@ public class ProtonSessionOutgoingWindow {
     private final Disposition cachedDisposition = new Disposition();
     private final Transfer cachedTransfer = new Transfer();
 
-    private void handlePayloadToLargeRequiresSplitFrames(Performative performative) {
-        cachedTransfer.setMore(true);
+    private static void handlePayloadToLargeRequiresSplitFrames(Performative performative) {
+        ((Transfer) performative).setMore(true);
     }
 
     boolean processSend(ProtonSender sender, ProtonOutgoingDelivery delivery, ProtonBuffer payload, boolean complete) {
@@ -311,8 +313,8 @@ public class ProtonSessionOutgoingWindow {
 
                 OutgoingAMQPEnvelope frame = engine.wrap(cachedTransfer, localChannel, payload);
 
-                frame.setPayloadToLargeHandler(this::handlePayloadToLargeRequiresSplitFrames);
-                frame.setFrameWriteCompletionHandler(this::handleOutgoingFrameWriteComplete);
+                frame.setPayloadToLargeHandler(ProtonSessionOutgoingWindow::handlePayloadToLargeRequiresSplitFrames);
+                frame.setFrameWriteCompletionHandler(outgoingFrameWriteComplete);
 
                 engine.fireWrite(frame);
 

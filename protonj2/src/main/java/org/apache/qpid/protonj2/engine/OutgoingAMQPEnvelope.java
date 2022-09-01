@@ -33,7 +33,7 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
 
     private AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> pool;
 
-    private Consumer<Performative> payloadToLargeHandler = this::defaultPayloadToLargeHandler;
+    private Consumer<Performative> payloadToLargeHandler = OutgoingAMQPEnvelope::defaultPayloadToLargeHandler;
     private Runnable frameWriteCompleteHandler;
 
     OutgoingAMQPEnvelope() {
@@ -60,7 +60,7 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
         if (payloadToLargeHandler != null) {
             this.payloadToLargeHandler = payloadToLargeHandler;
         } else {
-            this.payloadToLargeHandler = this::defaultPayloadToLargeHandler;
+            this.payloadToLargeHandler = OutgoingAMQPEnvelope::defaultPayloadToLargeHandler;
         }
 
         return this;
@@ -118,7 +118,7 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
     public final void release() {
         initialize(null, -1, null);
 
-        payloadToLargeHandler = this::defaultPayloadToLargeHandler;
+        payloadToLargeHandler = OutgoingAMQPEnvelope::defaultPayloadToLargeHandler;
         frameWriteCompleteHandler = null;
 
         if (pool != null) {
@@ -140,7 +140,7 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
         getBody().invoke(handler, getPayload(), getChannel(), context);
     }
 
-    private void defaultPayloadToLargeHandler(Performative performative) {
+    private static void defaultPayloadToLargeHandler(Performative performative) {
         throw new IllegalArgumentException(String.format(
             "Cannot transmit performative %s with payload larger than max frame size limit", performative));
     }
