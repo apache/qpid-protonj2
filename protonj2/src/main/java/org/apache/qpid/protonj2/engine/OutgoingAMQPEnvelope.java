@@ -26,9 +26,9 @@ import org.apache.qpid.protonj2.types.transport.Performative.PerformativeHandler
  */
 public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
 
-	/**
-	 * The frame type value to used when encoding the outgoing AMQP frame.
-	 */
+    /**
+     * The frame type value to used when encoding the outgoing AMQP frame.
+     */
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
 
     private AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> pool;
@@ -115,7 +115,7 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
      * contents of the Frame are invalid and cannot be used again inside the
      * same context.
      */
-    public void release() {
+    public final void release() {
         initialize(null, -1, null);
 
         payloadToLargeHandler = this::defaultPayloadToLargeHandler;

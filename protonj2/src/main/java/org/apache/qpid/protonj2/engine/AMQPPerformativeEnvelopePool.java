@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.engine;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.util.RingQueue;
@@ -29,15 +30,15 @@ import org.apache.qpid.protonj2.types.transport.Performative;
  */
 public class AMQPPerformativeEnvelopePool<E extends PerformativeEnvelope<Performative>> {
 
-	/**
-	 * The default maximum pool size to use if not otherwise configured.
-	 */
+    /**
+     * The default maximum pool size to use if not otherwise configured.
+     */
     public static final int DEFAULT_MAX_POOL_SIZE = 10;
 
     private int maxPoolSize = DEFAULT_MAX_POOL_SIZE;
 
     private final RingQueue<E> pool;
-    private final Function<AMQPPerformativeEnvelopePool<E>, E> envelopeBuilder;
+    private final Supplier<E> envelopeSupplier;
 
     /**
      * Create a new envelope pool using the default pool size.
@@ -60,7 +61,7 @@ public class AMQPPerformativeEnvelopePool<E extends PerformativeEnvelope<Perform
     public AMQPPerformativeEnvelopePool(Function<AMQPPerformativeEnvelopePool<E>, E> envelopeBuilder, int maxPoolSize) {
         this.pool = new RingQueue<>(getMaxPoolSize());
         this.maxPoolSize = maxPoolSize;
-        this.envelopeBuilder = envelopeBuilder;
+        this.envelopeSupplier = () -> envelopeBuilder.apply(this);
     }
 
     /**
@@ -85,15 +86,11 @@ public class AMQPPerformativeEnvelopePool<E extends PerformativeEnvelope<Perform
      */
     @SuppressWarnings("unchecked")
     public E take(Performative body, int channel, ProtonBuffer payload) {
-        return (E) pool.poll(this::supplyPooledResource).initialize(body, channel, payload);
+        return (E) pool.poll(envelopeSupplier).initialize(body, channel, payload);
     }
 
     void release(E pooledEnvelope) {
         pool.offer(pooledEnvelope);
-    }
-
-    private E supplyPooledResource() {
-        return envelopeBuilder.apply(this);
     }
 
     /**

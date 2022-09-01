@@ -24,9 +24,9 @@ import org.apache.qpid.protonj2.types.transport.Performative.PerformativeHandler
  */
 public class IncomingAMQPEnvelope extends PerformativeEnvelope<Performative> {
 
-	/**
-	 * The AMQP Frame type marker value used when processing incoming frames.
-	 */
+    /**
+     * The AMQP Frame type marker value used when processing incoming frames.
+     */
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
 
     private AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> pool;
@@ -47,7 +47,7 @@ public class IncomingAMQPEnvelope extends PerformativeEnvelope<Performative> {
      * contents of the Frame are invalid and cannot be used again inside the
      * same context.
      */
-    public void release() {
+    public final void release() {
         initialize(null, -1, null);
 
         if (pool != null) {
