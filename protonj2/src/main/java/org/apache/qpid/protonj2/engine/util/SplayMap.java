@@ -55,7 +55,11 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     protected static final Comparator<UnsignedInteger> COMPARATOR = new UnsignedComparator();
     protected static final Comparator<UnsignedInteger> REVERSE_COMPARATOR = Collections.reverseOrder(COMPARATOR);
 
-    protected final RingQueue<SplayedEntry<E>> entryPool = new RingQueue<>(64);
+    protected final int DEFAULT_ENTRY_POOL_SIZE = 64;
+
+    protected final RingQueue<SplayedEntry<E>> entryPool = new RingQueue<>(DEFAULT_ENTRY_POOL_SIZE);
+
+    protected int entriesInExistence = 0;
 
     /**
      * Root node which can be null if the tree has no elements (size == 0)
@@ -154,14 +158,14 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         E oldValue = null;
 
         if (root == null) {
-            root = entryPool.poll(SplayMap::createEntry).initialize(key, value);
+            root = entryPool.poll(() -> createEntry()).initialize(key, value);
         } else {
             root = splay(root, key);
             if (root.key == key) {
                 oldValue = root.value;
                 root.value = value;
             } else {
-                final SplayedEntry<E> node = entryPool.poll(SplayMap::createEntry).initialize(key, value);
+                final SplayedEntry<E> node = entryPool.poll(() -> createEntry()).initialize(key, value);
 
                 if (compare(key, root.key) < 0) {
                     shiftRootRightOf(node);
@@ -198,13 +202,13 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      */
     public E putIfAbsent(int key, E value) {
         if (root == null) {
-            root = entryPool.poll(SplayMap::createEntry).initialize(key, value);
+            root = entryPool.poll(() -> createEntry()).initialize(key, value);
         } else {
             root = splay(root, key);
             if (root.key == key) {
                 return root.value;
             } else {
-                final SplayedEntry<E> node = entryPool.poll(SplayMap::createEntry).initialize(key, value);
+                final SplayedEntry<E> node = entryPool.poll(() -> createEntry()).initialize(key, value);
 
                 if (compare(key, root.key) < 0) {
                     shiftRootRightOf(node);
@@ -857,7 +861,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return Integer.compareUnsigned(lhs, rhs);
     }
 
-    private static <E> SplayedEntry<E> createEntry() {
+    private SplayedEntry<E> createEntry() {
         return new SplayedEntry<>();
     }
 
@@ -1307,6 +1311,8 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     /**
      * An immutable {@link Map} entry that can be used when exposing raw entry mappings
      * via the {@link Map} API.
+     *
+     * @param <E> Type of the value portion of this immutable entry.
      */
     public static class ImmutableSplayMapEntry<E> implements Map.Entry<UnsignedInteger, E> {
 

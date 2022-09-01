@@ -2810,4 +2810,80 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    public void testSyncReceiverAutoSettlingOnEachIncomingDelivery() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World!"));
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond().withNextOutgoingId(0);
+            peer.expectAttach().respond();
+            peer.expectFlow().withLinkCredit(3);
+            peer.remoteTransfer().withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] {1})
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.expectDisposition().withFirst(0)
+                                    .withSettled(true)
+                                    .withState().accepted();
+            peer.remoteTransfer().withDeliveryId(1)
+                                 .withDeliveryTag(new byte[] {2})
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.expectDisposition().withFirst(1)
+                                    .withSettled(true)
+                                    .withState().accepted();
+            peer.remoteTransfer().withDeliveryId(2)
+                                 .withDeliveryTag(new byte[] {3})
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.expectDisposition().withFirst(2)
+                                    .withSettled(true)
+                                    .withState().accepted();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            ReceiverOptions options = new ReceiverOptions();
+            options.creditWindow(0);
+            options.autoSettle(true);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue", options);
+
+            receiver.addCredit(3);
+
+            Delivery delivery1 = receiver.receive();
+            Wait.assertTrue(() -> delivery1.settled());
+            Delivery delivery2 = receiver.receive();
+            Wait.assertTrue(() -> delivery2.settled());
+            Delivery delivery3 = receiver.receive();
+            Wait.assertTrue(() -> delivery3.settled());
+
+            assertNotNull(delivery1);
+            assertNotNull(delivery2);
+            assertNotNull(delivery3);
+
+            peer.waitForScriptToComplete();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            receiver.close();
+            session.close();
+            connection.close();
+
+            // Check post conditions and done.
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

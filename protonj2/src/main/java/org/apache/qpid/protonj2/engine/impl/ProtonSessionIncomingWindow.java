@@ -141,7 +141,7 @@ public class ProtonSessionIncomingWindow {
         nextIncomingId++;
 
         ProtonIncomingDelivery delivery = link.remoteTransfer(transfer, payload);
-        if (!delivery.isRemotelySettled() && delivery.isFirstTransfer()) {
+        if (!delivery.isSettled() && !delivery.isRemotelySettled() && delivery.isFirstTransfer()) {
             unsettled.put((int) delivery.getDeliveryId(), delivery);
         }
 

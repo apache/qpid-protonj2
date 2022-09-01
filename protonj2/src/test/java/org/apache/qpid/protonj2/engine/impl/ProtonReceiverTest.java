@@ -4592,4 +4592,66 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         assertNull(failure);
     }
+
+    @Test
+    public void testReceiveDeliveriesAndSendDispositionUponReceipt() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        final byte[] payload = new byte[] { 1 };
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond().withNextOutgoingId(0);
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(3);
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+        peer.expectDisposition().withFirst(0)
+                                .withSettled(true)
+                                .withState().accepted();
+        peer.remoteTransfer().withDeliveryId(1)
+                             .withDeliveryTag(new byte[] {2})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+        peer.expectDisposition().withFirst(1)
+                                .withSettled(true)
+                                .withState().accepted();
+        peer.remoteTransfer().withDeliveryId(2)
+                             .withDeliveryTag(new byte[] {3})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).queue();
+        peer.expectDisposition().withFirst(2)
+                                .withSettled(true)
+                                .withState().accepted();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("receiver");
+        receiver.deliveryReadHandler((delivery) -> {
+            delivery.disposition(Accepted.getInstance(), true);
+        });
+
+        receiver.addCredit(3);
+        receiver.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        receiver.close();
+        session.close();
+        connection.close();
+
+        // Check post conditions and done.
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
 }
