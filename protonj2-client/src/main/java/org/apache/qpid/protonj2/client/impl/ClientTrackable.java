@@ -36,8 +36,7 @@ public abstract class ClientTrackable<SenderType extends ClientSenderLinkType<?>
     protected final SenderType sender;
     protected final OutgoingDelivery delivery;
 
-    private final ClientFuture<TrackerType> remoteSettlementFuture;
-
+    private ClientFuture<TrackerType> remoteSettlementFuture;
     private volatile boolean remotelySettled;
     private volatile DeliveryState remoteDeliveryState;
 
@@ -53,7 +52,6 @@ public abstract class ClientTrackable<SenderType extends ClientSenderLinkType<?>
         this.sender = sender;
         this.delivery = delivery;
         this.delivery.deliveryStateUpdatedHandler(this::processDeliveryUpdated);
-        this.remoteSettlementFuture = sender.session().getFutureFactory().createFuture();
     }
 
     protected abstract TrackerType self();
@@ -79,7 +77,12 @@ public abstract class ClientTrackable<SenderType extends ClientSenderLinkType<?>
             sender.disposition(delivery, ClientDeliveryState.asProtonType(state), settle);
         } finally {
             if (settle) {
-                remoteSettlementFuture.complete(self());
+                synchronized (this) {
+                    if (remoteSettlementFuture == null) {
+                        remoteSettlementFuture = sender.session.connection().getFutureFactory().createFuture();
+                    }
+                    remoteSettlementFuture.complete(self());
+                }
             }
         }
 
@@ -90,7 +93,12 @@ public abstract class ClientTrackable<SenderType extends ClientSenderLinkType<?>
         try {
             sender.disposition(delivery, null, true);
         } finally {
-            remoteSettlementFuture.complete(self());
+            synchronized (this) {
+                if (remoteSettlementFuture == null) {
+                    remoteSettlementFuture = sender.session.connection().getFutureFactory().createFuture();
+                }
+                remoteSettlementFuture.complete(self());
+            }
         }
 
         return self();
@@ -101,7 +109,13 @@ public abstract class ClientTrackable<SenderType extends ClientSenderLinkType<?>
     }
 
     public ClientFuture<TrackerType> settlementFuture() {
-        if (delivery.isSettled()) {
+        synchronized (this) {
+            if (remoteSettlementFuture == null) {
+                remoteSettlementFuture = sender.session.connection().getFutureFactory().createFuture();
+            }
+        }
+
+        if (delivery.isSettled() || delivery.isRemotelySettled()) {
             remoteSettlementFuture.complete(self());
         }
 
@@ -189,11 +203,15 @@ public abstract class ClientTrackable<SenderType extends ClientSenderLinkType<?>
         remoteDeliveryState = ClientDeliveryState.fromProtonType(delivery.getRemoteState());
 
         if (delivery.isRemotelySettled()) {
-            remoteSettlementFuture.complete(self());
-        }
+            if (sender.options.autoSettle()) {
+                delivery.settle();
+            }
 
-        if (sender.options.autoSettle() && delivery.isRemotelySettled()) {
-            delivery.settle();
+            synchronized (this) {
+                if (remoteSettlementFuture != null) {
+                    remoteSettlementFuture.complete(self());
+                }
+            }
         }
     }
 }
