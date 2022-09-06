@@ -66,11 +66,6 @@ public class ProtonUuidTagGenerator extends ProtonDeliveryTagGenerator {
         }
 
         @Override
-        public void release() {
-            // Nothing to do for this tag implementation.
-        }
-
-        @Override
         public DeliveryTag copy() {
             return new ProtonUuidDeliveryTag(tagValue);
         }

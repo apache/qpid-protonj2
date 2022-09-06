@@ -62,6 +62,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.test.Wait;
+import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.ApplicationPropertiesMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.DeliveryAnnotationsMatcher;
@@ -74,6 +75,7 @@ import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAmqpValueMatch
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedCompositingDataSectionMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedDataMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedPartialDataSectionMatcher;
+import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Footer;
@@ -2782,6 +2784,112 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             assertTrue(message.tracker().settlementFuture().get().settled());
 
             sender.closeAsync().get(10, TimeUnit.SECONDS);
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    private static DeliveryTagGenerator customTagGenerator() {
+        return new DeliveryTagGenerator() {
+
+            private int count = 1;
+
+            @Override
+            public DeliveryTag nextTag() {
+                switch (count++) {
+                    case 1:
+                        return new DeliveryTag.ProtonDeliveryTag(new byte[] { 1, 1, 1 });
+                    case 2:
+                        return new DeliveryTag.ProtonDeliveryTag(new byte[] { 2, 2, 2 });
+                    case 3:
+                        return new DeliveryTag.ProtonDeliveryTag(new byte[] { 3, 3, 3 });
+                    default:
+                        throw new UnsupportedOperationException("Only supports creating three tags");
+                }
+            }
+        };
+    }
+
+    @Test
+    public void testSendeUsesCustomDeliveryTagGeneratorConfiguration() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond(); // Hidden session for stream sender
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            StreamSenderOptions options = new StreamSenderOptions().deliveryMode(DeliveryMode.AT_LEAST_ONCE)
+                                                                   .autoSettle(false)
+                                                                   .deliveryTagGeneratorSupplier(StreamSenderTest::customTagGenerator);
+            StreamSender sender = connection.openStreamSender("test-tags", options).openFuture().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withNonNullPayload()
+                                 .withDeliveryTag(new byte[] {1, 1, 1}).respond().withSettled(true).withState().accepted();
+            peer.expectTransfer().withNonNullPayload()
+                                 .withDeliveryTag(new byte[] {2, 2, 2}).respond().withSettled(true).withState().accepted();
+            peer.expectTransfer().withNonNullPayload()
+                                 .withDeliveryTag(new byte[] {3, 3, 3}).respond().withSettled(true).withState().accepted();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond(); // From hidden stream sender session
+            peer.expectClose().respond();
+
+            final Message<String> message = Message.create("Hello World");
+            final StreamTracker tracker1 = sender.send(message);
+            final StreamTracker tracker2 = sender.send(message);
+            final StreamTracker tracker3 = sender.send(message);
+
+            assertNotNull(tracker1);
+            assertNotNull(tracker1.settlementFuture().get().settled());
+            assertNotNull(tracker2);
+            assertNotNull(tracker2.settlementFuture().get().settled());
+            assertNotNull(tracker3);
+            assertNotNull(tracker3.settlementFuture().get().settled());
+
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCannotCreateSenderWhenTagGeneratorReturnsNull() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond(); // Hidden session for stream sender
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            StreamSenderOptions options = new StreamSenderOptions().deliveryMode(DeliveryMode.AT_LEAST_ONCE)
+                                                                   .autoSettle(false)
+                                                                   .deliveryTagGeneratorSupplier(() -> null);
+            try {
+                connection.openStreamSender("test-tags", options).openFuture().get();
+                fail("Should not create a sender if the tag generator is not supplied");
+            } catch (ClientException cliEx) {
+                // Expected
+            }
 
             connection.closeAsync().get(10, TimeUnit.SECONDS);
 

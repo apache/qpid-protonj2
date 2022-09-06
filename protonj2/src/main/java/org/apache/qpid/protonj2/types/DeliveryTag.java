@@ -58,10 +58,11 @@ public interface DeliveryTag {
     ProtonBuffer tagBuffer();
 
     /**
-     * Optional method used by tag implementations that provide pooling of tags.  Implementations can
-     * do nothing here if no release mechanics are needed.
+     * Optional method used by tag implementations that provide pooling of tags.
      */
-    void release();
+    default void release() {
+        // Default is no action, a subclass can add an action if needed.
+    }
 
     /**
      * Create a copy of this delivery tag, the copy should account for any underlying pooling of tags that
@@ -136,11 +137,6 @@ public interface DeliveryTag {
         @Override
         public DeliveryTag copy() {
             return new ProtonDeliveryTag(Arrays.copyOf(tagBytes, tagBytes.length));
-        }
-
-        @Override
-        public void release() {
-            // Nothing to do for this basic implementation.
         }
 
         @Override

@@ -17,8 +17,10 @@
 package org.apache.qpid.protonj2.client;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
+import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 
 /**
  * Options class that controls various aspects of a {@link StreamSenderMessage} instance and how
@@ -36,6 +38,8 @@ public class StreamSenderOptions extends LinkOptions<StreamSenderOptions> implem
     private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
 
     private int pendingWritesBufferSize = DEFAULT_PENDING_WRITES_BUFFER_SIZE;
+
+    private Supplier<DeliveryTagGenerator> tagGeneratorSupplier;
 
     /**
      * Defines the default minimum size that the context write buffer will allocate
@@ -157,7 +161,7 @@ public class StreamSenderOptions extends LinkOptions<StreamSenderOptions> implem
 
     /**
      * Configures the timeout used when awaiting a send operation to complete.  A send will block if the
-     * remote has not granted the {@link Sender} or the {@link Session} credit to do so, if the send blocks
+     * remote has not granted the {@link StreamSender} or the {@link Session} credit to do so, if the send blocks
      * for longer than this timeout the send call will fail with an {@link ClientSendTimedOutException}
      * exception to indicate that the send did not complete.
      *
@@ -171,6 +175,35 @@ public class StreamSenderOptions extends LinkOptions<StreamSenderOptions> implem
     public StreamSenderOptions sendTimeout(long timeout, TimeUnit units) {
         this.sendTimeout = units.toMillis(timeout);
         return this;
+    }
+
+    /**
+     * Configures a {@link Supplier} which provides unique instances of {@link DeliveryTagGenerator} objects
+     * for any {@link StreamSender} created using these options.
+     * <p>
+     * The client sender will use a default {@link DeliveryTagGenerator} under normal circumstances and the
+     * user is not required to configure a {@link Supplier}. In some cases where the user is communicating
+     * with a system that requires a specific format of delivery tag this option allows use of a custom
+     * generator. The caller is responsible for providing a supplier that will create a unique instance of
+     * a tag generator as they are not meant to be shared amongst senders. Once a sender has been created
+     * the tag generator it uses cannot be changed so future calls to this method will not affect previously
+     * created {@link StreamSender} instances.
+     *
+     * @param supplier
+     * 		The {@link Supplier} of {@link DeliveryTagGenerator} instances.
+     *
+     * @return the {@link StreamSenderOptions} instance that was given.
+     */
+    public StreamSenderOptions deliveryTagGeneratorSupplier(Supplier<DeliveryTagGenerator> supplier) {
+        this.tagGeneratorSupplier = supplier;
+        return this;
+    }
+
+    /**
+     * @return the configured delivery tag {@link Supplier} or null if none was set.
+     */
+    public Supplier<DeliveryTagGenerator> deliveryTagGeneratorSupplier() {
+        return tagGeneratorSupplier;
     }
 
     @Override

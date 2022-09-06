@@ -17,8 +17,10 @@
 package org.apache.qpid.protonj2.client;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
+import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 
 /**
  * Options that control the behavior of a {@link Sender} created from them.
@@ -26,6 +28,8 @@ import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 public class SenderOptions extends LinkOptions<SenderOptions> implements Cloneable {
 
     private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
+
+    private Supplier<DeliveryTagGenerator> tagGeneratorSupplier;
 
     /**
      * Create a new {@link SenderOptions} instance configured with default configuration settings.
@@ -103,8 +107,38 @@ public class SenderOptions extends LinkOptions<SenderOptions> implements Cloneab
         super.copyInto(other);
 
         other.sendTimeout(sendTimeout);
+        other.deliveryTagGeneratorSupplier(tagGeneratorSupplier);
 
         return other;
+    }
+
+    /**
+     * Configures a {@link Supplier} which provides unique instances of {@link DeliveryTagGenerator} objects
+     * for any {@link Sender} created using these options.
+     * <p>
+     * The client sender will use a default {@link DeliveryTagGenerator} under normal circumstances and the
+     * user is not required to configure a {@link Supplier}. In some cases where the user is communicating
+     * with a system that requires a specific format of delivery tag this option allows use of a custom
+     * generator. The caller is responsible for providing a supplier that will create a unique instance of
+     * a tag generator as they are not meant to be shared amongst senders. Once a sender has been created
+     * the tag generator it uses cannot be changed so future calls to this method will not affect previously
+     * created {@link Sender} instances.
+     *
+     * @param supplier
+     * 		The {@link Supplier} of {@link DeliveryTagGenerator} instances.
+     *
+     * @return the {@link SenderOptions} instance that was given.
+     */
+    public SenderOptions deliveryTagGeneratorSupplier(Supplier<DeliveryTagGenerator> supplier) {
+        this.tagGeneratorSupplier = supplier;
+        return this;
+    }
+
+    /**
+     * @return the configured delivery tag {@link Supplier} or null if none was set.
+     */
+    public Supplier<DeliveryTagGenerator> deliveryTagGeneratorSupplier() {
+        return tagGeneratorSupplier;
     }
 
     @Override

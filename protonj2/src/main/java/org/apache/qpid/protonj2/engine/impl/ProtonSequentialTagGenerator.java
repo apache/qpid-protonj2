@@ -85,11 +85,6 @@ public class ProtonSequentialTagGenerator extends ProtonDeliveryTagGenerator {
         }
 
         @Override
-        public void release() {
-            // Nothing to do in this implementation
-        }
-
-        @Override
         public DeliveryTag copy() {
             return new ProtonNumericDeliveryTag(tagValue);
         }

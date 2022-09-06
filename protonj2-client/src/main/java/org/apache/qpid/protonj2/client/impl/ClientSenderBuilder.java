@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.protonj2.client.LinkOptions;
@@ -25,6 +26,7 @@ import org.apache.qpid.protonj2.client.SourceOptions;
 import org.apache.qpid.protonj2.client.StreamSenderOptions;
 import org.apache.qpid.protonj2.client.TargetOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.impl.ProtonDeliveryTagGenerator;
@@ -58,7 +60,10 @@ final class ClientSenderBuilder {
     public ClientSender sender(String address, SenderOptions senderOptions) throws ClientException {
         final SenderOptions options = senderOptions != null ? senderOptions : getDefaultSenderOptions();
         final String senderId = nextSenderId();
-        final Sender protonSender = createSender(session.getProtonSession(), address, options, senderId);
+        final DeliveryTagGenerator tagGenerator = options.deliveryTagGeneratorSupplier() == null ? null :
+            Objects.requireNonNull(options.deliveryTagGeneratorSupplier().get(), "Cannot assign a null tag generator from a custom supplier");
+        final Sender protonSender = createSender(
+            session.getProtonSession(), address, options, senderId, tagGenerator);
 
         return new ClientSender(session, options, senderId, protonSender);
     }
@@ -66,7 +71,10 @@ final class ClientSenderBuilder {
     public ClientSender anonymousSender(SenderOptions senderOptions) throws ClientException {
         final SenderOptions options = senderOptions != null ? senderOptions : getDefaultSenderOptions();
         final String senderId = nextSenderId();
-        final Sender protonSender = createSender(session.getProtonSession(), null, options, senderId);
+        final DeliveryTagGenerator tagGenerator = options.deliveryTagGeneratorSupplier() == null ? null :
+            Objects.requireNonNull(options.deliveryTagGeneratorSupplier().get(), "Cannot assign a null tag generator from a custom supplier");
+        final Sender protonSender = createSender(
+            session.getProtonSession(), null, options, senderId, tagGenerator);
 
         return new ClientSender(session, options, senderId, protonSender);
     }
@@ -74,12 +82,16 @@ final class ClientSenderBuilder {
     public ClientStreamSender streamSender(String address, StreamSenderOptions senderOptions) throws ClientException {
         final StreamSenderOptions options = senderOptions != null ? senderOptions : getDefaultStreamSenderOptions();
         final String senderId = nextSenderId();
-        final Sender protonSender = createSender(session.getProtonSession(), address, options, senderId);
+        final DeliveryTagGenerator tagGenerator = options.deliveryTagGeneratorSupplier() == null ? null :
+            Objects.requireNonNull(options.deliveryTagGeneratorSupplier().get(), "Cannot assign a null tag generator from a custom supplier");
+        final Sender protonSender = createSender(
+            session.getProtonSession(), address, options, senderId, tagGenerator);
 
         return new ClientStreamSender(session, options, senderId, protonSender);
     }
 
-    private static Sender createSender(Session protonSession, String address, LinkOptions<?> options, String senderId) {
+    private static Sender createSender(Session protonSession, String address, LinkOptions<?> options,
+                                       String senderId, DeliveryTagGenerator tagGenerator) {
         final String linkName;
 
         if (options.linkName() != null) {
@@ -107,11 +119,15 @@ final class ClientSenderBuilder {
         protonSender.setTarget(createTarget(address, options));
         protonSender.setSource(createSource(senderId, options));
 
-        // Use a tag generator that will reuse old tags.  Later we might make this configurable.
-        if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
-            protonSender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.EMPTY.createGenerator());
+        if (tagGenerator == null) {
+            // Use a tag generator that will reuse old tags if not sending settled.
+            if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
+                protonSender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.EMPTY.createGenerator());
+            } else {
+                protonSender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator());
+            }
         } else {
-            protonSender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator());
+            protonSender.setDeliveryTagGenerator(tagGenerator);
         }
 
         return protonSender;
