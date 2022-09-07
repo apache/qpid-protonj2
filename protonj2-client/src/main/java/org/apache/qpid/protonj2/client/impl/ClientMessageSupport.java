@@ -32,6 +32,7 @@ import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
+import org.apache.qpid.protonj2.codec.SectionEncoder;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -53,6 +54,8 @@ public abstract class ClientMessageSupport {
 
     private static final Encoder DEFAULT_ENCODER = CodecFactory.getDefaultEncoder();
     private static final Decoder DEFAULT_DECODER = CodecFactory.getDefaultDecoder();
+
+    private static final SectionEncoder SECTION_ENCODER = new SectionEncoder(DEFAULT_ENCODER);
 
     private static final int DEFAULT_BUFFER_ALLOCATION = 256;
 
@@ -116,25 +119,25 @@ public abstract class ClientMessageSupport {
         Footer footer = message.footer();
 
         if (header != null) {
-            encoder.writeObject(buffer, encoderState, header);
+            SECTION_ENCODER.write(buffer, header);
         }
         if (deliveryAnnotations != null) {
-            encoder.writeObject(buffer, encoderState, new DeliveryAnnotations(StringUtils.toSymbolKeyedMap(deliveryAnnotations)));
+            SECTION_ENCODER.write(buffer, new DeliveryAnnotations(StringUtils.toSymbolKeyedMap(deliveryAnnotations)));
         }
         if (messageAnnotations != null) {
-            encoder.writeObject(buffer, encoderState, messageAnnotations);
+            SECTION_ENCODER.write(buffer, messageAnnotations);
         }
         if (properties != null) {
-            encoder.writeObject(buffer, encoderState, properties);
+            SECTION_ENCODER.write(buffer, properties);
         }
         if (applicationProperties != null) {
-            encoder.writeObject(buffer, encoderState, applicationProperties);
+            SECTION_ENCODER.write(buffer, applicationProperties);
         }
 
-        message.forEachBodySection(section -> encoder.writeObject(buffer, encoderState, section));
+        message.forEachBodySection(section -> SECTION_ENCODER.write(buffer, section));
 
         if (footer != null) {
-            encoder.writeObject(buffer, encoderState, footer);
+            SECTION_ENCODER.write(buffer, footer);
         }
 
         return buffer;
