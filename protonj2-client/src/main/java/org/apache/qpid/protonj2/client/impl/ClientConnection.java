@@ -21,7 +21,6 @@ import java.io.UncheckedIOException;
 import java.security.Principal;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -102,7 +101,6 @@ public final class ClientConnection implements Connection {
     private final NettyIOContext ioContext;
     private final String connectionId;
     private final ScheduledExecutorService executor;
-    private final Map<ClientFuture<?>, Object> requests = new ConcurrentHashMap<>();
     private final ThreadPoolExecutor notifications;
 
     private Engine engine;
@@ -592,27 +590,12 @@ public final class ClientConnection implements Connection {
     }
 
     <T> T request(Object requestor, ClientFuture<T> request) throws ClientException {
-        requests.put(request, requestor);
-
         try {
             return request.get();
         } catch (Throwable error) {
             request.cancel(false);
             throw ClientExceptionSupport.createNonFatalOrPassthrough(error);
-        } finally {
-            requests.remove(request);
         }
-    }
-
-    void failAllPendingRequests(Object requestor, ClientException cause) {
-        requests.entrySet().removeIf(entry -> {
-            if (entry.getValue() == requestor) {
-                entry.getKey().failed(cause);
-                return true;
-            }
-
-            return false;
-        });
     }
 
     boolean autoFlushOff() {
