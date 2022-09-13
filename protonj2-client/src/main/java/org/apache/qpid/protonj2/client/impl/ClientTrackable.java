@@ -212,14 +212,14 @@ public abstract class ClientTrackable<SenderType extends ClientSenderLinkType<?>
 
     private void processDeliveryUpdated(OutgoingDelivery delivery) {
         if (delivery.isRemotelySettled()) {
-            REMOTELY_SETTLED_UPDATER.lazySet(this, 1);
-            REMOTEL_DELIVERY_STATE_UPDATER.lazySet(this, ClientDeliveryState.fromProtonType(delivery.getRemoteState()));
-
             if (sender.options.autoSettle()) {
                 delivery.settle();
             }
 
             synchronized (this) {
+                REMOTELY_SETTLED_UPDATER.lazySet(this, 1);
+                REMOTEL_DELIVERY_STATE_UPDATER.lazySet(this, ClientDeliveryState.fromProtonType(delivery.getRemoteState()));
+
                 if (remoteSettlementFuture != null) {
                     remoteSettlementFuture.complete(self());
                 }
