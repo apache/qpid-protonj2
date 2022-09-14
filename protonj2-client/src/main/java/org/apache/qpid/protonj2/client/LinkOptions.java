@@ -26,6 +26,8 @@ import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutExcepti
 
 /**
  * Base options that are applied to AMQP link types.
+ *
+ * @param <T> The actual {@link LinkOptions} concrete type (SenderOptions or ReceiverOptions).
  */
 public abstract class LinkOptions<T extends LinkOptions<T>> {
 

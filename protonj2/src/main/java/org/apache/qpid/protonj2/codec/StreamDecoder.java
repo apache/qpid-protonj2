@@ -34,7 +34,10 @@ import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.apache.qpid.protonj2.types.UnsignedShort;
 
 /**
- * Decode AMQP types from a {@link InputStream}
+ * Decode AMQP types from a {@link InputStream} instance.  When reading from an input stream
+ * care should be take to capture the stream position and state and reset if not enough bytes
+ * are available for the decoder to complete reading an encoded type as the decoder is not
+ * required to handle partially available type encodings.
  */
 public interface StreamDecoder {
 
@@ -800,6 +803,9 @@ public interface StreamDecoder {
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
      * mark the and reset the input to make a further read attempt.
      *
+     * @param <K> The key type for the map that is being read.
+     * @param <V> The value type for the map that is being read.
+     *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
      * @param state
@@ -816,6 +822,8 @@ public interface StreamDecoder {
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
      * mark the and reset the input to make a further read attempt.
+     *
+     * @param <V> The value type for the list that is being read.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.

@@ -34,6 +34,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Base class for client link types that wrap a proton receiver to provide
  * delivery dispatch in some manner.
+ *
+ * @param <ReceiverType> The client receiver type that is being implemented.
  */
 public abstract class ClientReceiverLinkType<ReceiverType extends Link<ReceiverType>> extends ClientLinkType<ReceiverType, Receiver> {
 

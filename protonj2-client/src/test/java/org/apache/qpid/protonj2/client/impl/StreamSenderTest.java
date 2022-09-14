@@ -2813,7 +2813,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testSendeUsesCustomDeliveryTagGeneratorConfiguration() throws Exception {
+    public void testSenderUsesCustomDeliveryTagGeneratorConfiguration() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();

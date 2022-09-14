@@ -29,7 +29,9 @@ import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 
 /**
  * Base type for all the proton client sender types which provides a few extra
- * APIs for the connection and session to use when managing senders
+ * APIs for the connection and session to use when managing senders.
+ *
+ * @param <LinkType> The client sender link type being implemented.
  */
 public abstract class ClientSenderLinkType<LinkType extends Link<LinkType>> extends ClientLinkType<LinkType, Sender> {
 

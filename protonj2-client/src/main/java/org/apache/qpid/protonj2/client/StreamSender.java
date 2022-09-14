@@ -41,7 +41,9 @@ public interface StreamSender extends Link<StreamSender> {
 
     /**
      * Send the given message immediately if there is credit available or blocks if the link
-     * has not yet been granted credit or there is a streaming send ongoing..
+     * has not yet been granted credit or there is a streaming send ongoing. The provided
+     * delivery annotations are encoded along with the message, the annotations can be passed
+     * repeatedly to send calls if sending the same delivery annotations with each message.
      *
      * @param message
      *      the {@link Message} to send.
@@ -69,7 +71,9 @@ public interface StreamSender extends Link<StreamSender> {
 
     /**
      * Send the given message if credit is available or returns null if no credit has been
-     * granted to the link at the time of the send attempt.
+     * granted to the link at the time of the send attempt. The provided delivery annotations
+     * are encoded along with the message, the annotations can be passed repeatedly to send
+     * calls if sending the same delivery annotations with each message.
      *
      * @param message
      *      the {@link Message} to send if credit is available.
@@ -94,7 +98,9 @@ public interface StreamSender extends Link<StreamSender> {
 
     /**
      * Creates and returns a new {@link StreamSenderMessage} that can be used by the caller to perform
-     * streaming sends of large message payload data.
+     * streaming sends of large message payload data. The provided delivery annotations are encoded
+     * along with the message, the annotations can be passed repeatedly to send calls if sending the
+     * same delivery annotations with each message.
      *
      * @param deliveryAnnotations
      *      the delivery annotations that should be included in the sent {@link StreamSenderMessage}.

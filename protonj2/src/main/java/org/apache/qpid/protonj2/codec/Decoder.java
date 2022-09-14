@@ -33,7 +33,7 @@ import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.apache.qpid.protonj2.types.UnsignedShort;
 
 /**
- * Decode AMQP types from a byte stream
+ * Decode AMQP types from a byte stream read from a {@link ProtonBuffer} instance.
  */
 public interface Decoder {
 
@@ -799,6 +799,9 @@ public interface Decoder {
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
      * mark the and reset the input to make a further read attempt.
      *
+     * @param <K> The key type for the map that is being read.
+     * @param <V> The value type for the map that is being read.
+     *
      * @param buffer
      * 		The {@link ProtonBuffer} where the read operation takes place.
      * @param state
@@ -815,6 +818,8 @@ public interface Decoder {
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
      * mark the and reset the input to make a further read attempt.
+     *
+     * @param <V> The value type for the list being read.
      *
      * @param buffer
      * 		The {@link ProtonBuffer} where the read operation takes place.

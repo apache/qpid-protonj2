@@ -44,6 +44,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Base type used by client resources that represent an AMQP link type.
+ *
+ * @param <LinkType> The actual link type implementation ClientSender or ClientReceiver
+ * @param <ProtonType> The proton concrete link type implementation Sender or Receiver
  */
 public abstract class ClientLinkType<LinkType extends Link<LinkType>,
                                      ProtonType extends org.apache.qpid.protonj2.engine.Link<ProtonType>> implements Link<LinkType> {

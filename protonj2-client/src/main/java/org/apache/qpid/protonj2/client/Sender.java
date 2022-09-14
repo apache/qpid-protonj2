@@ -40,7 +40,9 @@ public interface Sender extends Link<Sender> {
 
     /**
      * Send the given message immediately if there is credit available or blocks if the link
-     * has not yet been granted credit.
+     * has not yet been granted credit. The provided delivery annotations are encoded along
+     * with the message, the annotations can be passed repeatedly to send calls if sending
+     * the same delivery annotations with each message.
      *
      * @param message
      *      the {@link Message} to send.
@@ -68,7 +70,9 @@ public interface Sender extends Link<Sender> {
 
     /**
      * Send the given message if credit is available or returns null if no credit has been
-     * granted to the link at the time of the send attempt.
+     * granted to the link at the time of the send attempt. The provided delivery annotations
+     * are encoded along with the message, the annotations can be passed repeatedly to send
+     * calls if sending the same delivery annotations with each message.
      *
      * @param message
      *      the {@link Message} to send if credit is available.

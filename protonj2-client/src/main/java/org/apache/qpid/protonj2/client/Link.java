@@ -24,6 +24,8 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
 
 /**
  * Base for all AMQP link types (Sender, Receiver etc).
+ *
+ * @param <T> The actual link type that is being created (Sender or Receiver).
  */
 public interface Link<T extends Link<T>> extends AutoCloseable {
 

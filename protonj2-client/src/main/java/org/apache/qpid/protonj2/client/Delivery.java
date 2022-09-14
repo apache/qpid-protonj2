@@ -45,12 +45,15 @@ public interface Delivery {
      * Calling this message claims the payload of the delivery for the returned {@link Message} and
      * excludes use of the {@link #rawInputStream()} method of the {@link Delivery} object.  Calling
      * the {@link #rawInputStream()} method after calling this method throws {@link ClientIllegalStateException}.
+     * <p>
+     * Care should be taken if attempting to specify anything other than the wild card type for the body
+     * of the returned message as the wrong type specification can lead to an exception.
+     *
+     * @param <E> The type of message body that should be contained in the returned {@link Message}.
      *
      * @return a {@link Message} instance that wraps the decoded payload.
      *
      * @throws ClientException if an error occurs while decoding the payload.
-     *
-     * @param <E> The type of message body that should be contained in the returned {@link Message}.
      */
     <E> Message<E> message() throws ClientException;
 

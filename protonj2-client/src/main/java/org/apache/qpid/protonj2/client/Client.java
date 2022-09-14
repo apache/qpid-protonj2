@@ -22,7 +22,9 @@ import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.impl.ClientInstance;
 
 /**
- * The Container that hosts AMQP Connections
+ * The Container that hosts AMQP Connections. From this container new connections
+ * can be created and an API exists to close all open connections hosted in this
+ * container instance.
  */
 public interface Client extends AutoCloseable {
 
@@ -62,8 +64,9 @@ public interface Client extends AutoCloseable {
     /**
      * Closes all currently open {@link Connection} instances created by this client.
      * <p>
-     * This method blocks and waits for each connection to be closed in turn using the configured
-     * close timeout of the {@link ConnectionOptions} that the connection was created with.
+     * This method does not block and wait for each connection to be closed in turn, instead
+     * it returns a future which will be completed once the close of all connections has been
+     * completed.
      *
      * @return a {@link Future} that will be completed when all open connections have closed.
      */
@@ -72,6 +75,10 @@ public interface Client extends AutoCloseable {
     /**
      * Connect to the specified host and port, without credentials and with all
      * connection options set to their defaults.
+     * <p>
+     * The connection returned may still fail afterwards as the majority of connection
+     * setup is done asynchronously so the application should be prepared for errors to
+     * arise of the connection methods if the open future is not waited on.
      *
      * @param host
      *            the host to connect to
@@ -86,6 +93,10 @@ public interface Client extends AutoCloseable {
 
     /**
      * Connect to the specified host and port, with given connection options.
+     * <p>
+     * The connection returned may still fail afterwards as the majority of connection
+     * setup is done asynchronously so the application should be prepared for errors to
+     * arise of the connection methods if the open future is not waited on.
      *
      * @param host
      *            the host to connect to
@@ -103,6 +114,10 @@ public interface Client extends AutoCloseable {
     /**
      * Connect to the specified host, using the default port, without credentials and with all
      * connection options set to their defaults.
+     * <p>
+     * The connection returned may still fail afterwards as the majority of connection
+     * setup is done asynchronously so the application should be prepared for errors to
+     * arise of the connection methods if the open future is not waited on.
      *
      * @param host
      *            the host to connect to
@@ -116,6 +131,10 @@ public interface Client extends AutoCloseable {
     /**
      * Connect to the specified host, using the default port, without credentials and with all
      * connection options set to their defaults.
+     * <p>
+     * The connection returned may still fail afterwards as the majority of connection
+     * setup is done asynchronously so the application should be prepared for errors to
+     * arise of the connection methods if the open future is not waited on.
      *
      * @param host
      *            the host to connect to

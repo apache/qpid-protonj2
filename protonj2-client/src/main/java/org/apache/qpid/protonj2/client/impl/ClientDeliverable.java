@@ -29,6 +29,9 @@ import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 /**
  * Abstract type that implements some of the common portions of a delivery
  * wrapper type.
+ *
+ * @param <DeliveryType> The client delivery type streamed or non-streamed
+ * @param <ReceiverType> The client receiver type streaming or non-streaming
  */
 @SuppressWarnings("rawtypes")
 public abstract class ClientDeliverable<DeliveryType, ReceiverType extends ClientReceiverLinkType> {
