@@ -70,6 +70,9 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.Modified;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Released;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusDurability;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnknownDescribedType;
+import org.apache.qpid.protonj2.types.DescribedType;
+import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.messaging.Data;
 import org.apache.qpid.protonj2.types.messaging.Section;
@@ -2527,10 +2530,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateReceiverWithUserConfiguredSourceAndTargetOptions() throws Exception {
-        final Map<String, Object> filtersToObject = new HashMap<>();
-        filtersToObject.put("x-opt-filter", "a = b");
-
-        final Map<String, String> filters = new HashMap<>();
+        final Map<String, Object> filters = new HashMap<>();
         filters.put("x-opt-filter", "a = b");
 
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -2545,7 +2545,110 @@ public class ReceiverTest extends ImperativeClientTestCase {
                                             .withExpiryPolicy(TerminusExpiryPolicy.CONNECTION_CLOSE)
                                             .withDefaultOutcome(new Released())
                                             .withCapabilities("QUEUE")
-                                            .withFilter(filtersToObject)
+                                            .withFilter(filters)
+                                            .withOutcomes("amqp:accepted:list", "amqp:rejected:list")
+                                            .also()
+                               .withTarget().withAddress(notNullValue())
+                                            .withCapabilities("QUEUE")
+                                            .withDurable(TerminusDurability.CONFIGURATION)
+                                            .withExpiryPolicy(TerminusExpiryPolicy.SESSION_END)
+                                            .withTimeout(42)
+                                            .withDynamic(anyOf(nullValue(), equalTo(false)))
+                                            .withDynamicNodeProperties(nullValue())
+                               .and().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            ReceiverOptions receiverOptions = new ReceiverOptions();
+
+            receiverOptions.sourceOptions().capabilities("QUEUE");
+            receiverOptions.sourceOptions().distributionMode(DistributionMode.COPY);
+            receiverOptions.sourceOptions().timeout(128);
+            receiverOptions.sourceOptions().durabilityMode(DurabilityMode.UNSETTLED_STATE);
+            receiverOptions.sourceOptions().expiryPolicy(ExpiryPolicy.CONNECTION_CLOSE);
+            receiverOptions.sourceOptions().defaultOutcome(DeliveryState.released());
+            receiverOptions.sourceOptions().filters(filters);
+            receiverOptions.sourceOptions().outcomes(DeliveryState.Type.ACCEPTED, DeliveryState.Type.REJECTED);
+
+            receiverOptions.targetOptions().capabilities("QUEUE");
+            receiverOptions.targetOptions().durabilityMode(DurabilityMode.CONFIGURATION);
+            receiverOptions.targetOptions().expiryPolicy(ExpiryPolicy.SESSION_CLOSE);
+            receiverOptions.targetOptions().timeout(42);
+
+            Receiver receiver = session.openReceiver("test-queue", receiverOptions).openFuture().get();
+
+            receiver.close();
+            session.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    private class AmqpJmsSelectorType implements DescribedType {
+
+        private final String selector;
+
+        public AmqpJmsSelectorType(String selector) {
+            this.selector = selector;
+        }
+
+        @Override
+        public Object getDescriptor() {
+            return UnsignedLong.valueOf(0x0000468C00000004L);
+        }
+
+        @Override
+        public Object getDescribed() {
+            return this.selector;
+        }
+
+        @Override
+        public String toString() {
+            return "AmqpJmsSelectorType{" + selector + "}";
+        }
+    }
+
+    private class PeerJmsSelectorType extends UnknownDescribedType {
+
+        public PeerJmsSelectorType(String selector) {
+            super(org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong.valueOf(0x0000468C00000004L), selector);
+        }
+    }
+
+    @Test
+    public void testCreateReceiverWithUserConfiguredSourceWithJMSStyleSelector() throws Exception {
+        final DescribedType clientJmsSelector = new AmqpJmsSelectorType("myProperty=42");
+        final Map<String, Object> filters = new HashMap<>();
+        filters.put("jms-selector", clientJmsSelector);
+
+        final PeerJmsSelectorType peerJmsSelector = new PeerJmsSelectorType("myProperty=42");
+        final Map<String, Object> filtersAtPeer = new HashMap<>();
+        filtersAtPeer.put("jms-selector", peerJmsSelector);
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver()
+                               .withSource().withAddress("test-queue")
+                                            .withDistributionMode("copy")
+                                            .withTimeout(128)
+                                            .withDurable(TerminusDurability.UNSETTLED_STATE)
+                                            .withExpiryPolicy(TerminusExpiryPolicy.CONNECTION_CLOSE)
+                                            .withDefaultOutcome(new Released())
+                                            .withCapabilities("QUEUE")
+                                            .withFilter(filtersAtPeer)
                                             .withOutcomes("amqp:accepted:list", "amqp:rejected:list")
                                             .also()
                                .withTarget().withAddress(notNullValue())

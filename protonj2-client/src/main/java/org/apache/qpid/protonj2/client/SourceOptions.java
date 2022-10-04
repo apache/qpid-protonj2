@@ -39,7 +39,7 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> implemen
     private DistributionMode distributionMode;
     private DeliveryState defaultOutcome;
     private DeliveryState.Type[] outcomes = DEFAULT_OUTCOMES;
-    private Map<String, String> filters;
+    private Map<String, Object> filters;
 
     @Override
     public SourceOptions clone() {
@@ -85,7 +85,7 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> implemen
     /**
      * @return the filters
      */
-    public Map<String, String> filters() {
+    public Map<String, Object> filters() {
         return filters;
     }
 
@@ -94,7 +94,7 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> implemen
      *
      * @return this {@link SourceOptions} instance.
      */
-    public SourceOptions filters(Map<String, String> filters) {
+    public SourceOptions filters(Map<String, Object> filters) {
         this.filters = filters;
         return self();
     }

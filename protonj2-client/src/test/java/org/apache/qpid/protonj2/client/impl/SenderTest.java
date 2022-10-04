@@ -2253,10 +2253,7 @@ public class SenderTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateSenderWithUserConfiguredSourceAndTargetOptions() throws Exception {
-        final Map<String, Object> filtersToObject = new HashMap<>();
-        filtersToObject.put("x-opt-filter", "a = b");
-
-        final Map<String, String> filters = new HashMap<>();
+        final Map<String, Object> filters = new HashMap<>();
         filters.put("x-opt-filter", "a = b");
 
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -2271,7 +2268,7 @@ public class SenderTest extends ImperativeClientTestCase {
                                             .withExpiryPolicy(TerminusExpiryPolicy.CONNECTION_CLOSE)
                                             .withDefaultOutcome(new Released())
                                             .withCapabilities("QUEUE")
-                                            .withFilter(filtersToObject)
+                                            .withFilter(filters)
                                             .withOutcomes("amqp:accepted:list", "amqp:rejected:list")
                                             .also()
                                .withTarget().withAddress("test-queue")
