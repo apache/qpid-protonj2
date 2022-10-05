@@ -33,6 +33,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosed
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
+import org.apache.qpid.protonj2.types.transport.ConnectionError;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -226,6 +227,75 @@ class ReconnectReceiverTest extends ImperativeClientTestCase {
             finalPeer.expectClose().respond();
 
             assertNotNull(delivery);
+
+            delivery.accept();
+
+            receiver.close();
+            session.close();
+            connection.close();
+
+            assertNotNull(delivery);
+        }
+    }
+
+    @Test
+    public void testReceiverWaitsWhenConnectionForcedDisconnect() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
+        try (ProtonTestServer firstPeer = new ProtonTestServer();
+             ProtonTestServer finalPeer = new ProtonTestServer()) {
+
+            firstPeer.expectSASLAnonymousConnect();
+            firstPeer.expectOpen().respond();
+            firstPeer.expectBegin().respond();
+            firstPeer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            firstPeer.expectFlow().withLinkCredit(10);
+            firstPeer.remoteClose()
+                     .withErrorCondition(ConnectionError.CONNECTION_FORCED.toString(), "Forced disconnect").queue().afterDelay(20);
+            firstPeer.expectClose();
+            firstPeer.start();
+
+            finalPeer.expectSASLAnonymousConnect();
+            finalPeer.expectOpen().respond();
+            finalPeer.expectBegin().respond();
+            finalPeer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            finalPeer.expectFlow().withLinkCredit(10);
+            finalPeer.remoteTransfer().withHandle(0)
+                                      .withDeliveryId(0)
+                                      .withDeliveryTag(new byte[] { 1 })
+                                      .withMore(false)
+                                      .withSettled(true)
+                                      .withMessageFormat(0)
+                                      .withPayload(payload).queue().afterDelay(5);
+            finalPeer.start();
+
+            final URI primaryURI = firstPeer.getServerURI();
+            final URI backupURI = finalPeer.getServerURI();
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.reconnectOptions().reconnectEnabled(true);
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
+
+            Client container = Client.create();
+            Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
+            Session session = connection.openSession();
+            ReceiverOptions rcvOpts = new ReceiverOptions().autoAccept(false);
+            Receiver receiver = session.openReceiver("test-queue", rcvOpts);
+
+            Delivery delivery = null;
+            try {
+                delivery = receiver.receive(10, TimeUnit.SECONDS);
+            } catch (Exception ex) {
+                fail("Should not have failed on blocking receive call." + ex.getMessage());
+            }
+
+            assertNotNull(delivery);
+
+            firstPeer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            finalPeer.waitForScriptToComplete();
+            finalPeer.expectDetach().respond();
+            finalPeer.expectEnd().respond();
+            finalPeer.expectClose().respond();
 
             delivery.accept();
 

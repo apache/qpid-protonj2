@@ -43,6 +43,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosed
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
+import org.apache.qpid.protonj2.types.transport.ConnectionError;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -152,6 +153,153 @@ class ReconnectSenderTest extends ImperativeClientTestCase {
            assertNotNull(tracker.get());
            assertNull(error.get());
            assertThrows(ClientConnectionRemotelyClosedException.class, () -> tracker.get().awaitSettlement());
+
+           sender.close();
+           session.close();
+           connection.close();
+
+           finalPeer.waitForScriptToComplete();
+       }
+    }
+
+    @Test
+    public void testInFlightSendFailedAfterConnectionForcedCloseAndNotResent() throws Exception {
+        try (ProtonTestServer firstPeer = new ProtonTestServer();
+             ProtonTestServer finalPeer = new ProtonTestServer()) {
+
+           firstPeer.expectSASLAnonymousConnect();
+           firstPeer.expectOpen().respond();
+           firstPeer.expectBegin().respond();
+           firstPeer.expectAttach().ofSender().withTarget().withAddress("test").and().respond();
+           firstPeer.remoteFlow().withLinkCredit(1).queue();
+           firstPeer.expectTransfer().withNonNullPayload();
+           firstPeer.remoteClose()
+                    .withErrorCondition(ConnectionError.CONNECTION_FORCED.toString(), "Forced disconnect").queue().afterDelay(20);
+           firstPeer.expectClose();
+           firstPeer.start();
+
+           finalPeer.expectSASLAnonymousConnect();
+           finalPeer.expectOpen().respond();
+           finalPeer.expectBegin().respond();
+           finalPeer.expectAttach().ofSender().withTarget().withAddress("test").and().respond();
+           finalPeer.start();
+
+           final URI primaryURI = firstPeer.getServerURI();
+           final URI backupURI = finalPeer.getServerURI();
+
+           ConnectionOptions options = new ConnectionOptions();
+           options.reconnectOptions().reconnectEnabled(true);
+           options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
+
+           Client container = Client.create();
+           Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
+           Session session = connection.openSession();
+           Sender sender = session.openSender("test");
+
+           final AtomicReference<Tracker> tracker = new AtomicReference<>();
+           final AtomicReference<ClientException> error = new AtomicReference<>();
+           final CountDownLatch latch = new CountDownLatch(1);
+
+           ForkJoinPool.commonPool().execute(() -> {
+               try {
+                   tracker.set(sender.send(Message.create("Hello")));
+               } catch (ClientException e) {
+                   error.set(e);
+               } finally {
+                   latch.countDown();
+               }
+           });
+
+           firstPeer.waitForScriptToComplete();
+           finalPeer.waitForScriptToComplete();
+           finalPeer.expectDetach().withClosed(true).respond();
+           finalPeer.expectEnd().respond();
+           finalPeer.expectClose().respond();
+
+           assertTrue(latch.await(10, TimeUnit.SECONDS), "Should have failed previously sent message");
+           assertNotNull(tracker.get());
+           assertNull(error.get());
+           assertThrows(ClientConnectionRemotelyClosedException.class, () -> tracker.get().awaitSettlement());
+
+           sender.close();
+           session.close();
+           connection.close();
+
+           finalPeer.waitForScriptToComplete();
+       }
+    }
+
+    @Test
+    public void testSendBlockedOnCreditGetsSentAfterReconnectFromForcedCloseAndCreditGranted() throws Exception {
+        try (ProtonTestServer firstPeer = new ProtonTestServer();
+             ProtonTestServer finalPeer = new ProtonTestServer()) {
+
+           firstPeer.expectSASLAnonymousConnect();
+           firstPeer.expectOpen().respond();
+           firstPeer.expectBegin().respond();
+           firstPeer.expectAttach().ofSender().withTarget().withAddress("test").and().respond();
+           firstPeer.remoteClose()
+                    .withErrorCondition(ConnectionError.CONNECTION_FORCED.toString(), "Forced disconnect").queue().afterDelay(20);
+           firstPeer.expectClose();
+           firstPeer.start();
+
+           finalPeer.expectSASLAnonymousConnect();
+           finalPeer.expectOpen().respond();
+           finalPeer.expectBegin().respond();
+           finalPeer.expectAttach().ofSender().withTarget().withAddress("test").and().respond();
+           finalPeer.start();
+
+           final URI primaryURI = firstPeer.getServerURI();
+           final URI backupURI = finalPeer.getServerURI();
+
+           ConnectionOptions options = new ConnectionOptions();
+           options.reconnectOptions().reconnectEnabled(true);
+           options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
+
+           Client container = Client.create();
+           Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
+           Session session = connection.openSession();
+           Sender sender = session.openSender("test");
+
+           final AtomicReference<Tracker> tracker = new AtomicReference<>();
+           final AtomicReference<Exception> sendError = new AtomicReference<>();
+           final CountDownLatch latch = new CountDownLatch(1);
+
+           ForkJoinPool.commonPool().execute(() -> {
+               try {
+                   tracker.set(sender.send(Message.create("Hello")));
+               } catch (ClientException e) {
+                   sendError.set(e);
+               } finally {
+                   latch.countDown();
+               }
+           });
+
+           firstPeer.waitForScriptToComplete();
+           finalPeer.waitForScriptToComplete();
+           finalPeer.expectTransfer().withNonNullPayload()
+                                     .respond()
+                                     .withSettled(true).withState().accepted();
+           finalPeer.expectDetach().withClosed(true).respond();
+           finalPeer.expectEnd().respond();
+           finalPeer.expectClose().respond();
+
+           // Grant credit now and await expected message send.
+           finalPeer.remoteFlow().withDeliveryCount(0)
+                                 .withLinkCredit(10)
+                                 .withIncomingWindow(10)
+                                 .withOutgoingWindow(10)
+                                 .withNextIncomingId(0)
+                                 .withNextOutgoingId(1).now();
+
+           assertTrue(latch.await(10, TimeUnit.SECONDS), "Should have sent blocked message");
+           assertNull(sendError.get());
+           assertNotNull(tracker.get());
+
+           Tracker send = tracker.get();
+           assertSame(tracker.get(), send.awaitSettlement(10, TimeUnit.SECONDS));
+           assertTrue(send.remoteSettled());
+           assertEquals(DeliveryState.accepted(), send.remoteState());
 
            sender.close();
            session.close();
@@ -297,7 +445,7 @@ class ReconnectSenderTest extends ImperativeClientTestCase {
     @Test
     public void testMultipleSenderCreationRecoversAfterDropWithNoAttachResponse() throws Exception {
         try (ProtonTestServer firstPeer = new ProtonTestServer();
-    		 ProtonTestServer intermediatePeer = new ProtonTestServer();
+             ProtonTestServer intermediatePeer = new ProtonTestServer();
              ProtonTestServer finalPeer = new ProtonTestServer()) {
 
             firstPeer.expectSASLAnonymousConnect();

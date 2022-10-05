@@ -369,9 +369,10 @@ public abstract class ClientLinkType<LinkType extends Link<LinkType>,
     }
 
     protected final void handleParentEndpointClosed(ProtonType link) {
-        // Don't react if engine was shutdown and parent closed as a result instead wait to get the
-        // shutdown notification and respond to that change.
-        if (link.getEngine().isRunning()) {
+        // This handle is only for the case that the parent session was remotely or locally
+        // closed. In all other cases we want to allow natural engine shutdown handling to
+        // trigger shutdown as we can check there if the parent is reconnecting or not.
+        if (link.getEngine().isRunning() && !link.getConnection().isLocallyClosed()) {
             final ClientException failureCause;
 
             if (link.getConnection().getRemoteCondition() != null) {

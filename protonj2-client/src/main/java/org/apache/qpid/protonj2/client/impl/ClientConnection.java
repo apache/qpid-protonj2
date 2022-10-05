@@ -639,6 +639,8 @@ public final class ClientConnection implements Connection {
     }
 
     private void handleLocalClose(org.apache.qpid.protonj2.engine.Connection connection) {
+        // Don't react if engine was shutdown and parent closed as a result instead wait to get the
+        // shutdown notification and respond to that change.
         if (connection.isRemotelyClosed()) {
             final ClientException failureCause;
 
