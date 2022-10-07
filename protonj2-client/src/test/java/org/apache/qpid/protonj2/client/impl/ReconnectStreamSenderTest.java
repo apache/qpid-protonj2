@@ -17,6 +17,9 @@
 package org.apache.qpid.protonj2.client.impl;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -24,15 +27,20 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.protonj2.client.Client;
 import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
+import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.OutputStreamOptions;
 import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamSenderMessage;
 import org.apache.qpid.protonj2.client.StreamSenderOptions;
+import org.apache.qpid.protonj2.client.StreamTracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
@@ -40,6 +48,7 @@ import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferPayloadCompositeMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedDataMatcher;
+import org.apache.qpid.protonj2.types.transport.ConnectionError;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -388,5 +397,70 @@ class ReconnectStreamSenderTest extends ImperativeClientTestCase {
 
             finalPeer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
+    }
+
+    @Test
+    public void testInFlightSendFailedAfterConnectionForcedCloseAndNotResent() throws Exception {
+        try (ProtonTestServer firstPeer = new ProtonTestServer();
+             ProtonTestServer finalPeer = new ProtonTestServer()) {
+
+           firstPeer.expectSASLAnonymousConnect();
+           firstPeer.expectOpen().respond();
+           firstPeer.expectBegin().respond();
+           firstPeer.expectAttach().ofSender().withTarget().withAddress("test").and().respond();
+           firstPeer.remoteFlow().withLinkCredit(1).queue();
+           firstPeer.expectTransfer().withNonNullPayload();
+           firstPeer.remoteClose()
+                    .withErrorCondition(ConnectionError.CONNECTION_FORCED.toString(), "Forced disconnect").queue().afterDelay(20);
+           firstPeer.expectClose();
+           firstPeer.start();
+
+           finalPeer.expectSASLAnonymousConnect();
+           finalPeer.expectOpen().respond();
+           finalPeer.expectBegin().respond();
+           finalPeer.expectAttach().ofSender().withTarget().withAddress("test").and().respond();
+           finalPeer.start();
+
+           final URI primaryURI = firstPeer.getServerURI();
+           final URI backupURI = finalPeer.getServerURI();
+
+           ConnectionOptions options = new ConnectionOptions();
+           options.reconnectOptions().reconnectEnabled(true);
+           options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
+
+           Client container = Client.create();
+           Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
+           StreamSender sender = connection.openStreamSender("test");
+
+           final AtomicReference<StreamTracker> tracker = new AtomicReference<>();
+           final AtomicReference<ClientException> error = new AtomicReference<>();
+           final CountDownLatch latch = new CountDownLatch(1);
+
+           ForkJoinPool.commonPool().execute(() -> {
+               try {
+                   tracker.set(sender.send(Message.create("Hello")));
+               } catch (ClientException e) {
+                   error.set(e);
+               } finally {
+                   latch.countDown();
+               }
+           });
+
+           firstPeer.waitForScriptToComplete();
+           finalPeer.waitForScriptToComplete();
+           finalPeer.expectDetach().withClosed(true).respond();
+           finalPeer.expectEnd().respond();
+           finalPeer.expectClose().respond();
+
+           assertTrue(latch.await(10, TimeUnit.SECONDS), "Should have failed previously sent message");
+           assertNotNull(tracker.get());
+           assertNull(error.get());
+           assertThrows(ClientConnectionRemotelyClosedException.class, () -> tracker.get().awaitSettlement());
+
+           sender.close();
+           connection.close();
+
+           finalPeer.waitForScriptToComplete();
+       }
     }
 }

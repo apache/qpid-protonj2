@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.net.URI;
@@ -30,9 +31,12 @@ import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.StreamDelivery;
 import org.apache.qpid.protonj2.client.StreamReceiver;
+import org.apache.qpid.protonj2.client.StreamReceiverOptions;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
+import org.apache.qpid.protonj2.types.transport.ConnectionError;
+import org.apache.qpid.protonj2.types.transport.Role;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -158,6 +162,73 @@ class ReconnectStreamReceiverTest extends ImperativeClientTestCase {
             connection.closeAsync().get();
 
             finalPeer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReceiverWaitsWhenConnectionForcedDisconnect() throws Exception {
+        final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
+        try (ProtonTestServer firstPeer = new ProtonTestServer();
+             ProtonTestServer finalPeer = new ProtonTestServer()) {
+
+            firstPeer.expectSASLAnonymousConnect();
+            firstPeer.expectOpen().respond();
+            firstPeer.expectBegin().respond();
+            firstPeer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            firstPeer.expectFlow().withLinkCredit(10);
+            firstPeer.remoteClose()
+                     .withErrorCondition(ConnectionError.CONNECTION_FORCED.toString(), "Forced disconnect").queue().afterDelay(20);
+            firstPeer.expectClose();
+            firstPeer.start();
+
+            finalPeer.expectSASLAnonymousConnect();
+            finalPeer.expectOpen().respond();
+            finalPeer.expectBegin().respond();
+            finalPeer.expectAttach().withRole(Role.RECEIVER.getValue()).respond();
+            finalPeer.expectFlow().withLinkCredit(10);
+            finalPeer.remoteTransfer().withHandle(0)
+                                      .withDeliveryId(0)
+                                      .withDeliveryTag(new byte[] { 1 })
+                                      .withMore(false)
+                                      .withSettled(true)
+                                      .withMessageFormat(0)
+                                      .withPayload(payload).queue().afterDelay(5);
+            finalPeer.start();
+
+            final URI primaryURI = firstPeer.getServerURI();
+            final URI backupURI = finalPeer.getServerURI();
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.reconnectOptions().reconnectEnabled(true);
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
+
+            Client container = Client.create();
+            Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
+            StreamReceiverOptions rcvOpts = new StreamReceiverOptions().autoAccept(false);
+            StreamReceiver receiver = connection.openStreamReceiver("test-receiver", rcvOpts);
+
+            StreamDelivery delivery = null;
+            try {
+                delivery = receiver.receive(10, TimeUnit.SECONDS);
+            } catch (Exception ex) {
+                fail("Should not have failed on blocking receive call." + ex.getMessage());
+            }
+
+            assertNotNull(delivery);
+
+            firstPeer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            finalPeer.waitForScriptToComplete();
+            finalPeer.expectDetach().respond();
+            finalPeer.expectEnd().respond();
+            finalPeer.expectClose().respond();
+
+            delivery.accept();
+
+            receiver.close();
+            connection.close();
+
+            assertNotNull(delivery);
         }
     }
 }
