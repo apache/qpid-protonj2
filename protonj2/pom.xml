@@ -26,7 +26,7 @@
   <artifactId>protonj2</artifactId>
   <name>Qpid ProtonJ2 AMQP Protocol Library</name>
   <description>AMQP 1.0 protocol engine and codec library</description>
-  <packaging>bundle</packaging>
+  <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
@@ -103,18 +103,6 @@
       </resource>
     </resources>
     <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <version>${maven.bundle.plugin.version}</version>
-        <configuration>
-          <instructions>
-            <Import-Package>
-              *
-            </Import-Package>
-          </instructions>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
