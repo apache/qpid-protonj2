@@ -66,7 +66,7 @@ public class WsConnectionTest extends ConnectionTest {
 
     @Test
     public void testWSConnectFailsDueToServerListeningOverTCP() throws Exception {
-        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions().setUseWebSockets(false))) {
             peer.start();
 
             URI remoteURI = peer.getServerURI();
