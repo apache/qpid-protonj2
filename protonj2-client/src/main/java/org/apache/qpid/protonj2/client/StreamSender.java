@@ -29,6 +29,11 @@ public interface StreamSender extends Link<StreamSender> {
     /**
      * Send the given message immediately if there is credit available or blocks if the link
      * has not yet been granted credit or there is a streaming send ongoing.
+     * <p>
+     * Upon successfully sending the message the methods returns a {@link Tracker} that can
+     * be used to await settlement of the message from the remote.  If the sender has been
+     * configured to send the message pre-settled then the resulting Tracker will immediately
+     * report the message as remotely settlement and accepted.
      *
      * @param message
      *      the {@link Message} to send.
@@ -44,6 +49,11 @@ public interface StreamSender extends Link<StreamSender> {
      * has not yet been granted credit or there is a streaming send ongoing. The provided
      * delivery annotations are encoded along with the message, the annotations can be passed
      * repeatedly to send calls if sending the same delivery annotations with each message.
+     * <p>
+     * Upon successfully sending the message the methods returns a {@link Tracker} that can
+     * be used to await settlement of the message from the remote.  If the sender has been
+     * configured to send the message pre-settled then the resulting Tracker will immediately
+     * report the message as remotely settlement and accepted.
      *
      * @param message
      *      the {@link Message} to send.
@@ -59,6 +69,11 @@ public interface StreamSender extends Link<StreamSender> {
     /**
      * Send the given message if credit is available or returns null if no credit has been
      * granted to the link at the time of the send attempt or a streaming send is ongoing.
+     * <p>
+     * Upon successfully sending the message the methods returns a {@link Tracker} that can
+     * be used to await settlement of the message from the remote.  If the sender has been
+     * configured to send the message pre-settled then the resulting Tracker will immediately
+     * report the message as remotely settlement and accepted.
      *
      * @param message
      *      the {@link Message} to send if credit is available.
@@ -74,6 +89,11 @@ public interface StreamSender extends Link<StreamSender> {
      * granted to the link at the time of the send attempt. The provided delivery annotations
      * are encoded along with the message, the annotations can be passed repeatedly to send
      * calls if sending the same delivery annotations with each message.
+     * <p>
+     * Upon successfully sending the message the methods returns a {@link Tracker} that can
+     * be used to await settlement of the message from the remote.  If the sender has been
+     * configured to send the message pre-settled then the resulting Tracker will immediately
+     * report the message as remotely settlement and accepted.
      *
      * @param message
      *      the {@link Message} to send if credit is available.

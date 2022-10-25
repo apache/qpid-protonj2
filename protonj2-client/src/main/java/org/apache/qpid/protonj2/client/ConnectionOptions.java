@@ -580,12 +580,12 @@ public class ConnectionOptions implements Cloneable {
 
     /**
      * Controls if the connection will attempt to reconnect if unable to connect immediately
-     * or if an existing connection fails.
+     * or if an existing connection fails (default is disabled).
      * <p>
-     * This option enables or disables reconnection to a remote remote peer after IO errors.
-     * To control specifics of the reconnection configuration for the {@link Connection} the
-     * values must be updated in the {@link ReconnectOptions} configuration prior to creating
-     * the connection.
+     * This option enables or disables reconnection to a remote peer after IO errors or remote
+     * forcibly closing the connection. To control specifics of the reconnection configuration
+     * for the {@link Connection} the values must be updated in the {@link ReconnectOptions}
+     * configuration prior to creating the connection.
      *
      * @param reconnectEnabled
      *      Controls if reconnection is enabled or not for the associated {@link Connection}.

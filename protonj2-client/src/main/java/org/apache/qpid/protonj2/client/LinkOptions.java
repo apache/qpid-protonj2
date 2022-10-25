@@ -66,7 +66,8 @@ public abstract class LinkOptions<T extends LinkOptions<T>> {
 
     /**
      * Controls if the created Link will automatically settle the deliveries that have
-     * been received by the application (default is <code>true</code>).
+     * been received by the application (default is <code>true</code>). This option will
+     * also result in an accepted outcome being applied to the settled delivery.
      *
      * @param autoSettle
      *      The value to assign for auto delivery settlement.
