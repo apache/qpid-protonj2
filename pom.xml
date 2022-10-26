@@ -25,7 +25,7 @@
 
   <groupId>org.apache.qpid</groupId>
   <artifactId>protonj2-parent</artifactId>
-  <version>1.0.0-M10</version>
+  <version>1.0.0-M11-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Qpid ProtonJ2 Parent</name>
@@ -65,7 +65,7 @@
     <!-- surefire forked jvm arguments -->
     <argLine>-Xmx2g -enableassertions ${jacoco-config}</argLine>
 
-    <project.build.outputTimestamp>2022-10-26T14:57:42Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2022-10-26T14:59:51Z</project.build.outputTimestamp>
   </properties>
 
   <url>https://qpid.apache.org/proton</url>
