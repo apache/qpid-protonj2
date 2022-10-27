@@ -61,6 +61,13 @@ public final class Data implements Section<byte[]> {
     }
 
     /**
+     * @return the number of actual bytes carried in this Data section.
+     */
+    public int getDataLength() {
+        return buffer == null ? 0 : buffer.getReadableBytes();
+    }
+
+    /**
      * Returns the {@link ProtonBuffer} that contains the bytes carried in the {@link Data} section.
      * If the section carries no bytes then this method returns null.  This method allows the {@link Data}
      * section to be considered a carrier of {@link ProtonBuffer} types instead of the {@link Binary}
@@ -72,6 +79,24 @@ public final class Data implements Section<byte[]> {
      */
     public ProtonBuffer getBuffer() {
         return buffer;
+    }
+
+    /**
+     * Copies the binary payload of this Data section info the given target buffer.
+     *
+     * @param target
+     * 		The buffer where the binary payload is written to.
+     *
+     * @return this {@link Data} section instance.
+     */
+    public Data copyTo(ProtonBuffer target) {
+        if (buffer != null) {
+            buffer.markReadIndex();
+            buffer.readBytes(target, buffer.getReadableBytes());
+            buffer.resetReadIndex();
+        }
+
+        return this;
     }
 
     /**

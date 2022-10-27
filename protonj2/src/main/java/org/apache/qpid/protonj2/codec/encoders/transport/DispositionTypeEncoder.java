@@ -31,6 +31,13 @@ import org.apache.qpid.protonj2.types.transport.Disposition;
  */
 public final class DispositionTypeEncoder extends AbstractDescribedListTypeEncoder<Disposition> {
 
+    private static final byte[] ACCEPTED_ENCODING = new byte[] {
+        EncodingCodes.DESCRIBED_TYPE_INDICATOR,
+        EncodingCodes.SMALLULONG,
+        Accepted.DESCRIPTOR_CODE.byteValue(),
+        EncodingCodes.LIST0
+    };
+
     @Override
     public UnsignedLong getDescriptorCode() {
         return Disposition.DESCRIPTOR_CODE;
@@ -80,10 +87,7 @@ public final class DispositionTypeEncoder extends AbstractDescribedListTypeEncod
             case 4:
                 if (disposition.hasState()) {
                     if (disposition.getState() == Accepted.getInstance()) {
-                        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-                        buffer.writeByte(EncodingCodes.SMALLULONG);
-                        buffer.writeByte(Accepted.DESCRIPTOR_CODE.byteValue());
-                        buffer.writeByte(EncodingCodes.LIST0);
+                        buffer.writeBytes(ACCEPTED_ENCODING);
                     } else {
                         state.getEncoder().writeObject(buffer, state, disposition.getState());
                     }

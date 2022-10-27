@@ -29,6 +29,13 @@ import org.apache.qpid.protonj2.types.messaging.Released;
  */
 public final class ReleasedTypeEncoder extends AbstractDescribedListTypeEncoder<Released> {
 
+    private static final byte[] RELEASED_ENCODING = new byte[] {
+        EncodingCodes.DESCRIBED_TYPE_INDICATOR,
+        EncodingCodes.SMALLULONG,
+        Released.DESCRIPTOR_CODE.byteValue(),
+        EncodingCodes.LIST0
+    };
+
     @Override
     public Class<Released> getTypeClass() {
         return Released.class;
@@ -51,10 +58,7 @@ public final class ReleasedTypeEncoder extends AbstractDescribedListTypeEncoder<
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, Released value) {
-        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-        buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(Released.DESCRIPTOR_CODE.byteValue());
-        buffer.writeByte(EncodingCodes.LIST0);
+        buffer.writeBytes(RELEASED_ENCODING);
     }
 
     @Override

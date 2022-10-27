@@ -29,6 +29,13 @@ import org.apache.qpid.protonj2.types.messaging.Accepted;
  */
 public final class AcceptedTypeEncoder extends AbstractDescribedListTypeEncoder<Accepted> {
 
+    private static final byte[] ACCEPTED_ENCODING = new byte[] {
+        EncodingCodes.DESCRIBED_TYPE_INDICATOR,
+        EncodingCodes.SMALLULONG,
+        Accepted.DESCRIPTOR_CODE.byteValue(),
+        EncodingCodes.LIST0
+    };
+
     @Override
     public Class<Accepted> getTypeClass() {
         return Accepted.class;
@@ -51,10 +58,7 @@ public final class AcceptedTypeEncoder extends AbstractDescribedListTypeEncoder<
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, Accepted value) {
-        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-        buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(Accepted.DESCRIPTOR_CODE.byteValue());
-        buffer.writeByte(EncodingCodes.LIST0);
+        buffer.writeBytes(ACCEPTED_ENCODING);
     }
 
     @Override

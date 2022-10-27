@@ -29,6 +29,10 @@ import org.apache.qpid.protonj2.types.messaging.Data;
  */
 public final class DataTypeEncoder extends AbstractDescribedTypeEncoder<Data> {
 
+    private static final byte[] DATA_PREAMBLE = new byte[] {
+        EncodingCodes.DESCRIBED_TYPE_INDICATOR, EncodingCodes.SMALLULONG, Data.DESCRIPTOR_CODE.byteValue()
+    };
+
     @Override
     public Class<Data> getTypeClass() {
         return Data.class;
@@ -46,11 +50,21 @@ public final class DataTypeEncoder extends AbstractDescribedTypeEncoder<Data> {
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, Data value) {
-        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-        buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(Data.DESCRIPTOR_CODE.byteValue());
+        buffer.writeBytes(DATA_PREAMBLE);
 
-        state.getEncoder().writeBinary(buffer, state, value.getBuffer());
+        final int dataLength = value.getDataLength();
+
+        if (dataLength > 255) {
+            buffer.ensureWritable(dataLength + Long.BYTES);
+            buffer.writeByte(EncodingCodes.VBIN32);
+            buffer.writeInt(dataLength);
+        } else {
+            buffer.ensureWritable(dataLength + Short.BYTES);
+            buffer.writeByte(EncodingCodes.VBIN8);
+            buffer.writeByte((byte) dataLength);
+        }
+
+        value.copyTo(buffer);
     }
 
     @Override

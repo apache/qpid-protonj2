@@ -31,6 +31,10 @@ import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 @SuppressWarnings({ "rawtypes" })
 public final class AmqpValueTypeEncoder extends AbstractDescribedTypeEncoder<AmqpValue> {
 
+    private static final byte[] VALUE_PREAMBLE = new byte[] {
+            EncodingCodes.DESCRIBED_TYPE_INDICATOR, EncodingCodes.SMALLULONG, AmqpValue.DESCRIPTOR_CODE.byteValue()
+        };
+
     @Override
     public Class<AmqpValue> getTypeClass() {
         return AmqpValue.class;
@@ -48,9 +52,7 @@ public final class AmqpValueTypeEncoder extends AbstractDescribedTypeEncoder<Amq
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, AmqpValue value) {
-        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-        buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(AmqpValue.DESCRIPTOR_CODE.byteValue());
+        buffer.writeBytes(VALUE_PREAMBLE);
 
         state.getEncoder().writeObject(buffer, state, value.getValue());
     }
@@ -60,7 +62,7 @@ public final class AmqpValueTypeEncoder extends AbstractDescribedTypeEncoder<Amq
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
 
-        int startIndex = buffer.getWriteIndex();
+        final int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size and write the count of list elements.
         buffer.writeInt(0);
@@ -69,8 +71,8 @@ public final class AmqpValueTypeEncoder extends AbstractDescribedTypeEncoder<Amq
         writeRawArray(buffer, state, values);
 
         // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
-        long writeSize = endIndex - startIndex - Integer.BYTES;
+        final int endIndex = buffer.getWriteIndex();
+        final long writeSize = endIndex - startIndex - Integer.BYTES;
 
         if (writeSize > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);

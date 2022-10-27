@@ -33,6 +33,10 @@ import org.apache.qpid.protonj2.types.messaging.AmqpSequence;
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public final class AmqpSequenceTypeEncoder extends AbstractDescribedTypeEncoder<AmqpSequence> {
 
+    private static final byte[] SEQUENCE_PREAMBLE = new byte[] {
+            EncodingCodes.DESCRIBED_TYPE_INDICATOR, EncodingCodes.SMALLULONG, AmqpSequence.DESCRIPTOR_CODE.byteValue()
+        };
+
     @Override
     public Class<AmqpSequence> getTypeClass() {
         return AmqpSequence.class;
@@ -50,9 +54,7 @@ public final class AmqpSequenceTypeEncoder extends AbstractDescribedTypeEncoder<
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, AmqpSequence value) {
-        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-        buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(AmqpSequence.DESCRIPTOR_CODE.byteValue());
+        buffer.writeBytes(SEQUENCE_PREAMBLE);
 
         state.getEncoder().writeList(buffer, state, value.getValue());
     }
@@ -71,8 +73,8 @@ public final class AmqpSequenceTypeEncoder extends AbstractDescribedTypeEncoder<
         writeRawArray(buffer, state, values);
 
         // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
-        long writeSize = endIndex - startIndex - Integer.BYTES;
+        final int endIndex = buffer.getWriteIndex();
+        final long writeSize = endIndex - startIndex - Integer.BYTES;
 
         if (writeSize > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
@@ -86,7 +88,7 @@ public final class AmqpSequenceTypeEncoder extends AbstractDescribedTypeEncoder<
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
 
-        List[] elements = new List[values.length];
+        final List[] elements = new List[values.length];
 
         for (int i = 0; i < values.length; ++i) {
             AmqpSequence sequence = (AmqpSequence) values[i];
