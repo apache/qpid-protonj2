@@ -406,6 +406,11 @@ public interface Connection extends AutoCloseable {
      * create the default anonymous connection {@link Sender} as well as creating those
      * resources created from the {@link Connection} such as {@link Sender} and {@link Receiver}
      * instances not married to a specific {@link Session}.
+     * <p>
+     * While it is possible to use the returned Session to cause Connection level resources
+     * to operate within a transaction it is strongly discouraged. Transactions should be
+     * performed from a user created Session with a single {@link Sender} or {@link Receiver}
+     * link for best results.
      *
      * @return a new {@link Session} instance.
      *

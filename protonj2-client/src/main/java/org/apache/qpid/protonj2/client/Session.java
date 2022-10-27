@@ -21,11 +21,17 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
+import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientTransactionNotActiveException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 
 /**
  * Session object used to create {@link Sender} and {@link Receiver} instances.
+ * <p>
+ * A session can serve as a context for a running transaction in which case care should be
+ * taken to ensure that work done is inside the scope of the transaction begin and end calls
+ * such as ensuring that receivers accept and settle before calling transaction commit if
+ * the work is meant to be within the transaction scope.
  */
 public interface Session extends AutoCloseable {
 
@@ -281,9 +287,9 @@ public interface Session extends AutoCloseable {
      *
      * A {@link Session} that has an active transaction will perform all sends and all delivery dispositions
      * under that active transaction.  If the user wishes to send with the same session but outside of a
-     * transaction they user must commit the active transaction and not request that a new one be started.
+     * transaction the user must commit the active transaction and not request that a new one be started.
      * A session can only have one active transaction at a time and as such any call to begin while there is
-     * a currently active transaction will throw an {@link ClientTransactionNotActiveException} to indicate that
+     * a currently active transaction will throw an {@link ClientIllegalStateException} to indicate that
      * the operation being requested is not valid at that time.
      *
      * This is a blocking method that will return successfully only after a new transaction has been started.
