@@ -931,6 +931,61 @@ public class TransactionsTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testAwaitSettlementWorksForMessageSentInTransaction() throws Exception {
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept(txnId);
+            peer.expectTransfer().withHandle(0)
+                                 .withNonNullPayload()
+                                 .withState().transactional().withTxnId(txnId).and()
+                                 .respond()
+                                 .withState().transactional().withTxnId(txnId).withAccepted().and()
+                                 .withSettled(true);
+            peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+            Sender sender = session.openSender("address").openFuture().get();
+
+            session.beginTransaction();
+
+            final Tracker tracker = sender.send(Message.create("test-message"));
+
+            assertNotNull(tracker);
+            assertNotNull(tracker.awaitAccepted());
+            assertTrue(tracker.remoteState().isAccepted());
+            assertEquals(tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL,
+                         "Delivery inside transaction should have Transactional state");
+            assertEquals(tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL,
+                         "Delivery inside transaction should have Transactional state: " + tracker.state().getType());
+            Wait.assertTrue("Delivery in transaction should be locally settled after response", () -> tracker.settled());
+
+            session.commitTransaction();
+
+            session.closeAsync();
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testSendMessagesInsideOfUniqueTransactions() throws Exception {
         final byte[] txnId1 = new byte[] { 0, 1, 2, 3 };
         final byte[] txnId2 = new byte[] { 1, 1, 2, 3 };

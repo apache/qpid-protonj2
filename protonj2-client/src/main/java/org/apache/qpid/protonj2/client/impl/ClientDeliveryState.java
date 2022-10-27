@@ -305,6 +305,11 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
 
         @Override
+        public boolean isAccepted() {
+            return txnState.getOutcome() instanceof Accepted;
+        }
+
+        @Override
         org.apache.qpid.protonj2.types.transport.DeliveryState getProtonDeliveryState() {
             return txnState;
         }
