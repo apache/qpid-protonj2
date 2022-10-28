@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.messaging;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -50,7 +51,7 @@ public final class DeleteOnNoLinksOrMessagesTypeEncoder extends AbstractDescribe
     }
 
     @Override
-    public void writeElement(DeleteOnNoLinksOrMessages source, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(DeleteOnNoLinksOrMessages source, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
     }
 
     @Override

@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.security;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -44,16 +45,16 @@ public final class SaslInitTypeEncoder extends AbstractDescribedListTypeEncoder<
     }
 
     @Override
-    public void writeElement(SaslInit init, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(SaslInit init, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeSymbol(buffer, state, init.getMechanism());
+                encoder.writeSymbol(buffer, state, init.getMechanism());
                 break;
             case 1:
-                state.getEncoder().writeBinary(buffer, state, init.getInitialResponse());
+                encoder.writeBinary(buffer, state, init.getInitialResponse());
                 break;
             case 2:
-                state.getEncoder().writeString(buffer, state, init.getHostname());
+                encoder.writeString(buffer, state, init.getHostname());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown SaslInit value index: " + index);

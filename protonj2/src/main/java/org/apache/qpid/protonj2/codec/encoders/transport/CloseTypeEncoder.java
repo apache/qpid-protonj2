@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.transport;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,10 +46,10 @@ public final class CloseTypeEncoder extends AbstractDescribedListTypeEncoder<Clo
     }
 
     @Override
-    public void writeElement(Close close, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Close close, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeObject(buffer, state, close.getError());
+                encoder.writeObject(buffer, state, close.getError());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Close value index: " + index);

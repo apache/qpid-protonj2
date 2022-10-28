@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.transport;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,18 +46,18 @@ public final class AttachTypeEncoder extends AbstractDescribedListTypeEncoder<At
     }
 
     @Override
-    public void writeElement(Attach attach, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Attach attach, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
                 if (attach.hasName()) {
-                    state.getEncoder().writeString(buffer, state, attach.getName());
+                    encoder.writeString(buffer, state, attach.getName());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 1:
                 if (attach.hasHandle()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, attach.getHandle());
+                    encoder.writeUnsignedInteger(buffer, state, attach.getHandle());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
@@ -70,35 +71,35 @@ public final class AttachTypeEncoder extends AbstractDescribedListTypeEncoder<At
                 break;
             case 3:
                 if (attach.hasSenderSettleMode()) {
-                    state.getEncoder().writeUnsignedByte(buffer, state, attach.getSenderSettleMode().byteValue());
+                    encoder.writeUnsignedByte(buffer, state, attach.getSenderSettleMode().byteValue());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 4:
                 if (attach.hasReceiverSettleMode()) {
-                    state.getEncoder().writeUnsignedByte(buffer, state, attach.getReceiverSettleMode().byteValue());
+                    encoder.writeUnsignedByte(buffer, state, attach.getReceiverSettleMode().byteValue());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 5:
                 if (attach.hasSource()) {
-                    state.getEncoder().writeObject(buffer, state, attach.getSource());
+                    encoder.writeObject(buffer, state, attach.getSource());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 6:
                 if (attach.hasTargetOrCoordinator()) {
-                    state.getEncoder().writeObject(buffer, state, attach.getTarget());
+                    encoder.writeObject(buffer, state, attach.getTarget());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 7:
                 if (attach.hasUnsettled()) {
-                    state.getEncoder().writeMap(buffer, state, attach.getUnsettled());
+                    encoder.writeMap(buffer, state, attach.getUnsettled());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
@@ -112,35 +113,35 @@ public final class AttachTypeEncoder extends AbstractDescribedListTypeEncoder<At
                 break;
             case 9:
                 if (attach.hasInitialDeliveryCount()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, attach.getInitialDeliveryCount());
+                    encoder.writeUnsignedInteger(buffer, state, attach.getInitialDeliveryCount());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 10:
                 if (attach.hasMaxMessageSize()) {
-                    state.getEncoder().writeUnsignedLong(buffer, state, attach.getMaxMessageSize());
+                    encoder.writeUnsignedLong(buffer, state, attach.getMaxMessageSize());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 11:
                 if (attach.hasOfferedCapabilities()) {
-                    state.getEncoder().writeArray(buffer, state, attach.getOfferedCapabilities());
+                    encoder.writeArray(buffer, state, attach.getOfferedCapabilities());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 12:
                 if (attach.hasDesiredCapabilities()) {
-                    state.getEncoder().writeArray(buffer, state, attach.getDesiredCapabilities());
+                    encoder.writeArray(buffer, state, attach.getDesiredCapabilities());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 13:
                 if (attach.hasProperties()) {
-                    state.getEncoder().writeMap(buffer, state, attach.getProperties());
+                    encoder.writeMap(buffer, state, attach.getProperties());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }

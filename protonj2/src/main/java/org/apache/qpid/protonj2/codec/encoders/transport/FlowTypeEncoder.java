@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.transport;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,60 +46,60 @@ public final class FlowTypeEncoder extends AbstractDescribedListTypeEncoder<Flow
     }
 
     @Override
-    public void writeElement(Flow flow, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Flow flow, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
                 if (flow.hasNextIncomingId()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getNextIncomingId());
+                    encoder.writeUnsignedInteger(buffer, state, flow.getNextIncomingId());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 1:
                 if (flow.hasIncomingWindow()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getIncomingWindow());
+                    encoder.writeUnsignedInteger(buffer, state, flow.getIncomingWindow());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 2:
                 if (flow.hasNextOutgoingId()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getNextOutgoingId());
+                    encoder.writeUnsignedInteger(buffer, state, flow.getNextOutgoingId());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 3:
                 if (flow.hasOutgoingWindow()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getOutgoingWindow());
+                    encoder.writeUnsignedInteger(buffer, state, flow.getOutgoingWindow());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 4:
                 if (flow.hasHandle()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getHandle());
+                    encoder.writeUnsignedInteger(buffer, state, flow.getHandle());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 5:
                 if (flow.hasDeliveryCount()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getDeliveryCount());
+                    encoder.writeUnsignedInteger(buffer, state, flow.getDeliveryCount());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 6:
                 if (flow.hasLinkCredit()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getLinkCredit());
+                    encoder.writeUnsignedInteger(buffer, state, flow.getLinkCredit());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 7:
                 if (flow.hasAvailable()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getAvailable());
+                    encoder.writeUnsignedInteger(buffer, state, flow.getAvailable());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
@@ -118,7 +119,7 @@ public final class FlowTypeEncoder extends AbstractDescribedListTypeEncoder<Flow
                 }
                 break;
             case 10:
-                state.getEncoder().writeMap(buffer, state, flow.getProperties());
+                encoder.writeMap(buffer, state, flow.getProperties());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Flow value index: " + index);

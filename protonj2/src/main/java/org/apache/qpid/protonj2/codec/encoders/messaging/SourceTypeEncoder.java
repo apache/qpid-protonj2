@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.messaging;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -48,40 +49,40 @@ public final class SourceTypeEncoder extends AbstractDescribedListTypeEncoder<So
     }
 
     @Override
-    public void writeElement(Source source, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Source source, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeString(buffer, state, source.getAddress());
+                encoder.writeString(buffer, state, source.getAddress());
                 break;
             case 1:
-                state.getEncoder().writeUnsignedInteger(buffer, state, source.getDurable().getValue());
+                encoder.writeUnsignedInteger(buffer, state, source.getDurable().getValue());
                 break;
             case 2:
-                state.getEncoder().writeSymbol(buffer, state, source.getExpiryPolicy().getPolicy());
+                encoder.writeSymbol(buffer, state, source.getExpiryPolicy().getPolicy());
                 break;
             case 3:
-                state.getEncoder().writeUnsignedInteger(buffer, state, source.getTimeout());
+                encoder.writeUnsignedInteger(buffer, state, source.getTimeout());
                 break;
             case 4:
                 buffer.writeByte(source.isDynamic() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 break;
             case 5:
-                state.getEncoder().writeMap(buffer, state, source.getDynamicNodeProperties());
+                encoder.writeMap(buffer, state, source.getDynamicNodeProperties());
                 break;
             case 6:
-                state.getEncoder().writeSymbol(buffer, state, source.getDistributionMode());
+                encoder.writeSymbol(buffer, state, source.getDistributionMode());
                 break;
             case 7:
-                state.getEncoder().writeMap(buffer, state, source.getFilter());
+                encoder.writeMap(buffer, state, source.getFilter());
                 break;
             case 8:
-                state.getEncoder().writeObject(buffer, state, source.getDefaultOutcome());
+                encoder.writeObject(buffer, state, source.getDefaultOutcome());
                 break;
             case 9:
-                state.getEncoder().writeArray(buffer, state, source.getOutcomes());
+                encoder.writeArray(buffer, state, source.getOutcomes());
                 break;
             case 10:
-                state.getEncoder().writeArray(buffer, state, source.getCapabilities());
+                encoder.writeArray(buffer, state, source.getCapabilities());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Source value index: " + index);

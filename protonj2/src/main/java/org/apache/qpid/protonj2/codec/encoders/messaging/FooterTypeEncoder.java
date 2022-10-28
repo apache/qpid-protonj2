@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.messaging;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedMapTypeEncoder;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -58,11 +59,11 @@ public final class FooterTypeEncoder extends AbstractDescribedMapTypeEncoder<Obj
     }
 
     @Override
-    public void writeMapEntries(ProtonBuffer buffer, EncoderState state, Footer footers) {
+    public void writeMapEntries(ProtonBuffer buffer, Encoder encoder, EncoderState state, Footer footers) {
         // Write the Map elements and then compute total size written.
         footers.getValue().forEach((key, value) -> {
-            state.getEncoder().writeObject(buffer, state, key);
-            state.getEncoder().writeObject(buffer, state, value);
+            encoder.writeObject(buffer, state, key);
+            encoder.writeObject(buffer, state, value);
         });
     }
 }

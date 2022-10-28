@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.transport;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,32 +46,32 @@ public final class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<
     }
 
     @Override
-    public void writeElement(Transfer transfer, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Transfer transfer, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
                 if (transfer.hasHandle()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, transfer.getHandle());
+                    encoder.writeUnsignedInteger(buffer, state, transfer.getHandle());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 1:
                 if (transfer.hasDeliveryId()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, transfer.getDeliveryId());
+                    encoder.writeUnsignedInteger(buffer, state, transfer.getDeliveryId());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 2:
                 if (transfer.hasDeliveryTag()) {
-                    state.getEncoder().writeDeliveryTag(buffer, state, transfer.getDeliveryTag());
+                    encoder.writeDeliveryTag(buffer, state, transfer.getDeliveryTag());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 3:
                 if (transfer.hasMessageFormat()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, transfer.getMessageFormat());
+                    encoder.writeUnsignedInteger(buffer, state, transfer.getMessageFormat());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
@@ -91,13 +92,13 @@ public final class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<
                 break;
             case 6:
                 if (transfer.hasRcvSettleMode()) {
-                    state.getEncoder().writeUnsignedByte(buffer, state, transfer.getRcvSettleMode().byteValue());
+                    encoder.writeUnsignedByte(buffer, state, transfer.getRcvSettleMode().byteValue());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 7:
-                state.getEncoder().writeObject(buffer, state, transfer.getState());
+                encoder.writeObject(buffer, state, transfer.getState());
                 break;
             case 8:
                 if (transfer.hasResume()) {

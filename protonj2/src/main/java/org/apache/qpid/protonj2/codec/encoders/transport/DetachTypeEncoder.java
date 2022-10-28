@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.transport;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,11 +46,11 @@ public final class DetachTypeEncoder extends AbstractDescribedListTypeEncoder<De
     }
 
     @Override
-    public void writeElement(Detach detach, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Detach detach, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
                 if (detach.hasHandle()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, detach.getHandle());
+                    encoder.writeUnsignedInteger(buffer, state, detach.getHandle());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
@@ -58,7 +59,7 @@ public final class DetachTypeEncoder extends AbstractDescribedListTypeEncoder<De
                 buffer.writeByte(detach.getClosed() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 break;
             case 2:
-                state.getEncoder().writeObject(buffer, state, detach.getError());
+                encoder.writeObject(buffer, state, detach.getError());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Detach value index: " + index);

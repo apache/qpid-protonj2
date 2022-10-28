@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.transport;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,10 +46,10 @@ public final class EndTypeEncoder extends AbstractDescribedListTypeEncoder<End> 
     }
 
     @Override
-    public void writeElement(End end, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(End end, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeObject(buffer, state, end.getError());
+                encoder.writeObject(buffer, state, end.getError());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown End value index: " + index);

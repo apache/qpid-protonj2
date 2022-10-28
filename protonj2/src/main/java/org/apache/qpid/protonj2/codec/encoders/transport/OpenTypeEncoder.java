@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.transport;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,76 +46,76 @@ public final class OpenTypeEncoder extends AbstractDescribedListTypeEncoder<Open
     }
 
     @Override
-    public void writeElement(Open open, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Open open, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
                 if (open.hasContainerId()) {
-                    state.getEncoder().writeString(buffer, state, open.getContainerId());
+                    encoder.writeString(buffer, state, open.getContainerId());
                 } else {
-                    state.getEncoder().writeNull(buffer, state);
+                    buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 1:
                 if (open.hasHostname()) {
-                    state.getEncoder().writeString(buffer, state, open.getHostname());
+                    encoder.writeString(buffer, state, open.getHostname());
                 } else {
-                    state.getEncoder().writeNull(buffer, state);
+                    buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 2:
                 if (open.hasMaxFrameSize()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, open.getMaxFrameSize());
+                    encoder.writeUnsignedInteger(buffer, state, open.getMaxFrameSize());
                 } else {
-                    state.getEncoder().writeNull(buffer, state);
+                    buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 3:
                 if (open.hasChannelMax()) {
-                    state.getEncoder().writeUnsignedShort(buffer, state, open.getChannelMax());
+                    encoder.writeUnsignedShort(buffer, state, open.getChannelMax());
                 } else {
-                    state.getEncoder().writeNull(buffer, state);
+                    buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 4:
                 if (open.hasIdleTimeout()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, open.getIdleTimeout());
+                    encoder.writeUnsignedInteger(buffer, state, open.getIdleTimeout());
                 } else {
-                    state.getEncoder().writeNull(buffer, state);
+                    buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 5:
                 if (open.hasOutgoingLocales()) {
-                    state.getEncoder().writeArray(buffer, state, open.getOutgoingLocales());
+                    encoder.writeArray(buffer, state, open.getOutgoingLocales());
                 } else {
-                    state.getEncoder().writeNull(buffer, state);
+                    buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 6:
                 if (open.hasIncomingLocales()) {
-                    state.getEncoder().writeArray(buffer, state, open.getIncomingLocales());
+                    encoder.writeArray(buffer, state, open.getIncomingLocales());
                 } else {
-                    state.getEncoder().writeNull(buffer, state);
+                    buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 7:
                 if (open.hasOfferedCapabilities()) {
-                    state.getEncoder().writeArray(buffer, state, open.getOfferedCapabilities());
+                    encoder.writeArray(buffer, state, open.getOfferedCapabilities());
                 } else {
-                    state.getEncoder().writeNull(buffer, state);
+                    buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 8:
                 if (open.hasDesiredCapabilities()) {
-                    state.getEncoder().writeArray(buffer, state, open.getDesiredCapabilities());
+                    encoder.writeArray(buffer, state, open.getDesiredCapabilities());
                 } else {
-                    state.getEncoder().writeNull(buffer, state);
+                    buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 9:
                 if (open.hasProperties()) {
-                    state.getEncoder().writeMap(buffer, state, open.getProperties());
+                    encoder.writeMap(buffer, state, open.getProperties());
                 } else {
-                    state.getEncoder().writeNull(buffer, state);
+                    buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             default:

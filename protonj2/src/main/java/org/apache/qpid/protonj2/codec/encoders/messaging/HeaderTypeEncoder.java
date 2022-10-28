@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.messaging;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -50,7 +51,7 @@ public final class HeaderTypeEncoder extends AbstractDescribedListTypeEncoder<He
     }
 
     @Override
-    public void writeElement(Header header, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Header header, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         // When encoding ensure that values that were never set are omitted and a simple
         // NULL entry is written in the slot instead (don't write defaults).
 
@@ -64,14 +65,14 @@ public final class HeaderTypeEncoder extends AbstractDescribedListTypeEncoder<He
                 break;
             case 1:
                 if (header.hasPriority()) {
-                    state.getEncoder().writeUnsignedByte(buffer, state, header.getPriority());
+                    encoder.writeUnsignedByte(buffer, state, header.getPriority());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 2:
                 if (header.hasTimeToLive()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, header.getTimeToLive());
+                    encoder.writeUnsignedInteger(buffer, state, header.getTimeToLive());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
@@ -85,7 +86,7 @@ public final class HeaderTypeEncoder extends AbstractDescribedListTypeEncoder<He
                 break;
             case 4:
                 if (header.hasDeliveryCount()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, header.getDeliveryCount());
+                    encoder.writeUnsignedInteger(buffer, state, header.getDeliveryCount());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }

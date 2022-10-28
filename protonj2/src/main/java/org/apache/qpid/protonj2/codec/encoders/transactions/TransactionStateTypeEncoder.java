@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.transactions;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,13 +46,13 @@ public final class TransactionStateTypeEncoder extends AbstractDescribedListType
     }
 
     @Override
-    public void writeElement(TransactionalState txState, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(TransactionalState txState, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeBinary(buffer, state, txState.getTxnId());
+                encoder.writeBinary(buffer, state, txState.getTxnId());
                 break;
             case 1:
-                state.getEncoder().writeObject(buffer, state, txState.getOutcome());
+                encoder.writeObject(buffer, state, txState.getOutcome());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown TransactionalState value index: " + index);

@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.messaging;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedMapTypeEncoder;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -58,11 +59,11 @@ public final class MessageAnnotationsTypeEncoder extends AbstractDescribedMapTyp
     }
 
     @Override
-    public void writeMapEntries(ProtonBuffer buffer, EncoderState state, MessageAnnotations annotations) {
+    public void writeMapEntries(ProtonBuffer buffer, Encoder encoder, EncoderState state, MessageAnnotations annotations) {
         // Write the Map elements and then compute total size written.
         annotations.getValue().forEach((key, value) -> {
-            state.getEncoder().writeSymbol(buffer, state, key);
-            state.getEncoder().writeObject(buffer, state, value);
+            encoder.writeSymbol(buffer, state, key);
+            encoder.writeObject(buffer, state, value);
         });
     }
 }

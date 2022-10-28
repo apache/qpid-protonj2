@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 
@@ -76,17 +77,21 @@ public abstract class AbstractDescribedMapTypeEncoder<K, V, M> extends AbstractD
      *
      * @param buffer
      *      the buffer where the type should be encoded to.
+     * @param encoder
+     *      the current encoder.
      * @param state
      *      the current encoder state.
      * @param value
      * 		the value which will be encoded as a map type.
      */
-    public abstract void writeMapEntries(ProtonBuffer buffer, EncoderState state, M value);
+    public abstract void writeMapEntries(ProtonBuffer buffer, Encoder encoder, EncoderState state, M value);
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, M value) {
+        final Encoder encoder = state.getEncoder();
+
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode().byteValue());
+        encoder.writeUnsignedLong(buffer, state, getDescriptorCode().byteValue());
 
         if (hasMap(value)) {
             final int count = getMapSize(value);
@@ -96,25 +101,25 @@ public abstract class AbstractDescribedMapTypeEncoder<K, V, M> extends AbstractD
 
             switch (encodingCode) {
                 case EncodingCodes.MAP8:
-                    writeSmallType(buffer, state, value, count);
+                    writeSmallType(buffer, encoder, state, value, count);
                     break;
                 case EncodingCodes.MAP32:
-                    writeLargeType(buffer, state, value, count);
+                    writeLargeType(buffer, encoder, state, value, count);
                     break;
             }
         } else {
-            state.getEncoder().writeNull(buffer, state);
+            buffer.writeByte(EncodingCodes.NULL);
         }
     }
 
-    private void writeSmallType(ProtonBuffer buffer, EncoderState state, M value, int elementCount) {
+    private void writeSmallType(ProtonBuffer buffer, Encoder encoder, EncoderState state, M value, int elementCount) {
         final int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size and write the count of list elements.
         buffer.writeByte((byte) 0);
         buffer.writeByte((byte) (elementCount * 2));
 
-        writeMapEntries(buffer, state, value);
+        writeMapEntries(buffer, encoder, state, value);
 
         // Move back and write the size
         final int writeSize = (buffer.getWriteIndex() - startIndex) - Byte.BYTES;
@@ -122,14 +127,14 @@ public abstract class AbstractDescribedMapTypeEncoder<K, V, M> extends AbstractD
         buffer.setByte(startIndex, writeSize);
     }
 
-    private void writeLargeType(ProtonBuffer buffer, EncoderState state, M value, int elementCount) {
+    private void writeLargeType(ProtonBuffer buffer, Encoder encoder, EncoderState state, M value, int elementCount) {
         final int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size and write the count of list elements.
         buffer.writeInt(0);
         buffer.writeInt(elementCount * 2);
 
-        writeMapEntries(buffer, state, value);
+        writeMapEntries(buffer, encoder, state, value);
 
         // Move back and write the size
         final int writeSize = (buffer.getWriteIndex() - startIndex) - Integer.BYTES;
@@ -177,7 +182,7 @@ public abstract class AbstractDescribedMapTypeEncoder<K, V, M> extends AbstractD
             buffer.writeInt(0);
             buffer.writeInt(count * 2);
 
-            writeMapEntries(buffer, state, map);
+            writeMapEntries(buffer, state.getEncoder(), state, map);
 
             // Move back and write the size
             final int writeSize = buffer.getWriteIndex() - mapStartIndex - Integer.BYTES;

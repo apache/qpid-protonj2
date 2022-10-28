@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.messaging;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,7 +46,7 @@ public final class ModifiedTypeEncoder extends AbstractDescribedListTypeEncoder<
     }
 
     @Override
-    public void writeElement(Modified source, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Modified source, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
                 buffer.writeByte(source.isDeliveryFailed() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
@@ -54,7 +55,7 @@ public final class ModifiedTypeEncoder extends AbstractDescribedListTypeEncoder<
                 buffer.writeByte(source.isUndeliverableHere() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 break;
             case 2:
-                state.getEncoder().writeMap(buffer, state, source.getMessageAnnotations());
+                encoder.writeMap(buffer, state, source.getMessageAnnotations());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Modified value index: " + index);

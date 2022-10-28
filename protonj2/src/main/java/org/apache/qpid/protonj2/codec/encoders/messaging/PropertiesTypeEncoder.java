@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.messaging;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,58 +46,58 @@ public final class PropertiesTypeEncoder extends AbstractDescribedListTypeEncode
     }
 
     @Override
-    public void writeElement(Properties properties, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Properties properties, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeObject(buffer, state, properties.getMessageId());
+                encoder.writeObject(buffer, state, properties.getMessageId());
                 break;
             case 1:
-                state.getEncoder().writeBinary(buffer, state, properties.getUserId());
+                encoder.writeBinary(buffer, state, properties.getUserId());
                 break;
             case 2:
-                state.getEncoder().writeString(buffer, state, properties.getTo());
+                encoder.writeString(buffer, state, properties.getTo());
                 break;
             case 3:
-                state.getEncoder().writeString(buffer, state, properties.getSubject());
+                encoder.writeString(buffer, state, properties.getSubject());
                 break;
             case 4:
-                state.getEncoder().writeString(buffer, state, properties.getReplyTo());
+                encoder.writeString(buffer, state, properties.getReplyTo());
                 break;
             case 5:
-                state.getEncoder().writeObject(buffer, state, properties.getCorrelationId());
+                encoder.writeObject(buffer, state, properties.getCorrelationId());
                 break;
             case 6:
-                state.getEncoder().writeSymbol(buffer, state, properties.getContentType());
+                encoder.writeSymbol(buffer, state, properties.getContentType());
                 break;
             case 7:
-                state.getEncoder().writeSymbol(buffer, state, properties.getContentEncoding());
+                encoder.writeSymbol(buffer, state, properties.getContentEncoding());
                 break;
             case 8:
                 if (properties.hasAbsoluteExpiryTime()) {
-                    state.getEncoder().writeTimestamp(buffer, state, properties.getAbsoluteExpiryTime());
+                    encoder.writeTimestamp(buffer, state, properties.getAbsoluteExpiryTime());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 9:
                 if (properties.hasCreationTime()) {
-                    state.getEncoder().writeTimestamp(buffer, state, properties.getCreationTime());
+                    encoder.writeTimestamp(buffer, state, properties.getCreationTime());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 10:
-                state.getEncoder().writeString(buffer, state, properties.getGroupId());
+                encoder.writeString(buffer, state, properties.getGroupId());
                 break;
             case 11:
                 if (properties.hasGroupSequence()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, properties.getGroupSequence());
+                    encoder.writeUnsignedInteger(buffer, state, properties.getGroupSequence());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 12:
-                state.getEncoder().writeString(buffer, state, properties.getReplyToGroupId());
+                encoder.writeString(buffer, state, properties.getReplyToGroupId());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Properties value index: " + index);

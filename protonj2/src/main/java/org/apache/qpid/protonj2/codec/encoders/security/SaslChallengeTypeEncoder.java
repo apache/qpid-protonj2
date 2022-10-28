@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.security;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,10 +46,10 @@ public final class SaslChallengeTypeEncoder extends AbstractDescribedListTypeEnc
     }
 
     @Override
-    public void writeElement(SaslChallenge challenge, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(SaslChallenge challenge, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeBinary(buffer, state, challenge.getChallenge());
+                encoder.writeBinary(buffer, state, challenge.getChallenge());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown SaslChallenge value index: " + index);

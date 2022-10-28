@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.transport;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,60 +46,60 @@ public final class BeginTypeEncoder extends AbstractDescribedListTypeEncoder<Beg
     }
 
     @Override
-    public void writeElement(Begin begin, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Begin begin, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
                 if (begin.hasRemoteChannel()) {
-                    state.getEncoder().writeUnsignedShort(buffer, state, begin.getRemoteChannel());
+                    encoder.writeUnsignedShort(buffer, state, begin.getRemoteChannel());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 1:
                 if (begin.hasNextOutgoingId()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, begin.getNextOutgoingId());
+                    encoder.writeUnsignedInteger(buffer, state, begin.getNextOutgoingId());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 2:
                 if (begin.hasIncomingWindow()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, begin.getIncomingWindow());
+                    encoder.writeUnsignedInteger(buffer, state, begin.getIncomingWindow());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 3:
                 if (begin.hasOutgoingWindow()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, begin.getOutgoingWindow());
+                    encoder.writeUnsignedInteger(buffer, state, begin.getOutgoingWindow());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 4:
                 if (begin.hasHandleMax()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, begin.getHandleMax());
+                    encoder.writeUnsignedInteger(buffer, state, begin.getHandleMax());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 5:
                 if (begin.hasOfferedCapabilities()) {
-                    state.getEncoder().writeArray(buffer, state, begin.getOfferedCapabilities());
+                    encoder.writeArray(buffer, state, begin.getOfferedCapabilities());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 6:
                 if (begin.hasDesiredCapabilities()) {
-                    state.getEncoder().writeArray(buffer, state, begin.getDesiredCapabilities());
+                    encoder.writeArray(buffer, state, begin.getDesiredCapabilities());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 7:
                 if (begin.hasProperties()) {
-                    state.getEncoder().writeMap(buffer, state, begin.getProperties());
+                    encoder.writeMap(buffer, state, begin.getProperties());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }

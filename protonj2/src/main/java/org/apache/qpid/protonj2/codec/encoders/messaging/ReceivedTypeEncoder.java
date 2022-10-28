@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.messaging;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,13 +46,13 @@ public final class ReceivedTypeEncoder extends AbstractDescribedListTypeEncoder<
     }
 
     @Override
-    public void writeElement(Received source, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Received source, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeUnsignedInteger(buffer, state, source.getSectionNumber());
+                encoder.writeUnsignedInteger(buffer, state, source.getSectionNumber());
                 break;
             case 1:
-                state.getEncoder().writeUnsignedLong(buffer, state, source.getSectionOffset());
+                encoder.writeUnsignedLong(buffer, state, source.getSectionOffset());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Received value index: " + index);

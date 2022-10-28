@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.transport;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -45,16 +46,16 @@ public final class ErrorConditionTypeEncoder extends AbstractDescribedListTypeEn
     }
 
     @Override
-    public void writeElement(ErrorCondition error, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(ErrorCondition error, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeSymbol(buffer, state, error.getCondition());
+                encoder.writeSymbol(buffer, state, error.getCondition());
                 break;
             case 1:
-                state.getEncoder().writeString(buffer, state, error.getDescription());
+                encoder.writeString(buffer, state, error.getDescription());
                 break;
             case 2:
-                state.getEncoder().writeMap(buffer, state, error.getInfo());
+                encoder.writeMap(buffer, state, error.getInfo());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown ErrorCondition value index: " + index);

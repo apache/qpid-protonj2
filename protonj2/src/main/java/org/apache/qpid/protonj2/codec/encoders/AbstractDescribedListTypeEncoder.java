@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.codec.encoders;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.EncodeException;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 
@@ -55,10 +56,12 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
      *      the element index that needs to be written
      * @param buffer
      *      the buffer to write the element to
+     * @param encoder
+     *      the current Encoder value to use.
      * @param state
      *      the current EncoderState value to use.
      */
-    public abstract void writeElement(V source, int index, ProtonBuffer buffer, EncoderState state);
+    public abstract void writeElement(V source, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state);
 
     /**
      * Gets the number of elements that will result when this type is encoded
@@ -83,8 +86,10 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, V value) {
+        final Encoder encoder = state.getEncoder();
+
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode().byteValue());
+        encoder.writeUnsignedLong(buffer, state, getDescriptorCode().byteValue());
 
         final int count = getElementCount(value);
         final byte encodingCode = getListEncoding(value);
@@ -97,15 +102,15 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
 
         switch (encodingCode) {
             case EncodingCodes.LIST8:
-                writeSmallType(buffer, state, value, count);
+                writeSmallType(buffer, encoder, state, value, count);
                 break;
             case EncodingCodes.LIST32:
-                writeLargeType(buffer, state, value, count);
+                writeLargeType(buffer, encoder, state, value, count);
                 break;
         }
     }
 
-    private void writeSmallType(ProtonBuffer buffer, EncoderState state, V value, int elementCount) {
+    private void writeSmallType(ProtonBuffer buffer, Encoder encoder, EncoderState state, V value, int elementCount) {
         final int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size and write the count of list elements.
@@ -114,7 +119,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
 
         // Write the list elements and then compute total size written.
         for (int i = 0; i < elementCount; ++i) {
-            writeElement(value, i, buffer, state);
+            writeElement(value, i, buffer, encoder, state);
         }
 
         // Move back and write the size
@@ -123,7 +128,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
         buffer.setByte(startIndex, writeSize);
     }
 
-    private void writeLargeType(ProtonBuffer buffer, EncoderState state, V value, int elementCount) {
+    private void writeLargeType(ProtonBuffer buffer, Encoder encoder, EncoderState state, V value, int elementCount) {
         final int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size and write the count of list elements.
@@ -132,7 +137,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
 
         // Write the list elements and then compute total size written.
         for (int i = 0; i < elementCount; ++i) {
-            writeElement(value, i, buffer, state);
+            writeElement(value, i, buffer, encoder, state);
         }
 
         // Move back and write the size
@@ -172,6 +177,8 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
     public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         buffer.writeByte(EncodingCodes.LIST32);
 
+        final Encoder encoder = state.getEncoder();
+
         for (int i = 0; i < values.length; ++i) {
             final V listType = (V) values[i];
             final int count = getElementCount(listType);
@@ -183,7 +190,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
 
             // Write the list elements and then compute total size written.
             for (int j = 0; j < count; ++j) {
-                writeElement(listType, j, buffer, state);
+                writeElement(listType, j, buffer, encoder, state);
             }
 
             // Move back and write the size

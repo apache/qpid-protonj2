@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.transport;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -54,7 +55,7 @@ public final class DispositionTypeEncoder extends AbstractDescribedListTypeEncod
     }
 
     @Override
-    public void writeElement(Disposition disposition, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Disposition disposition, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
                 if (disposition.hasRole()) {
@@ -65,14 +66,14 @@ public final class DispositionTypeEncoder extends AbstractDescribedListTypeEncod
                 break;
             case 1:
                 if (disposition.hasFirst()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, disposition.getFirst());
+                    encoder.writeUnsignedInteger(buffer, state, disposition.getFirst());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 2:
                 if (disposition.hasLast()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, disposition.getLast());
+                    encoder.writeUnsignedInteger(buffer, state, disposition.getLast());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
@@ -89,7 +90,7 @@ public final class DispositionTypeEncoder extends AbstractDescribedListTypeEncod
                     if (disposition.getState() == Accepted.getInstance()) {
                         buffer.writeBytes(ACCEPTED_ENCODING);
                     } else {
-                        state.getEncoder().writeObject(buffer, state, disposition.getState());
+                        encoder.writeObject(buffer, state, disposition.getState());
                     }
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);

@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.encoders.messaging;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedListTypeEncoder;
@@ -48,28 +49,28 @@ public final class TargetTypeEncoder extends AbstractDescribedListTypeEncoder<Ta
     }
 
     @Override
-    public void writeElement(Target target, int index, ProtonBuffer buffer, EncoderState state) {
+    public void writeElement(Target target, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeString(buffer, state, target.getAddress());
+                encoder.writeString(buffer, state, target.getAddress());
                 break;
             case 1:
-                state.getEncoder().writeUnsignedInteger(buffer, state, target.getDurable().getValue());
+                encoder.writeUnsignedInteger(buffer, state, target.getDurable().getValue());
                 break;
             case 2:
-                state.getEncoder().writeSymbol(buffer, state, target.getExpiryPolicy().getPolicy());
+                encoder.writeSymbol(buffer, state, target.getExpiryPolicy().getPolicy());
                 break;
             case 3:
-                state.getEncoder().writeUnsignedInteger(buffer, state, target.getTimeout());
+                encoder.writeUnsignedInteger(buffer, state, target.getTimeout());
                 break;
             case 4:
                 buffer.writeByte(target.isDynamic() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 break;
             case 5:
-                state.getEncoder().writeMap(buffer, state, target.getDynamicNodeProperties());
+                encoder.writeMap(buffer, state, target.getDynamicNodeProperties());
                 break;
             case 6:
-                state.getEncoder().writeArray(buffer, state, target.getCapabilities());
+                encoder.writeArray(buffer, state, target.getCapabilities());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Target value index: " + index);
