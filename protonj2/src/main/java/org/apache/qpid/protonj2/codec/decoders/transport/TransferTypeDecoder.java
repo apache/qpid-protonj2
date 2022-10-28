@@ -20,8 +20,10 @@ import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
@@ -62,7 +64,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
     public Transfer readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        return readTransfer(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readTransfer(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -71,7 +73,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
 
         final Transfer[] result = new Transfer[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readTransfer(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readTransfer(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -86,7 +88,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
         decoder.skipValue(buffer, state);
     }
 
-    private Transfer readTransfer(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Transfer readTransfer(ProtonBuffer buffer, Decoder decoder, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Transfer transfer = new Transfer();
 
         @SuppressWarnings("unused")
@@ -118,38 +120,38 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
 
             switch (index) {
                 case 0:
-                    transfer.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    transfer.setHandle(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 1:
-                    transfer.setDeliveryId(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    transfer.setDeliveryId(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 2:
-                    transfer.setDeliveryTag(state.getDecoder().readDeliveryTag(buffer, state));
+                    transfer.setDeliveryTag(decoder.readDeliveryTag(buffer, state));
                     break;
                 case 3:
-                    transfer.setMessageFormat(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    transfer.setMessageFormat(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 4:
-                    transfer.setSettled(state.getDecoder().readBoolean(buffer, state, false));
+                    transfer.setSettled(decoder.readBoolean(buffer, state, false));
                     break;
                 case 5:
-                    transfer.setMore(state.getDecoder().readBoolean(buffer, state, false));
+                    transfer.setMore(decoder.readBoolean(buffer, state, false));
                     break;
                 case 6:
-                    final UnsignedByte rcvSettleMode = state.getDecoder().readUnsignedByte(buffer, state);
+                    final UnsignedByte rcvSettleMode = decoder.readUnsignedByte(buffer, state);
                     transfer.setRcvSettleMode(rcvSettleMode == null ? null : ReceiverSettleMode.values()[rcvSettleMode.intValue()]);
                     break;
                 case 7:
-                    transfer.setState(state.getDecoder().readObject(buffer, state, DeliveryState.class));
+                    transfer.setState(decoder.readObject(buffer, state, DeliveryState.class));
                     break;
                 case 8:
-                    transfer.setResume(state.getDecoder().readBoolean(buffer, state, false));
+                    transfer.setResume(decoder.readBoolean(buffer, state, false));
                     break;
                 case 9:
-                    transfer.setAborted(state.getDecoder().readBoolean(buffer, state, false));
+                    transfer.setAborted(decoder.readBoolean(buffer, state, false));
                     break;
                 case 10:
-                    transfer.setBatchable(state.getDecoder().readBoolean(buffer, state, false));
+                    transfer.setBatchable(decoder.readBoolean(buffer, state, false));
                     break;
             }
         }
@@ -161,7 +163,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
     public Transfer readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        return readTransfer(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readTransfer(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -170,7 +172,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
 
         final Transfer[] result = new Transfer[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readTransfer(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readTransfer(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -185,7 +187,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
         decoder.skipValue(stream, state);
     }
 
-    private Transfer readTransfer(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Transfer readTransfer(InputStream stream, StreamDecoder decoder, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Transfer transfer = new Transfer();
 
         @SuppressWarnings("unused")
@@ -221,38 +223,38 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
 
             switch (index) {
                 case 0:
-                    transfer.setHandle(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    transfer.setHandle(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 1:
-                    transfer.setDeliveryId(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    transfer.setDeliveryId(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 2:
-                    transfer.setDeliveryTag(state.getDecoder().readDeliveryTag(stream, state));
+                    transfer.setDeliveryTag(decoder.readDeliveryTag(stream, state));
                     break;
                 case 3:
-                    transfer.setMessageFormat(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    transfer.setMessageFormat(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 4:
-                    transfer.setSettled(state.getDecoder().readBoolean(stream, state, false));
+                    transfer.setSettled(decoder.readBoolean(stream, state, false));
                     break;
                 case 5:
-                    transfer.setMore(state.getDecoder().readBoolean(stream, state, false));
+                    transfer.setMore(decoder.readBoolean(stream, state, false));
                     break;
                 case 6:
-                    final UnsignedByte rcvSettleMode = state.getDecoder().readUnsignedByte(stream, state);
+                    final UnsignedByte rcvSettleMode = decoder.readUnsignedByte(stream, state);
                     transfer.setRcvSettleMode(rcvSettleMode == null ? null : ReceiverSettleMode.values()[rcvSettleMode.intValue()]);
                     break;
                 case 7:
-                    transfer.setState(state.getDecoder().readObject(stream, state, DeliveryState.class));
+                    transfer.setState(decoder.readObject(stream, state, DeliveryState.class));
                     break;
                 case 8:
-                    transfer.setResume(state.getDecoder().readBoolean(stream, state, false));
+                    transfer.setResume(decoder.readBoolean(stream, state, false));
                     break;
                 case 9:
-                    transfer.setAborted(state.getDecoder().readBoolean(stream, state, false));
+                    transfer.setAborted(decoder.readBoolean(stream, state, false));
                     break;
                 case 10:
-                    transfer.setBatchable(state.getDecoder().readBoolean(stream, state, false));
+                    transfer.setBatchable(decoder.readBoolean(stream, state, false));
                     break;
             }
         }

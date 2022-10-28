@@ -21,7 +21,9 @@ import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
@@ -58,7 +60,7 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
     public ErrorCondition readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        return readErrorCondition(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readErrorCondition(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -67,7 +69,7 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
 
         final ErrorCondition[] result = new ErrorCondition[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readErrorCondition(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readErrorCondition(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -82,7 +84,7 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
         decoder.skipValue(buffer, state);
     }
 
-    private ErrorCondition readErrorCondition(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private ErrorCondition readErrorCondition(ProtonBuffer buffer, Decoder decoder, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         @SuppressWarnings("unused")
         final int size = listDecoder.readSize(buffer);
         final int count = listDecoder.readCount(buffer);
@@ -102,13 +104,13 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
         for (int index = 0; index < count; ++index) {
             switch (index) {
                 case 0:
-                    condition = state.getDecoder().readSymbol(buffer, state);
+                    condition = decoder.readSymbol(buffer, state);
                     break;
                 case 1:
-                    description = state.getDecoder().readString(buffer, state);
+                    description = decoder.readString(buffer, state);
                     break;
                 case 2:
-                    info = state.getDecoder().readMap(buffer, state);
+                    info = decoder.readMap(buffer, state);
                     break;
             }
         }
@@ -120,7 +122,7 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
     public ErrorCondition readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        return readErrorCondition(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readErrorCondition(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -129,7 +131,7 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
 
         final ErrorCondition[] result = new ErrorCondition[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readErrorCondition(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readErrorCondition(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -144,7 +146,7 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
         decoder.skipValue(stream, state);
     }
 
-    private ErrorCondition readErrorCondition(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private ErrorCondition readErrorCondition(InputStream stream, StreamDecoder decoder, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         @SuppressWarnings("unused")
         final int size = listDecoder.readSize(stream);
         final int count = listDecoder.readCount(stream);
@@ -164,13 +166,13 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
         for (int index = 0; index < count; ++index) {
             switch (index) {
                 case 0:
-                    condition = state.getDecoder().readSymbol(stream, state);
+                    condition = decoder.readSymbol(stream, state);
                     break;
                 case 1:
-                    description = state.getDecoder().readString(stream, state);
+                    description = decoder.readString(stream, state);
                     break;
                 case 2:
-                    info = state.getDecoder().readMap(stream, state);
+                    info = decoder.readMap(stream, state);
                     break;
             }
         }

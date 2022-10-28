@@ -20,8 +20,10 @@ import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
@@ -59,7 +61,7 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
     public Begin readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        return readBegin(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readBegin(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -68,7 +70,7 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
 
         final Begin[] result = new Begin[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readBegin(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readBegin(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -83,7 +85,7 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
         decoder.skipValue(buffer, state);
     }
 
-    private Begin readBegin(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Begin readBegin(ProtonBuffer buffer, Decoder decoder, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Begin begin = new Begin();
 
         @SuppressWarnings("unused")
@@ -115,28 +117,28 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
 
             switch (index) {
                 case 0:
-                    begin.setRemoteChannel(state.getDecoder().readUnsignedShort(buffer, state, 0));
+                    begin.setRemoteChannel(decoder.readUnsignedShort(buffer, state, 0));
                     break;
                 case 1:
-                    begin.setNextOutgoingId(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    begin.setNextOutgoingId(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 2:
-                    begin.setIncomingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    begin.setIncomingWindow(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 3:
-                    begin.setOutgoingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    begin.setOutgoingWindow(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 4:
-                    begin.setHandleMax(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    begin.setHandleMax(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 5:
-                    begin.setOfferedCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                    begin.setOfferedCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
                     break;
                 case 6:
-                    begin.setDesiredCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                    begin.setDesiredCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
                     break;
                 case 7:
-                    begin.setProperties(state.getDecoder().readMap(buffer, state));
+                    begin.setProperties(decoder.readMap(buffer, state));
                     break;
             }
         }
@@ -148,7 +150,7 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
     public Begin readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        return readBegin(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readBegin(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -157,7 +159,7 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
 
         final Begin[] result = new Begin[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readBegin(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readBegin(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -172,7 +174,7 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
         decoder.skipValue(stream, state);
     }
 
-    private Begin readBegin(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Begin readBegin(InputStream stream, StreamDecoder decoder, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Begin begin = new Begin();
 
         @SuppressWarnings("unused")
@@ -208,28 +210,28 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
 
             switch (index) {
                 case 0:
-                    begin.setRemoteChannel(state.getDecoder().readUnsignedShort(stream, state, 0));
+                    begin.setRemoteChannel(decoder.readUnsignedShort(stream, state, 0));
                     break;
                 case 1:
-                    begin.setNextOutgoingId(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    begin.setNextOutgoingId(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 2:
-                    begin.setIncomingWindow(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    begin.setIncomingWindow(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 3:
-                    begin.setOutgoingWindow(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    begin.setOutgoingWindow(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 4:
-                    begin.setHandleMax(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    begin.setHandleMax(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 5:
-                    begin.setOfferedCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    begin.setOfferedCapabilities(decoder.readMultiple(stream, state, Symbol.class));
                     break;
                 case 6:
-                    begin.setDesiredCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    begin.setDesiredCapabilities(decoder.readMultiple(stream, state, Symbol.class));
                     break;
                 case 7:
-                    begin.setProperties(state.getDecoder().readMap(stream, state));
+                    begin.setProperties(decoder.readMap(stream, state));
                     break;
             }
         }

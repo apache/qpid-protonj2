@@ -20,8 +20,10 @@ import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
@@ -59,7 +61,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
     public Flow readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        return readFlow(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readFlow(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -68,7 +70,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
 
         final Flow[] result = new Flow[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readFlow(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readFlow(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -83,7 +85,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
         decoder.skipValue(buffer, state);
     }
 
-    private Flow readFlow(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Flow readFlow(ProtonBuffer buffer, Decoder decoder, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Flow flow = new Flow();
 
         @SuppressWarnings("unused")
@@ -116,37 +118,37 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
 
             switch (index) {
                 case 0:
-                    flow.setNextIncomingId(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    flow.setNextIncomingId(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 1:
-                    flow.setIncomingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    flow.setIncomingWindow(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 2:
-                    flow.setNextOutgoingId(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    flow.setNextOutgoingId(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 3:
-                    flow.setOutgoingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    flow.setOutgoingWindow(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 4:
-                    flow.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    flow.setHandle(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 5:
-                    flow.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    flow.setDeliveryCount(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 6:
-                    flow.setLinkCredit(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    flow.setLinkCredit(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 7:
-                    flow.setAvailable(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    flow.setAvailable(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 8:
-                    flow.setDrain(state.getDecoder().readBoolean(buffer, state, false));
+                    flow.setDrain(decoder.readBoolean(buffer, state, false));
                     break;
                 case 9:
-                    flow.setEcho(state.getDecoder().readBoolean(buffer, state, false));
+                    flow.setEcho(decoder.readBoolean(buffer, state, false));
                     break;
                 case 10:
-                    flow.setProperties(state.getDecoder().readMap(buffer, state));
+                    flow.setProperties(decoder.readMap(buffer, state));
                     break;
             }
         }
@@ -158,7 +160,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
     public Flow readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        return readFlow(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readFlow(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -167,7 +169,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
 
         final Flow[] result = new Flow[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readFlow(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readFlow(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -182,7 +184,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
         decoder.skipValue(stream, state);
     }
 
-    private Flow readFlow(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Flow readFlow(InputStream stream, StreamDecoder decoder, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Flow flow = new Flow();
 
         @SuppressWarnings("unused")
@@ -219,37 +221,37 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
 
             switch (index) {
                 case 0:
-                    flow.setNextIncomingId(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    flow.setNextIncomingId(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 1:
-                    flow.setIncomingWindow(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    flow.setIncomingWindow(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 2:
-                    flow.setNextOutgoingId(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    flow.setNextOutgoingId(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 3:
-                    flow.setOutgoingWindow(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    flow.setOutgoingWindow(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 4:
-                    flow.setHandle(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    flow.setHandle(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 5:
-                    flow.setDeliveryCount(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    flow.setDeliveryCount(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 6:
-                    flow.setLinkCredit(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    flow.setLinkCredit(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 7:
-                    flow.setAvailable(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    flow.setAvailable(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 8:
-                    flow.setDrain(state.getDecoder().readBoolean(stream, state, false));
+                    flow.setDrain(decoder.readBoolean(stream, state, false));
                     break;
                 case 9:
-                    flow.setEcho(state.getDecoder().readBoolean(stream, state, false));
+                    flow.setEcho(decoder.readBoolean(stream, state, false));
                     break;
                 case 10:
-                    flow.setProperties(state.getDecoder().readMap(stream, state));
+                    flow.setProperties(decoder.readMap(stream, state));
                     break;
             }
         }

@@ -20,8 +20,10 @@ import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
@@ -60,7 +62,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
     public Detach readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        return readDetach(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readDetach(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -69,7 +71,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
 
         final Detach[] result = new Detach[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readDetach(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readDetach(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -84,7 +86,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
         decoder.skipValue(buffer, state);
     }
 
-    private Detach readDetach(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Detach readDetach(ProtonBuffer buffer, Decoder decoder, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Detach detach = new Detach();
 
         @SuppressWarnings("unused")
@@ -114,13 +116,13 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
 
             switch (index) {
                 case 0:
-                    detach.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    detach.setHandle(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 1:
-                    detach.setClosed(state.getDecoder().readBoolean(buffer, state, false));
+                    detach.setClosed(decoder.readBoolean(buffer, state, false));
                     break;
                 case 2:
-                    detach.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
+                    detach.setError(decoder.readObject(buffer, state, ErrorCondition.class));
                     break;
             }
         }
@@ -132,7 +134,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
     public Detach readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        return readDetach(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readDetach(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -141,7 +143,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
 
         final Detach[] result = new Detach[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readDetach(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readDetach(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -156,7 +158,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
         decoder.skipValue(stream, state);
     }
 
-    private Detach readDetach(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Detach readDetach(InputStream stream, StreamDecoder decoder, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Detach detach = new Detach();
 
         @SuppressWarnings("unused")
@@ -191,13 +193,13 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
 
             switch (index) {
                 case 0:
-                    detach.setHandle(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    detach.setHandle(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 1:
-                    detach.setClosed(state.getDecoder().readBoolean(stream, state, false));
+                    detach.setClosed(decoder.readBoolean(stream, state, false));
                     break;
                 case 2:
-                    detach.setError(state.getDecoder().readObject(stream, state, ErrorCondition.class));
+                    detach.setError(decoder.readObject(stream, state, ErrorCondition.class));
                     break;
             }
         }

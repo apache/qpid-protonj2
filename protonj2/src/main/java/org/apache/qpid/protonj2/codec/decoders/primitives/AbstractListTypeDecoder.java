@@ -23,7 +23,9 @@ import java.util.List;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
 
@@ -53,8 +55,9 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
         }
 
         final List<Object> list = new ArrayList<>(count);
+        final Decoder decoder = state.getDecoder();
         for (int i = 0; i < count; i++) {
-            list.add(state.getDecoder().readObject(buffer, state));
+            list.add(decoder.readObject(buffer, state));
         }
 
         return list;
@@ -71,8 +74,9 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
         final int count = readCount(stream);
 
         final List<Object> list = new ArrayList<>(count);
+        final StreamDecoder decoder = state.getDecoder();
         for (int i = 0; i < count; i++) {
-            list.add(state.getDecoder().readObject(stream, state));
+            list.add(decoder.readObject(stream, state));
         }
 
         return list;

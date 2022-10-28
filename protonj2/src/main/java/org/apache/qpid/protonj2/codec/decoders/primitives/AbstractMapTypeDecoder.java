@@ -23,7 +23,9 @@ import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
 
@@ -50,11 +52,13 @@ public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecode
                 "Map encoded number of elements %d is not an even number.", count));
         }
 
+        final Decoder decoder = state.getDecoder();
+
         // Count include both key and value so we must include that in the loop
         final Map<Object, Object> map = new LinkedHashMap<>(count);
         for (int i = 0; i < count / 2; i++) {
-            Object key = state.getDecoder().readObject(buffer, state);
-            Object value = state.getDecoder().readObject(buffer, state);
+            Object key = decoder.readObject(buffer, state);
+            Object value = decoder.readObject(buffer, state);
 
             map.put(key, value);
         }
@@ -77,11 +81,13 @@ public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecode
                 "Map encoded number of elements %d is not an even number.", count));
         }
 
+        final StreamDecoder decoder = state.getDecoder();
+
         // Count include both key and value so we must include that in the loop
         final Map<Object, Object> map = new LinkedHashMap<>(count);
         for (int i = 0; i < count / 2; i++) {
-            Object key = state.getDecoder().readObject(stream, state);
-            Object value = state.getDecoder().readObject(stream, state);
+            Object key = decoder.readObject(stream, state);
+            Object value = decoder.readObject(stream, state);
 
             map.put(key, value);
         }

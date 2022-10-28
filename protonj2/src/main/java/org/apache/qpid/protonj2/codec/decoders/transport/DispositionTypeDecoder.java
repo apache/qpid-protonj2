@@ -20,8 +20,10 @@ import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
@@ -61,7 +63,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
     public Disposition readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        return readDisposition(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readDisposition(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -70,7 +72,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
 
         Disposition[] result = new Disposition[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readDisposition(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readDisposition(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -85,7 +87,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
         decoder.skipValue(buffer, state);
     }
 
-    private Disposition readDisposition(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Disposition readDisposition(ProtonBuffer buffer, Decoder decoder, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Disposition disposition = new Disposition();
 
         @SuppressWarnings("unused")
@@ -117,22 +119,22 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
 
             switch (index) {
                 case 0:
-                    disposition.setRole(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)) ? Role.RECEIVER : Role.SENDER);
+                    disposition.setRole(Boolean.TRUE.equals(decoder.readBoolean(buffer, state)) ? Role.RECEIVER : Role.SENDER);
                     break;
                 case 1:
-                    disposition.setFirst(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    disposition.setFirst(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 2:
-                    disposition.setLast(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    disposition.setLast(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 3:
-                    disposition.setSettled(state.getDecoder().readBoolean(buffer, state, false));
+                    disposition.setSettled(decoder.readBoolean(buffer, state, false));
                     break;
                 case 4:
-                    disposition.setState(state.getDecoder().readObject(buffer, state, DeliveryState.class));
+                    disposition.setState(decoder.readObject(buffer, state, DeliveryState.class));
                     break;
                 case 5:
-                    disposition.setBatchable(state.getDecoder().readBoolean(buffer, state, false));
+                    disposition.setBatchable(decoder.readBoolean(buffer, state, false));
                     break;
             }
         }
@@ -153,7 +155,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
     public Disposition readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        return readDisposition(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readDisposition(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -162,7 +164,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
 
         final Disposition[] result = new Disposition[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readDisposition(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readDisposition(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -177,7 +179,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
         decoder.skipValue(stream, state);
     }
 
-    private Disposition readDisposition(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Disposition readDisposition(InputStream stream, StreamDecoder decoder, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Disposition disposition = new Disposition();
 
         @SuppressWarnings("unused")
@@ -213,22 +215,22 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
 
             switch (index) {
                 case 0:
-                    disposition.setRole(Boolean.TRUE.equals(state.getDecoder().readBoolean(stream, state)) ? Role.RECEIVER : Role.SENDER);
+                    disposition.setRole(Boolean.TRUE.equals(decoder.readBoolean(stream, state)) ? Role.RECEIVER : Role.SENDER);
                     break;
                 case 1:
-                    disposition.setFirst(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    disposition.setFirst(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 2:
-                    disposition.setLast(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    disposition.setLast(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 3:
-                    disposition.setSettled(state.getDecoder().readBoolean(stream, state, false));
+                    disposition.setSettled(decoder.readBoolean(stream, state, false));
                     break;
                 case 4:
-                    disposition.setState(state.getDecoder().readObject(stream, state, DeliveryState.class));
+                    disposition.setState(decoder.readObject(stream, state, DeliveryState.class));
                     break;
                 case 5:
-                    disposition.setBatchable(state.getDecoder().readBoolean(stream, state, false));
+                    disposition.setBatchable(decoder.readBoolean(stream, state, false));
                     break;
             }
         }

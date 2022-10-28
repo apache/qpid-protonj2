@@ -20,8 +20,10 @@ import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
@@ -59,7 +61,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
     public Open readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        return readOpen(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readOpen(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -68,7 +70,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
 
         final Open[] result = new Open[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readOpen(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readOpen(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -83,7 +85,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
         decoder.skipValue(buffer, state);
     }
 
-    private Open readOpen(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Open readOpen(ProtonBuffer buffer, Decoder decoder, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Open open = new Open();
 
         @SuppressWarnings("unused")
@@ -113,34 +115,34 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
 
             switch (index) {
                 case 0:
-                    open.setContainerId(state.getDecoder().readString(buffer, state));
+                    open.setContainerId(decoder.readString(buffer, state));
                     break;
                 case 1:
-                    open.setHostname(state.getDecoder().readString(buffer, state));
+                    open.setHostname(decoder.readString(buffer, state));
                     break;
                 case 2:
-                    open.setMaxFrameSize(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    open.setMaxFrameSize(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 3:
-                    open.setChannelMax(state.getDecoder().readUnsignedShort(buffer, state, 0));
+                    open.setChannelMax(decoder.readUnsignedShort(buffer, state, 0));
                     break;
                 case 4:
-                    open.setIdleTimeout(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    open.setIdleTimeout(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 5:
-                    open.setOutgoingLocales(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                    open.setOutgoingLocales(decoder.readMultiple(buffer, state, Symbol.class));
                     break;
                 case 6:
-                    open.setIncomingLocales(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                    open.setIncomingLocales(decoder.readMultiple(buffer, state, Symbol.class));
                     break;
                 case 7:
-                    open.setOfferedCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                    open.setOfferedCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
                     break;
                 case 8:
-                    open.setDesiredCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                    open.setDesiredCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
                     break;
                 case 9:
-                    open.setProperties(state.getDecoder().readMap(buffer, state));
+                    open.setProperties(decoder.readMap(buffer, state));
                     break;
             }
         }
@@ -152,7 +154,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
     public Open readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        return readOpen(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readOpen(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -161,7 +163,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
 
         final Open[] result = new Open[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readOpen(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readOpen(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -176,7 +178,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
         decoder.skipValue(stream, state);
     }
 
-    private Open readOpen(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Open readOpen(InputStream stream, StreamDecoder decoder, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Open open = new Open();
 
         @SuppressWarnings("unused")
@@ -211,34 +213,34 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
 
             switch (index) {
                 case 0:
-                    open.setContainerId(state.getDecoder().readString(stream, state));
+                    open.setContainerId(decoder.readString(stream, state));
                     break;
                 case 1:
-                    open.setHostname(state.getDecoder().readString(stream, state));
+                    open.setHostname(decoder.readString(stream, state));
                     break;
                 case 2:
-                    open.setMaxFrameSize(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    open.setMaxFrameSize(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 3:
-                    open.setChannelMax(state.getDecoder().readUnsignedShort(stream, state, 0));
+                    open.setChannelMax(decoder.readUnsignedShort(stream, state, 0));
                     break;
                 case 4:
-                    open.setIdleTimeout(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    open.setIdleTimeout(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 5:
-                    open.setOutgoingLocales(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    open.setOutgoingLocales(decoder.readMultiple(stream, state, Symbol.class));
                     break;
                 case 6:
-                    open.setIncomingLocales(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    open.setIncomingLocales(decoder.readMultiple(stream, state, Symbol.class));
                     break;
                 case 7:
-                    open.setOfferedCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    open.setOfferedCapabilities(decoder.readMultiple(stream, state, Symbol.class));
                     break;
                 case 8:
-                    open.setDesiredCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    open.setDesiredCapabilities(decoder.readMultiple(stream, state, Symbol.class));
                     break;
                 case 9:
-                    open.setProperties(state.getDecoder().readMap(stream, state));
+                    open.setProperties(decoder.readMap(stream, state));
                     break;
             }
         }

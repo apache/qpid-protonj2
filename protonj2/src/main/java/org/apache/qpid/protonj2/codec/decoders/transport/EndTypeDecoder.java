@@ -91,18 +91,10 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
 
         if (count < MIN_END_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in End list encoding: " + count);
-        }
-
-        if (count > MAX_END_LIST_ENTRIES) {
+        } else if (count > MAX_END_LIST_ENTRIES) {
             throw new DecodeException("To many entries in End list encoding: " + count);
-        }
-
-        for (int index = 0; index < count; ++index) {
-            switch (index) {
-                case 0:
-                    end.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
-                    break;
-            }
+        } else if (count == 1) {
+            end.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
         }
 
         return end;
@@ -145,18 +137,10 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
 
         if (count < MIN_END_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in End list encoding: " + count);
-        }
-
-        if (count > MAX_END_LIST_ENTRIES) {
+        } else if (count > MAX_END_LIST_ENTRIES) {
             throw new DecodeException("To many entries in End list encoding: " + count);
-        }
-
-        for (int index = 0; index < count; ++index) {
-            switch (index) {
-                case 0:
-                    end.setError(state.getDecoder().readObject(stream, state, ErrorCondition.class));
-                    break;
-            }
+        } else if (count == 1) {
+            end.setError(state.getDecoder().readObject(stream, state, ErrorCondition.class));
         }
 
         return end;

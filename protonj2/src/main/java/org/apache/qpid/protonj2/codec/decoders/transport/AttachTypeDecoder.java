@@ -20,8 +20,10 @@ import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
@@ -64,7 +66,7 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
     public Attach readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        return readAttach(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readAttach(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -73,7 +75,7 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
 
         final Attach[] result = new Attach[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readAttach(buffer, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readAttach(buffer, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -88,7 +90,7 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
         decoder.skipValue(buffer, state);
     }
 
-    private Attach readAttach(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Attach readAttach(ProtonBuffer buffer, Decoder decoder, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Attach attach = new Attach();
 
         @SuppressWarnings("unused")
@@ -120,49 +122,49 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
 
             switch (index) {
                 case 0:
-                    attach.setName(state.getDecoder().readString(buffer, state));
+                    attach.setName(decoder.readString(buffer, state));
                     break;
                 case 1:
-                    attach.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    attach.setHandle(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 2:
-                    Boolean role = state.getDecoder().readBoolean(buffer, state);
+                    Boolean role = decoder.readBoolean(buffer, state);
                     attach.setRole(Boolean.TRUE.equals(role) ? Role.RECEIVER : Role.SENDER);
                     break;
                 case 3:
-                    byte sndSettleMode = state.getDecoder().readUnsignedByte(buffer, state, (byte) 2);
+                    byte sndSettleMode = decoder.readUnsignedByte(buffer, state, (byte) 2);
                     attach.setSenderSettleMode(SenderSettleMode.valueOf(sndSettleMode));
                     break;
                 case 4:
-                    byte rcvSettleMode = state.getDecoder().readUnsignedByte(buffer, state, (byte) 0);
+                    byte rcvSettleMode = decoder.readUnsignedByte(buffer, state, (byte) 0);
                     attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(rcvSettleMode));
                     break;
                 case 5:
-                    attach.setSource(state.getDecoder().readObject(buffer, state, Source.class));
+                    attach.setSource(decoder.readObject(buffer, state, Source.class));
                     break;
                 case 6:
-                    attach.setTarget(state.getDecoder().readObject(buffer, state, Terminus.class));
+                    attach.setTarget(decoder.readObject(buffer, state, Terminus.class));
                     break;
                 case 7:
-                    attach.setUnsettled(state.getDecoder().readMap(buffer, state));
+                    attach.setUnsettled(decoder.readMap(buffer, state));
                     break;
                 case 8:
-                    attach.setIncompleteUnsettled(state.getDecoder().readBoolean(buffer, state, true));
+                    attach.setIncompleteUnsettled(decoder.readBoolean(buffer, state, true));
                     break;
                 case 9:
-                    attach.setInitialDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                    attach.setInitialDeliveryCount(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 10:
-                    attach.setMaxMessageSize(state.getDecoder().readUnsignedLong(buffer, state));
+                    attach.setMaxMessageSize(decoder.readUnsignedLong(buffer, state));
                     break;
                 case 11:
-                    attach.setOfferedCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                    attach.setOfferedCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
                     break;
                 case 12:
-                    attach.setDesiredCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                    attach.setDesiredCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
                     break;
                 case 13:
-                    attach.setProperties(state.getDecoder().readMap(buffer, state));
+                    attach.setProperties(decoder.readMap(buffer, state));
                     break;
             }
         }
@@ -174,7 +176,7 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
     public Attach readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        return readAttach(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+        return readAttach(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
     }
 
     @Override
@@ -183,7 +185,7 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
 
         final Attach[] result = new Attach[count];
         for (int i = 0; i < count; ++i) {
-            result[i] = readAttach(stream, state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
+            result[i] = readAttach(stream, state.getDecoder(), state, checkIsExpectedTypeAndCast(ListTypeDecoder.class, decoder));
         }
 
         return result;
@@ -198,7 +200,7 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
         decoder.skipValue(stream, state);
     }
 
-    private Attach readAttach(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
+    private Attach readAttach(InputStream stream, StreamDecoder decoder, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Attach attach = new Attach();
 
         @SuppressWarnings("unused")
@@ -234,49 +236,49 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
 
             switch (index) {
                 case 0:
-                    attach.setName(state.getDecoder().readString(stream, state));
+                    attach.setName(decoder.readString(stream, state));
                     break;
                 case 1:
-                    attach.setHandle(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    attach.setHandle(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 2:
-                    Boolean role = state.getDecoder().readBoolean(stream, state);
+                    Boolean role = decoder.readBoolean(stream, state);
                     attach.setRole(Boolean.TRUE.equals(role) ? Role.RECEIVER : Role.SENDER);
                     break;
                 case 3:
-                    byte sndSettleMode = state.getDecoder().readUnsignedByte(stream, state, (byte) 2);
+                    byte sndSettleMode = decoder.readUnsignedByte(stream, state, (byte) 2);
                     attach.setSenderSettleMode(SenderSettleMode.valueOf(sndSettleMode));
                     break;
                 case 4:
-                    byte rcvSettleMode = state.getDecoder().readUnsignedByte(stream, state, (byte) 0);
+                    byte rcvSettleMode = decoder.readUnsignedByte(stream, state, (byte) 0);
                     attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(rcvSettleMode));
                     break;
                 case 5:
-                    attach.setSource(state.getDecoder().readObject(stream, state, Source.class));
+                    attach.setSource(decoder.readObject(stream, state, Source.class));
                     break;
                 case 6:
-                    attach.setTarget(state.getDecoder().readObject(stream, state, Terminus.class));
+                    attach.setTarget(decoder.readObject(stream, state, Terminus.class));
                     break;
                 case 7:
-                    attach.setUnsettled(state.getDecoder().readMap(stream, state));
+                    attach.setUnsettled(decoder.readMap(stream, state));
                     break;
                 case 8:
-                    attach.setIncompleteUnsettled(state.getDecoder().readBoolean(stream, state, true));
+                    attach.setIncompleteUnsettled(decoder.readBoolean(stream, state, true));
                     break;
                 case 9:
-                    attach.setInitialDeliveryCount(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                    attach.setInitialDeliveryCount(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 10:
-                    attach.setMaxMessageSize(state.getDecoder().readUnsignedLong(stream, state));
+                    attach.setMaxMessageSize(decoder.readUnsignedLong(stream, state));
                     break;
                 case 11:
-                    attach.setOfferedCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    attach.setOfferedCapabilities(decoder.readMultiple(stream, state, Symbol.class));
                     break;
                 case 12:
-                    attach.setDesiredCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                    attach.setDesiredCapabilities(decoder.readMultiple(stream, state, Symbol.class));
                     break;
                 case 13:
-                    attach.setProperties(state.getDecoder().readMap(stream, state));
+                    attach.setProperties(decoder.readMap(stream, state));
                     break;
             }
         }
