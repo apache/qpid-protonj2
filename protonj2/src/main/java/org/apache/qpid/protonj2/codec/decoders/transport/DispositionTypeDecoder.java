@@ -106,20 +106,19 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
             // Peek ahead and see if there is a null in the next slot, if so we don't call
             // the setter for that entry to ensure the returned type reflects the encoded
             // state in the modification entry.
-            final boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
-            if (nullValue) {
+            if (buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL) {
                 // Ensure mandatory fields are set
                 if (index < MIN_DISPOSITION_LIST_ENTRIES) {
                     throw new DecodeException(errorForMissingRequiredFields(index));
                 }
 
-                buffer.readByte();
+                buffer.skipBytes(1);
                 continue;
             }
 
             switch (index) {
                 case 0:
-                    disposition.setRole(Boolean.TRUE.equals(decoder.readBoolean(buffer, state)) ? Role.RECEIVER : Role.SENDER);
+                    disposition.setRole(decoder.readBoolean(buffer, state, false) ? Role.RECEIVER : Role.SENDER);
                     break;
                 case 1:
                     disposition.setFirst(decoder.readUnsignedInteger(buffer, state, 0l));
@@ -215,7 +214,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
 
             switch (index) {
                 case 0:
-                    disposition.setRole(Boolean.TRUE.equals(decoder.readBoolean(stream, state)) ? Role.RECEIVER : Role.SENDER);
+                    disposition.setRole(decoder.readBoolean(stream, state, false) ? Role.RECEIVER : Role.SENDER);
                     break;
                 case 1:
                     disposition.setFirst(decoder.readUnsignedInteger(stream, state, 0l));

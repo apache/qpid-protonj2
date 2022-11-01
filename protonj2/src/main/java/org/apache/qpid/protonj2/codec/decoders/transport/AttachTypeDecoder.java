@@ -116,7 +116,7 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
                     throw new DecodeException(errorForMissingRequiredFields(index));
                 }
 
-                buffer.readByte();
+                buffer.skipBytes(1);
                 continue;
             }
 
@@ -128,16 +128,13 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
                     attach.setHandle(decoder.readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 2:
-                    Boolean role = decoder.readBoolean(buffer, state);
-                    attach.setRole(Boolean.TRUE.equals(role) ? Role.RECEIVER : Role.SENDER);
+                    attach.setRole(decoder.readBoolean(buffer, state, false) ? Role.RECEIVER : Role.SENDER);
                     break;
                 case 3:
-                    byte sndSettleMode = decoder.readUnsignedByte(buffer, state, (byte) 2);
-                    attach.setSenderSettleMode(SenderSettleMode.valueOf(sndSettleMode));
+                    attach.setSenderSettleMode(SenderSettleMode.valueOf(decoder.readUnsignedByte(buffer, state, (byte) 2)));
                     break;
                 case 4:
-                    byte rcvSettleMode = decoder.readUnsignedByte(buffer, state, (byte) 0);
-                    attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(rcvSettleMode));
+                    attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(decoder.readUnsignedByte(buffer, state, (byte) 0)));
                     break;
                 case 5:
                     attach.setSource(decoder.readObject(buffer, state, Source.class));
@@ -242,16 +239,13 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
                     attach.setHandle(decoder.readUnsignedInteger(stream, state, 0l));
                     break;
                 case 2:
-                    Boolean role = decoder.readBoolean(stream, state);
-                    attach.setRole(Boolean.TRUE.equals(role) ? Role.RECEIVER : Role.SENDER);
+                    attach.setRole(decoder.readBoolean(stream, state, false) ? Role.RECEIVER : Role.SENDER);
                     break;
                 case 3:
-                    byte sndSettleMode = decoder.readUnsignedByte(stream, state, (byte) 2);
-                    attach.setSenderSettleMode(SenderSettleMode.valueOf(sndSettleMode));
+                    attach.setSenderSettleMode(SenderSettleMode.valueOf(decoder.readUnsignedByte(stream, state, (byte) 2)));
                     break;
                 case 4:
-                    byte rcvSettleMode = decoder.readUnsignedByte(stream, state, (byte) 0);
-                    attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(rcvSettleMode));
+                    attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(decoder.readUnsignedByte(stream, state, (byte) 0)));
                     break;
                 case 5:
                     attach.setSource(decoder.readObject(stream, state, Source.class));

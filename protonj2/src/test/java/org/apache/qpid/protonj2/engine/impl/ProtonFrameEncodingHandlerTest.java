@@ -74,6 +74,7 @@ class ProtonFrameEncodingHandlerTest {
     void testEncodeBasicTransfer() {
         ProtonFrameEncodingHandler handler = new ProtonFrameEncodingHandler();
         handler.handlerAdded(context);
+        handler.engineStarting(context);
 
         Transfer transfer = new Transfer();
         transfer.setHandle(0);
@@ -110,6 +111,7 @@ class ProtonFrameEncodingHandlerTest {
     void testEncodeBasicTransferWthPayloadThatFitsIntoFrame() {
         ProtonFrameEncodingHandler handler = new ProtonFrameEncodingHandler();
         handler.handlerAdded(context);
+        handler.engineStarting(context);
 
         Transfer transfer = new Transfer();
         transfer.setHandle(0);
@@ -150,6 +152,7 @@ class ProtonFrameEncodingHandlerTest {
     void testEncodeBasicTransferWthPayloadThatDoesNotFitIntoFrame() {
         ProtonFrameEncodingHandler handler = new ProtonFrameEncodingHandler();
         handler.handlerAdded(context);
+        handler.engineStarting(context);
 
         Transfer transfer = new Transfer();
         transfer.setHandle(0);
@@ -197,6 +200,7 @@ class ProtonFrameEncodingHandlerTest {
     void testOutgoingFrameIsReleasedAfterWriteFinishes() {
         ProtonFrameEncodingHandler handler = new ProtonFrameEncodingHandler();
         handler.handlerAdded(context);
+        handler.engineStarting(context);
 
         Transfer transfer = new Transfer();
         transfer.setHandle(0);

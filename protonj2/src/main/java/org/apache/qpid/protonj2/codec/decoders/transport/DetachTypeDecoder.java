@@ -110,7 +110,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
                 if (index == 0) {
                     throw new DecodeException("The handle field is mandatory in a Detach");
                 }
-                buffer.readByte();
+                buffer.skipBytes(1);
                 continue;
             }
 

@@ -692,12 +692,16 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
     }
 
     final L remoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
-        LOG.trace("Link:{} Received remote disposition:{} for sent delivery:{}", self(), disposition, delivery);
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Link:{} Received remote disposition:{} for sent delivery:{}", self(), disposition, delivery);
+        }
         return handleRemoteDisposition(disposition, delivery);
     }
 
     final L remoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
-        LOG.trace("Link:{} Received remote disposition:{} for received delivery:{}", self(), disposition, delivery);
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Link:{} Received remote disposition:{} for received delivery:{}", self(), disposition, delivery);
+        }
         return handleRemoteDisposition(disposition, delivery);
     }
 

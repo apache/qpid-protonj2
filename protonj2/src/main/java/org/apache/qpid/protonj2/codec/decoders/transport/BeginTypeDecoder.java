@@ -111,7 +111,7 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
                     throw new DecodeException(errorForMissingRequiredFields(index));
                 }
 
-                buffer.readByte();
+                buffer.skipBytes(1);
                 continue;
             }
 
