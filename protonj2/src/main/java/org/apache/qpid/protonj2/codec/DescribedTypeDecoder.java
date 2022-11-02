@@ -40,4 +40,15 @@ public interface DescribedTypeDecoder<V> extends TypeDecoder<V> {
      */
     Symbol getDescriptorSymbol();
 
+    /**
+     * Allow the type decoder to react to being registered with a given {@link Decoder} instance.
+     *
+     * @param decoder
+     * 		The {@link Decoder} that this type decoder is now registered with.
+     *
+     * @return this type decoder value after having initialized itself following registration.
+     */
+    default DescribedTypeDecoder<V> decoderRegistered(Decoder decoder) {
+        return this;
+    }
 }

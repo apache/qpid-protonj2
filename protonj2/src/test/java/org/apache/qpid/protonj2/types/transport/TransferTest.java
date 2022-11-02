@@ -89,6 +89,19 @@ public class TransferTest {
         assertTrue(transfer.hasSettled());
         assertTrue(transfer.hasState());
 
+        assertTrue(transfer.hasElement(0));
+        assertTrue(transfer.hasElement(1));
+        assertTrue(transfer.hasElement(2));
+        assertTrue(transfer.hasElement(3));
+        assertTrue(transfer.hasElement(4));
+        assertTrue(transfer.hasElement(5));
+        assertTrue(transfer.hasElement(6));
+        assertTrue(transfer.hasElement(7));
+        assertTrue(transfer.hasElement(8));
+        assertTrue(transfer.hasElement(9));
+        assertTrue(transfer.hasElement(10));
+        assertFalse(transfer.hasElement(11));
+
         transfer.clearAborted();
         transfer.clearBatchable();
         transfer.clearDeliveryId();
@@ -114,6 +127,19 @@ public class TransferTest {
         assertFalse(transfer.hasResume());
         assertFalse(transfer.hasSettled());
         assertFalse(transfer.hasState());
+
+        assertFalse(transfer.hasElement(0));
+        assertFalse(transfer.hasElement(1));
+        assertFalse(transfer.hasElement(2));
+        assertFalse(transfer.hasElement(3));
+        assertFalse(transfer.hasElement(4));
+        assertFalse(transfer.hasElement(5));
+        assertFalse(transfer.hasElement(6));
+        assertFalse(transfer.hasElement(7));
+        assertFalse(transfer.hasElement(8));
+        assertFalse(transfer.hasElement(9));
+        assertFalse(transfer.hasElement(10));
+        assertFalse(transfer.hasElement(11));
 
         transfer.setDeliveryTag(new byte[] { 1 });
         assertTrue(transfer.hasDeliveryTag());

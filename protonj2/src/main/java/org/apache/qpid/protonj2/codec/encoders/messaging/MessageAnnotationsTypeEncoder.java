@@ -20,6 +20,7 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedMapTypeEncoder;
+import org.apache.qpid.protonj2.codec.encoders.primitives.SymbolTypeEncoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
@@ -28,6 +29,8 @@ import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
  * Encoder of AMQP MessageAnnotations type values to a byte stream.
  */
 public final class MessageAnnotationsTypeEncoder extends AbstractDescribedMapTypeEncoder<Symbol, Object, MessageAnnotations> {
+
+    private static final SymbolTypeEncoder SYMBOL_ENCODER = new SymbolTypeEncoder();
 
     @Override
     public Class<MessageAnnotations> getTypeClass() {
@@ -62,7 +65,7 @@ public final class MessageAnnotationsTypeEncoder extends AbstractDescribedMapTyp
     public void writeMapEntries(ProtonBuffer buffer, Encoder encoder, EncoderState state, MessageAnnotations annotations) {
         // Write the Map elements and then compute total size written.
         annotations.getValue().forEach((key, value) -> {
-            encoder.writeSymbol(buffer, state, key);
+            SYMBOL_ENCODER.writeType(buffer, state, key);
             encoder.writeObject(buffer, state, value);
         });
     }

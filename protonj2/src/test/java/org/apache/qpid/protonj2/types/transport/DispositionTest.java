@@ -96,6 +96,13 @@ public class DispositionTest {
         assertFalse(disposition.hasRole());
         assertFalse(disposition.hasSettled());
         assertFalse(disposition.hasState());
+
+        assertFalse(disposition.hasElement(0));
+        assertFalse(disposition.hasElement(1));
+        assertFalse(disposition.hasElement(2));
+        assertFalse(disposition.hasElement(3));
+        assertFalse(disposition.hasElement(4));
+        assertFalse(disposition.hasElement(5));
     }
 
     @Test
@@ -116,6 +123,14 @@ public class DispositionTest {
         assertTrue(disposition.hasRole());
         assertTrue(disposition.hasSettled());
         assertTrue(disposition.hasState());
+
+        assertTrue(disposition.hasElement(0));
+        assertTrue(disposition.hasElement(1));
+        assertTrue(disposition.hasElement(2));
+        assertTrue(disposition.hasElement(3));
+        assertTrue(disposition.hasElement(4));
+        assertTrue(disposition.hasElement(5));
+        assertFalse(disposition.hasElement(6));
 
         disposition.clearBatchable();
         disposition.clearFirst();

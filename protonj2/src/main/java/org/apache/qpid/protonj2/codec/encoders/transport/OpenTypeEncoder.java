@@ -47,79 +47,43 @@ public final class OpenTypeEncoder extends AbstractDescribedListTypeEncoder<Open
 
     @Override
     public void writeElement(Open open, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
-        switch (index) {
-            case 0:
-                if (open.hasContainerId()) {
+        if (open.hasElement(index)) {
+            switch (index) {
+                case 0:
                     encoder.writeString(buffer, state, open.getContainerId());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 1:
-                if (open.hasHostname()) {
+                    break;
+                case 1:
                     encoder.writeString(buffer, state, open.getHostname());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 2:
-                if (open.hasMaxFrameSize()) {
+                    break;
+                case 2:
                     encoder.writeUnsignedInteger(buffer, state, open.getMaxFrameSize());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 3:
-                if (open.hasChannelMax()) {
+                    break;
+                case 3:
                     encoder.writeUnsignedShort(buffer, state, open.getChannelMax());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 4:
-                if (open.hasIdleTimeout()) {
+                    break;
+                case 4:
                     encoder.writeUnsignedInteger(buffer, state, open.getIdleTimeout());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 5:
-                if (open.hasOutgoingLocales()) {
+                    break;
+                case 5:
                     encoder.writeArray(buffer, state, open.getOutgoingLocales());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 6:
-                if (open.hasIncomingLocales()) {
+                    break;
+                case 6:
                     encoder.writeArray(buffer, state, open.getIncomingLocales());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 7:
-                if (open.hasOfferedCapabilities()) {
+                    break;
+                case 7:
                     encoder.writeArray(buffer, state, open.getOfferedCapabilities());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 8:
-                if (open.hasDesiredCapabilities()) {
+                    break;
+                case 8:
                     encoder.writeArray(buffer, state, open.getDesiredCapabilities());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 9:
-                if (open.hasProperties()) {
+                    break;
+                case 9:
                     encoder.writeMap(buffer, state, open.getProperties());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown Open value index: " + index);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown Open value index: " + index);
+            }
+        } else {
+            buffer.writeByte(EncodingCodes.NULL);
         }
     }
 

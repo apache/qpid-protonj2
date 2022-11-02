@@ -292,6 +292,8 @@ public final class ProtonDecoder implements Decoder {
         describedTypeDecoders.put(describedTypeDecoder.getDescriptorCode(), describedTypeDecoder);
         describedTypeDecoders.put(describedTypeDecoder.getDescriptorSymbol(), describedTypeDecoder);
 
+        decoder.decoderRegistered(this);
+
         return this;
     }
 

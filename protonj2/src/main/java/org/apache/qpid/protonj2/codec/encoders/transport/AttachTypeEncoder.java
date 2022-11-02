@@ -47,107 +47,55 @@ public final class AttachTypeEncoder extends AbstractDescribedListTypeEncoder<At
 
     @Override
     public void writeElement(Attach attach, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
-        switch (index) {
-            case 0:
-                if (attach.hasName()) {
+        if (attach.hasElement(index)) {
+            switch (index) {
+                case 0:
                     encoder.writeString(buffer, state, attach.getName());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 1:
-                if (attach.hasHandle()) {
+                    break;
+                case 1:
                     encoder.writeUnsignedInteger(buffer, state, attach.getHandle());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 2:
-                if (attach.hasRole()) {
-                    buffer.writeByte(attach.getRole().getValue() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 3:
-                if (attach.hasSenderSettleMode()) {
+                    break;
+                case 2:
+                    buffer.writeByte(attach.getRole().encodingCode());
+                    break;
+                case 3:
                     encoder.writeUnsignedByte(buffer, state, attach.getSenderSettleMode().byteValue());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 4:
-                if (attach.hasReceiverSettleMode()) {
+                    break;
+                case 4:
                     encoder.writeUnsignedByte(buffer, state, attach.getReceiverSettleMode().byteValue());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 5:
-                if (attach.hasSource()) {
+                    break;
+                case 5:
                     encoder.writeObject(buffer, state, attach.getSource());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 6:
-                if (attach.hasTargetOrCoordinator()) {
+                    break;
+                case 6:
                     encoder.writeObject(buffer, state, attach.getTarget());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 7:
-                if (attach.hasUnsettled()) {
+                    break;
+                case 7:
                     encoder.writeMap(buffer, state, attach.getUnsettled());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 8:
-                if (attach.hasIncompleteUnsettled()) {
+                    break;
+                case 8:
                     buffer.writeByte(attach.getIncompleteUnsettled() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 9:
-                if (attach.hasInitialDeliveryCount()) {
+                    break;
+                case 9:
                     encoder.writeUnsignedInteger(buffer, state, attach.getInitialDeliveryCount());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 10:
-                if (attach.hasMaxMessageSize()) {
+                    break;
+                case 10:
                     encoder.writeUnsignedLong(buffer, state, attach.getMaxMessageSize());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 11:
-                if (attach.hasOfferedCapabilities()) {
+                    break;
+                case 11:
                     encoder.writeArray(buffer, state, attach.getOfferedCapabilities());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 12:
-                if (attach.hasDesiredCapabilities()) {
+                    break;
+                case 12:
                     encoder.writeArray(buffer, state, attach.getDesiredCapabilities());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 13:
-                if (attach.hasProperties()) {
+                    break;
+                case 13:
                     encoder.writeMap(buffer, state, attach.getProperties());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown Attach value index: " + index);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown Attach value index: " + index);
+            }
+        } else {
+            buffer.writeByte(EncodingCodes.NULL);
         }
     }
 

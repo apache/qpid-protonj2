@@ -20,6 +20,7 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.encoders.AbstractDescribedMapTypeEncoder;
+import org.apache.qpid.protonj2.codec.encoders.primitives.StringTypeEncoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
@@ -28,6 +29,8 @@ import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
  * Encoder of AMQP ApplicationProperties type values to a byte stream.
  */
 public final class ApplicationPropertiesTypeEncoder extends AbstractDescribedMapTypeEncoder<String, Object, ApplicationProperties> {
+
+    private static final StringTypeEncoder STRING_ENCODER = new StringTypeEncoder();
 
     @Override
     public Class<ApplicationProperties> getTypeClass() {
@@ -62,7 +65,7 @@ public final class ApplicationPropertiesTypeEncoder extends AbstractDescribedMap
     public void writeMapEntries(ProtonBuffer buffer, Encoder encoder, EncoderState state, ApplicationProperties properties) {
         // Write the Map elements and then compute total size written.
         properties.getValue().forEach((key, value) -> {
-            encoder.writeString(buffer, state, key);
+            STRING_ENCODER.writeType(buffer, state, key);
             encoder.writeObject(buffer, state, value);
         });
     }

@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.types.transport;
 
+import org.apache.qpid.protonj2.codec.EncodingCodes;
+
 public enum Role {
 
     SENDER(false), RECEIVER(true);
@@ -28,6 +30,14 @@ public enum Role {
 
     public boolean getValue() {
         return receiver;
+    }
+
+    public byte encodingCode() {
+        if (receiver) {
+            return EncodingCodes.BOOLEAN_TRUE;
+        } else {
+            return EncodingCodes.BOOLEAN_FALSE;
+        }
     }
 
     public static Role valueOf(boolean role) {

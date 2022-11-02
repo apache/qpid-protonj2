@@ -45,84 +45,63 @@ public final class FlowTypeEncoder extends AbstractDescribedListTypeEncoder<Flow
         return Flow.class;
     }
 
+    /*
+     * This assumes that the value was already check be the setter in Flow
+     */
+    private static void writeCheckedUnsignedInteger(final long value, final ProtonBuffer buffer) {
+        if (value == 0) {
+            buffer.writeByte(EncodingCodes.UINT0);
+        } else if (value <= 255) {
+            buffer.writeByte(EncodingCodes.SMALLUINT);
+            buffer.writeByte((byte) value);
+        } else {
+            buffer.writeByte(EncodingCodes.UINT);
+            buffer.writeInt((int) value);
+        }
+    }
+
     @Override
     public void writeElement(Flow flow, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
-        switch (index) {
-            case 0:
-                if (flow.hasNextIncomingId()) {
-                    encoder.writeUnsignedInteger(buffer, state, flow.getNextIncomingId());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 1:
-                if (flow.hasIncomingWindow()) {
-                    encoder.writeUnsignedInteger(buffer, state, flow.getIncomingWindow());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 2:
-                if (flow.hasNextOutgoingId()) {
-                    encoder.writeUnsignedInteger(buffer, state, flow.getNextOutgoingId());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 3:
-                if (flow.hasOutgoingWindow()) {
-                    encoder.writeUnsignedInteger(buffer, state, flow.getOutgoingWindow());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 4:
-                if (flow.hasHandle()) {
-                    encoder.writeUnsignedInteger(buffer, state, flow.getHandle());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 5:
-                if (flow.hasDeliveryCount()) {
-                    encoder.writeUnsignedInteger(buffer, state, flow.getDeliveryCount());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 6:
-                if (flow.hasLinkCredit()) {
-                    encoder.writeUnsignedInteger(buffer, state, flow.getLinkCredit());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 7:
-                if (flow.hasAvailable()) {
-                    encoder.writeUnsignedInteger(buffer, state, flow.getAvailable());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 8:
-                if (flow.hasDrain()) {
+        if (flow.hasElement(index)) {
+            switch (index) {
+                case 0:
+                    writeCheckedUnsignedInteger(flow.getNextIncomingId(), buffer);
+                    break;
+                case 1:
+                    writeCheckedUnsignedInteger(flow.getIncomingWindow(), buffer);
+                    break;
+                case 2:
+                    writeCheckedUnsignedInteger(flow.getNextOutgoingId(), buffer);
+                    break;
+                case 3:
+                    writeCheckedUnsignedInteger(flow.getOutgoingWindow(), buffer);
+                    break;
+                case 4:
+                    writeCheckedUnsignedInteger(flow.getHandle(), buffer);
+                    break;
+                case 5:
+                    writeCheckedUnsignedInteger(flow.getDeliveryCount(), buffer);
+                    break;
+                case 6:
+                    writeCheckedUnsignedInteger(flow.getLinkCredit(), buffer);
+                    break;
+                case 7:
+                    writeCheckedUnsignedInteger(flow.getAvailable(), buffer);
+                    break;
+                case 8:
                     buffer.writeByte(flow.getDrain() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 9:
-                if (flow.hasEcho()) {
+                    break;
+                case 9:
                     buffer.writeByte(flow.getEcho() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 10:
-                encoder.writeMap(buffer, state, flow.getProperties());
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown Flow value index: " + index);
+                    break;
+                case 10:
+                    encoder.writeMap(buffer, state, flow.getProperties());
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown Flow value index: " + index);
+            }
+        } else {
+            buffer.writeByte(EncodingCodes.NULL);
         }
     }
 

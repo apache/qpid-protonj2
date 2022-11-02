@@ -96,6 +96,11 @@ public final class Begin implements Performative {
         return 32 - Integer.numberOfLeadingZeros(modified);
     }
 
+    public boolean hasElement(int index) {
+        final int value = 1 << index;
+        return (modified & value) == value;
+    }
+
     public boolean hasRemoteChannel() {
         return (modified & REMOTE_CHANNEL) == REMOTE_CHANNEL;
     }

@@ -70,6 +70,11 @@ public final class Transfer implements Performative {
         return 32 - Integer.numberOfLeadingZeros(modified);
     }
 
+    public boolean hasElement(int index) {
+        final int value = 1 << index;
+        return (modified & value) == value;
+    }
+
     public boolean hasHandle() {
         return (modified & HANDLE) == HANDLE;
     }

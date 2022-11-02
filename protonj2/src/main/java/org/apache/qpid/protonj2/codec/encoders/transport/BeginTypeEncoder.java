@@ -47,65 +47,37 @@ public final class BeginTypeEncoder extends AbstractDescribedListTypeEncoder<Beg
 
     @Override
     public void writeElement(Begin begin, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
-        switch (index) {
-            case 0:
-                if (begin.hasRemoteChannel()) {
+        if (begin.hasElement(index)) {
+            switch (index) {
+                case 0:
                     encoder.writeUnsignedShort(buffer, state, begin.getRemoteChannel());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 1:
-                if (begin.hasNextOutgoingId()) {
+                    break;
+                case 1:
                     encoder.writeUnsignedInteger(buffer, state, begin.getNextOutgoingId());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 2:
-                if (begin.hasIncomingWindow()) {
+                    break;
+                case 2:
                     encoder.writeUnsignedInteger(buffer, state, begin.getIncomingWindow());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 3:
-                if (begin.hasOutgoingWindow()) {
+                    break;
+                case 3:
                     encoder.writeUnsignedInteger(buffer, state, begin.getOutgoingWindow());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 4:
-                if (begin.hasHandleMax()) {
+                    break;
+                case 4:
                     encoder.writeUnsignedInteger(buffer, state, begin.getHandleMax());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 5:
-                if (begin.hasOfferedCapabilities()) {
+                    break;
+                case 5:
                     encoder.writeArray(buffer, state, begin.getOfferedCapabilities());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 6:
-                if (begin.hasDesiredCapabilities()) {
+                    break;
+                case 6:
                     encoder.writeArray(buffer, state, begin.getDesiredCapabilities());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 7:
-                if (begin.hasProperties()) {
+                    break;
+                case 7:
                     encoder.writeMap(buffer, state, begin.getProperties());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown Begin value index: " + index);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown Begin value index: " + index);
+            }
+        } else {
+            buffer.writeByte(EncodingCodes.NULL);
         }
     }
 

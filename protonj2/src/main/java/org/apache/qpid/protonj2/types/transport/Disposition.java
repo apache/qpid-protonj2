@@ -53,6 +53,11 @@ public final class Disposition implements Performative {
         return 32 - Integer.numberOfLeadingZeros(modified);
     }
 
+    public boolean hasElement(int index) {
+        final int value = 1 << index;
+        return (modified & value) == value;
+    }
+
     public boolean hasRole() {
         return (modified & ROLE) == ROLE;
     }

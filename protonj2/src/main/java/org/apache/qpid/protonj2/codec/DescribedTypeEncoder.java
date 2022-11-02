@@ -36,4 +36,15 @@ public interface DescribedTypeEncoder<V> extends TypeEncoder<V> {
      */
     Symbol getDescriptorSymbol();
 
+    /**
+     * Allow the type encoder to react to being registered with a given {@link Encoder} instance.
+     *
+     * @param encoder
+     * 		The {@link Encoder} that this type encoder is now registered with.
+     *
+     * @return this type encoder value after having initialized itself following registration.
+     */
+    default DescribedTypeEncoder<V> encoderRegistered(Encoder encoder) {
+        return this;
+    }
 }

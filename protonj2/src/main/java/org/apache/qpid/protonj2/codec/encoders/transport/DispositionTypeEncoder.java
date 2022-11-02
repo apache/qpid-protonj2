@@ -54,58 +54,52 @@ public final class DispositionTypeEncoder extends AbstractDescribedListTypeEncod
         return Disposition.class;
     }
 
+    /*
+     * This assumes that the value was already check be the setter in Disposition
+     */
+    private static void writeCheckedUnsignedInteger(final long value, final ProtonBuffer buffer) {
+        if (value == 0) {
+            buffer.writeByte(EncodingCodes.UINT0);
+        } else if (value <= 255) {
+            buffer.writeByte(EncodingCodes.SMALLUINT);
+            buffer.writeByte((byte) value);
+        } else {
+            buffer.writeByte(EncodingCodes.UINT);
+            buffer.writeInt((int) value);
+        }
+    }
+
     @Override
     public void writeElement(Disposition disposition, int index, ProtonBuffer buffer, Encoder encoder, EncoderState state) {
-        switch (index) {
-            case 0:
-                if (disposition.hasRole()) {
-                    buffer.writeByte(disposition.getRole().getValue() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 1:
-                if (disposition.hasFirst()) {
-                    encoder.writeUnsignedInteger(buffer, state, disposition.getFirst());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 2:
-                if (disposition.hasLast()) {
-                    encoder.writeUnsignedInteger(buffer, state, disposition.getLast());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 3:
-                if (disposition.hasSettled()) {
+        if (disposition.hasElement(index)) {
+            switch (index) {
+                case 0:
+                    buffer.writeByte(disposition.getRole().encodingCode());
+                    break;
+                case 1:
+                    writeCheckedUnsignedInteger(disposition.getFirst(), buffer);
+                    break;
+                case 2:
+                    writeCheckedUnsignedInteger(disposition.getLast(), buffer);
+                    break;
+                case 3:
                     buffer.writeByte(disposition.getSettled() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            case 4:
-                if (disposition.hasState()) {
+                    break;
+                case 4:
                     if (disposition.getState() == Accepted.getInstance()) {
                         buffer.writeBytes(ACCEPTED_ENCODING);
                     } else {
                         encoder.writeObject(buffer, state, disposition.getState());
                     }
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-
-                break;
-            case 5:
-                if (disposition.hasBatchable()) {
+                    break;
+                case 5:
                     buffer.writeByte(disposition.getBatchable() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown Disposition value index: " + index);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown Disposition value index: " + index);
+            }
+        } else {
+            buffer.writeByte(EncodingCodes.NULL);
         }
     }
 

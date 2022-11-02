@@ -96,6 +96,7 @@ public class Benchmark implements Runnable {
         benchmarkApplicationProperties();
         benchmarkSymbols();
         benchmarkTransfer();
+        benchmarkAccepted();
         benchmarkFlow();
         benchmarkDisposition();
         benchmarkString();
@@ -167,6 +168,25 @@ public class Benchmark implements Runnable {
         resultSet.decodesComplete();
 
         time("Transfer", resultSet);
+    }
+
+    private void benchmarkAccepted() throws IOException {
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            buffer.clear();
+            encoder.writeObject(buffer, encoderState, Accepted.getInstance());
+        }
+        resultSet.encodesComplete();
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            buffer.setReadIndex(0);
+            decoder.readObject(buffer, decoderState);
+        }
+        resultSet.decodesComplete();
+
+        time("Accepted", resultSet);
     }
 
     private void benchmarkFlow() throws IOException {

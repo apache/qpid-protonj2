@@ -71,6 +71,11 @@ public final class Flow implements Performative {
         return 32 - Integer.numberOfLeadingZeros(modified);
     }
 
+    public boolean hasElement(int index) {
+        final int value = 1 << index;
+        return (modified & value) == value;
+    }
+
     public boolean hasNextIncomingId() {
         return (modified & NEXT_INCOMING_ID) == NEXT_INCOMING_ID;
     }

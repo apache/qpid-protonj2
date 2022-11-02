@@ -708,7 +708,7 @@ public final class ProtonEncoder implements Encoder {
 
     @Override
     public <V> ProtonEncoder registerDescribedTypeEncoder(DescribedTypeEncoder<V> encoder) {
-        typeEncoders.put(encoder.getTypeClass(), encoder);
+        typeEncoders.put(encoder.getTypeClass(), encoder.encoderRegistered(this));
         return this;
     }
 

@@ -111,10 +111,7 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
         // Count include both key and value so we must include that in the loop
         final Map<String, Object> map = new LinkedHashMap<>(count);
         for (int i = 0; i < count / 2; i++) {
-            String key = decoder.readString(buffer, state);
-            Object value = decoder.readObject(buffer, state);
-
-            map.put(key, value);
+            map.put(decoder.readString(buffer, state), decoder.readObject(buffer, state));
         }
 
         return map;
@@ -171,10 +168,7 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
         // Count include both key and value so we must include that in the loop
         final Map<String, Object> map = new LinkedHashMap<>(count);
         for (int i = 0; i < count / 2; i++) {
-            String key = decoder.readString(stream, state);
-            Object value = decoder.readObject(stream, state);
-
-            map.put(key, value);
+            map.put(decoder.readString(stream, state), decoder.readObject(stream, state));
         }
 
         return map;
