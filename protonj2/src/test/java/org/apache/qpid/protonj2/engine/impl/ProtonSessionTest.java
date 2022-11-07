@@ -2515,6 +2515,161 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testBothSendersNotifiedAfterSessionOutgoingWindowOpenedWhenBothRequestedSendableState() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();
+        ProtonTestConnector peer = createTestPeer(engine, asyncIOCallbacks);
+
+        final byte[] payload = new byte[] {0, 1, 2, 3, 4};
+        final DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(1024).respond();
+        peer.expectBegin().withNextOutgoingId(0).respond().withNextOutgoingId(0);
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).withNextIncomingId(0).withIncomingWindow(8192).queue();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).withNextIncomingId(0).withIncomingWindow(8192).queue();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().setOutgoingCapacity(1024).open();
+        Sender sender1 = session.sender("test1").setDeliveryTagGenerator(generator).open();
+        Sender sender2 = session.sender("test2").setDeliveryTagGenerator(generator).open();
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withPayload(payload);
+
+        final AtomicInteger sender1CreditStateUpdated = new AtomicInteger();
+        sender1.creditStateUpdateHandler((self) -> {
+            sender1CreditStateUpdated.incrementAndGet();
+        });
+
+        final AtomicInteger sender2CreditStateUpdated = new AtomicInteger();
+        sender2.creditStateUpdateHandler((self) -> {
+            sender2CreditStateUpdated.incrementAndGet();
+        });
+
+        assertTrue(sender1.isSendable());
+        assertEquals(1024, session.getRemainingOutgoingCapacity());
+        assertTrue(sender2.isSendable());
+        assertEquals(1024, session.getRemainingOutgoingCapacity());
+
+        // Open, Begin, Attach, Attach
+        assertEquals(4, asyncIOCallbacks.size());
+        asyncIOCallbacks.forEach(runner -> runner.run());
+        asyncIOCallbacks.clear();
+
+        OutgoingDelivery delivery = sender1.next();
+        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        peer.waitForScriptToComplete();
+
+        assertEquals(1, asyncIOCallbacks.size());
+
+        assertFalse(sender1.isSendable());
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+        // Sender 2 shouldn't be able to send since sender 1 consumed the outgoing window
+        assertFalse(sender2.isSendable());
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+
+        // Free a frame's worth of window which should trigger both senders sendable update event
+        asyncIOCallbacks.poll().run();
+        assertEquals(0, asyncIOCallbacks.size());
+
+        assertTrue(sender1.isSendable());
+        assertEquals(1024, session.getRemainingOutgoingCapacity());
+        assertEquals(1, sender1CreditStateUpdated.get());
+        assertTrue(sender2.isSendable());
+        assertEquals(1024, session.getRemainingOutgoingCapacity());
+        assertEquals(1, sender2CreditStateUpdated.get());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSingleSenderUpdatedWhenOutgoingWindowOpenedForTwoIfFirstConsumesSessionOutgoingWindow() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();
+        ProtonTestConnector peer = createTestPeer(engine, asyncIOCallbacks);
+
+        final byte[] payload = new byte[] {0, 1, 2, 3, 4};
+        final DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(1024).respond();
+        peer.expectBegin().withNextOutgoingId(0).respond().withNextOutgoingId(0);
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).withNextIncomingId(0).withIncomingWindow(8192).queue();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withLinkCredit(20).withNextIncomingId(0).withIncomingWindow(8192).queue();
+
+        Connection connection = engine.start().setMaxFrameSize(1024).open();
+        Session session = connection.session().setOutgoingCapacity(1024).open();
+        Sender sender1 = session.sender("test1").setDeliveryTagGenerator(generator).open();
+        Sender sender2 = session.sender("test2").setDeliveryTagGenerator(generator).open();
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withPayload(payload);
+
+        final AtomicInteger sender1CreditStateUpdated = new AtomicInteger();
+        sender1.creditStateUpdateHandler((self) -> {
+            sender1CreditStateUpdated.incrementAndGet();
+            if (self.isSendable()) {
+                OutgoingDelivery delivery = self.next();
+                delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+            }
+        });
+
+        final AtomicInteger sender2CreditStateUpdated = new AtomicInteger();
+        sender2.creditStateUpdateHandler((self) -> {
+            sender2CreditStateUpdated.incrementAndGet();
+        });
+
+        assertTrue(sender1.isSendable());
+        assertEquals(1024, session.getRemainingOutgoingCapacity());
+        assertTrue(sender2.isSendable());
+        assertEquals(1024, session.getRemainingOutgoingCapacity());
+
+        // Open, Begin, Attach, Attach
+        assertEquals(4, asyncIOCallbacks.size());
+        asyncIOCallbacks.forEach(runner -> runner.run());
+        asyncIOCallbacks.clear();
+
+        OutgoingDelivery delivery = sender1.next();
+        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withPayload(payload);
+
+        assertEquals(1, asyncIOCallbacks.size());
+
+        assertFalse(sender1.isSendable());
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+        // Sender 2 shouldn't be able to send since sender 1 consumed the outgoing window
+        assertFalse(sender2.isSendable());
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+
+        // Should trigger sender 1 to send which should exhaust the outgoing credit
+        asyncIOCallbacks.poll().run();
+        assertEquals(1, asyncIOCallbacks.size()); // Sender one should have sent
+
+        assertFalse(sender1.isSendable());
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+        assertEquals(1, sender1CreditStateUpdated.get());
+        assertFalse(sender2.isSendable());
+        assertEquals(0, session.getRemainingOutgoingCapacity());
+        // Should not have triggered an event for sender 2 being able to send since
+        // sender one consumed the outgoing window already.
+        assertEquals(0, sender2CreditStateUpdated.get());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
     public void testHandleInUseErrorReturnedIfAttachWithAlreadyBoundHandleArrives() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
