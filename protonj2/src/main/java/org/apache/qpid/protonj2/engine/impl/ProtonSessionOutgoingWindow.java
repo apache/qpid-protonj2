@@ -16,16 +16,12 @@
  */
 package org.apache.qpid.protonj2.engine.impl;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NavigableMap;
 import java.util.Set;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
-import org.apache.qpid.protonj2.engine.util.SplayMap;
+import org.apache.qpid.protonj2.engine.util.UnsettledMap;
 import org.apache.qpid.protonj2.types.DeliveryTag;
-import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.transport.Begin;
 import org.apache.qpid.protonj2.types.transport.Disposition;
 import org.apache.qpid.protonj2.types.transport.Flow;
@@ -64,7 +60,8 @@ public class ProtonSessionOutgoingWindow {
 
     private Runnable outgoingFrameWriteComplete = this::handleOutgoingFrameWriteComplete;
 
-    private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
+    private final UnsettledMap<ProtonOutgoingDelivery> unsettled =
+        new UnsettledMap<ProtonOutgoingDelivery>(ProtonOutgoingDelivery::getDeliveryIdInt);
 
     public ProtonSessionOutgoingWindow(ProtonSession session) {
         this.session = session;
@@ -237,33 +234,17 @@ public class ProtonSessionOutgoingWindow {
         return disposition;
     }
 
-    private static void handleRangedDisposition(NavigableMap<UnsignedInteger, ProtonOutgoingDelivery> unsettled, Disposition disposition) {
-        final UnsignedInteger first = UnsignedInteger.valueOf(disposition.getFirst());
-        final UnsignedInteger last = UnsignedInteger.valueOf(disposition.getLast());
-
-        // Dispositions cover a contiguous range in the map requires a single sub-map
-        // which we can iterate whereas a range that wraps requires two iterations over
-        // a split between the higher portion and the lower portion of the map.
-        if (first.compareTo(last) <= 0) {
-            handleDispositions(unsettled.subMap(first, true, last, true), disposition);
+    private static void handleRangedDisposition(UnsettledMap<ProtonOutgoingDelivery> unsettled, Disposition disposition) {
+        // Dispositions cover a contiguous range in the map and since the tracker always moves forward
+        // when appending new deliveries the range can wrap without needing a second iteration.
+        if (disposition.getSettled()) {
+            unsettled.removeEach((int) disposition.getFirst(), (int) disposition.getLast(), (delivery) -> {
+                delivery.getLink().remoteDisposition(disposition, delivery);
+            });
         } else {
-            handleDispositions(unsettled.tailMap(first, true), disposition);
-            handleDispositions(unsettled.headMap(last, true), disposition);
-        }
-    }
-
-    private static void handleDispositions(Map<UnsignedInteger, ProtonOutgoingDelivery> deliveries, Disposition disposition) {
-        final boolean settled = disposition.getSettled();
-
-        Iterator<ProtonOutgoingDelivery> deliveriesIter = deliveries.values().iterator();
-        while (deliveriesIter.hasNext()) {
-            ProtonOutgoingDelivery delivery = deliveriesIter.next();
-
-            if (settled) {
-                deliveriesIter.remove();
-            }
-
-            delivery.getLink().remoteDisposition(disposition, delivery);
+            unsettled.forEach((int) disposition.getFirst(), (int) disposition.getLast(), (delivery) -> {
+                delivery.getLink().remoteDisposition(disposition, delivery);
+            });
         }
     }
 

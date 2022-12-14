@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.RunnerException;
@@ -37,7 +38,7 @@ public class SplayMapBenchmark extends MapBenchmarkBase {
     private SplayMap<String> sqFilledMap;
 
     @Override
-    @Setup
+    @Setup(Level.Invocation)
     public void init() {
         super.init();
 

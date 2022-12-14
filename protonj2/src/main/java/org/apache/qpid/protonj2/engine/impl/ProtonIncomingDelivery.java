@@ -303,6 +303,10 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
         return deliveryId;
     }
 
+    int getDeliveryIdInt() {
+        return (int) deliveryId;
+    }
+
     ProtonIncomingDelivery aborted() {
         aborted = true;
 

@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
@@ -55,7 +56,7 @@ public abstract class MapBenchmarkBase {
     protected Map<UnsignedInteger, String> map;
     protected Map<UnsignedInteger, String> filledMap;
 
-    @Setup
+    @Setup(Level.Invocation)
     public void init() {
         this.random.setSeed(System.currentTimeMillis());
         this.map = createMap();

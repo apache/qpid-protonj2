@@ -30,8 +30,7 @@ import org.apache.qpid.protonj2.engine.OutgoingDelivery;
 import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.util.DeliveryIdTracker;
-import org.apache.qpid.protonj2.engine.util.LinkedSplayMap;
-import org.apache.qpid.protonj2.engine.util.SplayMap;
+import org.apache.qpid.protonj2.engine.util.UnsettledMap;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.transport.Attach;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
@@ -48,7 +47,8 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     private final ProtonSessionOutgoingWindow sessionWindow;
     private final DeliveryIdTracker currentDeliveryId = new DeliveryIdTracker();
-    private final SplayMap<ProtonOutgoingDelivery> unsettled = new LinkedSplayMap<>();
+    private final UnsettledMap<ProtonOutgoingDelivery> unsettled =
+        new UnsettledMap<ProtonOutgoingDelivery>(ProtonOutgoingDelivery::getDeliveryIdInt);
 
     private EventHandler<OutgoingDelivery> deliveryUpdatedEventHandler = null;
     private EventHandler<Sender> linkCreditUpdatedHandler = null;

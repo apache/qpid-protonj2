@@ -31,8 +31,7 @@ import org.apache.qpid.protonj2.engine.Receiver;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.util.DeliveryIdTracker;
-import org.apache.qpid.protonj2.engine.util.LinkedSplayMap;
-import org.apache.qpid.protonj2.engine.util.SplayMap;
+import org.apache.qpid.protonj2.engine.util.UnsettledMap;
 import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.transport.Attach;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
@@ -54,7 +53,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     private final ProtonSessionIncomingWindow sessionWindow;
     private final DeliveryIdTracker currentDeliveryId = new DeliveryIdTracker();
-    private final SplayMap<ProtonIncomingDelivery> unsettled = new LinkedSplayMap<>();
+    private final UnsettledMap<ProtonIncomingDelivery> unsettled =
+        new UnsettledMap<ProtonIncomingDelivery>(ProtonIncomingDelivery::getDeliveryIdInt);
 
     private DeliveryState defaultDeliveryState;
     private LinkCreditState drainStateSnapshot;

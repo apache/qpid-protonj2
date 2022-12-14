@@ -277,6 +277,10 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         return deliveryId;
     }
 
+    int getDeliveryIdInt() {
+        return (int) deliveryId;
+    }
+
     void setDeliveryId(long deliveryId) {
         this.deliveryId = deliveryId;
     }
