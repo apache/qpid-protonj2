@@ -35,7 +35,7 @@ public class ProtonBufferInputStreamTest {
     public void testCannotReadFromClosedStream() throws IOException {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
         stream.close();
@@ -48,7 +48,7 @@ public class ProtonBufferInputStreamTest {
     public void testBufferWrappedExposesAvailableBytes() throws IOException {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
 
@@ -59,7 +59,7 @@ public class ProtonBufferInputStreamTest {
     public void testReadFully() throws IOException {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
 
@@ -79,7 +79,7 @@ public class ProtonBufferInputStreamTest {
     public void testReadReturnsMinusOneAfterAllBytesRead() throws IOException {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
 
@@ -96,7 +96,7 @@ public class ProtonBufferInputStreamTest {
     public void testReadArrayReturnsMinusOneAfterAllBytesRead() throws IOException {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
         final byte[] target = new byte[payload.length];
@@ -123,7 +123,7 @@ public class ProtonBufferInputStreamTest {
         dos.writeFloat(3.14f);
         dos.writeDouble(3.14);
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(bos.toByteArray());
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(bos.toByteArray());
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
 
         final byte[] sink = new byte[4];
@@ -151,7 +151,7 @@ public class ProtonBufferInputStreamTest {
 
         dos.writeUTF("Hello World");
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(bos.toByteArray());
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(bos.toByteArray());
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
 
         assertEquals("Hello World", stream.readUTF());
@@ -163,7 +163,7 @@ public class ProtonBufferInputStreamTest {
     public void testMarkReadIndex() throws IOException {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertTrue(stream.markSupported());
         assertEquals(payload.length, stream.available());
@@ -196,7 +196,7 @@ public class ProtonBufferInputStreamTest {
         dos.writeFloat(3.14f);
         dos.writeDouble(3.14);
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(bos.toByteArray());
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(bos.toByteArray());
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
 
         final byte[] sink = new byte[4];
@@ -229,7 +229,7 @@ public class ProtonBufferInputStreamTest {
     public void testSkip() throws IOException {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
         assertEquals(payload.length, stream.skip(Integer.MAX_VALUE));
@@ -242,7 +242,7 @@ public class ProtonBufferInputStreamTest {
     public void testSkipLong() throws IOException {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
         assertEquals(payload.length, stream.skip(Long.MAX_VALUE));
@@ -256,7 +256,7 @@ public class ProtonBufferInputStreamTest {
         final String input = new String("Hello World\n");
         final byte[] payload = input.getBytes(StandardCharsets.UTF_8);
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         stream.skip(payload.length);
         assertEquals(0, stream.available());
@@ -272,7 +272,7 @@ public class ProtonBufferInputStreamTest {
         final String expected2 = new String("This is a test");
         final byte[] payload = input.getBytes(StandardCharsets.UTF_8);
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
         assertEquals(expected1, stream.readLine());
@@ -287,7 +287,7 @@ public class ProtonBufferInputStreamTest {
         final String expected = new String("Hello World");
         final byte[] payload = input.getBytes(StandardCharsets.UTF_8);
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
         assertEquals(expected, stream.readLine());
@@ -301,7 +301,7 @@ public class ProtonBufferInputStreamTest {
         final String expected = new String("");
         final byte[] payload = input.getBytes(StandardCharsets.UTF_8);
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
         assertEquals(expected, stream.readLine());
@@ -315,7 +315,7 @@ public class ProtonBufferInputStreamTest {
         final String expected = new String("");
         final byte[] payload = input.getBytes(StandardCharsets.UTF_8);
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
         assertEquals(expected, stream.readLine());
@@ -329,7 +329,7 @@ public class ProtonBufferInputStreamTest {
         final String expected = new String("Hello World");
         final byte[] payload = input.getBytes(StandardCharsets.UTF_8);
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
         assertEquals(expected, stream.readLine());
@@ -344,7 +344,7 @@ public class ProtonBufferInputStreamTest {
         final String expected2 = new String("ABC");
         final byte[] payload = input.getBytes(StandardCharsets.UTF_8);
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
         assertEquals(expected1, stream.readLine());
@@ -359,7 +359,7 @@ public class ProtonBufferInputStreamTest {
         final String expected = new String("Hello World");
         final byte[] payload = input.getBytes(StandardCharsets.UTF_8);
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
         assertEquals(expected, stream.readLine());
@@ -373,7 +373,7 @@ public class ProtonBufferInputStreamTest {
         final String expected = new String("Hello World");
         final byte[] payload = input.getBytes(StandardCharsets.UTF_8);
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
         ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
         assertEquals(payload.length, stream.available());
         assertEquals(expected, stream.readLine());

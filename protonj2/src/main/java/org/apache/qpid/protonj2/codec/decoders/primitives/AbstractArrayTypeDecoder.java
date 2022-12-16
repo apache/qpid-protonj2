@@ -77,7 +77,7 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.skipBytes(readSize(buffer));
+        buffer.advanceReadOffset(readSize(buffer));
     }
 
     @Override

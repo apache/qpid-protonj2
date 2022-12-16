@@ -20,7 +20,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Objects;
 import java.util.Queue;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -37,8 +36,9 @@ import org.apache.qpid.protonj2.test.driver.exceptions.UnexpectedPerformativeErr
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty5.buffer.Buffer;
+import io.netty5.buffer.BufferAllocator;
+import io.netty5.channel.EventLoop;
 
 /**
  * Test driver object used to drive inputs and inspect outputs of an Engine.
@@ -58,7 +58,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
 
     private final Consumer<ByteBuffer> frameConsumer;
     private final Consumer<AssertionError> assertionConsumer;
-    private final Supplier<ScheduledExecutorService> schedulerSupplier;
+    private final Supplier<EventLoop> schedulerSupplier;
 
     private volatile AssertionError failureCause;
 
@@ -88,7 +88,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
      * @param scheduler
      *      A {@link Supplier} that will provide this driver with a scheduler service for delayed actions
      */
-    public AMQPTestDriver(String name, Consumer<ByteBuffer> frameConsumer, Supplier<ScheduledExecutorService> scheduler) {
+    public AMQPTestDriver(String name, Consumer<ByteBuffer> frameConsumer, Supplier<EventLoop> scheduler) {
         this(name, frameConsumer, null, scheduler);
     }
 
@@ -104,7 +104,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
      * @param scheduler
      *      A {@link Supplier} that will provide this driver with a scheduler service for delayed actions
      */
-    public AMQPTestDriver(String name, Consumer<ByteBuffer> frameConsumer, Consumer<AssertionError> assertionConsumer, Supplier<ScheduledExecutorService> scheduler) {
+    public AMQPTestDriver(String name, Consumer<ByteBuffer> frameConsumer, Consumer<AssertionError> assertionConsumer, Supplier<EventLoop> scheduler) {
         this.frameConsumer = frameConsumer;
         this.assertionConsumer = assertionConsumer;
         this.schedulerSupplier = scheduler;
@@ -207,21 +207,23 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
 
     @Override
     public void accept(ByteBuffer buffer) {
-        accept(Unpooled.wrappedBuffer(buffer));
+        try (Buffer copy = BufferAllocator.onHeapUnpooled().copyOf(buffer)) {
+            accept(copy);
+        }
     }
 
     /**
-     * Supply incoming bytes read to the test driver via an Netty {@link ByteBuf} instance.
+     * Supply incoming bytes read to the test driver via an Netty {@link Buffer} instance.
      *
      * @param buffer
-     * 		The Netty {@link ByteBuf} that contains new incoming bytes read.
+     * 		The Netty {@link Buffer} that contains new incoming bytes read.
      */
-    public void accept(ByteBuf buffer) {
+    public void accept(Buffer buffer) {
         LOG.trace("{} processing new inbound buffer of size: {}", driverName, buffer.readableBytes());
 
         try {
             // Process off all encoded frames from this buffer one at a time.
-            while (buffer.isReadable() && failureCause == null) {
+            while (buffer.readableBytes() > 0 && failureCause == null) {
                 LOG.trace("{} ingesting {} bytes.", driverName, buffer.readableBytes());
                 frameParser.ingest(buffer);
                 LOG.trace("{} ingestion completed cycle, remaining bytes in buffer: {}", driverName, buffer.readableBytes());
@@ -280,7 +282,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         }
     }
 
-    void handleSaslPerformative(int frameSize, SaslDescribedType sasl, int channel, ByteBuf payload) throws AssertionError {
+    void handleSaslPerformative(int frameSize, SaslDescribedType sasl, int channel, Buffer payload) throws AssertionError {
         synchronized (script) {
             final ScriptedElement scriptEntry = script.poll();
             if (scriptEntry == null) {
@@ -312,7 +314,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         }
     }
 
-    void handlePerformative(int frameSize, PerformativeDescribedType amqp, int channel, ByteBuf payload) throws AssertionError {
+    void handlePerformative(int frameSize, PerformativeDescribedType amqp, int channel, Buffer payload) throws AssertionError {
         switch (amqp.getPerformativeType()) {
             case HEARTBEAT:
                 break;
@@ -364,7 +366,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
      */
     public synchronized void afterDelay(int delay, ScriptedAction action) {
         Objects.requireNonNull(schedulerSupplier, "This driver cannot schedule delayed events, no scheduler available");
-        ScheduledExecutorService scheduler = schedulerSupplier.get();
+        EventLoop scheduler = schedulerSupplier.get();
         Objects.requireNonNull(scheduler, "This driver cannot schedule delayed events, no scheduler available");
 
         scheduler.schedule(() -> {
@@ -499,7 +501,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
      * @param payload
      *      The payload to include in the encoded frame.
      */
-    public final void sendAMQPFrame(int channel, DescribedType performative, ByteBuf payload) {
+    public final void sendAMQPFrame(int channel, DescribedType performative, Buffer payload) {
         sendAMQPFrame(channel, performative, payload, false);
     }
 
@@ -515,7 +517,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
      * @param splitWrite
      * 		Should the data be written in multiple chunks
      */
-    public void sendAMQPFrame(int channel, DescribedType performative, ByteBuf payload, boolean splitWrite) {
+    public void sendAMQPFrame(int channel, DescribedType performative, Buffer payload, boolean splitWrite) {
         LOG.trace("{} Sending performative: {}", driverName, performative);
 
         if (performative instanceof PerformativeDescribedType) {
@@ -527,20 +529,25 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
             }
         }
 
-        try {
-            final ByteBuf buffer = frameEncoder.handleWrite(performative, channel, payload, null);
+        try (Buffer buffer = frameEncoder.handleWrite(performative, channel, payload, null)) {
             LOG.trace("{} Writing out buffer {} to consumer: {}", driverName, buffer, frameConsumer);
 
             if (splitWrite) {
                 final int bufferSplitPoint = buffer.readableBytes() / 2;
 
-                final ByteBuf front = buffer.slice(buffer.readerIndex(), bufferSplitPoint);
-                final ByteBuf rear = buffer.slice(bufferSplitPoint, buffer.readableBytes() - bufferSplitPoint);
+                final ByteBuffer front = ByteBuffer.allocate(bufferSplitPoint - buffer.readerOffset());
+                final ByteBuffer rear = ByteBuffer.allocate(buffer.readableBytes() - bufferSplitPoint);
 
-                frameConsumer.accept(front.nioBuffer());
-                frameConsumer.accept(rear.nioBuffer());
+                buffer.readBytes(front);
+                buffer.readBytes(rear);
+
+                frameConsumer.accept(front.flip());
+                frameConsumer.accept(rear.flip());
             } else {
-                frameConsumer.accept(buffer.nioBuffer());
+                final ByteBuffer output = ByteBuffer.allocate(buffer.readableBytes());
+                buffer.readBytes(output);
+
+                frameConsumer.accept(output.flip());
             }
         } catch (Throwable t) {
             signalFailure(new AssertionError("Frame was not written due to error.", t));
@@ -564,9 +571,11 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
 
         LOG.trace("{} Sending sasl performative: {}", driverName, performative);
 
-        try {
-            final ByteBuf buffer = frameEncoder.handleWrite(performative, channel);
-            frameConsumer.accept(buffer.nioBuffer());
+        try (Buffer buffer = frameEncoder.handleWrite(performative, channel)) {
+            final ByteBuffer output = ByteBuffer.allocate(buffer.readableBytes());
+            buffer.readBytes(output);
+
+            frameConsumer.accept(output.flip());
         } catch (Throwable t) {
             signalFailure(new AssertionError("Frame was not written due to error.", t));
         }
@@ -594,10 +603,11 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
      *      the channel on which to send the empty frame.
      */
     public void sendEmptyFrame(int channel) {
-        ByteBuf buffer = frameEncoder.handleWrite(null, channel, null, null);
+        try (Buffer buffer = frameEncoder.handleWrite(null, channel, null, null)) {
+            final ByteBuffer output = ByteBuffer.allocate(buffer.readableBytes());
+            buffer.readBytes(output);
 
-        try {
-            frameConsumer.accept(buffer.nioBuffer());
+            frameConsumer.accept(output.flip());
         } catch (Throwable t) {
             signalFailure(new AssertionError("Frame was not consumed due to error.", t));
         }
@@ -624,10 +634,13 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
      * @param buffer
      *      The buffer whose contents are to be written to the frame consumer.
      */
-    public void sendBytes(ByteBuf buffer) {
+    public void sendBytes(Buffer buffer) {
         LOG.trace("{} Sending bytes from ProtonBuffer: {}", driverName, buffer);
-        try {
-            frameConsumer.accept(buffer.nioBuffer());
+        try (Buffer bytes = buffer) {
+            final ByteBuffer output = ByteBuffer.allocate(bytes.readableBytes());
+            buffer.readBytes(output);
+
+            frameConsumer.accept(output.flip());
         } catch (Throwable t) {
             signalFailure(new AssertionError("Buffer was not consumed due to error.", t));
         }

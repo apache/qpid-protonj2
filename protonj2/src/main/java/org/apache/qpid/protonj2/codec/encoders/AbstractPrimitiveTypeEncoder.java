@@ -38,7 +38,7 @@ public abstract class AbstractPrimitiveTypeEncoder<V> implements PrimitiveTypeEn
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
 
-        int startIndex = buffer.getWriteIndex();
+        final int startIndex = buffer.getWriteOffset();
 
         // Reserve space for the size and write the count of list elements.
         buffer.writeInt(0);
@@ -48,7 +48,7 @@ public abstract class AbstractPrimitiveTypeEncoder<V> implements PrimitiveTypeEn
         writeRawArray(buffer, state, values);
 
         // Move back and write the size
-        long writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
+        final long writeSize = buffer.getWriteOffset() - startIndex - Integer.BYTES;
 
         if (writeSize > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Cannot encode given array, encoded size too large: " + writeSize);

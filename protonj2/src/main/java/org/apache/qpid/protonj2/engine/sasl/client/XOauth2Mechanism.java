@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.types.Symbol;
 
 /**
@@ -82,7 +82,7 @@ public class XOauth2Mechanism extends AbstractMechanism {
         data[data.length-2] = 1;
         data[data.length-1] = 1;
 
-        return ProtonByteBufferAllocator.DEFAULT.wrap(data).setWriteIndex(data.length);
+        return ProtonBufferAllocator.defaultAllocator().copy(data).convertToReadOnly();
     }
 
     @Override

@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.test.driver.codec;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 class ArrayElement extends AbstractElement<Object[]> {
 
@@ -151,12 +151,12 @@ class ArrayElement extends AbstractElement<Object[]> {
     }
 
     @Override
-    public int encode(ByteBuf buffer) {
+    public int encode(Buffer buffer) {
         int size = size();
 
         final int count = (int) count();
 
-        if (buffer.maxWritableBytes() >= size) {
+        if (buffer.implicitCapacityLimit() - buffer.capacity() >= size) {
             if (!isElementOfArray()) {
                 if (size > 257 || count > 255) {
                     buffer.writeByte((byte) 0xf0);

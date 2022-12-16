@@ -17,7 +17,6 @@
 package org.apache.qpid.protonj2.engine.impl;
 
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.engine.EngineConfiguration;
 import org.apache.qpid.protonj2.engine.EngineHandler;
 import org.apache.qpid.protonj2.engine.EngineSaslDriver.SaslState;
@@ -34,7 +33,7 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
 
     private final ProtonEngine engine;
 
-    private ProtonBufferAllocator allocator = ProtonByteBufferAllocator.DEFAULT;
+    private ProtonBufferAllocator allocator = ProtonBufferAllocator.defaultAllocator();
 
     private long effectiveMaxInboundFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
     private long effectiveMaxOutboundFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
@@ -53,7 +52,6 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
         this.allocator = allocator;
         return this;
     }
-
 
     @Override
     public EngineConfiguration setTraceFrames(boolean traceFrames) {

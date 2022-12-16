@@ -30,8 +30,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -80,8 +80,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeHeaderSeries(int size, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Map<String, Object> propertiesMap = new LinkedHashMap<>();
         ApplicationProperties properties = new ApplicationProperties(propertiesMap);
@@ -97,6 +96,14 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, properties);
+        }
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
         }
 
         for (int i = 0; i < size; ++i) {
@@ -124,8 +131,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeZeroSizedArrayOfApplicationProperties(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         ApplicationProperties[] array = new ApplicationProperties[0];
 
@@ -133,6 +139,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -156,8 +163,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
     }
 
     private void testEncodeDecodeArrayOfApplicationProperties(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         ApplicationProperties[] array = new ApplicationProperties[3];
 
@@ -173,6 +179,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -201,8 +208,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Map<String, Object> map = new HashMap<>();
         map.put("one", 1);
@@ -214,6 +220,14 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
         }
 
         encoder.writeObject(buffer, encoderState, new Modified());
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -252,13 +266,13 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeMessageAnnotationsWithEmptyValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeObject(buffer, encoderState, new ApplicationProperties(null));
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -302,8 +316,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueWithInvalidListType(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -321,6 +334,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(ApplicationProperties.class, typeDecoder.getTypeClass());
 
@@ -350,8 +364,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueWithNullMapEncoding(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -359,6 +372,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(EncodingCodes.NULL);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(ApplicationProperties.class, typeDecoder.getTypeClass());
 
@@ -390,8 +404,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeArray(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         ApplicationProperties[] array = new ApplicationProperties[3];
 
@@ -407,6 +420,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -435,8 +449,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
     }
 
     private void testReadTypeWithNullEncoding(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -445,6 +458,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -459,7 +473,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testReadTypeWithOverLargeEncoding() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);

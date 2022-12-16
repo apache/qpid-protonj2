@@ -511,9 +511,7 @@ public abstract class CodecToLegacyType {
      * @return the legacy version of the new type.
      */
     public static org.apache.qpid.proton.amqp.Binary convertToLegacyType(Binary binary) {
-        byte[] copy = new byte[binary.getLength()];
-        System.arraycopy(binary.getArray(), binary.getArrayOffset(), copy, 0, copy.length);
-        return new org.apache.qpid.proton.amqp.Binary(copy);
+        return new org.apache.qpid.proton.amqp.Binary(binary.asByteArray());
     }
 
     /**

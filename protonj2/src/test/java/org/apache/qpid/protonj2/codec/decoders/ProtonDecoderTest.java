@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeEOFException;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -50,7 +50,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadNullFromReadObjectForNullEncoding() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.NULL);
@@ -61,7 +61,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testTryReadFromEmptyBuffer() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         try {
             decoder.readObject(buffer, decoderState);
@@ -71,9 +71,9 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testErrorOnReadOfUnknownEncoding() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
-        buffer.writeByte(255);
+        buffer.writeByte((byte) 255);
 
         assertNull(decoder.peekNextTypeDecoder(buffer, decoderState));
 
@@ -85,7 +85,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadFromNullEncodingCode() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final UUID value = UUID.randomUUID();
 
@@ -102,7 +102,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadMultipleFromNullEncoding() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.NULL);
 
@@ -111,7 +111,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadMultipleFromSingleEncoding() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final UUID value = UUID.randomUUID();
 
@@ -128,7 +128,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadMultipleRequestsWrongTypeForArray() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final UUID value = UUID.randomUUID();
 
@@ -144,7 +144,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadMultipleRequestsWrongTypeForArrayEncoding() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final UUID[] value = new UUID[] { UUID.randomUUID(), UUID.randomUUID() };
 
@@ -158,7 +158,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testDecodeUnknownDescribedTypeWithNegativeLongDescriptor() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final UUID value = UUID.randomUUID();
 
@@ -181,7 +181,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testDecodeUnknownDescribedTypeWithMaxLongDescriptor() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final UUID value = UUID.randomUUID();
 
@@ -204,13 +204,13 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testDecodeUnknownDescribedTypeWithUnknownDescriptorCode() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final UUID value = UUID.randomUUID();
 
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(255);
+        buffer.writeByte((byte) 255);
         buffer.writeByte(EncodingCodes.UUID);
         buffer.writeLong(value.getMostSignificantBits());
         buffer.writeLong(value.getLeastSignificantBits());
@@ -228,16 +228,16 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadUnsignedIntegerTypes() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UINT0);
         buffer.writeByte(EncodingCodes.SMALLUINT);
-        buffer.writeByte(127);
+        buffer.writeByte((byte) 127);
         buffer.writeByte(EncodingCodes.UINT);
-        buffer.writeByte(0);
-        buffer.writeByte(0);
-        buffer.writeByte(0);
-        buffer.writeByte(255);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) 255);
         buffer.writeByte(EncodingCodes.NULL);
 
         assertEquals(0, decoder.readUnsignedInteger(buffer, decoderState, 32));
@@ -248,7 +248,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadStringWithCustomStringDecoder() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.STR32);
         buffer.writeInt(16);
@@ -272,7 +272,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
 
     @Test
     public void testStringReadFromCustomDecoderThrowsDecodeExceptionOnError() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.STR32);
         buffer.writeInt(16);

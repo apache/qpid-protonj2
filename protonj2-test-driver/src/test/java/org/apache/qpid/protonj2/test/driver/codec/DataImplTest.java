@@ -39,8 +39,8 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.SenderSettleMode;
 import org.junit.jupiter.api.Test;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty5.buffer.Buffer;
+import io.netty5.buffer.BufferAllocator;
 
 /**
  * Test some basic operations of the Data type codec
@@ -55,7 +55,7 @@ public class DataImplTest {
         open.setContainerId("test");
         open.setHostname("localhost");
 
-        ByteBuf encoded = encodeProtonPerformative(open);
+        Buffer encoded = encodeProtonPerformative(open);
         int expectedRead = encoded.readableBytes();
 
         Codec codec = Codec.Factory.create();
@@ -79,7 +79,7 @@ public class DataImplTest {
         Codec codec = Codec.Factory.create();
 
         codec.putDescribedType(open);
-        ByteBuf encoded = Unpooled.buffer((int) codec.encodedSize());
+        Buffer encoded = BufferAllocator.onHeapUnpooled().allocate((int) codec.encodedSize());
         codec.encode(encoded);
 
         DescribedType decoded = decodeProtonPerformative(encoded);
@@ -97,7 +97,7 @@ public class DataImplTest {
         begin.setHandleMax(UnsignedInteger.valueOf(512));
         begin.setRemoteChannel(UnsignedShort.valueOf(1));
 
-        ByteBuf encoded = encodeProtonPerformative(begin);
+        Buffer encoded = encodeProtonPerformative(begin);
         int expectedRead = encoded.readableBytes();
 
         Codec codec = Codec.Factory.create();
@@ -124,16 +124,17 @@ public class DataImplTest {
         Codec codec = Codec.Factory.create();
 
         codec.putDescribedType(begin);
-        ByteBuf encoded = Unpooled.buffer((int) codec.encodedSize());
-        codec.encode(encoded);
+        try (Buffer encoded = BufferAllocator.onHeapUnpooled().allocate((int) codec.encodedSize())) {
+            codec.encode(encoded);
 
-        DescribedType decoded = decodeProtonPerformative(encoded);
-        assertNotNull(decoded);
-        assertTrue(decoded instanceof Begin);
+            DescribedType decoded = decodeProtonPerformative(encoded);
+            assertNotNull(decoded);
+            assertTrue(decoded instanceof Begin);
 
-        Begin performative = (Begin) decoded;
-        assertEquals(performative.getHandleMax(), UnsignedInteger.valueOf(512));
-        assertEquals(performative.getRemoteChannel(), UnsignedShort.valueOf((short) 1));
+            Begin performative = (Begin) decoded;
+            assertEquals(performative.getHandleMax(), UnsignedInteger.valueOf(512));
+            assertEquals(performative.getRemoteChannel(), UnsignedShort.valueOf((short) 1));
+        }
     }
 
     @Test
@@ -147,19 +148,20 @@ public class DataImplTest {
         attach.setSource(new Source());
         attach.setTarget(new Target());
 
-        ByteBuf encoded = encodeProtonPerformative(attach);
-        int expectedRead = encoded.readableBytes();
+        try (Buffer encoded = encodeProtonPerformative(attach)) {
+            final int expectedRead = encoded.readableBytes();
 
-        Codec codec = Codec.Factory.create();
+            Codec codec = Codec.Factory.create();
 
-        assertEquals(expectedRead, codec.decode(encoded));
+            assertEquals(expectedRead, codec.decode(encoded));
 
-        Attach described = (Attach) codec.getDescribedType();
-        assertNotNull(described);
-        assertEquals(Attach.DESCRIPTOR_SYMBOL, described.getDescriptor());
+            Attach described = (Attach) codec.getDescribedType();
+            assertNotNull(described);
+            assertEquals(Attach.DESCRIPTOR_SYMBOL, described.getDescriptor());
 
-        assertEquals(described.getHandle(), UnsignedInteger.valueOf(1));
-        assertEquals(described.getName(), "test");
+            assertEquals(described.getHandle(), UnsignedInteger.valueOf(1));
+            assertEquals(described.getName(), "test");
+        }
     }
 
     @Test
@@ -176,16 +178,17 @@ public class DataImplTest {
         Codec codec = Codec.Factory.create();
 
         codec.putDescribedType(attach);
-        ByteBuf encoded = Unpooled.buffer((int) codec.encodedSize());
-        codec.encode(encoded);
+        try (Buffer encoded = BufferAllocator.onHeapUnpooled().allocate((int) codec.encodedSize())) {
+            codec.encode(encoded);
 
-        DescribedType decoded = decodeProtonPerformative(encoded);
-        assertNotNull(decoded);
-        assertTrue(decoded instanceof Attach);
+            DescribedType decoded = decodeProtonPerformative(encoded);
+            assertNotNull(decoded);
+            assertTrue(decoded instanceof Attach);
 
-        Attach performative = (Attach) decoded;
-        assertEquals(performative.getHandle(), UnsignedInteger.valueOf(1));
-        assertEquals(performative.getName(), "test");
+            Attach performative = (Attach) decoded;
+            assertEquals(performative.getHandle(), UnsignedInteger.valueOf(1));
+            assertEquals(performative.getName(), "test");
+        }
     }
 
     @Test
@@ -203,7 +206,7 @@ public class DataImplTest {
                                                 2, -95, 12, 113, 117, 101, 117, 101, 45, 112, 114, 101, 102, 105,
                                                 120, -95, 8, 113, 117, 101, 117, 101, 58, 47, 47};
 
-        ByteBuf encoded = Unpooled.wrappedBuffer(completeOpen);
+        Buffer encoded = BufferAllocator.onHeapUnpooled().copyOf(completeOpen);
 
         DescribedType decoded = decodeProtonPerformative(encoded);
         assertNotNull(decoded);
@@ -229,7 +232,7 @@ public class DataImplTest {
         assertEquals(expected, performative.getProperties());
     }
 
-    private DescribedType decodeProtonPerformative(ByteBuf buffer) throws IOException {
+    private DescribedType decodeProtonPerformative(Buffer buffer) throws IOException {
         DescribedType performative = null;
 
         try {
@@ -253,8 +256,8 @@ public class DataImplTest {
         return performative;
     }
 
-    private ByteBuf encodeProtonPerformative(DescribedType performative) {
-        ByteBuf buffer = Unpooled.buffer();
+    private Buffer encodeProtonPerformative(DescribedType performative) {
+        Buffer buffer = BufferAllocator.onHeapPooled().allocate(256);
 
         if (performative != null) {
             try {

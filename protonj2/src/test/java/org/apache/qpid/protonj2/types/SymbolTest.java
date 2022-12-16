@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.junit.jupiter.api.Test;
 
 public class SymbolTest {
@@ -61,9 +61,9 @@ public class SymbolTest {
 
     @Test
     public void testGetSymbolWithEmptyBuffer() {
-        assertNotNull(Symbol.getSymbol(ProtonByteBufferAllocator.DEFAULT.allocate(0)));
-        assertSame(Symbol.getSymbol(ProtonByteBufferAllocator.DEFAULT.allocate(0)),
-                   Symbol.getSymbol(ProtonByteBufferAllocator.DEFAULT.allocate(0)));
+        assertNotNull(Symbol.getSymbol(ProtonBufferAllocator.defaultAllocator().allocate(0)));
+        assertSame(Symbol.getSymbol(ProtonBufferAllocator.defaultAllocator().allocate(0)),
+                   Symbol.getSymbol(ProtonBufferAllocator.defaultAllocator().allocate(0)));
     }
 
     @Test
@@ -214,7 +214,7 @@ public class SymbolTest {
     public void testLargeSymbolNotCached() {
         Symbol symbol1 = Symbol.valueOf(LARGE_SYMBOL_VALUE);
         Symbol symbol2 = Symbol.getSymbol(
-            ProtonByteBufferAllocator.DEFAULT.wrap(LARGE_SYMBOL_VALUE.getBytes(StandardCharsets.US_ASCII)));
+            ProtonBufferAllocator.defaultAllocator().copy(LARGE_SYMBOL_VALUE.getBytes(StandardCharsets.US_ASCII)));
 
         assertNotSame(symbol1, symbol2);
         assertNotSame(symbol1.toString(), symbol2.toString());

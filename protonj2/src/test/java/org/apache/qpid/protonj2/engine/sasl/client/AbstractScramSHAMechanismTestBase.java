@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -60,7 +60,7 @@ public abstract class AbstractScramSHAMechanismTestBase extends MechanismTestBas
         ProtonBuffer clientFinalMessage = mechanism.getChallengeResponse(getTestCredentials(), serverFirstMessage);
         assertEquals(expectedClientFinalMessage, clientFinalMessage);
 
-        ProtonBuffer expectedFinalChallengeResponse = ProtonByteBufferAllocator.DEFAULT.wrap("".getBytes());
+        ProtonBuffer expectedFinalChallengeResponse = ProtonBufferAllocator.defaultAllocator().copy("".getBytes());
         assertEquals(expectedFinalChallengeResponse, mechanism.getChallengeResponse(getTestCredentials(), serverFinalMessage));
 
         mechanism.verifyCompletion();
@@ -72,8 +72,8 @@ public abstract class AbstractScramSHAMechanismTestBase extends MechanismTestBas
 
         mechanism.getInitialResponse(getTestCredentials());
 
-        ProtonBuffer challenge = ProtonByteBufferAllocator.DEFAULT.wrap("badserverfirst".getBytes());
-        challenge.setIndex(0, challenge.capacity());
+        ProtonBuffer challenge = ProtonBufferAllocator.defaultAllocator().copy("badserverfirst".getBytes());
+        challenge.setWriteOffset(challenge.capacity());
 
         try {
             mechanism.getChallengeResponse(getTestCredentials(), challenge);
@@ -98,8 +98,8 @@ public abstract class AbstractScramSHAMechanismTestBase extends MechanismTestBas
 
         mechanism.getInitialResponse(getTestCredentials());
 
-        ProtonBuffer challenge = ProtonByteBufferAllocator.DEFAULT.wrap("m=notsupported,s=,i=".getBytes());
-        challenge.setIndex(0, challenge.capacity());
+        ProtonBuffer challenge = ProtonBufferAllocator.defaultAllocator().copy("m=notsupported,s=,i=".getBytes());
+        challenge.setWriteOffset(challenge.capacity());
 
         try {
             mechanism.getChallengeResponse(getTestCredentials(), challenge);
@@ -123,9 +123,9 @@ public abstract class AbstractScramSHAMechanismTestBase extends MechanismTestBas
 
         mechanism.getInitialResponse(getTestCredentials());
 
-        ProtonBuffer challenge = ProtonByteBufferAllocator.DEFAULT.wrap(
+        ProtonBuffer challenge = ProtonBufferAllocator.defaultAllocator().copy(
             "r=invalidnonce,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096".getBytes());
-        challenge.setIndex(0, challenge.capacity());
+        challenge.setWriteOffset(challenge.capacity());
 
         try {
             mechanism.getChallengeResponse(getTestCredentials(), challenge);
@@ -152,8 +152,8 @@ public abstract class AbstractScramSHAMechanismTestBase extends MechanismTestBas
         mechanism.getInitialResponse(getTestCredentials());
         mechanism.getChallengeResponse(getTestCredentials(), serverFirstMessage);
 
-        ProtonBuffer challenge = ProtonByteBufferAllocator.DEFAULT.wrap("v=badserverfinal".getBytes());
-        challenge.setIndex(0, challenge.capacity());
+        ProtonBuffer challenge = ProtonBufferAllocator.defaultAllocator().copy("v=badserverfinal".getBytes());
+        challenge.setWriteOffset(challenge.capacity());
 
         try {
             mechanism.getChallengeResponse(getTestCredentials(), challenge);

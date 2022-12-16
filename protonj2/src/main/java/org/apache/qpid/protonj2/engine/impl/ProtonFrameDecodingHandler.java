@@ -17,7 +17,7 @@
 package org.apache.qpid.protonj2.engine.impl;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.protonj2.codec.CodecFactory;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.Decoder;
@@ -182,7 +182,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
     //---- Built in FrameParserStages
 
-    private class HeaderParsingStage implements FrameParserStage {
+    private final class HeaderParsingStage implements FrameParserStage {
 
         private final byte[] headerBytes = new byte[AMQPHeader.HEADER_SIZE_BYTES];
 
@@ -203,12 +203,18 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
             if (headerByte == AMQPHeader.HEADER_SIZE_BYTES) {
                 // Construct a new Header from the read bytes which will validate the contents
-                AMQPHeader header = new AMQPHeader(headerBytes);
+                AMQPHeader.validate(headerBytes);
+
+                // Trim the header from the inbound buffer to avoid those bytes being available
+                // if another frame is contained within this buffer instance.
+                if (incoming.isReadable()) {
+                    incoming.readSplit(0).close();
+                }
 
                 // Transition to parsing the frames if any pipelined into this buffer.
                 transitionToFrameSizeParsingStage();
 
-                if (header.isSaslHeader()) {
+                if (headerBytes[AMQPHeader.PROTOCOL_ID_INDEX] == AMQPHeader.SASL_PROTOCOL_ID) {
                     decoder = CodecFactory.getSaslDecoder();
                     decoderState = decoder.newDecoderState();
                     context.fireRead(HeaderEnvelope.SASL_HEADER_ENVELOPE);
@@ -231,18 +237,18 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         }
     }
 
-    private class FrameSizeParsingStage implements FrameParserStage {
+    private final class FrameSizeParsingStage implements FrameParserStage {
 
         private int frameSize;
         private int multiplier = FRAME_SIZE_BYTES;
 
         @Override
         public void parse(EngineHandlerContext context, ProtonBuffer input) {
-            while (input.isReadable()) {
-                frameSize |= ((input.readByte() & 0xFF) << --multiplier * Byte.SIZE);
-                if (multiplier == 0) {
-                    break;
-                }
+            if (multiplier == FRAME_SIZE_BYTES && input.getReadableBytes() >= Integer.BYTES) {
+                frameSize = input.readInt();
+                multiplier = 0;
+            } else {
+                readFrameSizeInChunks(input);
             }
 
             if (multiplier == 0) {
@@ -257,6 +263,15 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 }
 
                 stage.parse(context, input);
+            }
+        }
+
+        private void readFrameSizeInChunks(ProtonBuffer input) {
+            while (input.isReadable()) {
+                frameSize |= ((input.readByte() & 0xFF) << --multiplier * Byte.SIZE);
+                if (multiplier == 0) {
+                    break;
+                }
             }
         }
 
@@ -281,20 +296,26 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         }
     }
 
-    private class FrameBufferingStage implements FrameParserStage {
+    private final class FrameBufferingStage implements FrameParserStage {
 
-        private ProtonBuffer buffer;
+        private ProtonCompositeBuffer buffer;
+        private int frameBytesRemaining;
+        private int frameSize;
 
         @Override
         public void parse(EngineHandlerContext context, ProtonBuffer input) {
-            if (input.getReadableBytes() < buffer.getWritableBytes()) {
-                buffer.writeBytes(input);
+            if (input.getReadableBytes() > frameBytesRemaining) {
+                buffer.append(input.readSplit(frameBytesRemaining));
             } else {
-                buffer.writeBytes(input, buffer.getWritableBytes());
+                buffer.append(input);
+            }
 
+            frameBytesRemaining = frameSize - buffer.getReadableBytes();
+
+            if (frameBytesRemaining == 0) {
                 // Now we can consume the buffer frame body.
                 initializeFrameBodyParsingStage(buffer.getReadableBytes());
-                try {
+                try (ProtonBuffer buffered = buffer) {
                     stage.parse(context, buffer);
                 } finally {
                     buffer = null;
@@ -304,12 +325,15 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
         @Override
         public FrameBufferingStage reset(int length) {
-            buffer = ProtonByteBufferAllocator.DEFAULT.allocate(length, length);
+            buffer = configuration.getBufferAllocator().composite().convertToReadOnly();
+            frameBytesRemaining = length;
+            frameSize = length;
+
             return this;
         }
     }
 
-    private class FrameBodyParsingStage implements FrameParserStage {
+    private final class FrameBodyParsingStage implements FrameParserStage {
 
         private int length;
 
@@ -325,7 +349,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
             // Skip over the extended header if present (i.e offset > 8)
             if (dataOffset != 8) {
-                input.setReadIndex(input.getReadIndex() + dataOffset - 8);
+                input.advanceReadOffset(dataOffset - 8);
             }
 
             final int frameBodySize = frameSize - dataOffset;
@@ -334,7 +358,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
             Object val = null;
 
             if (frameBodySize > 0) {
-                int startReadIndex = input.getReadIndex();
+                int startReadIndex = input.getReadOffset();
                 val = decoder.readObject(input, decoderState);
 
                 // Copy the payload portion of the incoming bytes for now as the incoming may be
@@ -343,11 +367,11 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 // data at a client level and decode later we could end up losing the data to reuse
                 // if it was pooled.
                 if (input.isReadable()) {
-                    int payloadSize = frameBodySize - (input.getReadIndex() - startReadIndex);
-                    // Check that the remaining bytes aren't part of another frame.
+                    int payloadSize = frameBodySize - (input.getReadOffset() - startReadIndex);
                     if (payloadSize > 0) {
-                        payload = configuration.getBufferAllocator().allocate(payloadSize, payloadSize);
-                        payload.writeBytes(input, payloadSize);
+                        // Payload is now only a view of the bytes from the input that comprise it.
+                        payload = input.copy(input.getReadOffset(), payloadSize, true);
+                        input.advanceReadOffset(payloadSize);
                     }
                 }
             } else {

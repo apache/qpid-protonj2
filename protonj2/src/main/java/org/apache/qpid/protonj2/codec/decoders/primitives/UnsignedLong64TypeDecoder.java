@@ -54,7 +54,7 @@ public final class UnsignedLong64TypeDecoder extends AbstractPrimitiveTypeDecode
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.skipBytes(Long.BYTES);
+        buffer.advanceReadOffset(Long.BYTES);
     }
 
     @Override

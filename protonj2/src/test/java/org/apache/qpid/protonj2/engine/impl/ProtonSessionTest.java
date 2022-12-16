@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.ConnectionState;
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
@@ -1929,9 +1929,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         asyncIOCallbacks.clear();
 
         OutgoingDelivery delivery1 = sender.next();
-        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery1.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         OutgoingDelivery delivery2 = sender.next();
-        delivery2.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery2.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         peer.waitForScriptToComplete();
 
@@ -1982,11 +1982,11 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         asyncIOCallbacks.clear();
 
         OutgoingDelivery delivery1 = sender.next();
-        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery1.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         OutgoingDelivery delivery2 = sender.next();
-        delivery2.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery2.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         OutgoingDelivery delivery3 = sender.next();
-        delivery3.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery3.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         peer.waitForScriptToComplete();
 
@@ -2067,9 +2067,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         asyncIOCallbacks.clear();
 
         OutgoingDelivery delivery1 = sender.next();
-        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery1.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         OutgoingDelivery delivery2 = sender.next();
-        delivery2.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery2.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         peer.waitForScriptToComplete();
 
@@ -2134,9 +2134,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         asyncIOCallbacks.clear();
 
         OutgoingDelivery delivery1 = sender1.next();
-        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery1.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         OutgoingDelivery delivery2 = sender2.next();
-        delivery2.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery2.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         peer.waitForScriptToComplete();
 
@@ -2181,12 +2181,12 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         sender1.creditStateUpdateHandler((self) -> {
             creditStateUpdated.incrementAndGet();
             OutgoingDelivery delivery = self.next();
-            delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+            delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         });
         sender2.creditStateUpdateHandler((self) -> {
             creditStateUpdated.incrementAndGet();
             OutgoingDelivery delivery = self.next();
-            delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+            delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         });
 
         assertTrue(sender1.isSendable());
@@ -2199,9 +2199,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         asyncIOCallbacks.clear();
 
         OutgoingDelivery delivery1 = sender1.next();
-        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery1.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         OutgoingDelivery delivery2 = sender2.next();
-        delivery2.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery2.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         peer.waitForScriptToComplete();
         peer.expectTransfer().withPayload(payload);
@@ -2256,7 +2256,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         asyncIOCallbacks.clear();
 
         OutgoingDelivery delivery1 = sender.next();
-        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery1.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         peer.waitForScriptToComplete();
 
@@ -2304,7 +2304,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         asyncIOCallbacks.clear();
 
         OutgoingDelivery delivery1 = sender.next();
-        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery1.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         peer.waitForScriptToComplete();
 
@@ -2352,7 +2352,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         asyncIOCallbacks.clear();
 
         OutgoingDelivery delivery1 = sender.next();
-        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery1.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         peer.waitForScriptToComplete();
 
@@ -2399,7 +2399,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         sender.creditStateUpdateHandler((self) -> {
             creditStateUpdated.incrementAndGet();
             OutgoingDelivery delivery = self.next();
-            delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+            delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         });
 
         assertTrue(sender.isSendable());
@@ -2411,7 +2411,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         asyncIOCallbacks.clear();
 
         OutgoingDelivery delivery = sender.next();
-        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         peer.waitForScriptToComplete();
 
@@ -2469,7 +2469,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
             creditStateUpdated.incrementAndGet();
             if (sender.isSendable()) {
                 OutgoingDelivery delivery = self.next();
-                delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+                delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
             }
         });
 
@@ -2482,7 +2482,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         asyncIOCallbacks.clear();
 
         OutgoingDelivery delivery = sender.next();
-        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         peer.waitForScriptToComplete();
 
@@ -2561,7 +2561,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         asyncIOCallbacks.clear();
 
         OutgoingDelivery delivery = sender1.next();
-        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         peer.waitForScriptToComplete();
 
@@ -2619,7 +2619,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
             sender1CreditStateUpdated.incrementAndGet();
             if (self.isSendable()) {
                 OutgoingDelivery delivery = self.next();
-                delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+                delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
             }
         });
 
@@ -2639,7 +2639,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         asyncIOCallbacks.clear();
 
         OutgoingDelivery delivery = sender1.next();
-        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         peer.waitForScriptToComplete();
         peer.expectTransfer().withPayload(payload);

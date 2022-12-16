@@ -31,9 +31,9 @@ public class ProgressiveClientFuture<V> extends ClientFuture<V> {
 
     // Using a progressive wait strategy helps to avoid wait happening before
     // completion and avoid using expensive thread signaling
-    private static final int SPIN_COUNT = 10;
-    private static final int YIELD_COUNT = 100;
-    private static final int TINY_PARK_COUNT = 1000;
+    private static final int SPIN_COUNT = 15;
+    private static final int YIELD_COUNT = 150;
+    private static final int TINY_PARK_COUNT = 1500;
     private static final int TINY_PARK_NANOS = 1;
     private static final int SMALL_PARK_COUNT = 101_000;
     private static final int SMALL_PARK_NANOS = 10_000;

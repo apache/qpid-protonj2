@@ -18,7 +18,7 @@ package org.apache.qpid.protonj2.test.driver.codec;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 class DescribedTypeElement extends AbstractElement<DescribedType> {
 
@@ -68,10 +68,10 @@ class DescribedTypeElement extends AbstractElement<DescribedType> {
     }
 
     @Override
-    public int encode(ByteBuf buffer) {
+    public int encode(Buffer buffer) {
         int encodedSize = size();
 
-        if (encodedSize > buffer.maxWritableBytes()) {
+        if (encodedSize > buffer.implicitCapacityLimit() - buffer.capacity()) {
             return 0;
         } else {
             buffer.writeByte((byte) 0);

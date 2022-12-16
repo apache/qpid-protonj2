@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecFactory;
 import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.codec.EncoderState;
@@ -68,18 +68,19 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         Encoder declareEncoder = CodecFactory.getEncoder();
         EncoderState state = declareEncoder.newEncoderState();
 
-        ENCODED_DECLARE = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ENCODED_DECLARE = ProtonBufferAllocator.defaultAllocator().allocate();
 
         try {
             declareEncoder.writeObject(ENCODED_DECLARE, state, new AmqpValue<>(new Declare()));
         } finally {
+            ENCODED_DECLARE.convertToReadOnly();
             state.reset();
         }
     }
 
     private final ProtonSender senderLink;
     private final Encoder commandEncoder = CodecFactory.getEncoder();
-    private final ProtonBuffer encoding = ProtonByteBufferAllocator.DEFAULT.allocate();
+    private final ProtonBuffer encoding = ProtonBufferAllocator.defaultAllocator().allocate();
 
     private final Set<Transaction<TransactionController>> transactions = new HashSet<>();
 
@@ -186,11 +187,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         OutgoingDelivery command = senderLink.next();
 
         command.setLinkedResource(protonTransaction);
-        try {
-            command.writeBytes(ENCODED_DECLARE);
-        } finally {
-            ENCODED_DECLARE.setReadIndex(0);
-        }
+        command.writeBytes(ENCODED_DECLARE.copy(true));
 
         return this;
     }

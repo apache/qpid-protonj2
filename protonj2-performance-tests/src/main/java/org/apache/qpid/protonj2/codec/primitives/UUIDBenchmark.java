@@ -50,7 +50,7 @@ public class UUIDBenchmark extends CodecBenchmarkBase {
 
     @Benchmark
     public void decode() throws IOException {
-        buffer.setReadIndex(0);
+        buffer.setReadOffset(0);
         blackhole.consume(decoder.readUUID(buffer, decoderState));
     }
 

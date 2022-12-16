@@ -85,7 +85,7 @@ public final class ProtonEncoderState implements EncoderState {
     private static void encodeUTF8Sequence(ProtonBuffer buffer, CharSequence sequence) {
         final int length = sequence.length();
 
-        int position = buffer.getWriteIndex();
+        int position = buffer.getWriteOffset();
         int index = 0;
         int ch = 0;
 
@@ -102,7 +102,7 @@ public final class ProtonEncoderState implements EncoderState {
             position = extendedEncodeUTF8Sequence(buffer, sequence, index, position);
         }
 
-        buffer.setWriteIndex(position);
+        buffer.setWriteOffset(position);
     }
 
     private static int extendedEncodeUTF8Sequence(ProtonBuffer buffer, CharSequence value, int index, int position) {

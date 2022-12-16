@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
@@ -118,7 +118,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
 
         final AtomicReference<byte[]> declaredTxnId = new AtomicReference<>();
         txnController.declaredHandler(result -> {
-            declaredTxnId.set(result.getTxnId().arrayCopy());
+            declaredTxnId.set(result.getTxnId().asByteArray());
         });
 
         txnController.open();
@@ -184,7 +184,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
 
         final AtomicReference<byte[]> declaredTxnId = new AtomicReference<>();
         txnController.declaredHandler(result -> {
-            declaredTxnId.set(result.getTxnId().arrayCopy());
+            declaredTxnId.set(result.getTxnId().asByteArray());
         });
 
         final AtomicBoolean parentEndpointClosed = new AtomicBoolean();
@@ -244,7 +244,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
 
         final AtomicReference<byte[]> declaredTxnId = new AtomicReference<>();
         txnController.declaredHandler(result -> {
-            declaredTxnId.set(result.getTxnId().arrayCopy());
+            declaredTxnId.set(result.getTxnId().asByteArray());
         });
 
         final AtomicBoolean parentEndpointClosed = new AtomicBoolean();
@@ -302,7 +302,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
 
         final AtomicReference<byte[]> declaredTxnId = new AtomicReference<>();
         txnController.declaredHandler(result -> {
-            declaredTxnId.set(result.getTxnId().arrayCopy());
+            declaredTxnId.set(result.getTxnId().asByteArray());
         });
 
         final AtomicBoolean engineShutdown = new AtomicBoolean();
@@ -322,7 +322,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         assertTrue(engineShutdown.get());
         assertNull(failure);
     }
-    
+
     @Test
     public void testTransactionControllerDoesNotSignalsWhenParentConnectionClosedIfAlreadyClosed() {
         final byte[] TXN_ID = new byte[] { 1, 2, 3, 4 };
@@ -362,7 +362,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
 
         final AtomicReference<byte[]> declaredTxnId = new AtomicReference<>();
         txnController.declaredHandler(result -> {
-            declaredTxnId.set(result.getTxnId().arrayCopy());
+            declaredTxnId.set(result.getTxnId().asByteArray());
         });
 
         final AtomicBoolean parentEndpointClosed = new AtomicBoolean();
@@ -490,7 +490,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         final AtomicReference<byte[]> dischargedTxnId = new AtomicReference<>();
 
         txnController.declaredHandler(result -> {
-            declaredTxnId.set(result.getTxnId().arrayCopy());
+            declaredTxnId.set(result.getTxnId().asByteArray());
             if (useNewTransactionAPI) {
                 assertEquals(txnController, result.getLinkedResource(TransactionController.class) );
             } else {
@@ -498,7 +498,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
             }
         });
         txnController.dischargedHandler(result -> {
-            dischargedTxnId.set(result.getTxnId().arrayCopy());
+            dischargedTxnId.set(result.getTxnId().asByteArray());
             if (useNewTransactionAPI) {
                 assertEquals(txnController, result.getLinkedResource(TransactionController.class) );
             } else {
@@ -835,7 +835,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
     public void testSendMessageInsideOfTransaction() throws Exception {
         final byte[] TXN_ID = new byte[] { 1, 2, 3, 4 };
         final byte [] payloadBuffer = new byte[] {0, 1, 2, 3, 4};
-        final ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(payloadBuffer);
+        final ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(payloadBuffer).convertToReadOnly();
 
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
@@ -1007,10 +1007,10 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         final AtomicReference<byte[]> dischargedTxnId = new AtomicReference<>();
 
         txnController.declaredHandler(result -> {
-            declaredTxnId.set(result.getTxnId().arrayCopy());
+            declaredTxnId.set(result.getTxnId().asByteArray());
         });
         txnController.dischargedHandler(result -> {
-            dischargedTxnId.set(result.getTxnId().arrayCopy());
+            dischargedTxnId.set(result.getTxnId().asByteArray());
         });
 
         txnController.open();
@@ -1106,10 +1106,10 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         final AtomicReference<byte[]> dischargedTxnId = new AtomicReference<>();
 
         txnController.declaredHandler(result -> {
-            declaredTxnId.set(result.getTxnId().arrayCopy());
+            declaredTxnId.set(result.getTxnId().asByteArray());
         });
         txnController.dischargedHandler(result -> {
-            dischargedTxnId.set(result.getTxnId().arrayCopy());
+            dischargedTxnId.set(result.getTxnId().asByteArray());
         });
 
         txnController.open();
@@ -1182,7 +1182,7 @@ class ProtonTransactionControllerTest extends ProtonEngineTestSupport {
         final AtomicReference<byte[]> declaredTxnId = new AtomicReference<>();
 
         txnController.declaredHandler(result -> {
-            declaredTxnId.set(result.getTxnId().arrayCopy());
+            declaredTxnId.set(result.getTxnId().asByteArray());
         });
 
         txnController.open();

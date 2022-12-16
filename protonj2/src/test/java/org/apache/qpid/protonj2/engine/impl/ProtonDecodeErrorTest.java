@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
@@ -241,7 +241,6 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         doInvalidTransferProvokesDecodeErrorTestImpl(bytes, "The handle field cannot be omitted from the Transfer");
     }
 
-
     @Test
     public void testTransferWithWrongHandleTypeCodeProvokesDecodeError() throws Exception {
         // Provide the bytes for Transfer, but give the wrong type code for a not-really-present handle. Provokes a decode error.
@@ -308,7 +307,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0, 1, 2, 3, 4});
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -324,7 +323,7 @@ public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("test").open();
 
         OutgoingDelivery delivery = sender.next();
-        delivery.writeBytes(payload.duplicate());
+        delivery.writeBytes(payload.copy(true));
 
         peer.waitForScriptToCompleteIgnoreErrors();
 

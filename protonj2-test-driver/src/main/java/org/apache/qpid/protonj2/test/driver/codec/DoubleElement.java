@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 class DoubleElement extends AtomicElement<Double> {
 
@@ -43,9 +43,9 @@ class DoubleElement extends AtomicElement<Double> {
     }
 
     @Override
-    public int encode(ByteBuf buffer) {
+    public int encode(Buffer buffer) {
         int size = size();
-        if (buffer.maxWritableBytes() >= size) {
+        if (buffer.implicitCapacityLimit() - buffer.capacity() >= size) {
             if (size == 9) {
                 buffer.writeByte((byte) 0x82);
             }

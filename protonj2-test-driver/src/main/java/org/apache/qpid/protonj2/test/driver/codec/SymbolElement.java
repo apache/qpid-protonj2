@@ -20,7 +20,7 @@ import java.nio.charset.Charset;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 class SymbolElement extends AtomicElement<Symbol> {
 
@@ -69,9 +69,9 @@ class SymbolElement extends AtomicElement<Symbol> {
     }
 
     @Override
-    public int encode(ByteBuf buffer) {
+    public int encode(Buffer buffer) {
         int size = size();
-        if (buffer.maxWritableBytes() < size) {
+        if (buffer.implicitCapacityLimit() - buffer.capacity() < size) {
             return 0;
         }
         if (isElementOfArray()) {

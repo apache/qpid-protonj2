@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.security.sasl.SaslException;
 
-import org.apache.qpid.protonj2.buffer.ProtonByteBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.engine.AMQPPerformativeEnvelopePool;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.ConnectionState;
@@ -70,7 +70,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertFalse(engine.isWritable());
 
         try {
-            engine.pipeline().fireWrite(new ProtonByteBuffer(0), null);
+            engine.pipeline().fireWrite(ProtonBufferAllocator.defaultAllocator().allocate(0), null);
             fail("Should not be able to write until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected
@@ -123,14 +123,15 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         }
 
         try {
-            engine.pipeline().fireRead(AMQPPerformativeEnvelopePool.incomingEnvelopePool().take(new Open(), 0, new ProtonByteBuffer(0)));
+            engine.pipeline().fireRead(
+                AMQPPerformativeEnvelopePool.incomingEnvelopePool().take(new Open(), 0, ProtonBufferAllocator.defaultAllocator().allocate(0)));
             fail("Should not be able to read data until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected
         }
 
         try {
-            engine.pipeline().fireRead(new ProtonByteBuffer(0));
+            engine.pipeline().fireRead(ProtonBufferAllocator.defaultAllocator().allocate(0));
             fail("Should not be able to write until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected

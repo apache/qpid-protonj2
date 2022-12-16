@@ -21,7 +21,6 @@ import java.lang.invoke.MethodHandles;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Consumer;
@@ -39,6 +38,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedEx
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
+import org.apache.qpid.protonj2.engine.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +64,7 @@ public abstract class ClientLinkType<LinkType extends Link<LinkType>,
     protected ClientException failureCause;
 
     protected final ClientSession session;
-    protected final ScheduledExecutorService executor;
+    protected final Scheduler executor;
     protected final String linkId;
     protected final LinkOptions<?> options;
 

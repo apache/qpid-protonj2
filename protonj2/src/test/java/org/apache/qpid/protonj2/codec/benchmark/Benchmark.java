@@ -28,7 +28,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecFactory;
 import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
@@ -53,7 +53,7 @@ public class Benchmark implements Runnable {
 
     private static final int ITERATIONS = 10 * 1024 * 1024;
 
-    ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(8192);
+    ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate(8192);
     private BenchmarkResult resultSet = new BenchmarkResult();
     private boolean warming = true;
 
@@ -119,7 +119,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.setReadIndex(0);
+            buffer.setReadOffset(0);
             decoder.readList(buffer, decoderState);
         }
         resultSet.decodesComplete();
@@ -139,7 +139,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.setReadIndex(0);
+            buffer.setReadOffset(0);
             decoder.readUUID(buffer, decoderState);
         }
         resultSet.decodesComplete();
@@ -162,7 +162,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.setReadIndex(0);
+            buffer.setReadOffset(0);
             decoder.readObject(buffer, decoderState);
         }
         resultSet.decodesComplete();
@@ -181,7 +181,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.setReadIndex(0);
+            buffer.setReadOffset(0);
             decoder.readObject(buffer, decoderState);
         }
         resultSet.decodesComplete();
@@ -208,7 +208,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.setReadIndex(0);
+            buffer.setReadOffset(0);
             decoder.readObject(buffer, decoderState);
         }
         resultSet.decodesComplete();
@@ -230,7 +230,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.setReadIndex(0);
+            buffer.setReadOffset(0);
             decoder.readObject(buffer, decoderState);
         }
         resultSet.decodesComplete();
@@ -254,7 +254,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.setReadIndex(0);
+            buffer.setReadOffset(0);
             decoder.readObject(buffer, decoderState);
         }
         resultSet.decodesComplete();
@@ -277,7 +277,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.setReadIndex(0);
+            buffer.setReadOffset(0);
             decoder.readObject(buffer, decoderState);
         }
         resultSet.decodesComplete();
@@ -300,7 +300,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.setReadIndex(0);
+            buffer.setReadOffset(0);
             decoder.readObject(buffer, decoderState);
         }
         resultSet.decodesComplete();
@@ -324,7 +324,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.setReadIndex(0);
+            buffer.setReadOffset(0);
             decoder.readSymbol(buffer, decoderState);
             decoder.readSymbol(buffer, decoderState);
             decoder.readSymbol(buffer, decoderState);
@@ -350,7 +350,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.setReadIndex(0);
+            buffer.setReadOffset(0);
             decoder.readString(buffer, decoderState);
             decoder.readString(buffer, decoderState);
             decoder.readString(buffer, decoderState);
@@ -377,7 +377,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.setReadIndex(0);
+            buffer.setReadOffset(0);
             decoder.readObject(buffer, decoderState);
         }
         resultSet.decodesComplete();
@@ -401,7 +401,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.setReadIndex(0);
+            buffer.setReadOffset(0);
             decoder.readObject(buffer, decoderState);
             decoder.readObject(buffer, decoderState);
             decoder.readObject(buffer, decoderState);

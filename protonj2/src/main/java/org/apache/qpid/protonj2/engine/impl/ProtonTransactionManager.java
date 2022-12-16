@@ -114,7 +114,7 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
             throw new IllegalArgumentException("Cannot complete declaration of a transaction from another transaction manager.");
         }
 
-        if (txnId == null || txnId.getArray() == null || txnId.getArray().length == 0) {
+        if (txnId == null || txnId.getLength() == 0) {
             throw new IllegalArgumentException("Cannot declare a transaction without a transaction Id");
         }
 

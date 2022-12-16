@@ -90,7 +90,7 @@ public final class Integer8TypeDecoder extends AbstractPrimitiveTypeDecoder<Inte
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.skipBytes(Byte.BYTES);
+        buffer.advanceReadOffset(Byte.BYTES);
     }
 
     @Override

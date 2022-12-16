@@ -27,8 +27,8 @@ import java.io.InputStream;
 import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodeException;
@@ -59,7 +59,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
 
     @Test
     public void testCannotEncodeEmptyPerformative() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Transfer input = new Transfer();
 
@@ -81,10 +81,9 @@ public class TransferTypeCodeTest extends CodecTestSupport {
     }
 
     private void doTestEncodeAndDecode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
-        ProtonBuffer tag = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2});
+        ProtonBuffer tag = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0, 1, 2});
 
         final Random random = new Random();
         random.setSeed(System.nanoTime());
@@ -106,6 +105,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
 
         final Transfer result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = (Transfer) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (Transfer) decoder.readObject(buffer, decoderState);
@@ -130,10 +130,9 @@ public class TransferTypeCodeTest extends CodecTestSupport {
     }
 
     private void doTestSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
-        ProtonBuffer tag = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2});
+        ProtonBuffer tag = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0, 1, 2});
 
         Transfer input = new Transfer();
 
@@ -158,6 +157,13 @@ public class TransferTypeCodeTest extends CodecTestSupport {
         input.setBatchable(false);
 
         encoder.writeObject(buffer, encoderState, input);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -211,8 +217,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -228,6 +233,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(Transfer.class, typeDecoder.getTypeClass());
 
@@ -267,8 +273,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -284,6 +289,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid encoding");
@@ -307,8 +313,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeArray(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Transfer[] array = new Transfer[3];
 
@@ -316,9 +321,10 @@ public class TransferTypeCodeTest extends CodecTestSupport {
         array[1] = new Transfer();
         array[2] = new Transfer();
 
-        ProtonBuffer tag1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0});
-        ProtonBuffer tag2 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {1});
-        ProtonBuffer tag3 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {2});
+        ProtonBuffer tag1 = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0});
+        ProtonBuffer tag2 = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {1});
+        ProtonBuffer tag3 = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {2});
+
 
         array[0].setHandle(0).setDeliveryTag(tag1);
         array[1].setHandle(1).setDeliveryTag(tag2);
@@ -328,6 +334,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -372,8 +379,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithNotEnoughListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -391,6 +397,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");
@@ -424,8 +431,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithToManyListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -441,6 +447,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");

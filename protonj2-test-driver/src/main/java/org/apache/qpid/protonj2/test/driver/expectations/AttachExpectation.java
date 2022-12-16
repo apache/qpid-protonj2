@@ -54,7 +54,7 @@ import org.apache.qpid.protonj2.test.driver.matchers.transactions.CoordinatorMat
 import org.apache.qpid.protonj2.test.driver.matchers.transport.AttachMatcher;
 import org.hamcrest.Matcher;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 /**
  * Scripted expectation for the AMQP Attach performative
@@ -106,7 +106,7 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleAttach(int frameSize, Attach attach, ByteBuf payload, int channel, AMQPTestDriver context) {
+    public void handleAttach(int frameSize, Attach attach, Buffer payload, int channel, AMQPTestDriver context) {
         super.handleAttach(frameSize, attach, payload, channel, context);
 
         final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);

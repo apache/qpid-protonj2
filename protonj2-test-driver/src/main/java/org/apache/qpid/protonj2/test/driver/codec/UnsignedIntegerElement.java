@@ -18,7 +18,7 @@ package org.apache.qpid.protonj2.test.driver.codec;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 class UnsignedIntegerElement extends AtomicElement<UnsignedInteger> {
 
@@ -68,9 +68,9 @@ class UnsignedIntegerElement extends AtomicElement<UnsignedInteger> {
     }
 
     @Override
-    public int encode(ByteBuf buffer) {
+    public int encode(Buffer buffer) {
         int size = size();
-        if (size > buffer.maxWritableBytes()) {
+        if (size > buffer.implicitCapacityLimit() - buffer.capacity()) {
             return 0;
         }
         switch (size) {

@@ -19,8 +19,8 @@ package org.apache.qpid.protonj2.engine.impl;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.protonj2.buffer.ProtonByteUtils;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferUtils;
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 
@@ -54,15 +54,15 @@ public class ProtonUuidTagGenerator extends ProtonDeliveryTagGenerator {
         public byte[] tagBytes() {
             final byte[] tagView = new byte[BYTES];
 
-            ProtonByteUtils.writeLong(tagValue.getMostSignificantBits(), tagView, 0);
-            ProtonByteUtils.writeLong(tagValue.getLeastSignificantBits(), tagView, Long.BYTES);
+            ProtonBufferUtils.writeLong(tagValue.getMostSignificantBits(), tagView, 0);
+            ProtonBufferUtils.writeLong(tagValue.getLeastSignificantBits(), tagView, Long.BYTES);
 
             return tagView;
         }
 
         @Override
         public ProtonBuffer tagBuffer() {
-            return ProtonByteBufferAllocator.DEFAULT.wrap(tagBytes());
+            return ProtonBufferAllocator.defaultAllocator().copy(tagBytes()).convertToReadOnly();
         }
 
         @Override

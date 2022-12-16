@@ -31,8 +31,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -83,8 +83,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeHeaderSeries(int size, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Map<Symbol, Object> propertiesMap = new LinkedHashMap<>();
         Footer properties = new Footer(propertiesMap);
@@ -100,6 +99,14 @@ public class FooterTypeCodecTest extends CodecTestSupport {
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, properties);
+        }
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
         }
 
         for (int i = 0; i < size; ++i) {
@@ -131,8 +138,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeFailsWhenDescriedValueIsNotMapType(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -142,6 +148,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
         buffer.writeInt(0);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid encoding");
@@ -165,8 +172,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithNullBodyUsingDescriptorCode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -175,6 +181,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
 
         final Footer result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = (Footer) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (Footer) decoder.readObject(buffer, decoderState);
@@ -194,17 +201,17 @@ public class FooterTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeWithNullBodyUsingDescriptorSymbol(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SYM8);
-        buffer.writeByte(Footer.DESCRIPTOR_SYMBOL.getLength());
+        buffer.writeByte((byte) Footer.DESCRIPTOR_SYMBOL.getLength());
         Footer.DESCRIPTOR_SYMBOL.writeTo(buffer);
         buffer.writeByte(EncodingCodes.NULL);
 
         final Footer result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = (Footer) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (Footer) decoder.readObject(buffer, decoderState);
@@ -224,8 +231,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Map<Symbol, Object> map = new HashMap<>();
         map.put(Symbol.valueOf("one"), 1);
@@ -237,6 +243,14 @@ public class FooterTypeCodecTest extends CodecTestSupport {
         }
 
         encoder.writeObject(buffer, encoderState, new Modified());
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -275,13 +289,13 @@ public class FooterTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeMessageAnnotationsWithEmptyValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeObject(buffer, encoderState, new Footer(null));
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -325,8 +339,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueWithInvalidListType(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -344,6 +357,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(Footer.class, typeDecoder.getTypeClass());
 
@@ -373,8 +387,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueWithNullMapEncoding(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -382,6 +395,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(EncodingCodes.NULL);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(Footer.class, typeDecoder.getTypeClass());
 
@@ -413,8 +427,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeArray(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Footer[] array = new Footer[3];
 
@@ -430,6 +443,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -479,13 +493,13 @@ public class FooterTypeCodecTest extends CodecTestSupport {
         annotations.getValue().put(SYMBOL_1, stringKeyedMap);
         annotations.getValue().put(SYMBOL_2, symbolKeyedMap);
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeObject(buffer, encoderState, annotations);
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);

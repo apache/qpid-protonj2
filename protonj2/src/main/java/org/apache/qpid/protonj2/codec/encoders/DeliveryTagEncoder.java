@@ -46,7 +46,7 @@ public final class DeliveryTagEncoder implements TypeEncoder<DeliveryTag> {
             buffer.writeInt(tagLength);
         } else {
             buffer.writeByte(EncodingCodes.VBIN8);
-            buffer.writeByte(tagLength);
+            buffer.writeByte((byte) tagLength);
         }
 
         value.writeTo(buffer);

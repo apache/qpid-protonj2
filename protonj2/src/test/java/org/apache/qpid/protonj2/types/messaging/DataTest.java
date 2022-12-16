@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.messaging.Section.SectionType;
 import org.junit.jupiter.api.Test;
@@ -115,7 +115,7 @@ public class DataTest {
         assertEquals(data, data);
         assertEquals(data, copy);
 
-        Data second = new Data(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1, 2, 3 }));
+        Data second = new Data(ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 1, 2, 3 }));
         Data third = new Data(new byte[] { 1, 2, 3 }, 0, 3);
         Data fourth = new Data(new byte[] { 1, 2, 3 }, 0, 1);
         Data fifth = new Data(null, 0, 0);
@@ -143,7 +143,7 @@ public class DataTest {
         assertEquals(data, data);
         assertEquals(data, copy);
 
-        Data second = new Data(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1, 2, 3 }));
+        Data second = new Data(ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 1, 2, 3 }));
         Data third = new Data(new byte[] { 1, 2, 3 }, 0, 3);
         Data fourth = new Data(new byte[] { 1, 2, 3 }, 0, 1);
         Data fifth = new Data(null, 0, 0);

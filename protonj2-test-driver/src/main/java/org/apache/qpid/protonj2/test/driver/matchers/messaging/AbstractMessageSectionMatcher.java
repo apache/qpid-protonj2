@@ -30,7 +30,7 @@ import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 public abstract class AbstractMessageSectionMatcher {
 
@@ -68,10 +68,11 @@ public abstract class AbstractMessageSectionMatcher {
      * @throws RuntimeException
      *         if the provided Binary does not match expectation in some way
      */
-    public int verify(ByteBuf receivedBinary) throws RuntimeException {
-        int length = receivedBinary.readableBytes();
-        Codec data = Codec.Factory.create();
-        long decoded = data.decode(receivedBinary);
+    public int verify(Buffer receivedBinary) throws RuntimeException {
+        final int length = receivedBinary.readableBytes();
+        final Codec data = Codec.Factory.create();
+        final long decoded = data.decode(receivedBinary);
+
         if (decoded > Integer.MAX_VALUE) {
             throw new IllegalStateException("Decoded more bytes than Binary supports holding");
         }

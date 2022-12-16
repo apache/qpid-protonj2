@@ -26,8 +26,8 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.Data;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedCompositingDataSectionMatcher;
 import org.junit.jupiter.api.Test;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty5.buffer.Buffer;
+import io.netty5.buffer.BufferAllocator;
 
 class EncodedCompositingDataSectionMatcherTest {
 
@@ -39,7 +39,7 @@ class EncodedCompositingDataSectionMatcherTest {
 
         Random bytesGenerator = new Random(SEED);
         bytesGenerator.nextBytes(PAYLOAD);
-        ByteBuf incomingBytes = Unpooled.buffer();
+        Buffer incomingBytes = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE);
 
         incomingBytes.writeBytes(PAYLOAD);
 
@@ -61,7 +61,7 @@ class EncodedCompositingDataSectionMatcherTest {
         bytesGenerator.setSeed(SEED);
         bytesGenerator.nextBytes(CHUNK);
 
-        ByteBuf partial1 = Unpooled.buffer();
+        Buffer partial1 = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE);
 
         partial1.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         partial1.writeByte(EncodingCodes.SMALLULONG);
@@ -88,7 +88,7 @@ class EncodedCompositingDataSectionMatcherTest {
         bytesGenerator.setSeed(SEED + 1);
         bytesGenerator.nextBytes(CHUNK);
 
-        ByteBuf partial1 = Unpooled.buffer();
+        Buffer partial1 = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE);
 
         partial1.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         partial1.writeByte(EncodingCodes.SMALLULONG);
@@ -117,8 +117,8 @@ class EncodedCompositingDataSectionMatcherTest {
         bytesGenerator.nextBytes(CHUNK1);
         bytesGenerator.nextBytes(CHUNK2);
 
-        ByteBuf partial1 = Unpooled.buffer();
-        ByteBuf partial2 = Unpooled.buffer();
+        Buffer partial1 = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE);
+        Buffer partial2 = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE);
 
         // First half arrives with preamble
         partial1.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
@@ -156,10 +156,10 @@ class EncodedCompositingDataSectionMatcherTest {
         bytesGenerator.nextBytes(CHUNK3);
         bytesGenerator.nextBytes(CHUNK4);
 
-        ByteBuf partial1 = Unpooled.buffer();
-        ByteBuf partial2 = Unpooled.buffer();
-        ByteBuf partial3 = Unpooled.buffer();
-        ByteBuf partial4 = Unpooled.buffer();
+        Buffer partial1 = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE);
+        Buffer partial2 = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE);
+        Buffer partial3 = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE);
+        Buffer partial4 = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE);
 
         // First chunk arrives with preamble
         partial1.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
@@ -185,7 +185,9 @@ class EncodedCompositingDataSectionMatcherTest {
         assertThat(partial4, matcher);
 
         // Anything else that arrives that is handed to this matcher should fail
-        assertFalse(matcher.matches(Unpooled.buffer().writeBytes(new byte[] { 3, 3, 3, 3})));
+        try (Buffer buffer = BufferAllocator.onHeapUnpooled().allocate(4).writeBytes(new byte[] { 3, 3, 3, 3})) {
+            assertFalse(matcher.matches(buffer));
+        }
     }
 
     @Test
@@ -194,8 +196,8 @@ class EncodedCompositingDataSectionMatcherTest {
         final byte[] CHUNK1 = new byte[] { 0, 1, 2 };
         final byte[] CHUNK2 = new byte[] { 3, 4, 5, 6, 7, 8, 9 };
 
-        ByteBuf partial1 = Unpooled.buffer();
-        ByteBuf partial2 = Unpooled.buffer();
+        Buffer partial1 = BufferAllocator.onHeapUnpooled().allocate(16);
+        Buffer partial2 = BufferAllocator.onHeapUnpooled().allocate(16);
 
         // First half arrives with preamble
         partial1.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
@@ -230,8 +232,8 @@ class EncodedCompositingDataSectionMatcherTest {
         bytesGenerator.setSeed(SEED);
         bytesGenerator.nextBytes(CHUNK2);
 
-        ByteBuf partial1 = Unpooled.buffer();
-        ByteBuf partial2 = Unpooled.buffer();
+        Buffer partial1 = BufferAllocator.onHeapUnpooled().allocate(16);
+        Buffer partial2 = BufferAllocator.onHeapUnpooled().allocate(16);
 
         // First half arrives with preamble
         partial1.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
@@ -264,7 +266,7 @@ class EncodedCompositingDataSectionMatcherTest {
         bytesGenerator.setSeed(SEED);
         bytesGenerator.nextBytes(CHUNK);
 
-        ByteBuf inboundBytes = Unpooled.buffer();
+        Buffer inboundBytes = BufferAllocator.onHeapUnpooled().allocate(16);
 
         inboundBytes.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         inboundBytes.writeByte(EncodingCodes.SMALLULONG);
@@ -295,7 +297,7 @@ class EncodedCompositingDataSectionMatcherTest {
         bytesGenerator.nextBytes(CHUNK2);
 
         // First half arrives with preamble
-        ByteBuf partial1 = Unpooled.buffer();
+        Buffer partial1 = BufferAllocator.onHeapUnpooled().allocate(16);
         partial1.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         partial1.writeByte(EncodingCodes.SMALLULONG);
         partial1.writeByte(Data.DESCRIPTOR_CODE.byteValue());
@@ -304,7 +306,7 @@ class EncodedCompositingDataSectionMatcherTest {
         partial1.writeBytes(CHUNK1);
 
         // Second half arrives without preamble as expected
-        ByteBuf partial2 = Unpooled.buffer();
+        Buffer partial2 = BufferAllocator.onHeapUnpooled().allocate(16);
         partial2.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         partial2.writeByte(EncodingCodes.SMALLULONG);
         partial2.writeByte(Data.DESCRIPTOR_CODE.byteValue());
@@ -334,7 +336,7 @@ class EncodedCompositingDataSectionMatcherTest {
         bytesGenerator.nextBytes(CHUNK2);
 
         // First half arrives with preamble
-        ByteBuf partial1 = Unpooled.buffer();
+        Buffer partial1 = BufferAllocator.onHeapUnpooled().allocate(16);
         partial1.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         partial1.writeByte(EncodingCodes.SMALLULONG);
         partial1.writeByte(Data.DESCRIPTOR_CODE.byteValue());
@@ -343,14 +345,14 @@ class EncodedCompositingDataSectionMatcherTest {
         partial1.writeBytes(CHUNK1);
 
         // Second half arrives without preamble as expected
-        ByteBuf partial2 = Unpooled.buffer();
+        Buffer partial2 = BufferAllocator.onHeapUnpooled().allocate(16);
         partial2.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         partial2.writeByte(EncodingCodes.SMALLULONG);
         partial2.writeByte(Data.DESCRIPTOR_CODE.byteValue());
         partial2.writeByte(EncodingCodes.VBIN32);
         partial2.writeInt(CHUNK2.length + 1);
         partial2.writeBytes(CHUNK2);
-        partial2.writeByte(64);
+        partial2.writeByte((byte) 64);
 
         EncodedCompositingDataSectionMatcher matcher =
             new EncodedCompositingDataSectionMatcher(PAYLOAD);

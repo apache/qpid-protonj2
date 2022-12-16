@@ -51,18 +51,17 @@ public final class BinaryTypeEncoder extends AbstractPrimitiveTypeEncoder<Binary
      */
     public void writeType(ProtonBuffer buffer, EncoderState state, ProtonBuffer value) {
         if (value.getReadableBytes() > 255) {
+            buffer.ensureWritable(value.getReadableBytes() + Long.BYTES);
             buffer.writeByte(EncodingCodes.VBIN32);
             buffer.writeInt(value.getReadableBytes());
         } else {
+            buffer.ensureWritable(value.getReadableBytes() + Short.BYTES);
             buffer.writeByte(EncodingCodes.VBIN8);
             buffer.writeByte((byte) value.getReadableBytes());
         }
 
-        if (value.hasArray()) {
-            buffer.writeBytes(value.getArray(), value.getArrayOffset() + value.getReadIndex(), value.getReadableBytes());
-        } else {
-            buffer.writeBytes(value, value.getReadIndex(), value.getReadableBytes());
-        }
+        value.copyInto(value.getReadOffset(), buffer, buffer.getWriteOffset(), value.getReadableBytes());
+        buffer.advanceWriteOffset(value.getReadableBytes());
     }
 
     /**
@@ -79,10 +78,12 @@ public final class BinaryTypeEncoder extends AbstractPrimitiveTypeEncoder<Binary
      */
     public void writeType(ProtonBuffer buffer, EncoderState state, byte[] value) {
         if (value.length > 255) {
+            buffer.ensureWritable(value.length + Long.BYTES);
             buffer.writeByte(EncodingCodes.VBIN32);
             buffer.writeInt(value.length);
             buffer.writeBytes(value, 0, value.length);
         } else {
+            buffer.ensureWritable(value.length + Short.BYTES);
             buffer.writeByte(EncodingCodes.VBIN8);
             buffer.writeByte((byte) value.length);
             buffer.writeBytes(value, 0, value.length);
@@ -96,12 +97,13 @@ public final class BinaryTypeEncoder extends AbstractPrimitiveTypeEncoder<Binary
             Binary binary = (Binary) value;
             ProtonBuffer binaryBuffer = binary.asProtonBuffer();
 
+            buffer.ensureWritable(binaryBuffer.getReadableBytes() + Integer.BYTES);
             buffer.writeInt(binaryBuffer.getReadableBytes());
-            binaryBuffer.markReadIndex();
+            final int readOffset = binaryBuffer.getReadOffset();
             try {
                 buffer.writeBytes(binaryBuffer);
             } finally {
-                binaryBuffer.resetReadIndex();
+                binaryBuffer.setReadOffset(readOffset);
             }
         }
     }

@@ -28,6 +28,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -156,12 +157,11 @@ public class ExternalMessage<E> implements Message<E> {
 
     @Override
     public byte[] userId() {
-        byte[] copyOfUserId = null;
         if (properties != null && properties.getUserId() != null) {
-            copyOfUserId = properties.getUserId().arrayCopy();
+            return properties.getUserId().asByteArray();
+        } else {
+            return null;
         }
-
-        return copyOfUserId;
     }
 
     @Override
@@ -597,7 +597,7 @@ public class ExternalMessage<E> implements Message<E> {
         }
 
         @Override
-        public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) throws ClientException {
+        public ProtonBuffer encode(Map<String, Object> deliveryAnnotations, ProtonBufferAllocator allocator) throws ClientException {
             return ClientMessageSupport.encodeMessage(this, deliveryAnnotations);
         }
 

@@ -27,8 +27,8 @@ import java.io.InputStream;
 import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodeException;
@@ -59,7 +59,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testCannotEncodeEmptyPerformative() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Flow input = new Flow();
 
@@ -81,8 +81,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeAndDecode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final Random random = new Random();
         random.setSeed(System.nanoTime());
@@ -113,6 +112,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
 
         final Flow result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = (Flow) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (Flow) decoder.readObject(buffer, decoderState);
@@ -142,8 +142,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
     }
 
     private void testSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Flow flow = new Flow();
 
@@ -174,6 +173,13 @@ public class FlowTypeCodecTest extends CodecTestSupport {
         flow.setEcho(true);
 
         encoder.writeObject(buffer, encoderState, flow);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -232,8 +238,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -249,6 +254,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(Flow.class, typeDecoder.getTypeClass());
 
@@ -288,8 +294,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -305,6 +310,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid encoding");
@@ -328,8 +334,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
     }
 
     private void testEncodeDecodeArray(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Flow[] array = new Flow[3];
 
@@ -345,6 +350,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -390,8 +396,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithNotEnoughListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -409,6 +414,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");
@@ -442,8 +448,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithToManyListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -459,6 +464,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");

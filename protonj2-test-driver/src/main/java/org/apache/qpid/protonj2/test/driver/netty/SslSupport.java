@@ -41,8 +41,8 @@ import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import io.netty5.handler.ssl.SslHandler;
+import io.netty5.handler.ssl.util.InsecureTrustManagerFactory;
 
 /**
  * Static class that provides various utility methods used by Transport implementations.

@@ -24,7 +24,10 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * {@link ProtonBuffer} specialized {@link OutputStream} implementation which can be used to adapt
- * the proton buffer types into code that uses the streams API.
+ * the proton buffer types into code that uses the streams API. This stream wrapper does not take
+ * ownership of the provided buffer and will not close it upon a call to {@link #close()}
+ * <p>
+ * This stream is not thread-safe and should not be used by more than one thread at the same time.
  */
 public class ProtonBufferOutputStream extends OutputStream implements DataOutput {
 
@@ -42,40 +45,45 @@ public class ProtonBufferOutputStream extends OutputStream implements DataOutput
      */
     public ProtonBufferOutputStream(ProtonBuffer buffer) {
         this.buffer = buffer;
-        this.startWriteIndex = buffer.getWriteIndex();
+        this.startWriteIndex = buffer.getWriteOffset();
     }
 
     /**
      * @return a running total of the number of bytes that has been written to this {@link OutputStream}
      */
     public int getBytesWritten() {
-        return buffer.getWriteIndex() - startWriteIndex;
+        return buffer.getWriteOffset() - startWriteIndex;
     }
 
     @Override
     public void close() throws IOException {
-        try {
-            super.close();
-        } finally {
-            this.closed = true;
+        if (!closed) {
+            try {
+                super.close();
+            } finally {
+                this.closed = true;
+                if (cachedDataOut != null) {
+                    cachedDataOut.close();
+                }
+            }
         }
     }
 
     @Override
     public void writeBoolean(boolean value) throws IOException {
-        checkClosed();
+        prepareWrite(Byte.BYTES);
         buffer.writeBoolean(value);
     }
 
     @Override
     public void write(int value) throws IOException {
-        checkClosed();
-        buffer.writeByte(value);
+        prepareWrite(Byte.BYTES);
+        buffer.writeByte((byte) (value & 0xFF));
     }
 
     @Override
     public void write(byte[] array, int offset, int length) throws IOException {
-        checkClosed();
+        prepareWrite(length);
         if (length != 0) {
             buffer.writeBytes(array, offset, length);
         }
@@ -83,63 +91,65 @@ public class ProtonBufferOutputStream extends OutputStream implements DataOutput
 
     @Override
     public void write(byte[] array) throws IOException {
-        checkClosed();
+        prepareWrite(array.length);
         buffer.writeBytes(array);
     }
 
     @Override
     public void writeByte(int value) throws IOException {
         checkClosed();
-        buffer.writeByte(value);
+        prepareWrite(Byte.BYTES);
+        buffer.writeByte((byte) (value & 0xFF));
     }
 
     @Override
     public void writeShort(int value) throws IOException {
-        checkClosed();
+        prepareWrite(Short.BYTES);
         buffer.writeShort((short) value);
     }
 
     @Override
     public void writeChar(int value) throws IOException {
-        checkClosed();
+        prepareWrite(Character.BYTES);
         buffer.writeShort((short) value);
     }
 
     @Override
     public void writeInt(int value) throws IOException {
-        checkClosed();
+        prepareWrite(Integer.BYTES);
         buffer.writeInt(value);
     }
 
     @Override
     public void writeLong(long value) throws IOException {
-        checkClosed();
+        prepareWrite(Long.BYTES);
         buffer.writeLong(value);
     }
 
     @Override
     public void writeFloat(float value) throws IOException {
-        checkClosed();
+        prepareWrite(Float.BYTES);
         buffer.writeFloat(value);
     }
 
     @Override
     public void writeDouble(double value) throws IOException {
-        checkClosed();
+        prepareWrite(Double.BYTES);
         buffer.writeDouble(value);
     }
 
     @Override
     public void writeBytes(String value) throws IOException {
-        checkClosed();
+        prepareWrite(value.length());
         buffer.writeBytes(value.getBytes(StandardCharsets.US_ASCII));
     }
 
     @Override
     public void writeChars(String value) throws IOException {
         checkClosed();
+        prepareWrite(value.length() * Character.BYTES);
         for (int i = 0; i < value.length(); ++i) {
-            buffer.writeShort((short) value.charAt(i));
+            buffer.writeChar(value.charAt(i));
         }
     }
 
@@ -151,6 +161,11 @@ public class ProtonBufferOutputStream extends OutputStream implements DataOutput
         }
 
         cachedDataOut.writeUTF(value);
+    }
+
+    private void prepareWrite(int size) throws IOException {
+        checkClosed();
+        buffer.ensureWritable(size, buffer.capacity() >> 2, true);
     }
 
     private void checkClosed() throws IOException {

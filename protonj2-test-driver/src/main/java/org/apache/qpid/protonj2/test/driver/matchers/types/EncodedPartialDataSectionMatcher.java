@@ -18,6 +18,8 @@
  */
 package org.apache.qpid.protonj2.test.driver.matchers.types;
 
+import java.nio.ByteBuffer;
+
 import org.apache.qpid.protonj2.test.driver.codec.EncodingCodes;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Data;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
@@ -26,16 +28,16 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty5.buffer.Buffer;
+import io.netty5.buffer.BufferAllocator;
 
-public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
+public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<Buffer> {
 
     private static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:data:binary");
     private static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000075L);
 
     private final boolean expectDataSectionPreamble;
-    private final ByteBuf expectedValue;
+    private final Buffer expectedValue;
     private final int expectedEncodedSize;
     private boolean expectTrailingBytes;
     private String decodingErrorDescription;
@@ -49,7 +51,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
      *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedPartialDataSectionMatcher(int expectedEncodedSize, byte[] expectedValue) {
-        this(expectedEncodedSize, Unpooled.wrappedBuffer(expectedValue), true);
+        this(expectedEncodedSize, BufferAllocator.onHeapUnpooled().copyOf(expectedValue), true);
     }
 
     /**
@@ -60,7 +62,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
      *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedPartialDataSectionMatcher(int expectedEncodedSize, Binary expectedValue) {
-        this(expectedEncodedSize, Unpooled.wrappedBuffer(expectedValue.asByteBuffer()), true);
+        this(expectedEncodedSize, BufferAllocator.onHeapUnpooled().copyOf(expectedValue.asByteBuffer()), true);
     }
 
     /**
@@ -70,7 +72,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
      * @param expectedValue
      *        the value that is expected to be IN the received {@link Data}
      */
-    public EncodedPartialDataSectionMatcher(int expectedEncodedSize, ByteBuf expectedValue) {
+    public EncodedPartialDataSectionMatcher(int expectedEncodedSize, Buffer expectedValue) {
         this(expectedEncodedSize, expectedValue, true);
     }
 
@@ -79,7 +81,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
      *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedPartialDataSectionMatcher(byte[] expectedValue) {
-        this(-1, Unpooled.wrappedBuffer(expectedValue), false);
+        this(-1, BufferAllocator.onHeapUnpooled().copyOf(expectedValue), false);
     }
 
     /**
@@ -87,14 +89,14 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
      *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedPartialDataSectionMatcher(Binary expectedValue) {
-        this(-1, Unpooled.wrappedBuffer(expectedValue.asByteBuffer()), false);
+        this(-1, BufferAllocator.onHeapUnpooled().copyOf(expectedValue.asByteBuffer()), false);
     }
 
     /**
      * @param expectedValue
      *        the value that is expected to be IN the received {@link Data}
      */
-    public EncodedPartialDataSectionMatcher(ByteBuf expectedValue) {
+    public EncodedPartialDataSectionMatcher(Buffer expectedValue) {
         this(-1, expectedValue, false);
     }
 
@@ -108,7 +110,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
      *        should the matcher check for the Data and Binary section encoding
      *        meta-data or only match the payload to the given expected value.
      */
-    protected EncodedPartialDataSectionMatcher(int expectedEncodedSize, ByteBuf expectedValue, boolean expectDataSectionPreamble) {
+    protected EncodedPartialDataSectionMatcher(int expectedEncodedSize, Buffer expectedValue, boolean expectDataSectionPreamble) {
         this.expectedValue = expectedValue;
         this.expectedEncodedSize = expectedEncodedSize;
         this.expectDataSectionPreamble = expectDataSectionPreamble;
@@ -128,7 +130,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
     }
 
     @Override
-    protected boolean matchesSafely(ByteBuf receivedBinary) {
+    protected boolean matchesSafely(Buffer receivedBinary) {
         if (expectDataSectionPreamble) {
             Object descriptor = readDescribedTypeEncoding(receivedBinary);
 
@@ -157,14 +159,14 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
         }
 
         if (expectedValue != null) {
-            ByteBuf payload = receivedBinary.slice();
-            receivedBinary.skipBytes(payload.readableBytes());
+            Buffer payload = receivedBinary.copy(true);
+            receivedBinary.skipReadableBytes(payload.readableBytes());
             if (!expectedValue.equals(payload)) {
                 return false;
             }
         }
 
-        if (receivedBinary.isReadable() && !isTrailingBytesExpected()) {
+        if (receivedBinary.readableBytes() > 0 && !isTrailingBytesExpected()) {
             unexpectedTrailingBytes = true;
             return false;
         } else {
@@ -174,7 +176,7 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
 
     private static final int DESCRIBED_TYPE_INDICATOR = 0;
 
-    private Object readDescribedTypeEncoding(ByteBuf data) {
+    private Object readDescribedTypeEncoding(Buffer data) {
         byte encodingCode = data.readByte();
 
         if (encodingCode == DESCRIBED_TYPE_INDICATOR) {
@@ -200,34 +202,34 @@ public class EncodedPartialDataSectionMatcher extends TypeSafeMatcher<ByteBuf> {
         return null;
     }
 
-    private Symbol readSymbol32(ByteBuf buffer) {
+    private Symbol readSymbol32(Buffer buffer) {
         int length = buffer.readInt();
 
         if (length == 0) {
             return Symbol.valueOf("");
         } else {
-            ByteBuf symbolBuffer = buffer.slice(buffer.readerIndex(), length);
-            buffer.skipBytes(length);
+            final ByteBuffer symbolBuffer = ByteBuffer.allocate(length);
+            buffer.readBytes(symbolBuffer);
 
-            return Symbol.getSymbol(symbolBuffer.nioBuffer(), true);
+            return Symbol.getSymbol(symbolBuffer, false);
         }
     }
 
-    private Symbol readSymbol8(ByteBuf buffer) {
+    private Symbol readSymbol8(Buffer buffer) {
         int length = buffer.readByte() & 0xFF;
 
         if (length == 0) {
             return Symbol.valueOf("");
         } else {
-            ByteBuf symbolBuffer = buffer.slice(buffer.readerIndex(), length);
-            buffer.skipBytes(length);
+            final ByteBuffer symbolBuffer = ByteBuffer.allocate(length);
+            buffer.readBytes(symbolBuffer);
 
-            return Symbol.getSymbol(symbolBuffer.nioBuffer(), true);
+            return Symbol.getSymbol(symbolBuffer, false);
         }
     }
 
     @Override
-    protected void describeMismatchSafely(ByteBuf item, Description mismatchDescription) {
+    protected void describeMismatchSafely(Buffer item, Description mismatchDescription) {
         mismatchDescription.appendText("\nActual encoded form: ").appendValue(item);
 
         if (decodingErrorDescription != null) {

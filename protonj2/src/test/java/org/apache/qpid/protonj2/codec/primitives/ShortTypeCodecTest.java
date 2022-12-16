@@ -27,8 +27,8 @@ import java.io.InputStream;
 import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -51,13 +51,14 @@ public class ShortTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UINT);
         buffer.writeByte(EncodingCodes.UINT);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             try {
                 streamDecoder.readShort(stream, streamDecoderState);
                 fail("Should not allow read of integer type as this type");
@@ -91,8 +92,7 @@ public class ShortTypeCodecTest extends CodecTestSupport {
     }
 
     public void testTypeFromEncodingCode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.SHORT);
         buffer.writeShort((short) 42);
@@ -102,6 +102,8 @@ public class ShortTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(EncodingCodes.NULL);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             assertEquals(42, streamDecoder.readShort(stream, streamDecoderState).shortValue());
             assertEquals(43, streamDecoder.readShort(stream, streamDecoderState, (short) 42));
             assertNull(streamDecoder.readShort(stream, streamDecoderState));
@@ -136,13 +138,13 @@ public class ShortTypeCodecTest extends CodecTestSupport {
     }
 
     private void testReadShortFromEncodingCode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.SHORT);
         buffer.writeShort((short) 42);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             assertEquals(42, streamDecoder.readShort(stream, streamDecoderState).intValue());
         } else {
             assertEquals(42, decoder.readShort(buffer, decoderState).intValue());
@@ -160,8 +162,7 @@ public class ShortTypeCodecTest extends CodecTestSupport {
     }
 
     public void doTestSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeShort(buffer, encoderState, Short.MAX_VALUE);
@@ -171,6 +172,13 @@ public class ShortTypeCodecTest extends CodecTestSupport {
         short expected = 42;
 
         encoder.writeObject(buffer, encoderState, expected);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -215,8 +223,7 @@ public class ShortTypeCodecTest extends CodecTestSupport {
     }
 
     private void testArrayOfObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         Random random = new Random();
         random.setSeed(System.nanoTime());
 
@@ -231,6 +238,7 @@ public class ShortTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -259,8 +267,7 @@ public class ShortTypeCodecTest extends CodecTestSupport {
     }
 
     private void testZeroSizedArrayOfObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Short[] source = new Short[0];
 
@@ -268,6 +275,7 @@ public class ShortTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);

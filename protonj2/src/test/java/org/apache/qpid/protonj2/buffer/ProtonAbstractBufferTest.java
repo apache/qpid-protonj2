@@ -14,33 +14,64 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.qpid.protonj2.buffer;
 
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.READ;
+import static java.nio.file.StandardOpenOption.WRITE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ReadOnlyBufferException;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Random;
 
+import org.apache.qpid.protonj2.buffer.impl.ProtonByteArrayBufferAllocator;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
- * Abstract test base for testing common expected behaviors of ProtonBuffer implementations
- * of ProtonBuffer.
+ * A set of proton buffer basic tests that exercise common functionality that
+ * all buffer types should implement in a consistent manner.
  */
 public abstract class ProtonAbstractBufferTest {
+
+    /**
+     * @return a new allocator used to create the buffer type under test.
+     */
+    public abstract ProtonBufferAllocator createTestCaseAllocator();
+
+    /**
+     * @return an instance of the built in proton buffer allocator.
+     */
+    public ProtonBufferAllocator createProtonDefaultAllocator() {
+        return new ProtonByteArrayBufferAllocator();
+    }
 
     public static final int LARGE_CAPACITY = 4096; // Must be even for these tests
     public static final int BLOCK_SIZE = 128;
@@ -49,6 +80,21 @@ public abstract class ProtonAbstractBufferTest {
     protected long seed;
     protected Random random;
 
+    private static FileChannel closedChannel;
+    private static FileChannel channel;
+
+    @BeforeAll
+    static void setUpChannels(@TempDir Path parentDirectory) throws IOException {
+        closedChannel = tempFileChannel(parentDirectory);
+        closedChannel.close();
+        channel = tempFileChannel(parentDirectory);
+    }
+
+    @AfterAll
+    static void tearDownChannels() throws IOException {
+        channel.close();
+    }
+
     @BeforeEach
     public void setUp() {
         seed = System.currentTimeMillis();
@@ -56,3294 +102,5570 @@ public abstract class ProtonAbstractBufferTest {
         random.setSeed(seed);
     }
 
-    //----- Test Buffer creation ---------------------------------------------//
-
     @Test
-    public void testConstructWithDifferingCapacityAndMaxCapacity() {
-        assumeTrue(canBufferCapacityBeChanged());
-
-        final int baseCapacity = DEFAULT_CAPACITY + 10;
-
-        ProtonBuffer buffer = allocateBuffer(baseCapacity, baseCapacity + 100);
-
-        assertEquals(0, buffer.getReadableBytes());
-        assertEquals(baseCapacity, buffer.capacity());
-        assertEquals(baseCapacity + 100, buffer.maxCapacity());
-    }
-
-    @Test
-    public void testBufferRespectsMaxCapacityAfterGrowingToFit() {
-        assumeTrue(canBufferCapacityBeChanged());
-
-        ProtonBuffer buffer = allocateBuffer(5, 10);
-
-        assertEquals(0, buffer.getReadableBytes());
-        assertEquals(5, buffer.capacity());
-        assertEquals(10, buffer.maxCapacity());
-
-        for (int i = 0; i < 10; ++i) {
-            buffer.writeByte(i);
-        }
-
-        try {
-            buffer.writeByte(10);
-            fail("Should not be able to write more than the max capacity bytes");
-        } catch (IndexOutOfBoundsException iobe) {}
-    }
-
-    @Test
-    public void testBufferRespectsMaxCapacityLimitNoGrowthScenario() {
-        ProtonBuffer buffer = allocateBuffer(10, 10);
-
-        assertEquals(0, buffer.getReadableBytes());
-        assertEquals(10, buffer.capacity());
-        assertEquals(10, buffer.maxCapacity());
-
-        // Writes to capacity work, but exceeding that should fail.
-        for (int i = 0; i < 10; ++i) {
-            buffer.writeByte(i);
-        }
-
-        try {
-            buffer.writeByte(10);
-            fail("Should not be able to write more than the max capacity bytes");
-        } catch (IndexOutOfBoundsException iobe) {}
-    }
-
-    //----- Tests for altering buffer capacity -------------------------------//
-
-    @Test
-    public void testCapacityEnforceMaxCapacity() {
-        assumeTrue(canBufferCapacityBeChanged());
-
-        ProtonBuffer buffer = allocateBuffer(3, 13);
-        assertEquals(13, buffer.maxCapacity());
-        assertEquals(3, buffer.capacity());
-
-        assertThrows(IllegalArgumentException.class, () -> buffer.capacity(14));
-    }
-
-    @Test
-    public void testCapacityNegative() {
-        assumeTrue(canBufferCapacityBeChanged());
-
-        ProtonBuffer buffer = allocateBuffer(3, 13);
-        assertEquals(13, buffer.maxCapacity());
-        assertEquals(3, buffer.capacity());
-
-        assertThrows(IllegalArgumentException.class, () -> buffer.capacity(-1));
-    }
-
-    @Test
-    public void testCapacityDecrease() {
-        assumeTrue(canBufferCapacityBeChanged());
-
-        ProtonBuffer buffer = allocateBuffer(3, 13);
-        assertEquals(13, buffer.maxCapacity());
-        assertEquals(3, buffer.capacity());
-        buffer.capacity(2);
-        assertEquals(2, buffer.capacity());
-        assertEquals(13, buffer.maxCapacity());
-    }
-
-    @Test
-    public void testCapacityIncrease() {
-        assumeTrue(canBufferCapacityBeChanged());
-
-        ProtonBuffer buffer = allocateBuffer(3, 13);
-        assertEquals(13, buffer.maxCapacity());
-        assertEquals(3, buffer.capacity());
-        buffer.capacity(4);
-        assertEquals(4, buffer.capacity());
-        assertEquals(13, buffer.maxCapacity());
-    }
-
-    //----- Tests for altering buffer properties -----------------------------//
-
-    @Test
-    public void testSetReadIndexWithNegative() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        try {
-            buffer.setReadIndex(-1);
-            fail("Should not accept negative values");
-        } catch (IndexOutOfBoundsException e) {}
-    }
-
-    @Test
-    public void testSetReadIndexGreaterThanCapacity() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        try {
-            buffer.setReadIndex(buffer.capacity() + buffer.capacity());
-            fail("Should not accept values bigger than capacity");
-        } catch (IndexOutOfBoundsException e) {}
-    }
-
-    @Test
-    public void testSetWriteIndexWithNegative() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        try {
-            buffer.setWriteIndex(-1);
-            fail("Should not accept negative values");
-        } catch (IndexOutOfBoundsException e) {}
-    }
-
-    @Test
-    public void testSetWriteIndexGreaterThanCapacity() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        try {
-            buffer.setWriteIndex(buffer.capacity() + buffer.capacity());
-            fail("Should not accept values bigger than capacity");
-        } catch (IndexOutOfBoundsException e) {}
-    }
-
-    @Test
-    public void testSetIndexWithNegativeReadIndex() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        try {
-            buffer.setIndex(-1, 0);
-            fail("Should not accept negative values");
-        } catch (IndexOutOfBoundsException e) {}
-    }
-
-    @Test
-    public void testSetIndexWithNegativeWriteIndex() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        try {
-            buffer.setIndex(0, -1);
-            fail("Should not accept negative values");
-        } catch (IndexOutOfBoundsException e) {}
-    }
-
-    @Test
-    public void testSetIndexWithReadIndexBiggerThanWrite() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        try {
-            buffer.setIndex(50, 40);
-            fail("Should not accept bigger read index values");
-        } catch (IndexOutOfBoundsException e) {}
-    }
-
-    @Test
-    public void testSetIndexWithWriteIndexBiggerThanCapacity() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        try {
-            buffer.setIndex(0, buffer.capacity() + 1);
-            fail("Should not accept write index bigger than capacity");
-        } catch (IndexOutOfBoundsException e) {}
-    }
-
-    @Test
-    public void testIsReadable() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        assertFalse(buffer.isReadable());
-        buffer.writeBoolean(false);
-        assertTrue(buffer.isReadable());
-    }
-
-    @Test
-    public void testIsReadableWithAmount() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        assertFalse(buffer.isReadable(1));
-        buffer.writeBoolean(false);
-        assertTrue(buffer.isReadable(1));
-        assertFalse(buffer.isReadable(2));
-    }
-
-    @Test
-    public void testIsWriteable() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        assertTrue(buffer.isWritable());
-        buffer.setWriteIndex(buffer.capacity());
-        assertFalse(buffer.isWritable());
-    }
-
-    @Test
-    public void testIsWriteableWithAmount() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        assertTrue(buffer.isWritable());
-        buffer.setWriteIndex(buffer.capacity() - 1);
-        assertTrue(buffer.isWritable(1));
-        assertFalse(buffer.isWritable(2));
-    }
-
-    @Test
-    public void testMaxWritableBytes() {
-        ProtonBuffer buffer = allocateBuffer(DEFAULT_CAPACITY, DEFAULT_CAPACITY);
-        assertTrue(buffer.isWritable());
-        assertEquals(DEFAULT_CAPACITY, buffer.getMaxWritableBytes());
-        buffer.setWriteIndex(buffer.capacity() - 1);
-        assertTrue(buffer.isWritable(1));
-        assertFalse(buffer.isWritable(2));
-        assertEquals(1, buffer.getMaxWritableBytes());
-    }
-
-    @Test
-    public void testClear() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        assertEquals(0, buffer.getReadIndex());
-        assertEquals(0, buffer.getWriteIndex());
-        buffer.setIndex(10, 20);
-        assertEquals(10, buffer.getReadIndex());
-        assertEquals(20, buffer.getWriteIndex());
-        buffer.clear();
-        assertEquals(0, buffer.getReadIndex());
-        assertEquals(0, buffer.getWriteIndex());
-    }
-
-    @Test
-    public void testSkipBytes() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        buffer.setWriteIndex(buffer.capacity() / 2);
-        assertEquals(0, buffer.getReadIndex());
-        buffer.skipBytes(buffer.capacity() / 2);
-        assertEquals(buffer.capacity() / 2, buffer.getReadIndex());
-    }
-
-    @Test
-    public void testSkipBytesBeyondReadable() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        buffer.setWriteIndex(buffer.capacity() / 2);
-        assertEquals(0, buffer.getReadIndex());
-
-        try {
-            buffer.skipBytes(buffer.getReadableBytes() + 50);
-            fail("Should not be able to skip beyond write index");
-        } catch (IndexOutOfBoundsException e) {}
-    }
-
-    //----- Tests for altering buffer capacity -------------------------------//
-
-    @Test
-    public void testIncreaseCapacity() {
-        assumeTrue(canBufferCapacityBeChanged());
-
-        byte[] source = new byte[100];
-
-        ProtonBuffer buffer = allocateBuffer(100).writeBytes(source);
-        assertEquals(100, buffer.capacity());
-        assertEquals(0, buffer.getReadIndex());
-        assertEquals(100, buffer.getWriteIndex());
-
-        buffer.capacity(200);
-        assertEquals(200, buffer.capacity());
-
-        buffer.capacity(200);
-        assertEquals(200, buffer.capacity());
-
-        assertEquals(0, buffer.getReadIndex());
-        assertEquals(100, buffer.getWriteIndex());
-    }
-
-    @Test
-    public void testDecreaseCapacity() {
-        assumeTrue(canBufferCapacityBeChanged());
-
-        byte[] source = new byte[100];
-
-        ProtonBuffer buffer = allocateBuffer(100).writeBytes(source);
-        assertEquals(100, buffer.capacity());
-        assertEquals(100, buffer.getWriteIndex());
-
-        buffer.capacity(50);
-        assertEquals(50, buffer.capacity());
-
-        // Buffer is truncated but we never read anything so read index stays at front.
-        assertEquals(0, buffer.getReadIndex());
-        assertEquals(50, buffer.getWriteIndex());
-    }
-
-    @Test
-    public void testDecreaseCapacityValidatesSize() {
-        assumeTrue(canBufferCapacityBeChanged());
-
-        ProtonBuffer buffer = allocateBuffer(100);
-        assertEquals(100, buffer.capacity());
-
-        try {
-            buffer.capacity(-50);
-            fail("Should throw IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {}
-    }
-
-    @Test
-    public void testDecreaseCapacityWithReadIndexIndexBeyondNewValue() {
-        assumeTrue(canBufferCapacityBeChanged());
-
-        byte[] source = new byte[100];
-
-        ProtonBuffer buffer = allocateBuffer(100).writeBytes(source);
-        assertEquals(100, buffer.capacity());
-
-        buffer.setReadIndex(60);
-
-        buffer.capacity(50);
-        assertEquals(50, buffer.capacity());
-
-        // Buffer should be truncated and read index moves back to end
-        assertEquals(50, buffer.getReadIndex());
-        assertEquals(50, buffer.getWriteIndex());
-    }
-
-    @Test
-    public void testDecreaseCapacityWithWriteIndexWithinNewValue() {
-        assumeTrue(canBufferCapacityBeChanged());
-
-        byte[] source = new byte[100];
-
-        ProtonBuffer buffer = allocateBuffer(100).writeBytes(source);
-        assertEquals(100, buffer.capacity());
-
-        buffer.setIndex(10, 30);
-        buffer.capacity(50);
-        assertEquals(50, buffer.capacity());
-
-        // Buffer should be truncated but index values remain unchanged
-        assertEquals(10, buffer.getReadIndex());
-        assertEquals(30, buffer.getWriteIndex());
-    }
-
-    @Test
-    public void testCapacityIncreasesWhenWritesExceedCurrent() {
-        assumeTrue(canBufferCapacityBeChanged());
-
-        ProtonBuffer buffer = allocateBuffer(10);
-
-        assertTrue(buffer.hasArray());
-
-        assertEquals(10, buffer.capacity());
-        assertEquals(Integer.MAX_VALUE, buffer.maxCapacity());
-
-        for (int i = 1; i <= 9; ++i) {
-            buffer.writeByte(i);
-        }
-
-        assertEquals(10, buffer.capacity());
-
-        buffer.writeByte(10);
-
-        assertEquals(10, buffer.capacity());
-
-        buffer.writeByte(11);
-
-        assertTrue(buffer.capacity() > 10);
-
-        assertEquals(11, buffer.getReadableBytes());
-
-        for (int i = 1; i < 12; ++i) {
-            assertEquals(i, buffer.readByte());
+    public void testBufferShouldNotBeAccessibleAfterClose() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(24)) {
+            buf.writeLong(42);
+            buf.close();
+            verifyInaccessible(buf);
         }
     }
 
-    //----- Write Bytes Tests ------------------------------------------------//
-
     @Test
-    public void testWriteBytes() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
-
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        buffer.writeBytes(payload);
-
-        assertEquals(payload.length, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        for (int i = 0; i < payload.length; ++i) {
-            assertEquals(payload[i], buffer.readByte());
-        }
-
-        assertEquals(payload.length, buffer.getReadIndex());
-    }
-
-    @Test
-    public void testWriteBytesWithEmptyArray() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        buffer.writeBytes(new byte[0]);
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-    }
-
-    @Test
-    public void testWriteBytesNPEWhenNullGiven() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        try {
-            buffer.writeBytes((byte[]) null);
-            fail();
-        } catch (NullPointerException ex) {}
-
-        try {
-            buffer.writeBytes((byte[]) null, 0);
-            fail();
-        } catch (NullPointerException ex) {}
-
-        try {
-            buffer.writeBytes((byte[]) null, 0, 0);
-            fail();
-        } catch (NullPointerException ex) {}
-    }
-
-    @Test
-    public void testWriteBytesWithLength() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
-
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        buffer.writeBytes(payload, payload.length);
-
-        assertEquals(payload.length, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        for (int i = 0; i < payload.length; ++i) {
-            assertEquals(payload[i], buffer.readByte());
-        }
-
-        assertEquals(payload.length, buffer.getReadIndex());
-    }
-
-    @Test
-    public void testWriteBytesWithLengthToBig() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
-
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        try {
-            buffer.writeBytes(payload, payload.length + 1);
-            fail("Should not write when length given is to large.");
-        } catch (IndexOutOfBoundsException ex) {}
-    }
-
-    @Test
-    public void testWriteBytesWithNegativeLength() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
-
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        try {
-            buffer.writeBytes(payload, -1);
-            fail("Should not write when length given is negative.");
-        } catch (IllegalArgumentException ex) {}
-    }
-
-    @Test
-    public void testWriteBytesWithLengthAndOffset() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
-
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        buffer.writeBytes(payload, 0, payload.length);
-
-        assertEquals(payload.length, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        for (int i = 0; i < payload.length; ++i) {
-            assertEquals(payload[i], buffer.readByte());
-        }
-
-        assertEquals(payload.length, buffer.getReadIndex());
-    }
-
-    @Test
-    public void testWriteBytesWithLengthAndOffsetIncorrect() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
-
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        try {
-            buffer.writeBytes(payload, 0, payload.length + 1);
-            fail("Should not write when length given is to large.");
-        } catch (IndexOutOfBoundsException ex) {}
-
-        try {
-            buffer.writeBytes(payload, -1, payload.length);
-            fail("Should not write when offset given is negative.");
-        } catch (IndexOutOfBoundsException ex) {}
-
-        try {
-            buffer.writeBytes(payload, 0, -1);
-            fail("Should not write when length given is negative.");
-        } catch (IllegalArgumentException ex) {}
-
-        try {
-            buffer.writeBytes(payload, payload.length + 1, 1);
-            fail("Should not write when offset given is to large.");
-        } catch (IndexOutOfBoundsException ex) {}
-    }
-
-    @Test
-    public void testWriteBytesFromProtonBuffer() {
-        ProtonBuffer source = new ProtonByteBuffer(new byte[] { 0, 1, 2, 3, 4, 5 });
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        buffer.writeBytes(source);
-
-        assertEquals(0, source.getReadableBytes());
-        assertEquals(source.getWriteIndex(), buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        for (int i = 0; i < source.getReadableBytes(); ++i) {
-            assertEquals(source.getByte(i), buffer.readByte());
-        }
-
-        assertEquals(source.getReadableBytes(), buffer.getReadIndex());
-    }
-
-    @Test
-    public void testWriteBytesFromProtonBufferWithLength() {
-        ProtonBuffer source = new ProtonByteBuffer(new byte[] { 0, 1, 2, 3, 4, 5 });
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        try {
-            buffer.writeBytes(source, source.getReadableBytes() + 1);
-            fail("Should not write when length given is to large.");
-        } catch (IndexOutOfBoundsException ex) {}
-
-        buffer.writeBytes(source, source.getReadableBytes());
-
-        assertEquals(0, source.getReadableBytes());
-        assertEquals(source.getWriteIndex(), buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        for (int i = 0; i < source.getReadableBytes(); ++i) {
-            assertEquals(source.getByte(i), buffer.readByte());
-        }
-
-        assertEquals(source.getReadableBytes(), buffer.getReadIndex());
-    }
-
-    @Test
-    public void testWriteBytesFromProtonBufferWithLengthAndOffset() {
-        ProtonBuffer source = new ProtonByteBuffer(new byte[] { 0, 1, 2, 3, 4, 5 });
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        buffer.writeBytes(source, 0, source.getReadableBytes());
-
-        assertEquals(source.getReadableBytes(), buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        for (int i = 0; i < source.getReadableBytes(); ++i) {
-            assertEquals(source.getByte(i), buffer.readByte());
-        }
-
-        assertEquals(source.getReadableBytes(), buffer.getReadIndex());
-    }
-
-    @Test
-    public void testWriteBytesFromByteBuffer() {
-        ByteBuffer source = ByteBuffer.wrap(new byte[] { 0, 1, 2, 3, 4, 5 });
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        buffer.writeBytes(source);
-
-        assertEquals(0, source.remaining());
-        assertEquals(source.position(), buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        for (int i = 0; i < source.capacity(); ++i) {
-            assertEquals(source.get(i), buffer.readByte());
+    public void testEqualsSelf() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(24)) {
+            final byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
+            buf.writeBytes(payload);
+            assertTrue(buf.equals(buf));
         }
     }
 
-    //----- Write Primitives Tests -------------------------------------------//
-
     @Test
-    public void testWriteByte() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        buffer.writeByte((byte) 56);
-
-        assertEquals(1, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        assertEquals(56, buffer.readByte());
-
-        assertEquals(1, buffer.getWriteIndex());
-        assertEquals(1, buffer.getReadIndex());
-
-        assertEquals(0, buffer.getReadableBytes());
+    public void testOffsettedGetOfByteMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getByte(-1));
+        }
     }
 
     @Test
-    public void testWriteBoolean() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        buffer.writeBoolean(true);
-        buffer.writeBoolean(false);
-
-        assertEquals(2, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        assertEquals(true, buffer.readBoolean());
-
-        assertEquals(2, buffer.getWriteIndex());
-        assertEquals(1, buffer.getReadIndex());
-
-        assertEquals(1, buffer.getReadableBytes());
-        assertEquals(false, buffer.readBoolean());
-        assertEquals(2, buffer.getWriteIndex());
-        assertEquals(2, buffer.getReadIndex());
+    public void testOffsettedGetOfByteFromReadOnlyMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getByte(-1));
+        }
     }
 
     @Test
-    public void testWriteShort() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
+    public void testOffsettedGetOfByteMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(1, buf.componentCount());
+            assertEquals(0, buf.readableComponentCount());
+            assertEquals(1, buf.writableComponentCount());
 
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
+            byte value = 0x01;
+            buf.writeByte(value);
+            assertEquals(value, buf.getByte(0));
 
-        buffer.writeShort((short) 42);
-
-        assertEquals(2, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        assertEquals(42, buffer.readShort());
-
-        assertEquals(2, buffer.getWriteIndex());
-        assertEquals(2, buffer.getReadIndex());
-
-        assertEquals(0, buffer.getReadableBytes());
+            assertEquals(1, buf.componentCount());
+            assertEquals(1, buf.readableComponentCount());
+            assertEquals(1, buf.writableComponentCount());
+        }
     }
 
     @Test
-    public void testWriteInt() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        buffer.writeInt(72);
-
-        assertEquals(4, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        assertEquals(72, buffer.readInt());
-
-        assertEquals(4, buffer.getWriteIndex());
-        assertEquals(4, buffer.getReadIndex());
-
-        assertEquals(0, buffer.getReadableBytes());
+    public void testOffsettedGetOfByteMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            byte value = 0x01;
+            buf.writeByte(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(0x10, buf.getByte(0));
+        }
     }
 
     @Test
-    public void testWriteLong() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        buffer.writeLong(500l);
-
-        assertEquals(8, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        assertEquals(500l, buffer.readLong());
-
-        assertEquals(8, buffer.getWriteIndex());
-        assertEquals(8, buffer.getReadIndex());
-
-        assertEquals(0, buffer.getReadableBytes());
+    public void testOffsettedGetOfByteMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            byte value = 0x01;
+            buf.writeByte(value);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getByte(-1));
+        }
     }
 
     @Test
-    public void testWriteFloat() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        buffer.writeFloat(35.5f);
-
-        assertEquals(4, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        assertEquals(35.5f, buffer.readFloat(), 0.4f);
-
-        assertEquals(4, buffer.getWriteIndex());
-        assertEquals(4, buffer.getReadIndex());
-
-        assertEquals(0, buffer.getReadableBytes());
+    public void testOffsettedGetOfByteReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            byte value = 0x01;
+            buf.writeByte(value);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getByte(-1));
+        }
     }
 
     @Test
-    public void testWriteDouble() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        assertEquals(0, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        buffer.writeDouble(1.66);
-
-        assertEquals(8, buffer.getWriteIndex());
-        assertEquals(0, buffer.getReadIndex());
-
-        assertEquals(1.66, buffer.readDouble(), 0.1);
-
-        assertEquals(8, buffer.getWriteIndex());
-        assertEquals(8, buffer.getReadIndex());
-
-        assertEquals(0, buffer.getReadableBytes());
+    public void testOffsettedGetOfByteMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.getByte(0);
+        }
     }
 
-    //----- Tests for read operations ----------------------------------------//
+    @Test
+    public void testOffsettedGetOfByteMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getByte(8));
+        }
+    }
 
     @Test
-    public void testReadByte() {
-        byte[] source = new byte[] { 0, 1, 2, 3, 4, 5 };
-        ProtonBuffer buffer = wrapBuffer(source);
+    public void testOffsettedGetOfByteReadOnlyMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly().getByte(0);
+        }
+    }
 
-        assertEquals(source.length, buffer.getReadableBytes());
+    @Test
+    public void testOffsettedGetOfByteReadOnlyMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getByte(8));
+        }
+    }
 
-        for (int i = 0; i < source.length; ++i) {
-            assertEquals(source[i], buffer.readByte());
+    @Test
+    public void testOffsettedGetOfUnsignedByteMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getUnsignedByte(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedByteReadOnlyMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getUnsignedByte(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedByteMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x01;
+            buf.writeUnsignedByte(value);
+            assertEquals(value, buf.getUnsignedByte(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedByteMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x01;
+            buf.writeUnsignedByte(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(0x10, buf.getUnsignedByte(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedByteMustNotBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x01;
+            buf.writeUnsignedByte(value);
+            buf.getUnsignedByte(1);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedByteMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getUnsignedByte(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedByteReadOnlyMustNotBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x01;
+            buf.writeUnsignedByte(value);
+            buf.convertToReadOnly().getUnsignedByte(1);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedByteReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getUnsignedByte(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedByteMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.getUnsignedByte(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedByteMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getUnsignedByte(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedByteReadOnlyMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly().getUnsignedByte(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedByteReadOnlyMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getUnsignedByte(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfByteMustBoundsCheckWhenWriteOffsetIsNegative() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            byte value = 0x01;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setByte(-1, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfByteMustBoundsCheckWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            byte value = 0x01;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setByte(8, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfByteMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            byte value = 0x01;
+            buf.setByte(0, value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfUnsignedByteMustBoundsCheckWhenWriteOffsetIsNegative() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            int value = 0x01;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setUnsignedByte(-1, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfUnsignedByteMustBoundsCheckWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            int value = 0x01;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setUnsignedByte(8, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfUnsignedByteMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x01;
+            buf.setUnsignedByte(0, value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testWriteBytesMustWriteAllBytesFromByteArray() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeByte((byte) 1);
+            buf.writeBytes(new byte[] { 2, 3, 4, 5, 6, 7 });
+            assertEquals(7, buf.getWriteOffset());
+            assertEquals(0, buf.getReadOffset());
+            assertArrayEquals(new byte[] { 1, 2, 3, 4, 5, 6, 7 }, ProtonBufferUtils.toByteArray(buf));
+            // Actual buffer should have one more byte in its capacity
+            buf.advanceWriteOffset(1);
+            assertArrayEquals(new byte[] { 1, 2, 3, 4, 5, 6, 7, 0 }, ProtonBufferUtils.toByteArray(buf));
+        }
+    }
+
+    @Test
+    public void testWriteBytesWithOffsetMustWriteAllBytesFromByteArray() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(3)) {
+            buf.writeByte((byte) 1);
+            buf.writeBytes(new byte[] { 2, 3, 4, 5, 6, 7 }, 1, 2);
+            assertEquals(3, buf.getWriteOffset());
+            assertEquals(0, buf.getReadOffset());
+            assertArrayEquals(new byte[] { 1, 3, 4 }, ProtonBufferUtils.toByteArray(buf));
+        }
+    }
+
+    @Test
+    public void testReadBytesWithOffsetMustWriteAllBytesIntoByteArray() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeLong(0x0102030405060708L);
+            byte[] array = new byte[4];
+            assertEquals(1, buf.readByte());
+            assertEquals(2, buf.readByte());
+            buf.readBytes(array, 1, 2);
+            assertEquals(8, buf.getWriteOffset());
+            assertEquals(4, buf.getReadOffset());
+            assertArrayEquals(new byte[] { 0, 3, 4, 0 }, array);
+        }
+    }
+
+    @Test
+    public void testWriteBytesMustWriteAllBytesFromHeapByteBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeByte((byte) 1);
+            ByteBuffer source = ByteBuffer.allocate(8).put(new byte[] { 2, 3, 4, 5, 6, 7 }).flip();
+            buf.writeBytes(source);
+            assertEquals(source.position(), source.limit());
+            assertEquals(7, buf.getWriteOffset());
+            assertEquals(0, buf.getReadOffset());
+            assertArrayEquals(new byte[] { 1, 2, 3, 4, 5, 6, 7 }, ProtonBufferUtils.toByteArray(buf));
+        }
+    }
+
+    @Test
+    public void testWriteBytesMustWriteAllBytesFromDirectByteBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeByte((byte) 1);
+            ByteBuffer source = ByteBuffer.allocateDirect(8).put(new byte[] { 2, 3, 4, 5, 6, 7 }).flip();
+            buf.writeBytes(source);
+            assertEquals(source.position(), source.limit());
+            assertEquals(7, buf.getWriteOffset());
+            assertEquals(0, buf.getReadOffset());
+            assertArrayEquals(new byte[] { 1, 2, 3, 4, 5, 6, 7 }, ProtonBufferUtils.toByteArray(buf));
+        }
+    }
+
+    @Test
+    public void testWriteBytesHeapByteBufferMustExpandCapacityIfBufferIsTooSmall() {
+        // With zero offsets
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            ByteBuffer source = ByteBuffer.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7 });
+            buf.writeBytes(source);
+            assertTrue(buf.capacity() >= source.capacity());
+            assertEquals(source.position(), source.limit());
+            assertEquals(16, buf.getWriteOffset());
+            assertEquals(0, buf.getReadOffset());
+            assertArrayEquals(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7 },
+                ProtonBufferUtils.toByteArray(buf));
+        }
+        // With non-zero offsets
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            ByteBuffer source = ByteBuffer.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7 });
+            buf.writeByte((byte) -1).readByte();
+            buf.writeBytes(source);
+            assertTrue(buf.capacity() >= source.capacity() + 1);
+            assertEquals(source.position(), source.limit());
+            assertEquals(17, buf.getWriteOffset());
+            assertEquals(1, buf.getReadOffset());
+            assertArrayEquals(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7 },
+                ProtonBufferUtils.toByteArray(buf));
+        }
+    }
+
+    @Test
+    public void testWriteBytesHeapByteBufferMustThrowIfCannotBeExpanded() {
+        // With zero offsets
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).implicitGrowthLimit(15)) {
+            ByteBuffer source = ByteBuffer.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7 });
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeBytes(source));
+            assertEquals(8, buf.capacity());
+            assertEquals(0, source.position());
+            assertEquals(0, buf.getWriteOffset());
+            assertEquals(0, buf.getReadOffset());
+        }
+        // With non-zero offsets
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).implicitGrowthLimit(15)) {
+            ByteBuffer source = ByteBuffer.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7 });
+            buf.writeByte((byte) -1).readByte();
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeBytes(source));
+            assertEquals(8, buf.capacity());
+            assertEquals(0, source.position());
+            assertEquals(1, buf.getWriteOffset());
+            assertEquals(1, buf.getReadOffset());
+        }
+    }
+
+    @Test
+    public void testWiteBytesDirectByteBufferMustExpandCapacityIfBufferIsTooSmall() {
+        // With zero offsets
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            ByteBuffer source = ByteBuffer
+                .allocateDirect(16).put(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7 }).flip();
+            buf.writeBytes(source);
+            assertTrue(buf.capacity() >= source.capacity());
+            assertEquals(source.position(), source.limit());
+            assertEquals(16, buf.getWriteOffset());
+            assertEquals(0, buf.getReadOffset());
+            assertArrayEquals(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7 },
+                ProtonBufferUtils.toByteArray(buf));
+        }
+        // With non-zero offsets
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            ByteBuffer source = ByteBuffer
+                .allocateDirect(16).put(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7 }).flip();
+            buf.writeByte((byte) -1).readByte();
+            buf.writeBytes(source);
+            assertTrue(buf.capacity() >= source.capacity() + 1);
+            assertEquals(source.position(), source.limit());
+            assertEquals(17, buf.getWriteOffset());
+            assertEquals(1, buf.getReadOffset());
+            assertArrayEquals(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7 },
+                ProtonBufferUtils.toByteArray(buf));
+        }
+    }
+
+    @Test
+    public void testWriteBytesDirectByteBufferMustThrowIfCannotBeExpanded() {
+        // With zero offsets
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).implicitGrowthLimit(15)) {
+            ByteBuffer source =
+                ByteBuffer.allocateDirect(16).put(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7 }).flip();
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeBytes(source));
+            assertEquals(8, buf.capacity());
+            assertEquals(0, source.position());
+            assertEquals(0, buf.getWriteOffset());
+            assertEquals(0, buf.getReadOffset());
+        }
+        // With non-zero offsets
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).implicitGrowthLimit(15)) {
+            ByteBuffer source = ByteBuffer
+                .allocateDirect(16).put(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7 }).flip();
+            buf.writeByte((byte) -1).readByte();
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeBytes(source));
+            assertEquals(8, buf.capacity());
+            assertEquals(0, source.position());
+            assertEquals(1, buf.getWriteOffset());
+            assertEquals(1, buf.getReadOffset());
+        }
+    }
+
+    @Test
+    public void testWriteBytesByteArrayMustExpandCapacityIfTooSmall() {
+        // Starting at offsets zero.
+        byte[] expected = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(16, expected.length);
+            buf.writeBytes(expected);
+            assertTrue(buf.capacity() >= expected.length);
+            byte[] actual = new byte[expected.length];
+            buf.readBytes(actual, 0, actual.length);
+            assertArrayEquals(expected, actual);
         }
 
-        try {
-            buffer.readByte();
-            fail("Should not be able to read beyond current capacity");
-        } catch (IndexOutOfBoundsException ex) {}
+        // With non-zero start offsets.
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeByte((byte) 1).readByte();
+            assertEquals(16, expected.length);
+            buf.writeBytes(expected);
+            assertTrue(buf.capacity() >= expected.length + 1);
+            byte[] actual = new byte[expected.length];
+            buf.readBytes(actual, 0, actual.length);
+            assertArrayEquals(expected, actual);
+        }
     }
 
     @Test
-    public void testReadBoolean() {
-        byte[] source = new byte[] { 0, 1, 0, 1, 0, 1 };
-        ProtonBuffer buffer = wrapBuffer(source);
+    public void testWriteBytesByteArrayMustThrowIfCannotBeExpanded() {
+        // Starting at offsets zero.
+        byte[] expected = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).implicitGrowthLimit(15)) {
+            assertEquals(16, expected.length);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeBytes(expected));
+            assertEquals(8, buf.capacity());
+            assertEquals(0, buf.getReadableBytes());
+        }
 
-        assertEquals(source.length, buffer.getReadableBytes());
+        // With non-zero start offsets.
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).implicitGrowthLimit(15)) {
+            buf.writeByte((byte) 1).readByte();
+            assertEquals(16, expected.length);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeBytes(expected));
+            assertEquals(8, buf.capacity());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
 
-        for (int i = 0; i < source.length; ++i) {
-            if ((i % 2) == 0) {
-                assertFalse(buffer.readBoolean());
-            } else {
-                assertTrue(buffer.readBoolean());
+    @Test
+    public void testWriteBytesByteArrayWithOffsetMustExpandCapacityIfTooSmall() {
+        // Starting at offsets zero.
+        byte[] expected = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(16, expected.length);
+            buf.writeBytes(expected, 1, expected.length - 1);
+            assertTrue(buf.capacity() >= expected.length - 1);
+            byte[] actual = new byte[expected.length - 1];
+            buf.readBytes(actual, 0, actual.length);
+            assertArrayEquals("123456789ABCDEF".getBytes(StandardCharsets.US_ASCII), actual);
+        }
+
+        // With non-zero start offsets.
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeByte((byte) 1).readByte();
+            assertEquals(16, expected.length);
+            buf.writeBytes(expected, 1, expected.length - 1);
+            assertTrue(buf.capacity() >= expected.length);
+            byte[] actual = new byte[expected.length - 1];
+            buf.readBytes(actual, 0, actual.length);
+            assertArrayEquals("123456789ABCDEF".getBytes(StandardCharsets.US_ASCII), actual);
+        }
+    }
+
+    @Test
+    public void testWriteBytesByteArrayWithOffsetMustThrowIfCannotBeExpanded() {
+        // Starting at offsets zero.
+        byte[] expected = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).implicitGrowthLimit(14)) {
+            assertEquals(16, expected.length);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeBytes(expected, 1, expected.length - 1));
+            assertEquals(8, buf.capacity());
+            assertEquals(0, buf.getReadableBytes());
+        }
+
+        // With non-zero start offsets.
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).implicitGrowthLimit(14)) {
+            buf.writeByte((byte) 1).readByte();
+            assertEquals(16, expected.length);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeBytes(expected, 1, expected.length - 1));
+            assertEquals(8, buf.capacity());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testWriteBytesBufferMustExpandCapacityIfTooSmall() {
+        // Starting at offsets zero.
+        byte[] expectedByteArray = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8);
+             ProtonBuffer expected = allocator.copy(expectedByteArray)) {
+            assertEquals(16, expected.getReadableBytes());
+            buf.writeBytes(expected);
+            assertTrue(buf.capacity() >= expectedByteArray.length);
+            byte[] actual = new byte[expectedByteArray.length];
+            buf.readBytes(actual, 0, actual.length);
+            assertArrayEquals(expectedByteArray, actual);
+        }
+
+        // With non-zero start offsets.
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8);
+             ProtonBuffer expected = allocator.copy(expectedByteArray)) {
+            buf.writeByte((byte) 1).readByte();
+            assertEquals(16, expected.getReadableBytes());
+            buf.writeBytes(expected);
+            assertTrue(buf.capacity() >= expectedByteArray.length + 1);
+            byte[] actual = new byte[expectedByteArray.length];
+            buf.readBytes(actual, 0, actual.length);
+            assertArrayEquals(expectedByteArray, actual);
+        }
+    }
+
+    @Test
+    public void testWriteBytesBufferMustThrowIfCannotBeExpanded() {
+        // Starting at offsets zero.
+        byte[] expectedByteArray = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).implicitGrowthLimit(15);
+             ProtonBuffer expected = allocator.copy(expectedByteArray)) {
+            assertEquals(16, expected.getReadableBytes());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeBytes(expected));
+            assertEquals(8, buf.capacity());
+            assertEquals(0, buf.getReadableBytes());
+        }
+
+        // With non-zero start offsets.
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).implicitGrowthLimit(15);
+             ProtonBuffer expected = allocator.copy(expectedByteArray)) {
+            buf.writeByte((byte) 1).readByte();
+            assertEquals(16, expected.getReadableBytes());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeBytes(expected));
+            assertEquals(8, buf.capacity());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testReadBytesIntoHeapByteBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeLong(0x0102030405060708L);
+            ByteBuffer dest = ByteBuffer.allocate(4);
+            assertEquals(1, buf.readByte());
+            assertEquals(2, buf.readByte());
+            buf.readBytes(dest);
+            assertEquals(dest.position(), dest.limit());
+            assertEquals(8, buf.getWriteOffset());
+            assertEquals(6, buf.getReadOffset());
+            assertArrayEquals(new byte[] { 0x03, 0x04, 0x05, 0x06 }, ProtonBufferUtils.toByteArray(dest.flip()));
+        }
+    }
+
+    @Test
+    public void testReadBytesIntoDirectByteBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeLong(0x0102030405060708L);
+            ByteBuffer dest = ByteBuffer.allocateDirect(4);
+            assertEquals(1, buf.readByte());
+            assertEquals(2, buf.readByte());
+            buf.readBytes(dest);
+            assertEquals(dest.position(), dest.limit());
+            assertEquals(8, buf.getWriteOffset());
+            assertEquals(6, buf.getReadOffset());
+            assertArrayEquals(new byte[] { 0x03, 0x04, 0x05, 0x06 }, ProtonBufferUtils.toByteArray(dest.flip()));
+        }
+    }
+
+    @Test
+    public void testWriteBytesMustTransferDataAndUpdateOffsets() {
+        try (ProtonBufferAllocator protonAlloc = createProtonDefaultAllocator();
+             ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer target = protonAlloc.allocate(37);
+             ProtonBuffer source = allocator.allocate(35)) {
+
+            for (int i = 0; i < 35; i++) {
+                source.writeByte((byte) (i + 1));
+            }
+            target.writeBytes(source);
+            assertEquals(0, target.getReadOffset());
+            assertEquals(35, target.getWriteOffset());
+            assertEquals(35, source.getReadOffset());
+            assertEquals(35, source.getWriteOffset());
+
+            source.setReadOffset(0);
+            assertEquals(source, target);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfCharMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getChar(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfCharReadOnlyMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getChar(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfCharMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            char value = 0x0102;
+            buf.writeChar(value);
+            assertEquals(value, buf.getChar(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfCharMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            char value = 0x0102;
+            buf.writeChar(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(0x1002, buf.getChar(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfCharMustNotBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            char value = 0x0102;
+            buf.writeChar(value);
+            buf.getChar(1);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfCharMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getChar(7));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfCharReadOnlyMustNotBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            char value = 0x0102;
+            buf.writeChar(value);
+            buf.convertToReadOnly().getChar(1);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfCharReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getChar(7));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfCharMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.getChar(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfCharMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getChar(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfCharReadOnlyMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly().getChar(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfCharReadOnlyMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getChar(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfCharMustBoundsCheckWhenWriteOffsetIsNegative() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            char value = 0x0102;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setChar(-1, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfCharMustBoundsCheckWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            char value = 0x0102;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setChar(7, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfCharMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            char value = 0x0102;
+            buf.setChar(0, value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfDoubleMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getDouble(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfDoubleReadOnlyMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getDouble(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfDoubleMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            double value = Double.longBitsToDouble(0x0102030405060708L);
+            buf.writeDouble(value);
+            assertEquals(value, buf.getDouble(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfDoubleMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            double value = Double.longBitsToDouble(0x0102030405060708L);
+            buf.writeDouble(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(Double.longBitsToDouble(0x1002030405060708L), buf.getDouble(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfDoubleMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            double value = Double.longBitsToDouble(0x0102030405060708L);
+            buf.writeDouble(value);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getDouble(1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfDoubleReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            double value = Double.longBitsToDouble(0x0102030405060708L);
+            buf.writeDouble(value);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getDouble(1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfDoubleMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.getDouble(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfDoubleMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getDouble(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfDoubleReadOnlyMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly().getDouble(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfDoubleReadOnlyMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getDouble(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfDoubleMustBoundsCheckWhenWriteOffsetIsNegative() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            double value = Double.longBitsToDouble(0x0102030405060708L);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setDouble(-1, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfDoubleMustBoundsCheckWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            double value = Double.longBitsToDouble(0x0102030405060708L);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setDouble(1, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfDoubleMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            double value = Double.longBitsToDouble(0x0102030405060708L);
+            buf.setDouble(0, value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x03, buf.readByte());
+            assertEquals((byte) 0x04, buf.readByte());
+            assertEquals((byte) 0x05, buf.readByte());
+            assertEquals((byte) 0x06, buf.readByte());
+            assertEquals((byte) 0x07, buf.readByte());
+            assertEquals((byte) 0x08, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfFloatMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getFloat(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfFloatReadOnlyMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getFloat(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfFloatMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            float value = Float.intBitsToFloat(0x01020304);
+            buf.writeFloat(value);
+            assertEquals(value, buf.getFloat(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfFloatMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            float value = Float.intBitsToFloat(0x01020304);
+            buf.writeFloat(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(Float.intBitsToFloat(0x10020304), buf.getFloat(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfFloatMustNotBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            float value = Float.intBitsToFloat(0x01020304);
+            buf.writeFloat(value);
+            buf.getFloat(1);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfFloatMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getFloat(7));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfFloatReadOnlyMustNotBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            float value = Float.intBitsToFloat(0x01020304);
+            buf.writeFloat(value);
+            buf.convertToReadOnly().getFloat(1);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfFloatReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getFloat(5));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfFloatMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.getFloat(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfFloatMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getFloat(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfFloatReadOnlyMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly().getFloat(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfFloatReadOnlyMustBoundsCheckWhenReadOffsetIsGreaterThan() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getFloat(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfFloatMustBoundsCheckWhenWriteOffsetIsNegative() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            float value = Float.intBitsToFloat(0x01020304);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setFloat(-1, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfFloatMustBoundsCheckWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            float value = Float.intBitsToFloat(0x01020304);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setFloat(5, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfFloatMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            float value = Float.intBitsToFloat(0x01020304);
+            buf.setFloat(0, value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x03, buf.readByte());
+            assertEquals((byte) 0x04, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfIntMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getInt(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfIntReadOnlyMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getInt(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfIntMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x01020304;
+            buf.writeInt(value);
+            assertEquals(value, buf.getInt(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfIntMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x01020304;
+            buf.writeInt(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(0x10020304, buf.getInt(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfIntMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x01020304;
+            buf.writeInt(value);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getInt(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfIntReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x01020304;
+            buf.writeInt(value);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getInt(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfIntMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.getInt(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfIntMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getInt(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfIntReadOnlyMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly().getInt(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfIntReadOnlyMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getInt(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedIntMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getUnsignedInt(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedIntReadOnlyMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getUnsignedInt(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedIntMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            long value = 0x01020304;
+            buf.writeUnsignedInt(value);
+            assertEquals(value, buf.getUnsignedInt(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedIntMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            long value = 0x01020304;
+            buf.writeUnsignedInt(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(0x10020304, buf.getUnsignedInt(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedIntMustNotBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            long value = 0x01020304;
+            buf.writeUnsignedInt(value);
+            buf.getUnsignedInt(1);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedIntMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getUnsignedInt(5));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedIntReadOnlyMustNotBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            long value = 0x01020304;
+            buf.writeUnsignedInt(value);
+            buf.convertToReadOnly().getUnsignedInt(1);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedIntReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getUnsignedInt(5));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedIntMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.getUnsignedInt(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedIntMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getUnsignedInt(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedIntReadOnlyMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly().getUnsignedInt(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedIntReadOnlyMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getUnsignedInt(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfIntMustBoundsCheckWhenWriteOffsetIsNegative() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            int value = 0x01020304;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setInt(-1, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfIntMustBoundsCheckWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            int value = 0x01020304;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setInt(5, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfIntMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x01020304;
+            buf.setInt(0, value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x03, buf.readByte());
+            assertEquals((byte) 0x04, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfUnsignedIntMustBoundsCheckWhenWriteOffsetIsNegative() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            long value = 0x01020304;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setUnsignedInt(-1, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfUnsignedIntMustBoundsCheckWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            long value = 0x01020304;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setUnsignedInt(5, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfUnsignedIntMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            long value = 0x01020304;
+            buf.setUnsignedInt(0, value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x03, buf.readByte());
+            assertEquals((byte) 0x04, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfLongMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getLong(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfLongReadOnlyMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getLong(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfLongMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            long value = 0x0102030405060708L;
+            buf.writeLong(value);
+            assertEquals(value, buf.getLong(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfLongMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            long value = 0x0102030405060708L;
+            buf.writeLong(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(0x1002030405060708L, buf.getLong(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfLongMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            long value = 0x0102030405060708L;
+            buf.writeLong(value);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getLong(1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfLongReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            long value = 0x0102030405060708L;
+            buf.writeLong(value);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getLong(1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfLongMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.getLong(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfLongMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getLong(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfLongReadOnlyMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly().getLong(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfLongReadOnlyMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getLong(8));
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfLongMustBoundsCheckWhenWriteOffsetIsNegative() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            long value = 0x0102030405060708L;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setLong(-1, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfLongMustBoundsCheckWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            long value = 0x0102030405060708L;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setLong(1, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfLongMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            long value = 0x0102030405060708L;
+            buf.setLong(0, value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x03, buf.readByte());
+            assertEquals((byte) 0x04, buf.readByte());
+            assertEquals((byte) 0x05, buf.readByte());
+            assertEquals((byte) 0x06, buf.readByte());
+            assertEquals((byte) 0x07, buf.readByte());
+            assertEquals((byte) 0x08, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfShortMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getShort(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfShortReadOnlyMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getShort(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfShortMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            short value = 0x0102;
+            buf.writeShort(value);
+            assertEquals(value, buf.getShort(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfShortMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            short value = 0x0102;
+            buf.writeShort(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(0x1002, buf.getShort(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfShortMustNotBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            short value = 0x0102;
+            buf.writeShort(value);
+            buf.getShort(1);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfShortMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getShort(7));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfShortReadOnlyMustNotBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            short value = 0x0102;
+            buf.writeShort(value);
+            buf.convertToReadOnly().getShort(1);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfShortReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getShort(7));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfShortMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.getShort(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfShortMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getShort(7));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfShortReadOnlyMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly().getShort(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfShortReadOnlyMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getShort(7));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedShortMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getUnsignedShort(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedShortReadOnlyMustBoundsCheckOnNegativeOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getUnsignedShort(-1));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedShortMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x0102;
+            buf.writeUnsignedShort(value);
+            assertEquals(value, buf.getUnsignedShort(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedShortMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x0102;
+            buf.writeUnsignedShort(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(0x1002, buf.getUnsignedShort(0));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedShortMustNotBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x0102;
+            buf.writeUnsignedShort(value);
+            buf.getUnsignedShort(1);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedShortMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getUnsignedShort(7));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedShortReadOnlyMustNotBoundsCheckWhenReadOffsetAndSizeIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x0102;
+            buf.writeUnsignedShort(value);
+            buf.convertToReadOnly().getUnsignedShort(1);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedShortReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getUnsignedShort(7));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedShortMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.getUnsignedShort(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedShortMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.getUnsignedShort(7));
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedShortReadOnlyMustNotBoundsCheckWhenReadOffsetIsGreaterThanWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly().getUnsignedShort(0);
+        }
+    }
+
+    @Test
+    public void testOffsettedGetOfUnsignedShortReadOnlyMustBoundsCheckWhenReadOffsetIsGreaterThanCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().getUnsignedShort(7));
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfShortMustBoundsCheckWhenWriteOffsetIsNegative() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            short value = 0x0102;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setShort(-1, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfShortMustBoundsCheckWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            short value = 0x0102;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setShort(7, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfShortMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            short value = 0x0102;
+            buf.setShort(0, value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfUnsignedShortMustBoundsCheckWhenWriteOffsetIsNegative() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            int value = 0x0102;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setUnsignedShort(-1, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfUnsignedShortMustBoundsCheckWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            int value = 0x0102;
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setUnsignedShort(7, value));
+            buf.setWriteOffset(Long.BYTES);
+            // Verify contents are unchanged.
+            assertEquals(0, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testOffsettedSetOfUnsignedShortMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x0102;
+            buf.setUnsignedShort(0, value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testEnsureWritableMustThrowForNegativeSize() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IllegalArgumentException.class, () -> buf.ensureWritable(-1));
+        }
+    }
+
+    @Test
+    public void testEnsureWritableMustThrowIfRequestedSizeWouldGrowBeyondMaxAllowed() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IllegalArgumentException.class, () -> buf.ensureWritable(Integer.MAX_VALUE - 7));
+        }
+    }
+
+    @Test
+    public void testEnsureWritableMustNotThrowWhenSpaceIsAlreadyAvailable() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.ensureWritable(8);
+            assertEquals(8, buf.capacity());
+            buf.writeLong(1);
+            assertEquals(8, buf.capacity());
+        }
+    }
+
+    @Test
+    public void testEnsureWritableMustExpandBufferCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(8, buf.getWritableBytes());
+            buf.writeLong(0x0102030405060708L);
+            assertEquals(0, buf.getWritableBytes());
+            buf.ensureWritable(8);
+            assertTrue(buf.getWritableBytes() >= 8);
+            assertTrue(buf.capacity() >= 16);
+            buf.writeLong(0xA1A2A3A4A5A6A7A8L);
+            assertEquals(16, buf.getReadableBytes());
+            assertEquals(0x0102030405060708L, buf.readLong());
+            assertEquals(0xA1A2A3A4A5A6A7A8L, buf.readLong());
+            assertThrows(IndexOutOfBoundsException.class, buf::readByte);
+        }
+    }
+
+    @Test
+    public void testMultipleEnsureWritableMustExpandBufferCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(8, buf.getWritableBytes());
+            buf.writeLong(0x0102030405060708L);
+            assertEquals(0, buf.getWritableBytes());
+            buf.ensureWritable(4); // Ask for four
+            buf.ensureWritable(8); // now we expand to eight total
+            assertTrue(buf.getWritableBytes() >= 8);
+            assertTrue(buf.capacity() >= 16);
+            buf.writeLong(0xA1A2A3A4A5A6A7A8L);
+            assertEquals(16, buf.getReadableBytes());
+            assertEquals(0x0102030405060708L, buf.readLong());
+            assertEquals(0xA1A2A3A4A5A6A7A8L, buf.readLong());
+            assertThrows(IndexOutOfBoundsException.class, buf::readByte);
+        }
+    }
+
+    @Test
+    public void testEnsureWritableMustExpandCapacityOfEmptyCompositeBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.composite()) {
+            assertEquals(0, buf.getWritableBytes());
+            buf.ensureWritable(8);
+            assertEquals(8, buf.getWritableBytes());
+            buf.writeLong(0xA1A2A3A4A5A6A7A8L);
+            assertEquals(8, buf.getReadableBytes());
+            assertEquals(0xA1A2A3A4A5A6A7A8L, buf.readLong());
+            assertThrows(IndexOutOfBoundsException.class, buf::readByte);
+        }
+    }
+
+    @Test
+    public void testMustBeAbleToCopyAfterEnsureWritable() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(4)) {
+            buf.ensureWritable(8);
+            assertTrue(buf.getWritableBytes() >= 8);
+            assertTrue(buf.capacity() >= 8);
+            buf.writeLong(0x0102030405060708L);
+            try (ProtonBuffer copy = buf.copy()) {
+                long actual = copy.readLong();
+                assertEquals(0x0102030405060708L, actual);
             }
         }
-
-        try {
-            buffer.readBoolean();
-            fail("Should not be able to read beyond current capacity");
-        } catch (IndexOutOfBoundsException ex) {}
     }
 
     @Test
-    public void testReadShort() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
+    public void testEnsureWritableWithCompactionMustNotAllocateIfCompactionIsEnough() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(64)) {
+            while (buf.getWritableBytes() > 0) {
+                buf.writeByte((byte) 42);
+            }
+            while (buf.getReadableBytes() > 0) {
+                buf.readByte();
+            }
+            buf.ensureWritable(4, 4, true);
+            buf.writeInt(42);
+            assertEquals(64, buf.capacity());
 
-        buffer.writeShort((short) 2);
-        buffer.writeShort((short) 20);
-        buffer.writeShort((short) 200);
-        buffer.writeShort((short) 256);
-        buffer.writeShort((short) 512);
-        buffer.writeShort((short) 1025);
-        buffer.writeShort((short) 32767);
-        buffer.writeShort((short) -1);
-        buffer.writeShort((short) -8757);
-
-        assertEquals(2, buffer.readShort());
-        assertEquals(20, buffer.readShort());
-        assertEquals(200, buffer.readShort());
-        assertEquals(256, buffer.readShort());
-        assertEquals(512, buffer.readShort());
-        assertEquals(1025, buffer.readShort());
-        assertEquals(32767, buffer.readShort());
-        assertEquals(-1, buffer.readShort());
-        assertEquals(-8757, buffer.readShort());
-
-        try {
-            buffer.readShort();
-            fail("Should not be able to read beyond current capacity");
-        } catch (IndexOutOfBoundsException ex) {}
-    }
-
-    @Test
-    public void testReadInt() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        buffer.writeInt((short) 2);
-        buffer.writeInt((short) 20);
-        buffer.writeInt((short) 200);
-        buffer.writeInt((short) 256);
-        buffer.writeInt((short) 512);
-        buffer.writeInt((short) 1025);
-        buffer.writeInt((short) 32767);
-        buffer.writeInt((short) -1);
-        buffer.writeInt((short) -8757);
-
-        assertEquals(2, buffer.readInt());
-        assertEquals(20, buffer.readInt());
-        assertEquals(200, buffer.readInt());
-        assertEquals(256, buffer.readInt());
-        assertEquals(512, buffer.readInt());
-        assertEquals(1025, buffer.readInt());
-        assertEquals(32767, buffer.readInt());
-        assertEquals(-1, buffer.readInt());
-        assertEquals(-8757, buffer.readInt());
-
-        try {
-            buffer.readInt();
-            fail("Should not be able to read beyond current capacity");
-        } catch (IndexOutOfBoundsException ex) {}
-    }
-
-    @Test
-    public void testReadLong() {
-        // This is not a capacity increase handling test so allocate with enough capacity for this test.
-        ProtonBuffer buffer = allocateBuffer(DEFAULT_CAPACITY * 2);
-
-        buffer.writeLong((short) 2);
-        buffer.writeLong((short) 20);
-        buffer.writeLong((short) 200);
-        buffer.writeLong((short) 256);
-        buffer.writeLong((short) 512);
-        buffer.writeLong((short) 1025);
-        buffer.writeLong((short) 32767);
-        buffer.writeLong((short) -1);
-        buffer.writeLong((short) -8757);
-
-        assertEquals(2, buffer.readLong());
-        assertEquals(20, buffer.readLong());
-        assertEquals(200, buffer.readLong());
-        assertEquals(256, buffer.readLong());
-        assertEquals(512, buffer.readLong());
-        assertEquals(1025, buffer.readLong());
-        assertEquals(32767, buffer.readLong());
-        assertEquals(-1, buffer.readLong());
-        assertEquals(-8757, buffer.readLong());
-
-        try {
-            buffer.readLong();
-            fail("Should not be able to read beyond current readable bytes");
-        } catch (IndexOutOfBoundsException ex) {}
-    }
-
-    @Test
-    public void testReadFloat() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        buffer.writeFloat(1.111f);
-        buffer.writeFloat(2.222f);
-        buffer.writeFloat(3.333f);
-
-        assertEquals(1.111f, buffer.readFloat(), 0.111f);
-        assertEquals(2.222f, buffer.readFloat(), 0.222f);
-        assertEquals(3.333f, buffer.readFloat(), 0.333f);
-
-        try {
-            buffer.readFloat();
-            fail("Should not be able to read beyond current capacity");
-        } catch (IndexOutOfBoundsException ex) {}
-    }
-
-    @Test
-    public void testReadDouble() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        buffer.writeDouble(1.111);
-        buffer.writeDouble(2.222);
-        buffer.writeDouble(3.333);
-
-        assertEquals(1.111, buffer.readDouble(), 0.111);
-        assertEquals(2.222, buffer.readDouble(), 0.222);
-        assertEquals(3.333, buffer.readDouble(), 0.333);
-
-        try {
-            buffer.readDouble();
-            fail("Should not be able to read beyond current capacity");
-        } catch (IndexOutOfBoundsException ex) {}
-    }
-
-    //----- Tests for get operations -----------------------------------------//
-
-    @Test
-    public void testGetByte() {
-        byte[] source = new byte[] { 0, 1, 2, 3, 4, 5 };
-        ProtonBuffer buffer = wrapBuffer(source);
-
-        assertEquals(source.length, buffer.getReadableBytes());
-
-        for (int i = 0; i < source.length; ++i) {
-            assertEquals(source[i], buffer.getByte(i));
-        }
-
-        try {
-            buffer.readByte();
-        } catch (IndexOutOfBoundsException ex) {
-            fail("Should be able to read from the buffer");
+            buf.setWriteOffset(60).setReadOffset(60);
+            buf.ensureWritable(8, 8, true);
+            buf.writeLong(42);
+            assertTrue(buf.capacity() >= 64);
         }
     }
 
     @Test
-    public void testGetUnsignedByte() {
-        byte[] source = new byte[] { 0, 1, 2, 3, 4, 5 };
-        ProtonBuffer buffer = wrapBuffer(source);
-
-        assertEquals(source.length, buffer.getReadableBytes());
-
-        for (int i = 0; i < source.length; ++i) {
-            assertEquals(source[i], buffer.getUnsignedByte(i));
-        }
-
-        try {
-            buffer.readByte();
-        } catch (IndexOutOfBoundsException ex) {
-            fail("Should be able to read from the buffer");
+    public void testEnsureWritableWithLargeMinimumGrowthMustGrowByAtLeastThatMuch() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(16)) {
+            buf.writeLong(0).writeInt(0);
+            buf.readLong();
+            buf.readInt(); // Compaction is now possible as well.
+            buf.ensureWritable(8, 32, true); // We don't need to allocate.
+            assertEquals(16, buf.capacity());
+            buf.writeByte((byte) 1);
+            buf.ensureWritable(16, 32, true); // Now we DO need to allocate, because we can't compact.
+            assertTrue(buf.capacity() >= 48); // Initial capacity + minimum growth allowed
         }
     }
 
     @Test
-    public void testGetBoolean() {
-        byte[] source = new byte[] { 0, 1, 0, 1, 0, 1 };
-        ProtonBuffer buffer = wrapBuffer(source);
+    public void testEmptyBuffersAreEqual() {
+        final byte[] data = "".getBytes(StandardCharsets.UTF_8);
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf1 = allocator.allocate(data.length);
+             ProtonBuffer buf2 = allocator.allocate(data.length)) {
 
-        assertEquals(source.length, buffer.getReadableBytes());
+            buf1.writeBytes(data);
+            buf2.writeBytes(data);
 
-        for (int i = 0; i < source.length; ++i) {
-            if ((i % 2) == 0) {
-                assertFalse(buffer.getBoolean(i));
-            } else {
-                assertTrue(buffer.getBoolean(i));
+            assertEquals(buf1, buf2);
+            assertEquals(buf2, buf1);
+        }
+    }
+
+    @Test
+    public void testEqualBuffersAreEqual() {
+        final byte[] data = "foo".getBytes(StandardCharsets.UTF_8);
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf1 = allocator.allocate(data.length);
+             ProtonBuffer buf2 = allocator.allocate(data.length)) {
+
+            buf1.writeBytes(data);
+            buf2.writeBytes(data);
+
+            assertEquals(buf1, buf2);
+            assertEquals(buf2, buf1);
+        }
+    }
+
+    @Test
+    public void testDifferentBuffersAreNotEqual() {
+        byte[] data1 = "foo".getBytes(StandardCharsets.UTF_8);
+        byte[] data2 = "foo1".getBytes(StandardCharsets.UTF_8);
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf1 = allocator.allocate(data1.length);
+             ProtonBuffer buf2 = allocator.allocate(data2.length)) {
+
+            buf1.writeBytes(data1);
+            buf2.writeBytes(data2);
+
+            assertNotEquals(buf1, buf2);
+            assertNotEquals(buf2, buf1);
+        }
+    }
+
+    @Test
+    public void testSameReadableContentBuffersAreEqual() {
+        byte[] data1 = "foo".getBytes(StandardCharsets.UTF_8);
+        byte[] data2 = "notfoomaybe".getBytes(StandardCharsets.UTF_8);
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf1 = allocator.allocate(data1.length);
+             ProtonBuffer buf2 = allocator.allocate(data2.length)) {
+
+            buf1.writeBytes(data1);
+            buf2.writeBytes(data2);
+            buf2.advanceReadOffset(3);
+            buf2.setWriteOffset(buf2.getWriteOffset() - 5);
+
+            assertEquals(buf1, buf2);
+            assertEquals(buf2, buf1);
+        }
+    }
+
+    @Test
+    public void testImplicitGrowthLimit() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(ProtonBufferUtils.MAX_BUFFER_CAPACITY, buf.implicitGrowthLimit());
+            buf.implicitGrowthLimit(buf.capacity());
+            assertEquals(buf.capacity(), buf.implicitGrowthLimit());
+        }
+    }
+
+    @Test
+    public void testImplicitLimitMustBeWithinBounds() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.implicitGrowthLimit(0));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.implicitGrowthLimit(buf.capacity() - 1));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.implicitGrowthLimit(-1));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.implicitGrowthLimit(ProtonBufferUtils.MAX_BUFFER_CAPACITY + 1));
+            buf.implicitGrowthLimit(ProtonBufferUtils.MAX_BUFFER_CAPACITY);
+            buf.implicitGrowthLimit(buf.capacity());
+            buf.writeLong(0x0102030405060708L);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeByte((byte) 1));
+            assertEquals(8, buf.capacity());
+        }
+    }
+
+    @Test
+    public void testBufferFromCopyMustHaveResetImplicitCapacityLimit() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeLong(0x0102030405060708L);
+            buf.implicitGrowthLimit(buf.capacity());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeByte((byte) 1));
+            try (ProtonBuffer copy = buf.copy()) {
+                assertEquals(8, copy.getReadableBytes());
+                copy.writeByte((byte) 2); // No more implicit limit
+            }
+            try (ProtonBuffer copy = buf.copy(0, 8)) {
+                assertEquals(8, copy.getReadableBytes());
+                copy.writeByte((byte) 2); // No more implicit limit
+            }
+            try (ProtonBuffer copy = buf.copy(1, 6)) {
+                assertEquals(6, copy.getReadableBytes());
+                copy.writeByte((byte) 3); // No more implicit limit
             }
         }
+    }
 
-        try {
-            buffer.readBoolean();
-        } catch (IndexOutOfBoundsException ex) {
-            fail("Should be able to read from the buffer");
+    @Test
+    public void testBufferFromSplitMustHaveResetImplicitCapacityLimit() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(32)) {
+            buf.implicitGrowthLimit(32);
+            try (ProtonBuffer split = buf.split()) {
+                split.writeLong(0).writeLong(0).writeLong(0).writeLong(0); // 32 bytes written.
+                split.writeByte((byte) 0); // 33rd byte, mustn't fail.
+            }
+            assertEquals(32, buf.capacity());
+            try (ProtonBuffer split = buf.split(2)) {
+                split.writeLong(0).writeLong(0).writeLong(0).writeLong(0); // 32 bytes written.
+                split.writeByte((byte) 0); // 33rd byte, mustn't fail.
+            }
+            assertEquals(30, buf.capacity());
+            buf.writeInt(42).readInt();
+            try (ProtonBuffer split = buf.readSplit(4)) {
+                split.writeLong(0).writeLong(0).writeLong(0).writeLong(0); // 32 bytes written.
+                split.writeByte((byte) 0); // 33rd byte, mustn't fail.
+            }
+            assertEquals(22, buf.capacity());
+            buf.writeLong(0);
+            try (ProtonBuffer split = buf.writeSplit(8)) {
+                split.writeLong(0).writeLong(0).writeLong(0).writeLong(0); // 32 bytes written.
+                split.writeByte((byte) 0); // 33rd byte, mustn't fail.
+            }
+            assertEquals(6, buf.capacity());
+            buf.writeLong(0).writeLong(0).writeLong(0).writeLong(0); // 32 bytes written.
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeByte((byte) 0)); // 33rd byte, at limit.
         }
     }
 
     @Test
-    public void testGetShort() {
-        byte[] source = new byte[] { 0, 0, 0, 1, 0, 2, 0, 3, 0, 4 };
-        ProtonBuffer buffer = wrapBuffer(source);
-
-        assertEquals(source.length, buffer.getReadableBytes());
-
-        for (int i = 0; i < source.length; i += 2) {
-            assertEquals(source[i + 1], buffer.getShort(i));
-        }
-
-        try {
-            buffer.readShort();
-        } catch (IndexOutOfBoundsException ex) {
-            fail("Should be able to read from the buffer");
+    public void testSplitDoesNotReduceImplicitCapacityLimit() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.implicitGrowthLimit(8);
+            buf.writeLong(0x0102030405060708L);
+            buf.split().close();
+            assertEquals(0, buf.capacity());
+            buf.writeLong(0x0102030405060708L);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeByte((byte) 1));
         }
     }
 
     @Test
-    public void testGetUnsignedShort() {
-        byte[] source = new byte[] { 0, 0, 0, 1, 0, 2, 0, 3, 0, 4 };
-        ProtonBuffer buffer = wrapBuffer(source);
-
-        assertEquals(source.length, buffer.getReadableBytes());
-
-        for (int i = 0; i < source.length; i += 2) {
-            assertEquals(source[i + 1], buffer.getUnsignedShort(i));
-        }
-
-        try {
-            buffer.readShort();
-        } catch (IndexOutOfBoundsException ex) {
-            fail("Should be able to read from the buffer");
+    public void testEnsureWritableCanGrowBeyondImplicitCapacityLimit() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8).implicitGrowthLimit(8)) {
+            buf.writeLong(0x0102030405060708L);
+            buf.ensureWritable(8);
+            buf.writeLong(0x0102030405060708L);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeByte((byte) 1));
+            buf.readByte();
+            buf.compact(); // Now we have room and don't need to expand capacity implicitly.
+            buf.writeByte((byte) 1);
+            // And now there's no more room.
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeByte((byte) 1));
         }
     }
 
     @Test
-    public void testGetInt() {
-        byte[] source = new byte[] { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4 };
-        ProtonBuffer buffer = wrapBuffer(source);
+    public void testWritesMustThrowIfSizeWouldGoBeyondImplicitCapacityLimit() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            // Short
+            try (ProtonBuffer buf = allocator.allocate(0).implicitGrowthLimit(1)) {
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeShort((short) 0));
+                buf.writeByte((byte) 0);
+            }
+            try (ProtonBuffer buf = allocator.allocate(1).implicitGrowthLimit(2)) {
+                buf.writeByte((byte) 0);
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeShort((short) 0));
+                buf.writeByte((byte) 0);
+            }
+            try (ProtonBuffer buf = allocator.allocate(0).implicitGrowthLimit(1)) {
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeUnsignedShort(0));
+                buf.writeByte((byte) 0);
+            }
+            try (ProtonBuffer buf = allocator.allocate(1).implicitGrowthLimit(2)) {
+                buf.writeByte((byte) 0);
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeUnsignedShort(0));
+                buf.writeByte((byte) 0);
+            }
 
-        assertEquals(source.length, buffer.getReadableBytes());
+            // Char
+            try (ProtonBuffer buf = allocator.allocate(0).implicitGrowthLimit(1)) {
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeChar('0'));
+                buf.writeByte((byte) 0);
+            }
+            try (ProtonBuffer buf = allocator.allocate(1).implicitGrowthLimit(2)) {
+                buf.writeByte((byte) 0);
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeChar('0'));
+                buf.writeByte((byte) 0);
+            }
 
-        for (int i = 0; i < source.length; i += 4) {
-            assertEquals(source[i + 3], buffer.getInt(i));
-        }
+            // Int
+            try (ProtonBuffer buf = allocator.allocate(0).implicitGrowthLimit(3)) {
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeInt(0));
+                buf.writeByte((byte) 0);
+            }
+            try (ProtonBuffer buf = allocator.allocate(1).implicitGrowthLimit(4)) {
+                buf.writeByte((byte) 0);
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeInt(0));
+                buf.writeByte((byte) 0);
+            }
+            try (ProtonBuffer buf = allocator.allocate(0).implicitGrowthLimit(3)) {
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeUnsignedInt(0));
+                buf.writeByte((byte) 0);
+            }
+            try (ProtonBuffer buf = allocator.allocate(1).implicitGrowthLimit(4)) {
+                buf.writeByte((byte) 0);
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeUnsignedInt(0));
+                buf.writeByte((byte) 0);
+            }
 
-        try {
-            buffer.readInt();
-        } catch (IndexOutOfBoundsException ex) {
-            fail("Should be able to read from the buffer");
-        }
-    }
+            // Float
+            try (ProtonBuffer buf = allocator.allocate(0).implicitGrowthLimit(3)) {
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeFloat(0));
+                buf.writeByte((byte) 0);
+            }
+            try (ProtonBuffer buf = allocator.allocate(1).implicitGrowthLimit(4)) {
+                buf.writeByte((byte) 0);
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeFloat(0));
+                buf.writeByte((byte) 0);
+            }
 
-    @Test
-    public void testGetUnsignedInt() {
-        byte[] source = new byte[] { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4 };
-        ProtonBuffer buffer = wrapBuffer(source);
+            // Long
+            try (ProtonBuffer buf = allocator.allocate(0).implicitGrowthLimit(7)) {
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeLong(0));
+                buf.writeByte((byte) 0);
+            }
+            try (ProtonBuffer buf = allocator.allocate(1).implicitGrowthLimit(8)) {
+                buf.writeByte((byte) 0);
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeLong(0));
+                buf.writeByte((byte) 0);
+            }
 
-        assertEquals(source.length, buffer.getReadableBytes());
-
-        for (int i = 0; i < source.length; i += 4) {
-            assertEquals(source[i + 3], buffer.getUnsignedInt(i));
-        }
-
-        try {
-            buffer.readInt();
-        } catch (IndexOutOfBoundsException ex) {
-            fail("Should be able to read from the buffer");
-        }
-    }
-
-    @Test
-    public void testGetLong() {
-        byte[] source = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0,
-                                     0, 0, 0, 0, 0, 0, 0, 1,
-                                     0, 0, 0, 0, 0, 0, 0, 2,
-                                     0, 0, 0, 0, 0, 0, 0, 3,
-                                     0, 0, 0, 0, 0, 0, 0, 4 };
-        ProtonBuffer buffer = wrapBuffer(source);
-
-        assertEquals(source.length, buffer.getReadableBytes());
-
-        for (int i = 0; i < source.length; i += 8) {
-            assertEquals(source[i + 7], buffer.getLong(i));
-        }
-
-        try {
-            buffer.readLong();
-        } catch (IndexOutOfBoundsException ex) {
-            fail("Should be able to read from the buffer");
-        }
-    }
-
-    @Test
-    public void testGetFloat() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        buffer.writeInt(Float.floatToIntBits(1.1f));
-        buffer.writeInt(Float.floatToIntBits(2.2f));
-        buffer.writeInt(Float.floatToIntBits(42.3f));
-
-        assertEquals(Integer.BYTES * 3, buffer.getReadableBytes());
-
-        assertEquals(1.1f, buffer.getFloat(0), 0.1);
-        assertEquals(2.2f, buffer.getFloat(4), 0.1);
-        assertEquals(42.3f, buffer.getFloat(8), 0.1);
-
-        try {
-            buffer.readFloat();
-        } catch (IndexOutOfBoundsException ex) {
-            fail("Should be able to read from the buffer");
-        }
-    }
-
-    @Test
-    public void testGetDouble() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        buffer.writeLong(Double.doubleToLongBits(1.1));
-        buffer.writeLong(Double.doubleToLongBits(2.2));
-        buffer.writeLong(Double.doubleToLongBits(42.3));
-
-        assertEquals(Long.BYTES * 3, buffer.getReadableBytes());
-
-        assertEquals(1.1, buffer.getDouble(0), 0.1);
-        assertEquals(2.2, buffer.getDouble(8), 0.1);
-        assertEquals(42.3, buffer.getDouble(16), 0.1);
-
-        try {
-            buffer.readDouble();
-        } catch (IndexOutOfBoundsException ex) {
-            fail("Should be able to read from the buffer");
-        }
-    }
-
-    //----- Tests for Copy operations ----------------------------------------//
-
-    @Test
-    public void testCopyEmptyBuffer() {
-        ProtonBuffer buffer = allocateBuffer(10);
-        ProtonBuffer copy = buffer.copy();
-
-        assertEquals(buffer.getReadableBytes(), copy.getReadableBytes());
-
-        if (buffer.hasArray()) {
-            assertTrue(copy.hasArray());
-            assertNotNull(copy.getArray());
-            assertNotSame(buffer.getArray(), copy.getArray());
+            // Double
+            try (ProtonBuffer buf = allocator.allocate(0).implicitGrowthLimit(7)) {
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeDouble(0));
+                buf.writeByte((byte) 0);
+            }
+            try (ProtonBuffer buf = allocator.allocate(1).implicitGrowthLimit(8)) {
+                buf.writeByte((byte) 0);
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.writeDouble(0));
+                buf.writeByte((byte) 0);
+            }
         }
     }
 
     @Test
-    public void testCopyBuffer() {
-        ProtonBuffer buffer = allocateBuffer(10);
+    public void testCopyWithoutOffsetAndSizeMustReturnReadableRegion() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            for (byte b : new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 }) {
+                buf.writeByte(b);
+            }
+            assertEquals(0x01, buf.readByte());
+            buf.setWriteOffset(buf.getWriteOffset() - 1);
+            try (ProtonBuffer copy = buf.copy()) {
+                assertFalse(copy.isReadOnly());
+                assertArrayEquals(new byte[] {0x02, 0x03, 0x04, 0x05, 0x06, 0x07}, ProtonBufferUtils.toByteArray(buf));
+                assertEquals(0, copy.getReadOffset());
+                assertEquals(6, copy.getReadableBytes());
+                assertEquals(6, copy.getWriteOffset());
+                assertEquals(6, copy.capacity());
+                assertEquals(0x02, copy.readByte());
+                assertEquals(0x03, copy.readByte());
+                assertEquals(0x04, copy.readByte());
+                assertEquals(0x05, copy.readByte());
+                assertEquals(0x06, copy.readByte());
+                assertEquals(0x07, copy.readByte());
+                assertThrows(IndexOutOfBoundsException.class, copy::readByte);
+            }
+        }
+    }
 
-        buffer.writeByte(1);
-        buffer.writeByte(2);
-        buffer.writeByte(3);
-        buffer.writeByte(4);
-        buffer.writeByte(5);
+    @Test
+    public void testCopyOfReadOnlyBufferNotBeReadOnly() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeInt(42).convertToReadOnly();
+            try (ProtonBuffer copy = buf.copy()) {
+                assertFalse(copy.isReadOnly());
+                assertEquals(42, copy.readInt());
+            }
+        }
+    }
 
-        ProtonBuffer copy = buffer.copy();
+    @Test
+    public void testCopyOfBufferMustBeReadOnlyWhenRequested() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeInt(42);
+            try (ProtonBuffer copy = buf.copy(true)) {
+                assertTrue(copy.isReadOnly());
+                assertEquals(42, copy.readInt());
+            }
+            buf.convertToReadOnly();
+            try (ProtonBuffer copy = buf.copy(true)) {
+                assertTrue(copy.isReadOnly());
+                assertEquals(42, copy.readInt());
+            }
+        }
+    }
 
-        assertEquals(buffer.getReadableBytes(), copy.getReadableBytes());
+    @Test
+    public void testCopyOfBufferWithOffsetsMustBeReadOnlyWhenRequested() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeInt(42);
+            try (ProtonBuffer copy = buf.copy(0, 4, true)) {
+                assertTrue(copy.isReadOnly());
+                assertEquals(42, copy.readInt());
+            }
+            buf.convertToReadOnly();
+            try (ProtonBuffer copy = buf.copy(0, 4, true)) {
+                assertTrue(copy.isReadOnly());
+                assertEquals(42, copy.readInt());
+            }
+        }
+    }
 
-        for (int i = 0; i < 5; ++i) {
-            assertEquals(buffer.getByte(i), copy.getByte(i));
+    @Test
+    public void testCopyWithOffsetAndSizeMustReturnGivenRegion() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            for (byte b : new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 }) {
+                buf.writeByte(b);
+            }
+            buf.setReadOffset(3); // Reader and writer offsets must be ignored.
+            buf.setWriteOffset(6);
+            try (ProtonBuffer copy = buf.copy(1, 6)) {
+                assertFalse(copy.isReadOnly());
+                assertArrayEquals(new byte[] {0x02, 0x03, 0x04, 0x05, 0x06, 0x07}, ProtonBufferUtils.toByteArray(copy));
+                assertEquals(0, copy.getReadOffset());
+                assertEquals(6, copy.getReadableBytes());
+                assertEquals(6, copy.getWriteOffset());
+                assertEquals(6, copy.capacity());
+                assertEquals(0x02, copy.readByte());
+                assertEquals(0x03, copy.readByte());
+                assertEquals(0x04, copy.readByte());
+                assertEquals(0x05, copy.readByte());
+                assertEquals(0x06, copy.readByte());
+                assertEquals(0x07, copy.readByte());
+                assertThrows(IndexOutOfBoundsException.class, copy::readByte);
+            }
+        }
+    }
+
+    @Test
+    public void testCopyWithOffsetAndSizeAndReadOnlyStateTrueMustReturnGivenRegion() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            for (byte b : new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 }) {
+                buf.writeByte(b);
+            }
+            buf.setReadOffset(3); // Reader and writer offsets must be ignored.
+            buf.setWriteOffset(6);
+            try (ProtonBuffer copy = buf.copy(1, 6, true)) {
+                assertTrue(copy.isReadOnly());
+                assertArrayEquals(new byte[] {0x02, 0x03, 0x04, 0x05, 0x06, 0x07}, ProtonBufferUtils.toByteArray(copy));
+                assertEquals(0, copy.getReadOffset());
+                assertEquals(6, copy.getReadableBytes());
+                assertEquals(6, copy.getWriteOffset());
+                assertEquals(6, copy.capacity());
+                assertEquals(0x02, copy.readByte());
+                assertEquals(0x03, copy.readByte());
+                assertEquals(0x04, copy.readByte());
+                assertEquals(0x05, copy.readByte());
+                assertEquals(0x06, copy.readByte());
+                assertEquals(0x07, copy.readByte());
+                assertThrows(IndexOutOfBoundsException.class, copy::readByte);
+            }
+        }
+    }
+
+    @Test
+    public void testCopyWithOffsetAndSizeAndReadOnlyStateFalseMustReturnGivenRegion() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            for (byte b : new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 }) {
+                buf.writeByte(b);
+            }
+            buf.setReadOffset(3); // Reader and writer offsets must be ignored.
+            buf.setWriteOffset(6);
+            try (ProtonBuffer copy = buf.copy(1, 6, false)) {
+                assertFalse(copy.isReadOnly());
+                assertArrayEquals(new byte[] {0x02, 0x03, 0x04, 0x05, 0x06, 0x07}, ProtonBufferUtils.toByteArray(copy));
+                assertEquals(0, copy.getReadOffset());
+                assertEquals(6, copy.getReadableBytes());
+                assertEquals(6, copy.getWriteOffset());
+                assertEquals(6, copy.capacity());
+                assertEquals(0x02, copy.readByte());
+                assertEquals(0x03, copy.readByte());
+                assertEquals(0x04, copy.readByte());
+                assertEquals(0x05, copy.readByte());
+                assertEquals(0x06, copy.readByte());
+                assertEquals(0x07, copy.readByte());
+                assertThrows(IndexOutOfBoundsException.class, copy::readByte);
+            }
+        }
+    }
+
+    @Test
+    public void testCopyWithNegativeSizeMustThrow() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.copy(0, -1));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.copy(2, -1));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.copy(0, -1, true));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.copy(2, -1, true));
+        }
+    }
+
+    @Test
+    public void testCopyWithSizeGreaterThanCapacityMustThrow() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.copy(0, 9));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.copy(0, 9, true));
+            buf.copy(0, 8).close(); // This is still fine.
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.copy(1, 8));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.copy(1, 8, true));
+        }
+    }
+
+    @Test
+    public void testCopyWithZeroSizeMustBeAllowed() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.copy(0, 0).close();
+            buf.copy(0, 0, true).close();
+        }
+    }
+
+    @Test
+    public void testCopyOfLastByte() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).writeLong(0x0102030405060708L);
+             ProtonBuffer copy = buf.copy(7, 1)) {
+
+            assertEquals(1, copy.capacity());
+            assertEquals((byte) 0x08, copy.readByte());
+        }
+    }
+
+    @Test
+    public void testSplitWithNegativeOffsetMustThrow() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.split(0).close();
+            assertThrows(IllegalArgumentException.class, () -> buf.split(-1));
+        }
+    }
+
+    @Test
+    public void testSplitWithOversizedOffsetMustThrow() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IllegalArgumentException.class, () -> buf.split(9));
+            buf.split(8).close();
+        }
+    }
+
+    @Test
+    public void testSplitOnOffsetMustTruncateGreaterOffsets() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeInt(0x01020304);
+            buf.writeByte((byte) 0x05);
+            buf.readInt();
+            try (ProtonBuffer split = buf.split(2)) {
+                assertEquals(2, buf.getReadOffset());
+                assertEquals(3, buf.getWriteOffset());
+
+                assertEquals(2, split.getReadOffset());
+                assertEquals(2, split.getWriteOffset());
+            }
+        }
+    }
+
+    @Test
+    public void testSplitOnOffsetMustExtendLesserOffsets() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeInt(0x01020304);
+            buf.readInt();
+            try (ProtonBuffer split = buf.split(6)) {
+                assertEquals(0, buf.getReadOffset());
+                assertEquals(0, buf.getWriteOffset());
+
+                assertEquals(4, split.getReadOffset());
+                assertEquals(4, split.getWriteOffset());
+            }
+        }
+    }
+
+    @Test
+    public void testSplitPartMustContainFirstHalfOfBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(16)) {
+            buf.writeLong(0x0102030405060708L);
+            assertEquals(0x01, buf.readByte());
+            try (ProtonBuffer split = buf.split()) {
+                // Original buffer:
+                assertEquals(8, buf.capacity());
+                assertEquals(0, buf.getReadOffset());
+                assertEquals(0, buf.getWriteOffset());
+                assertEquals(0, buf.getReadableBytes());
+                assertThrows(IndexOutOfBoundsException.class, () -> buf.readByte());
+
+                // Split part:
+                assertEquals(8, split.capacity());
+                assertEquals(1, split.getReadOffset());
+                assertEquals(8, split.getWriteOffset());
+                assertEquals(7, split.getReadableBytes());
+                assertEquals(0x02, split.readByte());
+                assertEquals(0x03040506, split.readInt());
+                assertEquals(0x07, split.readByte());
+                assertEquals(0x08, split.readByte());
+                assertThrows(IndexOutOfBoundsException.class, () -> split.readByte());
+            }
+
+            // Split part does NOT return when closed:
+            assertEquals(8, buf.capacity());
+            assertEquals(0, buf.getReadOffset());
+            assertEquals(0, buf.getWriteOffset());
+            assertEquals(0, buf.getReadableBytes());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.readByte());
+        }
+    }
+
+    @Test
+    public void testMustBePossibleToSplitMoreThanOnce() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeLong(0x0102030405060708L);
+            try (ProtonBuffer a = buf.split()) {
+                a.setWriteOffset(4);
+                try (ProtonBuffer b = a.split()) {
+                    assertEquals(0x01020304, b.readInt());
+                    a.setWriteOffset(4);
+                    assertEquals(0x05060708, a.readInt());
+                    assertThrows(IndexOutOfBoundsException.class, () -> b.readByte());
+                    assertThrows(IndexOutOfBoundsException.class, () -> a.readByte());
+                    buf.writeLong(0xA1A2A3A4A5A6A7A8L);
+                    buf.setWriteOffset(4);
+                    try (ProtonBuffer c = buf.split()) {
+                        assertEquals(0xA1A2A3A4, c.readInt());
+                        buf.setWriteOffset(4);
+                        assertEquals(0xA5A6A7A8, buf.readInt());
+                        assertThrows(IndexOutOfBoundsException.class, () -> c.readByte());
+                        assertThrows(IndexOutOfBoundsException.class, () -> buf.readByte());
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testMustBePossibleToSplitCopies() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeLong(0x0102030405060708L);
+            try (ProtonBuffer copy = buf.copy()) {
+                buf.close();
+                assertEquals(0x0102030405060708L, copy.getLong(0));
+                try (ProtonBuffer split = copy.split(4)) {
+                    split.clear().ensureWritable(Long.BYTES);
+                    copy.clear().ensureWritable(Long.BYTES);
+                    assertEquals(Long.BYTES, split.capacity());
+                    assertEquals(Long.BYTES, copy.capacity());
+                    assertEquals(0x01020304, split.getInt(0));
+                    assertEquals(0x05060708, copy.getInt(0));
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testEnsureWritableOnSplitBuffers() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeLong(0x0102030405060708L);
+            try (ProtonBuffer a = buf.split()) {
+                assertEquals(0x0102030405060708L, a.readLong());
+                a.ensureWritable(8);
+                a.writeLong(0xA1A2A3A4A5A6A7A8L);
+                assertEquals(0xA1A2A3A4A5A6A7A8L, a.readLong());
+
+                buf.ensureWritable(8);
+                buf.writeLong(0xA1A2A3A4A5A6A7A8L);
+                assertEquals(0xA1A2A3A4A5A6A7A8L, buf.readLong());
+            }
+        }
+    }
+
+    @Test
+    public void testEnsureWritableOnSplitBuffersWithOddOffsets() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(10)) {
+            buf.writeLong(0x0102030405060708L);
+            buf.writeByte((byte) 0x09);
+            buf.readByte();
+            try (ProtonBuffer a = buf.split()) {
+                assertEquals(0x0203040506070809L, a.readLong());
+                a.ensureWritable(8);
+                a.writeLong(0xA1A2A3A4A5A6A7A8L);
+                assertEquals(0xA1A2A3A4A5A6A7A8L, a.readLong());
+
+                buf.ensureWritable(8);
+                buf.writeLong(0xA1A2A3A4A5A6A7A8L);
+                assertEquals(0xA1A2A3A4A5A6A7A8L, buf.readLong());
+            }
+        }
+    }
+
+    @Test
+    public void testSplitOnEmptyCompositeBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.composite()) {
+            verifySplitEmptyCompositeBuffer(buf);
+        }
+    }
+
+    @Test
+    public void testSplitOfReadOnlyBufferMustBeReadOnly() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(16)) {
+            buf.writeLong(0x0102030405060708L);
+            buf.convertToReadOnly();
+            try (ProtonBuffer split = buf.split()) {
+                assertTrue(split.isReadOnly());
+                assertTrue(buf.isReadOnly());
+
+                assertEquals(0x0102030405060708L, split.readLong());
+                assertFalse(buf.isReadable());
+            }
+        }
+    }
+
+    @Test
+    public void testAllocatingOnClosedAllocatorMustThrow() {
+        ProtonBufferAllocator allocator = createTestCaseAllocator();
+        allocator.close();
+        assertThrows(IllegalStateException.class, () -> allocator.allocate(8));
+    }
+
+    @Test
+    public void testReadSplit() {
+        doTestReadSplit(3, 3, 1, 1);
+    }
+
+    @Test
+    public void testReadSplitWriteOffsetLessThanCapacity() {
+        doTestReadSplit(5, 4, 2, 1);
+    }
+
+    @Test
+    public void testReadSplitOffsetZero() {
+        doTestReadSplit(3, 3, 1, 0);
+    }
+
+    @Test
+    public void testReadSplitOffsetToWriteOffset() {
+        doTestReadSplit(3, 3, 1, 2);
+    }
+
+    private void doTestReadSplit(int capacity, int writeBytes, int readBytes, int offset) {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(capacity)) {
+            writeRandomBytes(buf, writeBytes);
+            assertEquals(writeBytes, buf.getWriteOffset());
+
+            for (int i = 0; i < readBytes; i++) {
+                buf.readByte();
+            }
+            assertEquals(readBytes, buf.getReadOffset());
+
+            try (ProtonBuffer split = buf.readSplit(offset)) {
+                assertEquals(readBytes + offset, split.capacity());
+                assertEquals(split.capacity(), split.getWriteOffset());
+                assertEquals(readBytes, split.getReadOffset());
+
+                assertEquals(capacity - split.capacity(), buf.capacity());
+                assertEquals(writeBytes - split.capacity(), buf.getWriteOffset());
+                assertEquals(0, buf.getReadOffset());
+            }
+        }
+    }
+
+    @Test
+    public void testWriteSplit() {
+        doTestWriteSplit(5, 3, 1, 1);
+    }
+
+    @Test
+    public void testWriteSplitWriteOffsetLessThanCapacity() {
+        doTestWriteSplit(5, 2, 2, 2);
+    }
+
+    @Test
+    public void testWriteSplitOffsetZero() {
+        doTestWriteSplit(3, 3, 1, 0);
+    }
+
+    @Test
+    public void testWriteSplitOffsetToCapacity() {
+        doTestWriteSplit(3, 1, 1, 2);
+    }
+
+    private void doTestWriteSplit(int capacity, int writeBytes, int readBytes, int offset) {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(capacity)) {
+            writeRandomBytes(buf, writeBytes);
+            assertEquals(writeBytes, buf.getWriteOffset());
+            for (int i = 0; i < readBytes; i++) {
+                buf.readByte();
+            }
+            assertEquals(readBytes, buf.getReadOffset());
+
+            try (ProtonBuffer split = buf.writeSplit(offset)) {
+                assertEquals(writeBytes + offset, split.capacity());
+                assertEquals(writeBytes, split.getWriteOffset());
+                assertEquals(readBytes, split.getReadOffset());
+
+                assertEquals(capacity - split.capacity(), buf.capacity());
+                assertEquals(0, buf.getWriteOffset());
+                assertEquals(0, buf.getReadOffset());
+            }
+        }
+    }
+
+    @Test
+    public void testSplitPostFull() {
+        doTestSplitPostFullOrRead(false);
+    }
+
+    @Test
+    public void testSplitPostFullAndRead() {
+        doTestSplitPostFullOrRead(true);
+    }
+
+    private void doTestSplitPostFullOrRead(boolean read) {
+        final int capacity = 3;
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(capacity)) {
+            writeRandomBytes(buf, capacity);
+            assertEquals(buf.capacity(), buf.getWriteOffset());
+            if (read) {
+                for (int i = 0; i < capacity; i++) {
+                    buf.readByte();
+                }
+            }
+            assertEquals(read ? buf.capacity() : 0, buf.getReadOffset());
+
+            try (ProtonBuffer split = buf.split()) {
+                assertEquals(capacity, split.capacity());
+                assertEquals(split.capacity(), split.getWriteOffset());
+                assertEquals(read ? split.capacity() : 0, split.getReadOffset());
+
+                assertEquals(0, buf.capacity());
+                assertEquals(0, buf.getWriteOffset());
+                assertEquals(0, buf.getReadOffset());
+            }
+        }
+    }
+
+    @Test
+    public void testCompactMustDiscardReadBytes() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(16)) {
+            buf.writeLong(0x0102030405060708L).writeInt(0x090A0B0C);
+            assertEquals(0x01020304, buf.readInt());
+            assertEquals(12, buf.getWriteOffset());
+            assertEquals(4, buf.getReadOffset());
+            assertEquals(4, buf.getWritableBytes());
+            assertEquals(8, buf.getReadableBytes());
+            assertEquals(16, buf.capacity());
+            buf.compact();
+            assertEquals(8, buf.getWriteOffset());
+            assertEquals(0, buf.getReadOffset());
+            assertEquals(8, buf.getWritableBytes());
+            assertEquals(8, buf.getReadableBytes());
+            assertEquals(16, buf.capacity());
+            assertEquals(0x05060708090A0B0CL, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testCopyOfByteArrayMustContainContents() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            byte[] array = new byte[23];
+            writeRandomBytes(array);
+            try (ProtonBuffer buffer = allocator.copy(array)) {
+                assertEquals(array.length, buffer.capacity());
+                assertEquals(array.length, buffer.getReadableBytes());
+                for (int i = 0; i < array.length; i++) {
+                    byte b = array[i];
+                    byte a = buffer.readByte();
+                    if (b != a) {
+                        fail(String.format("Wrong contents at offset %s. Expected %s but was %s.", i, b, a));
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testCopyOfByteArrayMustNotBeReadOnly() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            byte[] array = new byte[23];
+            writeRandomBytes(array);
+            try (ProtonBuffer buffer = allocator.copy(array)) {
+                assertFalse(buffer.isReadOnly());
+                buffer.ensureWritable(Long.BYTES, 1, true);
+                buffer.writeLong(0x0102030405060708L);
+                assertTrue(buffer.capacity() >= array.length + Long.BYTES);
+                assertEquals(array.length + Long.BYTES, buffer.getReadableBytes());
+                for (int i = 0; i < array.length; i++) {
+                    byte b = array[i];
+                    byte a = buffer.readByte();
+                    if (b != a) {
+                        fail(String.format("Wrong contents at offset %s. Expected %s but was %s.", i, b, a));
+                    }
+                }
+                assertEquals(0x0102030405060708L, buffer.readLong());
+            }
+        }
+    }
+
+    @Test
+    public void testCopyOfByteArrayMustNotReflectChangesToArray() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            byte[] array = { 1, 1, 1, 1, 1, 1, 1, 1 };
+            try (ProtonBuffer buffer = allocator.copy(array)) {
+                array[2] = 2; // Change to array should not be reflected in buffer.
+                assertEquals(0x0101010101010101L, buffer.readLong());
+            }
+        }
+    }
+
+    @Test
+    public void testCopyOfEmptyByteArrayMustProduceEmptyBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.copy(new byte[0])) {
+
+            assertEquals(0, buffer.capacity());
+            assertFalse(buffer.isClosed());
+            buffer.ensureWritable(4);
+            assertTrue(buffer.capacity() >= 4);
+        }
+    }
+
+    @Test
+    public void testMustThrowWhenAllocatingNegativeSizedBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            assertThrows(IllegalArgumentException.class, () -> allocator.allocate(-1));
+        }
+    }
+
+    @Test
+    public void testSetReaderOffsetMustThrowOnNegativeIndex() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setReadOffset(-1));
+        }
+    }
+
+    @Test
+    public void testSetReaderOffsetMustThrowOnOversizedIndex() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setReadOffset(1));
+            buf.writeLong(0);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setReadOffset(9));
+
+            buf.setReadOffset(8);
+            assertThrows(IndexOutOfBoundsException.class, buf::readByte);
+        }
+    }
+
+    @Test
+    public void testSetWriterOffsetMustThrowOutsideOfWritableRegion() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            // Writer offset cannot be negative.
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setWriteOffset(-1));
+
+            buf.setWriteOffset(4);
+            buf.setReadOffset(4);
+
+            // Cannot set writer offset before reader offset.
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setWriteOffset(3));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setWriteOffset(0));
+
+            buf.setWriteOffset(buf.capacity());
+
+            // Cannot set writer offset beyond capacity.
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.setWriteOffset(buf.capacity() + 1));
+        }
+    }
+
+    @Test
+    public void testSetReaderOffsetMustNotThrowWithinBounds() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertSame(buf.setReadOffset(0), buf);
+            buf.writeLong(0);
+            assertSame(buf.setReadOffset(7), buf);
+            assertSame(buf.setReadOffset(8), buf);
+        }
+    }
+
+    @Test
+    public void testCapacityMustBeAllocatedSize() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(8, buf.capacity());
+            try (ProtonBuffer b = allocator.allocate(13)) {
+                assertEquals(13, b.capacity());
+            }
+        }
+    }
+
+    @Test
+    public void testReaderWriterOffsetUpdates() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(22)) {
+            assertEquals(0, buf.getWriteOffset());
+            assertSame(buf.setWriteOffset(1) , buf);
+            assertEquals(1, buf.getWriteOffset());
+            assertSame(buf.writeByte((byte) 7), buf);
+            assertEquals(2, buf.getWriteOffset());
+            assertSame(buf.writeShort((short) 3003), buf);
+            assertEquals(4, buf.getWriteOffset());
+            assertSame(buf.writeInt(0x5A55_BA55), buf);
+            assertEquals(8, buf.getWriteOffset());
+            assertSame(buf.writeLong(0x123456789ABCDEF0L), buf);
+            assertEquals(16, buf.getWriteOffset());
+            assertEquals(6, buf.getWritableBytes());
+            assertEquals(16, buf.getReadableBytes());
+
+            assertEquals(0, buf.getReadOffset());
+            assertSame(buf.setReadOffset(1) , buf);
+            assertEquals(1, buf.getReadOffset());
+            assertEquals((byte) 7, buf.readByte());
+            assertEquals(2, buf.getReadOffset());
+            assertEquals((short) 3003, buf.readShort());
+            assertEquals(4, buf.getReadOffset());
+            assertEquals(0x5A55_BA55, buf.readInt());
+            assertEquals(8, buf.getReadOffset());
+            assertEquals(0x123456789ABCDEF0L, buf.readLong());
+            assertEquals(16, buf.getReadOffset());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void readAndWriteBoundsChecksWithIndexUpdates() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeLong(0);
+
+            buf.readLong(); // Fine.
+            buf.setReadOffset(1);
+            assertThrows(IndexOutOfBoundsException.class, buf::readLong);
+
+            buf.setReadOffset(4);
+            buf.readInt(); // Fine.
+            buf.setReadOffset(5);
+
+            assertThrows(IndexOutOfBoundsException.class, buf::readInt);
+        }
+    }
+
+    @Test
+    public void testClearMustSetReaderAndWriterOffsetsToTheirInitialPositions() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeInt(0).readShort();
+            buf.clear();
+            assertEquals(0, buf.getReadOffset());
+            assertEquals(0, buf.getWriteOffset());
+        }
+    }
+
+    @Test
+    public void testReadableBytesMustMatchWhatWasWritten() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeLong(0);
+            assertEquals(Long.BYTES, buf.getReadableBytes());
+            buf.readShort();
+            assertEquals(Long.BYTES - Short.BYTES, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testAdvanceReadOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(32)) {
+            writeRandomBytes(buf, 16);
+
+            for (int i = 0; i < 8; i++) {
+                buf.readByte();
+            }
+
+            buf.advanceReadOffset(8);
+            assertEquals(8 + 8, buf.getReadOffset());
+        }
+    }
+
+    @Test
+    public void testAdvanceReadOffsetNegativeMustThrow() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeLong(1);
+            buf.readInt();
+            assertThrows(IllegalArgumentException.class, () -> buf.advanceReadOffset(-1));
+        }
+    }
+
+    @Test
+    public void testAdvanceWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(32)) {
+            writeRandomBytes(buf, 16);
+
+            buf.advanceWriteOffset(8);
+            assertEquals(16 + 8, buf.getWriteOffset());
+        }
+    }
+
+    @Test
+    public void testAdvanceWriteOffsetNegativeMustThrow() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeInt(1);
+            assertThrows(IllegalArgumentException.class, () -> buf.advanceWriteOffset(-1));
+        }
+    }
+
+    @Test
+    public void testReadOnlyBufferMustPreventWriteAccess() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            ProtonBuffer b = buf.convertToReadOnly();
+            assertSame(b, buf);
+            verifyWriteInaccessible(buf, ProtonBufferReadOnlyException.class);
+        }
+    }
+
+    @Test
+    public void testClosedBuffersAreNotReadOnly() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly();
+            buf.close();
+            assertFalse(buf.isReadOnly());
+        }
+    }
+
+    @Test
+    public void testReadOnlyBufferMustMustStayReadOnlyAfterRepeatedToggles() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertFalse(buf.isReadOnly());
+            buf.convertToReadOnly();
+            assertTrue(buf.isReadOnly());
+            verifyWriteInaccessible(buf, ProtonBufferReadOnlyException.class);
+
+            buf.convertToReadOnly();
+            assertTrue(buf.isReadOnly());
+
+            verifyWriteInaccessible(buf, ProtonBufferReadOnlyException.class);
+        }
+    }
+
+    @Test
+    public void testCompactOnReadOnlyBufferMustThrow() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly();
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.compact());
+        }
+    }
+
+    @Test
+    public void testEnsureWritableOnReadOnlyBufferMustThrow() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly();
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.ensureWritable(1));
+        }
+    }
+
+    @Test
+    public void testCopyIntoOnReadOnlyBufferMustThrow() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.convertToReadOnly();
+            try (ProtonBuffer src = allocator.allocate(8)) {
+                assertThrows(ProtonBufferReadOnlyException.class, () -> src.copyInto(0, buf, 0, 1));
+                assertThrows(ProtonBufferReadOnlyException.class, () -> src.copyInto(0, buf, 0, 0));
+            }
+        }
+    }
+
+    @Test
+    public void testReadOnlyBuffersCannotChangeWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8).convertToReadOnly()) {
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.setWriteOffset(0));
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.setWriteOffset(4));
+
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.writeByte((byte) 0));
+            assertEquals(0, buf.getWriteOffset());
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.writeShort((short) 0));
+            assertEquals(0, buf.getWriteOffset());
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.writeChar((char) 0));
+            assertEquals(0, buf.getWriteOffset());
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.writeInt(0));
+            assertEquals(0, buf.getWriteOffset());
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.writeFloat(0));
+            assertEquals(0, buf.getWriteOffset());
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.writeLong(0));
+            assertEquals(0, buf.getWriteOffset());
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.writeDouble(0));
+            assertEquals(0, buf.getWriteOffset());
+
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.writeUnsignedByte(0));
+            assertEquals(0, buf.getWriteOffset());
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.writeUnsignedShort(0));
+            assertEquals(0, buf.getWriteOffset());
+            assertThrows(ProtonBufferReadOnlyException.class, () -> buf.writeUnsignedInt(0));
+            assertEquals(0, buf.getWriteOffset());
+        }
+    }
+
+    @Test
+    public void testCopyOfReadOnlyBufferIsNotReadOnly() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).writeLong(0x0102030405060708L).convertToReadOnly();
+             ProtonBuffer copy = buf.copy()) {
+            assertFalse(copy.isReadOnly());
+            assertEquals(buf, copy);
+            assertEquals(0, copy.getReadOffset());
+            copy.setLong(0, 0xA1A2A3A4A5A6A7A8L);
+            assertEquals(0xA1A2A3A4A5A6A7A8L, copy.getLong(0));
+        }
+    }
+
+    @Test
+    public void resetOffsetsOfReadOnlyBufferOnlyChangesReadOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(4).writeInt(0x01020304).convertToReadOnly()) {
+            assertEquals(4, buf.getReadableBytes());
+            assertEquals(0x01020304, buf.readInt());
+            assertEquals(0, buf.getReadableBytes());
+            buf.clear();
+            assertEquals(4, buf.getReadableBytes());
+            assertEquals(0x01020304, buf.readInt());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfBooleanMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            boolean value = true;
+            buf.writeBoolean(value);
+            assertEquals(1, buf.getReadableBytes());
+            assertEquals(7, buf.getWritableBytes());
+            assertTrue(buf.readBoolean());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfBooleanMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            boolean value = true;
+            buf.writeBoolean(value);
+            buf.setReadOffset(1);
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(7, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, buf::readBoolean);
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfByteMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            byte value = 0x01;
+            buf.writeByte(value);
+            assertEquals(1, buf.getReadableBytes());
+            assertEquals(7, buf.getWritableBytes());
+            assertEquals(value, buf.readByte());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfByteMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            byte value = 0x01;
+            buf.writeByte(value);
+            buf.setReadOffset(1);
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(7, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, buf::readByte);
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadAndGetOfUnsignedByte() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = Byte.MAX_VALUE * 2;
+            buf.setUnsignedByte(0, value);
+            assertEquals(value, buf.getUnsignedByte(0));
+            buf.writeUnsignedByte(value);
+            assertEquals(value, buf.readUnsignedByte());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfUnsignedByteMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            int value = 0x01;
+            buf.writeUnsignedByte(value);
+            assertEquals(1, buf.getReadableBytes());
+            assertEquals(7, buf.getWritableBytes());
+            assertEquals(value, buf.readUnsignedByte());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfUnsignedByteMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            int value = 0x01;
+            buf.writeUnsignedByte(value);
+            buf.setReadOffset(1);
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(7, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.readUnsignedByte());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfUnsignedByteReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            int value = 0x01;
+            buf.writeUnsignedByte(value);
+            buf.setReadOffset(1);
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(7, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().readUnsignedByte());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfByteMustExpandCapacityWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            buf.setWriteOffset(8);
+            byte value = 0x01;
+            buf.writeByte(value);
+            assertTrue(buf.capacity() > Long.BYTES);
+            buf.setReadOffset(8);
+            assertEquals(value, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfUnsignedByteMustExpandCapacityWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            buf.setWriteOffset(8);
+            int value = 0x01;
+            buf.writeUnsignedByte(value);
+            assertTrue(buf.capacity() > Long.BYTES);
+            buf.setReadOffset(8);
+            assertEquals(value, buf.readUnsignedByte());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfCharMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            char value = 0x0102;
+            buf.writeChar(value);
+            assertEquals(2, buf.getReadableBytes());
+            assertEquals(6, buf.getWritableBytes());
+            assertEquals(value, buf.readChar());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfCharMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            char value = 0x0102;
+            buf.writeChar(value);
+            buf.setReadOffset(1);
+            assertEquals(1, buf.getReadableBytes());
+            assertEquals(6, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, buf::readChar);
+            assertEquals(1, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfCharReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            char value = 0x0102;
+            buf.writeChar(value);
+            buf.setReadOffset(1);
+            assertEquals(1, buf.getReadableBytes());
+            assertEquals(6, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().readChar());
+            assertEquals(1, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfCharMustExpandCapacityWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            buf.setWriteOffset(7);
+            char value = 0x0102;
+            buf.writeChar(value);
+            assertTrue(buf.capacity() > Long.BYTES);
+            buf.setReadOffset(7);
+            assertEquals(value, buf.readChar());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfShortMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            short value = 0x0102;
+            buf.writeShort(value);
+            assertEquals(2, buf.getReadableBytes());
+            assertEquals(6, buf.getWritableBytes());
+            assertEquals(value, buf.readShort());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfShortMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            short value = 0x0102;
+            buf.writeShort(value);
+            buf.setReadOffset(1);
+            assertEquals(1, buf.getReadableBytes());
+            assertEquals(6, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, buf::readShort);
+            assertEquals(1, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfShortReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            short value = 0x0102;
+            buf.writeShort(value);
+            buf.setReadOffset(1);
+            assertEquals(1, buf.getReadableBytes());
+            assertEquals(6, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().readShort());
+            assertEquals(1, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadAndGetOfUnsignedShort() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = Short.MAX_VALUE * 2;
+            buf.setUnsignedShort(0, value);
+            assertEquals(value, buf.getUnsignedShort(0));
+            buf.writeUnsignedShort(value);
+            assertEquals(value, buf.readUnsignedShort());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfUnsignedShortMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            int value = 0x0102;
+            buf.writeUnsignedShort(value);
+            assertEquals(2, buf.getReadableBytes());
+            assertEquals(6, buf.getWritableBytes());
+            assertEquals(value, buf.readUnsignedShort());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfUnsignedShortMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            int value = 0x0102;
+            buf.writeUnsignedShort(value);
+            buf.setReadOffset(1);
+            assertEquals(1, buf.getReadableBytes());
+            assertEquals(6, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, buf::readUnsignedShort);
+            assertEquals(1, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfUnsignedShortReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            int value = 0x0102;
+            buf.writeUnsignedShort(value);
+            buf.setReadOffset(1);
+            assertEquals(1, buf.getReadableBytes());
+            assertEquals(6, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().readUnsignedShort());
+            assertEquals(1, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfShortMustExpandCapacityWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            buf.setWriteOffset(7);
+            short value = 0x0102;
+            buf.writeShort(value);
+            assertTrue(buf.capacity() > Long.BYTES);
+            buf.setReadOffset(7);
+            assertEquals(value, buf.readShort());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfUnsignedShortMustExpandCapacityWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            buf.setWriteOffset(7);
+            int value = 0x0102;
+            buf.writeUnsignedShort(value);
+            assertTrue(buf.capacity() > Long.BYTES);
+            buf.setReadOffset(7);
+            assertEquals(value, buf.readUnsignedShort());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfIntMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            int value = 0x01020304;
+            buf.writeInt(value);
+            assertEquals(4, buf.getReadableBytes());
+            assertEquals(4, buf.getWritableBytes());
+            assertEquals(value, buf.readInt());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfIntMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            int value = 0x01020304;
+            buf.writeInt(value);
+            buf.setReadOffset(1);
+            assertEquals(3, buf.getReadableBytes());
+            assertEquals(4, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, buf::readInt);
+            assertEquals(3, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfIntReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            int value = 0x01020304;
+            buf.writeInt(value);
+            buf.setReadOffset(1);
+            assertEquals(3, buf.getReadableBytes());
+            assertEquals(4, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().readInt());
+            assertEquals(3, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadAndGetOfUnsignedInt() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            long value = Integer.MAX_VALUE * 2L;
+            buf.setUnsignedInt(0, value);
+            assertEquals(value, buf.getUnsignedInt(0));
+            buf.writeUnsignedInt(value);
+            assertEquals(value, buf.readUnsignedInt());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfUnsignedIntMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            long value = 0x01020304;
+            buf.writeUnsignedInt(value);
+            assertEquals(4, buf.getReadableBytes());
+            assertEquals(4, buf.getWritableBytes());
+            assertEquals(value, buf.readUnsignedInt());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfUnsignedIntMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            long value = 0x01020304;
+            buf.writeUnsignedInt(value);
+            buf.setReadOffset(1);
+            assertEquals(3, buf.getReadableBytes());
+            assertEquals(4, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, buf::readUnsignedInt);
+            assertEquals(3, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfUnsignedIntReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            long value = 0x01020304;
+            buf.writeUnsignedInt(value);
+            buf.setReadOffset(1);
+            assertEquals(3, buf.getReadableBytes());
+            assertEquals(4, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().readUnsignedInt());
+            assertEquals(3, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfIntMustExpandCapacityWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            buf.setWriteOffset(5);
+            int value = 0x01020304;
+            buf.writeInt(value);
+            assertTrue(buf.capacity() > Long.BYTES);
+            buf.setReadOffset(5);
+            assertEquals(value, buf.readInt());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfUnsignedIntMustExpandCapacityWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            buf.setWriteOffset(5);
+            long value = 0x01020304;
+            buf.writeUnsignedInt(value);
+            assertTrue(buf.capacity() > Long.BYTES);
+            buf.setReadOffset(5);
+            assertEquals(value, buf.readUnsignedInt());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfFloatMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            float value = Float.intBitsToFloat(0x01020304);
+            buf.writeFloat(value);
+            assertEquals(4, buf.getReadableBytes());
+            assertEquals(4, buf.getWritableBytes());
+            assertEquals(value, buf.readFloat());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfFloatMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            float value = Float.intBitsToFloat(0x01020304);
+            buf.writeFloat(value);
+            buf.setReadOffset(1);
+            assertEquals(3, buf.getReadableBytes());
+            assertEquals(4, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, buf::readFloat);
+            assertEquals(3, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfFloatReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            float value = Float.intBitsToFloat(0x01020304);
+            buf.writeFloat(value);
+            buf.setReadOffset(1);
+            assertEquals(3, buf.getReadableBytes());
+            assertEquals(4, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().readFloat());
+            assertEquals(3, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfFloatMustExpandCapacityWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            buf.setWriteOffset(5);
+            float value = Float.intBitsToFloat(0x01020304);
+            buf.writeFloat(value);
+            assertTrue(buf.capacity() > Long.BYTES);
+            buf.setReadOffset(5);
+            assertEquals(value, buf.readFloat());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfLongMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            long value = 0x0102030405060708L;
+            buf.writeLong(value);
+            assertEquals(8, buf.getReadableBytes());
+            assertEquals(0, buf.getWritableBytes());
+            assertEquals(value, buf.readLong());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfLongMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            long value = 0x0102030405060708L;
+            buf.writeLong(value);
+            buf.setReadOffset(1);
+            assertEquals(7, buf.getReadableBytes());
+            assertEquals(0, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, buf::readLong);
+            assertEquals(7, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfLongReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            long value = 0x0102030405060708L;
+            buf.writeLong(value);
+            buf.setReadOffset(1);
+            assertEquals(7, buf.getReadableBytes());
+            assertEquals(0, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().readLong());
+            assertEquals(7, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfLongMustExpandCapacityWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            buf.setWriteOffset(1);
+            long value = 0x0102030405060708L;
+            buf.writeLong(value);
+            assertTrue(buf.capacity() > Long.BYTES);
+            buf.setReadOffset(1);
+            assertEquals(value, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfDoubleMustNotBoundsCheckWhenReadOffsetAndSizeIsEqualToWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            double value = Double.longBitsToDouble(0x0102030405060708L);
+            buf.writeDouble(value);
+            assertEquals(8, buf.getReadableBytes());
+            assertEquals(0, buf.getWritableBytes());
+            assertEquals(value, buf.readDouble());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfShortMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            short value = 0x0102;
+            buf.writeShort(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(2, buf.getReadableBytes());
+            assertEquals(6, buf.getWritableBytes());
+            assertEquals(0x1002, buf.readShort());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfUnsignedShortMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            int value = 0x0102;
+            buf.writeUnsignedShort(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(2, buf.getReadableBytes());
+            assertEquals(6, buf.getWritableBytes());
+            assertEquals(0x1002, buf.readUnsignedShort());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfShortMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            short value = 0x0102;
+            buf.writeShort(value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfUnsignedShortMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x0102;
+            buf.writeUnsignedShort(value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfIntMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            int value = 0x01020304;
+            buf.writeInt(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(4, buf.getReadableBytes());
+            assertEquals(4, buf.getWritableBytes());
+            assertEquals(0x10020304, buf.readInt());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfDoubleMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            double value = Double.longBitsToDouble(0x0102030405060708L);
+            buf.writeDouble(value);
+            buf.setReadOffset(1);
+            assertEquals(7, buf.getReadableBytes());
+            assertEquals(0, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, buf::readDouble);
+            assertEquals(7, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfDoubleReadOnlyMustBoundsCheckWhenReadOffsetAndSizeIsBeyondWriteOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            double value = Double.longBitsToDouble(0x0102030405060708L);
+            buf.writeDouble(value);
+            buf.setReadOffset(1);
+            assertEquals(7, buf.getReadableBytes());
+            assertEquals(0, buf.getWritableBytes());
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.convertToReadOnly().readDouble());
+            assertEquals(7, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeReadOfCharMustReadWithDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(0, buf.getReadableBytes());
+            assertEquals(Long.BYTES, buf.getWritableBytes());
+            char value = 0x0102;
+            buf.writeChar(value);
+            buf.setByte(0, (byte) 0x10);
+            assertEquals(2, buf.getReadableBytes());
+            assertEquals(6, buf.getWritableBytes());
+            assertEquals(0x1002, buf.readChar());
+            assertEquals(0, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfDoubleMustExpandCapacityWhenWriteOffsetAndSizeIsBeyondCapacity() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertEquals(Long.BYTES, buf.capacity());
+            buf.setWriteOffset(1);
+            double value = Double.longBitsToDouble(0x0102030405060708L);
+            buf.writeDouble(value);
+            assertTrue(buf.capacity() > Long.BYTES);
+            buf.setReadOffset(1);
+            assertEquals(value, buf.readDouble());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfCharMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            char value = 0x0102;
+            buf.writeChar(value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfIntMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int value = 0x01020304;
+            buf.writeInt(value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x03, buf.readByte());
+            assertEquals((byte) 0x04, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfUnsignedIntMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            long value = 0x01020304;
+            buf.writeUnsignedInt(value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x03, buf.readByte());
+            assertEquals((byte) 0x04, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfFloatMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            float value = Float.intBitsToFloat(0x01020304);
+            buf.writeFloat(value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x03, buf.readByte());
+            assertEquals((byte) 0x04, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+            assertEquals((byte) 0x00, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfLongMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            long value = 0x0102030405060708L;
+            buf.writeLong(value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x03, buf.readByte());
+            assertEquals((byte) 0x04, buf.readByte());
+            assertEquals((byte) 0x05, buf.readByte());
+            assertEquals((byte) 0x06, buf.readByte());
+            assertEquals((byte) 0x07, buf.readByte());
+            assertEquals((byte) 0x08, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testRelativeWriteOfDoubleMustHaveDefaultEndianByteOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            double value = Double.longBitsToDouble(0x0102030405060708L);
+            buf.writeDouble(value);
+            buf.setWriteOffset(Long.BYTES);
+            assertEquals((byte) 0x01, buf.readByte());
+            assertEquals((byte) 0x02, buf.readByte());
+            assertEquals((byte) 0x03, buf.readByte());
+            assertEquals((byte) 0x04, buf.readByte());
+            assertEquals((byte) 0x05, buf.readByte());
+            assertEquals((byte) 0x06, buf.readByte());
+            assertEquals((byte) 0x07, buf.readByte());
+            assertEquals((byte) 0x08, buf.readByte());
+        }
+    }
+
+    @Test
+    public void testWriteBytesFromCompositeIntoContiguousBuffer() {
+        try (ProtonBufferAllocator defaultAlloc = ProtonBufferAllocator.defaultAllocator();
+             ProtonBufferAllocator alloc = createTestCaseAllocator()) {
+
+            ProtonBuffer buffer1 = defaultAlloc.allocate(16);
+            ProtonBuffer buffer2 = defaultAlloc.allocate(16);
+            ProtonBuffer buffer3 = defaultAlloc.allocate(16);
+
+            buffer1.fill((byte)'a').setWriteOffset(buffer1.capacity()).convertToReadOnly();
+            buffer2.fill((byte)'b').setWriteOffset(buffer2.capacity()).convertToReadOnly();
+            buffer3.fill((byte)'c').setWriteOffset(buffer3.capacity()).convertToReadOnly();
+
+            final int expectedCapacity = buffer1.capacity() + buffer2.capacity() + buffer3.capacity();
+
+            try (ProtonCompositeBuffer composite = alloc.composite(
+                    new ProtonBuffer[] { buffer1.copy(true), buffer2.copy(true), buffer3.copy(true) });
+                 ProtonBuffer target = alloc.allocate(composite.capacity())) {
+
+                assertEquals(expectedCapacity, composite.capacity());
+
+                target.writeBytes(composite);
+
+                assertEquals(target.capacity(), target.getWriteOffset());
+
+                for (int i = 0, j = 0; j < buffer1.capacity(); ++i, ++j) {
+                    assertEquals(target.getByte(i), buffer1.getByte(j),
+                        "Wrong value detected in target[" + i + "] expecting buffer1[" + j + "]");
+                }
+
+                for (int i = buffer1.capacity(), j = 0; j < buffer2.capacity(); ++i, ++j) {
+                    assertEquals(target.getByte(i), buffer2.getByte(j),
+                        "Wrong value detected in target[" + i + "] expecting buffer2[" + j + "]");
+                }
+
+                for (int i = buffer2.capacity() + buffer1.capacity(), j = 0; j < buffer3.capacity(); ++i, ++j) {
+                    assertEquals(target.getByte(i), buffer3.getByte(j),
+                        "Wrong value detected in target[" + i + "] expecting buffer3[" + j + "]");
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testSplitBufferAndCloseSplitPortionLeavesOriginalPortionAccessible() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(16)) {
+            buf.writeLong(0x0102030405060708l);
+            buf.writeLong(0x0807060504030201l);
+
+            final ProtonBuffer front = buf.split(8); // split the two longs
+
+            try (front) {
+                assertEquals(8, front.getReadableBytes());
+                assertEquals(8, front.capacity());
+                assertEquals(8, buf.getReadableBytes());
+                assertEquals(8, buf.capacity());
+            }
+
+            verifyInaccessible(front);
+
+            assertEquals(0x0807060504030201l, buf.readLong());
+        }
+    }
+
+    @Test
+    public void testSplitBufferAndCloseRemainingPortionLeavesTheSplitPortionAccessible() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(16)) {
+            buf.writeLong(0x0102030405060708l);
+            buf.writeLong(0x0807060504030201l);
+
+            final ProtonBuffer front = buf.split(8); // split the two longs
+
+            try (buf) {
+                assertEquals(8, front.getReadableBytes());
+                assertEquals(8, front.capacity());
+                assertEquals(8, buf.getReadableBytes());
+                assertEquals(8, buf.capacity());
+            }
+
+            verifyInaccessible(buf);
+
+            assertEquals(0x0102030405060708l, front.readLong());
+        }
+    }
+
+    @Test
+    public void testTransferOwnerShipLeavesOriginalInClosedState() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(16)) {
+            buf.writeLong(0x0102030405060708l);
+            buf.writeLong(0x0807060504030201l);
+
+            try (ProtonBuffer transfer = buf.transfer()) {
+                verifyInaccessible(buf);
+
+                assertEquals(16, transfer.getReadableBytes());
+                assertEquals(16, transfer.capacity());
+
+                assertEquals(0x0102030405060708l, transfer.readLong());
+                assertEquals(0x0807060504030201l, transfer.readLong());
+            }
+        }
+    }
+
+    @Test
+    public void testTransferOwnerShipLeavesOriginalReadOnlyState() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(16)) {
+            buf.writeLong(0x0102030405060708l);
+            buf.writeLong(0x0807060504030201l);
+            buf.convertToReadOnly();
+
+            try (ProtonBuffer transfer = buf.transfer()) {
+                verifyInaccessible(buf);
+
+                assertEquals(16, transfer.getReadableBytes());
+                assertEquals(16, transfer.capacity());
+                assertTrue(transfer.isReadOnly());
+
+                assertEquals(0x0102030405060708l, transfer.readLong());
+                assertEquals(0x0807060504030201l, transfer.readLong());
+            }
         }
     }
 
     @Test
     public void testCopy() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(LARGE_CAPACITY)) {
+            for (int i = 0; i < buffer.capacity(); i ++) {
+                byte value = (byte) random.nextInt();
+                buffer.setByte(i, value);
+            }
 
-        for (int i = 0; i < buffer.capacity(); i ++) {
-            byte value = (byte) random.nextInt();
-            buffer.setByte(i, value);
+            final int readerIndex = LARGE_CAPACITY / 3;
+            final int writerIndex = LARGE_CAPACITY * 2 / 3;
+            buffer.setWriteOffset(writerIndex);
+            buffer.setReadOffset(readerIndex);
+
+            // Make sure all properties are copied.
+            ProtonBuffer copy = buffer.copy();
+            assertEquals(0, copy.getReadOffset());
+            assertEquals(buffer.getReadableBytes(), copy.getWriteOffset());
+            assertEquals(buffer.getReadableBytes(), copy.capacity());
+            for (int i = 0; i < copy.capacity(); i ++) {
+                assertEquals(buffer.getByte(i + readerIndex), copy.getByte(i));
+            }
+
+            // Make sure the buffer content is independent from each other.
+            buffer.setByte(readerIndex, (byte) (buffer.getByte(readerIndex) + 1));
+            assertTrue(buffer.getByte(readerIndex) != copy.getByte(0));
+            copy.setByte(1, (byte) (copy.getByte(1) + 1));
+            assertTrue(buffer.getByte(readerIndex + 1) != copy.getByte(1));
         }
-
-        final int readerIndex = LARGE_CAPACITY / 3;
-        final int writerIndex = LARGE_CAPACITY * 2 / 3;
-        buffer.setIndex(readerIndex, writerIndex);
-
-        // Make sure all properties are copied.
-        ProtonBuffer copy = buffer.copy();
-        assertEquals(0, copy.getReadIndex());
-        assertEquals(buffer.getReadableBytes(), copy.getWriteIndex());
-        assertEquals(buffer.getReadableBytes(), copy.capacity());
-        for (int i = 0; i < copy.capacity(); i ++) {
-            assertEquals(buffer.getByte(i + readerIndex), copy.getByte(i));
-        }
-
-        // Make sure the buffer content is independent from each other.
-        buffer.setByte(readerIndex, (byte) (buffer.getByte(readerIndex) + 1));
-        assertTrue(buffer.getByte(readerIndex) != copy.getByte(0));
-        copy.setByte(1, (byte) (copy.getByte(1) + 1));
-        assertTrue(buffer.getByte(readerIndex + 1) != copy.getByte(1));
     }
 
     @Test
     public void testSequentialRandomFilledBufferIndexedCopy() {
-        doTestSequentialRandomFilledBufferIndexedCopy(false);
-    }
-
-    @Test
-    public void testSequentialRandomFilledBufferIndexedCopyDirectBackedBuffer() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestSequentialRandomFilledBufferIndexedCopy(true);
-    }
-
-    private void doTestSequentialRandomFilledBufferIndexedCopy(boolean direct) {
-        final ProtonBuffer buffer;
-        if (direct) {
-            buffer = allocateDirectBuffer(LARGE_CAPACITY);
-        } else {
-            buffer = allocateBuffer(LARGE_CAPACITY);
-        }
-
-        byte[] value = new byte[BLOCK_SIZE];
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(value);
-            buffer.setBytes(i, value);
-        }
-
-        random.setSeed(seed);
-        byte[] expectedValueContent = new byte[BLOCK_SIZE];
-        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValueContent);
-            ProtonBuffer copy = buffer.copy(i, BLOCK_SIZE);
-            for (int j = 0; j < BLOCK_SIZE; j ++) {
-                assertEquals(expectedValue.getByte(j), copy.getByte(j));
-            }
-        }
-    }
-
-    //----- Tests for Buffer duplication -------------------------------------//
-
-    @Test
-    public void testDuplicateEmptyBuffer() {
-        ProtonBuffer buffer = new ProtonByteBuffer(10);
-        ProtonBuffer duplicate = buffer.duplicate();
-
-        assertNotSame(buffer, duplicate);
-        assertEquals(buffer.capacity(), duplicate.capacity());
-        assertEquals(buffer.getReadableBytes(), duplicate.getReadableBytes());
-
-        if (buffer.hasArray()) {
-            assertSame(buffer.getArray(), duplicate.getArray());
-            assertEquals(0, buffer.getArrayOffset());
-        }
-    }
-
-    @Test
-    public void testDuplicate() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        for (int i = 0; i < buffer.capacity(); i ++) {
-            byte value = (byte) random.nextInt();
-            buffer.setByte(i, value);
-        }
-
-        final int readerIndex = LARGE_CAPACITY / 3;
-        final int writerIndex = LARGE_CAPACITY * 2 / 3;
-        buffer.setIndex(readerIndex, writerIndex);
-
-        // Make sure all properties are copied.
-        ProtonBuffer duplicate = buffer.duplicate();
-        assertEquals(buffer.getReadableBytes(), duplicate.getReadableBytes());
-        assertEquals(0, buffer.compareTo(duplicate));
-
-        // Make sure the buffer content is shared.
-        buffer.setByte(readerIndex, (byte) (buffer.getByte(readerIndex) + 1));
-        assertEquals(buffer.getByte(readerIndex), duplicate.getByte(duplicate.getReadIndex()));
-        duplicate.setByte(duplicate.getReadIndex(), (byte) (duplicate.getByte(duplicate.getReadIndex()) + 1));
-        assertEquals(buffer.getByte(readerIndex), duplicate.getByte(duplicate.getReadIndex()));
-    }
-
-    //----- Tests for Buffer slicing -----------------------------------------//
-
-    @Test
-    public void testSliceIndex() throws Exception {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        assertEquals(0, buffer.slice(0, buffer.capacity()).getReadIndex());
-        assertEquals(0, buffer.slice(0, buffer.capacity() - 1).getReadIndex());
-        assertEquals(0, buffer.slice(1, buffer.capacity() - 1).getReadIndex());
-        assertEquals(0, buffer.slice(1, buffer.capacity() - 2).getReadIndex());
-
-        assertEquals(buffer.capacity(), buffer.slice(0, buffer.capacity()).getWriteIndex());
-        assertEquals(buffer.capacity() - 1, buffer.slice(0, buffer.capacity() - 1).getWriteIndex());
-        assertEquals(buffer.capacity() - 1, buffer.slice(1, buffer.capacity() - 1).getWriteIndex());
-        assertEquals(buffer.capacity() - 2, buffer.slice(1, buffer.capacity() - 2).getWriteIndex());
-    }
-
-    @Test
-    public void testAdvancingSlice() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        buffer.setWriteIndex(0);
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(LARGE_CAPACITY)) {
             byte[] value = new byte[BLOCK_SIZE];
-            random.nextBytes(value);
-            assertEquals(0, buffer.getReadIndex());
-            assertEquals(i, buffer.getWriteIndex());
-            buffer.writeBytes(value);
-        }
-
-        random.setSeed(seed);
-        byte[] expectedValue = new byte[BLOCK_SIZE];
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValue);
-            assertEquals(i, buffer.getReadIndex());
-            assertEquals(LARGE_CAPACITY, buffer.getWriteIndex());
-            ProtonBuffer actualValue = buffer.slice().setWriteIndex(BLOCK_SIZE);
-            buffer.setReadIndex(BLOCK_SIZE + buffer.getReadIndex());
-            assertEquals(wrapBuffer(expectedValue), actualValue);
-
-            // Make sure if it is a sliced buffer.
-            actualValue.setByte(0, (byte) (actualValue.getByte(0) + 1));
-            assertEquals(buffer.getByte(i), actualValue.getByte(0));
-        }
-    }
-
-    @Test
-    public void testSequentialSlice1() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        buffer.setWriteIndex(0);
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            byte[] value = new byte[BLOCK_SIZE];
-            random.nextBytes(value);
-            assertEquals(0, buffer.getReadIndex());
-            assertEquals(i, buffer.getWriteIndex());
-            buffer.writeBytes(value);
-        }
-
-        random.setSeed(seed);
-        byte[] expectedValue = new byte[BLOCK_SIZE];
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValue);
-            assertEquals(i, buffer.getReadIndex());
-            assertEquals(LARGE_CAPACITY, buffer.getWriteIndex());
-            ProtonBuffer actualValue = buffer.slice(buffer.getReadIndex(), BLOCK_SIZE);
-            buffer.setReadIndex(BLOCK_SIZE + buffer.getReadIndex());
-            assertEquals(new ProtonByteBuffer(expectedValue), actualValue);
-
-            // Make sure if it is a sliced buffer.
-            actualValue.setByte(0, (byte) (actualValue.getByte(0) + 1));
-            assertEquals(buffer.getByte(i), actualValue.getByte(0));
-        }
-    }
-
-    //----- Tests for conversion to ByteBuffer -------------------------------//
-
-    @Test
-    public void testToByteBufferWithDataPresent() {
-        ProtonBuffer buffer = allocateBuffer(10);
-
-        buffer.writeByte(1);
-        buffer.writeByte(2);
-        buffer.writeByte(3);
-        buffer.writeByte(4);
-        buffer.writeByte(5);
-
-        ByteBuffer byteBuffer = buffer.toByteBuffer();
-
-        assertEquals(buffer.getReadableBytes(), byteBuffer.limit());
-
-        if (buffer.hasArray()) {
-            assertTrue(byteBuffer.hasArray());
-            assertNotNull(byteBuffer.array());
-            assertSame(buffer.getArray(), byteBuffer.array());
-        }
-    }
-
-    @Test
-    public void testToByteBufferWhenNoData() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-        ByteBuffer byteBuffer = buffer.toByteBuffer();
-
-        assertEquals(buffer.getReadableBytes(), byteBuffer.limit());
-
-        if (buffer.hasArray()) {
-            assertTrue(byteBuffer.hasArray());
-            assertNotNull(byteBuffer.array());
-            assertSame(buffer.getArray(), byteBuffer.array());
-        }
-    }
-
-    @Test
-    public void testNioBufferNoArgVariant() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        byte[] value = new byte[buffer.capacity()];
-        random.nextBytes(value);
-        buffer.clear();
-        buffer.writeBytes(value);
-
-        assertRemainingEquals(ByteBuffer.wrap(value), buffer.toByteBuffer());
-    }
-
-    @Test
-    public void testToByteBufferWithRange() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        byte[] value = new byte[buffer.capacity()];
-        random.nextBytes(value);
-        buffer.clear();
-        buffer.writeBytes(value);
-
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            assertRemainingEquals(ByteBuffer.wrap(value, i, BLOCK_SIZE), buffer.toByteBuffer(i, BLOCK_SIZE));
-        }
-    }
-
-    //----- Tests for string conversion --------------------------------------//
-
-    @Test
-    public void testToStringFromUTF8() throws Exception {
-        String sourceString = "Test-String-1";
-
-        ProtonBuffer buffer = wrapBuffer(sourceString.getBytes(StandardCharsets.UTF_8));
-
-        String decoded = buffer.toString(StandardCharsets.UTF_8);
-
-        assertEquals(sourceString, decoded);
-    }
-
-    @Test
-    public void testReadUnicodeStringAcrossArrayBoundaries() throws IOException {
-        String expected = "\u1f4a9\\u1f4a9\\u1f4a9";
-
-        byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
-
-        byte[] slice1 = new byte[] { utf8[0] };
-        byte[] slice2 = new byte[utf8.length - 1];
-
-        System.arraycopy(utf8, 1, slice2, 0, slice2.length);
-
-        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
-        buffer.append(slice1);
-        buffer.append(slice2);
-
-        String result = buffer.toString(StandardCharsets.UTF_8);
-
-        assertEquals(expected, result, "Failed to round trip String correctly: ");
-    }
-
-    @Test
-    public void testReadUnicodeStringAcrossMultipleArrayBoundaries() throws IOException {
-        String expected = "\u1f4a9\\u1f4a9\\u1f4a9";
-
-        byte[] utf8 = expected.getBytes(StandardCharsets.UTF_8);
-
-        byte[] slice1 = new byte[] { utf8[0] };
-        byte[] slice2 = new byte[] { utf8[1], utf8[2] };
-        byte[] slice3 = new byte[] { utf8[3], utf8[4] };
-        byte[] slice4 = new byte[utf8.length - 5];
-
-        System.arraycopy(utf8, 5, slice4, 0, slice4.length);
-
-        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
-        buffer.append(slice1);
-        buffer.append(slice2);
-        buffer.append(slice3);
-        buffer.append(slice4);
-
-        String result = buffer.toString(StandardCharsets.UTF_8);
-
-        assertEquals(expected, result, "Failed to round trip String correctly: ");
-    }
-
-    //----- Tests for index marking ------------------------------------------//
-
-    @Test
-    public void testMarkAndResetReadIndex() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        buffer.writeByte(0).writeByte(1);
-        buffer.markReadIndex();
-
-        assertEquals(0, buffer.readByte());
-        assertEquals(1, buffer.readByte());
-
-        buffer.resetReadIndex();
-
-        assertEquals(0, buffer.readByte());
-        assertEquals(1, buffer.readByte());
-    }
-
-    @Test
-    public void testResetReadIndexWhenInvalid() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        buffer.writeByte(0).writeByte(1);
-        buffer.readByte();
-        buffer.readByte();
-        buffer.markReadIndex();
-        buffer.setIndex(0, 1);
-
-        try {
-            buffer.resetReadIndex();
-            fail("Should not be able to reset to invalid mark");
-        } catch (IndexOutOfBoundsException iobe) {}
-    }
-
-    @Test
-    public void testMarkAndResetWriteIndex() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        buffer.markWriteIndex();
-        buffer.writeByte(0).writeByte(1);
-        buffer.resetWriteIndex();
-        buffer.writeByte(2).writeByte(3);
-
-        assertEquals(2, buffer.readByte());
-        assertEquals(3, buffer.readByte());
-    }
-
-    @Test
-    public void testResetWriteIndexWhenInvalid() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
-
-        buffer.markWriteIndex();
-        buffer.writeByte(0).writeByte(1);
-        buffer.readByte();
-        buffer.readByte();
-
-        try {
-            buffer.resetWriteIndex();
-            fail("Should not be able to reset to invalid mark");
-        } catch (IndexOutOfBoundsException iobe) {}
-    }
-
-    @Test
-    public void testReaderIndexLargerThanWriterIndex() {
-        String content1 = "hello";
-        String content2 = "world";
-        int length = content1.length() + content2.length();
-
-        ProtonBuffer buffer = allocateBuffer(length);
-        buffer.setIndex(0, 0);
-        buffer.writeBytes(content1.getBytes(StandardCharsets.UTF_8));
-        buffer.markWriteIndex();
-        buffer.skipBytes(content1.length());
-        buffer.writeBytes(content2.getBytes(StandardCharsets.UTF_8));
-        buffer.skipBytes(content2.length());
-        assertTrue(buffer.getReadIndex() <= buffer.getWriteIndex());
-
-        assertThrows(IndexOutOfBoundsException.class, () -> buffer.resetWriteIndex());
-    }
-
-    //----- Tests for equality and comparison --------------------------------//
-
-    @Test
-    public void testEqualsSelf() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
-        ProtonBuffer buffer = wrapBuffer(payload);
-        assertTrue(buffer.equals(buffer));
-    }
-
-    @SuppressWarnings("unlikely-arg-type")
-    @Test
-    public void testEqualsFailsForOtherBufferType() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
-        ProtonBuffer buffer = wrapBuffer(payload);
-        ByteBuffer byteBuffer = ByteBuffer.wrap(payload);
-
-        assertFalse(buffer.equals(byteBuffer));
-    }
-
-    @Test
-    public void testEqualsWithSameContents() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
-        ProtonBuffer buffer1 = wrapBuffer(payload);
-        ProtonBuffer buffer2 = wrapBuffer(payload);
-
-        assertTrue(buffer1.equals(buffer2));
-        assertTrue(buffer2.equals(buffer1));
-    }
-
-    @Test
-    public void testEqualsWithSameContentDifferenceArrays() {
-        byte[] payload1 = new byte[] { 0, 1, 2, 3, 4 };
-        byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };
-        ProtonBuffer buffer1 = wrapBuffer(payload1);
-        ProtonBuffer buffer2 = wrapBuffer(payload2);
-
-        assertTrue(buffer1.equals(buffer2));
-        assertTrue(buffer2.equals(buffer1));
-    }
-
-    @Test
-    public void testEqualsWithDifferingContent() {
-        byte[] payload1 = new byte[] { 1, 2, 3, 4, 5 };
-        byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };
-        ProtonBuffer buffer1 = wrapBuffer(payload1);
-        ProtonBuffer buffer2 = wrapBuffer(payload2);
-
-        assertFalse(buffer1.equals(buffer2));
-        assertFalse(buffer2.equals(buffer1));
-    }
-
-    @Test
-    public void testEqualsWithDifferingReadableBytes() {
-        byte[] payload1 = new byte[] { 0, 1, 2, 3, 4 };
-        byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };
-        ProtonBuffer buffer1 = wrapBuffer(payload1);
-        ProtonBuffer buffer2 = wrapBuffer(payload2);
-
-        buffer1.readByte();
-
-        assertFalse(buffer1.equals(buffer2));
-        assertFalse(buffer2.equals(buffer1));
-    }
-
-    @Test
-    public void testHashCode() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
-        ProtonBuffer buffer = wrapBuffer(payload);
-        assertNotEquals(0, buffer.hashCode());
-        assertNotEquals(buffer.hashCode(), System.identityHashCode(buffer));
-    }
-
-    @Test
-    public void testCompareToSameContents() {
-        byte[] payload1 = new byte[] { 0, 1, 2, 3, 4 };
-        byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };
-        ProtonBuffer buffer1 = wrapBuffer(payload1);
-        ProtonBuffer buffer2 = wrapBuffer(payload2);
-
-        assertEquals(0, buffer1.compareTo(buffer1));
-        assertEquals(0, buffer1.compareTo(buffer2));
-        assertEquals(0, buffer2.compareTo(buffer1));
-    }
-
-    @Test
-    public void testCompareToSameContentsButInOffsetBuffers() {
-        byte[] payload1 = new byte[] { 0, 1, 2, 3, 4 };
-        byte[] payload2 = new byte[] { 9, 9, 9, 0, 1, 2, 3, 4 };
-        ProtonBuffer buffer1 = wrapBuffer(payload1);
-        ProtonBuffer buffer2 = wrapBuffer(payload2);
-
-        buffer2.setReadIndex(3);
-
-        assertEquals(0, buffer1.compareTo(buffer1));
-        assertEquals(0, buffer1.compareTo(buffer2));
-        assertEquals(0, buffer2.compareTo(buffer1));
-    }
-
-    @Test
-    public void testCompareToDifferentContents() {
-        byte[] payload1 = new byte[] { 1, 2, 3, 4, 5 };
-        byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };
-        ProtonBuffer buffer1 = wrapBuffer(payload1);
-        ProtonBuffer buffer2 = wrapBuffer(payload2);
-
-        assertEquals(1, buffer1.compareTo(buffer2));
-        assertEquals(-1, buffer2.compareTo(buffer1));
-    }
-
-    @Test
-    public void testComparableInterfaceNotViolatedWithLongWrites() {
-        ProtonBuffer buffer1 = allocateBuffer(LARGE_CAPACITY);
-        ProtonBuffer buffer2 = allocateBuffer(LARGE_CAPACITY);
-
-        buffer1.setWriteIndex(buffer1.getReadIndex());
-        buffer1.writeLong(0);
-
-        buffer2.setWriteIndex(buffer2.getReadIndex());
-        buffer2.writeLong(0xF0000000L);
-
-        assertTrue(buffer1.compareTo(buffer2) < 0);
-        assertTrue(buffer2.compareTo(buffer1) > 0);
-    }
-
-    @Test
-    public void testCompareToContract() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        try {
-            buffer.compareTo(null);
-            fail();
-        } catch (NullPointerException e) {
-            // Expected
-        }
-
-        // Fill the random stuff
-        byte[] value = new byte[32];
-        random.nextBytes(value);
-        // Prevent overflow / underflow
-        if (value[0] == 0) {
-            value[0]++;
-        } else if (value[0] == -1) {
-            value[0]--;
-        }
-
-        buffer.setIndex(0, value.length);
-        buffer.setBytes(0, value);
-
-        assertEquals(0, buffer.compareTo(new ProtonByteBuffer(value)));
-
-        value[0]++;
-        assertTrue(buffer.compareTo(new ProtonByteBuffer(value)) < 0);
-        value[0] -= 2;
-        assertTrue(buffer.compareTo(new ProtonByteBuffer(value)) > 0);
-        value[0]++;
-
-        assertTrue(buffer.compareTo(new ProtonByteBuffer(value, 0, 31)) > 0);
-        assertTrue(buffer.slice(0, 31).compareTo(new ProtonByteBuffer(value)) < 0);
-    }
-
-    //----- Tests for readBytes variants -------------------------------------//
-
-    @Test
-    public void testReadBytesSingleArray() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
-        byte[] target = new byte[payload.length];
-
-        ProtonBuffer buffer = wrapBuffer(payload);
-
-        buffer.readBytes(target);
-
-        assertEquals(0, buffer.getReadableBytes());
-
-        for (int i = 0; i < payload.length; ++i) {
-            assertEquals(payload[i], buffer.getByte(i));
-        }
-
-        try {
-            buffer.readBytes(target);
-            fail("should have thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {
-        }
-    }
-
-    @Test
-    public void testReadBytesArrayAndLength() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
-        byte[] target = new byte[payload.length];
-
-        ProtonBuffer buffer = wrapBuffer(payload);
-
-        try {
-            buffer.readBytes(target, -1);
-            fail("should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {
-        }
-
-        buffer.readBytes(target, target.length);
-
-        assertEquals(0, buffer.getReadableBytes());
-
-        for (int i = 0; i < payload.length; ++i) {
-            assertEquals(payload[i], buffer.getByte(i));
-        }
-
-        try {
-            buffer.readBytes(target);
-            fail("should have thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {
-        }
-    }
-
-    @Test
-    public void testReadBytesArrayOffsetAndLength() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
-        byte[] target = new byte[payload.length];
-
-        ProtonBuffer buffer = wrapBuffer(payload);
-
-        try {
-            buffer.readBytes(target, 0, -1);
-            fail("should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {
-        }
-
-        buffer.readBytes(target, 0, target.length);
-
-        assertEquals(0, buffer.getReadableBytes());
-
-        for (int i = 0; i < payload.length; ++i) {
-            assertEquals(payload[i], buffer.getByte(i));
-        }
-
-        try {
-            buffer.readBytes(target);
-            fail("should have thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {
-        }
-    }
-
-    @Test
-    public void testReadBytesSingleProtonBuffer() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
-
-        ProtonBuffer buffer = wrapBuffer(payload);
-        ProtonBuffer target = allocateBuffer(5, 5);
-
-        buffer.readBytes(target);
-
-        assertEquals(0, buffer.getReadableBytes());
-
-        for (int i = 0; i < payload.length; ++i) {
-            assertEquals(payload[i], buffer.getByte(i));
-        }
-
-        target.setWriteIndex(0);
-
-        try {
-            buffer.readBytes(target);
-            fail("should have thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {
-        }
-    }
-
-    @Test
-    public void testReadBytesProtonBufferAndLength() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
-
-        ProtonBuffer buffer = wrapBuffer(payload);
-        ProtonBuffer target = allocateBuffer(5, 5);
-
-        try {
-            buffer.readBytes(target, -1);
-            fail("should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {
-        }
-
-        try {
-            buffer.readBytes(target, 1024);
-            fail("should have thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iae) {
-        }
-
-        buffer.readBytes(target, payload.length);
-
-        assertEquals(0, buffer.getReadableBytes());
-
-        for (int i = 0; i < payload.length; ++i) {
-            assertEquals(payload[i], buffer.getByte(i));
-        }
-
-        target.setWriteIndex(0);
-
-        try {
-            buffer.readBytes(target);
-            fail("should have thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {
-        }
-    }
-
-    @Test
-    public void testReadBytesProtonBufferOffsetAndLength() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
-
-        ProtonBuffer buffer = wrapBuffer(payload);
-        ProtonBuffer target = allocateBuffer(5, 5);
-
-        try {
-            buffer.readBytes(target, 0, -1);
-            fail("should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {
-        }
-
-        try {
-            buffer.readBytes(target, -1, -1);
-            fail("should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {
-        }
-
-        buffer.readBytes(target, 0, payload.length);
-
-        assertEquals(0, buffer.getReadableBytes());
-
-        for (int i = 0; i < payload.length; ++i) {
-            assertEquals(payload[i], buffer.getByte(i));
-        }
-
-        target.setWriteIndex(0);
-
-        try {
-            buffer.readBytes(target);
-            fail("should have thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {
-        }
-    }
-
-    @Test
-    public void testReadBytesIntoByteBuffer() {
-        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
-
-        ProtonBuffer buffer = wrapBuffer(payload);
-        ByteBuffer target = ByteBuffer.allocate(5);
-
-        buffer.readBytes(target);
-
-        assertEquals(0, buffer.getReadableBytes());
-
-        for (int i = 0; i < payload.length; ++i) {
-            assertEquals(payload[i], buffer.getByte(i));
-        }
-
-        target.clear();
-
-        try {
-            buffer.readBytes(target);
-            fail("should have thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {
-        }
-    }
-
-    //----- Test for set by index --------------------------------------------//
-
-    @Test
-    public void testSetByteAtIndex() {
-        ProtonBuffer buffer = allocateBuffer(5, 5);
-
-        for (int i = 0; i < buffer.capacity(); ++i) {
-            buffer.setByte(i, i);
-        }
-
-        for (int i = 0; i < buffer.capacity(); ++i) {
-            assertEquals(i, buffer.getByte(i));
-        }
-
-        try {
-            buffer.setByte(-1, 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-
-        try {
-            buffer.setByte(buffer.capacity(), 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-    }
-
-    @Test
-    public void testSetBooleanAtIndex() {
-        ProtonBuffer buffer = allocateBuffer(5, 5);
-
-        for (int i = 0; i < buffer.capacity(); ++i) {
-            if ((i % 2) == 0) {
-                buffer.setBoolean(i, false);
-            } else {
-                buffer.setBoolean(i, true);
+            for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+                random.nextBytes(value);
+                buffer.setWriteOffset(i);
+                buffer.writeBytes(value);
+            }
+
+            random.setSeed(seed);
+
+            for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+                final byte[] expectedValueContent = new byte[BLOCK_SIZE];
+                random.nextBytes(expectedValueContent);
+
+                final ProtonBuffer expectedValue = allocator.copy(expectedValueContent);
+
+                ProtonBuffer copy = buffer.copy(i, BLOCK_SIZE);
+                for (int j = 0; j < BLOCK_SIZE; j ++) {
+                    assertEquals(expectedValue.getByte(j), copy.getByte(j));
+                }
             }
         }
+    }
 
-        for (int i = 0; i < buffer.capacity(); ++i) {
-            if ((i % 2) == 0) {
-                assertFalse(buffer.getBoolean(i));
+    @Test
+    public void testWriteBytesAfterMultipleBufferExpansions() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(8)) {
+            buffer.ensureWritable(16);
+            buffer.ensureWritable(32);
+
+            final byte[] data = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+
+            buffer.setWriteOffset(24);
+            buffer.writeBytes(data);
+
+            assertEquals(32, buffer.getReadableBytes());
+
+            buffer.setReadOffset(24);
+
+            assertEquals(0x0102030405060708l, buffer.readLong());
+        }
+    }
+
+    @Test
+    public void testWriteBytesFromProtonBufferAfterMultipleBufferExpansions() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(8);
+             ProtonBuffer input = ProtonBufferAllocator.defaultAllocator().allocate(8)) {
+
+            input.writeLong(0x0102030405060708l);
+
+            buffer.ensureWritable(16);
+            buffer.ensureWritable(32);
+
+            buffer.setWriteOffset(24);
+            buffer.writeBytes(input);
+
+            assertEquals(32, buffer.getReadableBytes());
+
+            buffer.setReadOffset(24);
+
+            assertEquals(0x0102030405060708l, buffer.readLong());
+        }
+    }
+
+    @Test
+    public void testTransferToMustThrowIfBufferIsClosed() throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            final long position = channel.position();
+            final long size = channel.size();
+            ProtonBuffer empty = allocator.allocate(8);
+            empty.close();
+            assertThrows(ProtonBufferClosedException.class, () -> empty.transferTo(channel, 8));
+            assertEquals(position, channel.position());
+            assertEquals(size, channel.size());
+            ProtonBuffer withData = allocator.allocate(8);
+            withData.writeLong(0x0102030405060708L);
+            withData.close();
+            assertThrows(ProtonBufferClosedException.class, () -> withData.transferTo(channel, 8));
+            assertEquals(position, channel.position());
+            assertEquals(size, channel.size());
+
+            if (withData.isComposite()) {
+                assertEquals(0, withData.componentCount());
             } else {
-                assertTrue(buffer.getBoolean(i));
+                assertEquals(1, withData.componentCount());
             }
-        }
-
-        try {
-            buffer.setBoolean(-1, true);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-
-        try {
-            buffer.setBoolean(buffer.capacity(), false);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-    }
-
-    @Test
-    public void testSetShortAtIndex() {
-        ProtonBuffer buffer = allocateBuffer(10, 10);
-
-        for (short i = 0; i < buffer.capacity() / 2; i += 2) {
-            buffer.setShort(i, i);
-        }
-
-        for (short i = 0; i < buffer.capacity() / 2; i += 2) {
-            assertEquals(i, buffer.getShort(i));
-        }
-
-        try {
-            buffer.setShort(-1, 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-
-        try {
-            buffer.setShort(buffer.capacity(), 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-    }
-
-    @Test
-    public void testSetIntAtIndex() {
-        ProtonBuffer buffer = allocateBuffer(20, 20);
-
-        for (int i = 0; i < buffer.capacity() / 4; i += 4) {
-            buffer.setInt(i, i);
-        }
-
-        for (int i = 0; i < buffer.capacity() / 4; i += 4) {
-            assertEquals(i, buffer.getInt(i));
-        }
-
-        try {
-            buffer.setInt(-1, 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-
-        try {
-            buffer.setInt(buffer.capacity(), 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-    }
-
-    @Test
-    public void testSetLongAtIndex() {
-        ProtonBuffer buffer = allocateBuffer(40, 40);
-
-        for (long i = 0; i < buffer.capacity() / 8; i += 8) {
-            buffer.setLong((int) i, i);
-        }
-
-        for (long i = 0; i < buffer.capacity() / 8; i += 8) {
-            assertEquals(i, buffer.getLong((int) i));
-        }
-
-        try {
-            buffer.setInt(-1, 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-
-        try {
-            buffer.setInt(buffer.capacity(), 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-    }
-
-    @Test
-    public void testSetFloatAtIndex() {
-        ProtonBuffer buffer = allocateBuffer(8, 8);
-
-        buffer.setFloat(0, 1.5f);
-        buffer.setFloat(4, 45.2f);
-
-        assertEquals(1.5f, buffer.getFloat(0), 0.1);
-        assertEquals(45.2f, buffer.getFloat(4), 0.1);
-
-        try {
-            buffer.setFloat(-1, 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-
-        try {
-            buffer.setFloat(buffer.capacity(), 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-    }
-
-    @Test
-    public void testSetDoubleAtIndex() {
-        ProtonBuffer buffer = allocateBuffer(16, 16);
-
-        buffer.setDouble(0, 1.5);
-        buffer.setDouble(8, 45.2);
-
-        assertEquals(1.5, buffer.getDouble(0), 0.1);
-        assertEquals(45.2, buffer.getDouble(8), 0.1);
-
-        try {
-            buffer.setDouble(-1, 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-
-        try {
-            buffer.setDouble(buffer.capacity(), 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-    }
-
-    @Test
-    public void testSetCharAtIndex() {
-        ProtonBuffer buffer = allocateBuffer(8, 8);
-
-        buffer.setChar(0, 65);
-        buffer.setChar(4, 66);
-
-        assertEquals('A', buffer.getChar(0));
-        assertEquals('B', buffer.getChar(4));
-
-        try {
-            buffer.setDouble(-1, 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-
-        try {
-            buffer.setDouble(buffer.capacity(), 0);
-            fail("should throw an IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException ioe) {}
-    }
-
-    //----- Test for setBytes methods ----------------------------------------//
-
-    @Test
-    public void testSetBytesUsingArray() {
-        ProtonBuffer buffer = allocateBuffer(8, 8);
-
-        byte[] other = new byte[] { 1, 2 };
-
-        buffer.setWriteIndex(buffer.capacity());
-        buffer.setBytes(0, other);
-
-        assertEquals(1, buffer.readByte());
-        assertEquals(2, buffer.readByte());
-    }
-
-    @Test
-    public void testSetBytesUsingBufferAtIndex() {
-        ProtonBuffer buffer = allocateBuffer(8, 8);
-        ProtonBuffer other = allocateBuffer(8, 8);
-
-        buffer.setWriteIndex(buffer.capacity());
-
-        other.writeByte(1);
-        other.writeByte(2);
-
-        buffer.setBytes(0, other);
-
-        assertEquals(1, buffer.readByte());
-        assertEquals(2, buffer.readByte());
-
-        assertTrue(other.getReadableBytes() == 0);
-        assertFalse(other.isReadable());
-    }
-
-    @Test
-    public void testSetBytesUsingBufferAtIndexWithLength() {
-        ProtonBuffer buffer = allocateBuffer(8, 8);
-        ProtonBuffer other = allocateBuffer(8, 8);
-
-        buffer.setWriteIndex(buffer.capacity());
-
-        other.writeByte(1);
-        other.writeByte(2);
-
-        buffer.setBytes(0, other, 2);
-
-        assertEquals(1, buffer.readByte());
-        assertEquals(2, buffer.readByte());
-
-        assertTrue(other.getReadableBytes() == 0);
-        assertFalse(other.isReadable());
-    }
-
-    @Test
-    public void testSetBytesUsingBufferAtIndexHandleBoundsError() {
-        ProtonBuffer buffer = allocateBuffer(8, 8);
-        ProtonBuffer other = allocateBuffer(8, 8);
-
-        buffer.setWriteIndex(buffer.capacity());
-
-        other.writeByte(0);
-        other.writeByte(1);
-
-        try {
-            buffer.setBytes(0, null, 0);
-            fail("Should thrown NullPointerException");
-        } catch (NullPointerException npe) {}
-
-        try {
-            buffer.setBytes(-1, other, 1);
-            fail("Should thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {}
-
-        try {
-            buffer.setBytes(0, other, -1);
-            fail("Should thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {}
-
-        try {
-            buffer.setBytes(-1, other, -1);
-            fail("Should thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {}
-
-        try {
-            buffer.setBytes(10, other, 1);
-            fail("Should thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {}
-
-        try {
-            buffer.setBytes(0, other, 10);
-            fail("Should thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {}
-
-        try {
-            buffer.setBytes(0, other, 3);
-            fail("Should thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {}
-
-        try {
-            buffer.setBytes(buffer.getWriteIndex() - 1, other, 2);
-            fail("Should thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {}
-    }
-
-    @Test
-    public void testSetBytesFromLargerBufferIntoSmallerBuffer() {
-        ProtonBuffer buffer = allocateBuffer(2, 2);
-        ProtonBuffer other = allocateBuffer(3, 3);
-
-        other.writeByte(1);
-        other.writeByte(2);
-        other.writeByte(3);
-
-        try {
-            buffer.setBytes(0, other);
-        } catch (IndexOutOfBoundsException iobe) {}
-
-        buffer.setBytes(0, other, 2);
-
-        assertFalse(buffer.isReadable());
-
-        buffer.setWriteIndex(2);
-
-        assertEquals(buffer.readByte(), 1);
-        assertEquals(buffer.readByte(), 2);
-
-        assertEquals(2, other.getReadIndex());
-    }
-
-    //----- Test for getBytes methods ----------------------------------------//
-
-    @Test
-    public void testGetBytesUsingBufferAtIndexHandleBoundsError() {
-        ProtonBuffer buffer = allocateBuffer(8, 8);
-        ProtonBuffer other = allocateBuffer(8, 8);
-
-        buffer.setWriteIndex(buffer.capacity());
-
-        other.writeByte(0);
-        other.writeByte(1);
-
-        try {
-            buffer.getBytes(0, null, 0);
-            fail("Should thrown NullPointerException");
-        } catch (NullPointerException npe) {}
-
-        try {
-            buffer.getBytes(-1, other, 1);
-            fail("Should thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {}
-
-        try {
-            buffer.getBytes(0, other, -1);
-            fail("Should thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {}
-
-        try {
-            buffer.getBytes(-1, other, -1);
-            fail("Should thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {}
-
-        try {
-            buffer.getBytes(10, other, 1);
-            fail("Should thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {}
-
-        try {
-            buffer.getBytes(0, other, 10);
-            fail("Should thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {}
-
-        try {
-            buffer.getBytes(buffer.getWriteIndex() - 1, other, 2);
-            fail("Should thrown IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException iobe) {}
-    }
-
-    @Test
-    public void testGetBytesUsingArray() {
-        ProtonBuffer buffer = allocateBuffer(8, 8);
-
-        byte[] data = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
-        byte[] target = new byte[data.length];
-
-        buffer.writeBytes(data);
-        buffer.getBytes(0, target);
-
-        for (int i = 0; i < data.length; ++i) {
-            assertEquals(buffer.getByte(i), target[i]);
+            assertEquals(0, withData.readableComponentCount());
+            assertEquals(0, withData.writableComponentCount());
         }
     }
 
     @Test
-    public void testGetBytesUsingArrayOffsetAndLength() {
-        ProtonBuffer buffer = allocateBuffer(8, 8);
+    public void testTransferToMustCapAtReadableBytes() throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(8)) {
+            buffer.writeLong(0x0102030405060708L);
+            buffer.setWriteOffset(buffer.getWriteOffset() - 5);
+            long position = channel.position();
+            long size = channel.size();
+            int bytesWritten = buffer.transferTo(channel, 8);
 
-        byte[] data = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
-        byte[] target = new byte[data.length];
-
-        buffer.writeBytes(data);
-        buffer.getBytes(0, target, 0, target.length);
-
-        for (int i = 0; i < data.length; ++i) {
-            assertEquals(buffer.getByte(i), target[i]);
-        }
-
-        byte[] target2 = new byte[data.length * 2];
-        buffer.getBytes(0, target2, target.length, target.length);
-
-        for (int i = 0; i < data.length; ++i) {
-            assertEquals(buffer.getByte(i), target2[i + target.length]);
+            assertEquals(3, bytesWritten);
+            assertEquals(position + 3, channel.position());
+            assertEquals(size + 3, channel.size());
+            assertEquals(5, buffer.getWritableBytes());
+            assertEquals(0, buffer.getReadableBytes());
         }
     }
 
     @Test
-    public void testGetBytesUsingBuffer() {
-        ProtonBuffer buffer = allocateBuffer(8, 8);
-        ProtonBuffer target = allocateBuffer(8, 8);
+    public void testTransferToMustCapAtLength() throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(8)) {
+            buffer.writeLong(0x0102030405060708L);
+            long position = channel.position();
+            long size = channel.size();
+            int bytesWritten = buffer.transferTo(channel, 3);
 
-        byte[] data = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
-
-        buffer.writeBytes(data);
-        buffer.getBytes(0, target);
-
-        assertTrue(target.isReadable());
-        assertEquals(8, target.getReadableBytes());
-
-        for (int i = 0; i < data.length; ++i) {
-            assertEquals(buffer.getByte(i), target.getByte(i));
+            assertEquals(3, bytesWritten);
+            assertEquals(position + 3, channel.position());
+            assertEquals(size + 3, channel.size());
+            assertEquals(0, buffer.getWritableBytes());
+            assertEquals(5, buffer.getReadableBytes());
         }
     }
 
     @Test
-    public void testGetBytesFromLargerBufferIntoSmallerBuffer() {
-        ProtonBuffer buffer = allocateBuffer(2, 2);
-        ProtonBuffer other = allocateBuffer(3, 3);
-
-        other.writeByte(1);
-        other.writeByte(2);
-        other.writeByte(3);
-
-        other.getBytes(0, buffer);
-
-        assertTrue(buffer.isReadable());
-
-        assertEquals(other.readByte(), 1);
-        assertEquals(other.readByte(), 2);
-        assertEquals(other.readByte(), 3);
-
-        assertEquals(3, other.getReadIndex());
-
-        assertEquals(buffer.readByte(), 1);
-        assertEquals(buffer.readByte(), 2);
-    }
-
-    //----- Miscellaneous Stress Tests
-
-    @Test
-    public void testRandomByteAccess() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        for (int i = 0; i < buffer.capacity(); i ++) {
-            byte value = (byte) random.nextInt();
-            buffer.setByte(i, value);
-        }
-
-        random.setSeed(seed);
-        for (int i = 0; i < buffer.capacity(); i ++) {
-            byte value = (byte) random.nextInt();
-            assertEquals(value, buffer.getByte(i));
+    public void testTransferToMustThrowIfChannelIsClosed() throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(8)) {
+            buffer.writeLong(0x0102030405060708L);
+            assertThrows(ClosedChannelException.class, () -> buffer.transferTo(closedChannel, 8));
+            assertFalse(buffer.isClosed());
+            assertEquals(8, buffer.getReadableBytes());
         }
     }
 
     @Test
-    public void testRandomShortAccess() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        for (int i = 0; i < buffer.capacity() - 1; i += 2) {
-            short value = (short) random.nextInt();
-            buffer.setShort(i, value);
-        }
-
-        random.setSeed(seed);
-        for (int i = 0; i < buffer.capacity() - 1; i += 2) {
-            short value = (short) random.nextInt();
-            assertEquals(value, buffer.getShort(i));
+    public void testTransferToMustThrowIfChannelIsNull() throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(8)) {
+            buffer.writeLong(0x0102030405060708L);
+            assertThrows(NullPointerException.class, () -> buffer.transferTo(null, 8));
+            assertFalse(buffer.isClosed());
+            assertEquals(8, buffer.getReadableBytes());
         }
     }
 
     @Test
-    public void testShortConsistentWithByteBuffer() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        for (int i = 0; i < 64; ++i) {
-            ByteBuffer javaBuffer = ByteBuffer.allocate(buffer.capacity());
-
-            short expected = (short) (random.nextInt() & 0xFFFF);
-            javaBuffer.putShort(expected);
-
-            final int bufferIndex = buffer.capacity() - 2;
-            buffer.setShort(bufferIndex, expected);
-            javaBuffer.flip();
-
-            short javaActual = javaBuffer.getShort();
-            assertEquals(expected, javaActual);
-            assertEquals(javaActual, buffer.getShort(bufferIndex));
+    public void testTransferToMustThrowIfLengthIsNegative() throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(8)) {
+            buffer.writeLong(0x0102030405060708L);
+            assertThrows(IllegalArgumentException.class, () -> buffer.transferTo(channel, -1));
+            assertEquals(8, buffer.getReadableBytes());
         }
     }
 
     @Test
-    public void testRandomIntAccess() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
+    public void testTransferToMustIgnoreZeroLengthOperations() throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(8)) {
+            long position = channel.position();
+            long size = channel.size();
+            buffer.writeLong(0x0102030405060708L);
+            int bytesWritten = buffer.transferTo(channel, 0);
 
-        for (int i = 0; i < buffer.capacity() - 3; i += 4) {
-            int value = random.nextInt();
-            buffer.setInt(i, value);
-        }
-
-        random.setSeed(seed);
-        for (int i = 0; i < buffer.capacity() - 3; i += 4) {
-            int value = random.nextInt();
-            assertEquals(value, buffer.getInt(i));
-        }
-    }
-
-    @Test
-    public void testIntConsistentWithByteBuffer() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        for (int i = 0; i < 64; ++i) {
-            ByteBuffer javaBuffer = ByteBuffer.allocate(buffer.capacity());
-            int expected = random.nextInt();
-            javaBuffer.putInt(expected);
-
-            final int bufferIndex = buffer.capacity() - 4;
-            buffer.setInt(bufferIndex, expected);
-            javaBuffer.flip();
-
-            int javaActual = javaBuffer.getInt();
-            assertEquals(expected, javaActual);
-            assertEquals(javaActual, buffer.getInt(bufferIndex));
+            assertEquals(0, bytesWritten);
+            assertEquals(position, channel.position());
+            assertEquals(size, channel.size());
+            assertEquals(8, buffer.getReadableBytes());
         }
     }
 
     @Test
-    public void testRandomLongAccess() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        for (int i = 0; i < buffer.capacity() - 7; i += 8) {
+    public void testTransferToMustMoveDataToChannel() throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(8)) {
             long value = random.nextLong();
-            buffer.setLong(i, value);
-        }
-
-        random.setSeed(seed);
-        for (int i = 0; i < buffer.capacity() - 7; i += 8) {
-            long value = random.nextLong();
-            assertEquals(value, buffer.getLong(i));
-        }
-    }
-
-    @Test
-    public void testLongConsistentWithByteBuffer() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        for (int i = 0; i < 64; ++i) {
-            ByteBuffer javaBuffer = ByteBuffer.allocate(buffer.capacity());
-
-            long expected = random.nextLong();
-            javaBuffer.putLong(expected);
-
-            final int bufferIndex = buffer.capacity() - 8;
-            buffer.setLong(bufferIndex, expected);
-            javaBuffer.flip();
-
-            long javaActual = javaBuffer.getLong();
-            assertEquals(expected, javaActual);
-            assertEquals(javaActual, buffer.getLong(bufferIndex));
-        }
-    }
-
-    @Test
-    public void testRandomFloatAccess() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        for (int i = 0; i < buffer.capacity() - 7; i += 8) {
-            float value = random.nextFloat();
-            buffer.setFloat(i, value);
-        }
-
-        random.setSeed(seed);
-        for (int i = 0; i < buffer.capacity() - 7; i += 8) {
-            float expected = random.nextFloat();
-            float actual = buffer.getFloat(i);
-            assertEquals(expected, actual, 0.01);
-        }
-    }
-
-    @Test
-    public void testRandomDoubleAccess() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        for (int i = 0; i < buffer.capacity() - 7; i += 8) {
-            double value = random.nextDouble();
-            buffer.setDouble(i, value);
-        }
-
-        random.setSeed(seed);
-        for (int i = 0; i < buffer.capacity() - 7; i += 8) {
-            double expected = random.nextDouble();
-            double actual = buffer.getDouble(i);
-            assertEquals(expected, actual, 0.01);
-        }
-    }
-
-    @Test
-    public void testSequentialByteAccess() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        buffer.setWriteIndex(0);
-        for (int i = 0; i < buffer.capacity(); i ++) {
-            byte value = (byte) random.nextInt();
-            assertEquals(i, buffer.getWriteIndex());
-            assertTrue(buffer.isWritable());
-            buffer.writeByte(value);
-        }
-
-        assertEquals(0, buffer.getReadIndex());
-        assertEquals(buffer.capacity(), buffer.getWriteIndex());
-        assertFalse(buffer.isWritable());
-
-        random.setSeed(seed);
-        for (int i = 0; i < buffer.capacity(); i ++) {
-            byte value = (byte) random.nextInt();
-            assertEquals(i, buffer.getReadIndex());
-            assertTrue(buffer.isReadable());
-            assertEquals(value, buffer.readByte());
-        }
-
-        assertEquals(buffer.capacity(), buffer.getReadIndex());
-        assertEquals(buffer.capacity(), buffer.getWriteIndex());
-        assertFalse(buffer.isReadable());
-        assertFalse(buffer.isWritable());
-    }
-
-    @Test
-    public void testSequentialShortAccess() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        buffer.setWriteIndex(0);
-        for (int i = 0; i < buffer.capacity(); i += 2) {
-            short value = (short) random.nextInt();
-            assertEquals(i, buffer.getWriteIndex());
-            assertTrue(buffer.isWritable());
-            buffer.writeShort(value);
-        }
-
-        assertEquals(0, buffer.getReadIndex());
-        assertEquals(buffer.capacity(), buffer.getWriteIndex());
-        assertFalse(buffer.isWritable());
-
-        random.setSeed(seed);
-        for (int i = 0; i < buffer.capacity(); i += 2) {
-            short value = (short) random.nextInt();
-            assertEquals(i, buffer.getReadIndex());
-            assertTrue(buffer.isReadable());
-            assertEquals(value, buffer.readShort());
-        }
-
-        assertEquals(buffer.capacity(), buffer.getReadIndex());
-        assertEquals(buffer.capacity(), buffer.getWriteIndex());
-        assertFalse(buffer.isReadable());
-        assertFalse(buffer.isWritable());
-    }
-
-    @Test
-    public void testSequentialIntAccess() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        buffer.setWriteIndex(0);
-        for (int i = 0; i < buffer.capacity(); i += 4) {
-            int value = random.nextInt();
-            assertEquals(i, buffer.getWriteIndex());
-            assertTrue(buffer.isWritable());
-            buffer.writeInt(value);
-        }
-
-        assertEquals(0, buffer.getReadIndex());
-        assertEquals(buffer.capacity(), buffer.getWriteIndex());
-        assertFalse(buffer.isWritable());
-
-        random.setSeed(seed);
-        for (int i = 0; i < buffer.capacity(); i += 4) {
-            int value = random.nextInt();
-            assertEquals(i, buffer.getReadIndex());
-            assertTrue(buffer.isReadable());
-            assertEquals(value, buffer.readInt());
-        }
-
-        assertEquals(buffer.capacity(), buffer.getReadIndex());
-        assertEquals(buffer.capacity(), buffer.getWriteIndex());
-        assertFalse(buffer.isReadable());
-        assertFalse(buffer.isWritable());
-    }
-
-    @Test
-    public void testSequentialLongAccess() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
-
-        buffer.setWriteIndex(0);
-        for (int i = 0; i < buffer.capacity(); i += 8) {
-            long value = random.nextLong();
-            assertEquals(i, buffer.getWriteIndex());
-            assertTrue(buffer.isWritable());
             buffer.writeLong(value);
+            long position = channel.position();
+            int bytesWritten = buffer.transferTo(channel, 8);
+            assertEquals(8, bytesWritten);
+            ByteBuffer nio = ByteBuffer.allocate(8);
+            int bytesRead = channel.read(nio, position);
+            assertEquals(8, bytesRead);
+            nio.flip();
+            assertEquals(value, nio.getLong());
         }
+    }
 
-        assertEquals(0, buffer.getReadIndex());
-        assertEquals(buffer.capacity(), buffer.getWriteIndex());
-        assertFalse(buffer.isWritable());
+    @Test
+    public void testTransferToMustMoveCompositeDataToChannel() throws IOException {
+        final int value1 = random.nextInt();
+        final int value2 = random.nextInt();
 
-        random.setSeed(seed);
-        for (int i = 0; i < buffer.capacity(); i += 8) {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer1 = allocator.allocate(4).writeInt(value1);
+             ProtonBuffer buffer2 = allocator.allocate(4).writeInt(value2);
+             ProtonBuffer composite = allocator.composite(new ProtonBuffer[] { buffer1, buffer2})) {
+
+            long position = channel.position();
+            int bytesWritten = composite.transferTo(channel, 8);
+            assertEquals(8, bytesWritten);
+
+            ByteBuffer nio = ByteBuffer.allocate(8);
+            int bytesRead = channel.read(nio, position);
+            assertEquals(8, bytesRead);
+            nio.flip();
+            assertEquals(value1, nio.getInt());
+            assertEquals(value2, nio.getInt());
+        }
+    }
+
+    @Test
+    public void testTransferToMustFunctionOnReadOnlyBuffers() throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(8)) {
             long value = random.nextLong();
-            assertEquals(i, buffer.getReadIndex());
-            assertTrue(buffer.isReadable());
+            buffer.writeLong(value).convertToReadOnly();
+            long position = channel.position();
+            int bytesWritten = buffer.transferTo(channel, 8);
+            assertEquals(8, bytesWritten);
+            ByteBuffer nio = ByteBuffer.allocate(8);
+            int bytesRead = channel.read(nio, position);
+            assertEquals(8, bytesRead);
+            nio.flip();
+            assertEquals(value, nio.getLong());
+        }
+    }
+
+    @Test
+    public void testTransferToZeroBytesMustNotThrowOnClosedChannel() throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer empty = allocator.allocate(0);
+             ProtonBuffer notEmpty = allocator.allocate(4).writeInt(42)) {
+
+            empty.transferTo(closedChannel, 4);
+            notEmpty.transferTo(closedChannel, 0);
+        }
+    }
+
+    @Test
+    public void testPrtialFailureOfTransferToMustKeepChannelAndBufferPositionsInSync(@TempDir Path parentDir) throws IOException {
+        ProtonBufferAllocator allocator = ProtonBufferAllocator.defaultAllocator();
+        Path path = parentDir.resolve("transferTo");
+        try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+             ProtonBuffer buf = allocator.composite(
+                 new ProtonBuffer[] { allocator.allocate(4).writeInt(0x01020304), allocator.allocate(4).writeInt(0x05060708) })) {
+
+            WritableByteChannel channelWrapper = new WritableByteChannel() {
+                private boolean pastFirstCall;
+
+                @Override
+                public int write(ByteBuffer src) throws IOException {
+                    if (pastFirstCall) {
+                        throw new IOException("boom");
+                    }
+                    pastFirstCall = true;
+                    return channel.write(src);
+                }
+
+                @Override
+                public boolean isOpen() {
+                    return channel.isOpen();
+                }
+
+                @Override
+                public void close() throws IOException {
+                    channel.close();
+                }
+            };
+
+            long position = channel.position();
+            long size = channel.size();
+            Exception e = assertThrows(IOException.class, () -> buf.transferTo(channelWrapper, 8));
+            assertTrue(e.getMessage().contains("boom"));
+
+            assertEquals(position + 4, channel.position());
+            assertEquals(size + 4, channel.size());
+            assertEquals(4, buf.getReadOffset());
+            assertEquals(4, buf.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testTransferFromMustThrowIfBufferIsClosed() throws IOException {
+        doTestTransferFromMustThrowIfBufferIsClosed(false);
+    }
+
+    @Test
+    public void testTransferFromWithPositionMustThrowIfBufferIsClosed() throws IOException {
+        doTestTransferFromMustThrowIfBufferIsClosed(true);
+    }
+
+    private void doTestTransferFromMustThrowIfBufferIsClosed(boolean withPosition) throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            ByteBuffer data = ByteBuffer.allocate(8).putLong(0x0102030405060708L).flip();
+            long position = channel.position();
+            assertEquals(8, channel.write(data, position));
+            long size = channel.size();
+            ProtonBuffer empty = allocator.allocate(0);
+            empty.close();
+            assertThrows(ProtonBufferClosedException.class, () -> {
+                if (withPosition) {
+                    empty.transferFrom(channel, 4 + position, 8);
+                } else {
+                    empty.transferFrom(channel, 8);
+                }
+            });
+
+            assertEquals(position, channel.position());
+            assertEquals(size, channel.size());
+
+            ProtonBuffer withAvailableSpace = allocator.allocate(8);
+            withAvailableSpace.close();
+            assertThrows(ProtonBufferClosedException.class, () -> {
+                if (withPosition) {
+                    withAvailableSpace.transferFrom(channel, 4 + position, 8);
+                } else {
+                    withAvailableSpace.transferFrom(channel, 8);
+                }
+            });
+
+            assertEquals(position, channel.position());
+            assertEquals(size, channel.size());
+        } finally {
+            channel.position(channel.size());
+        }
+    }
+
+    @Test
+    public void testTransferFromMustCapAtWritableBytes() throws IOException {
+        doTestTransferFromMustCapAtWritableBytes(false);
+    }
+
+    @Test
+    public void testTransferFromWithPositionMustCapAtWritableBytes() throws IOException {
+        doTestTransferFromMustCapAtWritableBytes(true);
+    }
+
+    private void doTestTransferFromMustCapAtWritableBytes(boolean withPosition) throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(3)) {
+            ByteBuffer data = ByteBuffer.allocate(8).putLong(0x0102030405060708L).flip();
+            long position = channel.position();
+            assertEquals(8, channel.write(data, position));
+            long size = channel.size();
+
+            final int bytesRead = withPosition ? buffer.transferFrom(channel, 4 + position, 8) :
+                                                 buffer.transferFrom(channel, 8);
+
+            assertEquals(3, bytesRead);
+            assertEquals(withPosition ? position : 3 + position, channel.position());
+            assertEquals(size, channel.size());
+            assertEquals(0, buffer.getWritableBytes());
+            assertEquals(3, buffer.getReadableBytes());
+        } finally {
+            channel.position(channel.size());
+        }
+    }
+
+    @Test
+    public void testTransferFromMustCapAtLength() throws IOException {
+        doTestTransferFromMustCapAtLength(false);
+    }
+
+    @Test
+    public void testTransferFromWithPositionMustCapAtLength() throws IOException {
+        doTestTransferFromMustCapAtLength(true);
+    }
+
+    private void doTestTransferFromMustCapAtLength(boolean withPosition) throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(8)) {
+            ByteBuffer data = ByteBuffer.allocate(8).putLong(0x0102030405060708L).flip();
+            long position = channel.position();
+            assertEquals(8, channel.write(data, position));
+            long size = channel.size();
+            int bytesRead = withPosition ? buffer.transferFrom(channel, 4 + position, 3) :
+                                           buffer.transferFrom(channel, 3);
+
+            assertEquals(3, bytesRead);
+            assertEquals(withPosition ? position : 3 + position, channel.position());
+            assertEquals(size, channel.size());
+            assertEquals(5, buffer.getWritableBytes());
+            assertEquals(3, buffer.getReadableBytes());
+        } finally {
+            channel.position(channel.size());
+        }
+    }
+
+    @Test
+    public void testTransferFromMustThrowIfChannelIsClosed() {
+        doTestTransferFromMustThrowIfChannelIsClosed(false);
+    }
+
+    @Test
+    public void testTransferFromWithPositionMustThrowIfChannelIsClosed() {
+        doTestTransferFromMustThrowIfChannelIsClosed(true);
+    }
+
+    private void doTestTransferFromMustThrowIfChannelIsClosed(boolean withPosition) {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(8)) {
+
+            assertThrows(ClosedChannelException.class, () -> {
+                if (withPosition) {
+                    buffer.transferFrom(closedChannel, 4, 8);
+                } else {
+                    buffer.transferFrom(closedChannel, 8);
+                }
+            });
+
+            assertFalse(buffer.isClosed());
+            assertEquals(8, buffer.getWritableBytes());
+            assertEquals(0, buffer.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testTransferFromMustThrowIfChannelIsNull() {
+        doTestTransferFromMustThrowIfChannelIsNull(false);
+    }
+
+    @Test
+    public void testTransferFromWithPositionMustThrowIfChannelIsNull() {
+        doTestTransferFromMustThrowIfChannelIsNull(true);
+    }
+
+    private void doTestTransferFromMustThrowIfChannelIsNull(boolean withPosition) {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(8)) {
+
+            assertThrows(NullPointerException.class, () -> {
+                if (withPosition) {
+                    buffer.transferFrom(null, 4, 8);
+                } else {
+                    buffer.transferFrom(null, 8);
+                }
+            });
+
+            assertFalse(buffer.isClosed());
+            assertEquals(8, buffer.getWritableBytes());
+            assertEquals(0, buffer.getReadableBytes());
+        }
+    }
+
+    @Test
+    public void testTransferFromMustThrowIfLengthIsNegative() throws IOException {
+        doTestTransferFromMustThrowIfLengthIsNegative(false);
+    }
+
+    @Test
+    public void testTransferFromWithPositionMustThrowIfLengthIsNegative() throws IOException {
+        doTestTransferFromMustThrowIfLengthIsNegative(true);
+    }
+
+    private void doTestTransferFromMustThrowIfLengthIsNegative(boolean withPosition) throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(8)) {
+
+            long position = channel.position();
+            ByteBuffer data = ByteBuffer.allocate(8).putLong(0x0102030405060708L).flip();
+            assertEquals(8, channel.write(data, position));
+            long size = channel.size();
+            assertThrows(IllegalArgumentException.class, () -> {
+                if (withPosition) {
+                    buffer.transferFrom(channel, 4 + position, -1);
+                } else {
+                    buffer.transferFrom(channel, -1);
+                }
+            });
+            assertFalse(buffer.isClosed());
+            assertEquals(8, buffer.getWritableBytes());
+            assertEquals(0, buffer.getReadableBytes());
+            assertEquals(position, channel.position());
+            assertEquals(size, channel.size());
+        } finally {
+            channel.position(channel.size());
+        }
+    }
+
+    @Test
+    public void testTransferFromMustIgnoreZeroLengthOperations() throws IOException {
+        doTestTransferFromMustIgnoreZeroLengthOperations(false);
+    }
+
+    @Test
+    public void testTransferFromWithPositionMustIgnoreZeroLengthOperations() throws IOException {
+        doTestTransferFromMustIgnoreZeroLengthOperations(true);
+    }
+
+    private void doTestTransferFromMustIgnoreZeroLengthOperations(boolean withPosition) throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(8)) {
+
+            long position = channel.position();
+            ByteBuffer data = ByteBuffer.allocate(8).putLong(0x0102030405060708L).flip();
+            assertEquals(8, channel.write(data, position));
+            long size = channel.size();
+            int bytesRead = withPosition ? buffer.transferFrom(channel, 4 + position, 0) : buffer.transferFrom(channel, 0);
+
+            assertFalse(buffer.isClosed());
+            assertEquals(0, bytesRead);
+
+            assertEquals(8, buffer.getWritableBytes());
+            assertEquals(0, buffer.getReadableBytes());
+            assertEquals(position, channel.position());
+            assertEquals(size, channel.size());
+        } finally {
+            channel.position(channel.size());
+        }
+    }
+
+    @Test
+    public void testTransferFromMustMoveDataFromChannel() throws IOException {
+        doTestTransferFromMustMoveDataFromChannel(false);
+    }
+
+    @Test
+    public void testTransferFromWithPositionMustMoveDataFromChannel() throws IOException {
+        doTestTransferFromMustMoveDataFromChannel(true);
+    }
+
+    private void doTestTransferFromMustMoveDataFromChannel(boolean withPosition) throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(8)) {
+
+            long value = random.nextLong();
+            ByteBuffer data = ByteBuffer.allocate(8).putLong(value).flip();
+            long position = channel.position();
+            assertEquals(8, channel.write(data, position));
+
+            long size = channel.size();
+            int bytesRead = withPosition ? buffer.transferFrom(channel, position, 8) : buffer.transferFrom(channel, 8);
+            assertEquals(8, bytesRead);
+
+            assertEquals(withPosition ? position : 8 + position,  channel.position());
+            assertEquals(size, channel.size());
+
+            assertEquals(0, buffer.getWritableBytes());
+            assertEquals(8, buffer.getReadableBytes());
+
             assertEquals(value, buffer.readLong());
+        } finally {
+            channel.position(channel.size());
         }
-
-        assertEquals(buffer.capacity(), buffer.getReadIndex());
-        assertEquals(buffer.capacity(), buffer.getWriteIndex());
-        assertFalse(buffer.isReadable());
-        assertFalse(buffer.isWritable());
     }
 
     @Test
-    public void testByteArrayTransfer() {
-        testByteArrayTransfer(false);
+    public void testTransferFromMustNotReadBeyondEndOfChannel() throws IOException {
+        doTestTransferFromMustNotReadBeyondEndOfChannel(false);
     }
 
     @Test
-    public void testByteArrayTransferDirectBackedBuffer() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        testByteArrayTransfer(true);
+    public void testTransferFromWithPositionMustNotReadBeyondEndOfChannel() throws IOException {
+        doTestTransferFromMustNotReadBeyondEndOfChannel(true);
     }
 
-    private void testByteArrayTransfer(boolean direct) {
-        final ProtonBuffer buffer;
+    private void doTestTransferFromMustNotReadBeyondEndOfChannel(boolean withPosition) throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(8)) {
 
-        if (direct) {
-            buffer = allocateDirectBuffer(LARGE_CAPACITY);
-        } else {
-            buffer = allocateBuffer(LARGE_CAPACITY);
+            ByteBuffer data = ByteBuffer.allocate(8).putInt(0x01020304).flip();
+            long position = channel.position();
+
+            assertEquals(4, channel.write(data, position));
+            long size = channel.size();
+            int bytesRead = withPosition ? buffer.transferFrom(channel, position, 8) : buffer.transferFrom(channel, 8);
+
+            assertEquals(4, bytesRead);
+            assertEquals(4, buffer.getReadableBytes());
+
+            assertEquals(withPosition ? position : 4 + position,  channel.position());
+            assertEquals(size, channel.size());
+        } finally {
+            channel.position(channel.size());
         }
+    }
 
-        byte[] value = new byte[BLOCK_SIZE * 2];
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(value);
-            buffer.setBytes(i, value, random.nextInt(BLOCK_SIZE), BLOCK_SIZE);
+    @Test
+    public void testTransferFromMustReturnMinusOneForEndOfStream() throws IOException {
+        doTestTransferFromMustReturnMinusOneForEndOfStream(false);
+    }
+
+    @Test
+    public void testTransferFromWithPositionMustReturnMinusOneForEndOfStream() throws IOException {
+        doTestTransferFromMustReturnMinusOneForEndOfStream(true);
+    }
+
+    private void doTestTransferFromMustReturnMinusOneForEndOfStream(boolean withPosition) throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(8)) {
+
+            final long position = channel.position();
+            final long size = channel.size();
+            final int bytesRead = withPosition ? buffer.transferFrom(channel, position, 8) : buffer.transferFrom(channel, 8);
+
+            assertEquals(-1, bytesRead);
+            assertEquals(8, buffer.getWritableBytes());
+            assertEquals(0, buffer.getReadableBytes());
+
+            assertEquals(position, channel.position());
+            assertEquals(size, channel.size());
+        } finally {
+            channel.position(channel.size());
         }
+    }
 
-        random.setSeed(seed);
-        byte[] expectedValue = new byte[BLOCK_SIZE * 2];
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValue);
-            int valueOffset = random.nextInt(BLOCK_SIZE);
-            buffer.getBytes(i, value, valueOffset, BLOCK_SIZE);
-            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
-                assertEquals(expectedValue[j], value[j]);
+    @Test
+    public void testTransferFromMustReturnMinusOneForEndOfStreamNonScattering() throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(8)) {
+
+            final long position = channel.position();
+            final long size = channel.size();
+            final ReadableByteChannel nonScatteringChannel = new ReadableByteChannel() {
+                @Override
+                public int read(ByteBuffer dst) throws IOException {
+                    return channel.read(dst);
+                }
+
+                @Override
+                public boolean isOpen() {
+                    return channel.isOpen();
+                }
+
+                @Override
+                public void close() throws IOException {
+                    channel.close();
+                }
+            };
+
+            int bytesRead = buffer.transferFrom(nonScatteringChannel, 8);
+            assertEquals(-1, bytesRead);
+            assertEquals(8, buffer.getWritableBytes());
+            assertEquals(0, buffer.getReadableBytes());
+            assertEquals(position, channel.position());
+            assertEquals(size, channel.size());
+        } finally {
+            channel.position(channel.size());
+        }
+    }
+
+    @Test
+    public void testTransferFromMustStartFromWritableOffset() throws IOException {
+        doTestTransferFromMustStartFromWritableOffset(false);
+    }
+
+    @Test
+    public void testTransferFromWithPositionMustStartFromWritableOffset() throws IOException {
+        doTestTransferFromMustStartFromWritableOffset(true);
+    }
+
+    private void doTestTransferFromMustStartFromWritableOffset(boolean withPosition) throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(4)) {
+
+            ByteBuffer data = ByteBuffer.allocate(4).putInt(0x01020304).flip();
+            final long position = channel.position();
+            assertEquals(4, channel.write(data, position));
+
+            final long size = channel.size();
+            int bytesRead = withPosition ? buffer.transferFrom(channel, position, 2) : buffer.transferFrom(channel, 2);
+            bytesRead += withPosition ? buffer.transferFrom(channel, 2 + position, 2) : buffer.transferFrom(channel, 2);
+
+            assertEquals(4, bytesRead);
+            assertEquals(4, buffer.getReadableBytes());
+
+            assertEquals(withPosition ? position : 4 + position, channel.position());
+            assertEquals(size, channel.size());
+
+            for (int i = 0; i < buffer.getReadableBytes(); i++) {
+                assertEquals(data.get(i), buffer.readByte());
+            }
+        } finally {
+            channel.position(channel.size());
+        }
+    }
+
+    @Test
+    public void testTransferFromMustThrowIfBufferIsReadOnly() throws IOException {
+        doTestTransferFromMustThrowIfBufferIsReadOnly(false);
+    }
+
+    @Test
+    public void testTransferFromWithPositionMustThrowIfBufferIsReadOnly() throws IOException {
+        doTestTransferFromMustThrowIfBufferIsReadOnly(true);
+    }
+
+    private void doTestTransferFromMustThrowIfBufferIsReadOnly(boolean withPosition) throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(8).writeLong(0x0102030405060708L).convertToReadOnly()) {
+
+            final long position = channel.position();
+            final long size = channel.size();
+
+            assertThrows(ProtonBufferReadOnlyException.class, () -> {
+                if (withPosition) {
+                    buffer.transferFrom(channel, 4 + position, 8);
+                } else {
+                    buffer.transferFrom(channel, 8);
+                }
+            });
+
+            assertEquals(8, buffer.getReadableBytes());
+            assertEquals(position, channel.position());
+            assertEquals(size, channel.size());
+        }
+    }
+
+    @Test
+    public void testTransferFromZeroBytesMustNotThrowOnClosedChannel() throws IOException {
+        doTestTransferFromZeroBytesMustNotThrowOnClosedChannel(false);
+    }
+
+    @Test
+    public void testTransferFromWithPositionZeroBytesMustNotThrowOnClosedChannel() throws IOException {
+        doTestTransferFromZeroBytesMustNotThrowOnClosedChannel(true);
+    }
+
+    private void doTestTransferFromZeroBytesMustNotThrowOnClosedChannel(boolean withPosition) throws IOException {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer empty = allocator.allocate(0);
+             ProtonBuffer nonEmpty = allocator.allocate(4)) {
+
+            if (withPosition) {
+                empty.transferFrom(closedChannel, 4, 4);
+                nonEmpty.transferFrom(closedChannel, 4, 0);
+            } else {
+                empty.transferFrom(closedChannel, 4);
+                nonEmpty.transferFrom(closedChannel, 0);
             }
         }
     }
 
     @Test
-    public void testRandomByteArrayTransfer1() {
-        doTestRandomByteArrayTransfer1(false);
+    public void testPartialFailureOfTransferToMustKeepChannelAndBufferPositionsInSync(@TempDir Path parentDir) throws IOException {
+        ProtonBufferAllocator allocator = ProtonBufferAllocator.defaultAllocator();
+        Path path = parentDir.resolve("transferTo");
+
+        try (FileChannel channel = FileChannel.open(path, READ, WRITE, CREATE);
+             ProtonBuffer buffer = allocator.composite(new ProtonBuffer[] {
+                                        allocator.allocate(4).writeInt(0x01020304),
+                                        allocator.allocate(4).writeInt(0x05060708) })) {
+
+            WritableByteChannel channelWrapper = new WritableByteChannel() {
+                private boolean pastFirstCall;
+
+                @Override
+                public int write(ByteBuffer src) throws IOException {
+                    if (pastFirstCall) {
+                        throw new IOException("boom");
+                    }
+                    pastFirstCall = true;
+                    return channel.write(src);
+                }
+
+                @Override
+                public boolean isOpen() {
+                    return channel.isOpen();
+                }
+
+                @Override
+                public void close() throws IOException {
+                    channel.close();
+                }
+            };
+
+            final long position = channel.position();
+            final long size = channel.size();
+            final Exception e = assertThrows(IOException.class, () -> buffer.transferTo(channelWrapper, 8));
+
+            assertTrue(e.getMessage().contains("boom"));
+
+            assertEquals(position + 4, channel.position());
+            assertEquals(size + 4, channel.size());
+
+            assertEquals(4, buffer.getReadOffset());
+            assertEquals(4, buffer.getReadableBytes());
+        }
     }
 
     @Test
-    public void testRandomByteArrayTransfer1DirectBackedBuffer() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestRandomByteArrayTransfer1(true);
+    public void testPartialFailureOfTransferFromMustKeepChannelAndBufferPositionsInSync(@TempDir Path parentDir) throws IOException {
+        ProtonBufferAllocator allocator = ProtonBufferAllocator.defaultAllocator();
+        Path path = parentDir.resolve("transferFrom");
+
+        try (FileChannel channel = FileChannel.open(path, READ, WRITE, CREATE);
+             ProtonBuffer buffer = allocator.composite(new ProtonBuffer[] {
+                     allocator.allocate(4), allocator.allocate(4) })) {
+
+            ByteBuffer byteBuffer = ByteBuffer.allocate(8).putLong(0x0102030405060708L).flip();
+            assertEquals(8, channel.write(byteBuffer));
+            channel.position(0);
+
+            ReadableByteChannel channelWrapper = new ReadableByteChannel() {
+                private boolean pastFirstCall;
+
+                @Override
+                public int read(ByteBuffer dst) throws IOException {
+                    if (pastFirstCall) {
+                        throw new IOException("boom");
+                    }
+                    pastFirstCall = true;
+                    return channel.read(dst);
+                }
+
+                @Override
+                public boolean isOpen() {
+                    return channel.isOpen();
+                }
+
+                @Override
+                public void close() throws IOException {
+                    channel.close();
+                }
+            };
+
+            final long position = channel.position();
+            final long size = channel.size();
+            final Exception e = assertThrows(IOException.class, () -> buffer.transferFrom(channelWrapper, 8));
+
+            assertTrue(e.getMessage().contains("boom"));
+
+            assertEquals(position + 4, channel.position());
+            assertEquals(size, channel.size());
+
+            assertEquals(4, buffer.getWritableBytes());
+            assertEquals(4, buffer.getReadableBytes());
+        }
     }
 
-    private void doTestRandomByteArrayTransfer1(boolean direct) {
-        final ProtonBuffer buffer;
-        if (direct) {
-            buffer = allocateDirectBuffer(LARGE_CAPACITY);
-        } else {
-            buffer = allocateBuffer(LARGE_CAPACITY);
+    @Test
+    public void testComponentCountOfNonCompositeBufferMustBeOne() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(8)) {
+            assertEquals(1, buffer.componentCount());
         }
+    }
 
-        byte[] value = new byte[BLOCK_SIZE];
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(value);
-            buffer.setBytes(i, value);
+    @Test
+    public void testReadableComponentCountMustBeOneIfThereAreReadableBytes() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(8)) {
+            assertEquals(0, buffer.readableComponentCount());
+            buffer.advanceWriteOffset(1);
+            assertEquals(1, buffer.readableComponentCount());
         }
+    }
 
-        random.setSeed(seed);
-        byte[] expectedValueContent = new byte[BLOCK_SIZE];
-        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValueContent);
-            buffer.getBytes(i, value);
-            for (int j = 0; j < BLOCK_SIZE; j ++) {
-                assertEquals(expectedValue.getByte(j), value[j]);
+    @Test
+    public void testWritableComponentCountMustBeOneIfThereAreWritableBytes() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(8)) {
+            assertEquals(1, buffer.writableComponentCount());
+            buffer.advanceWriteOffset(8);
+            assertEquals(0, buffer.writableComponentCount());
+        }
+    }
+
+    @Test
+    public void testCompositeBufferComponentCountsUpdateWithChangeAfterFlattening() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            try (ProtonBuffer a = allocator.allocate(8);
+                 ProtonBuffer b = allocator.allocate(8);
+                 ProtonBuffer c = allocator.allocate(8);
+                 ProtonBuffer composed = allocator.composite(new ProtonBuffer[] { b, c });
+                 ProtonBuffer buffer = allocator.composite(new ProtonBuffer[] { a, composed })) {
+
+                assertEquals(3, buffer.componentCount());
+                assertEquals(0, buffer.readableComponentCount());
+                assertEquals(3, buffer.writableComponentCount());
+                buffer.writeInt(1);
+                assertEquals(1, buffer.readableComponentCount());
+                assertEquals(3, buffer.writableComponentCount());
+                buffer.writeInt(1);
+                assertEquals(1, buffer.readableComponentCount());
+                assertEquals(2, buffer.writableComponentCount());
+                buffer.writeInt(1);
+                assertEquals(2, buffer.readableComponentCount());
+                assertEquals(2, buffer.writableComponentCount());
+                buffer.writeInt(1);
+                assertEquals(2, buffer.readableComponentCount());
+                assertEquals(1, buffer.writableComponentCount());
+                buffer.writeInt(1);
+                assertEquals(3, buffer.readableComponentCount());
+                assertEquals(1, buffer.writableComponentCount());
+                buffer.writeInt(1);
+                assertEquals(3, buffer.readableComponentCount());
+                assertEquals(0, buffer.writableComponentCount());
             }
         }
     }
 
     @Test
-    public void testRandomByteArrayTransfer2() {
-        dotestRandomByteArrayTransfer2(false);
+    public void testIteratingComponentOnClosedBufferMustThrow() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            ProtonBuffer writableBuffer = allocator.allocate(8);
+            writableBuffer.close();
+            assertThrows(ProtonBufferClosedException.class, () -> writableBuffer.componentAccessor());
+
+            var readableBuffer = allocator.allocate(8);
+            readableBuffer.writeLong(0);
+            readableBuffer.close();
+            assertThrows(ProtonBufferClosedException.class, () -> readableBuffer.componentAccessor());
+        }
     }
 
     @Test
-    public void testRandomByteArrayTransfer2DirectBackedBuffer() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        dotestRandomByteArrayTransfer2(true);
-    }
+    public void testProtonBufferProvidesAccessToAvailableComponents() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buffer = allocator.allocate(8)) {
+            assertEquals(1, buffer.componentCount());
+            assertEquals(0, buffer.readableComponentCount());
+            assertEquals(1, buffer.writableComponentCount());
 
-    private void dotestRandomByteArrayTransfer2(boolean direct) {
-        final ProtonBuffer buffer;
-        if (direct) {
-            buffer = allocateDirectBuffer(LARGE_CAPACITY);
-        } else {
-            buffer = allocateBuffer(LARGE_CAPACITY);
-        }
+            try (ProtonBufferComponentAccessor accessor = buffer.componentAccessor()) {
+                assertNull(accessor.firstReadable());
+                assertNotNull(accessor.firstWritable());
+                assertNotNull(accessor.first());
 
-        byte[] value = new byte[BLOCK_SIZE * 2];
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(value);
-            buffer.setBytes(i, value, random.nextInt(BLOCK_SIZE), BLOCK_SIZE);
-        }
+                ProtonBufferComponent component = accessor.first();
+                assertEquals(8, component.getWritableBytes());
+                assertEquals(0, component.getReadableBytes());
 
-        random.setSeed(seed);
-        byte[] expectedValueContent = new byte[BLOCK_SIZE * 2];
-        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValueContent);
-            int valueOffset = random.nextInt(BLOCK_SIZE);
-            buffer.getBytes(i, value, valueOffset, BLOCK_SIZE);
-            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
-                assertEquals(expectedValue.getByte(j), value[j]);
+                ByteBuffer bb = component.getWritableBuffer();
+                assertEquals(8, bb.remaining());
+
+                for (byte i = 0; i < bb.remaining(); ++i) {
+                    bb.put(i);
+                }
+
+                // Changes in the byte buffer should not reflect back other than to the underlying bytes
+                assertEquals(8, component.getWritableBytes());
+                assertEquals(0, component.getReadableBytes());
+            }
+
+            buffer.setWriteOffset(buffer.capacity());
+
+            try (ProtonBufferComponentAccessor accessor = buffer.componentAccessor()) {
+                assertNotNull(accessor.firstReadable());
+                assertNull(accessor.firstWritable());
+                assertNotNull(accessor.first());
+
+                ProtonBufferComponent component = accessor.first();
+                assertEquals(0, component.getWritableBytes());
+                assertEquals(8, component.getReadableBytes());
+
+                ByteBuffer bb = component.getReadableBuffer();
+                assertEquals(8, bb.remaining());
+
+                for (byte i = 0; i < bb.remaining(); ++i) {
+                    assertEquals(i, bb.get());
+                }
+
+                // Changes in the byte buffer should not reflect back other than to the underlying bytes
+                assertEquals(0, component.getWritableBytes());
+                assertEquals(8, component.getReadableBytes());
             }
         }
     }
 
     @Test
-    public void testRandomProtonBufferTransfer1() {
-        doTestRandomProtonBufferTransfer1(false, false);
-    }
+    public void testIteratingComponentMustAllowCollectingBuffersInArray() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            try (ProtonBuffer composite = allocator.composite(new ProtonBuffer[] {
+                    allocator.allocate(4), allocator.allocate(4), allocator.allocate(4) })) {
+                int i = 1;
+                while (composite.isWritable()) {
+                    composite.writeByte((byte) i++);
+                }
+                ByteBuffer[] buffers = new ByteBuffer[composite.componentCount()];
+                try (ProtonBufferComponentAccessor accessor = composite.componentAccessor()) {
+                    int index = 0;
+                    for (ProtonBufferComponent component = accessor.first(); component != null; component = accessor.next()) {
+                        buffers[index] = component.getReadableBuffer();
+                        index++;
+                    }
+                }
+                i = 1;
+                assertTrue(buffers.length > 1);
+                for (ByteBuffer buffer : buffers) {
+                    while (buffer.hasRemaining()) {
+                        assertEquals((byte) i++, buffer.get());
+                    }
+                }
+            }
 
-    @Test
-    public void testRandomProtonBufferTransfer1DirectSource() {
-        doTestRandomProtonBufferTransfer1(true, false);
-    }
-
-    @Test
-    public void testRandomProtonBufferTransfer1DirectTarget() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestRandomProtonBufferTransfer1(false, true);
-    }
-
-    @Test
-    public void testRandomProtonBufferTransfer1DirectSourceAndTarget() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestRandomProtonBufferTransfer1(true, true);
-    }
-
-    private void doTestRandomProtonBufferTransfer1(boolean directSource, boolean directTarget) {
-        final ProtonBuffer buffer;
-        if (directTarget) {
-            buffer = allocateDirectBuffer(LARGE_CAPACITY);
-        } else {
-            buffer = allocateBuffer(LARGE_CAPACITY);
-        }
-
-        byte[] valueContent = new byte[BLOCK_SIZE];
-        final ProtonBuffer value;
-        if (directSource) {
-            value = new ProtonNioByteBuffer(ByteBuffer.allocateDirect(BLOCK_SIZE));
-        } else {
-            value = new ProtonByteBuffer(BLOCK_SIZE, BLOCK_SIZE);
-        }
-
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(valueContent);
-            value.clear();
-            value.writeBytes(valueContent);
-            buffer.setBytes(i, value);
-            assertEquals(BLOCK_SIZE, value.getReadIndex());
-            assertEquals(BLOCK_SIZE, value.getWriteIndex());
-        }
-
-        random.setSeed(seed);
-        byte[] expectedValueContent = new byte[BLOCK_SIZE];
-        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValueContent);
-            value.clear();
-            buffer.getBytes(i, value);
-            assertEquals(0, value.getReadIndex());
-            assertEquals(BLOCK_SIZE, value.getWriteIndex());
-            for (int j = 0; j < BLOCK_SIZE; j ++) {
-                assertEquals(expectedValue.getByte(j), value.getByte(j));
+            try (ProtonBuffer single = allocator.allocate(8)) {
+                ByteBuffer[] buffers = new ByteBuffer[single.componentCount()];
+                try (ProtonBufferComponentAccessor accessor = single.componentAccessor()) {
+                    int index = 0;
+                    for (var component = accessor.first(); component != null; component = accessor.next()) {
+                        buffers[index] = component.getWritableBuffer();
+                        index++;
+                    }
+                }
+                assertTrue(buffers.length == 1);
+                int i = 1;
+                for (ByteBuffer buffer : buffers) {
+                    while (buffer.hasRemaining()) {
+                        buffer.put((byte) i++);
+                    }
+                }
+                single.setWriteOffset(single.capacity());
+                i = 1;
+                while (single.isReadable()) {
+                    assertEquals((byte) i++, single.readByte());
+                }
             }
         }
     }
 
     @Test
-    public void testRandomProtonBufferTransfer2() {
-        doTestRandomProtonBufferTransfer2(false, false);
+    public void testComponentAccessorMustVisitBuffer() {
+        final long value = 0x0102030405060708L;
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer readWriteBuffer = allocator.allocate(8).writeLong(value);
+             ProtonBuffer readonlyBuffer = allocator.allocate(8).writeLong(value).convertToReadOnly()) {
+
+            verifyReadingForEachSingleComponent(readWriteBuffer);
+            verifyReadingForEachSingleComponent(readonlyBuffer);
+        }
     }
 
     @Test
-    public void testRandomProtonBufferTransfer2DirectSource() {
-        doTestRandomProtonBufferTransfer2(true, false);
+    public void testComponentAccessorMustVisitAllReadableConstituentBuffersInOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer a = allocator.allocate(4).writeInt(1);
+             ProtonBuffer b = allocator.allocate(4).writeInt(2);
+             ProtonBuffer c = allocator.allocate(4).writeInt(3);
+             ProtonBuffer composite = allocator.composite(new ProtonBuffer[] { a, b, c })) {
+
+            Deque<Integer> list = new LinkedList<Integer>(List.of(1, 2, 3));
+            int index = 0;
+            try (ProtonBufferComponentAccessor accessor = composite.componentAccessor()) {
+                for (var component = accessor.first(); component != null; component = accessor.next()) {
+                    var buffer = component.getReadableBuffer();
+                    int bufferValue = buffer.getInt();
+                    int expectedValue = list.pollFirst().intValue();
+                    assertEquals(expectedValue, bufferValue);
+                    assertEquals(bufferValue, index + 1);
+                    assertThrows(ReadOnlyBufferException.class, () -> buffer.put(0, (byte) 0xFF));
+                    index++;
+                }
+            }
+            assertEquals(3, index);
+            assertTrue(list.isEmpty());
+        }
     }
 
     @Test
-    public void testRandomProtonBufferTransfer2DirectTarget() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestRandomProtonBufferTransfer2(false, true);
-    }
-
-    @Test
-    public void testRandomProtonBufferTransfer2DirectSourceAndTarget() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestRandomProtonBufferTransfer2(true, true);
-    }
-
-    private void doTestRandomProtonBufferTransfer2(boolean directSource, boolean directTarget) {
-        final ProtonBuffer buffer;
-        if (directTarget) {
-            buffer = allocateDirectBuffer(LARGE_CAPACITY);
-        } else {
-            buffer = allocateBuffer(LARGE_CAPACITY);
-        }
-
-        final int SIZE = BLOCK_SIZE * 2;
-        byte[] valueContent = new byte[SIZE];
-        final ProtonBuffer value;
-        if (directSource) {
-            value = new ProtonNioByteBuffer(ByteBuffer.allocateDirect(SIZE));
-        } else {
-            value = new ProtonByteBuffer(SIZE, SIZE);
-        }
-
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(valueContent);
-            value.clear();
-            value.writeBytes(valueContent);
-            buffer.setBytes(i, value, random.nextInt(BLOCK_SIZE), BLOCK_SIZE);
-        }
-
-        random.setSeed(seed);
-        byte[] expectedValueContent = new byte[SIZE];
-        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValueContent);
-            int valueOffset = random.nextInt(BLOCK_SIZE);
-            buffer.getBytes(i, value, valueOffset, BLOCK_SIZE);
-            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
-                assertEquals(expectedValue.getByte(j), value.getByte(j));
+    public void testComponentAccessorMustVisitAllWritableConstituentBuffersInOrder() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            try (ProtonBuffer a = allocator.allocate(8);
+                 ProtonBuffer b = allocator.allocate(8);
+                 ProtonBuffer c = allocator.allocate(8);
+                 ProtonBuffer buf = allocator.composite(new ProtonBuffer[] {a, b, c})) {
+                try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+                    int index = 0;
+                    for (var component = accessor.first(); component != null; component = accessor.next()) {
+                        component.getWritableBuffer().putLong(0x0102030405060708L + 0x1010101010101010L * index);
+                        index++;
+                    }
+                }
+                buf.setWriteOffset(3 * 8);
+                assertEquals(0x0102030405060708L, buf.readLong());
+                assertEquals(0x1112131415161718L, buf.readLong());
+                assertEquals(0x2122232425262728L, buf.readLong());
             }
         }
     }
 
     @Test
-    public void testRandomByteBufferTransfer() {
-        doTestRandomByteBufferTransfer(false, false);
-    }
+    public void testComponentAccessorMustReturnNullFirstWhenNotReadable() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(0)) {
+            try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+                // First component may or may not be null such as from the byte array based buffer
+                var component = accessor.first();
+                if (component != null) {
+                    assertEquals(0, component.getReadableBytes());
+                    assertEquals(0, component.getReadableArrayLength());
+                    ByteBuffer byteBuffer = component.getReadableBuffer();
+                    assertEquals(0, byteBuffer.remaining());
+                    assertEquals(0, byteBuffer.capacity());
+                    assertNull(accessor.next());
+                }
+            }
 
-    @Test
-    public void testRandomDirectByteBufferTransfer() {
-        doTestRandomByteBufferTransfer(true, false);
-    }
-
-    @Test
-    public void testRandomByteBufferTransferToDirectProtonBuffer() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestRandomByteBufferTransfer(false, true);
-    }
-
-    @Test
-    public void testRandomDirectByteBufferTransferToDirectProtonBuffer() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestRandomByteBufferTransfer(true, true);
-    }
-
-    private void doTestRandomByteBufferTransfer(boolean directSource, boolean directTarget) {
-        final ProtonBuffer buffer;
-        if (directTarget) {
-            buffer = allocateDirectBuffer(LARGE_CAPACITY);
-        } else {
-            buffer = allocateBuffer(LARGE_CAPACITY);
-        }
-
-        final int SIZE = BLOCK_SIZE * 2;
-        final byte[] valueContent = new byte[SIZE];
-        final ByteBuffer value;
-        if (directSource) {
-            value = ByteBuffer.allocateDirect(BLOCK_SIZE * 2);
-        } else {
-            value = ByteBuffer.allocate(BLOCK_SIZE * 2);
-        }
-
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(valueContent);
-            value.clear();
-            value.put(valueContent);
-            value.clear().position(random.nextInt(BLOCK_SIZE));
-            value.limit(value.position() + BLOCK_SIZE);
-            buffer.setBytes(i, value);
-        }
-
-        random.setSeed(seed);
-        ByteBuffer expectedValue = ByteBuffer.allocate(BLOCK_SIZE * 2);
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValue.array());
-            int valueOffset = random.nextInt(BLOCK_SIZE);
-            value.clear().position(valueOffset).limit(valueOffset + BLOCK_SIZE);
-            buffer.getBytes(i, value);
-            assertEquals(valueOffset + BLOCK_SIZE, value.position());
-            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
-                assertEquals(expectedValue.get(j), value.get(j));
+            try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+                assertNull(accessor.firstReadable());
             }
         }
     }
 
     @Test
-    public void testSequentialByteArrayTransfer1() {
-        dotestSequentialByteArrayTransfer1(false);
+    public void testComponentAccessorChangesMadeToByteBufferComponentMustBeReflectedInBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(9)) {
+            buf.writeByte((byte) 0xFF);
+            int writtenCounter = 0;
+            try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+                for (ProtonBufferComponent component = accessor.first(); component != null; component = accessor.next()) {
+                    ByteBuffer buffer = component.getWritableBuffer();
+                    while (buffer.hasRemaining()) {
+                        buffer.put((byte) ++writtenCounter);
+                    }
+                }
+            }
+            buf.setWriteOffset(9);
+            assertEquals((byte) 0xFF, buf.readByte());
+            assertEquals(0x0102030405060708L, buf.readLong());
+        }
     }
 
     @Test
-    public void testSequentialByteArrayTransfer1DirectBackedBuffer() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        dotestSequentialByteArrayTransfer1(true);
-    }
-
-    private void dotestSequentialByteArrayTransfer1(boolean direct) {
-        final ProtonBuffer buffer;
-        if (direct) {
-            buffer = allocateDirectBuffer(LARGE_CAPACITY);
-        } else {
-            buffer = allocateBuffer(LARGE_CAPACITY);
-        }
-
-        byte[] value = new byte[BLOCK_SIZE];
-        buffer.setWriteIndex(0);
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(value);
-            assertEquals(0, buffer.getReadIndex());
-            assertEquals(i, buffer.getWriteIndex());
-            buffer.writeBytes(value);
-        }
-
-        random.setSeed(seed);
-        byte[] expectedValue = new byte[BLOCK_SIZE];
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValue);
-            assertEquals(i, buffer.getReadIndex());
-            assertEquals(LARGE_CAPACITY, buffer.getWriteIndex());
-            buffer.readBytes(value);
-            for (int j = 0; j < BLOCK_SIZE; j ++) {
-                assertEquals(expectedValue[j], value[j]);
+    public void testChangesMadeToByteBufferComponentsDuringAccessShouldBeReflectedInBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            int counter = 0;
+            try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+                for (var component = accessor.first(); component != null; component = accessor.next()) {
+                    ByteBuffer buffer = component.getWritableBuffer();
+                    while (buffer.hasRemaining()) {
+                        buffer.put((byte) ++counter);
+                    }
+                }
+            }
+            buf.setWriteOffset(buf.capacity());
+            for (int i = 0; i < 8; i++) {
+                assertEquals((byte) i + 1, buf.getByte(i));
             }
         }
     }
 
     @Test
-    public void testSequentialByteArrayTransfer2() {
-        doTestSequentialByteArrayTransfer2(false);
-    }
-
-    @Test
-    public void testSequentialByteArrayTransfer2DirectBackedBuffer() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestSequentialByteArrayTransfer2(true);
-    }
-
-    private void doTestSequentialByteArrayTransfer2(boolean direct) {
-        final ProtonBuffer buffer;
-        if (direct) {
-            buffer = allocateDirectBuffer(LARGE_CAPACITY);
-        } else {
-            buffer = allocateBuffer(LARGE_CAPACITY);
-        }
-
-        byte[] value = new byte[BLOCK_SIZE * 2];
-        buffer.setWriteIndex(0);
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(value);
-            assertEquals(0, buffer.getReadIndex());
-            assertEquals(i, buffer.getWriteIndex());
-            int readerIndex = random.nextInt(BLOCK_SIZE);
-            buffer.writeBytes(value, readerIndex, BLOCK_SIZE);
-        }
-
-        random.setSeed(seed);
-        byte[] expectedValue = new byte[BLOCK_SIZE * 2];
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValue);
-            int valueOffset = random.nextInt(BLOCK_SIZE);
-            assertEquals(i, buffer.getReadIndex());
-            assertEquals(LARGE_CAPACITY, buffer.getWriteIndex());
-            buffer.readBytes(value, valueOffset, BLOCK_SIZE);
-            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
-                assertEquals(expectedValue[j], value[j]);
+    public void testComponentAccessorMustHaveZeroWritableBytesWhenNotWritable() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(0)) {
+            try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+                // First component may or may not be null as with the byte based proton buffer
+                ProtonBufferComponent component = accessor.first();
+                if (component != null) {
+                    assertEquals(0, component.getWritableBytes());
+                    assertEquals(0, component.getWritableArrayLength());
+                    ByteBuffer byteBuffer = component.getWritableBuffer();
+                    assertEquals(0, byteBuffer.remaining());
+                    assertEquals(0, byteBuffer.capacity());
+                    assertNull(accessor.next());
+                }
+            }
+            try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+                // First *writable* component is definitely null.
+                assertNull(accessor.firstWritable());
             }
         }
     }
 
     @Test
-    public void testSequentialProtonBufferTransfer1() {
-        doTestSequentialProtonBufferTransfer1(false, false);
-    }
-
-    @Test
-    public void testSequentialProtonBufferTransfer1DirectSource() {
-        doTestSequentialProtonBufferTransfer1(true, false);
-    }
-
-    @Test
-    public void testSequentialProtonBufferTransfer1DirectTargetBuffer() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestSequentialProtonBufferTransfer1(false, true);
-    }
-
-    @Test
-    public void testSequentialProtonBufferTransfer1DirectSourceAndTargetBuffers() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestSequentialProtonBufferTransfer1(true, true);
-    }
-
-    private void doTestSequentialProtonBufferTransfer1(boolean directSource, boolean directTarget) {
-        final ProtonBuffer buffer;
-        if (directTarget) {
-            buffer = allocateDirectBuffer(LARGE_CAPACITY);
-        } else {
-            buffer = allocateBuffer(LARGE_CAPACITY);
-        }
-
-        final int SIZE = BLOCK_SIZE * 2;
-        final byte[] valueContent = new byte[SIZE];
-        final ProtonBuffer value;
-        if (directSource) {
-            value = new ProtonNioByteBuffer(ByteBuffer.allocateDirect(SIZE));
-        } else {
-            value = new ProtonByteBuffer(SIZE, SIZE);
-        }
-
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(valueContent);
-            value.clear().writeBytes(valueContent);
-            assertEquals(0, buffer.getReadIndex());
-            assertEquals(i, buffer.getWriteIndex());
-            buffer.writeBytes(value, random.nextInt(BLOCK_SIZE), BLOCK_SIZE);
-            assertEquals(0, value.getReadIndex());
-            assertEquals(valueContent.length, value.getWriteIndex());
-        }
-
-        random.setSeed(seed);
-        byte[] expectedValueContent = new byte[BLOCK_SIZE * 2];
-        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValueContent);
-            int valueOffset = random.nextInt(BLOCK_SIZE);
-            assertEquals(i, buffer.getReadIndex());
-            assertEquals(LARGE_CAPACITY, buffer.getWriteIndex());
-            buffer.readBytes(value, valueOffset, BLOCK_SIZE);
-            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
-                assertEquals(expectedValue.getByte(j), value.getByte(j));
+    public void testAllComponentsOfReadOnlyBufferMustNotHaveAnyWritableBytes() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).convertToReadOnly()) {
+            try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+                for (var c = accessor.first(); c != null; c = accessor.next()) {
+                    assertEquals(0, c.getWritableBytes());
+                    assertEquals(0, c.getWritableArrayLength());
+                    ByteBuffer byteBuffer = c.getWritableBuffer();
+                    assertEquals(0, byteBuffer.remaining());
+                    assertEquals(0, byteBuffer.capacity());
+                    assertNull(accessor.next());
+                }
             }
-            assertEquals(0, value.getReadIndex());
-            assertEquals(valueContent.length, value.getWriteIndex());
-        }
-    }
-
-    @Test
-    public void testSequentialProtonBufferTransfer2() {
-        doTestSequentialProtonBufferTransfer2(false, false);
-    }
-
-    @Test
-    public void testSequentialProtonBufferTransfer2DirectSourceBuffer() {
-        doTestSequentialProtonBufferTransfer2(true, false);
-    }
-
-    @Test
-    public void testSequentialProtonBufferTransfer2DirectTargetBuffer() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestSequentialProtonBufferTransfer2(false, true);
-    }
-
-    @Test
-    public void testSequentialProtonBufferTransfer2DirectSourceAndTargetBuffer() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestSequentialProtonBufferTransfer2(true, true);
-    }
-
-    private void doTestSequentialProtonBufferTransfer2(boolean directSource, boolean directTarget) {
-        final ProtonBuffer buffer;
-        if (directTarget) {
-            buffer = allocateDirectBuffer(LARGE_CAPACITY);
-        } else {
-            buffer = allocateBuffer(LARGE_CAPACITY);
-        }
-
-        final int SIZE = BLOCK_SIZE * 2;
-        final byte[] valueContent = new byte[SIZE];
-        final ProtonBuffer value;
-        if (directSource) {
-            value = new ProtonNioByteBuffer(ByteBuffer.allocateDirect(SIZE));
-        } else {
-            value = new ProtonByteBuffer(SIZE, SIZE);
-        }
-
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(valueContent);
-            value.clear().writeBytes(valueContent);
-            assertEquals(0, buffer.getReadIndex());
-            assertEquals(i, buffer.getWriteIndex());
-            int readerIndex = random.nextInt(BLOCK_SIZE);
-            value.setReadIndex(readerIndex);
-            value.setWriteIndex(readerIndex + BLOCK_SIZE);
-            buffer.writeBytes(value);
-            assertEquals(readerIndex + BLOCK_SIZE, value.getWriteIndex());
-            assertEquals(value.getWriteIndex(), value.getReadIndex());
-        }
-
-        random.setSeed(seed);
-        byte[] expectedValueContent = new byte[BLOCK_SIZE * 2];
-        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValueContent);
-            int valueOffset = random.nextInt(BLOCK_SIZE);
-            assertEquals(i, buffer.getReadIndex());
-            assertEquals(LARGE_CAPACITY, buffer.getWriteIndex());
-            value.setReadIndex(valueOffset);
-            value.setWriteIndex(valueOffset);
-            buffer.readBytes(value, BLOCK_SIZE);
-            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
-                assertEquals(expectedValue.getByte(j), value.getByte(j));
-            }
-            assertEquals(valueOffset, value.getReadIndex());
-            assertEquals(valueOffset + BLOCK_SIZE, value.getWriteIndex());
-        }
-    }
-
-    @Test
-    public void testSequentialProtonBufferTransfer3() {
-        doTestSequentialProtonBufferTransfer3(false, false);
-    }
-
-    @Test
-    public void testSequentialProtonBufferTransfer3DirectSource() {
-        doTestSequentialProtonBufferTransfer3(true, false);
-    }
-
-    @Test
-    public void testSequentialProtonBufferTransfer3DirectTargetBuffer() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestSequentialProtonBufferTransfer3(false, true);
-    }
-
-    @Test
-    public void testSequentialProtonBufferTransfer3DirectSourceAndTargetBuffers() {
-        assumeTrue(canAllocateDirectBackedBuffers());
-        doTestSequentialProtonBufferTransfer3(true, true);
-    }
-
-    private void doTestSequentialProtonBufferTransfer3(boolean directSource, boolean directTarget) {
-        final ProtonBuffer buffer;
-        if (directTarget) {
-            buffer = allocateDirectBuffer(LARGE_CAPACITY);
-        } else {
-            buffer = allocateBuffer(LARGE_CAPACITY);
-        }
-
-        final byte[] valueContent = new byte[BLOCK_SIZE];
-        final ProtonBuffer value;
-        if (directSource) {
-            value = new ProtonNioByteBuffer(ByteBuffer.allocateDirect(BLOCK_SIZE));
-        } else {
-            value = new ProtonByteBuffer(BLOCK_SIZE, BLOCK_SIZE);
-        }
-
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(valueContent);
-            value.clear().writeBytes(valueContent);
-            assertEquals(0, value.getReadIndex());
-            assertEquals(BLOCK_SIZE, value.getWriteIndex());
-            buffer.setWriteIndex(buffer.getWriteIndex() + BLOCK_SIZE);
-            buffer.setBytes(i, value, BLOCK_SIZE);
-            assertEquals(BLOCK_SIZE, value.getReadIndex());
-            assertEquals(BLOCK_SIZE, value.getWriteIndex());
-        }
-
-        random.setSeed(seed);
-        byte[] expectedValueContent = new byte[BLOCK_SIZE];
-        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
-        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(expectedValueContent);
-            value.clear();
-            assertEquals(0, value.getReadIndex());
-            assertEquals(0, value.getWriteIndex());
-            buffer.getBytes(i, value, BLOCK_SIZE);
-            assertEquals(0, value.getReadIndex());
-            assertEquals(BLOCK_SIZE, value.getWriteIndex());
-            for (int j = 0; j < BLOCK_SIZE; j++) {
-                assertEquals(expectedValue.getByte(j), value.getByte(j));
+            try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+                assertNull(accessor.firstWritable());
             }
         }
     }
 
-    //----- Tests need to define these allocation methods
+    @Test
+    public void testComponentAccessMustBeAbleToIncrementReaderOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8);
+             ProtonBuffer target = allocator.allocate(5)) {
+            buf.writeLong(0x0102030405060708L);
+            try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+                for (ProtonBufferComponent component = accessor.first(); component != null; component = accessor.next()) {
+                    while (target.getWritableBytes() > 0 && component.getReadableBytes() > 0) {
+                        ByteBuffer byteBuffer = component.getReadableBuffer();
+                        byte value = byteBuffer.get();
+                        byteBuffer.clear();
+                        target.writeByte(value);
+                        final ProtonBufferComponent cmp = component; // Capture for lambda.
+                        assertThrows(IndexOutOfBoundsException.class, () -> cmp.advanceReadOffset(9));
+                        component.advanceReadOffset(1);
+                    }
+                }
+            }
+            assertEquals(5, buf.getReadOffset());
+            assertEquals(3, buf.getReadableBytes());
+            assertEquals(5, target.getReadableBytes());
 
-    /**
-     * @return true if the buffer type under test support capacity alterations.
-     */
-    protected boolean canBufferCapacityBeChanged() {
-        return true;
+            try (ProtonBuffer expected = allocator.copy(new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05 })) {
+                assertEquals(target, expected);
+            }
+            try (ProtonBuffer expected = allocator.copy(new byte[] { 0x06, 0x07, 0x08 })) {
+                assertEquals(buf, expected);
+            }
+        }
     }
 
-    /**
-     * @return true if the buffer implementation can allocate a version with a direct buffer backed implementation.
-     */
-    protected abstract boolean canAllocateDirectBackedBuffers();
-
-    /**
-     * @return a ProtonBuffer allocated with defaults for capacity and max-capacity.
-     */
-    protected ProtonBuffer allocateDefaultBuffer() {
-        return allocateBuffer(DEFAULT_CAPACITY);
+    @Test
+    public void testComponentAccessorMustBeAbleToIncrementWriterOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).writeLong(0x0102030405060708L);
+             ProtonBuffer target = buf.copy()) {
+            buf.setWriteOffset(0); // Prime the buffer with data, but leave the write-offset at zero.
+            try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+                for (ProtonBufferComponent component = accessor.first(); component != null; component = accessor.next()) {
+                    while (component.getWritableBytes() > 0) {
+                        ByteBuffer byteBuffer = component.getWritableBuffer();
+                        byte value = byteBuffer.get();
+                        byteBuffer.clear();
+                        assertEquals(value, target.readByte());
+                        var cmp = component; // Capture for lambda.
+                        assertThrows(IndexOutOfBoundsException.class, () -> cmp.advanceWriteOffset(9));
+                        component.advanceWriteOffset(1);
+                    }
+                }
+            }
+            assertEquals(8, buf.getWriteOffset());
+            assertEquals(8, target.getReadOffset());
+            target.setReadOffset(0);
+            assertEquals(buf, target);
+        }
     }
 
-    /**
-     * @return a ProtonBuffer allocated with defaults for capacity and max-capacity.
-     */
-    protected ProtonBuffer allocateDefaultDirectBuffer() {
-        return allocateDirectBuffer(DEFAULT_CAPACITY);
+    @Test
+    public void testNegativeAdvanceReadOffsetOnReadableComponentMustThrow() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            buf.writeLong(0x0102030405060708L);
+            assertEquals(0x01020304, buf.readInt());
+            try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+                for (ProtonBufferComponent component = accessor.first(); component != null; component = accessor.next()) {
+                    final ProtonBufferComponent cmp = component;
+                    assertThrows(IllegalArgumentException.class, () -> cmp.advanceReadOffset(-1));
+                }
+            }
+        }
     }
 
-    /**
-     * @param initialCapacity the initial capacity to assign the returned buffer
-     *
-     * @return a ProtonBuffer allocated with the given capacity and a default max-capacity.
-     */
-    protected abstract ProtonBuffer allocateBuffer(int initialCapacity);
+    @Test
+    public void testNegativeAdvanceWriteOffsetWritableComponentMustThrow() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+                for (ProtonBufferComponent component = accessor.first(); component != null; component = accessor.next()) {
+                    final ProtonBufferComponent cmp = component;
+                    assertThrows(IllegalArgumentException.class, () -> cmp.advanceWriteOffset(-1));
+                }
+            }
+        }
+    }
 
-    /**
-     * @param initialCapacity the initial capacity to assign the returned buffer
-     *
-     * @return a ProtonBuffer allocated with the given capacity and a default max-capacity.
-     */
-    protected abstract ProtonBuffer allocateDirectBuffer(int initialCapacity);
+    @Test
+    public void testBufferIterationAllReadableBytes() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            {
+                final ProtonBufferIterator iterator = buf.bufferIterator();
+                assertFalse(iterator.hasNext());
+                assertEquals(0, iterator.remaining());
+                assertThrows(NoSuchElementException.class, () -> iterator.next());
+            }
 
-    /**
-     * @param initialCapacity the initial capacity to assign the returned buffer
-     * @param maxCapacity the maximum capacity the buffer is allowed to grow to
-     *
-     * @return a ProtonBuffer allocated with the given capacity and the given max-capacity.
-     */
-    protected abstract ProtonBuffer allocateBuffer(int initialCapacity, int maxCapacity);
+            buf.writeBytes(new byte[] {1, 2, 3, 4});
+            int roff = buf.getReadOffset();
+            int woff = buf.getWriteOffset();
+            ProtonBufferIterator iterator = buf.bufferIterator();
+            assertEquals(4, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 0x01, iterator.next());
+            assertEquals(3, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 0x02, iterator.next());
+            assertEquals(2, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 0x03, iterator.next());
+            assertEquals(1, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 0x04, iterator.next());
+            assertEquals(0, iterator.remaining());
+            assertFalse(iterator.hasNext());
+            assertEquals(roff, buf.getReadOffset());
+            assertEquals(woff, buf.getWriteOffset());
+            assertThrows(NoSuchElementException.class, () -> iterator.next());
+        }
+    }
 
-    /**
-     * @param initialCapacity the initial capacity to assign the returned buffer
-     * @param maxCapacity the maximum capacity the buffer is allowed to grow to
-     *
-     * @return a ProtonBuffer allocated with the given capacity and the given max-capacity.
-     */
-    protected abstract ProtonBuffer allocateDirectBuffer(int initialCapacity, int maxCapacity);
+    @Test
+    public void testBufferIterationWithingBounds() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IllegalArgumentException.class, () -> buf.bufferIterator(-1, 1));
+            assertThrows(IllegalArgumentException.class, () -> buf.bufferIterator(1, -1));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.bufferIterator(buf.capacity(), 1));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.bufferIterator(buf.capacity() - 1, 2));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.bufferIterator(buf.capacity() - 2, 3));
 
-    /**
-     * @param array the byte array to wrap with the given buffer under test.
-     *
-     * @return a ProtonBuffer that wraps the given buffer.
-     */
-    protected abstract ProtonBuffer wrapBuffer(byte[] array);
+            {
+                final ProtonBufferIterator iterator = buf.bufferIterator();
+                assertFalse(iterator.hasNext());
+                assertEquals(0, iterator.remaining());
+                assertThrows(NoSuchElementException.class, () -> iterator.next());
+            }
 
-    //----- Test support methods
+            buf.writeBytes(new byte[] {1, 2, 3, 4, 5, 6});
+            int roff = buf.getReadOffset();
+            int woff = buf.getWriteOffset();
+            ProtonBufferIterator iterator = buf.bufferIterator(buf.getReadOffset() + 1, buf.getReadableBytes() - 2);
+            assertEquals(4, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 2, iterator.next());
+            assertEquals(3, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 3, iterator.next());
+            assertEquals(2, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 4, iterator.next());
+            assertEquals(1, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 5, iterator.next());
+            assertEquals(0, iterator.remaining());
 
-    public static void assertRemainingEquals(ByteBuffer expected, ByteBuffer actual) {
-        int remaining1 = expected.remaining();
-        int remaining2 = actual.remaining();
+            iterator = buf.bufferIterator(buf.getReadOffset() + 1, 2);
+            assertEquals(2, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 2, iterator.next());
+            assertEquals(1, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 3, iterator.next());
+            assertEquals(0, iterator.remaining());
+            assertFalse(iterator.hasNext());
+            assertEquals(roff, buf.getReadOffset());
+            assertEquals(woff, buf.getWriteOffset());
+        }
+    }
 
-        assertEquals(remaining1, remaining2);
-        byte[] array1 = new byte[remaining1];
-        byte[] array2 = new byte[remaining2];
-        expected.get(array1);
-        actual.get(array2);
-        assertArrayEquals(array1, array2);
+    @Test
+    public void testReverseBufferIterationAllReadableBytes() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+
+            {
+                final ProtonBufferIterator iterator = buf.bufferReverseIterator();
+                assertFalse(iterator.hasNext());
+                assertEquals(0, iterator.remaining());
+                assertThrows(NoSuchElementException.class, () -> iterator.next());
+            }
+
+            buf.writeBytes(new byte[] {1, 2, 3, 4});
+            int roff = buf.getReadOffset();
+            int woff = buf.getWriteOffset();
+            ProtonBufferIterator iterator = buf.bufferReverseIterator();
+            assertEquals(4, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 4, iterator.next());
+            assertEquals(3, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 3, iterator.next());
+            assertEquals(2, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 2, iterator.next());
+            assertEquals(1, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 1, iterator.next());
+            assertEquals(0, iterator.remaining());
+            assertFalse(iterator.hasNext());
+            assertEquals(roff, buf.getReadOffset());
+            assertEquals(woff, buf.getWriteOffset());
+        }
+    }
+
+    @Test
+    public void testReverseBufferIterationWithinBounds() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8)) {
+            assertThrows(IllegalArgumentException.class, () -> buf.bufferReverseIterator(-1, 0));
+            assertThrows(IllegalArgumentException.class, () -> buf.bufferReverseIterator(0, -1));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.bufferReverseIterator(0, 2));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.bufferReverseIterator(1, 3));
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.bufferReverseIterator(buf.capacity(), 0));
+
+            {
+                ProtonBufferIterator iterator = buf.bufferReverseIterator(1, 0);
+                assertFalse(iterator.hasNext());
+                assertEquals(0, iterator.remaining());
+                assertThrows(NoSuchElementException.class, () -> iterator.next());
+            }
+
+            buf.writeBytes(new byte[] {1, 2, 3, 4, 5, 6, 7});
+            int roff = buf.getReadOffset();
+            int woff = buf.getWriteOffset();
+            ProtonBufferIterator iterator = buf.bufferReverseIterator(buf.getWriteOffset() - 2, buf.getReadableBytes() - 2);
+            assertEquals(5, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 6, iterator.next());
+            assertEquals(4, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 5, iterator.next());
+            assertEquals(3, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 4, iterator.next());
+            assertEquals(2, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 3, iterator.next());
+            assertEquals(1, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 2, iterator.next());
+            assertEquals(0, iterator.remaining());
+            assertFalse(iterator.hasNext());
+
+            iterator = buf.bufferReverseIterator(buf.getReadOffset() + 2, 2);
+            assertEquals(2, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 3, iterator.next());
+            assertEquals(1, iterator.remaining());
+            assertTrue(iterator.hasNext());
+            assertEquals((byte) 2, iterator.next());
+            assertEquals(0, iterator.remaining());
+            assertFalse(iterator.hasNext());
+            assertEquals(roff, buf.getReadOffset());
+            assertEquals(woff, buf.getWriteOffset());
+        }
+    }
+
+    @Test
+    public void testIndeOfByteMustThrowOnClosedBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            ProtonBuffer buffer = allocator.allocate(8);
+            buffer.writeLong(0x0102030405060708L);
+            assertEquals(2, buffer.indexOf((byte) 0x03));
+            ProtonBuffer transferred = buffer.transfer();
+            assertThrows(IllegalStateException.class, () -> buffer.indexOf((byte) 0));
+            assertEquals(2, transferred.indexOf((byte) 0x03));
+            transferred.close();
+            assertThrows(IllegalStateException.class, () -> transferred.indexOf((byte) 0));
+        }
+    }
+
+    @Test
+    public void testIndexOfByteMustFindNeedleAtReadOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            ProtonBuffer buffer = allocator.allocate(128);
+            writeRandomBytes(buffer);
+            byte needle = (byte) 0xA5;
+            buffer.setByte(3, needle);
+            buffer.advanceReadOffset(3);
+            assertEquals(3, buffer.indexOf(needle));
+        }
+    }
+
+    @Test
+    public void testIndexOfByteMustFindNeedleCloseToEndOfReadableBytes() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            ProtonBuffer buffer = allocator.allocate(128);
+            writeRandomBytes(buffer);
+            final byte needle = (byte) 0xA5;
+            final int indexOf = buffer.capacity() - 2;
+
+            buffer.setByte(indexOf, needle);
+
+            // As the read offset increases the location remains the same
+            while (buffer.getReadableBytes() > 1) {
+                assertEquals(indexOf, buffer.indexOf(needle));
+                buffer.advanceReadOffset(1);
+            }
+        }
+    }
+
+    @Test
+    public void testIndexOfByteMustFindNeedlePriorToEndOffset() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            ProtonBuffer buffer = allocator.allocate(128);
+            writeRandomBytes(buffer);
+
+            final byte needle = (byte) 0xA5;
+            final int indexOf = buffer.capacity() - 1;
+
+            buffer.setByte(indexOf, needle);
+
+            while (buffer.getReadableBytes() > 1) {
+                assertEquals(indexOf, buffer.indexOf(needle));
+                buffer.advanceReadOffset(1);
+            }
+        }
+    }
+
+    @Test
+    public void testIndexOfByteMustNotFindNeedleOutsideReadableRange() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            ProtonBuffer buffer = allocator.allocate(128);
+            writeRandomBytes(buffer);
+
+            final byte needle = (byte) 0xA5;
+
+            buffer.setByte(buffer.capacity() - 1, needle);
+
+            // Pull the write-offset down by one, leaving needle just outside readable range.
+            buffer.setWriteOffset(buffer.getWriteOffset() - 1);
+
+            while (buffer.getReadableBytes() > 1) {
+                assertEquals(-1, buffer.indexOf(needle));
+                buffer.advanceReadOffset(1);
+            }
+        }
+    }
+
+    @Test
+    public void testIndexOfByteOnEmptyBufferReturnsNoResult() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            ProtonBuffer buffer = allocator.allocate(128);
+            assertEquals(-1, buffer.indexOf((byte) 0));
+        }
+    }
+
+    protected static void verifyInaccessible(ProtonBuffer buf) {
+        verifyReadInaccessible(buf);
+
+        verifyWriteInaccessible(buf, ProtonBufferClosedException.class);
+
+        try (ProtonBufferAllocator allocator = ProtonBufferAllocator.defaultAllocator();
+             ProtonBuffer target = allocator.allocate(24)) {
+            assertThrows(ProtonBufferClosedException.class, () -> buf.copyInto(0, target, 0, 1));
+            assertThrows(ProtonBufferClosedException.class, () -> buf.copyInto(0, target, 0, 0));
+            assertThrows(ProtonBufferClosedException.class, () -> buf.copyInto(0, new byte[1], 0, 1));
+            assertThrows(ProtonBufferClosedException.class, () -> buf.copyInto(0, new byte[1], 0, 0));
+            assertThrows(ProtonBufferClosedException.class, () -> buf.copyInto(0, ByteBuffer.allocate(1), 0, 1));
+            assertThrows(ProtonBufferClosedException.class, () -> buf.copyInto(0, ByteBuffer.allocate(1), 0, 0));
+            if (ProtonCompositeBuffer.isComposite(buf)) {
+                assertThrows(ProtonBufferClosedException.class, () -> ((ProtonCompositeBuffer) buf).append(target));
+            }
+        }
+
+        assertThrows(ProtonBufferClosedException.class, () -> buf.split());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.copy());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.bufferIterator());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.bufferIterator(0, 0));
+        assertThrows(ProtonBufferClosedException.class, () -> buf.bufferReverseIterator());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.bufferReverseIterator(0, 0));
+    }
+
+    protected static void verifyReadInaccessible(ProtonBuffer buf) {
+        assertThrows(ProtonBufferClosedException.class, () -> buf.readBoolean());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.readByte());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.readUnsignedByte());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.readChar());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.readShort());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.readUnsignedShort());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.readInt());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.readUnsignedInt());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.readFloat());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.readLong());
+        assertThrows(ProtonBufferClosedException.class, () -> buf.readDouble());
+
+        assertThrows(ProtonBufferClosedException.class, () -> buf.getBoolean(0));
+        assertThrows(ProtonBufferClosedException.class, () -> buf.getByte(0));
+        assertThrows(ProtonBufferClosedException.class, () -> buf.getUnsignedByte(0));
+        assertThrows(ProtonBufferClosedException.class, () -> buf.getChar(0));
+        assertThrows(ProtonBufferClosedException.class, () -> buf.getShort(0));
+        assertThrows(ProtonBufferClosedException.class, () -> buf.getUnsignedShort(0));
+        assertThrows(ProtonBufferClosedException.class, () -> buf.getInt(0));
+        assertThrows(ProtonBufferClosedException.class, () -> buf.getUnsignedInt(0));
+        assertThrows(ProtonBufferClosedException.class, () -> buf.getFloat(0));
+        assertThrows(ProtonBufferClosedException.class, () -> buf.getLong(0));
+        assertThrows(ProtonBufferClosedException.class, () -> buf.getDouble(0));
+    }
+
+    protected static void verifyWriteInaccessible(ProtonBuffer buf, Class<? extends RuntimeException> expected) {
+        assertThrows(expected, () -> buf.writeByte((byte) 32));
+        assertThrows(expected, () -> buf.writeUnsignedByte(32));
+        assertThrows(expected, () -> buf.writeChar('3'));
+        assertThrows(expected, () -> buf.writeShort((short) 32));
+        assertThrows(expected, () -> buf.writeUnsignedShort(32));
+        assertThrows(expected, () -> buf.writeInt(32));
+        assertThrows(expected, () -> buf.writeUnsignedInt(32));
+        assertThrows(expected, () -> buf.writeFloat(3.2f));
+        assertThrows(expected, () -> buf.writeLong(32));
+        assertThrows(expected, () -> buf.writeDouble(32));
+
+        assertThrows(expected, () -> buf.setByte(0, (byte) 32));
+        assertThrows(expected, () -> buf.setUnsignedByte(0, 32));
+        assertThrows(expected, () -> buf.setChar(0, '3'));
+        assertThrows(expected, () -> buf.setShort(0, (short) 32));
+        assertThrows(expected, () -> buf.setUnsignedShort(0, 32));
+        assertThrows(expected, () -> buf.setInt(0, 32));
+        assertThrows(expected, () -> buf.setUnsignedInt(0, 32));
+        assertThrows(expected, () -> buf.setFloat(0, 3.2f));
+        assertThrows(expected, () -> buf.setLong(0, 32));
+        assertThrows(expected, () -> buf.setDouble(0, 32));
+
+        assertThrows(expected, () -> buf.ensureWritable(1));
+        assertThrows(expected, () -> buf.fill((byte) 0));
+        assertThrows(expected, () -> buf.compact());
+        try (ProtonBufferAllocator allocator = ProtonBufferAllocator.defaultAllocator();
+             ProtonBuffer source = allocator.allocate(8)) {
+            assertThrows(expected, () -> source.copyInto(0, buf, 0, 1));
+            if (expected == ProtonBufferClosedException.class) {
+                assertThrows(expected, () -> buf.copyInto(0, source, 0, 1));
+            }
+        }
+    }
+
+    protected static void verifySplitEmptyCompositeBuffer(ProtonBuffer buf) {
+        try (ProtonBuffer a = buf.split()) {
+            a.ensureWritable(4);
+            buf.ensureWritable(4);
+            a.writeInt(1);
+            buf.writeInt(2);
+            assertEquals(1, a.readInt());
+            assertEquals(2, buf.readInt());
+        }
+    }
+
+    public static void verifyReadingForEachSingleComponent(ProtonBuffer buf) {
+        try (ProtonBufferComponentAccessor accessor = buf.componentAccessor()) {
+            for (ProtonBufferComponent component = accessor.first(); component != null; component = accessor.next()) {
+                ByteBuffer buffer = component.getReadableBuffer();
+                assertEquals(0, buffer.position());
+                assertEquals(8, buffer.limit());
+                assertEquals(8, buffer.capacity());
+                assertEquals(0x0102030405060708L, buffer.getLong());
+
+                if (component.hasReadbleArray()) {
+                    byte[] array = component.getReadableArray();
+                    byte[] arrayCopy = new byte[component.getReadableArrayLength()];
+                    System.arraycopy(array, component.getReadableArrayOffset(), arrayCopy, 0, arrayCopy.length);
+                    assertArrayEquals(new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}, arrayCopy);
+                }
+
+                assertThrows(ReadOnlyBufferException.class, () -> buffer.put(0, (byte) 0xFF));
+            }
+        }
+    }
+
+    protected static void writeRandomBytes(ProtonBuffer buf, int length) {
+        byte[] data = new byte[length];
+        Random random = new Random(42);
+        random.nextBytes(data);
+        buf.writeBytes(data);
+    }
+
+    protected static void writeRandomBytes(byte[] array) {
+        Random random = new Random(42);
+        random.nextBytes(array);
+    }
+
+    protected static void writeRandomBytes(ProtonBuffer buffer) {
+        Random random = new Random(42);
+        int len = buffer.capacity() / Long.BYTES;
+        for (int i = 0; i < len; i++) {
+            // Random bytes, but lower nibble is zeroed to avoid accidentally matching our needle.
+            buffer.writeLong(random.nextLong() & 0xF0F0F0F0_F0F0F0F0L);
+        }
+    }
+
+    protected void assertContentEquals(ProtonBuffer buffer, byte array[], int offset, int length) {
+        for (int i = 0; i < length; i++) {
+            assertEquals(buffer.getByte(i), array[offset + i]);
+        }
+    }
+
+    private static FileChannel tempFileChannel(Path parentDirectory) throws IOException {
+        Path path = Files.createTempFile(parentDirectory, "ProtonBufferTestsChannelTest", "txt");
+        return FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.DELETE_ON_CLOSE);
     }
 }

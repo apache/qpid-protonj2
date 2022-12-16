@@ -26,8 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -50,13 +50,14 @@ public class DoubleTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UINT);
         buffer.writeByte(EncodingCodes.UINT);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             try {
                 streamDecoder.readDouble(stream, streamDecoderState);
                 fail("Should not allow read of integer type as this type");
@@ -90,8 +91,7 @@ public class DoubleTypeCodecTest extends CodecTestSupport {
     }
 
     private void testReadPrimitiveTypeFromEncodingCode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.DOUBLE);
         buffer.writeDouble(42.0);
@@ -101,6 +101,8 @@ public class DoubleTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(EncodingCodes.NULL);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             assertEquals(42.0, streamDecoder.readDouble(stream, streamDecoderState).shortValue(), 0.0);
             assertEquals(43.0, streamDecoder.readDouble(stream, streamDecoderState, 42.0), 0.0);
             assertNull(streamDecoder.readDouble(stream, streamDecoderState));
@@ -135,13 +137,13 @@ public class DoubleTypeCodecTest extends CodecTestSupport {
     }
 
     private void testReadDoubleFromEncodingCode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.DOUBLE);
         buffer.writeDouble(42);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             assertEquals(42, streamDecoder.readDouble(stream, streamDecoderState).intValue());
         } else {
             assertEquals(42, decoder.readDouble(buffer, decoderState).intValue());
@@ -159,8 +161,7 @@ public class DoubleTypeCodecTest extends CodecTestSupport {
     }
 
     private void testSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeDouble(buffer, encoderState, Double.MAX_VALUE);
@@ -170,6 +171,13 @@ public class DoubleTypeCodecTest extends CodecTestSupport {
         double expected = 42;
 
         encoder.writeObject(buffer, encoderState, expected);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -214,8 +222,7 @@ public class DoubleTypeCodecTest extends CodecTestSupport {
     }
 
     private void testArrayOfObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final int size = 10;
 
@@ -228,6 +235,7 @@ public class DoubleTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -256,8 +264,7 @@ public class DoubleTypeCodecTest extends CodecTestSupport {
     }
 
     private void testZeroSizedArrayOfObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Double[] source = new Double[0];
 
@@ -265,6 +272,7 @@ public class DoubleTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);

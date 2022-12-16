@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.engine.sasl.client;
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 
 /**
  * Base class for SASL Authentication Mechanism that implements the basic
@@ -27,7 +27,7 @@ import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
  */
 public abstract class AbstractMechanism implements Mechanism {
 
-    protected static final ProtonBuffer EMPTY = ProtonByteBufferAllocator.DEFAULT.allocate(0, 0);
+    protected static final ProtonBuffer EMPTY = ProtonBufferAllocator.defaultAllocator().allocate(0).convertToReadOnly();
 
     @Override
     public ProtonBuffer getInitialResponse(SaslCredentialsProvider credentials) throws SaslException {

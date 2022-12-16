@@ -32,6 +32,7 @@ import org.apache.qpid.protonj2.engine.ConnectionState;
 import org.apache.qpid.protonj2.engine.EventHandler;
 import org.apache.qpid.protonj2.engine.HeaderEnvelope;
 import org.apache.qpid.protonj2.engine.Receiver;
+import org.apache.qpid.protonj2.engine.Scheduler;
 import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.SessionState;
@@ -182,6 +183,13 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     public Connection tickAuto(ScheduledExecutorService executor) {
         checkConnectionClosed("Cannot call tickAuto on an already closed Connection");
         engine.tickAuto(executor);
+        return this;
+    }
+
+    @Override
+    public Connection tickAuto(Scheduler scheduler) {
+        checkConnectionClosed("Cannot call tickAuto on an already closed Connection");
+        engine.tickAuto(scheduler);
         return this;
     }
 

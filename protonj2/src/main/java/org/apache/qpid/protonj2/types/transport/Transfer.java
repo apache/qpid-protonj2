@@ -17,7 +17,7 @@
 package org.apache.qpid.protonj2.types.transport;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -181,7 +181,7 @@ public final class Transfer implements Performative {
 
     public Transfer setDeliveryTag(byte[] tagBytes) {
         if (tagBytes != null) {
-            return setDeliveryTag(new DeliveryTag.ProtonDeliveryTag(ProtonByteBufferAllocator.DEFAULT.wrap(tagBytes)));
+            return setDeliveryTag(new DeliveryTag.ProtonDeliveryTag(ProtonBufferAllocator.defaultAllocator().copy(tagBytes)));
         } else {
             return setDeliveryTag((DeliveryTag) null);
         }

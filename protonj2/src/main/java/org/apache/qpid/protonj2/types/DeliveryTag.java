@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 
 /**
@@ -106,12 +106,8 @@ public interface DeliveryTag {
 
         public ProtonDeliveryTag(ProtonBuffer tagBytes) {
             Objects.requireNonNull(tagBytes, "Tag bytes cannot be null");
-            if (tagBytes.hasArray() && tagBytes.getArrayOffset() == 0) {
-                this.tagBytes = tagBytes.getArray();
-            } else {
-                this.tagBytes = new byte[tagBytes.getReadableBytes()];
-                tagBytes.getBytes(tagBytes.getReadIndex(), this.tagBytes);
-            }
+            this.tagBytes = new byte[tagBytes.getReadableBytes()];
+            tagBytes.copyInto(tagBytes.getReadOffset(), this.tagBytes, 0, this.tagBytes.length);
             this.tagView = tagBytes;
         }
 
@@ -128,7 +124,7 @@ public interface DeliveryTag {
         @Override
         public ProtonBuffer tagBuffer() {
             if (tagView == null) {
-                tagView = ProtonByteBufferAllocator.DEFAULT.wrap(tagBytes);
+                tagView = ProtonBufferAllocator.defaultAllocator().copy(tagBytes).convertToReadOnly();
             }
 
             return tagView;

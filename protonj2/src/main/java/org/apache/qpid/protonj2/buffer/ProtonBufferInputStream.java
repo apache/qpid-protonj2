@@ -25,38 +25,44 @@ import java.util.Objects;
 
 /**
  * An InputStream that can be used to adapt a {@link ProtonBuffer} for use in the
- * standard streams API.
+ * standard streams API. This stream wrapper assumes ownership of the provided stream
+ * and will close it upon a call to the {@link #close()} method.
  */
 public class ProtonBufferInputStream extends InputStream implements DataInput {
 
+    private static final int NOT_SET = -1;
+
     private final ProtonBuffer buffer;
     private final int initialReadIndex;
+    private int readOffsetMark = NOT_SET;
 
     private boolean closed;
 
     /**
      * Creates a new {@link InputStream} instance that wraps the given {@link ProtonBuffer}
+     * and assumes ownership.
      *
      * @param buffer
      * 		The {@link ProtonBuffer} that this {@link InputStream} will read from.
      */
     public ProtonBufferInputStream(ProtonBuffer buffer) {
         Objects.requireNonNull(buffer, "The given ProtonBuffer to wrap cannot be null");
-        this.buffer = buffer;
-        this.initialReadIndex = buffer.getReadIndex();
+        this.initialReadIndex = buffer.getReadOffset();
+        this.buffer = buffer.transfer();
     }
 
     /**
      * @return a running total of the number of bytes that has been read from this {@link InputStream}.
      */
     public int getBytesRead() {
-        return buffer.getReadIndex() - initialReadIndex;
+        return buffer.getReadOffset() - initialReadIndex;
     }
 
     @Override
     public void close() throws IOException {
         try {
             super.close();
+            this.buffer.close();
         } finally {
             this.closed = true;
         }
@@ -68,13 +74,16 @@ public class ProtonBufferInputStream extends InputStream implements DataInput {
     }
 
     @Override
-    public synchronized void mark(int readlimit) {
-        buffer.markReadIndex();
+    public void mark(int readlimit) {
+        readOffsetMark = buffer.getReadOffset();
     }
 
     @Override
-    public synchronized void reset() throws IOException {
-        buffer.resetReadIndex();
+    public void reset() throws IOException {
+        if (readOffsetMark == NOT_SET) {
+            throw new IOException("The stream has not been marked or the mark was invalidated");
+        }
+        buffer.setReadOffset(readOffsetMark);
     }
 
     @Override
@@ -89,16 +98,14 @@ public class ProtonBufferInputStream extends InputStream implements DataInput {
             return -1;
         }
 
-        int result = buffer.readByte() & 0xff;
-
-        return result;
+        return buffer.readByte() & 0xff;
     }
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
         checkClosed();
 
-        int available = available();
+        final int available = available();
         if (available == 0) {
             return -1;
         }
@@ -121,8 +128,8 @@ public class ProtonBufferInputStream extends InputStream implements DataInput {
     @Override
     public int skipBytes(int skipAmount) throws IOException {
         checkClosed();
-        int nBytes = Math.min(available(), skipAmount);
-        buffer.skipBytes(nBytes);
+        final int nBytes = Math.min(available(), skipAmount);
+        buffer.advanceReadOffset(nBytes);
         return nBytes;
     }
 
@@ -130,7 +137,7 @@ public class ProtonBufferInputStream extends InputStream implements DataInput {
     public void readFully(byte[] target) throws IOException {
         checkClosed();
         checkAvailable(target.length);
-        buffer.readBytes(target);
+        buffer.readBytes(target, 0, target.length);
     }
 
     @Override
@@ -221,14 +228,14 @@ public class ProtonBufferInputStream extends InputStream implements DataInput {
         }
 
         loop: do {
-            int c = buffer.readByte() & 0xff;
+            final int c = buffer.readByte() & 0xff;
             --available;
             switch (c) {
                 case '\n':
                     break loop;
                 case '\r':
-                    if (available > 0 && (char) buffer.getUnsignedByte(buffer.getReadIndex()) == '\n') {
-                        buffer.skipBytes(1);
+                    if (available > 0 && (char) buffer.getUnsignedByte(buffer.getReadOffset()) == '\n') {
+                        buffer.advanceReadOffset(1);
                         --available;
                     }
 

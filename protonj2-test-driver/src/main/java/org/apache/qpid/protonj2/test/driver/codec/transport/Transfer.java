@@ -25,7 +25,7 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedByte;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 public class Transfer extends PerformativeDescribedType {
 
@@ -172,7 +172,7 @@ public class Transfer extends PerformativeDescribedType {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, int frameSize, ByteBuf payload, int channel, E context) {
+    public <E> void invoke(PerformativeHandler<E> handler, int frameSize, Buffer payload, int channel, E context) {
         handler.handleTransfer(frameSize, this, payload, channel, context);
     }
 

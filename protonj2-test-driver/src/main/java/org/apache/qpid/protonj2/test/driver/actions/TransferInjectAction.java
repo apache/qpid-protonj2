@@ -47,8 +47,8 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty5.buffer.Buffer;
+import io.netty5.buffer.BufferAllocator;
 
 /**
  * AMQP Close injection action which can be added to a driver for write at a specific time or
@@ -59,7 +59,7 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
     private final Transfer transfer = new Transfer();
     private final DeliveryStateBuilder stateBuilder = new DeliveryStateBuilder();
 
-    private ByteBuf payload;
+    private Buffer payload;
 
     private Header header;
     private DeliveryAnnotations deliveryAnnotations;
@@ -81,7 +81,7 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
     }
 
     @Override
-    public ByteBuf getPayload() {
+    public Buffer getPayload() {
         if (payload == null) {
             payload = encodePayload();
         }
@@ -212,11 +212,11 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
     }
 
     public TransferInjectAction withPayload(byte[] payload) {
-        this.payload = Unpooled.wrappedBuffer(payload);
+        this.payload = BufferAllocator.onHeapUnpooled().copyOf(payload);
         return this;
     }
 
-    public TransferInjectAction withPayload(ByteBuf payload) {
+    public TransferInjectAction withPayload(Buffer payload) {
         this.payload = payload;
         return this;
     }
@@ -293,10 +293,10 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
         return footer;
     }
 
-    private ByteBuf encodePayload() {
+    private Buffer encodePayload() {
         org.apache.qpid.protonj2.test.driver.codec.Codec codec =
             org.apache.qpid.protonj2.test.driver.codec.Codec.Factory.create();
-        ByteBuf buffer = Unpooled.buffer();
+        final Buffer buffer = BufferAllocator.onHeapUnpooled().allocate(128);
 
         if (header != null) {
             codec.putDescribedType(header);
@@ -322,7 +322,7 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
 
         codec.encode(buffer);
 
-        return buffer;
+        return buffer.makeReadOnly();
     }
 
     protected abstract class SectionBuilder {

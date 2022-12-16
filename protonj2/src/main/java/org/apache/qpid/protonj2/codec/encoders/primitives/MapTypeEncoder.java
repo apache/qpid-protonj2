@@ -51,7 +51,7 @@ public final class MapTypeEncoder extends AbstractPrimitiveTypeEncoder<Map> {
     }
 
     private void writeValue(ProtonBuffer buffer, EncoderState state, Map value) {
-        int startIndex = buffer.getWriteIndex();
+        int startIndex = buffer.getWriteOffset();
 
         // Reserve space for the size
         buffer.writeInt(0);
@@ -77,7 +77,7 @@ public final class MapTypeEncoder extends AbstractPrimitiveTypeEncoder<Map> {
         });
 
         // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
+        int endIndex = buffer.getWriteOffset();
         buffer.setInt(startIndex, endIndex - startIndex - 4);
     }
 }

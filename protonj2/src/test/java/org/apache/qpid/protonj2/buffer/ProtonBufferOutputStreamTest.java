@@ -33,7 +33,7 @@ public class ProtonBufferOutputStreamTest {
     public void testBufferWrappedExposesWrittenBytes() throws IOException {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(payload.length);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate(payload.length);
         ProtonBufferOutputStream stream = new ProtonBufferOutputStream(buffer);
         assertEquals(0, stream.getBytesWritten());
 
@@ -48,7 +48,7 @@ public class ProtonBufferOutputStreamTest {
     public void testBufferWritesGivenArrayBytes() throws IOException {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(payload.length);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate(payload.length);
         ProtonBufferOutputStream stream = new ProtonBufferOutputStream(buffer);
         assertEquals(0, stream.getBytesWritten());
 
@@ -65,7 +65,7 @@ public class ProtonBufferOutputStreamTest {
     public void testZeroLengthWriteBytesDoesNotWriteOrThrow() throws IOException {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(payload.length);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate(payload.length);
         ProtonBufferOutputStream stream = new ProtonBufferOutputStream(buffer);
 
         stream.write(payload, 0, 0);
@@ -77,7 +77,7 @@ public class ProtonBufferOutputStreamTest {
 
     @Test
     public void testCannotWriteToClosedStream() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         ProtonBufferOutputStream stream = new ProtonBufferOutputStream(buffer);
 
         stream.close();
@@ -86,7 +86,7 @@ public class ProtonBufferOutputStreamTest {
 
     @Test
     public void testWriteValuesAndReadWithDataInputStream() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         ProtonBufferOutputStream stream = new ProtonBufferOutputStream(buffer);
 
         stream.write(32);
@@ -101,7 +101,7 @@ public class ProtonBufferOutputStreamTest {
         stream.writeFloat(3.14f);
         stream.writeDouble(3.14);
 
-        final byte[] array = buffer.toByteBuffer().array();
+        final byte[] array = ProtonBufferUtils.toByteArray(buffer);
         ByteArrayInputStream bis = new ByteArrayInputStream(array, 0, buffer.getReadableBytes());
         DataInputStream dis = new DataInputStream(bis);
 
@@ -125,13 +125,13 @@ public class ProtonBufferOutputStreamTest {
 
     @Test
     public void testWriteChars() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         ProtonBufferOutputStream stream = new ProtonBufferOutputStream(buffer);
         String expected = "Hello World";
 
         stream.writeChars(expected);
 
-        final byte[] array = buffer.toByteBuffer().array();
+        final byte[] array = ProtonBufferUtils.toByteArray(buffer);
         ByteArrayInputStream bis = new ByteArrayInputStream(array, 0, buffer.getReadableBytes());
         DataInputStream dis = new DataInputStream(bis);
 
@@ -144,13 +144,13 @@ public class ProtonBufferOutputStreamTest {
 
     @Test
     public void testWriteUtf8StringAndReadWithDataInputStream() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         ProtonBufferOutputStream stream = new ProtonBufferOutputStream(buffer);
 
         stream.writeUTF("Hello World");
         stream.writeUTF("Hello World Again");
 
-        final byte[] array = buffer.toByteBuffer().array();
+        final byte[] array = ProtonBufferUtils.toByteArray(buffer);
         ByteArrayInputStream bis = new ByteArrayInputStream(array, 0, buffer.getReadableBytes());
         DataInputStream dis = new DataInputStream(bis);
 
@@ -162,12 +162,12 @@ public class ProtonBufferOutputStreamTest {
 
     @Test
     public void testWriteBytesFromString() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         ProtonBufferOutputStream stream = new ProtonBufferOutputStream(buffer);
 
         stream.writeBytes("Hello World");
 
-        final byte[] array = buffer.toByteBuffer().array();
+        final byte[] array = ProtonBufferUtils.toByteArray(buffer);
         ByteArrayInputStream bis = new ByteArrayInputStream(array, 0, buffer.getReadableBytes());
         DataInputStream dis = new DataInputStream(bis);
 

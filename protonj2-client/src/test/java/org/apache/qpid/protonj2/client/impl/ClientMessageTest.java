@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.client.impl;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -366,8 +367,8 @@ class ClientMessageTest {
         message.bodySections().forEach(section -> {
             assertTrue(section instanceof Data);
             final Data dataView = (Data) section;
-            assertEquals(counter.get(), dataView.getBuffer().getArray()[0]);
-            assertEquals(counter.getAndIncrement(), dataView.getBinary().getArray()[0]);
+            assertEquals(counter.get(), dataView.getBuffer().getByte(0));
+            assertEquals(counter.getAndIncrement(), dataView.getBinary().asByteArray()[0]);
         });
     }
 
@@ -452,21 +453,21 @@ class ClientMessageTest {
 
         message.body(expected.get(0).getValue());
 
-        assertEquals(expected.get(0).getValue(), message.body());
+        assertArrayEquals(expected.get(0).getValue(), message.body());
         assertNotNull(message.bodySections());
         assertFalse(message.bodySections().isEmpty());
         assertEquals(1, message.bodySections().size());
 
         message.addBodySection(expected.get(1));
 
-        assertEquals(expected.get(0).getValue(), message.body());
+        assertArrayEquals(expected.get(0).getValue(), message.body());
         assertNotNull(message.bodySections());
         assertFalse(message.bodySections().isEmpty());
         assertEquals(2, message.bodySections().size());
 
         message.addBodySection(expected.get(2));
 
-        assertEquals(expected.get(0).getValue(), message.body());
+        assertArrayEquals(expected.get(0).getValue(), message.body());
         assertNotNull(message.bodySections());
         assertFalse(message.bodySections().isEmpty());
         assertEquals(3, message.bodySections().size());

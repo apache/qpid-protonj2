@@ -22,7 +22,7 @@ import org.apache.qpid.proton.codec.AMQPDefinedTypes;
 import org.apache.qpid.proton.codec.DecoderImpl;
 import org.apache.qpid.proton.codec.EncoderImpl;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 
 /**
  * Adapter to allow using the legacy proton-j codec in tests for new proton library.
@@ -52,7 +52,7 @@ public final class LegacyCodecAdapter {
      * @return a {@link ProtonBuffer} with the encoded bytes ready for reading.
      */
     public ProtonBuffer encodeUsingLegacyEncoder(Object value) {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         ByteBuffer byteBuffer = ByteBuffer.allocate(8192);
 
@@ -79,11 +79,12 @@ public final class LegacyCodecAdapter {
      * @return a decoded version of the legacy encoded type that can compare against the new version of the type.
      */
     public Object decodeLegacyType(ProtonBuffer buffer) {
-        ByteBuffer byteBuffer = buffer.toByteBuffer();
+        ByteBuffer byteBuffer = ByteBuffer.allocate(buffer.getReadableBytes());
+        buffer.readBytes(byteBuffer);
         Object result = null;
 
         try {
-            decoder.setByteBuffer(byteBuffer);
+            decoder.setByteBuffer(byteBuffer.flip());
             result = decoder.readObject();
         } finally {
             decoder.setBuffer(null);

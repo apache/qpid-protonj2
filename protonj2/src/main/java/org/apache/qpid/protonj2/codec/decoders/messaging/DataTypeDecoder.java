@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.codec.decoders.messaging;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -79,12 +79,12 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
                                       "amount of data available ("+ buffer.getReadableBytes()+")");
         }
 
-        final int position = buffer.getReadIndex();
-        final ProtonBuffer data = ProtonByteBufferAllocator.DEFAULT.allocate(size, size);
+        // Use a heap buffer to avoid retaining any pooled buffers for prolonged periods of time.
+        final ProtonBuffer data = ProtonBufferAllocator.defaultAllocator().allocateHeapBuffer(size);
 
-        buffer.getBytes(position, data.getArray(), data.getArrayOffset(), size);
-        data.setWriteIndex(size);
-        buffer.setReadIndex(position + size);
+        buffer.copyInto(buffer.getReadOffset(), data, 0, size);
+        buffer.advanceReadOffset(size);
+        data.advanceWriteOffset(size);
 
         return new Data(data);
     }

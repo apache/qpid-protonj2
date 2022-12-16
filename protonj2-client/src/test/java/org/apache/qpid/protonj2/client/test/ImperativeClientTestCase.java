@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecFactory;
 import org.apache.qpid.protonj2.codec.Encoder;
 import org.apache.qpid.protonj2.types.messaging.Data;
@@ -105,32 +105,32 @@ public abstract class ImperativeClientTestCase {
 
     protected byte[] createEncodedMessage(Section<Object> body) {
         Encoder encoder = CodecFactory.getEncoder();
-        ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         encoder.writeObject(buffer, encoder.newEncoderState(), body);
         byte[] result = new byte[buffer.getReadableBytes()];
-        buffer.readBytes(result);
+        buffer.copyInto(buffer.getReadOffset(), result, 0, result.length);
         return result;
     }
 
     protected byte[] createEncodedMessage(Section<?>... body) {
         Encoder encoder = CodecFactory.getEncoder();
-        ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         for (Section<?> section : body) {
             encoder.writeObject(buffer, encoder.newEncoderState(), section);
         }
         byte[] result = new byte[buffer.getReadableBytes()];
-        buffer.readBytes(result);
+        buffer.copyInto(buffer.getReadOffset(), result, 0, result.length);
         return result;
     }
 
     protected byte[] createEncodedMessage(Data... body) {
         Encoder encoder = CodecFactory.getEncoder();
-        ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         for (Data data : body) {
             encoder.writeObject(buffer, encoder.newEncoderState(), data);
         }
         byte[] result = new byte[buffer.getReadableBytes()];
-        buffer.readBytes(result);
+        buffer.copyInto(buffer.getReadOffset(), result, 0, result.length);
         return result;
     }
 }

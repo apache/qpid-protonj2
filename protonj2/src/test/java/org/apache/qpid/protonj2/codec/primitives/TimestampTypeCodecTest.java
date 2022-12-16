@@ -28,8 +28,8 @@ import java.util.Date;
 import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -53,13 +53,14 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UINT);
         buffer.writeByte(EncodingCodes.UINT);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             try {
                 streamDecoder.readTimestamp(stream, streamDecoderState);
                 fail("Should not allow read of integer type as this type");
@@ -93,13 +94,14 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
     }
 
     private void testReadFromNullEncodingCode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.NULL);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             assertNull(streamDecoder.readTimestamp(stream, streamDecoderState));
             assertEquals(42l, streamDecoder.readTimestamp(stream, streamDecoderState, 42l));
         } else {
@@ -130,13 +132,13 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
     }
 
     private void testReadFromEncodingCode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.TIMESTAMP);
         buffer.writeLong(42);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             assertEquals(42, streamDecoder.readTimestamp(stream, streamDecoderState).longValue());
         } else {
             assertEquals(42, decoder.readTimestamp(buffer, decoderState).longValue());
@@ -154,8 +156,7 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
     }
 
     public void doTestSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeTimestamp(buffer, encoderState, Long.MAX_VALUE);
@@ -165,6 +166,13 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
         long expected = 42;
 
         encoder.writeObject(buffer, encoderState, expected);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -217,8 +225,7 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
     }
 
     private void testArrayOfObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         Random random = new Random();
         random.setSeed(System.nanoTime());
 
@@ -233,6 +240,7 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -261,8 +269,7 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
     }
 
     private void testZeroSizedArrayOfObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Date[] source = new Date[0];
 
@@ -270,6 +277,7 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);

@@ -27,7 +27,7 @@ import java.util.Base64;
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -35,11 +35,11 @@ import org.junit.jupiter.api.Test;
  */
 public class CramMD5MechanismTest extends MechanismTestBase {
 
-    private final ProtonBuffer SERVER_FIRST_MESSAGE = ProtonByteBufferAllocator.DEFAULT.wrap(
-        Base64.getDecoder().decode("PDE4OTYuNjk3MTcwOTUyQHBvc3RvZmZpY2UucmVzdG9uLm1jaS5uZXQ+"));
+    private final ProtonBuffer SERVER_FIRST_MESSAGE = ProtonBufferAllocator.defaultAllocator().copy(
+        Base64.getDecoder().decode("PDE4OTYuNjk3MTcwOTUyQHBvc3RvZmZpY2UucmVzdG9uLm1jaS5uZXQ+")).convertToReadOnly();
 
-    private final ProtonBuffer EXPECTED_CLIENT_FINAL_MESSAGE = ProtonByteBufferAllocator.DEFAULT.wrap(
-        Base64.getDecoder().decode("dGltIGI5MTNhNjAyYzdlZGE3YTQ5NWI0ZTZlNzMzNGQzODkw"));
+    private final ProtonBuffer EXPECTED_CLIENT_FINAL_MESSAGE = ProtonBufferAllocator.defaultAllocator().copy(
+        Base64.getDecoder().decode("dGltIGI5MTNhNjAyYzdlZGE3YTQ5NWI0ZTZlNzMzNGQzODkw")).convertToReadOnly();
 
     private static final String TEST_USERNAME = "tim";
     private static final String TEST_PASSWORD = "tanstaaftanstaaf";

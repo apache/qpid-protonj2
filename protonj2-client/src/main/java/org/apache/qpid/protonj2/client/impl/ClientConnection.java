@@ -25,7 +25,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -63,12 +62,13 @@ import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutExcepti
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.client.futures.ClientFutureFactory;
-import org.apache.qpid.protonj2.client.transport.NettyIOContext;
+import org.apache.qpid.protonj2.client.transport.IOContext;
 import org.apache.qpid.protonj2.client.transport.Transport;
 import org.apache.qpid.protonj2.client.util.ReconnectLocationPool;
 import org.apache.qpid.protonj2.client.util.TrackableThreadFactory;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
+import org.apache.qpid.protonj2.engine.Scheduler;
 import org.apache.qpid.protonj2.engine.sasl.client.SaslAuthenticator;
 import org.apache.qpid.protonj2.engine.sasl.client.SaslCredentialsProvider;
 import org.apache.qpid.protonj2.engine.sasl.client.SaslMechanismSelector;
@@ -98,9 +98,9 @@ public final class ClientConnection implements Connection {
     private final ClientFutureFactory futureFactory;
     private final ClientSessionBuilder sessionBuilder;
     private final ReconnectLocationPool reconnectPool = new ReconnectLocationPool();
-    private final NettyIOContext ioContext;
+    private final IOContext ioContext;
     private final String connectionId;
-    private final ScheduledExecutorService executor;
+    private final Scheduler executor;
     private final ThreadPoolExecutor notifications;
 
     private Engine engine;
@@ -138,10 +138,9 @@ public final class ClientConnection implements Connection {
         this.openFuture = futureFactory.createFuture();
         this.closeFuture = futureFactory.createFuture();
         this.sessionBuilder = new ClientSessionBuilder(this);
-        this.ioContext = new NettyIOContext(options.transportOptions(),
-                                            options.sslOptions(),
-                                            "ClientConnection :(" + connectionId + "): I/O Thread");
-        this.executor = ioContext.eventLoop();
+        this.ioContext = IOContext.create(options.transportOptions(), options.sslOptions(),
+                                          "ClientConnection :(" + connectionId + "): I/O Thread");
+        this.executor = ioContext.ioScheduler();
 
         // This executor can be used for dispatching asynchronous tasks that might block or result
         // in reentrant calls to this Connection that could block.
@@ -569,7 +568,7 @@ public final class ClientConnection implements Connection {
         return closed > 0;
     }
 
-    ScheduledExecutorService getScheduler() {
+    Scheduler getScheduler() {
         return executor;
     }
 

@@ -28,7 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -40,14 +40,14 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
     @Test
     public void testToStringOnEmptyDeliveryDoesNotNPE() throws Exception {
         ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
-            Mockito.mock(ProtonReceiver.class), 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
+            createMockReceiver(), 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
         assertNotNull(delivery.toString());
     }
 
     @Test
     public void testDefaultMessageFormat() throws Exception {
         ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
-            Mockito.mock(ProtonReceiver.class), 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
+            createMockReceiver(), 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
         assertEquals(0L, DEFAULT_MESSAGE_FORMAT, "Unexpected value");
         assertEquals(DEFAULT_MESSAGE_FORMAT, delivery.getMessageFormat(), "Unexpected message format");
     }
@@ -56,9 +56,10 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
     public void testAvailable() throws Exception {
         byte[] data = "test-data".getBytes(StandardCharsets.UTF_8);
 
+        final ProtonReceiver receiver = createMockReceiver();
         ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
-            Mockito.mock(ProtonReceiver.class), 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
-        delivery.appendTransferPayload(ProtonByteBufferAllocator.DEFAULT.wrap(data));
+            receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
+        delivery.appendTransferPayload(ProtonBufferAllocator.defaultAllocator().copy(data));
 
         // Check the full data is available
         assertNotNull(delivery, "expected the delivery to be present");
@@ -83,25 +84,33 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
 
     @Test
     public void testAvailableWhenEmpty() throws Exception {
+        final ProtonEngineConfiguration config = Mockito.mock(ProtonEngineConfiguration.class);
+        Mockito.when(config.getBufferAllocator()).thenReturn(ProtonBufferAllocator.defaultAllocator());
+        final ProtonEngine engine = Mockito.mock(ProtonEngine.class);
+        Mockito.when(engine.configuration()).thenReturn(config);
+        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        Mockito.when(receiver.getEngine()).thenReturn(engine);
+
         ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
-            Mockito.mock(ProtonReceiver.class), 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
+            receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
         assertEquals(0, delivery.available());
     }
 
     @Test
     public void testAppendArraysToBuffer() throws Exception {
-        ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
-            Mockito.mock(ProtonReceiver.class), 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
+        final ProtonReceiver receiver = createMockReceiver();
+        final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
+            receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
 
         byte[] data1 = new byte[] { 0, 1, 2, 3, 4, 5 };
         byte[] data2 = new byte[] { 6, 7, 8, 9, 10, 11 };
 
         assertTrue(delivery.isFirstTransfer());
         assertEquals(0, delivery.getTransferCount());
-        delivery.appendTransferPayload(ProtonByteBufferAllocator.DEFAULT.wrap(data1));
+        delivery.appendTransferPayload(ProtonBufferAllocator.defaultAllocator().copy(data1));
         assertTrue(delivery.isFirstTransfer());
         assertEquals(1, delivery.getTransferCount());
-        delivery.appendTransferPayload(ProtonByteBufferAllocator.DEFAULT.wrap(data2));
+        delivery.appendTransferPayload(ProtonBufferAllocator.defaultAllocator().copy(data2));
         assertFalse(delivery.isFirstTransfer());
         assertEquals(2, delivery.getTransferCount());
 
@@ -112,7 +121,7 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
 
     @Test
     public void testClaimAvailableBytesIndicatesAllBytesRead() throws Exception {
-        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonReceiver receiver = createMockReceiver();
         final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
             receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
 
@@ -127,7 +136,7 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
 
     @Test
     public void testReadAllAfterAllClaimedDoesNotClaimMore() throws Exception {
-        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonReceiver receiver = createMockReceiver();
         final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
             receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
 
@@ -145,7 +154,7 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
 
     @Test
     public void testReadAllAfterAllClaimedSignalsBytesReadIfMoreDataArrived() throws Exception {
-        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonReceiver receiver = createMockReceiver();
         final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
             receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
 
@@ -163,13 +172,14 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
 
         assertNotNull(delivery.readAll());
 
+        Mockito.verify(receiver).getEngine();
         Mockito.verify(receiver).deliveryRead(delivery, 2048);
         Mockito.verifyNoMoreInteractions(receiver);
     }
 
     @Test
     public void testClaimAvailableBytesDoesNothingOnSecondCall() throws Exception {
-        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonReceiver receiver = createMockReceiver();
         final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
             receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
 
@@ -188,7 +198,7 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
 
     @Test
     public void testClaimAvailableBytesIndicatesAllBytesReadAfterNewDelivery() throws Exception {
-        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonReceiver receiver = createMockReceiver();
         final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
             receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
 
@@ -202,6 +212,7 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
         assertEquals(1024 + 512, delivery.available());
         assertSame(delivery, delivery.claimAvailableBytes());
 
+        Mockito.verify(receiver, times(1)).getEngine();
         Mockito.verify(receiver, times(1)).deliveryRead(delivery, 1024);
         Mockito.verify(receiver, times(1)).deliveryRead(delivery, 512);
         Mockito.verifyNoMoreInteractions(receiver);
@@ -209,7 +220,7 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
 
     @Test
     public void testClaimAvailableBytesThenReadSomeAndExpectNoMoreClaimed() throws Exception {
-        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonReceiver receiver = createMockReceiver();
         final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
             receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
 
@@ -220,7 +231,7 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
         assertEquals(1024, delivery.available());
         assertSame(delivery, delivery.claimAvailableBytes());
 
-        Mockito.verify(receiver, times(1)).deliveryRead(delivery, 1024);
+        Mockito.verify(receiver).deliveryRead(delivery, 1024);
 
         delivery.readBytes(target, 0, target.length);
         delivery.readBytes(target, 0, target.length);
@@ -230,7 +241,7 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
 
     @Test
     public void testClaimThenReadSomeGetMoreAndThenClaimAgain() throws Exception {
-        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        final ProtonReceiver receiver = createMockReceiver();
         final ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
             receiver, 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
 
@@ -247,6 +258,7 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
 
         delivery.readBytes(target, 0, target.length);
 
+        Mockito.verify(receiver, times(1)).getEngine();
         Mockito.verify(receiver, times(2)).deliveryRead(delivery, 1024);
         Mockito.verifyNoMoreInteractions(receiver);
 
@@ -258,6 +270,20 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
     private ProtonBuffer createProtonBuffer(int available) {
         byte[] array = new byte[available];
         Arrays.fill(array, (byte) 65);
-        return ProtonByteBufferAllocator.DEFAULT.wrap(array);
+        return ProtonBufferAllocator.defaultAllocator().copy(array);
+    }
+
+    private ProtonReceiver createMockReceiver() {
+        final ProtonEngineConfiguration configuration = Mockito.mock(ProtonEngineConfiguration.class);
+        Mockito.when(configuration.getInboundMaxFrameSize()).thenReturn(Long.valueOf(65535));
+        Mockito.when(configuration.getOutboundMaxFrameSize()).thenReturn(Long.valueOf(65535));
+        Mockito.when(configuration.getBufferAllocator()).thenReturn(ProtonBufferAllocator.defaultAllocator());
+        final ProtonEngine engine = Mockito.mock(ProtonEngine.class);
+        Mockito.when(engine.configuration()).thenReturn(configuration);
+        Mockito.when(engine.isWritable()).thenReturn(Boolean.TRUE);
+        final ProtonReceiver receiver = Mockito.mock(ProtonReceiver.class);
+        Mockito.when(receiver.getEngine()).thenReturn(engine);
+
+        return receiver;
     }
 }

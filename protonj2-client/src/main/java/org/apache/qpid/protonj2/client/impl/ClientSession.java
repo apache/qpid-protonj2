@@ -21,8 +21,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Supplier;
@@ -46,6 +44,7 @@ import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.client.futures.ClientFutureFactory;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
+import org.apache.qpid.protonj2.engine.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +66,7 @@ public class ClientSession implements Session {
 
     private final SessionOptions options;
     private final ClientConnection connection;
-    private final ScheduledExecutorService serializer;
+    private final Scheduler serializer;
     private final String sessionId;
     private final ClientSenderBuilder senderBuilder;
     private final ClientReceiverBuilder receiverBuilder;
@@ -441,7 +440,7 @@ public class ClientSession implements Session {
         return this;
     }
 
-    ScheduledExecutorService getScheduler() {
+    Scheduler getScheduler() {
         return serializer;
     }
 
@@ -457,7 +456,7 @@ public class ClientSession implements Session {
         return closed > 0;
     }
 
-    ScheduledFuture<?> scheduleRequestTimeout(final AsyncResult<?> request, long timeout, Supplier<ClientException> errorSupplier) {
+    Future<?> scheduleRequestTimeout(final AsyncResult<?> request, long timeout, Supplier<ClientException> errorSupplier) {
         if (timeout != INFINITE) {
             return serializer.schedule(() -> request.failed(errorSupplier.get()), timeout, TimeUnit.MILLISECONDS);
         } else {

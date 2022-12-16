@@ -23,8 +23,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.util.NoLocalType;
 import org.apache.qpid.protonj2.codec.util.NoLocalTypeDecoder;
 import org.apache.qpid.protonj2.codec.util.NoLocalTypeEncoder;
@@ -46,8 +46,7 @@ public class RegisteredTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeRegisteredType(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         // Register the codec pair.
         encoder.registerDescribedTypeEncoder(new NoLocalTypeEncoder());
@@ -58,6 +57,7 @@ public class RegisteredTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);

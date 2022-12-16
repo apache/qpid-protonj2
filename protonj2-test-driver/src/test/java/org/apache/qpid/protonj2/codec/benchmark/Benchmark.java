@@ -44,14 +44,14 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty5.buffer.Buffer;
+import io.netty5.buffer.BufferAllocator;
 
 public class Benchmark implements Runnable {
 
     private static final int ITERATIONS = 10 * 1024 * 1024;
 
-    ByteBuf buffer = Unpooled.buffer(8192);
+    private Buffer buffer = BufferAllocator.onHeapUnpooled().allocate(8192);
     private BenchmarkResult resultSet = new BenchmarkResult();
     private boolean warming = true;
 
@@ -105,7 +105,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.clear();
+            buffer.resetOffsets();
             codec.putJavaList(list);
             codec.encode(buffer);
             codec.clear();
@@ -114,7 +114,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerIndex(0);
+            buffer.readerOffset(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -128,7 +128,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.clear();
+            buffer.resetOffsets();
             codec.putUUID(uuid);
             codec.encode(buffer);
             codec.clear();
@@ -137,7 +137,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerIndex(0);
+            buffer.readerOffset(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -154,7 +154,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.clear();
+            buffer.resetOffsets();
             codec.putDescribedType(transfer);
             codec.encode(buffer);
             codec.clear();
@@ -163,7 +163,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerIndex(0);
+            buffer.readerOffset(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -184,7 +184,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.clear();
+            buffer.resetOffsets();
             codec.putDescribedType(flow);
             codec.encode(buffer);
             codec.clear();
@@ -193,7 +193,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerIndex(0);
+            buffer.readerOffset(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -209,7 +209,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.clear();
+            buffer.resetOffsets();
             codec.putDescribedType(header);
             codec.encode(buffer);
             codec.clear();
@@ -218,7 +218,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerIndex(0);
+            buffer.readerOffset(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -236,7 +236,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.clear();
+            buffer.resetOffsets();
             codec.putDescribedType(properties);
             codec.encode(buffer);
             codec.clear();
@@ -245,7 +245,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerIndex(0);
+            buffer.readerOffset(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -262,7 +262,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.clear();
+            buffer.resetOffsets();
             codec.putDescribedType(annotations);
             codec.encode(buffer);
             codec.clear();
@@ -271,7 +271,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerIndex(0);
+            buffer.readerOffset(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -288,7 +288,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.clear();
+            buffer.resetOffsets();
             codec.putDescribedType(properties);
             codec.encode(buffer);
             codec.clear();
@@ -297,7 +297,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerIndex(0);
+            buffer.readerOffset(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -313,7 +313,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.clear();
+            buffer.resetOffsets();
             codec.putSymbol(symbol1);
             codec.putSymbol(symbol2);
             codec.putSymbol(symbol3);
@@ -324,7 +324,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerIndex(0);
+            buffer.readerOffset(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -340,7 +340,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.clear();
+            buffer.resetOffsets();
             codec.putString(string1);
             codec.putString(string2);
             codec.putString(string3);
@@ -351,7 +351,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerIndex(0);
+            buffer.readerOffset(0);
             codec.decode(buffer);
             codec.decode(buffer);
             codec.decode(buffer);
@@ -372,7 +372,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.clear();
+            buffer.resetOffsets();
             codec.putDescribedType(disposition);
             codec.encode(buffer);
             codec.clear();
@@ -381,7 +381,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerIndex(0);
+            buffer.readerOffset(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -397,7 +397,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.clear();
+            buffer.resetOffsets();
             codec.putDescribedType(data1);
             codec.putDescribedType(data2);
             codec.putDescribedType(data3);
@@ -408,7 +408,7 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerIndex(0);
+            buffer.readerOffset(0);
             codec.decode(buffer);
             codec.clear();
         }

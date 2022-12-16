@@ -58,7 +58,7 @@ public final class BooleanTypeEncoder extends AbstractPrimitiveTypeEncoder<Boole
         // Write the array elements after writing the array length
         buffer.writeByte(EncodingCodes.BOOLEAN);
         for (Object bool : values) {
-            buffer.writeByte((Boolean) bool ? 1 : 0);
+            buffer.writeBoolean((boolean) bool);
         }
     }
 
@@ -76,7 +76,7 @@ public final class BooleanTypeEncoder extends AbstractPrimitiveTypeEncoder<Boole
         // Write the array elements after writing the array length
         buffer.writeByte(EncodingCodes.BOOLEAN);
         for (boolean bool : values) {
-            buffer.writeByte(bool ? 1 : 0);
+            buffer.writeBoolean(bool);
         }
     }
 
@@ -104,16 +104,16 @@ public final class BooleanTypeEncoder extends AbstractPrimitiveTypeEncoder<Boole
     private void writeAsArray8(ProtonBuffer buffer, EncoderState state, boolean[] values) {
         buffer.writeByte(EncodingCodes.ARRAY8);
 
-        int startIndex = buffer.getWriteIndex();
+        final int startIndex = buffer.getWriteOffset();
 
-        buffer.writeByte(0);
-        buffer.writeByte(values.length);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) values.length);
 
         // Write the array elements after writing the array length
         writeRawArray(buffer, state, values);
 
         // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
+        int endIndex = buffer.getWriteOffset();
         long writeSize = endIndex - startIndex - Byte.BYTES;
 
         buffer.setByte(startIndex, (byte) writeSize);
@@ -122,7 +122,7 @@ public final class BooleanTypeEncoder extends AbstractPrimitiveTypeEncoder<Boole
     private void writeAsArray32(ProtonBuffer buffer, EncoderState state, boolean[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
-        int startIndex = buffer.getWriteIndex();
+        final int startIndex = buffer.getWriteOffset();
 
         buffer.writeInt(0);
         buffer.writeInt(values.length);
@@ -131,8 +131,8 @@ public final class BooleanTypeEncoder extends AbstractPrimitiveTypeEncoder<Boole
         writeRawArray(buffer, state, values);
 
         // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
-        long writeSize = endIndex - startIndex - Integer.BYTES;
+        final int endIndex = buffer.getWriteOffset();
+        final long writeSize = endIndex - startIndex - Integer.BYTES;
 
         if (writeSize > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);

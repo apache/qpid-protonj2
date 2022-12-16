@@ -28,8 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -77,8 +77,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeType(boolean fromStream) throws Exception {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         TransactionalState input = new TransactionalState();
         input.setTxnId(new Binary(new byte[] { 2, 4, 6, 8 }));
@@ -88,6 +87,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
 
         final TransactionalState result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = (TransactionalState) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (TransactionalState) decoder.readObject(buffer, decoderState);
@@ -96,9 +96,9 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
         assertSame(result.getOutcome(), Accepted.getInstance());
 
         assertNotNull(result.getTxnId());
-        assertNotNull(result.getTxnId().getArray());
+        assertNotNull(result.getTxnId().asByteArray());
 
-        assertArrayEquals(new byte[] { 2, 4, 6, 8 }, result.getTxnId().getArray());
+        assertArrayEquals(new byte[] { 2, 4, 6, 8 }, result.getTxnId().asByteArray());
     }
 
     @Test
@@ -112,8 +112,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValue(boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         TransactionalState txnState = new TransactionalState();
 
@@ -128,6 +127,13 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
         txnState.setOutcome(null);
 
         encoder.writeObject(buffer, encoderState, txnState);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -152,7 +158,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
         assertTrue(result instanceof TransactionalState);
 
         TransactionalState value = (TransactionalState) result;
-        assertArrayEquals(new byte[] {1, 2}, value.getTxnId().getArray());
+        assertArrayEquals(new byte[] {1, 2}, value.getTxnId().asByteArray());
         assertNull(value.getOutcome());
     }
 
@@ -177,8 +183,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -194,6 +199,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(TransactionalState.class, typeDecoder.getTypeClass());
 
@@ -233,8 +239,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -250,6 +255,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid encoding");
@@ -273,8 +279,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeArray(boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         TransactionalState[] array = new TransactionalState[3];
 
@@ -290,6 +295,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -334,8 +340,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithNotEnoughListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -354,6 +359,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
 
         if (fromStream) {
             try {
+                InputStream stream = new ProtonBufferInputStream(buffer);
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");
             } catch (DecodeException ex) {}
@@ -386,8 +392,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithToManyListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -403,6 +408,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");

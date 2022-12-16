@@ -23,7 +23,6 @@ import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -102,15 +101,19 @@ public abstract class ClientMessageSupport {
     //----- Message Encoding
 
     public static ProtonBuffer encodeMessage(AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
-        return encodeMessage(DEFAULT_ENCODER, THREAD_LOCAL_ENCODER_STATE.get(), ProtonByteBufferAllocator.DEFAULT, message, deliveryAnnotations);
+        return encodeMessage(DEFAULT_ENCODER, THREAD_LOCAL_ENCODER_STATE.get(), ProtonBufferAllocator.defaultAllocator(), message, deliveryAnnotations);
+    }
+
+    public static ProtonBuffer encodeMessage(AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations, ProtonBufferAllocator allocator) throws ClientException {
+        return encodeMessage(DEFAULT_ENCODER, THREAD_LOCAL_ENCODER_STATE.get(), allocator, message, deliveryAnnotations);
     }
 
     public static ProtonBuffer encodeMessage(Encoder encoder, ProtonBufferAllocator allocator, AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
-        return encodeMessage(encoder, encoder.newEncoderState(), ProtonByteBufferAllocator.DEFAULT, message, deliveryAnnotations);
+        return encodeMessage(encoder, encoder.newEncoderState(), allocator, message, deliveryAnnotations);
     }
 
     public static ProtonBuffer encodeMessage(Encoder encoder, EncoderState encoderState, ProtonBufferAllocator allocator, AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations) throws ClientException {
-        ProtonBuffer buffer = allocator.allocate(DEFAULT_BUFFER_ALLOCATION);
+        ProtonBuffer buffer = allocator.outputBuffer(DEFAULT_BUFFER_ALLOCATION);
 
         Header header = message.header();
         MessageAnnotations messageAnnotations = message.annotations();
@@ -140,7 +143,7 @@ public abstract class ClientMessageSupport {
             SECTION_ENCODER.write(buffer, footer);
         }
 
-        return buffer;
+        return buffer.convertToReadOnly();
     }
 
     //----- Message Decoding

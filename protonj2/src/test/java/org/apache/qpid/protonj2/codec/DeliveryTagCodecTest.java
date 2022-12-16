@@ -24,8 +24,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +33,7 @@ public class DeliveryTagCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UINT);
 
@@ -45,15 +45,38 @@ public class DeliveryTagCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisTypeFromStream() throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
-
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         buffer.writeByte(EncodingCodes.UINT);
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         try {
             streamDecoder.readDeliveryTag(stream, streamDecoderState);
             fail("Should not allow read of integer type as this type");
         } catch (DecodeException e) {}
+    }
+
+    @Test
+    public void testReadNullDeliveryTagsFromBinaryEncodedValues() throws Exception {
+        testReadDeliveryTagsFromBinaryEncodedValues(false);
+    }
+
+    @Test
+    public void testReadNullDeliveryTagsFromBinaryEncodedValuesFS() throws Exception {
+        testReadDeliveryTagsFromBinaryEncodedValues(true);
+    }
+
+    public void testReadNullDeliveryTagsFromBinaryEncodedValues(boolean fromStream) throws Exception {
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate(32).implicitGrowthLimit(32);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        if (fromStream) {
+            assertNull(streamDecoder.readDeliveryTag(stream, streamDecoderState));
+        } else {
+            assertNull(decoder.readDeliveryTag(buffer, decoderState));
+        }
     }
 
     @Test
@@ -67,21 +90,11 @@ public class DeliveryTagCodecTest extends CodecTestSupport {
     }
 
     public void testReadDeliveryTagsFromBinaryEncodedValues(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(32, 32);
-        InputStream stream = new ProtonBufferInputStream(buffer);
-
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate(32).implicitGrowthLimit(32);
         final byte[] tagBytes = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
-        buffer.writeByte(EncodingCodes.NULL);
-
-        if (fromStream) {
-            assertNull(streamDecoder.readDeliveryTag(stream, streamDecoderState));
-        } else {
-            assertNull(decoder.readDeliveryTag(buffer, decoderState));
-        }
-
         buffer.writeByte(EncodingCodes.VBIN8);
-        buffer.writeByte(tagBytes.length);
+        buffer.writeByte((byte) tagBytes.length);
         buffer.writeBytes(tagBytes);
 
         buffer.writeByte(EncodingCodes.VBIN32);
@@ -92,6 +105,8 @@ public class DeliveryTagCodecTest extends CodecTestSupport {
         final DeliveryTag tag2;
 
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
+
             tag1 = streamDecoder.readDeliveryTag(stream, streamDecoderState);
             tag2 = streamDecoder.readDeliveryTag(stream, streamDecoderState);
         } else {

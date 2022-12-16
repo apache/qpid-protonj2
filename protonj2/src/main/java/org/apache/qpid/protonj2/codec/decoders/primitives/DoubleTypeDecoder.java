@@ -90,7 +90,7 @@ public final class DoubleTypeDecoder extends AbstractPrimitiveTypeDecoder<Double
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.skipBytes(Double.BYTES);
+        buffer.advanceReadOffset(Double.BYTES);
     }
 
     @Override

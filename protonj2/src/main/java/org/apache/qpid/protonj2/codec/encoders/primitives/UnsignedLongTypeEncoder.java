@@ -55,7 +55,7 @@ public final class UnsignedLongTypeEncoder extends AbstractPrimitiveTypeEncoder<
             buffer.writeByte(EncodingCodes.ULONG0);
         } else if (value > 0 && value <= 255) {
             buffer.writeByte(EncodingCodes.SMALLULONG);
-            buffer.writeByte((int) value);
+            buffer.writeByte((byte) value);
         } else {
             buffer.writeByte(EncodingCodes.ULONG);
             buffer.writeLong(value);

@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.protonj2.types.security;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
@@ -91,7 +90,7 @@ public class SaslChallengeTest {
         SaslChallenge copy = value.copy();
 
         assertNotSame(copy, value);
-        assertArrayEquals(value.getChallenge().getArray(), copy.getChallenge().getArray());
+        assertEquals(value.getChallenge(), copy.getChallenge());
     }
 
     @Test

@@ -26,8 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -50,13 +50,13 @@ public class CharacterTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UINT);
         buffer.writeByte(EncodingCodes.UINT);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readCharacter(stream, streamDecoderState);
                 fail("Should not allow read of integer type as byte");
@@ -90,8 +90,7 @@ public class CharacterTypeCodecTest extends CodecTestSupport {
     }
 
     public void testTypeFromEncodingCode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.CHAR);
         buffer.writeInt(42);
@@ -101,6 +100,8 @@ public class CharacterTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(EncodingCodes.NULL);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             assertEquals(42, streamDecoder.readCharacter(stream, streamDecoderState).charValue());
             assertEquals(43, streamDecoder.readCharacter(stream, streamDecoderState, (char) 42));
             assertNull(streamDecoder.readCharacter(stream, streamDecoderState));
@@ -135,13 +136,13 @@ public class CharacterTypeCodecTest extends CodecTestSupport {
     }
 
     private void testReadCharFromEncodingCode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.CHAR);
         buffer.writeInt(42);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             assertEquals(42, streamDecoder.readCharacter(stream, streamDecoderState).charValue());
         } else {
             assertEquals(42, decoder.readCharacter(buffer, decoderState).charValue());
@@ -159,8 +160,7 @@ public class CharacterTypeCodecTest extends CodecTestSupport {
     }
 
     private void testSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeCharacter(buffer, encoderState, Character.MAX_VALUE);
@@ -170,6 +170,13 @@ public class CharacterTypeCodecTest extends CodecTestSupport {
         char expected = 42;
 
         encoder.writeObject(buffer, encoderState, expected);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -214,8 +221,7 @@ public class CharacterTypeCodecTest extends CodecTestSupport {
     }
 
     private void testArrayOfCharacterObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final int size = 10;
 
@@ -228,6 +234,7 @@ public class CharacterTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -256,8 +263,7 @@ public class CharacterTypeCodecTest extends CodecTestSupport {
     }
 
     private void testZeroSizedArrayOfCharacterObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Character[] source = new Character[0];
 
@@ -265,6 +271,7 @@ public class CharacterTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -299,8 +306,7 @@ public class CharacterTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeCharArrayType(int size, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         char[] source = new char[size];
         for (int i = 0; i < size; ++i) {
@@ -311,6 +317,7 @@ public class CharacterTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);

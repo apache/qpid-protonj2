@@ -25,8 +25,8 @@ import org.apache.qpid.protonj2.test.driver.actions.AMQPHeaderInjectAction;
 import org.apache.qpid.protonj2.test.driver.actions.ByteBufferInjectAction;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty5.buffer.Buffer;
+import io.netty5.buffer.BufferAllocator;
 
 /**
  * Expectation entry for AMQP Headers
@@ -54,12 +54,12 @@ public class AMQPHeaderExpectation implements ScriptedExpectation {
     }
 
     public ByteBufferInjectAction respondWithBytes(byte[] buffer) {
-        ByteBufferInjectAction response = new ByteBufferInjectAction(driver, Unpooled.wrappedBuffer(buffer));
+        ByteBufferInjectAction response = new ByteBufferInjectAction(driver, BufferAllocator.onHeapUnpooled().copyOf(buffer));
         driver.addScriptedElement(response);
         return response;
     }
 
-    public ByteBufferInjectAction respondWithBytes(ByteBuf buffer) {
+    public ByteBufferInjectAction respondWithBytes(Buffer buffer) {
         ByteBufferInjectAction response = new ByteBufferInjectAction(driver, buffer);
         driver.addScriptedElement(response);
         return response;

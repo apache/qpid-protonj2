@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.client.impl;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
@@ -396,7 +396,7 @@ public final class ClientStreamSender extends ClientSenderLinkType<StreamSender>
         private final int messageFormat;
 
         private boolean aborted;
-        private ScheduledFuture<?> sendTimeout;
+        private Future<?> sendTimeout;
         private OutgoingDelivery delivery;
 
         /**
@@ -425,19 +425,19 @@ public final class ClientStreamSender extends ClientSenderLinkType<StreamSender>
         }
 
         /**
-         * @return the {@link ScheduledFuture} used to determine when the send should fail if no credit available to write.
+         * @return the {@link Future} used to determine when the send should fail if no credit available to write.
          */
-        public ScheduledFuture<?> sendTimeout() {
+        public Future<?> sendTimeout() {
             return sendTimeout;
         }
 
         /**
-         * Sets the {@link ScheduledFuture} which should be used when a send cannot be immediately performed.
+         * Sets the {@link Future} which should be used when a send cannot be immediately performed.
          *
          * @param sendTimeout
-         * 		The {@link ScheduledFuture} that will fail the send if not cancelled once it has been performed.
+         * 		The {@link Future} that will fail the send if not cancelled once it has been performed.
          */
-        public void sendTimeout(ScheduledFuture<?> sendTimeout) {
+        public void sendTimeout(Future<?> sendTimeout) {
             this.sendTimeout = sendTimeout;
         }
 
@@ -465,6 +465,10 @@ public final class ClientStreamSender extends ClientSenderLinkType<StreamSender>
                 sendTimeout = null;
             }
 
+            if (payload != null) {
+                payload.close();
+            }
+
             if (delivery != null) {
                 ClientTracker tracker = delivery.getLinkedResource();
                 if (tracker != null) {
@@ -481,6 +485,10 @@ public final class ClientStreamSender extends ClientSenderLinkType<StreamSender>
                 sendTimeout.cancel(true);
             }
 
+            if (payload != null) {
+                payload.close();
+            }
+
             request.complete(delivery.getLinkedResource());
 
             return this;
@@ -489,6 +497,10 @@ public final class ClientStreamSender extends ClientSenderLinkType<StreamSender>
         public ClientOutgoingEnvelope failed(ClientException exception) {
             if (sendTimeout != null) {
                 sendTimeout.cancel(true);
+            }
+
+            if (payload != null) {
+                payload.close();
             }
 
             request.failed(exception);

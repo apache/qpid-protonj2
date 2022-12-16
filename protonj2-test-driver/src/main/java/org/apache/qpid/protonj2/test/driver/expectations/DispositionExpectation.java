@@ -41,7 +41,7 @@ import org.apache.qpid.protonj2.test.driver.matchers.transactions.TransactionalS
 import org.apache.qpid.protonj2.test.driver.matchers.transport.DispositionMatcher;
 import org.hamcrest.Matcher;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 /**
  * Scripted expectation for the AMQP Disposition performative
@@ -68,7 +68,7 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
     //----- Handle the incoming Disposition validation and update local side if able
 
     @Override
-    public void handleDisposition(int frameSize, Disposition disposition, ByteBuf payload, int channel, AMQPTestDriver context) {
+    public void handleDisposition(int frameSize, Disposition disposition, Buffer payload, int channel, AMQPTestDriver context) {
         super.handleDisposition(frameSize, disposition, payload, channel, context);
 
         final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);

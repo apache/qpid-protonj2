@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 class ListElement extends AbstractElement<List<Object>> {
 
@@ -99,7 +99,7 @@ class ListElement extends AbstractElement<List<Object>> {
     }
 
     @Override
-    public int encode(ByteBuf buffer) {
+    public int encode(Buffer buffer) {
         int encodedSize = size();
 
         int count = 0;
@@ -111,7 +111,7 @@ class ListElement extends AbstractElement<List<Object>> {
             elt = elt.next();
         }
 
-        if (encodedSize > buffer.maxWritableBytes()) {
+        if (encodedSize > buffer.implicitCapacityLimit() - buffer.capacity()) {
             return 0;
         } else {
             if (isElementOfArray()) {
@@ -138,7 +138,6 @@ class ListElement extends AbstractElement<List<Object>> {
                     buffer.writeInt((size + 4));
                     buffer.writeInt(count);
                 }
-
             }
 
             elt = first;

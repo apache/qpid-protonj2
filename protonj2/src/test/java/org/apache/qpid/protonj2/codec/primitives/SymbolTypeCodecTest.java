@@ -31,8 +31,9 @@ import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferUtils;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -67,12 +68,13 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         if (fromStream) {
             buffer.writeByte(EncodingCodes.UINT);
             buffer.writeByte(EncodingCodes.UINT);
+
+            InputStream stream = new ProtonBufferInputStream(buffer);
 
             try {
                 streamDecoder.readSymbol(stream, streamDecoderState);
@@ -110,13 +112,13 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
     }
 
     private void testReadFromNullEncodingCode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.NULL);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             assertNull(streamDecoder.readSymbol(stream, streamDecoderState));
             assertEquals("", streamDecoder.readSymbol(stream, streamDecoderState, ""));
         } else {
@@ -166,13 +168,13 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecode(Symbol value, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeSymbol(buffer, encoderState, value);
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readSymbol(stream, streamDecoderState);
         } else {
             result = decoder.readSymbol(buffer, decoderState);
@@ -209,11 +211,17 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeSymbolSeries(int size, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < size; ++i) {
             encoder.writeSymbol(buffer, encoderState, Symbol.valueOf(LARGE_SYMBOL_VALUE));
+        }
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
         }
 
         for (int i = 0; i < size; ++i) {
@@ -251,8 +259,7 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeSymbolArrayType(int size, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Symbol[] source = new Symbol[size];
         for (int i = 0; i < size; ++i) {
@@ -263,6 +270,7 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -300,11 +308,17 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
     }
 
     public void doTestEmptySymbolEncodeAsGivenType(byte encodingCode, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(encodingCode);
         buffer.writeInt(0);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         if (fromStream) {
             StreamTypeDecoder<?> typeDecoder = streamDecoder.peekNextTypeDecoder(stream, streamDecoderState);
@@ -350,14 +364,14 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
     }
 
     public void doTestEmptySymbolEncodeAsGivenTypeReadAsString(byte encodingCode, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(encodingCode);
         buffer.writeInt(0);
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readSymbol(stream, streamDecoderState, "");
         } else {
             result = decoder.readSymbol(buffer, decoderState, "");
@@ -369,7 +383,7 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodedSizeExceedsRemainingDetectedSym32() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.SYM32);
         buffer.writeInt(Integer.MAX_VALUE);
@@ -382,7 +396,7 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodedSizeExceedsRemainingDetectedSym8() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.SYM8);
         buffer.writeByte(Byte.MAX_VALUE);
@@ -424,8 +438,7 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
     }
 
     private void doEncodeDecodeSmallSymbolArrayTestImpl(int count, boolean fromStream) throws Throwable {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         Symbol[] source = createPayloadArraySmallSymbols(count);
 
         try {
@@ -434,9 +447,8 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
             int encodingWidth = 4;
             int arrayPayloadSize = encodingWidth + 1 + (count * 5); // variable width for element count + byte type descriptor + (number of elements * size[=length+content-char])
             int expectedEncodedArraySize = 1 + encodingWidth + arrayPayloadSize; // array type code + variable width for array size + other encoded payload
-            byte[] expectedEncoding = new byte[expectedEncodedArraySize];
-            ProtonBuffer expectedEncodingWrapper = ProtonByteBufferAllocator.DEFAULT.wrap(expectedEncoding);
-            expectedEncodingWrapper.setWriteIndex(0);
+            ProtonBuffer expectedEncodingWrapper = ProtonBufferAllocator.defaultAllocator().allocate(expectedEncodedArraySize);
+            expectedEncodingWrapper.setWriteOffset(0);
 
             // Write the array encoding code, array size, and element count
             expectedEncodingWrapper.writeByte((byte) 0xF0); // 'array32' type descriptor code
@@ -452,28 +464,30 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
                 assertEquals(1, symbol.getLength(), "Unexpected length");
 
                 expectedEncodingWrapper.writeInt(1); // Length
-                expectedEncodingWrapper.writeByte(symbol.toString().charAt(0)); // Content
+                expectedEncodingWrapper.writeByte((byte) symbol.toString().charAt(0)); // Content
             }
 
             assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
+            final byte[] expectedEncoding = ProtonBufferUtils.toByteArray(expectedEncodingWrapper);
 
             // Now verify against the actual encoding of the array
-            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
+            assertEquals(0, buffer.getReadOffset(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
             assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
-            buffer.markReadIndex();
-            buffer.readBytes(actualEncoding);
+            final int oldPos = buffer.getReadOffset();
+            buffer.readBytes(actualEncoding, 0, actualEncoding.length);
             assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
             assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
-            buffer.resetReadIndex();
+            buffer.setReadOffset(oldPos);
 
             final Object decoded;
             if (fromStream) {
+                InputStream stream = new ProtonBufferInputStream(buffer);
                 decoded = streamDecoder.readObject(stream, streamDecoderState);
             } else {
                 decoded = decoder.readObject(buffer, decoderState);
@@ -513,8 +527,7 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
     }
 
     public void doTestSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeSymbol(buffer, encoderState, Symbol.valueOf("skipMe"));
@@ -523,6 +536,13 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
         Symbol expected = Symbol.valueOf("expected-symbol-value");
 
         encoder.writeObject(buffer, encoderState, expected);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -552,11 +572,11 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testStreamSkipOfEncodingHandlesIOException() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeObject(buffer, encoderState, Symbol.valueOf("TEST-SYMBOL-VALUE"));
 
+        InputStream stream = new ProtonBufferInputStream(buffer);
         StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
         assertEquals(Symbol.class, typeDecoder.getTypeClass());
 

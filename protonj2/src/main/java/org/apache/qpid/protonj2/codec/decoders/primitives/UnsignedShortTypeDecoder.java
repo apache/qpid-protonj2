@@ -54,7 +54,7 @@ public final class UnsignedShortTypeDecoder extends AbstractPrimitiveTypeDecoder
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.skipBytes(Short.BYTES);
+        buffer.advanceReadOffset(Short.BYTES);
     }
 
     @Override

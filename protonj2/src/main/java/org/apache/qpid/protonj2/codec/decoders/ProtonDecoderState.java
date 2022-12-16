@@ -89,20 +89,20 @@ public final class ProtonDecoderState implements DecoderState {
         if (stringDecoder == null) {
             return internalDecode(buffer, length, STRING_DECODER, length > MAX_CHAR_BUFFER_CACHE_SIZE ? new char[length] : decodeCache);
         } else {
-            final int originalPosition = buffer.getReadIndex();
+            final int originalPosition = buffer.getReadOffset();
 
             try {
                 return stringDecoder.decodeUTF8(buffer, length);
             } catch (Exception ex) {
                 throw new DecodeException("Cannot parse encoded UTF8 String", ex);
             } finally {
-                buffer.setReadIndex(originalPosition + length);
+                buffer.setReadOffset(originalPosition + length);
             }
         }
     }
 
     private static String internalDecode(ProtonBuffer buffer, final int length, CharsetDecoder decoder, char[] scratch) {
-        final int bufferInitialPosition = buffer.getReadIndex();
+        final int bufferInitialPosition = buffer.getReadOffset();
 
         int offset;
         for (offset = 0; offset < length; offset++) {
@@ -113,7 +113,7 @@ public final class ProtonDecoderState implements DecoderState {
             scratch[offset] = (char) b;
         }
 
-        buffer.setReadIndex(bufferInitialPosition + offset);
+        buffer.setReadOffset(bufferInitialPosition + offset);
 
         if (offset == length) {
             return new String(scratch, 0, length);
@@ -128,9 +128,10 @@ public final class ProtonDecoderState implements DecoderState {
 
         // Create a buffer from the remaining portion of the buffer and then use the decoder to complete the work
         // remember to move the main buffer position to consume the data processed.
-        ProtonBuffer slice = buffer.slice(buffer.getReadIndex(), length - offset);
-        buffer.setReadIndex(buffer.getReadIndex() + slice.getReadableBytes());
-        ByteBuffer byteBuffer = slice.toByteBuffer();
+        ByteBuffer byteBuffer = ByteBuffer.allocate(buffer.getReadableBytes());
+
+        buffer.copyInto(buffer.getReadOffset(), byteBuffer, 0, length - offset);
+        buffer.advanceReadOffset(length - offset);
 
         try {
             for (;;) {

@@ -24,8 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
@@ -49,7 +49,7 @@ public class NullTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testWriteOfArrayThrowsException() throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(1, 1);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate(1).implicitGrowthLimit(1);
 
         try {
             new NullTypeEncoder().writeArray(buffer, encoderState, new Object[1]);
@@ -59,7 +59,7 @@ public class NullTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testWriteRawOfArrayThrowsException() throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(1, 1);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate(1).implicitGrowthLimit(1);
 
         try {
             new NullTypeEncoder().writeRawArray(buffer, encoderState, new Object[1]);
@@ -78,12 +78,12 @@ public class NullTypeCodecTest extends CodecTestSupport {
     }
 
     private void testReadNullDoesNotTouchBuffer(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(1, 1);
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate(1).implicitGrowthLimit(1);
 
         buffer.writeByte(EncodingCodes.NULL);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             assertNull(streamDecoder.readObject(stream, streamDecoderState));
         } else {
             assertNull(decoder.readObject(buffer, decoderState));
@@ -101,23 +101,23 @@ public class NullTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipNullDoesNotTouchBuffer(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.NULL);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(Void.class, typeDecoder.getTypeClass());
-            int index = buffer.getReadIndex();
+            int index = buffer.getReadOffset();
             typeDecoder.skipValue(stream, streamDecoderState);
-            assertEquals(index, buffer.getReadIndex());
+            assertEquals(index, buffer.getReadOffset());
         } else {
             TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
             assertEquals(Void.class, typeDecoder.getTypeClass());
-            int index = buffer.getReadIndex();
+            int index = buffer.getReadOffset();
             typeDecoder.skipValue(buffer, decoderState);
-            assertEquals(index, buffer.getReadIndex());
+            assertEquals(index, buffer.getReadOffset());
         }
     }
 }

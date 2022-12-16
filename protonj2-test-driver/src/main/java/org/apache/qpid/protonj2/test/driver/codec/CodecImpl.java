@@ -32,7 +32,7 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 public class CodecImpl implements Codec {
 
@@ -124,12 +124,12 @@ public class CodecImpl implements Codec {
     }
 
     @Override
-    public long encode(ByteBuf buffer) {
+    public long encode(Buffer buffer) {
         Element<?> elt = first;
         int size = 0;
         while (elt != null) {
             final int eltSize = elt.size();
-            if (eltSize <= buffer.maxWritableBytes()) {
+            if (eltSize <= buffer.implicitCapacityLimit()) {
                 size += elt.encode(buffer);
             } else {
                 size += eltSize;
@@ -140,7 +140,7 @@ public class CodecImpl implements Codec {
     }
 
     @Override
-    public long decode(ByteBuf buffer) {
+    public long decode(Buffer buffer) {
         return TypeDecoder.decode(buffer, this);
     }
 

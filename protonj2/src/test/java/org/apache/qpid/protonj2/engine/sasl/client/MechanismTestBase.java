@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.engine.sasl.client;
 import java.security.Principal;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 
 /**
  * Base class for SASL Mechanism tests that provides some default utilities
@@ -30,7 +30,8 @@ public class MechanismTestBase {
     protected static final String USERNAME = "user";
     protected static final String PASSWORD = "pencil";
 
-    protected static final ProtonBuffer TEST_BUFFER = ProtonByteBufferAllocator.DEFAULT.allocate(10, 10).setWriteIndex(10);
+    protected static final ProtonBuffer TEST_BUFFER =
+        ProtonBufferAllocator.defaultAllocator().allocate(10).setWriteOffset(10);
 
     protected SaslCredentialsProvider credentials() {
         return new UserCredentialsProvider(USERNAME, PASSWORD, HOST, true);

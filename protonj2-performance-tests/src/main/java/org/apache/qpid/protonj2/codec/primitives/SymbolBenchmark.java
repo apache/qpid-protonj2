@@ -56,7 +56,7 @@ public class SymbolBenchmark extends CodecBenchmarkBase {
 
     @Benchmark
     public void decode() throws IOException {
-        buffer.setReadIndex(0);
+        buffer.setReadOffset(0);
         blackhole.consume(decoder.readSymbol(buffer, decoderState));
         blackhole.consume(decoder.readSymbol(buffer, decoderState));
         blackhole.consume(decoder.readSymbol(buffer, decoderState));

@@ -22,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.StreamDelivery;
@@ -46,9 +45,9 @@ public final class ClientStreamReceiver extends ClientReceiverLinkType<StreamRec
     private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private ClientFuture<StreamReceiver> drainingFuture;
-    private ScheduledFuture<?> drainingTimeout;
+    private Future<?> drainingTimeout;
     private final StreamReceiverOptions options;
-    private final Map<ClientFuture<StreamDelivery>, ScheduledFuture<?>> receiveRequests = new LinkedHashMap<>();
+    private final Map<ClientFuture<StreamDelivery>, Future<?>> receiveRequests = new LinkedHashMap<>();
 
     ClientStreamReceiver(ClientSession session, StreamReceiverOptions options, String receiverId, org.apache.qpid.protonj2.engine.Receiver receiver) {
         super(session, receiverId, options, receiver);
@@ -87,7 +86,7 @@ public final class ClientStreamReceiver extends ClientReceiverLinkType<StreamRec
                     if (timeout == 0) {
                         receive.complete(null);
                     } else {
-                        final ScheduledFuture<?> timeoutFuture;
+                        final Future<?> timeoutFuture;
 
                         if (timeout > 0) {
                             timeoutFuture = session.getScheduler().schedule(() -> {
@@ -212,10 +211,10 @@ public final class ClientStreamReceiver extends ClientReceiverLinkType<StreamRec
         if (delivery.getLinkedResource() == null) {
             // New delivery that can be sent to a waiting receive caller
             if (!receiveRequests.isEmpty()) {
-                Iterator<Entry<ClientFuture<StreamDelivery>, ScheduledFuture<?>>> entries =
+                Iterator<Entry<ClientFuture<StreamDelivery>, Future<?>>> entries =
                     receiveRequests.entrySet().iterator();
 
-                Entry<ClientFuture<StreamDelivery>, ScheduledFuture<?>> entry = entries.next();
+                Entry<ClientFuture<StreamDelivery>, Future<?>> entry = entries.next();
                 if (entry.getValue() != null) {
                     entry.getValue().cancel(false);
                 }

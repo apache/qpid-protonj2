@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.EncoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -57,7 +57,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testUseCustomUTF8EncoderInEncoderState() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final String expected = "test-encoding-string";
 
@@ -78,7 +78,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteBooleanObject() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeBoolean(buffer, encoderState, Boolean.TRUE);
         encoder.writeBoolean(buffer, encoderState, (Boolean) null);
@@ -92,7 +92,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteBooleanPrimitive() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeBoolean(buffer, encoderState, true);
         encoder.writeBoolean(buffer, encoderState, false);
@@ -104,7 +104,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteUnsignedByteObject() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedByte(buffer, encoderState, UnsignedByte.valueOf((byte) 0));
         encoder.writeUnsignedByte(buffer, encoderState, (UnsignedByte) null);
@@ -120,7 +120,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteUnsignedBytePrimitive() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedByte(buffer, encoderState, (byte) 0);
         encoder.writeUnsignedByte(buffer, encoderState, (byte) 255);
@@ -134,7 +134,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteUnsignedShortObject() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedShort(buffer, encoderState, UnsignedShort.valueOf((short) 0));
         encoder.writeUnsignedShort(buffer, encoderState, (UnsignedShort) null);
@@ -152,7 +152,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteUnsignedShortPrimitive() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedShort(buffer, encoderState, (short) 0);
         encoder.writeUnsignedShort(buffer, encoderState, (short) 65535);
@@ -168,7 +168,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteUnsignedShortPrimitiveInt() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedShort(buffer, encoderState, 0);
         encoder.writeUnsignedShort(buffer, encoderState, -1);
@@ -186,7 +186,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteUnsignedIntegerObject() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedInteger(buffer, encoderState, UnsignedInteger.valueOf(0));
         encoder.writeUnsignedInteger(buffer, encoderState, (UnsignedInteger) null);
@@ -207,7 +207,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteUnsignedIntegerPrimitive() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedInteger(buffer, encoderState, 0);
         encoder.writeUnsignedInteger(buffer, encoderState, 255);
@@ -226,7 +226,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteUnsignedIntegerPrimitiveLong() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedInteger(buffer, encoderState, 0l);
         encoder.writeUnsignedInteger(buffer, encoderState, 255l);
@@ -247,7 +247,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteUnsignedLongObject() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedLong(buffer, encoderState, UnsignedLong.valueOf(0));
         encoder.writeUnsignedLong(buffer, encoderState, (UnsignedLong) null);
@@ -272,7 +272,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteUnsignedLongPrimitive() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedLong(buffer, encoderState, 0l);
         encoder.writeUnsignedLong(buffer, encoderState, 255l);
@@ -295,7 +295,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteUnsignedLongPrimitiveByte() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedLong(buffer, encoderState, (byte) 0);
         encoder.writeUnsignedLong(buffer, encoderState, (byte) 255);
@@ -308,7 +308,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteByteObject() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeByte(buffer, encoderState, Byte.valueOf((byte) 0));
         encoder.writeByte(buffer, encoderState, (Byte) null);
@@ -324,7 +324,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteBytePrimitive() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeByte(buffer, encoderState, (byte) 0);
         encoder.writeByte(buffer, encoderState, (byte) 255);
@@ -338,7 +338,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteShortObject() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeShort(buffer, encoderState, Short.valueOf((short) 0));
         encoder.writeShort(buffer, encoderState, (Short) null);
@@ -356,7 +356,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteShortPrimitive() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeShort(buffer, encoderState, (short) 0);
         encoder.writeShort(buffer, encoderState, (short) 65535);
@@ -372,7 +372,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteIntegerObject() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeInteger(buffer, encoderState, Integer.valueOf(0));
         encoder.writeInteger(buffer, encoderState, (Integer) null);
@@ -391,7 +391,7 @@ class ProtonEncoderTest extends CodecTestSupport {
 
     @Test
     public void testWriteIntegerPrimitive() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeInteger(buffer, encoderState, 0);
         encoder.writeInteger(buffer, encoderState, Integer.MAX_VALUE);

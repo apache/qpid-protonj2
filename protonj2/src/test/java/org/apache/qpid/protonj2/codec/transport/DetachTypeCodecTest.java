@@ -27,8 +27,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodeException;
@@ -61,7 +61,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testCannotEncodeEmptyPerformative() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Detach input = new Detach();
 
@@ -83,8 +83,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeTypeWithNoError(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Detach input = new Detach();
         input.setHandle(1);
@@ -94,6 +93,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
 
         final Detach result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = (Detach) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (Detach) decoder.readObject(buffer, decoderState);
@@ -115,9 +115,8 @@ public class DetachTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeTypeWithError(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         ErrorCondition error = new ErrorCondition(Symbol.valueOf("amqp-error"), null);
-        InputStream stream = new ProtonBufferInputStream(buffer);
 
         Detach input = new Detach();
         input.setHandle(1);
@@ -128,6 +127,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
 
         final Detach result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = (Detach) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (Detach) decoder.readObject(buffer, decoderState);
@@ -151,8 +151,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
     }
 
     private void testSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Detach detach = new Detach();
 
@@ -166,6 +165,13 @@ public class DetachTypeCodecTest extends CodecTestSupport {
         detach.setError(null);
 
         encoder.writeObject(buffer, encoderState, detach);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -214,8 +220,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -231,6 +236,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(Detach.class, typeDecoder.getTypeClass());
 
@@ -270,8 +276,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -287,6 +292,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid encoding");
@@ -310,8 +316,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
     }
 
     private void testEncodeDecodeArray(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Detach[] array = new Detach[3];
 
@@ -327,6 +332,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -370,8 +376,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithNotEnoughListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -389,6 +394,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");
@@ -422,8 +428,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithToManyListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -439,6 +444,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");

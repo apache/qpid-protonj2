@@ -28,8 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -55,13 +55,14 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecoderThrowsWhenAskedToReadWrongTypeAsBoolean(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UINT);
         buffer.writeByte(EncodingCodes.UINT);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             try {
                 streamDecoder.readBoolean(stream, streamDecoderState);
                 fail("Should not allow read of integer type as boolean");
@@ -95,18 +96,18 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeBooleanEncodedBytes(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.BOOLEAN_TRUE);
         buffer.writeByte(EncodingCodes.BOOLEAN);
-        buffer.writeByte(0);
+        buffer.writeByte((byte) 0);
         buffer.writeByte(EncodingCodes.BOOLEAN_FALSE);
         buffer.writeByte(EncodingCodes.BOOLEAN);
-        buffer.writeByte(1);
+        buffer.writeByte((byte) 1);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             assertNull(streamDecoder.readBoolean(stream, streamDecoderState));
 
             boolean result1 = streamDecoder.readBoolean(stream, streamDecoderState);
@@ -144,17 +145,17 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeBooleanEncodedBytesWithTypeDecoder(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.BOOLEAN_TRUE);
         buffer.writeByte(EncodingCodes.BOOLEAN);
-        buffer.writeByte(0);
+        buffer.writeByte((byte) 0);
         buffer.writeByte(EncodingCodes.BOOLEAN_FALSE);
         buffer.writeByte(EncodingCodes.BOOLEAN);
-        buffer.writeByte(1);
+        buffer.writeByte((byte) 1);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(Boolean.class, typeDecoder.getTypeClass());
             assertTrue((boolean) typeDecoder.readValue(stream, streamDecoderState));
@@ -224,8 +225,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeBooleanEncodedBytesWithTypeDecoder(byte arrayType, byte encodingCode, boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         if (arrayType == EncodingCodes.ARRAY32) {
             buffer.writeByte(EncodingCodes.ARRAY32);
@@ -234,12 +234,13 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
             buffer.writeByte(encodingCode);
         } else {
             buffer.writeByte(EncodingCodes.ARRAY8);
-            buffer.writeByte(3);  // Size
-            buffer.writeByte(10); // Count
+            buffer.writeByte((byte) 3);  // Size
+            buffer.writeByte((byte) 10); // Count
             buffer.writeByte(encodingCode);
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertTrue(typeDecoder instanceof PrimitiveArrayTypeDecoder);
             PrimitiveArrayTypeDecoder arrayDecoder = (PrimitiveArrayTypeDecoder) typeDecoder;
@@ -271,17 +272,17 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testPeekNextTypeDecoder(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.BOOLEAN_TRUE);
         buffer.writeByte(EncodingCodes.BOOLEAN);
-        buffer.writeByte(0);
+        buffer.writeByte((byte) 0);
         buffer.writeByte(EncodingCodes.BOOLEAN_FALSE);
         buffer.writeByte(EncodingCodes.BOOLEAN);
-        buffer.writeByte(1);
+        buffer.writeByte((byte) 1);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             assertEquals(Boolean.class, streamDecoder.peekNextTypeDecoder(stream, streamDecoderState).getTypeClass());
             assertTrue(streamDecoder.readBoolean(stream, streamDecoderState));
             assertEquals(Boolean.class, streamDecoder.peekNextTypeDecoder(stream, streamDecoderState).getTypeClass());
@@ -313,17 +314,18 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeBooleanEncodedBytesAsPrimitives(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.BOOLEAN_TRUE);
         buffer.writeByte(EncodingCodes.BOOLEAN);
-        buffer.writeByte(0);
+        buffer.writeByte((byte) 0);
         buffer.writeByte(EncodingCodes.BOOLEAN_FALSE);
         buffer.writeByte(EncodingCodes.BOOLEAN);
-        buffer.writeByte(1);
+        buffer.writeByte((byte) 1);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             boolean result1 = streamDecoder.readBoolean(stream, streamDecoderState, false);
             boolean result2 = streamDecoder.readBoolean(stream, streamDecoderState, true);
             boolean result3 = streamDecoder.readBoolean(stream, streamDecoderState, true);
@@ -357,30 +359,33 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeBooleanTrue(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        try (ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate()) {
+            encoder.writeBoolean(buffer, encoderState, true);
 
-        encoder.writeBoolean(buffer, encoderState, true);
-
-        final Object result;
-        if (fromStream) {
-            result = streamDecoder.readObject(stream, streamDecoderState);
-        } else {
-            result = decoder.readObject(buffer, decoderState);
+            final Object result;
+            if (fromStream) {
+                InputStream stream = new ProtonBufferInputStream(buffer);
+                result = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                result = decoder.readObject(buffer, decoderState);
+            }
+            assertTrue(result instanceof Boolean);
+            assertTrue(((Boolean) result).booleanValue());
         }
-        assertTrue(result instanceof Boolean);
-        assertTrue(((Boolean) result).booleanValue());
 
-        encoder.writeBoolean(buffer, encoderState, true);
+        try (ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate()) {
+            encoder.writeBoolean(buffer, encoderState, true);
 
-        final Boolean booleanResult;
-        if (fromStream) {
-            booleanResult = streamDecoder.readBoolean(stream, streamDecoderState);
-        } else {
-            booleanResult = decoder.readBoolean(buffer, decoderState);
+            final Boolean booleanResult;
+            if (fromStream) {
+                InputStream stream = new ProtonBufferInputStream(buffer);
+                booleanResult = streamDecoder.readBoolean(stream, streamDecoderState);
+            } else {
+                booleanResult = decoder.readBoolean(buffer, decoderState);
+            }
+            assertTrue(booleanResult.booleanValue());
+            assertEquals(Boolean.TRUE, booleanResult);
         }
-        assertTrue(booleanResult.booleanValue());
-        assertEquals(Boolean.TRUE, booleanResult);
     }
 
     @Test
@@ -394,13 +399,13 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeBooleanFalse(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeBoolean(buffer, encoderState, false);
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -421,20 +426,22 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeBooleanFromNullEncoding(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeBoolean(buffer, encoderState, true);
         encoder.writeNull(buffer, encoderState);
 
         final boolean result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readBoolean(stream, streamDecoderState);
+            assertTrue(result);
+            assertNull(streamDecoder.readBoolean(stream, streamDecoderState));
         } else {
             result = decoder.readBoolean(buffer, decoderState);
+            assertTrue(result);
+            assertNull(decoder.readBoolean(buffer, decoderState));
         }
-        assertTrue(result);
-        assertNull(decoder.readBoolean(buffer, decoderState));
     }
 
     @Test
@@ -448,13 +455,13 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeBooleanAsPrimitiveWithDefault(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeBoolean(buffer, encoderState, true);
         encoder.writeNull(buffer, encoderState);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             boolean result = streamDecoder.readBoolean(stream, streamDecoderState, false);
             assertTrue(result);
             result = streamDecoder.readBoolean(stream, streamDecoderState, false);
@@ -478,12 +485,13 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeBooleanFailsForNonBooleanType(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeLong(buffer, encoderState, 1l);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             try {
                 streamDecoder.readBoolean(stream, streamDecoderState);
                 fail("Should not read long as boolean value.");
@@ -517,11 +525,17 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeBooleanSeries(int size, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < size; ++i) {
             encoder.writeBoolean(buffer, encoderState, i % 2 == 0);
+        }
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
         }
 
         for (int i = 0; i < size; ++i) {
@@ -551,8 +565,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testArrayOfBooleanObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final int size = 10;
 
@@ -565,6 +578,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -593,8 +607,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testZeroSizedArrayOfBooleanObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Boolean[] source = new Boolean[0];
 
@@ -602,6 +615,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -636,8 +650,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeBooleanArrayType(int size, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         boolean[] source = new boolean[size];
         for (int i = 0; i < size; ++i) {
@@ -648,6 +661,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -676,8 +690,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testArrayOfPrimitiveBooleanObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final int size = 10;
 
@@ -690,6 +703,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -718,8 +732,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testZeroSizedArrayOfPrimitiveBooleanObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         boolean[] source = new boolean[0];
 
@@ -727,6 +740,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -751,8 +765,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testArrayOfArraysOfPrimitiveBooleanObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final int size = 10;
 
@@ -766,6 +779,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -800,17 +814,17 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testReadAllBooleanTypeEncodings(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.BOOLEAN_TRUE);
         buffer.writeByte(EncodingCodes.BOOLEAN_FALSE);
         buffer.writeByte(EncodingCodes.BOOLEAN);
-        buffer.writeByte(1);
+        buffer.writeByte((byte) 1);
         buffer.writeByte(EncodingCodes.BOOLEAN);
-        buffer.writeByte(0);
+        buffer.writeByte((byte) 0);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(Boolean.class, typeDecoder.getTypeClass());
             assertTrue((Boolean) typeDecoder.readValue(stream, streamDecoderState));
@@ -850,17 +864,23 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testSkipValueFullBooleanTypeEncodings(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < 10; ++i) {
             buffer.writeByte(EncodingCodes.BOOLEAN);
-            buffer.writeByte(1);
+            buffer.writeByte((byte) 1);
             buffer.writeByte(EncodingCodes.BOOLEAN);
-            buffer.writeByte(0);
+            buffer.writeByte((byte) 0);
         }
 
         encoder.writeObject(buffer, encoderState, false);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -913,8 +933,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void testSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeBoolean(buffer, encoderState, Boolean.TRUE);
@@ -922,6 +941,13 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
         }
 
         encoder.writeObject(buffer, encoderState, false);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {

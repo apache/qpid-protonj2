@@ -31,8 +31,8 @@ import java.io.ObjectOutputStream;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -95,13 +95,20 @@ public class DataTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeDataSeries(int size, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Data data = new Data(new byte[] { 1, 2, 3});
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, data);
+        }
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
         }
 
         for (int i = 0; i < size; ++i) {
@@ -132,24 +139,23 @@ public class DataTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeDataWithPayloadInUpperBoundsOfSmallBinaryEncoding(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final int SIZE = 240;
 
-        Data data = new Data(new Binary(new byte[SIZE]));
-        for (int i = 0; i < SIZE; ++i) {
-            data.getValue()[i] = (byte) i;
-        }
+        final byte[] backing = new byte[SIZE];
 
         for (int i = 0; i < SIZE; ++i) {
-            data.getBinary().getArray()[i] = (byte) i;
+            backing[i] = (byte) i;
         }
+
+        Data data = new Data(new Binary(backing));
 
         encoder.writeObject(buffer, encoderState, data);
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -174,24 +180,23 @@ public class DataTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeDataWithPayloadInVBIN32BinaryEncoding(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final int SIZE = 65535;
 
-        Data data = new Data(new Binary(new byte[SIZE]));
-        for (int i = 0; i < SIZE; ++i) {
-            data.getValue()[i] = (byte) i;
-        }
+        final byte[] backing = new byte[SIZE];
 
         for (int i = 0; i < SIZE; ++i) {
-            data.getBinary().getArray()[i] = (byte) i;
+            backing[i] = (byte) i;
         }
+
+        Data data = new Data(new Binary(backing));
 
         encoder.writeObject(buffer, encoderState, data);
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -216,8 +221,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeArrayOfDataSections(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Data[] dataArray = new Data[3];
 
@@ -229,6 +233,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -257,14 +262,21 @@ public class DataTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeObject(buffer, encoderState, new Data(new Binary(new byte[] { (byte) i })));
         }
 
         encoder.writeObject(buffer, encoderState, new Modified());
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -313,8 +325,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -331,6 +342,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
 
         if (fromStream) {
             try {
+                InputStream stream = new ProtonBufferInputStream(buffer);
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid encoding");
             } catch (DecodeException ex) {}
@@ -363,8 +375,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -380,6 +391,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(Data.class, typeDecoder.getTypeClass());
 
@@ -409,8 +421,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeSerializedTypeFromDataSection(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         SimplePojo expectedContent = new SimplePojo(UUID.randomUUID());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -424,6 +435,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -446,8 +458,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
     }
 
     private void testEncodeDecodeArray(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Data[] array = new Data[3];
 
@@ -463,6 +474,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -491,8 +503,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
     }
 
     private void testReadTypeWithNullEncoding(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -501,6 +512,7 @@ public class DataTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -515,14 +527,14 @@ public class DataTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testReadTypeWithOverLargeEncoding() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
         buffer.writeByte(Data.DESCRIPTOR_CODE.byteValue());
         buffer.writeByte(EncodingCodes.VBIN32);
         buffer.writeInt(Integer.MAX_VALUE); // Not enough bytes in buffer for this
-        buffer.writeByte(0);
+        buffer.writeByte((byte) 0);
 
         try {
             decoder.readObject(buffer, decoderState);

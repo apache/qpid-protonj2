@@ -233,18 +233,18 @@ public final class ProtonDecoder implements Decoder {
         final int encodingCode = readEncodingCode(buffer) & 0xff;
 
         if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR) {
-            buffer.markReadIndex();
+            final int readMark = buffer.getReadOffset();
             try {
                 final long result = readUnsignedLong(buffer, state, amqpTypeDecoders.length);
 
                 if (result > 0 && result < amqpTypeDecoders.length && amqpTypeDecoders[(int) result] != null) {
                     return amqpTypeDecoders[(int) result];
                 } else {
-                    buffer.resetReadIndex();
+                    buffer.setReadOffset(readMark);
                     return slowReadNextTypeDecoder(buffer, state);
                 }
             } catch (Exception e) {
-                buffer.resetReadIndex();
+                buffer.setReadOffset(readMark);
                 return slowReadNextTypeDecoder(buffer, state);
             }
         } else {
@@ -254,11 +254,11 @@ public final class ProtonDecoder implements Decoder {
 
     private TypeDecoder<?> slowReadNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         Object descriptor;
-        buffer.markReadIndex();
+        final int readMark = buffer.getReadOffset();
         try {
             descriptor = readUnsignedLong(buffer, state);
         } catch (Exception e) {
-            buffer.resetReadIndex();
+            buffer.setReadOffset(readMark);
             descriptor = readObject(buffer, state);
         }
 
@@ -272,11 +272,11 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     public TypeDecoder<?> peekNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.markReadIndex();
+        final int readMark = buffer.getReadOffset();
         try {
             return readNextTypeDecoder(buffer, state);
         } finally {
-            buffer.resetReadIndex();
+            buffer.setReadOffset(readMark);
         }
     }
 

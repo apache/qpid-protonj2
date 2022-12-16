@@ -104,11 +104,11 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
             // Peek ahead and see if there is a null in the next slot, if so we don't call
             // the setter for that entry to ensure the returned type reflects the encoded
             // state in the modification entry.
-            if (buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL) {
+            if (buffer.getByte(buffer.getReadOffset()) == EncodingCodes.NULL) {
                 if (index == 0) {
                     throw new DecodeException("The container-id field cannot be omitted from the Open");
                 }
-                buffer.skipBytes(1);
+                buffer.advanceReadOffset(1);
                 continue;
             }
 

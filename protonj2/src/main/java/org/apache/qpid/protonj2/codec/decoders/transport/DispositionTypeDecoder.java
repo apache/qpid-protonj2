@@ -106,13 +106,13 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
             // Peek ahead and see if there is a null in the next slot, if so we don't call
             // the setter for that entry to ensure the returned type reflects the encoded
             // state in the modification entry.
-            if (buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL) {
+            if (buffer.getByte(buffer.getReadOffset()) == EncodingCodes.NULL) {
                 // Ensure mandatory fields are set
                 if (index < MIN_DISPOSITION_LIST_ENTRIES) {
                     throw new DecodeException(errorForMissingRequiredFields(index));
                 }
 
-                buffer.skipBytes(1);
+                buffer.advanceReadOffset(1);
                 continue;
             }
 

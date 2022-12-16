@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 
 /**
  * Class that represents an AMQP Symbol value.  The creation of a Symbol object
@@ -43,7 +43,7 @@ public final class Symbol implements Comparable<Symbol> {
     private final int hashCode;
 
     private Symbol() {
-        this.underlying = ProtonByteBufferAllocator.DEFAULT.allocate(0, 0);
+        this.underlying = ProtonBufferAllocator.defaultAllocator().allocate(0).convertToReadOnly();
         this.hashCode = 31;
         this.symbolString = "";
     }
@@ -107,7 +107,9 @@ public final class Symbol implements Comparable<Symbol> {
      * 		The buffer where the Symbol bytes should be written to.
      */
     public void writeTo(ProtonBuffer target) {
-        target.writeBytes(underlying, 0, underlying.getReadableBytes());
+        target.ensureWritable(underlying.getReadableBytes());
+        underlying.copyInto(underlying.getReadOffset(), target, target.getWriteOffset(), underlying.getReadableBytes());
+        target.advanceWriteOffset(underlying.getReadableBytes());
     }
 
     /**
@@ -159,8 +161,9 @@ public final class Symbol implements Comparable<Symbol> {
             if (copyOnCreate) {
                 // Copy to a known heap based buffer to avoid issue with life-cycle of pooled buffer types.
                 int symbolSize = symbolBuffer.getReadableBytes();
-                ProtonBuffer copy = ProtonByteBufferAllocator.DEFAULT.allocate(symbolSize, symbolSize);
-                symbolBuffer = copy.setBytes(0, symbolBuffer, 0, symbolSize).setWriteIndex(symbolSize);
+                ProtonBuffer copy = ProtonBufferAllocator.defaultAllocator().allocate(symbolSize);
+                copy.writeBytes(symbolBuffer);
+                symbolBuffer = copy.convertToReadOnly();
             }
 
             symbol = new Symbol(symbolBuffer);
@@ -196,7 +199,7 @@ public final class Symbol implements Comparable<Symbol> {
 
         Symbol symbol = stringToSymbols.get(stringValue);
         if (symbol == null) {
-            symbol = getSymbol(ProtonByteBufferAllocator.DEFAULT.wrap(stringValue.getBytes(US_ASCII)));
+            symbol = getSymbol(ProtonBufferAllocator.defaultAllocator().copy(stringValue.getBytes(US_ASCII)));
 
             // Don't cache overly large symbols to prevent holding large
             // amount of memory in the symbol cache.

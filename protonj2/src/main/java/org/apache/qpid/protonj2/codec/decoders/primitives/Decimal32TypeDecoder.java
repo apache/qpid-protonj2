@@ -54,7 +54,7 @@ public final class Decimal32TypeDecoder extends AbstractPrimitiveTypeDecoder<Dec
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.skipBytes(Decimal32.BYTES);
+        buffer.advanceReadOffset(Decimal32.BYTES);
     }
 
     @Override

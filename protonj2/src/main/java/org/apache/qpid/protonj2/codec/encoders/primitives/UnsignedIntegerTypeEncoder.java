@@ -40,7 +40,7 @@ public final class UnsignedIntegerTypeEncoder extends AbstractPrimitiveTypeEncod
             buffer.writeByte(EncodingCodes.UINT0);
         } else if (intValue > 0 && intValue <= 255) {
             buffer.writeByte(EncodingCodes.SMALLUINT);
-            buffer.writeByte(intValue);
+            buffer.writeByte((byte) intValue);
         } else {
             buffer.writeByte(EncodingCodes.UINT);
             buffer.writeInt(intValue);
@@ -87,7 +87,7 @@ public final class UnsignedIntegerTypeEncoder extends AbstractPrimitiveTypeEncod
             buffer.writeByte(EncodingCodes.UINT0);
         } else if (value > 0 && value <= 255) {
             buffer.writeByte(EncodingCodes.SMALLUINT);
-            buffer.writeByte(value);
+            buffer.writeByte((byte) value);
         } else {
             buffer.writeByte(EncodingCodes.UINT);
             buffer.writeInt(value);
@@ -118,7 +118,7 @@ public final class UnsignedIntegerTypeEncoder extends AbstractPrimitiveTypeEncod
             buffer.writeByte(EncodingCodes.UINT0);
         } else if (intValue > 0 && intValue <= 255) {
             buffer.writeByte(EncodingCodes.SMALLUINT);
-            buffer.writeByte(intValue);
+            buffer.writeByte((byte) intValue);
         } else {
             buffer.writeByte(EncodingCodes.UINT);
             buffer.writeInt(intValue);

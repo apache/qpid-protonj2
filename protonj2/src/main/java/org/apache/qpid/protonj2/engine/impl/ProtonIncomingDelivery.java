@@ -47,7 +47,6 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     private boolean remotelySettled;
 
     private ProtonBuffer payload;
-    private ProtonCompositeBuffer aggregate;
 
     private ProtonAttachments attachments;
     private Object linkedResource;
@@ -188,10 +187,10 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     public ProtonBuffer readAll() {
         ProtonBuffer result = null;
         if (payload != null) {
-            int bytesRead = claimedBytes -= payload.getReadableBytes();
-            result = payload;
+            final int bytesRead = claimedBytes -= payload.getReadableBytes();
+            result = payload.transfer();
             payload = null;
-            aggregate = null;
+
             if (bytesRead < 0) {
                 claimedBytes = 0;
                 link.deliveryRead(this, -bytesRead);
@@ -204,16 +203,16 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     @Override
     public ProtonIncomingDelivery readBytes(ProtonBuffer buffer) {
         if (payload != null) {
-            int bytesRead = payload.getReadableBytes();
-            payload.readBytes(buffer);
-            bytesRead -= payload.getReadableBytes();
-            if (!payload.isReadable()) {
+            int bytesRead = Math.min(payload.getReadableBytes(), buffer.getWritableBytes());
+            payload.copyInto(payload.getReadOffset(), buffer, buffer.getWriteOffset(), bytesRead);
+            payload.advanceReadOffset(bytesRead);
+
+            if (complete && !payload.isReadable()) {
                 payload = null;
-                aggregate = null;
             }
 
             bytesRead = claimedBytes -= bytesRead;
-            if (bytesRead < 0) {
+            if (claimedBytes < 0) {
                 claimedBytes = 0;
                 link.deliveryRead(this, -bytesRead);
             }
@@ -227,9 +226,8 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
             int bytesRead = payload.getReadableBytes();
             payload.readBytes(array, offset, length);
             bytesRead -= payload.getReadableBytes();
-            if (!payload.isReadable()) {
+            if (complete && !payload.isReadable()) {
                 payload = null;
-                aggregate = null;
             }
 
             bytesRead = claimedBytes -= bytesRead;
@@ -243,10 +241,10 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     @Override
     public IncomingDelivery claimAvailableBytes() {
-        long available = available();
+        long unclaimed = available();
 
-        if (available > 0) {
-            long unclaimed = available - claimedBytes;
+        if (unclaimed > 0) {
+            unclaimed -= claimedBytes;
             if (unclaimed > 0) {
                 claimedBytes += unclaimed;
                 link.deliveryRead(this, (int) unclaimed);
@@ -313,8 +311,8 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
         if (payload != null) {
             final int bytesRead = payload.getReadableBytes();
 
+            payload.close();
             payload = null;
-            aggregate = null;
 
             // Ensure Session no longer records these in the window metrics
             link.deliveryRead(this, bytesRead);
@@ -352,16 +350,11 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
         transferCount++;
 
         if (payload == null) {
-            payload = buffer;
-        } else if (aggregate != null) {
-            aggregate.append(buffer);
+            this.payload = buffer;
+        } else if (ProtonCompositeBuffer.isComposite(payload)) {
+            ((ProtonCompositeBuffer) payload).append(buffer);
         } else {
-            final ProtonBuffer previous = payload;
-
-            payload = aggregate = new ProtonCompositeBuffer();
-
-            aggregate.append(previous);
-            aggregate.append(buffer);
+            this.payload = link.getEngine().configuration().getBufferAllocator().composite(new ProtonBuffer[] { payload, buffer });
         }
 
         return this;

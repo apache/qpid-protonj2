@@ -34,8 +34,9 @@ import java.util.Random;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferUtils;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
@@ -50,7 +51,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testWriteOfZeroSizedGenericArrayFails() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Object[] source = new Object[0];
 
@@ -64,7 +65,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testWriteOfGenericArrayOfObjectsFails() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Object[] source = new Object[2];
 
@@ -90,8 +91,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestArrayOfArraysOfMixedTypes(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final int size = 10;
 
@@ -105,6 +105,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -133,8 +134,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void testArrayOfArraysOfArraysOfShortTypes(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final int size = 10;
 
@@ -151,6 +151,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -192,8 +193,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void testWriteArrayOfArraysStrings(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         String[][] stringArray = new String[2][1];
 
@@ -210,6 +210,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -247,7 +248,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         }
 
         try {
-            ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+            ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
             encoder.writeObject(buffer, encoderState, input1);
             fail("Should fail as no type encoder can be deduced");
         } catch (NullPointerException npe) {
@@ -262,7 +263,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         }
 
         try {
-            ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+            ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
             encoder.writeObject(buffer, encoderState, input2);
             fail("Should fail as no type encoder cannot handle null elements");
         } catch (NullPointerException npe) {
@@ -288,7 +289,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeStringArrayUsingNewCodecAndDecodeWithLegacyCodec() throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         String[] input = new String[] { "test", "legacy", "codec" };
 
         encoder.writeObject(buffer, encoderState, input);
@@ -312,8 +313,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void testEncodeAndDecodeArrayOfListsUsingReadMultiple(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         @SuppressWarnings("rawtypes")
         List[] lists = new List[3];
@@ -335,6 +335,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         @SuppressWarnings("rawtypes")
         final List[] decoded;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             decoded = streamDecoder.readMultiple(stream, streamDecoderState, List.class);
         } else {
             decoded = decoder.readMultiple(buffer, decoderState, List.class);
@@ -357,8 +358,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void testEncodeAndDecodeArrayOfMapsUsingReadMultiple(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         @SuppressWarnings("rawtypes")
         Map[] maps = new Map[3];
@@ -380,6 +380,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         @SuppressWarnings("rawtypes")
         final Map[] decoded;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             decoded = streamDecoder.readMultiple(stream, streamDecoderState, Map.class);
         } else {
             decoded = decoder.readMultiple(buffer, decoderState, Map.class);
@@ -428,8 +429,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void doEncodeDecodeBooleanArrayTestImpl(int count, boolean fromStream) throws Throwable {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         boolean[] source = createPayloadArrayBooleans(count);
 
@@ -439,9 +439,8 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             int encodingWidth = count < 254 ? 1 : 4; // less than 254 and not 256, since we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int arrayPayloadSize =  encodingWidth + 1 + count; // variable width for element count + byte type descriptor + number of elements
             int expectedEncodedArraySize = 1 + encodingWidth + arrayPayloadSize; // array type code +  variable width for array size + other encoded payload
-            byte[] expectedEncoding = new byte[expectedEncodedArraySize];
-            ProtonBuffer expectedEncodingWrapper = ProtonByteBufferAllocator.DEFAULT.wrap(expectedEncoding);
-            expectedEncodingWrapper.setWriteIndex(0);
+            ProtonBuffer expectedEncodingWrapper = ProtonBufferAllocator.defaultAllocator().allocate(expectedEncodedArraySize);
+            expectedEncodingWrapper.setWriteOffset(0);
 
             // Write the array encoding code, array size, and element count
             if (count < 254) {
@@ -465,23 +464,26 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
             assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
 
+            final byte[] expectedEncoding = ProtonBufferUtils.toByteArray(expectedEncodingWrapper);
+
             // Now verify against the actual encoding of the array
-            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
+            assertEquals(0, buffer.getReadOffset(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
             assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
-            buffer.markReadIndex();
-            buffer.readBytes(actualEncoding);
+            final int oldPos = buffer.getReadOffset();
+            buffer.readBytes(actualEncoding, 0, actualEncoding.length);
             assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
             assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
-            buffer.resetReadIndex();
+            buffer.setReadOffset(oldPos);
 
             final Object decoded;
             if (fromStream) {
+                InputStream stream = new ProtonBufferInputStream(buffer);
                 decoded = streamDecoder.readObject(stream, streamDecoderState);
             } else {
                 decoded = decoder.readObject(buffer, decoderState);
@@ -571,8 +573,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void doEncodeDecodeByteArrayTestImpl(int count, boolean fromStream) throws Throwable {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         byte[] source = createPayloadArrayBytes(count);
 
@@ -582,9 +583,8 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             int encodingWidth = count < 254 ? 1 : 4; // less than 254 and not 256, since we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int arrayPayloadSize = encodingWidth + 1 + count; // variable width for element count + byte type descriptor + number of elements
             int expectedEncodedArraySize = 1 + encodingWidth + arrayPayloadSize; // array type code + variable width for array size + other encoded payload
-            byte[] expectedEncoding = new byte[expectedEncodedArraySize];
-            ProtonBuffer expectedEncodingWrapper = ProtonByteBufferAllocator.DEFAULT.wrap(expectedEncoding);
-            expectedEncodingWrapper.setWriteIndex(0);
+            ProtonBuffer expectedEncodingWrapper = ProtonBufferAllocator.defaultAllocator().allocate(expectedEncodedArraySize);
+            expectedEncodingWrapper.setWriteOffset(0);
 
             // Write the array encoding code, array size, and element count
             if (count < 254) {
@@ -606,24 +606,26 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             }
 
             assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
+            final byte[] expectedEncoding = ProtonBufferUtils.toByteArray(expectedEncodingWrapper);
 
             // Now verify against the actual encoding of the array
-            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
+            assertEquals(0, buffer.getReadOffset(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
             assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
-            buffer.markReadIndex();
-            buffer.readBytes(actualEncoding);
+            final int oldPos = buffer.getReadOffset();
+            buffer.readBytes(actualEncoding, 0, actualEncoding.length);
             assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
             assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
-            buffer.resetReadIndex();
+            buffer.setReadOffset(oldPos);
 
             final Object decoded;
             if (fromStream) {
+                InputStream stream = new ProtonBufferInputStream(buffer);
                 decoded = streamDecoder.readObject(stream, streamDecoderState);
             } else {
                 decoded = decoder.readObject(buffer, decoderState);
@@ -689,8 +691,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void doEncodeDecodeShortArrayTestImpl(int count, boolean fromStream) throws Throwable {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         short[] source = createPayloadArrayShorts(count);
 
         try {
@@ -699,9 +700,8 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             int encodingWidth = count < 127 ? 1 : 4; // less than 127, since each element is 2 bytes, but we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int arrayPayloadSize =  encodingWidth + 1 + (count * 2); // variable width for element count + byte type descriptor + (number of elements * size)
             int expectedEncodedArraySize = 1 + encodingWidth + arrayPayloadSize; // array type code +  variable width for array size + other encoded payload
-            byte[] expectedEncoding = new byte[expectedEncodedArraySize];
-            ProtonBuffer expectedEncodingWrapper = ProtonByteBufferAllocator.DEFAULT.wrap(expectedEncoding);
-            expectedEncodingWrapper.setWriteIndex(0);
+            ProtonBuffer expectedEncodingWrapper = ProtonBufferAllocator.defaultAllocator().allocate(expectedEncodedArraySize);
+            expectedEncodingWrapper.setWriteOffset(0);
 
             // Write the array encoding code, array size, and element count
             if (count < 254) {
@@ -724,23 +724,26 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
             assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
 
+            final byte[] expectedEncoding = ProtonBufferUtils.toByteArray(expectedEncodingWrapper);
+
             // Now verify against the actual encoding of the array
-            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
+            assertEquals(0, buffer.getReadOffset(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
             assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
-            buffer.markReadIndex();
-            buffer.readBytes(actualEncoding);
+            final int oldPos = buffer.getReadOffset();
+            buffer.readBytes(actualEncoding, 0, actualEncoding.length);
             assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
             assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
-            buffer.resetReadIndex();
+            buffer.setReadOffset(oldPos);
 
             final Object decoded;
             if (fromStream) {
+                InputStream stream = new ProtonBufferInputStream(buffer);
                 decoded = streamDecoder.readObject(stream, streamDecoderState);
             } else {
                 decoded = decoder.readObject(buffer, decoderState);
@@ -806,8 +809,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void doEncodeDecodeIntArrayTestImpl(int count, boolean fromStream) throws Throwable {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         int[] source = createPayloadArrayInts(count);
 
         try {
@@ -817,9 +819,8 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             int elementWidth = 4;
             int arrayPayloadSize =  encodingWidth + 1 + (count * elementWidth); // variable width for element count + byte type descriptor + (number of elements * size)
             int expectedEncodedArraySize = 1 + encodingWidth + arrayPayloadSize; // array type code +  variable width for array size + other encoded payload
-            byte[] expectedEncoding = new byte[expectedEncodedArraySize];
-            ProtonBuffer expectedEncodingWrapper = ProtonByteBufferAllocator.DEFAULT.wrap(expectedEncoding);
-            expectedEncodingWrapper.setWriteIndex(0);
+            ProtonBuffer expectedEncodingWrapper = ProtonBufferAllocator.defaultAllocator().allocate(expectedEncodedArraySize);
+            expectedEncodingWrapper.setWriteOffset(0);
 
             // Write the array encoding code, array size, and element count
             if (count < 254) {
@@ -842,24 +843,26 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             }
 
             assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
+            final byte[] expectedEncoding = ProtonBufferUtils.toByteArray(expectedEncodingWrapper);
 
             // Now verify against the actual encoding of the array
-            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
+            assertEquals(0, buffer.getReadOffset(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
             assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
-            buffer.markReadIndex();
-            buffer.readBytes(actualEncoding);
+            final int oldPos = buffer.getReadOffset();
+            buffer.readBytes(actualEncoding, 0, actualEncoding.length);
             assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
             assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
-            buffer.resetReadIndex();
+            buffer.setReadOffset(oldPos);
 
             final Object decoded;
             if (fromStream) {
+                InputStream stream = new ProtonBufferInputStream(buffer);
                 decoded = streamDecoder.readObject(stream, streamDecoderState);
             } else {
                 decoded = decoder.readObject(buffer, decoderState);
@@ -925,8 +928,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void doEncodeDecodeLongArrayTestImpl(int count, boolean fromStream) throws Throwable {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         long[] source = createPayloadArrayLongs(count);
 
         try {
@@ -937,9 +939,8 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
             int arrayPayloadSize = encodingWidth + 1 + (count * elementWidth); // variable width for element count + byte type descriptor + (number of elements * size)
             int expectedEncodedArraySize = 1 + encodingWidth + arrayPayloadSize; // array type code +  variable width for array size + other encoded payload
-            byte[] expectedEncoding = new byte[expectedEncodedArraySize];
-            ProtonBuffer expectedEncodingWrapper = ProtonByteBufferAllocator.DEFAULT.wrap(expectedEncoding);
-            expectedEncodingWrapper.setWriteIndex(0);
+            ProtonBuffer expectedEncodingWrapper = ProtonBufferAllocator.defaultAllocator().allocate(expectedEncodedArraySize);
+            expectedEncodingWrapper.setWriteOffset(0);
 
             // Write the array encoding code, array size, and element count
             if (count < 254) {
@@ -962,24 +963,26 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             }
 
             assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
+            final byte[] expectedEncoding = ProtonBufferUtils.toByteArray(expectedEncodingWrapper);
 
             // Now verify against the actual encoding of the array
-            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
+            assertEquals(0, buffer.getReadOffset(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
             assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
-            buffer.markReadIndex();
-            buffer.readBytes(actualEncoding);
+            final int oldPos = buffer.getReadOffset();
+            buffer.readBytes(actualEncoding, 0, actualEncoding.length);
             assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
             assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
-            buffer.resetReadIndex();
+            buffer.setReadOffset(oldPos);
 
             final Object decoded;
             if (fromStream) {
+                InputStream stream = new ProtonBufferInputStream(buffer);
                 decoded = streamDecoder.readObject(stream, streamDecoderState);
             } else {
                 decoded = decoder.readObject(buffer, decoderState);
@@ -1045,8 +1048,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void doEncodeDecodeFloatArrayTestImpl(int count, boolean fromStream) throws Throwable {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         float[] source = createPayloadArrayFloats(count);
 
         try {
@@ -1055,9 +1057,8 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             int encodingWidth = count < 63 ? 1 : 4; // less than 63, since each element is 4 bytes, but we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int arrayPayloadSize =  encodingWidth + 1 + (count * 4); // variable width for element count + byte type descriptor + (number of elements * size)
             int expectedEncodedArraySize = 1 + encodingWidth + arrayPayloadSize; // array type code +  variable width for array size + other encoded payload
-            byte[] expectedEncoding = new byte[expectedEncodedArraySize];
-            ProtonBuffer expectedEncodingWrapper = ProtonByteBufferAllocator.DEFAULT.wrap(expectedEncoding);
-            expectedEncodingWrapper.setWriteIndex(0);
+            ProtonBuffer expectedEncodingWrapper = ProtonBufferAllocator.defaultAllocator().allocate(expectedEncodedArraySize);
+            expectedEncodingWrapper.setWriteOffset(0);
 
             // Write the array encoding code, array size, and element count
             if (count < 254) {
@@ -1079,24 +1080,26 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             }
 
             assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
+            final byte[] expectedEncoding = ProtonBufferUtils.toByteArray(expectedEncodingWrapper);
 
             // Now verify against the actual encoding of the array
-            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
+            assertEquals(0, buffer.getReadOffset(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
             assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
-            buffer.markReadIndex();
-            buffer.readBytes(actualEncoding);
+            final int oldPos = buffer.getReadOffset();
+            buffer.readBytes(actualEncoding, 0, actualEncoding.length);
             assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
             assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
-            buffer.resetReadIndex();
+            buffer.setReadOffset(oldPos);
 
             final Object decoded;
             if (fromStream) {
+                InputStream stream = new ProtonBufferInputStream(buffer);
                 decoded = streamDecoder.readObject(stream, streamDecoderState);
             } else {
                 decoded = decoder.readObject(buffer, decoderState);
@@ -1162,8 +1165,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void doEncodeDecodeDoubleArrayTestImpl(int count, boolean fromStream) throws Throwable {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         double[] source = createPayloadArrayDoubles(count);
 
         try {
@@ -1172,9 +1174,8 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             int encodingWidth = count < 31 ? 1 : 4; // less than 31, since each element is 8 bytes, but we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int arrayPayloadSize =  encodingWidth + 1 + (count * 8); // variable width for element count + byte type descriptor + (number of elements * size)
             int expectedEncodedArraySize = 1 + encodingWidth + arrayPayloadSize; // array type code +  variable width for array size + other encoded payload
-            byte[] expectedEncoding = new byte[expectedEncodedArraySize];
-            ProtonBuffer expectedEncodingWrapper = ProtonByteBufferAllocator.DEFAULT.wrap(expectedEncoding);
-            expectedEncodingWrapper.setWriteIndex(0);
+            ProtonBuffer expectedEncodingWrapper = ProtonBufferAllocator.defaultAllocator().allocate(expectedEncodedArraySize);
+            expectedEncodingWrapper.setWriteOffset(0);
 
             // Write the array encoding code, array size, and element count
             if (count < 254) {
@@ -1197,23 +1198,26 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
             assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
 
+            final byte[] expectedEncoding = ProtonBufferUtils.toByteArray(expectedEncodingWrapper);
+
             // Now verify against the actual encoding of the array
-            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
+            assertEquals(0, buffer.getReadOffset(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
             assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
-            buffer.markReadIndex();
-            buffer.readBytes(actualEncoding);
+            final int oldPos = buffer.getReadOffset();
+            buffer.readBytes(actualEncoding, 0, actualEncoding.length);
             assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
             assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
-            buffer.resetReadIndex();
+            buffer.setReadOffset(oldPos);
 
             final Object decoded;
             if (fromStream) {
+                InputStream stream = new ProtonBufferInputStream(buffer);
                 decoded = streamDecoder.readObject(stream, streamDecoderState);
             } else {
                 decoded = decoder.readObject(buffer, decoderState);
@@ -1279,8 +1283,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void doEncodeDecodeCharArrayTestImpl(int count, boolean fromStream) throws Throwable {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         char[] source = createPayloadArrayChars(count);
 
         try {
@@ -1289,9 +1292,8 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             int encodingWidth = count < 63 ? 1 : 4; // less than 63, since each element is 4 bytes, but we also need 1 byte for element count, and (in this case) 1 byte for primitive element type constructor.
             int arrayPayloadSize =  encodingWidth + 1 + (count * 4); // variable width for element count + byte type descriptor + (number of elements * size)
             int expectedEncodedArraySize = 1 + encodingWidth + arrayPayloadSize; // array type code +  variable width for array size + other encoded payload
-            byte[] expectedEncoding = new byte[expectedEncodedArraySize];
-            ProtonBuffer expectedEncodingWrapper = ProtonByteBufferAllocator.DEFAULT.wrap(expectedEncoding);
-            expectedEncodingWrapper.setWriteIndex(0);
+            ProtonBuffer expectedEncodingWrapper = ProtonBufferAllocator.defaultAllocator().allocate(expectedEncodedArraySize);
+            expectedEncodingWrapper.setWriteOffset(0);
 
             // Write the array encoding code, array size, and element count
             if (count < 254) {
@@ -1313,24 +1315,26 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
             }
 
             assertFalse(expectedEncodingWrapper.isWritable(), "Should have filled expected encoding array");
+            final byte[] expectedEncoding = ProtonBufferUtils.toByteArray(expectedEncodingWrapper);
 
             // Now verify against the actual encoding of the array
-            assertEquals(0, buffer.getReadIndex(), "Unexpected buffer position");
+            assertEquals(0, buffer.getReadOffset(), "Unexpected buffer position");
             encoder.writeArray(buffer, encoderState, source);
             assertEquals(expectedEncodedArraySize, buffer.getReadableBytes(), "Unexpected encoded payload length");
 
             byte[] actualEncoding = new byte[expectedEncodedArraySize];
-            buffer.markReadIndex();
-            buffer.readBytes(actualEncoding);
+            final int oldPos = buffer.getReadOffset();
+            buffer.readBytes(actualEncoding, 0, actualEncoding.length);
             assertFalse(buffer.isReadable(), "Should have drained the encoder buffer contents");
 
             assertArrayEquals(expectedEncoding, actualEncoding, "Unexpected actual array encoding");
 
             // Now verify against the decoding
-            buffer.resetReadIndex();
+            buffer.setReadOffset(oldPos);
 
             final Object decoded;
             if (fromStream) {
+                InputStream stream = new ProtonBufferInputStream(buffer);
                 decoded = streamDecoder.readObject(stream, streamDecoderState);
             } else {
                 decoded = decoder.readObject(buffer, decoderState);
@@ -1380,8 +1384,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueOnArrayOfSize(int arraySize, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Random filler = new Random();
         filler.setSeed(System.nanoTime());
@@ -1400,6 +1403,8 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         final Object result;
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             for (int i = 0; i < 10; ++i) {
                 StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
                 assertEquals(Object.class, typeDecoder.getTypeClass());
@@ -1407,7 +1412,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
                 typeDecoder.skipValue(stream, streamDecoderState);
             }
 
-            result = decoder.readObject(buffer, decoderState);
+            result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             for (int i = 0; i < 10; ++i) {
                 TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
@@ -1437,8 +1442,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     public void doTestArrayOfInts(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final int size = 10;
 
@@ -1451,6 +1455,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);

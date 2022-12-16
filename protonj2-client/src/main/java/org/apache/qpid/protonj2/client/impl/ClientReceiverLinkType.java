@@ -18,7 +18,7 @@
 package org.apache.qpid.protonj2.client.impl;
 
 import java.lang.invoke.MethodHandles;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Future;
 
 import org.apache.qpid.protonj2.client.Link;
 import org.apache.qpid.protonj2.client.LinkOptions;
@@ -42,7 +42,7 @@ public abstract class ClientReceiverLinkType<ReceiverType extends Link<ReceiverT
     private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     protected ClientFuture<ReceiverType> drainingFuture;
-    protected ScheduledFuture<?> drainingTimeout;
+    protected Future<?> drainingTimeout;
 
     protected Receiver protonReceiver;
 

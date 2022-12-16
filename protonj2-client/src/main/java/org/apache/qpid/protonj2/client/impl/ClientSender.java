@@ -19,10 +19,11 @@ package org.apache.qpid.protonj2.client.impl;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.client.AdvancedMessage;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.Sender;
@@ -151,7 +152,7 @@ public final class ClientSender extends ClientSenderLinkType<Sender> implements 
 
     private Tracker sendMessage(AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations, boolean waitForCredit) throws ClientException {
         final ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
-        final ProtonBuffer buffer = message.encode(deliveryAnnotations);
+        final ProtonBuffer buffer = message.encode(deliveryAnnotations, ProtonBufferAllocator.defaultAllocator());
 
         executor.execute(() -> {
             if (notClosedOrFailed(operation)) {
@@ -249,7 +250,7 @@ public final class ClientSender extends ClientSenderLinkType<Sender> implements 
         private final ClientSender sender;
         private final int messageFormat;
 
-        private ScheduledFuture<?> sendTimeout;
+        private Future<?> sendTimeout;
         private OutgoingDelivery delivery;
 
         /**
@@ -273,19 +274,19 @@ public final class ClientSender extends ClientSenderLinkType<Sender> implements 
         }
 
         /**
-         * @return the {@link ScheduledFuture} used to determine when the send should fail if no credit available to write.
+         * @return the {@link Future} used to determine when the send should fail if no credit available to write.
          */
-        public ScheduledFuture<?> sendTimeout() {
+        public Future<?> sendTimeout() {
             return sendTimeout;
         }
 
         /**
-         * Sets the {@link ScheduledFuture} which should be used when a send cannot be immediately performed.
+         * Sets the {@link Future} which should be used when a send cannot be immediately performed.
          *
          * @param sendTimeout
-         * 		The {@link ScheduledFuture} that will fail the send if not cancelled once it has been performed.
+         * 		The {@link Future} that will fail the send if not cancelled once it has been performed.
          */
-        public void sendTimeout(ScheduledFuture<?> sendTimeout) {
+        public void sendTimeout(Future<?> sendTimeout) {
             this.sendTimeout = sendTimeout;
         }
 
@@ -298,6 +299,8 @@ public final class ClientSender extends ClientSenderLinkType<Sender> implements 
                 sendTimeout.cancel(true);
             }
 
+            payload.close();
+
             request.complete(delivery.getLinkedResource());
 
             return this;
@@ -307,6 +310,8 @@ public final class ClientSender extends ClientSenderLinkType<Sender> implements 
             if (sendTimeout != null) {
                 sendTimeout.cancel(true);
             }
+
+            payload.close();
 
             request.failed(exception);
 
@@ -320,14 +325,16 @@ public final class ClientSender extends ClientSenderLinkType<Sender> implements 
                 sendTimeout = null;
             }
 
-            if (delivery != null) {
-                ClientTracker tracker = delivery.getLinkedResource();
-                if (tracker != null) {
-                    tracker.settlementFuture().complete(tracker);
+            try (payload) {
+                if (delivery != null) {
+                    ClientTracker tracker = delivery.getLinkedResource();
+                    if (tracker != null) {
+                        tracker.settlementFuture().complete(tracker);
+                    }
+                    request.complete(delivery.getLinkedResource());
+                } else {
+                    request.complete(sender.createNoOpTracker());
                 }
-                request.complete(delivery.getLinkedResource());
-            } else {
-                request.complete(sender.createNoOpTracker());
             }
         }
 

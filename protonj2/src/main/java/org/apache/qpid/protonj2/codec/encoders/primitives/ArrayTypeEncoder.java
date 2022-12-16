@@ -81,7 +81,7 @@ public final class ArrayTypeEncoder implements PrimitiveTypeEncoder<Object> {
             // Write the Array Type encoding code, we don't optimize here.
             buffer.writeByte(EncodingCodes.ARRAY32);
 
-            int startIndex = buffer.getWriteIndex();
+            final int startIndex = buffer.getWriteOffset();
 
             // Reserve space for the size and write the count of list elements.
             buffer.writeInt(0);
@@ -91,7 +91,7 @@ public final class ArrayTypeEncoder implements PrimitiveTypeEncoder<Object> {
             writeRawArray(buffer, state, values);
 
             // Move back and write the size
-            long writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
+            final long writeSize = buffer.getWriteOffset() - startIndex - Integer.BYTES;
 
             if (writeSize > Integer.MAX_VALUE) {
                 throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
@@ -111,7 +111,7 @@ public final class ArrayTypeEncoder implements PrimitiveTypeEncoder<Object> {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         for (int i = 0; i < values.length; ++i) {
-            int startIndex = buffer.getWriteIndex();
+            final int startIndex = buffer.getWriteOffset();
 
             // Reserve space for the size and write the count of list elements.
             buffer.writeInt(0);
@@ -154,7 +154,7 @@ public final class ArrayTypeEncoder implements PrimitiveTypeEncoder<Object> {
             }
 
             // Move back and write the size
-            long writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
+            final long writeSize = buffer.getWriteOffset() - startIndex - Integer.BYTES;
 
             if (writeSize > Integer.MAX_VALUE) {
                 throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);

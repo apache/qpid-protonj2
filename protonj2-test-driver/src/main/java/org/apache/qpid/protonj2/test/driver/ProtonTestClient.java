@@ -18,7 +18,6 @@ package org.apache.qpid.protonj2.test.driver;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -28,12 +27,11 @@ import org.apache.qpid.protonj2.test.driver.netty.NettyClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.EventLoop;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty5.buffer.Buffer;
+import io.netty5.channel.ChannelHandler;
+import io.netty5.channel.ChannelHandlerContext;
+import io.netty5.channel.EventLoop;
+import io.netty5.channel.SimpleChannelInboundHandler;
 
 /**
  * Test Client for AMQP server testing, allows for scripting the expected inputs from
@@ -99,7 +97,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
         client.write(frame);
     }
 
-    protected void processChannelInput(ByteBuf input) {
+    protected void processChannelInput(Buffer input) {
         LOG.trace("AMQP Test Client Channel processing: {}", input);
         driver.accept(input);
     }
@@ -109,7 +107,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
         close();
     }
 
-    protected ScheduledExecutorService eventLoop() {
+    protected EventLoop eventLoop() {
         return client.eventLoop();
     }
 
@@ -117,7 +115,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
 
     private final class NettyAwareAMQPTestDriver extends AMQPTestDriver {
 
-        public NettyAwareAMQPTestDriver(Consumer<ByteBuffer> frameConsumer, Consumer<AssertionError> assertionConsumer, Supplier<ScheduledExecutorService> scheduler) {
+        public NettyAwareAMQPTestDriver(Consumer<ByteBuffer> frameConsumer, Consumer<AssertionError> assertionConsumer, Supplier<EventLoop> scheduler) {
             super(getPeerName(), frameConsumer, assertionConsumer, scheduler);
         }
 
@@ -128,7 +126,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
         // other driver resources being used on two different threads.
 
         @Override
-        public void sendAMQPFrame(int channel, DescribedType performative, ByteBuf payload, boolean splitWrite) {
+        public void sendAMQPFrame(int channel, DescribedType performative, Buffer payload, boolean splitWrite) {
             EventLoop loop = client.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendAMQPFrame(channel, performative, payload, splitWrite);
@@ -186,7 +184,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
 
         @Override
         protected ChannelHandler getClientHandler() {
-            return new SimpleChannelInboundHandler<ByteBuf>() {
+            return new SimpleChannelInboundHandler<Buffer>() {
 
                 @Override
                 public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -195,16 +193,11 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
                 }
 
                 @Override
-                protected void channelRead0(ChannelHandlerContext ctx, ByteBuf input) throws Exception {
+                protected void messageReceived(ChannelHandlerContext ctx, Buffer input) throws Exception {
                     LOG.trace("AMQP Test Client Channel read: {}", input);
 
-                    try {
-                        // Create a stable copy to avoid issue with retained buffer slices when input is pooled.
-                        ByteBuf copy = Unpooled.buffer(input.readableBytes());
-                        copy.writeBytes(input.nioBuffer());
-                        input.skipBytes(input.readableBytes());
-
-                        // Driver processes new data and may produce output based on this.
+                    // Driver processes new data and may produce output based on this.
+                    try (Buffer copy = input.copy(true)) {
                         processChannelInput(copy);
                     } catch (Throwable e) {
                         LOG.error("Closed AMQP Test client channel due to error: ", e);

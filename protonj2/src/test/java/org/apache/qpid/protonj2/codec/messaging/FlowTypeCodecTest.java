@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -69,7 +69,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeFlowSeries(int size) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Flow flow = new Flow();
         flow.setNextIncomingId(1);
@@ -104,7 +104,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeArrayOfDataSections() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Flow flow = new Flow();
         flow.setNextIncomingId(1);
@@ -145,7 +145,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testSkipValue() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeObject(buffer, encoderState, new Flow().setAvailable(100));
@@ -179,7 +179,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithInvalidMapType(byte mapType) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -211,7 +211,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueWithInvalidMapType(byte mapType) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -237,7 +237,7 @@ public class FlowTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeArray() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Flow[] array = new Flow[3];
 

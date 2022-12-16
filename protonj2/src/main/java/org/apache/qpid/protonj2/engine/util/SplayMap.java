@@ -2177,7 +2177,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
          * Specialized iterator for the sub-map type that iterators on a generic type
          * but internally contains splayed entries from the splay map tree.
          *
-         * @param <T>
+         * @param <T> The value type that is returned from this iterator.
          */
         protected abstract class NavigableSubMapIterator<T> implements Iterator<T> {
             SplayedEntry<E> lastReturned;

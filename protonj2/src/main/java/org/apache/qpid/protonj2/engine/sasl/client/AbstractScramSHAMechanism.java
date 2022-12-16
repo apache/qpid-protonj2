@@ -28,7 +28,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 
 abstract class AbstractScramSHAMechanism extends AbstractMechanism {
 
@@ -82,7 +82,7 @@ abstract class AbstractScramSHAMechanism extends AbstractMechanism {
 
         byte[] data = (GS2_HEADER + clientFirstMessageBare).getBytes(StandardCharsets.US_ASCII);
 
-        return ProtonByteBufferAllocator.DEFAULT.wrap(data).setWriteIndex(data.length);
+        return ProtonBufferAllocator.defaultAllocator().copy(data).convertToReadOnly();
     }
 
     @Override
@@ -103,7 +103,7 @@ abstract class AbstractScramSHAMechanism extends AbstractMechanism {
                 throw new SaslException("No challenge expected in state " + state);
         }
 
-        return ProtonByteBufferAllocator.DEFAULT.wrap(response).setWriteIndex(response.length);
+        return ProtonBufferAllocator.defaultAllocator().copy(response).convertToReadOnly();
     }
 
     @Override

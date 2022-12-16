@@ -29,8 +29,8 @@ import java.io.InputStream;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeEOFException;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -53,11 +53,12 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadNullFromReadObjectForNullEncoding() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.NULL);
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         assertNull(streamDecoder.readObject(stream, streamDecoderState));
         assertNull(streamDecoder.readObject(stream, streamDecoderState, UUID.class));
@@ -65,7 +66,7 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testTryReadFromEmptyStream() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         InputStream stream = new ProtonBufferInputStream(buffer);
 
         try {
@@ -76,10 +77,11 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testErrorOnReadOfUnknownEncoding() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
-        buffer.writeByte(255);
+        buffer.writeByte((byte) 255);
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         assertNull(streamDecoder.peekNextTypeDecoder(stream, streamDecoderState));
 
@@ -91,14 +93,15 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadFromNullEncodingCode() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final UUID value = UUID.randomUUID();
 
         buffer.writeByte(EncodingCodes.UUID);
         buffer.writeLong(value.getMostSignificantBits());
         buffer.writeLong(value.getLeastSignificantBits());
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         try {
             streamDecoder.readObject(stream, streamDecoderState, String.class);
@@ -109,24 +112,23 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadMultipleFromNullEncoding() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
-
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         buffer.writeByte(EncodingCodes.NULL);
 
+        InputStream stream = new ProtonBufferInputStream(buffer);
         assertNull(streamDecoder.readMultiple(stream, streamDecoderState, UUID.class));
     }
 
     @Test
     public void testReadMultipleFromSingleEncoding() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
-
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         final UUID value = UUID.randomUUID();
 
         buffer.writeByte(EncodingCodes.UUID);
         buffer.writeLong(value.getMostSignificantBits());
         buffer.writeLong(value.getLeastSignificantBits());
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         UUID[] result = streamDecoder.readMultiple(stream, streamDecoderState, UUID.class);
 
@@ -137,14 +139,15 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadMultipleRequestsWrongTypeForArray() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final UUID value = UUID.randomUUID();
 
         buffer.writeByte(EncodingCodes.UUID);
         buffer.writeLong(value.getMostSignificantBits());
         buffer.writeLong(value.getLeastSignificantBits());
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         try {
             streamDecoder.readMultiple(stream, streamDecoderState, String.class);
@@ -154,8 +157,7 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testDecodeUnknownDescribedTypeWithNegativeLongDescriptor() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final UUID value = UUID.randomUUID();
 
@@ -165,6 +167,8 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
         buffer.writeByte(EncodingCodes.UUID);
         buffer.writeLong(value.getMostSignificantBits());
         buffer.writeLong(value.getLeastSignificantBits());
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         final Object result = streamDecoder.readObject(stream, streamDecoderState);
 
@@ -178,8 +182,7 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testDecodeUnknownDescribedTypeWithMaxLongDescriptor() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final UUID value = UUID.randomUUID();
 
@@ -189,6 +192,8 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
         buffer.writeByte(EncodingCodes.UUID);
         buffer.writeLong(value.getMostSignificantBits());
         buffer.writeLong(value.getLeastSignificantBits());
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         final Object result = streamDecoder.readObject(stream, streamDecoderState);
 
@@ -202,17 +207,18 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testDecodeUnknownDescribedTypeWithUnknownDescriptorCode() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final UUID value = UUID.randomUUID();
 
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(255);
+        buffer.writeByte((byte) 255);
         buffer.writeByte(EncodingCodes.UUID);
         buffer.writeLong(value.getMostSignificantBits());
         buffer.writeLong(value.getLeastSignificantBits());
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         final Object result = streamDecoder.readObject(stream, streamDecoderState);
 
@@ -227,18 +233,19 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadUnsignedIntegerTypes() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UINT0);
         buffer.writeByte(EncodingCodes.SMALLUINT);
-        buffer.writeByte(127);
+        buffer.writeByte((byte) 127);
         buffer.writeByte(EncodingCodes.UINT);
-        buffer.writeByte(0);
-        buffer.writeByte(0);
-        buffer.writeByte(0);
-        buffer.writeByte(255);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) 255);
         buffer.writeByte(EncodingCodes.NULL);
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         assertEquals(0, streamDecoder.readUnsignedInteger(stream, streamDecoderState, 32));
         assertEquals(127, streamDecoder.readUnsignedInteger(stream, streamDecoderState, 32));
@@ -248,12 +255,13 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadMultipleRequestsWrongTypeForArrayEncoding() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final UUID[] value = new UUID[] { UUID.randomUUID(), UUID.randomUUID() };
 
         encoder.writeArray(buffer, encoderState, value);
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         try {
             streamDecoder.readMultiple(stream, streamDecoderState, String.class);
@@ -263,8 +271,7 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadStringWithCustomStringDecoder() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.STR32);
         buffer.writeInt(16);
@@ -280,16 +287,16 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
         assertNotNull(((ProtonStreamDecoderState) streamDecoderState).getStringDecoder());
 
+        ProtonBufferInputStream stream = new ProtonBufferInputStream(buffer);
+
         String result = streamDecoder.readString(stream, streamDecoderState);
 
         assertEquals("string-decoder", result);
-        assertTrue(buffer.isReadable());  // We didn't read anything so buffer was untouched
     }
 
     @Test
     public void testStringReadFromCustomDecoderThrowsDecodeExceptionOnError() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.STR32);
         buffer.writeInt(16);
@@ -303,13 +310,15 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
             }
         });
 
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
         assertNotNull(((ProtonStreamDecoderState) streamDecoderState).getStringDecoder());
         assertThrows(DecodeException.class, () -> streamDecoder.readString(stream, streamDecoderState));
     }
 
     @Test
     public void testCannotPeekFromStreamThatCannotMark() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
 
         Mockito.when(stream.markSupported()).thenReturn(false);
@@ -322,11 +331,11 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testDecodeErrorFromPeekWhenStreamResetFails() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeObject(buffer, encoderState, "test");
 
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
         Mockito.doThrow(new IOException()).when(stream).reset();
 
         try {
@@ -337,12 +346,12 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testStreamDecoderCanStillReadWhenMarkNotSupported() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeObject(buffer, encoderState, "test");
         encoder.writeObject(buffer, encoderState, Accepted.getInstance());
 
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
         Mockito.when(stream.markSupported()).thenReturn(false);
 
         final Object string = streamDecoder.readObject(stream, streamDecoderState);
@@ -354,16 +363,17 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadDescriptorOfTypeSymbol32MarkNotSupported() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
-
-        Mockito.when(stream.markSupported()).thenReturn(false);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         buffer.writeByte(EncodingCodes.SYM32);
         buffer.writeInt(Accepted.DESCRIPTOR_SYMBOL.getLength());
         Accepted.DESCRIPTOR_SYMBOL.writeTo(buffer);
         buffer.writeByte(EncodingCodes.LIST0);
+
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+
+        Mockito.when(stream.markSupported()).thenReturn(false);
 
         final Object accepted = streamDecoder.readObject(stream, streamDecoderState);
 
@@ -372,16 +382,16 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadDescriptorOfTypeSymbol8MarkNotSupported() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
-
-        Mockito.when(stream.markSupported()).thenReturn(false);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         buffer.writeByte(EncodingCodes.SYM8);
-        buffer.writeByte(Accepted.DESCRIPTOR_SYMBOL.getLength());
+        buffer.writeByte((byte) Accepted.DESCRIPTOR_SYMBOL.getLength());
         Accepted.DESCRIPTOR_SYMBOL.writeTo(buffer);
         buffer.writeByte(EncodingCodes.LIST0);
+
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+        Mockito.when(stream.markSupported()).thenReturn(false);
 
         final Object accepted = streamDecoder.readObject(stream, streamDecoderState);
 
@@ -390,15 +400,16 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadDescriptorOfTypeUnsignedLongMarkNotSupported() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
-
-        Mockito.when(stream.markSupported()).thenReturn(false);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         buffer.writeByte(EncodingCodes.ULONG);
         buffer.writeLong(Accepted.DESCRIPTOR_CODE.longValue());
         buffer.writeByte(EncodingCodes.LIST0);
+
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+
+        Mockito.when(stream.markSupported()).thenReturn(false);
 
         final Object accepted = streamDecoder.readObject(stream, streamDecoderState);
 
@@ -407,15 +418,16 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testReadDescriptorOfTypeSmallUnsignedLongMarkNotSupported() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
-
-        Mockito.when(stream.markSupported()).thenReturn(false);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         buffer.writeByte(EncodingCodes.SMALLULONG);
         buffer.writeByte(Accepted.DESCRIPTOR_CODE.byteValue());
         buffer.writeByte(EncodingCodes.LIST0);
+
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+
+        Mockito.when(stream.markSupported()).thenReturn(false);
 
         final Object accepted = streamDecoder.readObject(stream, streamDecoderState);
 
@@ -424,15 +436,15 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
 
     @Test
     public void testDecodeErrorWhenMarkNotSupportedAndUnknownEncodingCodeFoundInDescribedType() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
-
-        Mockito.when(stream.markSupported()).thenReturn(false);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         buffer.writeByte(EncodingCodes.UUID);
         buffer.writeLong(Accepted.DESCRIPTOR_CODE.longValue());
         buffer.writeByte(EncodingCodes.LIST0);
+
+        InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+        Mockito.when(stream.markSupported()).thenReturn(false);
 
         try {
             streamDecoder.readObject(stream, streamDecoderState);

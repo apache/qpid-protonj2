@@ -16,18 +16,38 @@
  */
 package org.apache.qpid.protonj2.buffer;
 
+import static org.apache.qpid.protonj2.buffer.ProtonBufferUtils.checkIsNotNegative;
+
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
+
+import org.apache.qpid.protonj2.resource.Resource;
 
 /**
  * Buffer type abstraction used to provide users of the proton library with
  * a means of using their own type of byte buffer types in combination with the
  * library tooling.
  */
-public interface ProtonBuffer extends Comparable<ProtonBuffer> {
+public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuffer>, Comparable<ProtonBuffer> {
 
     /**
-     * Return the underlying buffer object that backs this {@link ProtonBuffer} instance, or null
+     * Close the buffer and clean up an resources that are held. The buffer close
+     * must not throw an exception.
+     */
+    @Override
+    void close();
+
+    /**
+     * @return true if the buffer is backed by native memory.
+     */
+    boolean isDirect();
+
+    /**
+     * Return the underlying buffer object that backs this {@link ProtonBuffer} instance, or self
      * if there is no backing object.
      *
      * This method should be overridden in buffer abstraction when access to the underlying backing
@@ -35,31 +55,134 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @return an underlying buffer object or other backing store for this buffer.
      */
-    default Object unwrap() { return null; }
+    default Object unwrap() { return this; }
 
     /**
-     * @return true if this buffer has a backing byte array that can be accessed.
+     * Converts this buffer instance to a read-only buffer, any write operation that is
+     * performed on this buffer following this call will fail.  A buffer cannot be made
+     * writable after this call.
+     *
+     * @return this buffer for use in chaining.
      */
-    boolean hasArray();
+    ProtonBuffer convertToReadOnly();
 
     /**
-     * Returns the backing array for this ProtonBuffer instance if there is such an array or
-     * throws an exception if this ProtonBuffer implementation has no backing array.
-     * <p>
-     * Changes to the returned array are visible to other users of this ProtonBuffer.
-     *
-     * @return the backing byte array for this ProtonBuffer.
-     *
-     * @throws UnsupportedOperationException if this buffer type has no backing array.
+     * @return whether this buffer instance is read-only or not.
      */
-    byte[] getArray();
+    boolean isReadOnly();
 
     /**
-     * @return the offset of the first byte in the backing array belonging to this buffer.
-     *
-     * @throws UnsupportedOperationException if this buffer type has no backing array.
+     * @return if this buffer has been closed and can no longer be accessed for reads or writes.
      */
-    int getArrayOffset();
+    @Override
+    boolean isClosed();
+
+    /**
+     * @return the number of bytes available for reading from this buffer.
+     */
+    default int getReadableBytes() {
+        return getWriteOffset() - getReadOffset();
+    }
+
+    /**
+     * @return the current value of the read offset for this buffer.
+     */
+    int getReadOffset();
+
+    /**
+     * Sets the read offset for this buffer.
+     *
+     * @param value The offset into the buffer where the read offset should be positioned.
+     *
+     * @return this buffer for use in chaining.
+     *
+     * @throws IndexOutOfBoundsException if the value given is greater than the write offset or negative.
+     */
+    ProtonBuffer setReadOffset(int value);
+
+    /**
+     * Adjusts the current {@link #getReadOffset()} of this buffer by the specified {@code length}.
+     *
+     * @param length
+     *      the number of bytes to advance the read offset by.
+     *
+     * @return this ProtonBuffer for chaining.
+     *
+     * @throws IllegalArgumentException if the {#code length} given is negative.
+     * @throws IndexOutOfBoundsException
+     *         if {@code length} is greater than {@code this.readableBytes}
+     */
+    default ProtonBuffer advanceReadOffset(int length) {
+        checkIsNotNegative(length, "Read offset advance requires positive values");
+        setReadOffset(getReadOffset() + length);
+        return this;
+    }
+
+    /**
+     * @return true if the read index is less than the write index.
+     */
+    default boolean isReadable() {
+        return getReadOffset() < getWriteOffset();
+    }
+
+    /**
+     * @return the number of bytes that can be written to this buffer before the limit is hit.
+     */
+    default int getWritableBytes() {
+        return capacity() - getWriteOffset();
+    }
+
+    /**
+     * @return the current value of the write offset for this buffer.
+     */
+    int getWriteOffset();
+
+    /**
+     * Sets the write offset for this buffer.
+     *
+     * @param value The offset into the buffer where the write offset should be positioned.
+     *
+     * @return this buffer for use in chaining.
+     *
+     * @throws IndexOutOfBoundsException if the value less than the read offset or greater than the capacity.
+     */
+    ProtonBuffer setWriteOffset(int value);
+
+    /**
+     * Adjusts the current {@link #getWriteOffset()} of this buffer by the specified {@code length}.
+     *
+     * @param length
+     *      the number of bytes to advance the write offset by.
+     *
+     * @return this ProtonBuffer for chaining.
+     *
+     * @throws IllegalArgumentException if the {#code length} given is negative.
+     * @throws IndexOutOfBoundsException
+     *         if {@code length} is greater than the buffer {@link #capacity()}
+     */
+    default ProtonBuffer advanceWriteOffset(int length) {
+        checkIsNotNegative(length, "Write offset advance requires positive values");
+        setWriteOffset(getWriteOffset() + length);
+        return this;
+    }
+
+    /**
+     * @return true if the buffer has bytes remaining between the write offset and the capacity.
+     */
+    default boolean isWritable() {
+        return getWriteOffset() < capacity();
+    }
+
+    /**
+     * Assigns the given value to every byte in the buffer without respect for the
+     * buffer read or write offsets.
+     *
+     * @param value
+     * 		The byte value to assign each byte in this buffer.
+     *
+     * @return this ProtonBuffer for chaining.
+     */
+    ProtonBuffer fill(byte value);
 
     /**
      * @return the number of bytes this buffer can currently contain.
@@ -67,31 +190,49 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
     int capacity();
 
     /**
-     * Adjusts the capacity of this buffer.  If the new capacity is less than the current
-     * capacity, the content of this buffer is truncated.  If the new capacity is greater
-     * than the current capacity, the buffer is appended with unspecified data whose length is
-     * new capacity - current capacity.
+     * Returns the limit assigned to this buffer if one was set which controls how
+     * large the capacity of the buffer can grow implicitly via write calls. Once
+     * the limit is hit any write call that requires more capacity than is currently
+     * available will throw an exception instead of allocating more space.
+     * <p>
+     * When a capacity limit is hit the buffer can still be enlarged but must be
+     * done explicitly via the ensure writable APIs.
      *
-     * @param newCapacity
-     *      the new maximum capacity value of this buffer.
+     * @return the number of bytes this buffer can currently grow to..
+     */
+    int implicitGrowthLimit();
+
+    /**
+     * Configures the limit assigned to this buffer if one was set which controls how
+     * large the capacity of the buffer can grow implicitly via write calls. Once
+     * the limit is hit any write call that requires more capacity than is currently
+     * available will throw an exception instead of allocating more space.
+     * <p>
+     * When a capacity limit is hit the buffer can still be enlarged but must be
+     * done explicitly via the ensure writable APIs.
+     * <p>
+     * The growth limit set applies only to this buffer instance and is not carried
+     * over to a copied buffer of the split buffer created from any of the buffer
+     * split calls.
+     *
+     * @param limit
+     * 		The limit to assign as the maximum capacity this buffer can grow
      *
      * @return this buffer for using in call chaining.
      */
-    ProtonBuffer capacity(int newCapacity);
-
-    /**
-     * Returns the number of bytes that this buffer is allowed to grow to when write
-     * operations exceed the current capacity value.
-     *
-     * @return the number of bytes this buffer is allowed to grow to.
-     */
-    int maxCapacity();
+    ProtonBuffer implicitGrowthLimit(int limit);
 
     /**
      * Ensures that the requested number of bytes is available for write operations
      * in the current buffer, growing the buffer if needed to meet the requested
      * writable capacity. This method will not alter the write offset but may change
      * the value returned from the capacity method if new buffer space is allocated.
+     * <p>
+     * This method allows buffer compaction as a strategy to reclaim already read
+     * space to make room for additional writes. This implies that a composite buffer
+     * can reuse already read buffers to extend the buffer's writable space by moving
+     * them to the end of the set of composite buffers and reseting their index values
+     * to make them fully writable.
      *
      * @param amount
      *      The number of bytes beyond the current write index needed.
@@ -102,60 +243,61 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      * @throws IndexOutOfBoundsException if the amount given would result in the buffer
      *         exceeding the maximum capacity for this buffer.
      */
-    ProtonBuffer ensureWritable(int amount) throws IndexOutOfBoundsException, IllegalArgumentException;
+    default ProtonBuffer ensureWritable(int amount) throws IndexOutOfBoundsException, IllegalArgumentException {
+        return ensureWritable(amount, capacity(), true);
+    }
 
     /**
-     * Create a duplicate of this ProtonBuffer instance that shares the same backing
-     * data store and but maintains separate position index values.  Changes to one buffer
-     * are visible in any of its duplicates.  This method does not copy the read or write
-     * markers to the new buffer instance.
-     *
-     * @return a new ProtonBuffer instance that shares the backing data as this one.
-     */
-    ProtonBuffer duplicate();
-
-    /**
-     * Create a new ProtonBuffer whose contents are a subsequence of the contents of this
-     * {@link ProtonBuffer}.
+     * Ensures that the requested number of bytes is available for write operations
+     * in the current buffer, growing the buffer if needed to meet the requested
+     * writable capacity. This method will not alter the write offset but may change
+     * the value returned from the capacity method if new buffer space is allocated.
+     * If the buffer cannot create the required number of byte via compaction then
+     * the buffer will be grown by either the requested number of bytes or by the
+     * minimum allowed value specified.
      * <p>
-     * The starting point of the new buffer starts at this buffer's current position, the
-     * marks and limits of the new buffer will be independent of this buffer however changes
-     * to the data backing the buffer will be visible in this buffer.
+     * This method allows buffer compaction as a strategy to reclaim already read
+     * space to make room for additional writes. This implies that a composite buffer
+     * can reuse already read buffers to extend the buffer's writable space by moving
+     * them to the end of the set of composite buffers and reseting their index values
+     * to make them fully writable.
      *
-     * @return a new {@link ProtonBuffer} whose contents are a subsequence of this buffer.
+     * @param amount
+     *      The number of bytes beyond the current write index needed.
+     * @param minimumGrowth
+     * 		The minimum number of byte that the buffer can grow by
+     * @param allowCompaction
+     * 		Can the buffer use compaction as a strategy to create more writable space.
+     *
+     * @return this buffer for using in call chaining.
+     *
+     * @throws IllegalArgumentException if the amount given is less than zero.
+     * @throws IndexOutOfBoundsException if the amount given would result in the buffer
+     *         exceeding the maximum capacity for this buffer.
      */
-    ProtonBuffer slice();
-
-    /**
-     * Create a new ProtonBuffer whose contents are a subsequence of the contents of this
-     * {@link ProtonBuffer}.
-     * <p>
-     * The starting point of the new buffer starts at given index into this buffer and spans
-     * the number of bytes given by the length.  Changes to the contents of this buffer or to
-     * the produced slice buffer are visible in the other.
-     *
-     * @param index
-     *      The index in this buffer where the slice should begin.
-     * @param length
-     *      The number of bytes to make visible to the new buffer from this one.
-     *
-     * @return a new {@link ProtonBuffer} whose contents are a subsequence of this buffer.
-     */
-    ProtonBuffer slice(int index, int length);
+    ProtonBuffer ensureWritable(int amount, int minimumGrowth, boolean allowCompaction) throws IndexOutOfBoundsException, IllegalArgumentException;
 
     /**
      * Create a deep copy of the readable bytes of this ProtonBuffer, the returned buffer can
-     * be modified without affecting the contents or position markers of this instance.
+     * be modified without affecting the contents or position markers of this instance. The
+     * returned copy will not be read-only regardless of the read-only state of this buffer
+     * instance at the time of copy.
      *
      * @return a deep copy of this ProtonBuffer instance.
      */
-    ProtonBuffer copy();
+    default ProtonBuffer copy() {
+        return copy(getReadOffset(), getReadableBytes());
+    }
 
     /**
      * Returns a copy of this buffer's sub-region.  Modifying the content of
      * the returned buffer or this buffer does not affect each other at all.
-     * This method does not modify the value returned from {@link #getReadIndex()}
-     * or {@link #getWriteIndex()} of this buffer.
+     * This method does not modify the value returned from {@link #getReadOffset()}
+     * or {@link #getWriteOffset()} of this buffer.
+     * <p>
+     * The returned buffer will not be read-only even if this buffer is and
+     * as such the contents will be a deep copy regardless of this buffer's
+     * read-only state.
      *
      * @param index
      *      The index in this buffer where the copy should begin
@@ -164,44 +306,132 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @return a new ProtonBuffer instance containing the copied bytes.
      */
-    ProtonBuffer copy(int index, int length);
+    default ProtonBuffer copy(int index, int length) {
+        return copy(index, length, false);
+    }
 
     /**
-     * Reset the read and write offsets to zero and clears the position markers if
-     * set previously, this method is not required to reset the data previously
-     * written to this buffer.
+     * Returns a copy of this buffer's readable bytes and sets the read-only
+     * state of the returned buffer based on the value of the read-only flag.
+     * If this buffer is read-only and the flag indicates a read-only copy
+     * then the copy may be a shallow copy that references the readable
+     * bytes of the source buffer.
+     *
+     * @param readOnly
+     *     Should the returned buffer be read-only or not.
+     *
+     * @return a new ProtonBuffer instance containing the copied bytes.
+     */
+    default ProtonBuffer copy(boolean readOnly) {
+        return copy(getReadOffset(), getReadableBytes(), readOnly);
+    }
+
+    /**
+     * Returns a copy of this buffer's sub-region.  Modifying the content of
+     * the returned buffer or this buffer does not affect each other at all.
+     * This method does not modify the value returned from {@link #getReadOffset()}
+     * or {@link #getWriteOffset()} of this buffer.
+     * <p>
+     * If this buffer is read-only and the requested copy is also read-only the
+     * copy may be shallow and allow each buffer to share the same memory.
+     *
+     * @param index
+     *      The index in this buffer where the copy should begin
+     * @param length
+     *      The number of bytes to copy to the new buffer from this one.
+     * @param readOnly
+     *     Should the returned buffer be read-only or not.
+     *
+     * @return a new ProtonBuffer instance containing the copied bytes.
+     *
+     * @throws IllegalArgumentException if the offset or length given are out of bounds.
+     */
+    ProtonBuffer copy(int index, int length, boolean readOnly) throws IllegalArgumentException;
+
+    /**
+     * Reset the read and write offsets to zero.
+     * <p>
+     * This method is not required to reset the data previously written to this buffer.
      *
      * @return this buffer for using in call chaining.
      */
-    ProtonBuffer clear();
+    default ProtonBuffer clear() {
+        setReadOffset(0);
+        if (!isReadOnly()) {
+            setWriteOffset(0);
+        }
+        return this;
+    }
 
     /**
-     * Returns a ByteBuffer that represents the readable bytes contained in this buffer.
-     * <p>
-     * This method should attempt to return a ByteBuffer that shares the backing data store
-     * with this buffer however if that is not possible it is permitted that the returned
-     * ByteBuffer contain a copy of the readable bytes of this ProtonBuffer.
+     * Moves the readable portion of the buffer to the beginning of the underlying
+     * buffer storage and possibly makes additional bytes available for writes before
+     * a buffer expansion would occur via an {@link #ensureWritable(int)} call.
      *
-     * @return a ByteBuffer that represents the readable bytes of this buffer.
+     * @return this buffer for using in call chaining.
      */
-    ByteBuffer toByteBuffer();
+    ProtonBuffer compact();
 
     /**
-     * Returns a ByteBuffer that represents the given span of bytes from the readable portion
-     * of this buffer.
-     * <p>
-     * This method should attempt to return a ByteBuffer that shares the backing data store
-     * with this buffer however if that is not possible it is permitted that the returned
-     * ByteBuffer contain a copy of the readable bytes of this ProtonBuffer.
+     * Splits this buffer at the read offset + the length given.
      *
-     * @param index
-     *      The starting index in this where the ByteBuffer view should begin.
      * @param length
-     *      The number of bytes to include in the ByteBuffer view.
+     * 		The number of bytes beyond the read offset where the split should occur
      *
-     * @return a ByteBuffer that represents the given view of this buffers readable bytes.
+     * @return A new buffer that owns the memory spanning the range given.
      */
-    ByteBuffer toByteBuffer(int index, int length);
+    default ProtonBuffer readSplit(int length) {
+        return split(getReadOffset() + length);
+    }
+
+    /**
+     * Splits this buffer at the write offset + the length given.
+     *
+     * @param length
+     * 		The number of bytes beyond the write offset where the split should occur
+     *
+     * @return A new buffer that owns the memory spanning the range given.
+     */
+    default ProtonBuffer writeSplit(int length) {
+        return split(getWriteOffset() + length);
+    }
+
+    /**
+     * Splits this buffer at the write offset.
+     * <p>
+     * This creates two independent buffers that can manage differing views of the same
+     * memory region or in the case of a composite buffer two buffers that take ownership
+     * of differing sections of the composite buffer range. For a composite buffer a single
+     * buffer might be split if the offset lays within its bounds but all others buffers
+     * are divided amongst the two split buffers.
+     * <p>
+     * If this buffer is a read-only buffer then the resulting split buffer will also be
+     * read-only.
+     *
+     * @return A new buffer that owns the memory spanning the range given.
+     */
+    default ProtonBuffer split() {
+        return split(getWriteOffset());
+    }
+
+    /**
+     * Splits this buffer at the given offset.
+     * <p>
+     * This creates two independent buffers that can manage differing views of the same
+     * memory region or in the case of a composite buffer two buffers that take ownership
+     * of differing sections of the composite buffer range. For a composite buffer a single
+     * buffer might be split if the offset lays within its bounds but all others buffers
+     * are divided amongst the two split buffers.
+     * <p>
+     * If this buffer is a read-only buffer then the resulting split buffer will also be
+     * read-only.
+     *
+     * @param splitOffset
+     * 		The offset in this buffer where the split should occur.
+     *
+     * @return A new buffer that owns the memory spanning the range given.
+     */
+    ProtonBuffer split(int splitOffset);
 
     /**
      * Returns a String created from the buffer's underlying bytes using the specified
@@ -212,124 +442,9 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      *
      * @return a string created from the buffer's underlying bytes using the given {@link java.nio.charset.Charset}.
      */
-    String toString(Charset charset);
-
-    /**
-     * @return the number of bytes available for reading from this buffer.
-     */
-    int getReadableBytes();
-
-    /**
-     * @return the number of bytes that can be written to this buffer before the limit is hit.
-     */
-    int getWritableBytes();
-
-    /**
-     * Gets the current maximum number of bytes that can be written to this buffer.  This is
-     * the same value that can be computed by subtracting the current write index from the
-     * maximum buffer capacity.
-     *
-     * @return the maximum number of bytes that can be written to this buffer before the limit is hit.
-     */
-    int getMaxWritableBytes();
-
-    /**
-     * @return the current value of the read index for this buffer.
-     */
-    int getReadIndex();
-
-    /**
-     * Sets the read index for this buffer.
-     *
-     * @param value The index into the buffer where the read index should be positioned.
-     *
-     * @return this buffer for use in chaining.
-     *
-     * @throws IndexOutOfBoundsException if the value given is greater than the write index or negative.
-     */
-    ProtonBuffer setReadIndex(int value);
-
-    /**
-     * @return the current value of the write index for this buffer.
-     */
-    int getWriteIndex();
-
-    /**
-     * Sets the write index for this buffer.
-     *
-     * @param value The index into the buffer where the write index should be positioned.
-     *
-     * @return this buffer for use in chaining.
-     *
-     * @throws IndexOutOfBoundsException if the value less than the read index or greater than the capacity.
-     */
-    ProtonBuffer setWriteIndex(int value);
-
-    /**
-     * Used to set the read index and the write index in one call.  This methods allows for an update
-     * to the read index and write index to values that could not be set using simple setReadIndex and
-     * setWriteIndex call where the values would violate the constraints placed on them by the value
-     * of the other index.
-     *
-     * @param readIndex
-     *      The new read index to assign to this buffer.
-     * @param writeIndex
-     *      The new write index to assign to this buffer.
-     *
-     * @return this buffer for use in chaining.
-     *
-     * @throws IndexOutOfBoundsException if the values violate the basic tenants of readIndex and writeIndex
-     */
-    ProtonBuffer setIndex(int readIndex, int writeIndex);
-
-    /**
-     * Marks the current read index so that it can later be restored by a call to
-     * {@link ProtonBuffer#resetReadIndex}, the initial mark value is 0.
-     *
-     * @return this buffer for use in chaining.
-     */
-    ProtonBuffer markReadIndex();
-
-    /**
-     * Resets the current read index to the previously marked value.
-     *
-     * @return this buffer for use in chaining.
-     *
-     * @throws IndexOutOfBoundsException if the current write index is less than the marked read index.
-     */
-    ProtonBuffer resetReadIndex();
-
-    /**
-     * Marks the current write index so that it can later be restored by a call to
-     * {@link ProtonBuffer#resetWriteIndex}, the initial mark value is 0.
-     *
-     * @return this buffer for use in chaining.
-     */
-    ProtonBuffer markWriteIndex();
-
-    /**
-     * Resets the current write index to the previously marked value.
-     *
-     * @return this buffer for use in chaining.
-     *
-     * @throws IndexOutOfBoundsException if the current read index is greater than the marked write index.
-     */
-    ProtonBuffer resetWriteIndex();
-
-    /**
-     * @return true if the read index is less than the write index.
-     */
-    boolean isReadable();
-
-    /**
-     * Check if the given number of bytes can be read from the buffer.
-     *
-     * @param size
-     *      the size that is desired in readable bytes
-     *
-     * @return true if the buffer has at least the given number of readable bytes remaining.
-     */
-    boolean isReadable(int size);
+    default String toString(Charset charset) {
+        return ProtonBufferUtils.toString(this, charset);
+    }
 
     /**
      * Compares the remaining content of the current buffer with the remaining content of the
@@ -338,979 +453,449 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      * buffer, the shorter buffer is considered less than the other, or else if the same length
      * then they are considered equal.
      *
-     * @return  a negative, zero, or positive integer when this buffer is less than, equal to,
-     *          or greater than the given buffer.
+     * @param buffer The buffer to compare to this instance.
+     *
+     * @return a negative, zero, or positive integer when this buffer is less than, equal to,
+     *         or greater than the given buffer.
+     *
      * @see Comparable#compareTo(Object)
      */
-    @Override int compareTo(ProtonBuffer buffer);
+    @Override
+    default int compareTo(ProtonBuffer buffer) {
+        return ProtonBufferUtils.compare(this, buffer);
+    }
 
     /**
-     * Gets a boolean from the specified index, this method will not modify the read or write
-     * index.
+     * Writes into this buffer, all the bytes from the given {@code source} using the passed
+     * {@code charset}. This updates the {@linkplain #getWriteOffset() write offset} of this buffer.
      *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     *
-     * @return the value read from the given index.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or past the current buffer capacity.
-     */
-    boolean getBoolean(int index);
-
-    /**
-     * Gets a byte from the specified index, this method will not modify the read or write
-     * index.
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     *
-     * @return the value read from the given index.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or past the current buffer capacity.
-     */
-    byte getByte(int index);
-
-    /**
-     * Gets a unsigned byte from the specified index, this method will not modify the read or write
-     * index.
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     *
-     * @return the value read from the given index.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or past the current buffer capacity.
-     */
-    short getUnsignedByte(int index);
-
-    /**
-     * Gets a 2-byte char from the specified index, this method will not modify the read or write
-     * index.
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     *
-     * @return the value read from the given index.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or past the current buffer capacity.
-     */
-    char getChar(int index);
-
-    /**
-     * Gets a short from the specified index, this method will not modify the read or write
-     * index.
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     *
-     * @return the value read from the given index.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or past the current buffer capacity.
-     */
-    short getShort(int index);
-
-    /**
-     * Gets a unsigned short from the specified index, this method will not modify the read or write
-     * index.
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     *
-     * @return the value read from the given index.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or past the current buffer capacity.
-     */
-    int getUnsignedShort(int index);
-
-    /**
-     * Gets a int from the specified index, this method will not modify the read or write
-     * index.
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     *
-     * @return the value read from the given index.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or past the current buffer capacity.
-     */
-    int getInt(int index);
-
-    /**
-     * Gets a unsigned int from the specified index, this method will not modify the read or write
-     * index.
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     *
-     * @return the value read from the given index.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or past the current buffer capacity.
-     */
-    long getUnsignedInt(int index);
-
-    /**
-     * Gets a long from the specified index, this method will not modify the read or write
-     * index.
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     *
-     * @return the value read from the given index.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or past the current buffer capacity.
-     */
-    long getLong(int index);
-
-    /**
-     * Gets a float from the specified index, this method will not modify the read or write
-     * index.
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     *
-     * @return the value read from the given index.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or past the current buffer capacity.
-     */
-    float getFloat(int index);
-
-    /**
-     * Gets a double from the specified index, this method will not modify the read or write
-     * index.
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     *
-     * @return the value read from the given index.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or past the current buffer capacity.
-     */
-    double getDouble(int index);
-
-    /**
-     * Transfers this buffer's data to the specified destination starting at
-     * the specified absolute {@code index} until the destination becomes
-     * non-writable.  This method is basically same with
-     * {@link #getBytes(int, ProtonBuffer, int, int)}, except that this
-     * method increases the {@code writeIndex} of the destination by the
-     * number of the transferred bytes while
-     * {@link #getBytes(int, ProtonBuffer, int, int)} does not.
-     * This method does not modify {@code readIndex} or {@code writeIndex} of
-     * the source buffer (i.e. {@code this}).
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     * @param destination
-     *      the destination buffer for the bytes to be read
-     *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if the specified {@code index} is less than {@code 0} or
-     *         if {@code index + dst.writableBytes} is greater than
-     *            {@code this.capacity}
-     */
-    ProtonBuffer getBytes(int index, ProtonBuffer destination);
-
-    /**
-     * Transfers this buffer's data to the specified destination starting at
-     * the specified absolute {@code index}.  This method is basically same
-     * with {@link #getBytes(int, ProtonBuffer, int, int)}, except that this
-     * method increases the {@code writeIndex} of the destination by the
-     * number of the transferred bytes while
-     * {@link #getBytes(int, ProtonBuffer, int, int)} does not.
-     * This method does not modify {@code readIndex} or {@code writeIndex} of
-     * the source buffer (i.e. {@code this}).
-     *
-     * @param index
-     *      the index in the buffer to start the read from
-     * @param destination
-     *      the destination buffer for the bytes to be read
-     * @param length
-     *      the number of bytes to transfer
-     *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if the specified {@code index} is less than {@code 0},
-     *         if {@code index + length} is greater than
-     *            {@code this.capacity}, or
-     *         if {@code length} is greater than {@code dst.writableBytes}
-     */
-    ProtonBuffer getBytes(int index, ProtonBuffer destination, int length);
-
-    /**
-     * Transfers this buffer's data to the specified destination starting at
-     * the specified absolute {@code index}.
-     * This method does not modify {@code readIndex} or {@code writeIndex}
-     * of both the source (i.e. {@code this}) and the destination.
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     * @param destination
-     *      The buffer where the bytes read will be written to
-     * @param offset
-     *      The offset into the destination where the write starts
-     * @param length
-     *      The number of bytes to transfer
-     *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if the specified {@code index} is less than {@code 0},
-     *         if the specified {@code dstIndex} is less than {@code 0},
-     *         if {@code index + length} is greater than
-     *            {@code this.capacity}, or
-     *         if {@code dstIndex + length} is greater than
-     *            {@code dst.capacity}
-     */
-    ProtonBuffer getBytes(int index, ProtonBuffer destination, int offset, int length);
-
-    /**
-     * Transfers this buffer's data to the specified destination starting at
-     * the specified absolute {@code index}.
-     * This method does not modify {@code readIndex} or {@code writeIndex} of
-     * this buffer
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     * @param destination
-     *      The buffer where the bytes read will be written to
-     *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if the specified {@code index} is less than {@code 0} or
-     *         if {@code index + dst.length} is greater than
-     *            {@code this.capacity}
-     */
-    ProtonBuffer getBytes(int index, byte[] destination);
-
-    /**
-     * Transfers this buffer's data to the specified destination starting at
-     * the specified absolute {@code index}.
-     * This method does not modify {@code #getReadIndex()} or {@code #getWriteIndex()}
-     * of this buffer.
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     * @param destination
-     *      The buffer where the bytes read will be written to
-     * @param offset
-     *      the offset into the destination to begin writing the bytes.
-     * @param length
-     *      the number of bytes to transfer from this buffer to the target buffer.
-     *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if the specified {@code index} is less than {@code 0},
-     *         if the specified {@code offset} is less than {@code 0},
-     *         if {@code index + length} is greater than
-     *            {@code this.capacity}, or
-     *         if {@code offset + length} is greater than
-     *            {@code target.length}
-     */
-    ProtonBuffer getBytes(int index, byte[] destination, int offset, int length);
-
-    /**
-     * Transfers this buffer's data to the specified destination starting at
-     * the specified absolute {@code index} until the destination's position
-     * reaches its limit.
-     * This method does not modify {@code #getReadIndex()} or {@code #getWriteIndex()} of
-     * this buffer while the destination's {@code position} will be increased.
-     *
-     * @param index
-     *      The index into the buffer where the value should be read.
-     * @param destination
-     *      The buffer where the bytes read will be written to
-     *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if the specified {@code index} is less than {@code 0} or
-     *         if {@code index + destination.remaining()} is greater than
-     *            {@code #capacity()}
-     */
-    ProtonBuffer getBytes(int index, ByteBuffer destination);
-
-    /**
-     * Sets the byte value at the given write index in this buffer's backing data store.
-     *
-     * @param index
-     *      The index to start the write from.
-     * @param value
-     *      The value to write at the given index.
-     *
-     * @return a reference to this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
-     */
-    ProtonBuffer setByte(int index, int value);
-
-    /**
-     * Sets the boolean value at the given write index in this buffer's backing data store.
-     *
-     * @param index
-     *      The index to start the write from.
-     * @param value
-     *      The value to write at the given index.
-     *
-     * @return a reference to this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
-     */
-    ProtonBuffer setBoolean(int index, boolean value);
-
-    /**
-     * Sets the char value at the given write index in this buffer's backing data store.
-     *
-     * @param index
-     *      The index to start the write from.
-     * @param value
-     *      The value to write at the given index.
-     *
-     * @return a reference to this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
-     */
-    ProtonBuffer setChar(int index, int value);
-
-    /**
-     * Sets the short value at the given write index in this buffer's backing data store.
-     *
-     * @param index
-     *      The index to start the write from.
-     * @param value
-     *      The value to write at the given index.
-     *
-     * @return a reference to this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
-     */
-    ProtonBuffer setShort(int index, int value);
-
-    /**
-     * Sets the int value at the given write index in this buffer's backing data store.
-     *
-     * @param index
-     *      The index to start the write from.
-     * @param value
-     *      The value to write at the given index.
-     *
-     * @return a reference to this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
-     */
-    ProtonBuffer setInt(int index, int value);
-
-    /**
-     * Sets the long value at the given write index in this buffer's backing data store.
-     *
-     * @param index
-     *      The index to start the write from.
-     * @param value
-     *      The value to write at the given index.
-     *
-     * @return a reference to this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
-     */
-    ProtonBuffer setLong(int index, long value);
-
-    /**
-     * Sets the float value at the given write index in this buffer's backing data store.
-     *
-     * @param index
-     *      The index to start the write from.
-     * @param value
-     *      The value to write at the given index.
-     *
-     * @return a reference to this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
-     */
-    ProtonBuffer setFloat(int index, float value);
-
-    /**
-     * Sets the double value at the given write index in this buffer's backing data store.
-     *
-     * @param index
-     *      The index to start the write from.
-     * @param value
-     *      The value to write at the given index.
-     *
-     * @return a reference to this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the index is negative or the write would exceed capacity.
-     */
-    ProtonBuffer setDouble(int index, double value);
-
-    /**
-     * Transfers the specified source buffer's data to this buffer starting at
-     * the specified absolute {@code index} until the source buffer becomes
-     * unreadable.  This method is basically same with
-     * {@link #setBytes(int, ProtonBuffer, int, int)}, except that this
-     * method increases the {@code readIndex} of the source buffer by
-     * the number of the transferred bytes while
-     * {@link #setBytes(int, ProtonBuffer, int, int)} does not.
-     * This method does not modify {@code readIndex} or {@code writeIndex} of
-     * the source buffer (i.e. {@code this}).
-     *
-     * @param index
-     *      The index in this buffer where the write operation starts.
      * @param source
-     *      The source buffer from which the bytes are read.
+     * 		The {@link CharSequence} to read the bytes from.
+     * @param charset
+     *  	The {@link Charset} to use for encoding the bytes that will be written.
      *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if the specified {@code index} is less than {@code 0} or
-     *         if {@code index + source.readableBytes} is greater than
-     *            {@code this.capacity}
+     * @return this buffer for using in call chaining.
      */
-    ProtonBuffer setBytes(int index, ProtonBuffer source);
+    default ProtonBuffer writeCharSequence(CharSequence source, Charset charset) {
+        ProtonBufferUtils.writeCharSequence(source, this, charset);
+        return this;
+    }
 
     /**
-     * Transfers the specified source buffer's data to this buffer starting at
-     * the specified absolute {@code index}.  This method is basically same
-     * with {@link #setBytes(int, ProtonBuffer, int, int)}, except that this
-     * method increases the {@code readIndex} of the source buffer by
-     * the number of the transferred bytes while
-     * {@link #setBytes(int, ProtonBuffer, int, int)} does not.
-     * This method does not modify {@code readIndex} or {@code writeIndex} of
-     * the source buffer (i.e. {@code this}).
+     * Reads a {@link CharSequence} of the provided {@code length} using the given {@link Charset}.
+     * This advances the {@linkplain #getReadOffset()} reader offset} of this buffer.
      *
-     * @param index
-     *      The index in this buffer where the write operation starts.
-     * @param source
-     *      The source buffer from which the bytes are read.
      * @param length
-     *      The number of bytes to transfer
+     * 		The number of bytes to read to create the resulting {@link CharSequence}.
+     * @param charset
+     * 		The Charset of the bytes to be read and decoded into the resulting {@link CharSequence}.
      *
-     * @return this buffer for chaining
+     * @return {@link CharSequence} read and decoded from bytes in this buffer.
      *
-     * @throws IndexOutOfBoundsException
-     *         if the specified {@code index} is less than {@code 0},
-     *         if {@code index + length} is greater than
-     *            {@code this.capacity}, or
-     *         if {@code length} is greater than {@code source.readableBytes}
+     * @throws IndexOutOfBoundsException if the passed {@code length} is more than the {@linkplain #getReadableBytes()} of
+     * 									 this buffer.
      */
-    ProtonBuffer setBytes(int index, ProtonBuffer source, int length);
+    default CharSequence readCharSequence(int length, Charset charset) {
+        return ProtonBufferUtils.readCharSequence(this, length, charset);
+    }
 
     /**
-     * Transfers the specified source buffer's data to this buffer starting at
-     * the specified absolute {@code index}.
-     * This method does not modify {@code readIndex} or {@code writeIndex}
-     * of both the source (i.e. {@code this}) and the destination.
+     * Copies the given number of bytes from this buffer into the specified target byte array
+     * starting at the given offset into this buffer.  The copied region is written into the
+     * target starting at the given offset and continues for the specified length of elements.
      *
-     * @param index
-     *      The index in this buffer where the write operation starts.
-     * @param source
-     *      The source buffer from which the bytes are read.
      * @param offset
-     *      The offset into the source where the set begins.
+     * 		The offset into this buffer where the copy begins from.
+     * @param destination
+     * 		The destination byte array where the copied bytes are written.
+     * @param destOffset
+     * 		The offset into the destination to begin writing the copied bytes.
      * @param length
-     *      The number of bytes to transfer
+     * 		The number of bytes to copy into the destination.
      *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if the specified {@code index} is less than {@code 0},
-     *         if the specified {@code sourceIndex} is less than {@code 0},
-     *         if {@code index + length} is greater than
-     *            {@code this.capacity}, or
-     *         if {@code sourceIndex + length} is greater than
-     *            {@code source.capacity}
+     * @throws NullPointerException if the destination array is null.
+     * @throws IndexOutOfBoundsException if the source or destination positions, or the length, are negative,
+     * 		 or if the resulting end positions reaches beyond the end of either this buffer, or the destination array.
+     * @throws IllegalStateException if this buffer has already been closed.
      */
-    ProtonBuffer setBytes(int index, ProtonBuffer source, int offset, int length);
+    void copyInto(int offset, byte[] destination, int destOffset, int length);
 
     /**
-     * Transfers the specified source array's data to this buffer starting at
-     * the specified absolute {@code index}.
-     * This method does not modify {@code readIndex} or {@code writeIndex} of
-     * this buffer.
+     * Copies the given number of bytes from this buffer into the specified target {@link ByteBuffer}
+     * starting at the given offset into this buffer.  The copied region is written into the
+     * target starting at the given offset and continues for the specified length of elements.
      *
-     * @param index
-     *      The index in this buffer where the write operation starts.
-     * @param source
-     *      The source buffer from which the bytes are read.
-     *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if the specified {@code index} is less than {@code 0} or
-     *         if {@code index + source.length} is greater than
-     *            {@code this.capacity}
-     */
-    ProtonBuffer setBytes(int index, byte[] source);
-
-    /**
-     * Transfers the specified source array's data to this buffer starting at
-     * the specified absolute {@code index}.
-     * This method does not modify {@code readIndex} or {@code writeIndex} of
-     * this buffer.
-     *
-     * @param index
-     *      The index in this buffer where the write operation starts.
-     * @param source
-     *      The source buffer from which the bytes are read.
      * @param offset
-     *      The offset into the source where the set begins.
+     * 		The offset into this buffer where the copy begins from.
+     * @param destination
+     * 		The destination {@link ByteBuffer} where the copied bytes are written.
+     * @param destOffset
+     * 		The offset into the destination to begin writing the copied bytes.
      * @param length
-     *      The number of bytes to transfer
+     * 		The number of bytes to copy into the destination.
      *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if the specified {@code index} is less than {@code 0},
-     *         if the specified {@code offset} is less than {@code 0},
-     *         if {@code index + length} is greater than
-     *            {@code this.capacity}, or
-     *         if {@code offset + length} is greater than {@code source.length}
+     * @throws NullPointerException if the destination buffer is null.
+     * @throws IndexOutOfBoundsException if the source or destination positions, or the length, are negative,
+     * 		 or if the resulting end positions reaches beyond the end of either this buffer, or the destination buffer.
+     * @throws IllegalStateException if this buffer has already been closed.
      */
-    ProtonBuffer setBytes(int index, byte[] source, int offset, int length);
+    void copyInto(int offset, ByteBuffer destination, int destOffset, int length);
 
     /**
-     * Transfers the specified source buffer's data to this buffer starting at
-     * the specified absolute {@code index} until the source buffer's position
-     * reaches its limit.
-     * This method does not modify {@code readIndex} or {@code writeIndex} of
-     * this buffer.
+     * Copies the given number of bytes from this buffer into the specified target {@link ProtonBuffer}
+     * starting at the given offset into this buffer.  The copied region is written into the
+     * target starting at the given offset and continues for the specified length of elements.
      *
-     * @param index
-     *      The index in this buffer where the write operation starts.
+     * @param offset
+     * 		The offset into this buffer where the copy begins from.
+     * @param destination
+     * 		The destination {@link ProtonBuffer} where the copied bytes are written.
+     * @param destOffset
+     * 		The offset into the destination to begin writing the copied bytes.
+     * @param length
+     * 		The number of bytes to copy into the destination.
+     *
+     * @throws NullPointerException if the destination buffer is null.
+     * @throws IndexOutOfBoundsException if the source or destination positions, or the length, are negative,
+     * 		 or if the resulting end positions reaches beyond the end of either this buffer, or the destination buffer.
+     * @throws IllegalStateException if this buffer has already been closed.
+     */
+    void copyInto(int offset, ProtonBuffer destination, int destOffset, int length);
+
+    /**
+     * Writes into this buffer, all the readable bytes from the given buffer. This updates the
+     * {@link #getWriteOffset()} of this buffer, and the {@link #getReadOffset()} of the given buffer.
+     *
      * @param source
-     *      The source buffer from which the bytes are read.
+     * 		The buffer to read from.
      *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if the specified {@code index} is less than {@code 0} or
-     *         if {@code index + source.remaining()} is greater than
-     *            {@code this.capacity}
+     * @return This buffer.
+     * @throws NullPointerException If the source buffer is {@code null}.
      */
-    ProtonBuffer setBytes(int index, ByteBuffer source);
+    default ProtonBuffer writeBytes(ProtonBuffer source) {
+        final int size = source.getReadableBytes();
+        if (getWritableBytes() < size && getWriteOffset() + size <= implicitGrowthLimit()) {
+            ensureWritable(size, 1, false);
+        }
+        source.copyInto(source.getReadOffset(), this, getWriteOffset(), size);
+        source.advanceReadOffset(size);
+        advanceWriteOffset(size);
+        return this;
+    }
 
     /**
-     * Increases the current {@code readIndex} of this buffer by the specified {@code length}.
+     * Writes into this buffer, all the bytes from the given byte array. This updates the
+     * {@linkplain #getWriteOffset()} of this buffer by the length of the array.
      *
-     * @param length
-     *      the number of bytes in this buffer to skip.
+     * @param source The byte array to read from.
      *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException
-     *         if {@code length} is greater than {@code this.readableBytes}
+     * @return this buffer for using in call chaining.
      */
-    ProtonBuffer skipBytes(int length);
+    default ProtonBuffer writeBytes(byte[] source) {
+        return writeBytes(source, 0, source.length);
+    }
 
     /**
-     * Reads one byte from the buffer and advances the read index by one.
+     * Writes into this buffer, the given number of bytes from the byte array. This updates the
+     * {@linkplain #getWriteOffset()} of this buffer by the length argument.
      *
-     * @return a single byte from the ProtonBuffer.
+     * @param source The byte array to read from.
+     * @param offset The position in the {@code source} from where bytes should be written to this buffer.
+     * @param length The number of bytes to copy.
      *
-     * @throws IndexOutOfBoundsException if there is no readable bytes left in the buffer.
+     * @return this buffer for using in call chaining.
      */
-    byte readByte();
+    default ProtonBuffer writeBytes(byte[] source, int offset, int length) {
+        final int writeOffset = getWriteOffset();
+        if (getWritableBytes() < length && getWriteOffset() + length <= implicitGrowthLimit()) {
+            ensureWritable(length, 1, false);
+        }
+        advanceWriteOffset(length);
+        for (int i = 0; i < length; i++) {
+            setByte(writeOffset + i, source[offset + i]);
+        }
+
+        return this;
+    }
 
     /**
-     * Reads bytes from this buffer and writes them into the destination byte array incrementing
-     * the read index by the value of the length of the destination array.
+     * Writes into this buffer from the source {@link ByteBuffer}. This updates the
+     * {@link #getWriteOffset()} of this buffer and also the position of the source
+     * {@link ByteBuffer}.
+     * <p>
+     * Note: the behavior is undefined if the given {@link ByteBuffer} is an alias for the memory in this buffer.
      *
-     * @param target
-     *      The byte array to write into.
+     * @param source The {@link ByteBuffer} to read from.
      *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the target array is larger than the readable bytes.
+     * @return this buffer for using in call chaining.
      */
-    ProtonBuffer readBytes(byte[] target);
+    default ProtonBuffer writeBytes(ByteBuffer source) {
+        if (source.hasArray()) {
+            writeBytes(source.array(), source.arrayOffset() + source.position(), source.remaining());
+            source.position(source.limit());
+        } else {
+            int writeOffset = getWriteOffset();
+            int length = source.remaining();
+            if (getWritableBytes() < length && getWriteOffset() + length <= implicitGrowthLimit()) {
+                ensureWritable(length, 1, false);
+            }
+            advanceWriteOffset(source.remaining());
+
+            // Try to reduce bounds-checking by using larger primitives when possible.
+            for (; length >= Long.BYTES; length -= Long.BYTES, writeOffset += Long.BYTES) {
+                setLong(writeOffset, source.getLong());
+            }
+            for (; length >= Integer.BYTES; length -= Integer.BYTES, writeOffset += Integer.BYTES) {
+                setInt(writeOffset, source.getInt());
+            }
+            for (; length > 0; length--, writeOffset++) {
+                setByte(writeOffset, source.get());
+            }
+        }
+
+        return this;
+    }
 
     /**
-     * Reads bytes from this buffer and writes them into the destination byte array incrementing
-     * the read index by the length value passed.
-     *
-     * @param target
-     *      The byte array to write into.
-     * @param length
-     *      The number of bytes to read into the given array.
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the length is larger than the readable bytes, or length is
-     *         greater than the length of the target array, or length is negative.
-     */
-    ProtonBuffer readBytes(byte[] target, int length);
-
-    /**
-     * Reads bytes from this buffer and writes them into the destination byte array incrementing
-     * the read index by the length value passed, the bytes are read into the given buffer starting
-     * from the given offset value.
-     *
-     * @param target
-     *      The byte array to write into.
-     * @param offset
-     *      The offset into the given array where bytes are written.
-     * @param length
-     *      The number of bytes to read into the given array.
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the offset is negative, or if the length is greater than
-     *         the current readable bytes or if the offset + length is great than the size of the target.
-     */
-    ProtonBuffer readBytes(byte[] target, int offset, int length);
-
-    /**
-     * Reads bytes from this buffer and writes them into the destination ProtonBuffer incrementing
-     * the read index by the value of the number of bytes written to the target.  The number of bytes
-     * written will be the equal to the writable bytes of the target buffer.  The write index of the
-     * target buffer will be incremented by the number of bytes written into it.
-     *
-     * @param target
-     *      The ProtonBuffer to write into.
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IllegalArgumentException if the target buffer is this buffer.
-     * @throws IndexOutOfBoundsException if the target buffer has more writable bytes than this buffer
-     *         has readable bytes.
-     */
-    ProtonBuffer readBytes(ProtonBuffer target);
-
-    /**
-     * Reads bytes from this buffer and writes them into the destination ProtonBuffer incrementing
-     * the read index by the number of bytes written.  The write index of the target buffer will be
-     * incremented by the number of bytes written into it.
-     *
-     * @param target
-     *      The ProtonBuffer to write into.
-     * @param length
-     *      The number of bytes to read into the given buffer.
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the length value is greater than the readable bytes of
-     *         this buffer or is greater than the writable bytes of the target buffer..
-     */
-    ProtonBuffer readBytes(ProtonBuffer target, int length);
-
-    /**
-     * Transfers this buffer's data to the specified destination starting at
-     * the current {@code readIndex} and increases the {@code readIndex}
-     * by the number of the transferred bytes (= {@code length}).  This method
-     * does not modify the write index of the target buffer.
-     *
-     * @param target
-     *      The ProtonBuffer to write into.
-     * @param offset
-     *      The offset into the given buffer where bytes are written.
-     * @param length
-     *      The number of bytes to read into the given buffer.
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the offset is negative, or if the length is greater than
-     *         the current readable bytes or if the offset + length is great than the size of the target.
-     */
-    ProtonBuffer readBytes(ProtonBuffer target, int offset, int length);
-
-    /**
-     * Transfers this buffer's data to the specified destination starting at
-     * the current {@code readIndex} until the destination's position
-     * reaches its limit, and increases the {@code readIndex} by the
-     * number of the transferred bytes.
+     * Read from this buffer, into the destination {@link ByteBuffer} This updates the read offset of this
+     * buffer and also the position of the destination {@link ByteBuffer}.
+     * <p>
+     * Note: the behavior is undefined if the given {@link ByteBuffer} is an alias for the memory in this buffer.
      *
      * @param destination
-     *      The target ByteBuffer to write into.
+     * 		The {@link ByteBuffer} to write into.
      *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if the destination does not have enough capacity.
+     * @return this buffer for using in call chaining.
      */
-    ProtonBuffer readBytes(ByteBuffer destination);
+    default ProtonBuffer readBytes(ByteBuffer destination) {
+        final int byteCount = destination.remaining();
+        copyInto(getReadOffset(), destination, destination.position(), byteCount);
+        advanceReadOffset(byteCount);
+        destination.position(destination.limit());
+        return this;
+    }
 
     /**
-     * Reads a boolean value from the buffer and advances the read index by one.
+     * Read from this buffer, into the destination array, the given number of bytes.
+     * This updates the read offset of this buffer by the length argument.
      *
-     * @return boolean value read from the buffer.
+     * @param destination The byte array to write into.
+     * @param offset Position in the {@code destination} to where bytes should be written from this buffer.
+     * @param length The number of bytes to copy.
      *
-     * @throws IndexOutOfBoundsException if a value cannot be read from the buffer.
+     * @return This buffer.
      */
-    boolean readBoolean();
+    default ProtonBuffer readBytes(byte[] destination, int offset, int length) {
+        copyInto(getReadOffset(), destination, offset, length);
+        advanceReadOffset(length);
+        return this;
+    }
 
     /**
-     * Reads a short value from the buffer and advances the read index by two.
+     * Read from this buffer and write to the given channel.
+     * <p>
+     * The number of bytes actually written to the channel are returned. No more than the given {@code length}
+     * of bytes, or the number of {@linkplain #getReadableBytes() readable bytes}, will be written to the channel,
+     * whichever is smaller. A channel that has a position marker, will be advanced by the number of bytes written.
+     * The {@linkplain #getReadOffset() read offset} of this buffer will also be advanced by the number of bytes
+     * written.
      *
-     * @return short value read from the buffer.
+     * @param channel The channel to write to.
+     * @param length The maximum number of bytes to write.
      *
-     * @throws IndexOutOfBoundsException if a value cannot be read from the buffer.
+     * @return The actual number of bytes written, possibly zero.
+     *
+     * @throws IOException If the write-operation on the channel failed for some reason.
      */
-    short readShort();
+    int transferTo(WritableByteChannel channel, int length) throws IOException;
 
     /**
-     * Reads a integer value from the buffer and advances the read index by four.
+     * Reads a sequence of bytes from the given channel into this buffer.
+     * <p>
+     * The method reads a given amount of bytes from the provided channel and returns the number of
+     * bytes actually read which can be zero or -1 if the channel has reached the end of stream state.
+     * <p>
+     * The length value given is a maximum limit however the code will adjust this if the number
+     * of writable bytes in this buffer is smaller (or zero) and the result will indicate how many
+     * bytes where actually read.  The write offset of this buffer will be advanced by the number
+     * of bytes read from the buffer as will the channel position index if one exists.
      *
-     * @return integer value read from the buffer.
+     * @param channel The readable byte channel where the bytes are read
+     * @param length The maximum number of bytes to read from the channel
      *
-     * @throws IndexOutOfBoundsException if a value cannot be read from the buffer.
+     * @return The number of bytes read, possibly zero, or -1 if the channel has reached end-of-stream
+     *
+     * @throws IOException if the read operation fails
      */
-    int readInt();
+    int transferFrom(ReadableByteChannel channel, int length) throws IOException;
 
     /**
-     * Reads a long value from the buffer and advances the read index by eight.
+     * Reads a sequence of bytes from the given channel into this buffer.
+     * <p>
+     * The method reads a given amount of bytes from the provided channel and returns the number of
+     * bytes actually read which can be zero or -1 if the channel has reached the end of stream state.
+     * <p>
+     * The length value given is a maximum limit however the code will adjust this if the number
+     * of writable bytes in this buffer is smaller (or zero) and the result will indicate how many
+     * bytes where actually read.  The write offset of this buffer will be advanced by the number
+     * of bytes read from the buffer, the channel will not have its position modified.
      *
-     * @return long value read from the buffer.
+     * @param channel The File channel where the bytes are read
+     * @param position The position in the channel where the read should begin
+     * @param length The maximum number of bytes to read from the channel
      *
-     * @throws IndexOutOfBoundsException if a value cannot be read from the buffer.
+     * @return The number of bytes read, possibly zero, or -1 if the channel has reached end-of-stream
+     *
+     * @throws IOException if the read operation fails
      */
-    long readLong();
+    int transferFrom(FileChannel channel, long position, int length) throws IOException;
 
     /**
-     * Reads a float value from the buffer and advances the read index by four.
-     *
-     * @return float value read from the buffer.
-     *
-     * @throws IndexOutOfBoundsException if a value cannot be read from the buffer.
+     * @return true if the buffer is backed by one or more {@link ProtonBuffer} instances.
      */
-    float readFloat();
+    boolean isComposite();
 
     /**
-     * Reads a double value from the buffer and advances the read index by eight.
+     * Returns the number of constituent buffer components that are contained in this buffer instance
+     * which for a non-composite buffer will always be one (namely itself).  For a composite buffer this
+     * count is the total count of all buffers mapped to the composite.
      *
-     * @return double value read from the buffer.
-     *
-     * @throws IndexOutOfBoundsException if a value cannot be read from the buffer.
+     * @return the number of buffers managed by this {@link ProtonBuffer} instance.
      */
-    double readDouble();
+    int componentCount();
 
     /**
-     * @return true if the buffer has bytes remaining between the write index and the capacity.
+     * Returns the number of readable constituent buffer components that are contained in this buffer
+     * instance which for a non-composite buffer will always be zero or one (namely itself). For a composite
+     * buffer this count is the total count of all buffers mapped to the composite which are readable.
+     *
+     * @return the number of readable buffers managed by this {@link ProtonBuffer} instance.
      */
-    boolean isWritable();
+    int readableComponentCount();
 
     /**
-     * Check if the requested number of bytes can be written into this buffer.
+     * Returns the number of writable constituent buffer components that are contained in this buffer
+     * instance which for a non-composite buffer will always be zero or one (namely itself). For a composite
+     * buffer this count is the total count of all buffers mapped to the composite which are writable.
      *
-     * @param size
-     *      The number writable bytes that is being checked in this buffer.
-     *
-     * @return true if the buffer has space left for the given number of bytes to be written.
+     * @return the number of writable buffer components managed by this {@link ProtonBuffer} instance.
      */
-    boolean isWritable(int size);
+    int writableComponentCount();
 
     /**
-     * Writes a single byte to the buffer and advances the write index by one.
+     * Returns a component access object that can be used to gain access to the constituent buffer components
+     * for use in IO operations or other lower level buffer operations that need to work on single compoents.
+     * <p>
+     * The general usage of the component access object should be within a try-with-resource
+     * block as follows:
+     * <pre>{@code
+     *   try (ProtonBufferComponentAccessor accessor = buffer.componentAccessor()) {
+     *      for (ProtonBufferComponent component : accessor.readableComponents()) {
+     *         // Access logic here....
+     *      }
+     *   }
+     * }</pre>
      *
-     * @param value
-     *      The byte to write into the buffer.
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if there is no room in the buffer for this write operation.
+     * @return a component access object instance used to view the buffer internal components
      */
-    ProtonBuffer writeByte(int value);
+    ProtonBufferComponentAccessor componentAccessor();
 
     /**
-     * Writes the contents of the given byte array into the buffer and advances the write index by the
-     * length of the given array.
+     * Creates and returns a new {@link ProtonBufferIterator} that iterates from the current
+     * read offset and continues until all readable bytes have been traversed. The source buffer
+     * read and write offsets are not modified by an iterator instance.
+     * <p>
+     * The caller must ensure that the source buffer lifetime extends beyond the lifetime of
+     * the returned {@link ProtonBufferIterator}.
      *
-     * @param value
-     *      The byte array to write into the buffer.
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if there is no room in the buffer for this write operation.
+     * @return a new buffer iterator that iterates over the readable bytes.
      */
-    ProtonBuffer writeBytes(byte[] value);
+    default ProtonBufferIterator bufferIterator() {
+        return bufferIterator(getReadOffset(), getReadableBytes());
+    }
 
     /**
-     * Writes the contents of the given byte array into the buffer and advances the write index by the
-     * length value given.
+     * Creates and returns a new {@link ProtonBufferIterator} that iterates from the given
+     * offset and continues until specified number of bytes has been traversed. The source buffer
+     * read and write offsets are not modified by an iterator instance.
+     * <p>
+     * The caller must ensure that the source buffer lifetime extends beyond the lifetime of
+     * the returned {@link ProtonBufferIterator}.
      *
-     * @param value
-     *      The byte array to write into the buffer.
-     * @param length
-     *      The number of bytes to write from the given array into this buffer
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if there is no room in the buffer for this write operation.
-     */
-    ProtonBuffer writeBytes(byte[] value, int length);
-
-    /**
-     * Writes the contents of the given byte array into the buffer and advances the write index by the
-     * length value given.  The bytes written into this buffer are read starting at the given offset
-     * into the passed in byte array.
-     *
-     * @param value
-     *      The byte array to write into the buffer.
      * @param offset
-     *      The offset into the given array to start reading from.
+     * 		The offset into the buffer where iteration begins
      * @param length
-     *      The number of bytes to write from the given array into this buffer
+     * 		The number of bytes to iterate over.
      *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if there is no room in the buffer for this write operation.
+     * @return a new buffer iterator that iterates over the readable bytes.
      */
-    ProtonBuffer writeBytes(byte[] value, int offset, int length);
+    ProtonBufferIterator bufferIterator(int offset, int length);
 
     /**
-     * Transfers the specified source buffer's data to this buffer starting at
-     * the current {@code writeIndex} until the source buffer becomes
-     * unreadable, and increases the {@code writeIndex} by the number of
-     * the transferred bytes.  This method is basically same with
-     * {@link #writeBytes(ProtonBuffer, int, int)}, except that this method
-     * increases the {@code readIndex} of the source buffer by the number of
-     * the transferred bytes while {@link #writeBytes(ProtonBuffer, int, int)}
-     * does not.
+     * Creates and returns a new {@link ProtonBufferIterator} that reverse iterates over the readable
+     * bytes of the source buffer (write offset to read offset). The source buffer read and write offsets
+     * are not modified by an iterator instance.
+     * <p>
+     * The caller must ensure that the source buffer lifetime extends beyond the lifetime of
+     * the returned {@link ProtonBufferIterator}.
      *
-     * @param source
-     *      The source buffer from which the bytes are read.
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException
-     *         if {@code source.readableBytes} is greater than
-     *            {@code this.writableBytes}
+     * @return a new buffer iterator that iterates over the readable bytes.
      */
-    ProtonBuffer writeBytes(ProtonBuffer source);
+    default ProtonBufferIterator bufferReverseIterator() {
+        return bufferReverseIterator(Math.max(0, getWriteOffset() - 1), getReadableBytes());
+    }
 
     /**
-     * Transfers the specified source buffer's data to this buffer starting at
-     * the current {@code writeIndex} and increases the {@code writeIndex}
-     * by the number of the transferred bytes (= {@code length}).  This method
-     * is basically same with {@link #writeBytes(ProtonBuffer, int, int)},
-     * except that this method increases the {@code readIndex} of the source
-     * buffer by the number of the transferred bytes (= {@code length}) while
-     * {@link #writeBytes(ProtonBuffer, int, int)} does not.
+     * Creates and returns a new {@link ProtonBufferIterator} that reverse iterates from the given
+     * offset and continues until specified number of bytes has been traversed. The source buffer
+     * read and write offsets are not modified by an iterator instance.
+     * <p>
+     * The caller must ensure that the source buffer lifetime extends beyond the lifetime of
+     * the returned {@link ProtonBufferIterator}.
      *
-     * @param source
-     *      The source buffer from which the bytes are read.
-     * @param length
-     *      The number of bytes to transfer
-     *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if {@code length} is greater than {@code this.writableBytes} or
-     *         if {@code length} is greater then {@code source.readableBytes}
-     */
-    ProtonBuffer writeBytes(ProtonBuffer source, int length);
-
-    /**
-     * Transfers the specified source buffer's data to this buffer starting at
-     * the current {@code writeIndex} and increases the {@code writeIndex}
-     * by the number of the transferred bytes (= {@code length}).  This method
-     * does not modify the read index of the source buffer.
-     *
-     * @param source
-     *      The source buffer from which the bytes are read.
      * @param offset
-     *      The offset in the source buffer to start writing into this buffer.
+     * 		The offset into the buffer where iteration begins
      * @param length
-     *      The number of bytes to transfer
+     * 		The number of bytes to iterate over.
      *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if the specified {@code offset} is less than {@code 0},
-     *         if {@code offset + length} is greater than
-     *            {@code source.capacity}, or
-     *         if {@code length} is greater than {@code this.writableBytes}
+     * @return a new buffer iterator that iterates over the readable bytes.
      */
-    ProtonBuffer writeBytes(ProtonBuffer source, int offset, int length);
+    ProtonBufferIterator bufferReverseIterator(int offset, int length);
 
     /**
-     * Transfers the specified source buffer's data to this buffer starting at
-     * the current {@code writeIndex} until the source buffer's position
-     * reaches its limit, and increases the {@code writeIndex} by the
-     * number of the transferred bytes.
+     * Starting from the current read offset into this buffer, find the next offset (index) in the
+     * buffer where the given value is located or <code>-1</code> if the value is not found by the
+     * time the remaining readable bytes has been searched. This method does not affect the read or
+     * write offset and can be called from any point in the buffer regardless of the current read or
+     * write offsets.
      *
-     * @param source
-     *      The source buffer from which the bytes are read.
+     * @param needle
+     * 		The byte value to search for in the remaining buffer bytes.
      *
-     * @return this buffer for chaining
-     *
-     * @throws IndexOutOfBoundsException
-     *         if {@code source.remaining()} is greater than
-     *            {@code this.writableBytes}
+     * @return the location in the buffer where the value was found or <code>-1</code> if not found.
      */
-    ProtonBuffer writeBytes(ByteBuffer source);
+    default int indexOf(byte needle) {
+        return indexOf(needle, getReadOffset(), getReadableBytes());
+    }
 
     /**
-     * Writes a single boolean to the buffer and advances the write index by one.
+     * Starting from the given offset into this buffer, find the next offset (index) in the
+     * buffer where the given value is located or <code>-1</code> if the value is not found by the
+     * time the specified number of bytes has been searched. This method does not affect the read or
+     * write offset and can be called from any point in the buffer regardless of the current read or
+     * write offsets. The search bounds are that of the buffer's readable bytes meaning that the
+     * starting office cannot be less than the read offset and the length cannot cause the search
+     * to read past the readable bytes otherwise an {@link IndexOutOfBoundsException} will be thrown.
      *
-     * @param value
-     *      The boolean to write into the buffer.
+     * @param needle
+     * 		The byte value to search for in the remaining buffer bytes.
+     * @param offset
+     * 		The offset into the buffer where the search should begin from.
+     * @param length
+     * 		The offset into the buffer where the search should begin from.
      *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if there is no room in the buffer for this write operation.
+     * @return the location in the buffer where the value was found or <code>-1</code> if not found.
      */
-    ProtonBuffer writeBoolean(boolean value);
-
-    /**
-     * Writes a single short to the buffer and advances the write index by two.
-     *
-     * @param value
-     *      The short to write into the buffer.
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if there is no room in the buffer for this write operation.
-     */
-    ProtonBuffer writeShort(short value);
-
-    /**
-     * Writes a single integer to the buffer and advances the write index by four.
-     *
-     * @param value
-     *      The integer to write into the buffer.
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if there is no room in the buffer for this write operation.
-     */
-    ProtonBuffer writeInt(int value);
-
-    /**
-     * Writes a single long to the buffer and advances the write index by eight.
-     *
-     * @param value
-     *      The long to write into the buffer.
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if there is no room in the buffer for this write operation.
-     */
-    ProtonBuffer writeLong(long value);
-
-    /**
-     * Writes a single float to the buffer and advances the write index by four.
-     *
-     * @param value
-     *      The float to write into the buffer.
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if there is no room in the buffer for this write operation.
-     */
-    ProtonBuffer writeFloat(float value);
-
-    /**
-     * Writes a single double to the buffer and advances the write index by eight.
-     *
-     * @param value
-     *      The double to write into the buffer.
-     *
-     * @return this ProtonBuffer for chaining.
-     *
-     * @throws IndexOutOfBoundsException if there is no room in the buffer for this write operation.
-     */
-    ProtonBuffer writeDouble(double value);
+    int indexOf(byte needle, int offset, int length);
 
 }

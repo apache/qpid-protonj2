@@ -26,8 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -72,8 +72,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeRejected(boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Rejected value = new Rejected();
 
@@ -81,6 +80,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -101,8 +101,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeRejectedWithErrorCondition(boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         ErrorCondition error = new ErrorCondition(AmqpError.DECODE_ERROR, "invalid");
 
@@ -113,6 +112,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -137,8 +137,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeRejectedWithList8(boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -149,6 +148,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -169,8 +169,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeRejectedWithList32(boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -181,6 +180,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -201,8 +201,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValue(boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Rejected rejected = new Rejected();
         rejected.setError(new ErrorCondition(TransactionErrors.TRANSACTION_ROLLBACK, "Failure"));
@@ -212,6 +211,14 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
         }
 
         encoder.writeObject(buffer, encoderState, new Modified());
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -260,8 +267,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -277,6 +283,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid encoding");
@@ -310,8 +317,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -327,6 +333,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(Rejected.class, typeDecoder.getTypeClass());
 
@@ -356,8 +363,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeArray(boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Rejected[] array = new Rejected[3];
 
@@ -373,6 +379,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -411,8 +418,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithNotEnoughListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -428,6 +434,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");
@@ -461,8 +468,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithToManyListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -478,6 +484,7 @@ public class RejectedTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");

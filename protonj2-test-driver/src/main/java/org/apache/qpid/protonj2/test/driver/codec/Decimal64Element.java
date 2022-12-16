@@ -18,7 +18,7 @@ package org.apache.qpid.protonj2.test.driver.codec;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Decimal64;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 class Decimal64Element extends AtomicElement<Decimal64> {
 
@@ -45,9 +45,9 @@ class Decimal64Element extends AtomicElement<Decimal64> {
     }
 
     @Override
-    public int encode(ByteBuf buffer) {
+    public int encode(Buffer buffer) {
         int size = size();
-        if (buffer.maxWritableBytes() >= size) {
+        if (buffer.implicitCapacityLimit() - buffer.capacity() >= size) {
             if (size == 9) {
                 buffer.writeByte((byte) 0x84);
             }

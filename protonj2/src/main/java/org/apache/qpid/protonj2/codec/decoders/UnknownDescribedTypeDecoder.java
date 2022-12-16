@@ -34,9 +34,9 @@ import org.apache.qpid.protonj2.types.UnsignedLong;
  */
 public abstract class UnknownDescribedTypeDecoder extends AbstractDescribedTypeDecoder<DescribedType> {
 
-	/**
-	 * @return the AMQP type descriptor for this {@link TypeDecoder}.
-	 */
+    /**
+     * @return the AMQP type descriptor for this {@link TypeDecoder}.
+     */
     public abstract Object getDescriptor();
 
     @Override

@@ -31,7 +31,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 /**
  * Tracks information related to an opened Session and its various links
@@ -319,7 +319,7 @@ public class SessionTracker {
         return tracker;
     }
 
-    public LinkTracker handleTransfer(Transfer transfer, ByteBuf payload) {
+    public LinkTracker handleTransfer(Transfer transfer, Buffer payload) {
         LinkTracker tracker = remoteLinks.get(transfer.getHandle());
 
         if (tracker.isSender()) {
@@ -332,7 +332,7 @@ public class SessionTracker {
         return tracker;
     }
 
-    public void handleLocalTransfer(Transfer transfer, ByteBuf payload) {
+    public void handleLocalTransfer(Transfer transfer, Buffer payload) {
         LinkTracker tracker = localLinks.get(transfer.getHandle());
 
         // Pass along to local sender for processing before sending and ignore if

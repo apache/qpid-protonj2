@@ -39,10 +39,9 @@ public class BinaryTest {
     public void testCreateEmptyBinary() {
         Binary binary = new Binary();
 
-        assertNull(binary.getArray());
+        assertNull(binary.asByteArray());
         assertNull(binary.asByteBuffer());
         assertNull(binary.asProtonBuffer());
-        assertNull(binary.arrayCopy());
         assertEquals(binary, binary.copy());
         assertEquals("", binary.toString());
     }
@@ -87,9 +86,7 @@ public class BinaryTest {
     public void testEqualsWithDifferentContentBinary() {
         int length = 10;
         Binary bin1 = createNewRepeatedValueBinary(length, (byte) 1);
-
-        Binary bin2 = createNewRepeatedValueBinary(length, (byte) 1);
-        bin2.getArray()[5] = (byte) 0;
+        Binary bin2 = createNewRepeatedValueBinary(length, (byte) 2);
 
         assertFalse(bin1.equals(bin2), "Objects should not be equal");
         assertFalse(bin2.equals(bin1), "Objects should not be equal");

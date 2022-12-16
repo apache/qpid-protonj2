@@ -57,7 +57,7 @@ public class DataBenchmark extends CodecBenchmarkBase {
 
     @Benchmark
     public void decode() throws IOException {
-        buffer.setReadIndex(0);
+        buffer.setReadOffset(0);
         blackhole.consume(decoder.readObject(buffer, decoderState));
         blackhole.consume(decoder.readObject(buffer, decoderState));
         blackhole.consume(decoder.readObject(buffer, decoderState));

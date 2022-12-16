@@ -17,13 +17,13 @@
 package org.apache.qpid.protonj2.engine.impl;
 
 import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.engine.AMQPPerformativeEnvelopePool;
 import org.apache.qpid.protonj2.engine.ConnectionState;
 import org.apache.qpid.protonj2.engine.Engine;
@@ -33,6 +33,7 @@ import org.apache.qpid.protonj2.engine.EngineState;
 import org.apache.qpid.protonj2.engine.EventHandler;
 import org.apache.qpid.protonj2.engine.HeaderEnvelope;
 import org.apache.qpid.protonj2.engine.OutgoingAMQPEnvelope;
+import org.apache.qpid.protonj2.engine.Scheduler;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineNotStartedException;
 import org.apache.qpid.protonj2.engine.exceptions.EngineNotWritableException;
@@ -54,8 +55,8 @@ public class ProtonEngine implements Engine {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonEngine.class);
 
-    private static final ProtonBuffer EMPTY_FRAME_BUFFER =
-        ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00});
+    private static final byte[] EMPTY_FRAME_BUFFER =
+        new byte[] {0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00};
 
     private final ProtonEnginePipeline pipeline =  new ProtonEnginePipeline(this);
     private final ProtonEnginePipelineProxy pipelineProxy = new ProtonEnginePipelineProxy(pipeline);
@@ -72,8 +73,8 @@ public class ProtonEngine implements Engine {
     private int outputSequence;
 
     // Idle Timeout Check data
-    private ScheduledFuture<?> nextIdleTimeoutCheck;
-    private ScheduledExecutorService idleTimeoutExecutor;
+    private Future<?> nextIdleTimeoutCheck;
+    private Scheduler idleTimeoutExecutor;
     private int lastInputSequence;
     private int lastOutputSequence;
     private long localIdleDeadline = 0;
@@ -189,6 +190,44 @@ public class ProtonEngine implements Engine {
 
     @Override
     public ProtonEngine tickAuto(ScheduledExecutorService executor) throws IllegalStateException, EngineStateException {
+        return tickAuto(new Scheduler() {
+
+            private final ScheduledExecutorService service = executor;
+
+            @Override
+			public boolean isShutdown() {
+                return service.isShutdown();
+            }
+
+            @Override
+            public void execute(Runnable command) {
+                service.execute(command);
+            }
+
+            @Override
+            public Future<?> schedule(Runnable command, long delay, TimeUnit unit) {
+                return service.schedule(command, delay, unit);
+            }
+
+            @Override
+            public <V> Future<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
+                return service.schedule(task, delay, unit);
+            }
+
+            @Override
+            public Future<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
+                return service.scheduleAtFixedRate(command, initialDelay, period, unit);
+            }
+
+            @Override
+            public Future<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
+                return service.scheduleWithFixedDelay(command, initialDelay, delay, unit);
+            }
+        });
+    }
+
+    @Override
+    public ProtonEngine tickAuto(Scheduler executor) throws IllegalStateException, EngineStateException {
         checkShutdownOrFailed("Cannot start auto tick on an Engine that has been shutdown or failed");
 
         Objects.requireNonNull(executor);
@@ -223,9 +262,9 @@ public class ProtonEngine implements Engine {
         }
 
         try {
-            int startIndex = input.getReadIndex();
+            final int startIndex = input.getReadOffset();
             pipeline.fireRead(input);
-            if (input.getReadIndex() != startIndex) {
+            if (input.getReadOffset() != startIndex) {
                 inputSequence++;
             }
         } catch (Exception error) {
@@ -432,7 +471,7 @@ public class ProtonEngine implements Engine {
                 lastOutputSequence = outputSequence;
             } else if (remoteIdleDeadline - currentTime <= 0) {
                 remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
-                pipeline.fireWrite(EMPTY_FRAME_BUFFER.duplicate(), null);
+                pipeline.fireWrite(configuration.getBufferAllocator().copy(EMPTY_FRAME_BUFFER).convertToReadOnly(), null);
                 lastOutputSequence++;
             }
         }

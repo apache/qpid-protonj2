@@ -29,7 +29,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.OutputStreamOptions;
@@ -135,8 +135,9 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
     private void doFlush() throws ClientException {
         if (buffer != null && buffer.isReadable()) {
             try {
-                sender.sendMessage(this, buffer, messageFormat);
+                sender.sendMessage(this, buffer.convertToReadOnly().transfer(), messageFormat);
             } finally {
+                buffer.close();
                 buffer = null;
             }
         }
@@ -149,8 +150,15 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
         }
 
         if (!aborted()) {
-            currentState = StreamState.ABORTED;
-            sender.abort(getProtonDelivery(), tracker);
+            try {
+                currentState = StreamState.ABORTED;
+                sender.abort(getProtonDelivery(), tracker);
+            } finally {
+                if (buffer != null) {
+                    buffer.close();
+                }
+                buffer = null;
+            }
         }
 
         return this;
@@ -167,23 +175,30 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
             throw new ClientIllegalStateException("Cannot complete an already aborted send context");
         }
 
-        if (!completed()) {
-            // This may result in completion if the write surpasses the buffer limit but we still
-            // need to check in case it does not, or if there are no footers...
-            if (footer != null) {
-                write(footer);
-            }
+        try {
+            if (!completed()) {
+                // This may result in completion if the write surpasses the buffer limit but we still
+                // need to check in case it does not, or if there are no footers...
+                if (footer != null) {
+                    write(footer);
+                }
 
-            currentState = StreamState.COMPLETE;
+                currentState = StreamState.COMPLETE;
 
-            // If there is buffered data we can flush and complete in one Transfer
-            // frame otherwise we only need to do work if there was ever a send on
-            // this context which would imply we have a Tracker and a Delivery.
-            if (buffer != null && buffer.isReadable()) {
-                doFlush();
-            } else {
-                sender.complete(getProtonDelivery(), tracker);
+                // If there is buffered data we can flush and complete in one Transfer
+                // frame otherwise we only need to do work if there was ever a send on
+                // this context which would imply we have a Tracker and a Delivery.
+                if (buffer != null && buffer.isReadable()) {
+                    doFlush();
+                } else {
+                    sender.complete(getProtonDelivery(), tracker);
+                }
             }
+        } finally {
+            if (buffer != null) {
+                buffer.close();
+            }
+            buffer = null;
         }
 
         return this;
@@ -215,7 +230,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
 
         transitionToWritableState();
 
-        appendDataToBuffer(ClientMessageSupport.encodeSection(bodySection, ProtonByteBufferAllocator.DEFAULT.allocate()));
+        appendDataToBuffer(ClientMessageSupport.encodeSection(bodySection, ProtonBufferAllocator.defaultAllocator().allocate()));
 
         return this;
     }
@@ -271,7 +286,9 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
 
         transitionToWritableState();
 
-        ProtonBuffer streamBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(writeBufferSize, writeBufferSize);
+        final ProtonBuffer streamBuffer = ProtonBufferAllocator.defaultAllocator()
+                                                               .allocate(writeBufferSize)
+                                                               .implicitGrowthLimit(writeBufferSize);
 
         if (options.bodyLength() > 0) {
             return new SingularDataSectionOutputStream(options, streamBuffer);
@@ -296,7 +313,8 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
 
         transitionToWritableState();
 
-        return new SendContextRawBytesOutputStream(ProtonByteBufferAllocator.DEFAULT.allocate(writeBufferSize, writeBufferSize));
+        return new SendContextRawBytesOutputStream(
+            ProtonBufferAllocator.defaultAllocator().allocate(writeBufferSize).implicitGrowthLimit(writeBufferSize));
     }
 
     //----- OutputStream implementation for the Send Context
@@ -321,7 +339,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
         public void write(int value) throws IOException {
             checkClosed();
             checkOutputLimitReached(1);
-            streamBuffer.writeByte(value);
+            streamBuffer.writeByte((byte) value);
             if (!streamBuffer.isWritable()) {
                 flush();
             }
@@ -374,16 +392,18 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
             if (closed.compareAndSet(false, true) && !completed()) {
                 currentState = StreamState.BODY_WRITABLE;
 
-                if (options.bodyLength() > 0 && options.bodyLength() != bytesWritten) {
-                    // Limit was set but user did not write all of it so we must abort.
-                    try {
-                        abort();
-                    } catch (ClientException e) {
-                        throw new IOException(e);
+                try (streamBuffer) {
+                    if (options.bodyLength() > 0 && options.bodyLength() != bytesWritten) {
+                        // Limit was set but user did not write all of it so we must abort.
+                        try {
+                            abort();
+                        } catch (ClientException e) {
+                            throw new IOException(e);
+                        }
+                    } else {
+                        // Limit not set or was set and user wrote that many bytes so we can complete.
+                        doFlushPending(options.completeSendOnClose());
                     }
-                } else {
-                    // Limit not set or was set and user wrote that many bytes so we can complete.
-                    doFlushPending(options.completeSendOnClose());
                 }
             }
         }
@@ -413,7 +433,8 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
         protected void doFlushPending(boolean complete) throws IOException {
             try {
                 if (streamBuffer.isReadable()) {
-                    appendDataToBuffer(streamBuffer);
+                    // Send the readable portion and preserve any allocated writable space
+                    appendDataToBuffer(streamBuffer.split());
                 }
 
                 if (complete) {
@@ -423,7 +444,11 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
                 }
 
                 if (!complete) {
-                    streamBuffer.setIndex(0, 0);
+                    // Extend the buffer to the full write buffer size limit so the other
+                    // stream write operations don't need to try and extend it each write.
+                    streamBuffer.ensureWritable(writeBufferSize, writeBufferSize, true);
+                } else {
+                    streamBuffer.close();
                 }
             } catch (ClientException e) {
                 throw new IOException(e);
@@ -443,12 +468,15 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
         public SingularDataSectionOutputStream(OutputStreamOptions options, ProtonBuffer buffer) throws ClientException {
             super(options, buffer);
 
-            ProtonBuffer preamble = ProtonByteBufferAllocator.DEFAULT.allocate(DATA_SECTION_HEADER_ENCODING_SIZE, DATA_SECTION_HEADER_ENCODING_SIZE);
+            ProtonBuffer preamble = ProtonBufferAllocator.defaultAllocator().allocate(DATA_SECTION_HEADER_ENCODING_SIZE)
+                                                                            .implicitGrowthLimit(DATA_SECTION_HEADER_ENCODING_SIZE);
 
             preamble.writeBytes(DATA_SECTION_PREAMBLE);
             preamble.writeInt(options.bodyLength());
 
-            appendDataToBuffer(preamble);
+            try (preamble) {
+                appendDataToBuffer(preamble);
+            }
         }
     }
 
@@ -461,13 +489,13 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
         @Override
         protected void doFlushPending(boolean complete) throws IOException {
             if (streamBuffer.isReadable()) {
-
-                ProtonBuffer preamble = ProtonByteBufferAllocator.DEFAULT.allocate(DATA_SECTION_HEADER_ENCODING_SIZE, DATA_SECTION_HEADER_ENCODING_SIZE);
+                ProtonBuffer preamble = ProtonBufferAllocator.defaultAllocator().allocate(DATA_SECTION_HEADER_ENCODING_SIZE)
+                                                                                .implicitGrowthLimit(DATA_SECTION_HEADER_ENCODING_SIZE);
 
                 preamble.writeBytes(DATA_SECTION_PREAMBLE);
                 preamble.writeInt(streamBuffer.getReadableBytes());
 
-                try {
+                try (preamble) {
                     appendDataToBuffer(preamble);
                 } catch (ClientException e) {
                     throw new IOException(e);
@@ -550,12 +578,11 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
 
     @Override
     public byte[] userId() {
-        byte[] copyOfUserId = null;
         if (properties != null && properties.getUserId() != null) {
-            copyOfUserId = properties.getUserId().arrayCopy();
+            return properties.getUserId().asByteArray();
+        } else {
+            return null;
         }
-
-        return copyOfUserId;
     }
 
     @Override
@@ -911,23 +938,22 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
     }
 
     @Override
-    public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) throws ClientException {
+    public ProtonBuffer encode(Map<String, Object> deliveryAnnotations, ProtonBufferAllocator allocator) throws ClientException {
         throw new ClientUnsupportedOperationException("StreamSenderMessage cannot be directly encoded");
     }
 
     //----- Internal API
 
     private void appendDataToBuffer(ProtonBuffer incoming) throws ClientException {
+        incoming = Objects.requireNonNull(incoming, "Appended buffer cannot be null").convertToReadOnly();
+
         if (buffer == null) {
-            buffer = incoming;
+            buffer = incoming.transfer();
         } else {
             if (buffer instanceof ProtonCompositeBuffer) {
                 ((ProtonCompositeBuffer) buffer).append(incoming);
             } else {
-                ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
-                composite.append(buffer).append(incoming);
-
-                buffer = composite;
+                buffer = ProtonBufferAllocator.defaultAllocator().composite(new ProtonBuffer[] { buffer, incoming });
             }
         }
 
@@ -938,8 +964,9 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
 
         if (buffer.getReadableBytes() >= writeBufferSize) {
             try {
-                sender.sendMessage(this, buffer, messageFormat);
+                sender.sendMessage(this, buffer.convertToReadOnly().transfer(), messageFormat);
             } finally {
+                buffer.close();
                 buffer = null;
             }
         }
@@ -949,19 +976,19 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
         if (currentState == StreamState.PREAMBLE) {
 
             if (header != null) {
-                appendDataToBuffer(ClientMessageSupport.encodeSection(header, ProtonByteBufferAllocator.DEFAULT.allocate()));
+                appendDataToBuffer(ClientMessageSupport.encodeSection(header, ProtonBufferAllocator.defaultAllocator().allocate()));
             }
             if (deliveryAnnotations != null) {
-                appendDataToBuffer(ClientMessageSupport.encodeSection(deliveryAnnotations, ProtonByteBufferAllocator.DEFAULT.allocate()));
+                appendDataToBuffer(ClientMessageSupport.encodeSection(deliveryAnnotations, ProtonBufferAllocator.defaultAllocator().allocate()));
             }
             if (annotations != null) {
-                appendDataToBuffer(ClientMessageSupport.encodeSection(annotations, ProtonByteBufferAllocator.DEFAULT.allocate()));
+                appendDataToBuffer(ClientMessageSupport.encodeSection(annotations, ProtonBufferAllocator.defaultAllocator().allocate()));
             }
             if (properties != null) {
-                appendDataToBuffer(ClientMessageSupport.encodeSection(properties, ProtonByteBufferAllocator.DEFAULT.allocate()));
+                appendDataToBuffer(ClientMessageSupport.encodeSection(properties, ProtonBufferAllocator.defaultAllocator().allocate()));
             }
             if (applicationProperties != null) {
-                appendDataToBuffer(ClientMessageSupport.encodeSection(applicationProperties, ProtonByteBufferAllocator.DEFAULT.allocate()));
+                appendDataToBuffer(ClientMessageSupport.encodeSection(applicationProperties, ProtonBufferAllocator.defaultAllocator().allocate()));
             }
 
             currentState = StreamState.BODY_WRITABLE;
@@ -977,7 +1004,7 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
             throw new ClientIllegalStateException("Cannot write a Section to an already completed send context");
         }
 
-        appendDataToBuffer(ClientMessageSupport.encodeSection(section, ProtonByteBufferAllocator.DEFAULT.allocate()));
+        appendDataToBuffer(ClientMessageSupport.encodeSection(section, ProtonBufferAllocator.defaultAllocator().allocate()));
 
         return this;
     }

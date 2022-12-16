@@ -55,7 +55,7 @@ public final class ListTypeEncoder extends AbstractPrimitiveTypeEncoder<List> {
     }
 
     private void writeValue(ProtonBuffer buffer, EncoderState state, List value) {
-        int startIndex = buffer.getWriteIndex();
+        final int startIndex = buffer.getWriteOffset();
 
         // Reserve space for the size
         buffer.writeInt(0);
@@ -82,7 +82,7 @@ public final class ListTypeEncoder extends AbstractPrimitiveTypeEncoder<List> {
         }
 
         // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
+        final int endIndex = buffer.getWriteOffset();
         buffer.setInt(startIndex, endIndex - startIndex - 4);
     }
 }

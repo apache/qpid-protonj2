@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.protonj2.codec.security;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -27,8 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -88,8 +87,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeTypeMechanismOnly(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         SaslInit input = new SaslInit();
         input.setMechanism(Symbol.valueOf("ANONYMOUS"));
@@ -98,6 +96,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
 
         final SaslInit result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = (SaslInit) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (SaslInit) decoder.readObject(buffer, decoderState);
@@ -119,8 +118,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeTypeWithoutHostname(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         byte[] initialResponse = new byte[] { 1, 2, 3, 4 };
 
@@ -132,6 +130,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
 
         final SaslInit result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = (SaslInit) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (SaslInit) decoder.readObject(buffer, decoderState);
@@ -139,7 +138,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
 
         assertEquals(Symbol.valueOf("ANONYMOUS"), result.getMechanism());
         assertNull(result.getHostname());
-        assertArrayEquals(initialResponse, result.getInitialResponse().getArray());
+        assertEquals(ProtonBufferAllocator.defaultAllocator().copy(initialResponse), result.getInitialResponse());
     }
 
     @Test
@@ -153,8 +152,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestInitialResponseHandlesNullBinarySet(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         byte[] initialResponse = new byte[] { 1, 2, 3, 4 };
 
@@ -169,6 +167,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
 
         final SaslInit result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = (SaslInit) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (SaslInit) decoder.readObject(buffer, decoderState);
@@ -190,8 +189,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeTypeMechanismAndHostname(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         SaslInit input = new SaslInit();
         input.setMechanism(Symbol.valueOf("ANONYMOUS"));
@@ -201,6 +199,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
 
         final SaslInit result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = (SaslInit) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (SaslInit) decoder.readObject(buffer, decoderState);
@@ -222,8 +221,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeTypeAllFieldsSet(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         byte[] initialResponse = new byte[] { 1, 2, 3, 4 };
 
@@ -236,6 +234,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
 
         final SaslInit result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = (SaslInit) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (SaslInit) decoder.readObject(buffer, decoderState);
@@ -243,7 +242,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
 
         assertEquals("test", result.getHostname());
         assertEquals(Symbol.valueOf("ANONYMOUS"), result.getMechanism());
-        assertArrayEquals(initialResponse, result.getInitialResponse().getArray());
+        assertEquals(ProtonBufferAllocator.defaultAllocator().copy(initialResponse), result.getInitialResponse());
     }
 
     @Test
@@ -257,8 +256,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         SaslInit init = new SaslInit();
 
@@ -274,6 +272,13 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
         init.setMechanism(Symbol.valueOf("PLAIN"));
 
         encoder.writeObject(buffer, encoderState, init);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -298,7 +303,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
         assertTrue(result instanceof SaslInit);
 
         SaslInit value = result;
-        assertArrayEquals(new byte[] {1, 2}, value.getInitialResponse().getArray());
+        assertEquals(ProtonBufferAllocator.defaultAllocator().copy(new byte[] {1, 2}), value.getInitialResponse());
         assertEquals("localhost", value.getHostname());
         assertEquals(Symbol.valueOf("PLAIN"), value.getMechanism());
     }
@@ -324,8 +329,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -341,6 +345,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(SaslInit.class, typeDecoder.getTypeClass());
 
@@ -380,8 +385,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -397,6 +401,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid encoding");
@@ -420,8 +425,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeArray(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         SaslInit[] array = new SaslInit[3];
 
@@ -437,6 +441,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -477,8 +482,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithNotEnoughListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -496,6 +500,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");
@@ -529,8 +534,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithToManyListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -546,6 +550,7 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");

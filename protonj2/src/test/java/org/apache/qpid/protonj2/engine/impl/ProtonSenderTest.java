@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 import org.apache.qpid.protonj2.engine.Engine;
@@ -1200,7 +1200,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(payloadBuffer);
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(payloadBuffer);
 
         Sender sender = session.sender("sender-1");
 
@@ -1247,7 +1247,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(payloadBuffer);
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(payloadBuffer);
 
         Sender sender = session.sender("sender-1");
 
@@ -1329,7 +1329,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.creditStateUpdateHandler(handler -> {
             if (handler.isSendable()) {
-                handler.next().setTag(new byte[] {0}).writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+                handler.next().setTag(new byte[] {0}).writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
             }
         });
 
@@ -1539,7 +1539,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0, 1, 2, 3, 4});
 
         Sender sender = session.sender("sender-1");
 
@@ -1614,7 +1614,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertFalse(sender.isSendable());
         try {
-            delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1 }));
+            delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 1 }));
             fail("Should not be able to write to delivery after connection closed.");
         } catch (IllegalStateException ise) {
             // Should not allow writes on past delivery instances after connection closed
@@ -1673,7 +1673,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertFalse(sender.isSendable());
         try {
-            delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1 }));
+            delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 1 }));
             fail("Should not be able to write to delivery after session closed.");
         } catch (IllegalStateException ise) {
             // Should not allow writes on past delivery instances after session closed
@@ -1713,7 +1713,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertTrue(sender.isSendable());
 
         try {
-            delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1 }));
+            delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 1 }));
             fail("Should not be able to write to delivery afters simulated connection drop.");
         } catch (EngineFailedException efe) {
             // Should not allow writes on past delivery instances after connection dropped
@@ -2004,7 +2004,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNotNull(delivery);
 
         delivery.setTag(new byte[] {0});
-        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
+        delivery.streamBytes(ProtonBufferAllocator.defaultAllocator().copy(payload), false);
         delivery.streamBytes(null, true);
 
         assertFalse(delivery.isAborted());
@@ -2071,7 +2071,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNotNull(delivery);
 
         delivery.setTag(new byte[] {0});
-        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery.streamBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         delivery.abort();
 
         assertTrue(delivery.isAborted());
@@ -2138,7 +2138,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNotNull(delivery);
 
         delivery.setTag(new byte[] {0});
-        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery.streamBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         assertTrue(sender.hasUnsettled());
 
@@ -2268,7 +2268,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectDetach().withHandle(0).respond();
 
         delivery = sender.current();
-        delivery.setTag(new byte[] {1}).writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery.setTag(new byte[] {1}).writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         delivery.disposition(Accepted.getInstance(), true);
 
         sender.close();
@@ -2364,7 +2364,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0, 1, 2, 3, 4});
 
         Sender sender = session.sender("sender-1");
 
@@ -2446,7 +2446,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0, 1, 2, 3, 4});
 
         Sender sender = session.sender("sender-1");
         final AtomicReference<OutgoingDelivery> sentDelivery = new AtomicReference<>();
@@ -2512,7 +2512,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0, 1, 2, 3, 4});
 
         Sender sender = session.sender("sender-1");
 
@@ -2900,7 +2900,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0, 1, 2, 3, 4});
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -2955,7 +2955,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0, 1, 2, 3, 4});
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -2983,11 +2983,11 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .withDeliveryTag(new byte[] {2}).accept();
 
         OutgoingDelivery delivery1 = sender.next();
-        delivery1.writeBytes(payload.duplicate());
+        delivery1.writeBytes(payload.copy());
         OutgoingDelivery delivery2 = sender.next();
-        delivery2.writeBytes(payload.duplicate());
+        delivery2.writeBytes(payload.copy());
         OutgoingDelivery delivery3 = sender.next();
-        delivery3.writeBytes(payload.duplicate());
+        delivery3.writeBytes(payload.copy());
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
@@ -3035,7 +3035,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(payloadBuffer);
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(payloadBuffer);
 
         Sender sender = session.sender("sender-1");
 
@@ -3093,7 +3093,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0, 1, 2, 3, 4});
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -3139,7 +3139,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                 delivery.settle();
             }
 
-            delivery.writeBytes(payload.duplicate());
+            delivery.writeBytes(payload.copy(true));
 
             if (!sendSettled) {
                 delivery.settle();
@@ -3168,7 +3168,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0, 1, 2, 3, 4}).convertToReadOnly();
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -3196,11 +3196,11 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .withDeliveryTag(new byte[] {2});
 
         OutgoingDelivery delivery1 = sender.next();
-        delivery1.writeBytes(payload.duplicate());
+        delivery1.writeBytes(payload.copy(true));
         OutgoingDelivery delivery2 = sender.next();
-        delivery2.writeBytes(payload.duplicate());
+        delivery2.writeBytes(payload.copy(true));
         OutgoingDelivery delivery3 = sender.next();
-        delivery3.writeBytes(payload.duplicate());
+        delivery3.writeBytes(payload.copy(true));
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
@@ -3368,12 +3368,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         delivery.setTag(new byte[] {0});
         delivery.setMessageFormat(42);
-        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
+        delivery.streamBytes(ProtonBufferAllocator.defaultAllocator().copy(payload), false);
 
         assertThrows(IllegalStateException.class, () -> delivery.setMessageFormat(43));
         assertDoesNotThrow(() -> delivery.setMessageFormat(42));
 
-        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), true);
+        delivery.streamBytes(ProtonBufferAllocator.defaultAllocator().copy(payload), true);
 
         assertFalse(delivery.isAborted());
         assertFalse(delivery.isPartial());
@@ -3450,13 +3450,13 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         delivery.setTag(new byte[] {0});
         delivery.setMessageFormat(42);
-        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
+        delivery.streamBytes(ProtonBufferAllocator.defaultAllocator().copy(payload), false);
 
         assertThrows(IllegalStateException.class, () -> delivery.setMessageFormat(43));
         assertDoesNotThrow(() -> delivery.setMessageFormat(42));
 
         delivery.disposition(Accepted.getInstance(), settle);
-        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), true);
+        delivery.streamBytes(ProtonBufferAllocator.defaultAllocator().copy(payload), true);
 
         assertFalse(delivery.isAborted());
         assertFalse(delivery.isPartial());
@@ -3501,7 +3501,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNotNull(delivery);
 
         delivery.setTag(new byte[] {0});
-        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
+        delivery.streamBytes(ProtonBufferAllocator.defaultAllocator().copy(payload), false);
 
         assertFalse(sender.isSendable());
 
@@ -3553,7 +3553,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         delivery.setTag(new byte[] {0});
         // Shouldn't generate any frames as there's no session capacity
-        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
+        delivery.streamBytes(ProtonBufferAllocator.defaultAllocator().copy(payload), false);
 
         {
             final CountDownLatch senderCreditUpdated = new CountDownLatch(1);
@@ -3581,7 +3581,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .withPayload(payload);
         peer.expectDetach().withHandle(0).respond();
 
-        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         assertFalse(sender.isSendable());
 
@@ -3621,7 +3621,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         delivery.setTag(new byte[] {0});
         // Shouldn't generate any frames as there's no session capacity
-        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload), false);
+        delivery.streamBytes(ProtonBufferAllocator.defaultAllocator().copy(payload), false);
 
         {
             final CountDownLatch senderCreditUpdated = new CountDownLatch(1);
@@ -3649,7 +3649,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .withPayload(payload);
         peer.expectDetach().withHandle(0).respond();
 
-        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         assertFalse(sender.isSendable());
 
@@ -3722,7 +3722,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         // Should not generate any outgoing transfers as the delivery is not sendable
         final OutgoingDelivery delivery = sender.next();
         delivery.setTag(new byte[] {0});
-        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         sender.close();
 
@@ -3793,7 +3793,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         // Should not generate any outgoing transfers as the delivery is not sendable
         final OutgoingDelivery delivery = sender.next();
         delivery.setTag(new byte[] {0});
-        delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         sender.close();
 
@@ -3819,7 +3819,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         byte[] payload = new byte[1536];
         Arrays.fill(payload, (byte) 64);
-        ProtonBuffer payloadBuffer = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
+        ProtonBuffer payloadBuffer = ProtonBufferAllocator.defaultAllocator().copy(payload);
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver").withMaxFrameSize(1024);
@@ -3892,7 +3892,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0, 1, 2, 3, 4});
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -3981,10 +3981,10 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertEquals(0, delivery.getTransferCount());
 
         delivery.setTag(new byte[] {0});
-        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery.streamBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         assertEquals(1, delivery.getTransferCount());
 
-        delivery.streamBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery.streamBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         assertEquals(2, delivery.getTransferCount());
 
         delivery.abort();
@@ -4021,7 +4021,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
         ProtonTestConnector peer = createTestPeer(engine);
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {0, 1, 2, 3, 4}).convertToReadOnly();
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
@@ -4060,18 +4060,18 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         OutgoingDelivery delivery1 = sender.next();
         delivery1.setTag(new byte[] { 0 });
-        delivery1.writeBytes(payload.duplicate());
+        delivery1.writeBytes(payload.copy(true));
 
         OutgoingDelivery delivery2 = sender.next();
         delivery2.setTag(new byte[] { 1 });
-        delivery2.writeBytes(payload.duplicate());
+        delivery2.writeBytes(payload.copy(true));
 
         OutgoingDelivery delivery3 = sender.next();
         delivery3.setTag(new byte[] { 2 });
-        delivery3.writeBytes(payload.duplicate());
+        delivery3.writeBytes(payload.copy(true));
 
         sender.disposition((delivery) -> {
-            if (delivery.getTag().tagBuffer().equals(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {1}))) {
+            if (delivery.getTag().tagBuffer().equals(ProtonBufferAllocator.defaultAllocator().copy(new byte[] {1}))) {
                 return true;
             } else {
                 return false;
@@ -4132,11 +4132,11 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         OutgoingDelivery delivery1 = sender.next();
         delivery1.setTag(new byte[] { 0 });
-        delivery1.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery1.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         OutgoingDelivery delivery2 = sender.next();
         delivery2.setTag(new byte[] { 1 });
-        delivery2.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+        delivery2.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
 
         peer.waitForScriptToComplete();
         peer.expectDetach().respond();
@@ -4202,7 +4202,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         for (int i = 0; i < 10; ++i) {
             OutgoingDelivery delivery = sender.next();
             delivery.setTag(new byte[] { (byte) i });
-            delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(payload));
+            delivery.writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
         }
 
         peer.waitForScriptToComplete();
@@ -4293,7 +4293,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         int payloadOutstanding = 4800;
         final byte[] bytes = new byte[payloadOutstanding];
         Arrays.fill(bytes, (byte) 1);
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(bytes);
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(bytes);
 
         OutgoingDelivery delivery = sender.next().setTag(new byte[] { 0 });
         assertEquals(payload.getReadableBytes(), payloadOutstanding);
@@ -4369,7 +4369,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         int payloadOutstanding = 4800;
         final byte[] bytes = new byte[payloadOutstanding];
         Arrays.fill(bytes, (byte) 1);
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(bytes);
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(bytes);
 
         final OutgoingDelivery delivery = sender.next().setTag(new byte[] { 0 });
         assertEquals(payload.getReadableBytes(), payloadOutstanding);

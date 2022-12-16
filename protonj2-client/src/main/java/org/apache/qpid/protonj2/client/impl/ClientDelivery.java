@@ -75,7 +75,9 @@ public final class ClientDelivery extends ClientDeliverable<ClientDelivery, Clie
 
         Message<E> message = (Message<E>) cachedMessage;
         if (message == null && payload.isReadable()) {
-            message = (Message<E>)(cachedMessage = ClientMessageSupport.decodeMessage(payload, this::deliveryAnnotations));
+            try (payload) {
+                message = (Message<E>)(cachedMessage = ClientMessageSupport.decodeMessage(payload, this::deliveryAnnotations));
+            }
         }
 
         return message;
@@ -88,7 +90,9 @@ public final class ClientDelivery extends ClientDeliverable<ClientDelivery, Clie
         }
 
         if (rawInputStream == null) {
-            rawInputStream = new ProtonBufferInputStream(payload);
+            try (payload) {
+                rawInputStream = new ProtonBufferInputStream(payload);
+            }
         }
 
         return rawInputStream;

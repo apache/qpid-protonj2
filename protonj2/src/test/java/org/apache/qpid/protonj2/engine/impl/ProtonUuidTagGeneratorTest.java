@@ -25,8 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.protonj2.buffer.ProtonByteUtils;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferUtils;
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.junit.jupiter.api.Test;
@@ -67,10 +67,11 @@ public class ProtonUuidTagGeneratorTest {
 
         assertEquals(16, tag.tagLength());
 
-        byte[] tagBuffer = tag.tagBuffer().getArray();
+        final byte[] tagBuffer = new byte[tag.tagBuffer().getReadableBytes()];
+        tag.tagBuffer().readBytes(tagBuffer, 0, tagBuffer.length);
 
-        long msBytes = ProtonByteUtils.readLong(tagBuffer, 0);
-        long lsBytes = ProtonByteUtils.readLong(tagBuffer, 8);
+        long msBytes = ProtonBufferUtils.readLong(tagBuffer, 0);
+        long lsBytes = ProtonBufferUtils.readLong(tagBuffer, 8);
 
         UUID uuid = new UUID(msBytes, lsBytes);
 
@@ -87,10 +88,11 @@ public class ProtonUuidTagGeneratorTest {
 
         assertEquals(16, tag.tagLength());
 
-        byte[] tagBuffer = tag.tagBuffer().getArray();
+        final byte[] tagBuffer = new byte[tag.tagBuffer().getReadableBytes()];
+        tag.tagBuffer().readBytes(tagBuffer, 0, tagBuffer.length);
 
-        long msBytes = ProtonByteUtils.readLong(tagBuffer, 0);
-        long lsBytes = ProtonByteUtils.readLong(tagBuffer, 8);
+        long msBytes = ProtonBufferUtils.readLong(tagBuffer, 0);
+        long lsBytes = ProtonBufferUtils.readLong(tagBuffer, 8);
 
         UUID uuid = new UUID(msBytes, lsBytes);
 
@@ -102,7 +104,7 @@ public class ProtonUuidTagGeneratorTest {
     @Test
     public void testCreateMatchingUUIDFromWrittenBuffer() {
         ProtonUuidTagGenerator generator = new ProtonUuidTagGenerator();
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate(16);
 
         DeliveryTag tag = generator.nextTag();
 
@@ -110,10 +112,11 @@ public class ProtonUuidTagGeneratorTest {
 
         assertEquals(16, buffer.getReadableBytes());
 
-        byte[] tagBuffer = tag.tagBuffer().getArray();
+        final byte[] tagBuffer = new byte[tag.tagBuffer().getReadableBytes()];
+        tag.tagBuffer().readBytes(tagBuffer, 0, tagBuffer.length);
 
-        long msBytes = ProtonByteUtils.readLong(tagBuffer, 0);
-        long lsBytes = ProtonByteUtils.readLong(tagBuffer, 8);
+        long msBytes = ProtonBufferUtils.readLong(tagBuffer, 0);
+        long lsBytes = ProtonBufferUtils.readLong(tagBuffer, 8);
 
         UUID uuid = new UUID(msBytes, lsBytes);
 

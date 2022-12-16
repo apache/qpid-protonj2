@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.test.driver;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 /**
  * Link Tracker that manages tracking of the peer Sender link which will
@@ -32,7 +32,7 @@ public class SenderTracker extends LinkTracker {
     }
 
     @Override
-    protected void handleTransfer(Transfer transfer, ByteBuf payload) {
+    protected void handleTransfer(Transfer transfer, Buffer payload) {
         // TODO Handle sender scripted transfer by updating local state.
     }
 

@@ -24,8 +24,8 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.PerformativeDescribe
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty5.buffer.Buffer;
+import io.netty5.buffer.BufferAllocator;
 
 class FrameDecoder {
 
@@ -49,7 +49,7 @@ class FrameDecoder {
         this.driver = driver;
     }
 
-    public void ingest(ByteBuf buffer) throws AssertionError {
+    public void ingest(Buffer buffer) throws AssertionError {
         try {
             // Parses in-incoming data and emit one complete frame before returning, caller should
             // ensure that the input buffer is drained into the engine or stop if the engine
@@ -107,7 +107,7 @@ class FrameDecoder {
          *
          * @throws AssertionError if an error occurs while parsing incoming data.
          */
-        void parse(ByteBuf input) throws AssertionError;
+        void parse(Buffer input) throws AssertionError;
 
         /**
          * Reset the stage to its defaults for a new cycle of parsing.
@@ -130,8 +130,8 @@ class FrameDecoder {
         private int headerByte;
 
         @Override
-        public void parse(ByteBuf incoming) throws AssertionError {
-            while (incoming.isReadable() && headerByte < AMQPHeader.HEADER_SIZE_BYTES) {
+        public void parse(Buffer incoming) throws AssertionError {
+            while (incoming.readableBytes() > 0 && headerByte < AMQPHeader.HEADER_SIZE_BYTES) {
                 headerBytes[headerByte++] = incoming.readByte();
             }
 
@@ -163,8 +163,8 @@ class FrameDecoder {
         private int multiplier = FRAME_SIZE_BYTES;
 
         @Override
-        public void parse(ByteBuf input) throws AssertionError {
-            while (input.isReadable()) {
+        public void parse(Buffer input) throws AssertionError {
+            while (input.readableBytes() > 0) {
                 frameSize |= (input.readByte() & 0xFF) << (--multiplier * Byte.SIZE);
                 if (multiplier == 0) {
                     break;
@@ -209,19 +209,23 @@ class FrameDecoder {
 
     private class FrameBufferingStage implements FrameParserStage {
 
-        private ByteBuf buffer;
+        private Buffer buffer;
 
         @Override
-        public void parse(ByteBuf input) throws AssertionError {
+        public void parse(Buffer input) throws AssertionError {
             if (input.readableBytes() < buffer.writableBytes()) {
                 buffer.writeBytes(input);
             } else {
-                buffer.writeBytes(input, buffer.writableBytes());
+                final int remaining = buffer.writableBytes();
+
+                input.copyInto(input.readerOffset(), buffer, buffer.writerOffset(), remaining);
+                input.skipReadableBytes(remaining);
+                buffer.skipWritableBytes(remaining);
 
                 // Now we can consume the buffer frame body.
                 initializeFrameBodyParsingStage(buffer.readableBytes());
-                try {
-                    stage.parse(buffer);
+                try (Buffer frame = buffer.makeReadOnly()){
+                    stage.parse(frame);
                 } finally {
                     buffer = null;
                 }
@@ -230,7 +234,7 @@ class FrameDecoder {
 
         @Override
         public FrameBufferingStage reset(int frameSize) {
-            buffer = Unpooled.buffer(frameSize, frameSize);
+            buffer = BufferAllocator.onHeapUnpooled().allocate(frameSize).implicitCapacityLimit(frameSize);
             return this;
         }
     }
@@ -240,7 +244,7 @@ class FrameDecoder {
         private int frameSize;
 
         @Override
-        public void parse(ByteBuf input) throws AssertionError {
+        public void parse(Buffer input) throws AssertionError {
             int dataOffset = (input.readByte() << 2) & 0x3FF;
             int frameSize = this.frameSize + FRAME_SIZE_BYTES;
 
@@ -251,16 +255,16 @@ class FrameDecoder {
 
             // note that this skips over the extended header if it's present
             if (dataOffset != 8) {
-                input.readerIndex(input.readerIndex() + dataOffset - 8);
+                input.readerOffset(input.readerOffset() + dataOffset - 8);
             }
 
             final int frameBodySize = frameSize - dataOffset;
 
-            ByteBuf payload = null;
+            Buffer payload = null;
             Object val = null;
 
             if (frameBodySize > 0) {
-                int frameBodyStartIndex = input.readerIndex();
+                int frameBodyStartIndex = input.readerOffset();
 
                 try {
                     codec.decode(input);
@@ -283,12 +287,12 @@ class FrameDecoder {
                 // Slice to the known Frame body size and use that as the buffer for any payload once
                 // the actual Performative has been decoded.  The implies that the data comprising the
                 // performative will be held as long as the payload buffer is kept.
-                if (input.isReadable()) {
+                if (input.readableBytes() > 0) {
                     // Check that the remaining bytes aren't part of another frame.
-                    int payloadSize = frameBodySize - (input.readerIndex() - frameBodyStartIndex);
+                    int payloadSize = frameBodySize - (input.readerOffset() - frameBodyStartIndex);
                     if (payloadSize > 0) {
-                        payload = input.slice(input.readerIndex(), payloadSize);
-                        input.skipBytes(payloadSize);
+                        payload = input.copy(input.readerOffset(), payloadSize, true);
+                        input.skipReadableBytes(payloadSize);
                     }
                 }
             } else {
@@ -345,7 +349,7 @@ class FrameDecoder {
         }
 
         @Override
-        public void parse(ByteBuf input) throws AssertionError {
+        public void parse(Buffer input) throws AssertionError {
             throw parsingError;
         }
 

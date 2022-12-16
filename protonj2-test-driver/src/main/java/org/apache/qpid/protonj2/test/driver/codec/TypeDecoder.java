@@ -29,7 +29,7 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 class TypeDecoder {
 
@@ -96,31 +96,31 @@ class TypeDecoder {
 
         Codec.DataType getType();
 
-        int size(ByteBuf buffer);
+        int size(Buffer buffer);
 
-        void parse(ByteBuf buffer, Codec data);
+        void parse(Buffer buffer, Codec data);
 
     }
 
-    static int decode(ByteBuf buffer, Codec data) {
-        if (buffer.isReadable()) {
-            int position = buffer.readerIndex();
-            TypeConstructor c = readConstructor(buffer);
+    static int decode(Buffer buffer, Codec data) {
+        if (buffer.readableBytes() > 0) {
+            final int position = buffer.readerOffset();
+            final TypeConstructor c = readConstructor(buffer);
             final int size = c.size(buffer);
             if (buffer.readableBytes() >= size) {
                 c.parse(buffer, data);
                 return 1 + size;
             } else {
-                buffer.readerIndex(position);
+                buffer.readerOffset(position);
                 return -4;
             }
         }
         return 0;
     }
 
-    private static TypeConstructor readConstructor(ByteBuf buffer) {
-        int index = buffer.readByte() & 0xff;
-        TypeConstructor tc = constructors[index];
+    private static TypeConstructor readConstructor(Buffer buffer) {
+        final int index = buffer.readByte() & 0xff;
+        final TypeConstructor tc = constructors[index];
         if (tc == null) {
             throw new IllegalArgumentException("No constructor for type " + index);
         }
@@ -135,12 +135,12 @@ class TypeDecoder {
         }
 
         @Override
-        public int size(ByteBuf buffer) {
+        public int size(Buffer buffer) {
             return 0;
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putNull();
         }
     }
@@ -153,12 +153,12 @@ class TypeDecoder {
         }
 
         @Override
-        public int size(ByteBuf buffer) {
+        public int size(Buffer buffer) {
             return 0;
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putBoolean(true);
         }
     }
@@ -171,12 +171,12 @@ class TypeDecoder {
         }
 
         @Override
-        public int size(ByteBuf buffer) {
+        public int size(Buffer buffer) {
             return 0;
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putBoolean(false);
         }
     }
@@ -189,12 +189,12 @@ class TypeDecoder {
         }
 
         @Override
-        public int size(ByteBuf buffer) {
+        public int size(Buffer buffer) {
             return 0;
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putUnsignedInteger(UnsignedInteger.ZERO);
         }
     }
@@ -207,12 +207,12 @@ class TypeDecoder {
         }
 
         @Override
-        public int size(ByteBuf buffer) {
+        public int size(Buffer buffer) {
             return 0;
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putUnsignedLong(UnsignedLong.ZERO);
         }
     }
@@ -225,12 +225,12 @@ class TypeDecoder {
         }
 
         @Override
-        public int size(ByteBuf buffer) {
+        public int size(Buffer buffer) {
             return 0;
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putList();
         }
     }
@@ -239,7 +239,7 @@ class TypeDecoder {
     private static abstract class Fixed0SizeConstructor implements TypeConstructor {
 
         @Override
-        public final int size(ByteBuf buffer) {
+        public final int size(Buffer buffer) {
             return 0;
         }
     }
@@ -247,7 +247,7 @@ class TypeDecoder {
     private static abstract class Fixed1SizeConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuf buffer) {
+        public int size(Buffer buffer) {
             return 1;
         }
     }
@@ -255,7 +255,7 @@ class TypeDecoder {
     private static abstract class Fixed2SizeConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuf buffer) {
+        public int size(Buffer buffer) {
             return 2;
         }
     }
@@ -263,7 +263,7 @@ class TypeDecoder {
     private static abstract class Fixed4SizeConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuf buffer) {
+        public int size(Buffer buffer) {
             return 4;
         }
     }
@@ -271,7 +271,7 @@ class TypeDecoder {
     private static abstract class Fixed8SizeConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuf buffer) {
+        public int size(Buffer buffer) {
             return 8;
         }
     }
@@ -279,7 +279,7 @@ class TypeDecoder {
     private static abstract class Fixed16SizeConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuf buffer) {
+        public int size(Buffer buffer) {
             return 16;
         }
     }
@@ -292,7 +292,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putUnsignedByte(UnsignedByte.valueOf(buffer.readByte()));
         }
     }
@@ -305,7 +305,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putByte(buffer.readByte());
         }
     }
@@ -318,7 +318,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putUnsignedInteger(UnsignedInteger.valueOf((buffer.readByte()) & 0xff));
         }
     }
@@ -331,7 +331,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putInt(buffer.readByte());
         }
     }
@@ -344,7 +344,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putUnsignedLong(UnsignedLong.valueOf((buffer.readByte()) & 0xff));
         }
     }
@@ -357,7 +357,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putLong(buffer.readByte());
         }
     }
@@ -370,8 +370,8 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
-            int i = buffer.readByte();
+        public void parse(Buffer buffer, Codec data) {
+            final int i = buffer.readByte();
             if (i != 0 && i != 1) {
                 throw new IllegalArgumentException("Illegal value " + i + " for boolean");
             }
@@ -387,7 +387,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putUnsignedShort(UnsignedShort.valueOf(buffer.readShort()));
         }
     }
@@ -400,7 +400,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putShort(buffer.readShort());
         }
     }
@@ -413,7 +413,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putUnsignedInteger(UnsignedInteger.valueOf(buffer.readInt()));
         }
     }
@@ -426,7 +426,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putInt(buffer.readInt());
         }
     }
@@ -439,7 +439,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putFloat(buffer.readFloat());
         }
     }
@@ -452,7 +452,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putChar(buffer.readInt());
         }
     }
@@ -465,7 +465,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putDecimal32(new Decimal32(buffer.readInt()));
         }
     }
@@ -478,7 +478,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putUnsignedLong(UnsignedLong.valueOf(buffer.readLong()));
         }
     }
@@ -491,7 +491,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putLong(buffer.readLong());
         }
     }
@@ -504,7 +504,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putDouble(buffer.readDouble());
         }
     }
@@ -517,7 +517,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putTimestamp(new Date(buffer.readLong()));
         }
     }
@@ -530,7 +530,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putDecimal64(new Decimal64(buffer.readLong()));
         }
     }
@@ -543,7 +543,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putDecimal128(new Decimal128(buffer.readLong(), buffer.readLong()));
         }
     }
@@ -556,7 +556,7 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putUUID(new UUID(buffer.readLong(), buffer.readLong()));
         }
     }
@@ -564,11 +564,11 @@ class TypeDecoder {
     private static abstract class SmallVariableConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuf buffer) {
-            int position = buffer.readerIndex();
-            if (buffer.isReadable()) {
-                int size = buffer.readByte() & 0xff;
-                buffer.readerIndex(position);
+        public int size(Buffer buffer) {
+            final int position = buffer.readerOffset();
+            if (buffer.readableBytes() > 0) {
+                final int size = buffer.readByte() & 0xff;
+                buffer.readerOffset(position);
 
                 return size + 1;
             } else {
@@ -581,11 +581,11 @@ class TypeDecoder {
     private static abstract class VariableConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuf buffer) {
-            int position = buffer.readerIndex();
+        public int size(Buffer buffer) {
+            final int position = buffer.readerOffset();
             if (buffer.readableBytes() >= 4) {
-                int size = buffer.readInt();
-                buffer.readerIndex(position);
+                final int size = buffer.readInt();
+                buffer.readerOffset(position);
 
                 return size + 4;
             } else {
@@ -603,10 +603,10 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
-            int size = buffer.readByte() & 0xff;
-            byte[] bytes = new byte[size];
-            buffer.readBytes(bytes);
+        public void parse(Buffer buffer, Codec data) {
+            final int size = buffer.readByte() & 0xff;
+            final byte[] bytes = new byte[size];
+            buffer.readBytes(bytes, 0, bytes.length);
             data.putBinary(bytes);
         }
     }
@@ -619,10 +619,10 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
-            int size = buffer.readByte() & 0xff;
-            byte[] bytes = new byte[size];
-            buffer.readBytes(bytes);
+        public void parse(Buffer buffer, Codec data) {
+            final int size = buffer.readByte() & 0xff;
+            final byte[] bytes = new byte[size];
+            buffer.readBytes(bytes, 0, bytes.length);
             data.putSymbol(Symbol.valueOf(new String(bytes, ASCII)));
         }
     }
@@ -635,10 +635,10 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
-            int size = buffer.readByte() & 0xff;
-            byte[] bytes = new byte[size];
-            buffer.readBytes(bytes);
+        public void parse(Buffer buffer, Codec data) {
+            final int size = buffer.readByte() & 0xff;
+            final byte[] bytes = new byte[size];
+            buffer.readBytes(bytes, 0, bytes.length);
             data.putString(new String(bytes, UTF_8));
         }
     }
@@ -651,10 +651,10 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
-            int size = buffer.readInt();
-            byte[] bytes = new byte[size];
-            buffer.readBytes(bytes);
+        public void parse(Buffer buffer, Codec data) {
+            final int size = buffer.readInt();
+            final byte[] bytes = new byte[size];
+            buffer.readBytes(bytes, 0, bytes.length);
             data.putBinary(bytes);
         }
     }
@@ -667,10 +667,10 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
-            int size = buffer.readInt();
-            byte[] bytes = new byte[size];
-            buffer.readBytes(bytes);
+        public void parse(Buffer buffer, Codec data) {
+            final int size = buffer.readInt();
+            final byte[] bytes = new byte[size];
+            buffer.readBytes(bytes, 0, bytes.length);
             data.putSymbol(Symbol.valueOf(new String(bytes, ASCII)));
         }
     }
@@ -683,10 +683,10 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
-            int size = buffer.readInt();
-            byte[] bytes = new byte[size];
-            buffer.readBytes(bytes);
+        public void parse(Buffer buffer, Codec data) {
+            final int size = buffer.readInt();
+            final byte[] bytes = new byte[size];
+            buffer.readBytes(bytes, 0, bytes.length);
             data.putString(new String(bytes, UTF_8));
         }
     }
@@ -699,13 +699,14 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             int size = buffer.readByte() & 0xff;
-            ByteBuf buf = buffer.slice(buffer.readerIndex(), size);
-            buffer.skipBytes(size);
-            int count = buf.readByte() & 0xff;
-            data.putList();
-            parseChildren(data, buf, count);
+            try (Buffer buf = buffer.copy(buffer.readerOffset(), size, true)) {
+                buffer.skipReadableBytes(size);
+                final int count = buf.readByte() & 0xff;
+                data.putList();
+                parseChildren(data, buf, count);
+            }
         }
     }
 
@@ -717,13 +718,14 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             int size = buffer.readByte() & 0xff;
-            ByteBuf buf = buffer.slice(buffer.readerIndex(), size);
-            buffer.skipBytes(size);
-            int count = buf.readByte() & 0xff;
-            data.putMap();
-            parseChildren(data, buf, count);
+            try (Buffer buf = buffer.copy(buffer.readerOffset(), size, true)) {
+                buffer.skipReadableBytes(size);
+                final int count = buf.readByte() & 0xff;
+                data.putMap();
+                parseChildren(data, buf, count);
+            }
         }
     }
 
@@ -735,13 +737,14 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             int size = buffer.readInt();
-            ByteBuf buf = buffer.slice(buffer.readerIndex(), size);
-            buffer.skipBytes(size);
-            int count = buf.readInt();
-            data.putList();
-            parseChildren(data, buf, count);
+            try (Buffer buf = buffer.copy(buffer.readerOffset(), size, true)) {
+                buffer.skipReadableBytes(size);
+                final int count = buf.readInt();
+                data.putList();
+                parseChildren(data, buf, count);
+            }
         }
     }
 
@@ -753,20 +756,21 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             int size = buffer.readInt();
-            ByteBuf buf = buffer.slice(buffer.readerIndex(), size);
-            buffer.skipBytes(size);
-            int count = buf.readInt();
-            data.putMap();
-            parseChildren(data, buf, count);
+            try (Buffer buf = buffer.copy(buffer.readerOffset(), size, true)) {
+                buffer.skipReadableBytes(size);
+                final int count = buf.readInt();
+                data.putMap();
+                parseChildren(data, buf, count);
+            }
         }
     }
 
-    private static void parseChildren(Codec data, ByteBuf buf, int count) {
+    private static void parseChildren(Codec data, Buffer buf, int count) {
         data.enter();
         for (int i = 0; i < count; i++) {
-            TypeConstructor c = readConstructor(buf);
+            final TypeConstructor c = readConstructor(buf);
             final int size = c.size(buf);
             final int getReadableBytes = buf.readableBytes();
             if (size <= getReadableBytes) {
@@ -787,25 +791,26 @@ class TypeDecoder {
         }
 
         @Override
-        public int size(ByteBuf buffer) {
-            ByteBuf buf = buffer.slice();
-            if (buf.isReadable()) {
-                TypeConstructor c = readConstructor(buf);
-                int size = c.size(buf);
-                if (buf.readableBytes() > size) {
-                    buf.readerIndex(size + 1);
-                    c = readConstructor(buf);
-                    return size + 2 + c.size(buf);
+        public int size(Buffer buffer) {
+            try (Buffer buf = buffer.copy(true)) {
+                if (buf.readableBytes() > 0) {
+                    TypeConstructor c = readConstructor(buf);
+                    final int size = c.size(buf);
+                    if (buf.readableBytes() > size) {
+                        buf.readerOffset(size + 1);
+                        c = readConstructor(buf);
+                        return size + 2 + c.size(buf);
+                    } else {
+                        return size + 2;
+                    }
                 } else {
-                    return size + 2;
+                    return 1;
                 }
-            } else {
-                return 1;
             }
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
+        public void parse(Buffer buffer, Codec data) {
             data.putDescribed();
             data.enter();
             TypeConstructor c = readConstructor(buffer);
@@ -824,13 +829,13 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
-
-            int size = buffer.readByte() & 0xff;
-            ByteBuf buf = buffer.slice(buffer.readerIndex(), size);
-            buffer.skipBytes(size);
-            int count = buf.readByte() & 0xff;
-            parseArray(data, buf, count);
+        public void parse(Buffer buffer, Codec data) {
+            final int size = buffer.readByte() & 0xff;
+            try (Buffer buf = buffer.copy(buffer.readerOffset(), size, true)) {
+                buffer.skipReadableBytes(size);
+                final int count = buf.readByte() & 0xff;
+                parseArray(data, buf, count);
+            }
         }
     }
 
@@ -842,23 +847,23 @@ class TypeDecoder {
         }
 
         @Override
-        public void parse(ByteBuf buffer, Codec data) {
-
-            int size = buffer.readInt();
-            ByteBuf buf = buffer.slice(buffer.readerIndex(), size);
-            buffer.skipBytes(size);
-            int count = buf.readInt();
-            parseArray(data, buf, count);
+        public void parse(Buffer buffer, Codec data) {
+            final int size = buffer.readInt();
+            try (Buffer buf = buffer.copy(buffer.readerOffset(), size, true)) {
+                buffer.skipReadableBytes(size);
+                final int count = buf.readInt();
+                parseArray(data, buf, count);
+            }
         }
     }
 
-    private static void parseArray(Codec data, ByteBuf buffer, int count) {
+    private static void parseArray(Codec data, Buffer buffer, int count) {
         byte type = buffer.readByte();
         boolean isDescribed = type == (byte) 0x00;
-        int descriptorPosition = buffer.readerIndex();
+        final int descriptorPosition = buffer.readerOffset();
         if (isDescribed) {
-            TypeConstructor descriptorTc = readConstructor(buffer);
-            buffer.skipBytes(descriptorTc.size(buffer));
+            final TypeConstructor descriptorTc = readConstructor(buffer);
+            buffer.skipReadableBytes(descriptorTc.size(buffer));
             type = buffer.readByte();
             if (type == (byte) 0x00) {
                 throw new IllegalArgumentException("Malformed array data");
@@ -870,11 +875,11 @@ class TypeDecoder {
         data.putArray(isDescribed, tc.getType());
         data.enter();
         if (isDescribed) {
-            int position = buffer.readerIndex();
-            buffer.readerIndex(descriptorPosition);
-            TypeConstructor descriptorTc = readConstructor(buffer);
+            final int position = buffer.readerOffset();
+            buffer.readerOffset(descriptorPosition);
+            final TypeConstructor descriptorTc = readConstructor(buffer);
             descriptorTc.parse(buffer, data);
-            buffer.readerIndex(position);
+            buffer.readerOffset(position);
         }
         for (int i = 0; i < count; i++) {
             tc.parse(buffer, data);

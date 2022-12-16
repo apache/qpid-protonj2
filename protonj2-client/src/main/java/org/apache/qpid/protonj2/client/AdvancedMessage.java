@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.impl.ClientMessage;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
@@ -277,6 +278,25 @@ public interface AdvancedMessage<E> extends Message<E> {
      *
      * @throws ClientException if an error occurs while encoding the message data.
      */
-    ProtonBuffer encode(Map<String, Object> deliveryAnnotations) throws ClientException;
+    default ProtonBuffer encode(Map<String, Object> deliveryAnnotations) throws ClientException {
+        return encode(deliveryAnnotations, ProtonBufferAllocator.defaultAllocator());
+    }
+
+    /**
+     * Encodes the {@link AdvancedMessage} for transmission by the client.  The provided {@link DeliveryAnnotations}
+     * can be included or augmented by the {@link AdvancedMessage} implementation based on the target message format.
+     * The implementation is responsible for ensuring that the delivery annotations are treated correctly encoded into
+     * the correct location in the message.
+     *
+     * @param deliveryAnnotations
+     *      A {@link Map} of delivery annotation values that were requested to be included in the transmitted message.
+     * @param allocator
+     * 		An allocator that should be used to create the buffer the message is encoded into.
+     *
+     * @return the encoded form of this message in a {@link ProtonBuffer} instance.
+     *
+     * @throws ClientException if an error occurs while encoding the message data.
+     */
+    ProtonBuffer encode(Map<String, Object> deliveryAnnotations, ProtonBufferAllocator allocator) throws ClientException;
 
 }

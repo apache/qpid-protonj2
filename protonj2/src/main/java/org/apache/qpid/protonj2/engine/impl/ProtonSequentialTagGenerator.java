@@ -17,8 +17,8 @@
 package org.apache.qpid.protonj2.engine.impl;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.protonj2.buffer.ProtonByteUtils;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferUtils;
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 
@@ -67,21 +67,21 @@ public class ProtonSequentialTagGenerator extends ProtonDeliveryTagGenerator {
         @Override
         public byte[] tagBytes() {
             if (tagValue < 0) {
-                return ProtonByteUtils.toByteArray(tagValue);
+                return ProtonBufferUtils.toByteArray(tagValue);
             } else if (tagValue <= 0x00000000000000FFl) {
-                return ProtonByteUtils.toByteArray((byte) tagValue);
+                return ProtonBufferUtils.toByteArray((byte) tagValue);
             } else if (tagValue <= 0x000000000000FFFFl) {
-                return ProtonByteUtils.toByteArray((short) tagValue);
+                return ProtonBufferUtils.toByteArray((short) tagValue);
             } else if (tagValue <= 0x00000000FFFFFFFFl) {
-                return ProtonByteUtils.toByteArray((int) tagValue);
+                return ProtonBufferUtils.toByteArray((int) tagValue);
             } else {
-                return ProtonByteUtils.toByteArray(tagValue);
+                return ProtonBufferUtils.toByteArray(tagValue);
             }
         }
 
         @Override
         public ProtonBuffer tagBuffer() {
-            return ProtonByteBufferAllocator.DEFAULT.wrap(tagBytes());
+            return ProtonBufferAllocator.defaultAllocator().copy(tagBytes()).convertToReadOnly();
         }
 
         @Override
@@ -124,7 +124,7 @@ public class ProtonSequentialTagGenerator extends ProtonDeliveryTagGenerator {
             if (tagValue < 0) {
                 buffer.writeLong(tagValue);
             } else if (tagValue <= 0x00000000000000FFl) {
-                buffer.writeByte((int) tagValue);
+                buffer.writeByte((byte) tagValue);
             } else if (tagValue <= 0x000000000000FFFFl) {
                 buffer.writeShort((short) tagValue);
             } else if (tagValue <= 0x00000000FFFFFFFFl) {

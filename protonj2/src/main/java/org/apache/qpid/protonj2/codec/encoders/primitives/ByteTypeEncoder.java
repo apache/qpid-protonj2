@@ -81,16 +81,16 @@ public final class ByteTypeEncoder extends AbstractPrimitiveTypeEncoder<Byte> {
     private void writeAsArray8(ProtonBuffer buffer, EncoderState state, byte[] values) {
         buffer.writeByte(EncodingCodes.ARRAY8);
 
-        int startIndex = buffer.getWriteIndex();
+        final int startIndex = buffer.getWriteOffset();
 
-        buffer.writeByte(0);
-        buffer.writeByte(values.length);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) values.length);
 
         // Write the array elements after writing the array length
         writeRawArray(buffer, state, values);
 
         // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
+        int endIndex = buffer.getWriteOffset();
         long writeSize = endIndex - startIndex - Byte.BYTES;
 
         buffer.setByte(startIndex, (byte) writeSize);
@@ -99,7 +99,7 @@ public final class ByteTypeEncoder extends AbstractPrimitiveTypeEncoder<Byte> {
     private void writeAsArray32(ProtonBuffer buffer, EncoderState state, byte[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
-        int startIndex = buffer.getWriteIndex();
+        int startIndex = buffer.getWriteOffset();
 
         buffer.writeInt(0);
         buffer.writeInt(values.length);
@@ -108,7 +108,7 @@ public final class ByteTypeEncoder extends AbstractPrimitiveTypeEncoder<Byte> {
         writeRawArray(buffer, state, values);
 
         // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
+        int endIndex = buffer.getWriteOffset();
         long writeSize = endIndex - startIndex - Integer.BYTES;
 
         if (writeSize > Integer.MAX_VALUE) {

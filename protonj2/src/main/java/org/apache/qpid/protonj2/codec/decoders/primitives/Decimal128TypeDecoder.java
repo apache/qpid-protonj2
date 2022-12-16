@@ -60,7 +60,7 @@ public final class Decimal128TypeDecoder extends AbstractPrimitiveTypeDecoder<De
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.skipBytes(Decimal128.BYTES);
+        buffer.advanceReadOffset(Decimal128.BYTES);
     }
 
     @Override

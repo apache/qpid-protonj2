@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
@@ -46,10 +46,10 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
                     "of data available (%d)", length, buffer.getReadableBytes()));
         }
 
-        final ProtonBuffer symbolBuffer = buffer.slice(buffer.getReadIndex(), length);
-        buffer.skipBytes(length);
-
-        return Symbol.getSymbol(symbolBuffer, true);
+        try (ProtonBuffer symbolBuffer = buffer.copy(buffer.getReadOffset(), length, true)) {
+            buffer.advanceReadOffset(length);
+            return Symbol.getSymbol(symbolBuffer, true);
+        }
     }
 
     /**
@@ -88,7 +88,7 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
             throw new DecodeException("Error while reading Symbol payload bytes", ex);
         }
 
-        return Symbol.getSymbol(ProtonByteBufferAllocator.DEFAULT.wrap(symbolBytes), true);
+        return Symbol.getSymbol(ProtonBufferAllocator.defaultAllocator().copy(symbolBytes).convertToReadOnly());
     }
 
     /**
@@ -113,7 +113,7 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.skipBytes(readSize(buffer));
+        buffer.advanceReadOffset(readSize(buffer));
     }
 
     @Override

@@ -33,7 +33,7 @@ import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.EndMatcher;
 import org.hamcrest.Matcher;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 /**
  * Scripted expectation for the AMQP End performative
@@ -63,7 +63,7 @@ public class EndExpectation extends AbstractExpectation<End> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleEnd(int frameSize, End end, ByteBuf payload, int channel, AMQPTestDriver context) {
+    public void handleEnd(int frameSize, End end, Buffer payload, int channel, AMQPTestDriver context) {
         super.handleEnd(frameSize, end, payload, channel, context);
 
         // Ensure that local session tracking knows that remote ended a Session.

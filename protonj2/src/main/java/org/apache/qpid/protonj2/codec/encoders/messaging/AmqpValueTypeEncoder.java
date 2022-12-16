@@ -62,7 +62,7 @@ public final class AmqpValueTypeEncoder extends AbstractDescribedTypeEncoder<Amq
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
 
-        final int startIndex = buffer.getWriteIndex();
+        final int startIndex = buffer.getWriteOffset();
 
         // Reserve space for the size and write the count of list elements.
         buffer.writeInt(0);
@@ -71,7 +71,7 @@ public final class AmqpValueTypeEncoder extends AbstractDescribedTypeEncoder<Amq
         writeRawArray(buffer, state, values);
 
         // Move back and write the size
-        final int endIndex = buffer.getWriteIndex();
+        final int endIndex = buffer.getWriteOffset();
         final long writeSize = endIndex - startIndex - Integer.BYTES;
 
         if (writeSize > Integer.MAX_VALUE) {

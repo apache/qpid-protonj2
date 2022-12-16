@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -38,13 +38,13 @@ public class ScramSHA256MechanismTest extends AbstractScramSHAMechanismTestBase 
 
     private static final String CLIENT_NONCE = "rOprNGfwEbeRWgbNEkqO";
 
-    private static final ProtonBuffer EXPECTED_CLIENT_INITIAL_RESPONSE = ProtonByteBufferAllocator.DEFAULT.wrap(
+    private static final ProtonBuffer EXPECTED_CLIENT_INITIAL_RESPONSE = ProtonBufferAllocator.defaultAllocator().copy(
         "n,,n=user,r=rOprNGfwEbeRWgbNEkqO".getBytes(StandardCharsets.UTF_8));
-    private static final ProtonBuffer SERVER_FIRST_MESSAGE = ProtonByteBufferAllocator.DEFAULT.wrap(
+    private static final ProtonBuffer SERVER_FIRST_MESSAGE = ProtonBufferAllocator.defaultAllocator().copy(
         "r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096".getBytes(StandardCharsets.UTF_8));
-    private static final ProtonBuffer EXPECTED_CLIENT_FINAL_MESSAGE = ProtonByteBufferAllocator.DEFAULT.wrap(
+    private static final ProtonBuffer EXPECTED_CLIENT_FINAL_MESSAGE = ProtonBufferAllocator.defaultAllocator().copy(
         "c=biws,r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,p=dHzbZapWIk4jUhN+Ute9ytag9zjfMHgsqmmiz7AndVQ=".getBytes(StandardCharsets.UTF_8));
-    private static final ProtonBuffer SERVER_FINAL_MESSAGE = ProtonByteBufferAllocator.DEFAULT.wrap(
+    private static final ProtonBuffer SERVER_FINAL_MESSAGE = ProtonBufferAllocator.defaultAllocator().copy(
         "v=6rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=".getBytes(StandardCharsets.UTF_8));
 
     public ScramSHA256MechanismTest() {
@@ -89,7 +89,7 @@ public class ScramSHA256MechanismTest extends AbstractScramSHAMechanismTestBase 
         String escapedUsername = "user=2Cname=3D";
 
         String expectedInitialResponseString = "n,,n=" + escapedUsername + ",r=" + CLIENT_NONCE;
-        ProtonBuffer expectedInitialResponseBuffer = ProtonByteBufferAllocator.DEFAULT.wrap(
+        ProtonBuffer expectedInitialResponseBuffer = ProtonBufferAllocator.defaultAllocator().copy(
             expectedInitialResponseString.getBytes(StandardCharsets.UTF_8));
 
         ScramSHA256Mechanism mech = new ScramSHA256Mechanism(CLIENT_NONCE);
@@ -106,18 +106,18 @@ public class ScramSHA256MechanismTest extends AbstractScramSHAMechanismTestBase 
         ProtonBuffer clientInitialResponse = mechanism.getInitialResponse(credentials);
         assertEquals(EXPECTED_CLIENT_INITIAL_RESPONSE, clientInitialResponse);
 
-        ProtonBuffer serverFirstMessage = ProtonByteBufferAllocator.DEFAULT.wrap(
+        ProtonBuffer serverFirstMessage = ProtonBufferAllocator.defaultAllocator().copy(
             "r=rOprNGfwEbeRWgbNEkqOb291012f-b281-47d3-acbc-fefffaad60f2,s=fQwuXmWB4XES7vNK4oBlLtH9cbWAmtxO+Z+tZ9m5W54=,i=4096".getBytes(StandardCharsets.UTF_8));
-        ProtonBuffer expectedClientFinalMessage = ProtonByteBufferAllocator.DEFAULT.wrap(
+        ProtonBuffer expectedClientFinalMessage = ProtonBufferAllocator.defaultAllocator().copy(
             "c=biws,r=rOprNGfwEbeRWgbNEkqOb291012f-b281-47d3-acbc-fefffaad60f2,p=PNeUNfKwyqBPjMssgF7yk4iLt8W24NS/D99HjBbXwyw=".getBytes(StandardCharsets.UTF_8));
 
         ProtonBuffer clientFinalMessage = mechanism.getChallengeResponse(credentials, serverFirstMessage);
 
         assertEquals(expectedClientFinalMessage, clientFinalMessage);
 
-        ProtonBuffer serverFinalMessage = ProtonByteBufferAllocator.DEFAULT.wrap(
+        ProtonBuffer serverFinalMessage = ProtonBufferAllocator.defaultAllocator().copy(
             "v=/N9SY26AOvz2QZkJZkyXpomWknaFWSN6zBGqg5RNG9w=".getBytes(StandardCharsets.UTF_8));
-        ProtonBuffer expectedFinalChallengeResponse = ProtonByteBufferAllocator.DEFAULT.wrap("".getBytes());
+        ProtonBuffer expectedFinalChallengeResponse = ProtonBufferAllocator.defaultAllocator().copy("".getBytes());
 
         assertEquals(expectedFinalChallengeResponse, mechanism.getChallengeResponse(credentials, serverFinalMessage));
 

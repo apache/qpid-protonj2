@@ -19,19 +19,41 @@ package org.apache.qpid.protonj2.types;
 import java.nio.ByteBuffer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferUtils;
 
+/**
+ * A Binary wrapper that presents an immutable view of a payload.
+ */
 public final class Binary {
 
     private final ProtonBuffer buffer;
     private int hashCode;
 
+    /**
+     * Creates an empty Binary instance.
+     */
     public Binary() {
         this((ProtonBuffer) null);
     }
 
+    /**
+     * Creates an {@link Binary} that wraps the given buffer or copies it
+     * if the given buffer is not read-only to preserves the immutable nature
+     * of this Binary instance.
+     *
+     * @param buffer the {@link ProtonBuffer} to wrap or copy.
+     */
     public Binary(ProtonBuffer buffer) {
-        this.buffer = buffer;
+        if (buffer != null && !buffer.isReadOnly()) {
+            this.buffer = buffer.copy(true);
+        } else {
+            this.buffer = buffer;
+        }
+
+        if (buffer != null) {
+            ProtonBufferUtils.registerCleanup(this, this.buffer);
+        }
     }
 
     public Binary(final byte[] data) {
@@ -39,7 +61,7 @@ public final class Binary {
     }
 
     public Binary(final byte[] data, final int offset, final int length) {
-        this.buffer = ProtonByteBufferAllocator.DEFAULT.wrap(data, offset, length);
+        this.buffer = ProtonBufferAllocator.defaultAllocator().copy(data, offset, length).convertToReadOnly();
     }
 
     public Binary copy() {
@@ -50,22 +72,52 @@ public final class Binary {
         }
     }
 
-    public byte[] arrayCopy() {
-        byte[] dataCopy = null;
+    /**
+     * Creates a <code>byte[]</code> that contains a copy of the bytes wrapped by this
+     * {@link Binary} instance. If the Binary has no backing buffer than this method
+     * returns <code>null</code>.
+     *
+     * @return a byte array based copy of the Binary instance backing bytes
+     */
+    public byte[] asByteArray() {
+        byte[] result = null;
+
         if (buffer != null) {
-            dataCopy = new byte[buffer.getReadableBytes()];
-            buffer.getBytes(buffer.getReadIndex(), dataCopy);
+            result = new byte[buffer.getReadableBytes()];
+            buffer.copyInto(buffer.getReadOffset(), result, 0, result.length);
         }
 
-        return dataCopy;
+        return result;
     }
 
+    /**
+     * Creates a read-only {@link ByteBuffer} that contains a copy of the bytes
+     * wrapped by this Binary instance. If the Binary has no backing buffer than
+     * this method returns <code>null</code>.
+     *
+     * @return a {@link ByteBuffer} copy of the Binary instance backing bytes
+     */
     public ByteBuffer asByteBuffer() {
-        return buffer != null ? buffer.toByteBuffer() : null;
+        ByteBuffer result = null;
+
+        if (buffer != null) {
+            result = ByteBuffer.allocate(buffer.getReadableBytes());
+            buffer.copyInto(buffer.getReadOffset(), result, 0, result.remaining());
+            result = result.asReadOnlyBuffer();
+        }
+
+        return result;
     }
 
+    /**
+     * Creates a read-only {@link ProtonBuffer} that contains a copy of the bytes
+     * wrapped by this Binary instance. If the Binary has no backing buffer than
+     * this method returns <code>null</code>.
+     *
+     * @return a {@link ProtonBuffer} copy of the Binary instance backing bytes
+     */
     public ProtonBuffer asProtonBuffer() {
-        return buffer;
+        return buffer == null ? null : buffer.copy(true);
     }
 
     @Override
@@ -97,18 +149,6 @@ public final class Binary {
         }
 
         return buffer.equals(other.buffer);
-    }
-
-    public boolean hasArray() {
-        return buffer != null ? buffer.hasArray() : false;
-    }
-
-    public int getArrayOffset() {
-        return buffer != null ? buffer.getArrayOffset() : 0;
-    }
-
-    public byte[] getArray() {
-        return buffer != null ? buffer.getArray() : null;
     }
 
     public int getLength() {

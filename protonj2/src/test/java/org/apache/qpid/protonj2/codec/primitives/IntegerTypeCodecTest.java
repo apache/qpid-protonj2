@@ -26,8 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -51,13 +51,14 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UINT);
         buffer.writeByte(EncodingCodes.UINT);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             try {
                 streamDecoder.readInteger(stream, streamDecoderState);
                 fail("Should not allow read of integer type as this type");
@@ -82,14 +83,14 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testReadUByteFromEncodingCode() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.INT);
         buffer.writeInt(42);
         buffer.writeByte(EncodingCodes.INT);
         buffer.writeInt(44);
         buffer.writeByte(EncodingCodes.SMALLINT);
-        buffer.writeByte(43);
+        buffer.writeByte((byte) 43);
         buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.NULL);
 
@@ -102,17 +103,18 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testReadUByteFromEncodingCodeFromStream() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.INT);
         buffer.writeInt(42);
         buffer.writeByte(EncodingCodes.INT);
         buffer.writeInt(44);
         buffer.writeByte(EncodingCodes.SMALLINT);
-        buffer.writeByte(43);
+        buffer.writeByte((byte) 43);
         buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.NULL);
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         assertEquals(42, streamDecoder.readInteger(stream, streamDecoderState).intValue());
         assertEquals(44, streamDecoder.readInteger(stream, streamDecoderState, 42));
@@ -136,7 +138,7 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testReadIntegerFromEncodingCodeInt() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.INT);
         buffer.writeInt(42);
@@ -146,32 +148,34 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testReadIntegerFromEncodingCodeSmallInt() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.SMALLINT);
-        buffer.writeByte(42);
+        buffer.writeByte((byte) 42);
 
         assertEquals(42, decoder.readInteger(buffer, decoderState).intValue());
     }
 
     @Test
     public void testReadIntegerFromEncodingCodeIntFromStream() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.INT);
         buffer.writeInt(42);
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         assertEquals(42, streamDecoder.readInteger(stream, streamDecoderState).intValue());
     }
 
     @Test
     public void testReadIntegerFromEncodingCodeSmallIntFromStream() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.SMALLINT);
-        buffer.writeByte(42);
+        buffer.writeByte((byte) 42);
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
 
         assertEquals(42, streamDecoder.readInteger(stream, streamDecoderState).intValue());
     }
@@ -187,8 +191,7 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
     }
 
     public void doTestSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeInteger(buffer, encoderState, Integer.MAX_VALUE);
@@ -198,6 +201,13 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
         int expected = 42;
 
         encoder.writeObject(buffer, encoderState, expected);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -242,8 +252,7 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
     }
 
     protected void doTestArrayOfObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final int size = 10;
 
@@ -256,6 +265,7 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -284,8 +294,7 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
     }
 
     private void testZeroSizedArrayOfObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Integer[] source = new Integer[0];
 
@@ -293,6 +302,7 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -327,8 +337,7 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
     }
 
     public void doTestReadIntegerArray(byte encoding, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         if (encoding == EncodingCodes.INT) {
             buffer.writeByte(EncodingCodes.ARRAY32);
@@ -342,12 +351,13 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
             buffer.writeInt(11);  // Size
             buffer.writeInt(2);   // Count
             buffer.writeByte(EncodingCodes.SMALLINT);
-            buffer.writeByte(1);   // [0]
-            buffer.writeByte(2);   // [1]
+            buffer.writeByte((byte) 1);   // [0]
+            buffer.writeByte((byte) 2);   // [1]
         }
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);

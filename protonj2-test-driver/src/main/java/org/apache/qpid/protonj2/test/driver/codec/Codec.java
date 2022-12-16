@@ -32,7 +32,7 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 public interface Codec {
 
@@ -91,9 +91,9 @@ public interface Codec {
 
     long encodedSize();
 
-    long encode(ByteBuf buffer);
+    long encode(Buffer buffer);
 
-    long decode(ByteBuf buffer);
+    long decode(Buffer buffer);
 
     void putList();
 

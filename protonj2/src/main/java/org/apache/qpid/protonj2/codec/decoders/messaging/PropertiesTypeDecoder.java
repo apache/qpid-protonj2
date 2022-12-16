@@ -104,7 +104,7 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
             // Peek ahead and see if there is a null in the next slot, if so we don't call
             // the setter for that entry to ensure the returned type reflects the encoded
             // state in the modification entry.
-            boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
+            boolean nullValue = buffer.getByte(buffer.getReadOffset()) == EncodingCodes.NULL;
             if (nullValue) {
                 buffer.readByte();
                 continue;

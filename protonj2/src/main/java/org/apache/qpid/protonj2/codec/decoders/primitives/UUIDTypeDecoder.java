@@ -62,7 +62,7 @@ public final class UUIDTypeDecoder extends AbstractPrimitiveTypeDecoder<UUID> {
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.skipBytes(BYTES);
+        buffer.advanceReadOffset(BYTES);
     }
 
     @Override

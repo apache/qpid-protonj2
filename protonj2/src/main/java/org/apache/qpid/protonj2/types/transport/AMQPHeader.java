@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.types.transport;
 import java.nio.ByteBuffer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 
 /**
  * Represents the AMQP protocol handshake packet that is sent during the
@@ -48,19 +48,19 @@ public final class AMQPHeader {
     private ProtonBuffer buffer;
 
     public AMQPHeader() {
-        this(AMQP_HEADER.buffer.duplicate());
+        this(AMQP_HEADER.buffer.copy(true));
     }
 
     public AMQPHeader(byte[] headerBytes) {
-        setBuffer(new ProtonByteBuffer(headerBytes), true);
+        setBuffer(ProtonBufferAllocator.defaultAllocator().copy(headerBytes).convertToReadOnly(), true);
     }
 
     public AMQPHeader(ProtonBuffer buffer) {
-        setBuffer(new ProtonByteBuffer(HEADER_SIZE_BYTES, HEADER_SIZE_BYTES).writeBytes(buffer), true);
+        setBuffer(buffer.copy(true), true);
     }
 
     public AMQPHeader(ProtonBuffer buffer, boolean validate) {
-        setBuffer(new ProtonByteBuffer(HEADER_SIZE_BYTES, HEADER_SIZE_BYTES).writeBytes(buffer), validate);
+        setBuffer(buffer.copy(true), validate);
     }
 
     public static AMQPHeader getAMQPHeader() {
@@ -88,13 +88,13 @@ public final class AMQPHeader {
     }
 
     public ProtonBuffer getBuffer() {
-        return buffer.copy();
+        return buffer.copy(true);
     }
 
     public byte[] toArray() {
         if (buffer != null) {
             final byte[] copy = new byte[buffer.getReadableBytes()];
-            buffer.getBytes(0, copy);
+            buffer.copyInto(0, copy, 0, copy.length);
             return copy;
         } else {
             return null;
@@ -104,7 +104,7 @@ public final class AMQPHeader {
     public ByteBuffer toByteBuffer() {
         if (buffer != null) {
             final byte[] copy = new byte[buffer.getReadableBytes()];
-            buffer.getBytes(0, copy);
+            buffer.copyInto(0, copy, 0, copy.length);
             return ByteBuffer.wrap(copy);
         } else {
             return null;
@@ -198,6 +198,29 @@ public final class AMQPHeader {
 
         buffer = value;
         return this;
+    }
+
+    /**
+     * Validates that the bytes contained in the given array are a valid AMQP header.
+     *
+     * @param headerBytes
+     * 		The bytes to validate.
+     */
+    public static void validate(byte[] headerBytes) {
+        if (headerBytes.length != 8) {
+            throw new IllegalArgumentException("Not an AMQP header buffer, size should be eight but was: " + headerBytes.length);
+        }
+
+        for (int i = 0; i < PREFIX.length; ++i) {
+            if (headerBytes[i] != PREFIX[i]) {
+                throw new IllegalArgumentException("The header bytes given do not have an AMQP prefix");
+            }
+        }
+
+        validateProtocolByte(headerBytes[PROTOCOL_ID_INDEX]);
+        validateMajorVersionByte(headerBytes[MAJOR_VERSION_INDEX]);
+        validateMinorVersionByte(headerBytes[MINOR_VERSION_INDEX]);
+        validateRevisionByte(headerBytes[REVISION_INDEX]);
     }
 
     /**

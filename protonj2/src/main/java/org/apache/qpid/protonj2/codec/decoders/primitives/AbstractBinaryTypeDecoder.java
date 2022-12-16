@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncoderState;
@@ -59,9 +59,9 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
                               "of data available (%d)", length, buffer.getReadableBytes()));
         }
 
-        final ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.allocate(length, length);
+        final ProtonBuffer payload = buffer.copy(buffer.getReadOffset(), length, buffer.isReadOnly());
 
-        buffer.readBytes(payload);
+        buffer.advanceReadOffset(length);
 
         return payload;
     }
@@ -89,7 +89,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
 
         final byte[] payload = new byte[length];
 
-        buffer.readBytes(payload);
+        buffer.readBytes(payload, 0, payload.length);
 
         return payload;
     }
@@ -112,7 +112,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
      * @throws DecodeException if an error occurs while reading the Binary value.
      */
     public ProtonBuffer readValueAsBuffer(InputStream stream, StreamDecoderState state) throws DecodeException {
-        return ProtonByteBufferAllocator.DEFAULT.wrap(readValueAsArray(stream, state));
+        return ProtonBufferAllocator.defaultAllocator().copy(readValueAsArray(stream, state)).convertToReadOnly();
     }
 
     /**
@@ -150,7 +150,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
                               "of data available (%d)", length, buffer.getReadableBytes()));
         }
 
-        buffer.skipBytes(length);
+        buffer.advanceReadOffset(length);
     }
 
     @Override

@@ -18,7 +18,7 @@ package org.apache.qpid.protonj2.test.driver.codec;
 
 import java.util.Date;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 class TimestampElement extends AtomicElement<Date> {
 
@@ -45,9 +45,9 @@ class TimestampElement extends AtomicElement<Date> {
     }
 
     @Override
-    public int encode(ByteBuf buffer) {
+    public int encode(Buffer buffer) {
         int size = size();
-        if (size > buffer.maxWritableBytes()) {
+        if (size > buffer.implicitCapacityLimit() - buffer.capacity()) {
             return 0;
         }
         if (size == 9) {

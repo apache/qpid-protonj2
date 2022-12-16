@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.types.transport;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -30,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader.HeaderHandler;
 import org.junit.jupiter.api.Test;
 
@@ -51,25 +52,27 @@ public class AMQPHeaderTest {
 
     @Test
     public void testToArray() {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {'A', 'M', 'Q', 'P', 0, 1, 0, 0});
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {'A', 'M', 'Q', 'P', 0, 1, 0, 0});
         AMQPHeader header = new AMQPHeader(buffer);
         byte[] array = header.toArray();
 
-        assertArrayEquals(buffer.getArray(), array);
+        assertEquals(buffer, ProtonBufferAllocator.defaultAllocator().copy(array));
     }
 
     @Test
     public void testToByteBuffer() {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {'A', 'M', 'Q', 'P', 0, 1, 0, 0});
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {'A', 'M', 'Q', 'P', 0, 1, 0, 0});
         AMQPHeader header = new AMQPHeader(buffer);
         ByteBuffer byteBuffer = header.toByteBuffer();
+        ByteBuffer bufferView = ByteBuffer.allocate(buffer.getReadableBytes());
+        buffer.readBytes(bufferView);
 
-        assertArrayEquals(buffer.getArray(), byteBuffer.array());
+        assertArrayEquals(bufferView.array(), byteBuffer.array());
     }
 
     @Test
     public void testCreateFromBufferWithoutValidation() {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {'A', 'M', 'Q', 'P', 4, 1, 0, 0});
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {'A', 'M', 'Q', 'P', 4, 1, 0, 0});
         AMQPHeader invalid = new AMQPHeader(buffer, false);
 
         assertEquals(4, invalid.getByteAt(4));
@@ -77,9 +80,9 @@ public class AMQPHeaderTest {
     }
 
     @Test
-    public void testCreateFromBufferWithoutValidationFailsWithToLargeInput() {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {'A', 'M', 'Q', 'P', 4, 1, 0, 0, 0});
-        assertThrows(IndexOutOfBoundsException.class, () -> new AMQPHeader(buffer, false));
+    public void testCreateFromBufferWithoutValidationDoesNotFailWithToLargeInput() {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().copy(new byte[] {'A', 'M', 'Q', 'P', 4, 1, 0, 0, 0});
+        assertDoesNotThrow(() -> new AMQPHeader(buffer, false));
     }
 
     @Test
@@ -88,8 +91,10 @@ public class AMQPHeaderTest {
 
         assertNotNull(header.getBuffer());
         ProtonBuffer buffer = header.getBuffer();
+        assertTrue(buffer.isReadOnly());
+        buffer = header.getBuffer().copy();
 
-        buffer.setByte(0, 'B');
+        buffer.setByte(0, (byte) 'B');
 
         assertEquals('A', header.getByteAt(0));
     }
@@ -153,10 +158,8 @@ public class AMQPHeaderTest {
     public void testValidateByteWithValidHeaderBytes() {
         ProtonBuffer buffer = AMQPHeader.getAMQPHeader().getBuffer();
 
-        byte[] bytes = buffer.getArray();
-
         for (int i = 0; i < AMQPHeader.HEADER_SIZE_BYTES; ++i) {
-            AMQPHeader.validateByte(i, bytes[i]);
+            AMQPHeader.validateByte(i, buffer.getByte(i));
         }
     }
 
@@ -186,7 +189,7 @@ public class AMQPHeaderTest {
 
     @Test
     public void testCreateWithEmptyBuffer() {
-        assertThrows(IllegalArgumentException.class, () -> new AMQPHeader(ProtonByteBufferAllocator.DEFAULT.allocate()));
+        assertThrows(IllegalArgumentException.class, () -> new AMQPHeader(ProtonBufferAllocator.defaultAllocator().allocate()));
     }
 
     @Test

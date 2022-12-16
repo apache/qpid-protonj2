@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
 class MapElement extends AbstractElement<Map<Object, Object>> {
 
@@ -100,7 +100,7 @@ class MapElement extends AbstractElement<Map<Object, Object>> {
     }
 
     @Override
-    public int encode(ByteBuf buffer) {
+    public int encode(Buffer buffer) {
         int encodedSize = size();
 
         int count = 0;
@@ -112,7 +112,7 @@ class MapElement extends AbstractElement<Map<Object, Object>> {
             elt = elt.next();
         }
 
-        if (encodedSize > buffer.maxWritableBytes()) {
+        if (encodedSize > buffer.implicitCapacityLimit() - buffer.capacity()) {
             return 0;
         } else {
             if (isElementOfArray()) {
@@ -139,7 +139,6 @@ class MapElement extends AbstractElement<Map<Object, Object>> {
                     buffer.writeInt((size + 4));
                     buffer.writeInt(count);
                 }
-
             }
 
             elt = first;

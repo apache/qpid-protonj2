@@ -71,7 +71,7 @@ public class StringBenchmark extends CodecBenchmarkBase {
 
     @Benchmark
     public ProtonBuffer decode() throws IOException {
-        buffer.setReadIndex(0);
+        buffer.setReadOffset(0);
         blackhole.consume(decoder.readString(buffer, decoderState));
         blackhole.consume(decoder.readString(buffer, decoderState));
         blackhole.consume(decoder.readString(buffer, decoderState));

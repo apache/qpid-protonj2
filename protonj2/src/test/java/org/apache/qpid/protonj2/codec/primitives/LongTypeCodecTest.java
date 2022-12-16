@@ -27,8 +27,8 @@ import java.io.InputStream;
 import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -52,14 +52,15 @@ public class LongTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UINT);
         buffer.writeByte(EncodingCodes.UINT);
         buffer.writeByte(EncodingCodes.UINT);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             try {
                 streamDecoder.readLong(stream, streamDecoderState);
                 fail("Should not allow read of integer type as this type");
@@ -103,19 +104,20 @@ public class LongTypeCodecTest extends CodecTestSupport {
     }
 
     public void testTypeFromEncodingCode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.LONG);
         buffer.writeLong(42);
         buffer.writeByte(EncodingCodes.LONG);
         buffer.writeLong(44);
         buffer.writeByte(EncodingCodes.SMALLLONG);
-        buffer.writeByte(43);
+        buffer.writeByte((byte) 43);
         buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.NULL);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             assertEquals(42, streamDecoder.readLong(stream, streamDecoderState).intValue());
             assertEquals(44, streamDecoder.readLong(stream, streamDecoderState, 42));
             assertEquals(43, streamDecoder.readLong(stream, streamDecoderState, 42));
@@ -153,13 +155,13 @@ public class LongTypeCodecTest extends CodecTestSupport {
     }
 
     private void testReadLongFromEncodingCodeLong(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.LONG);
         buffer.writeLong(42);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             assertEquals(42l, streamDecoder.readLong(stream, streamDecoderState).longValue());
         } else {
             assertEquals(42l, decoder.readLong(buffer, decoderState).longValue());
@@ -177,13 +179,13 @@ public class LongTypeCodecTest extends CodecTestSupport {
     }
 
     private void testReadLongFromEncodingCodeSmallLong(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.SMALLLONG);
-        buffer.writeByte(42);
+        buffer.writeByte((byte) 42);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             assertEquals(42l, streamDecoder.readLong(stream, streamDecoderState).longValue());
         } else {
             assertEquals(42l, decoder.readLong(buffer, decoderState).longValue());
@@ -201,8 +203,7 @@ public class LongTypeCodecTest extends CodecTestSupport {
     }
 
     public void doTestSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeLong(buffer, encoderState, Long.MAX_VALUE);
@@ -212,6 +213,13 @@ public class LongTypeCodecTest extends CodecTestSupport {
         long expected = 42l;
 
         encoder.writeObject(buffer, encoderState, expected);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -256,8 +264,7 @@ public class LongTypeCodecTest extends CodecTestSupport {
     }
 
     private void testArrayOfObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         Random random = new Random();
         random.setSeed(System.nanoTime());
 
@@ -272,6 +279,7 @@ public class LongTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -300,8 +308,7 @@ public class LongTypeCodecTest extends CodecTestSupport {
     }
 
     private void testZeroSizedArrayOfObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Long[] source = new Long[0];
 
@@ -309,6 +316,7 @@ public class LongTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -343,8 +351,7 @@ public class LongTypeCodecTest extends CodecTestSupport {
     }
 
     public void doTestReadLongArray(byte encoding, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         if (encoding == EncodingCodes.LONG) {
             buffer.writeByte(EncodingCodes.ARRAY32);
@@ -358,12 +365,13 @@ public class LongTypeCodecTest extends CodecTestSupport {
             buffer.writeInt(11);  // Size
             buffer.writeInt(2);   // Count
             buffer.writeByte(EncodingCodes.SMALLLONG);
-            buffer.writeByte(1);   // [0]
-            buffer.writeByte(2);   // [1]
+            buffer.writeByte((byte) 1);   // [0]
+            buffer.writeByte((byte) 2);   // [1]
         }
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);

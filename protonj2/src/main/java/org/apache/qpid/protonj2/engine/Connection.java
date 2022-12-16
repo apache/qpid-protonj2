@@ -109,6 +109,21 @@ public interface Connection extends Endpoint<Connection> {
     Connection tickAuto(ScheduledExecutorService executor);
 
     /**
+     * Convenience method which is the same as calling {@link Engine#tickAuto(Scheduler)}.
+     *
+     * @param scheduler
+     *      The single threaded execution context where all engine work takes place.
+     *
+     * @throws IllegalStateException if the {@link Engine} is already performing auto tick handling.
+     * @throws EngineStateException if the Engine state precludes accepting new input.
+     *
+     * @return this {@link Connection} instance.
+     *
+     * @see Engine#tickAuto(Scheduler)
+     */
+    Connection tickAuto(Scheduler scheduler) throws IllegalStateException, EngineStateException;
+
+    /**
      * @return the local connection state only
      */
     ConnectionState getState();

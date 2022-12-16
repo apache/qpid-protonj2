@@ -44,28 +44,28 @@ public final class StringTypeEncoder extends AbstractPrimitiveTypeEncoder<String
 
     private static void writeSmallString(ProtonBuffer buffer, EncoderState state, String value) {
         buffer.writeByte(EncodingCodes.STR8);
-        buffer.writeByte(0);
+        buffer.writeByte((byte) 0);
 
-        int startIndex = buffer.getWriteIndex();
+        int startIndex = buffer.getWriteOffset();
 
         // Write the full string value
         state.encodeUTF8(buffer, value);
 
         // Move back and write the size into the size slot
-        buffer.setByte(startIndex - Byte.BYTES, buffer.getWriteIndex() - startIndex);
+        buffer.setByte(startIndex - Byte.BYTES, (byte) (buffer.getWriteOffset() - startIndex));
     }
 
     private static void writeString(ProtonBuffer buffer, EncoderState state, String value) {
         buffer.writeByte(EncodingCodes.STR32);
         buffer.writeInt(0);
 
-        int startIndex = buffer.getWriteIndex();
+        int startIndex = buffer.getWriteOffset();
 
         // Write the full string value
         state.encodeUTF8(buffer, value);
 
         // Move back and write the size into the size slot
-        buffer.setInt(startIndex - Integer.BYTES, buffer.getWriteIndex() - startIndex);
+        buffer.setInt(startIndex - Integer.BYTES, buffer.getWriteOffset() - startIndex);
     }
 
     @Override
@@ -75,13 +75,13 @@ public final class StringTypeEncoder extends AbstractPrimitiveTypeEncoder<String
             // Reserve space for the size
             buffer.writeInt(0);
 
-            int stringStart = buffer.getWriteIndex();
+            int stringStart = buffer.getWriteOffset();
 
             // Write the full string value
             state.encodeUTF8(buffer, (CharSequence) value);
 
             // Move back and write the string size
-            buffer.setInt(stringStart - Integer.BYTES, buffer.getWriteIndex() - stringStart);
+            buffer.setInt(stringStart - Integer.BYTES, buffer.getWriteOffset() - stringStart);
         }
     }
 }

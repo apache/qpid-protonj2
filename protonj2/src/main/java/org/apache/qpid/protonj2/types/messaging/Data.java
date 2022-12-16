@@ -17,7 +17,7 @@
 package org.apache.qpid.protonj2.types.messaging;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.impl.ProtonByteArrayBufferAllocator;
 import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -26,6 +26,10 @@ public final class Data implements Section<byte[]> {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000075L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:data:binary");
+
+    // We create a proton version here since the general API doesn't expose wrap because not all buffer
+    // implementation might support array wrapping.
+    private static final ProtonByteArrayBufferAllocator PROTON_ALLOCATOR = new ProtonByteArrayBufferAllocator();
 
     private final ProtonBuffer buffer;
 
@@ -37,26 +41,28 @@ public final class Data implements Section<byte[]> {
     }
 
     public Data(ProtonBuffer buffer) {
-        this.buffer = buffer;
+        this.buffer = buffer != null ? buffer.convertToReadOnly() : null;
     }
 
     public Data(byte[] value) {
-        this.buffer = value != null ? ProtonByteBufferAllocator.DEFAULT.wrap(value) : null;
+        // Creates heap buffers that will be cleaned on GC
+        this.buffer = value != null ? PROTON_ALLOCATOR.wrap(value, 0, value.length).convertToReadOnly() : null;
     }
 
     public Data(byte[] value, int offset, int length) {
-        this.buffer = value != null ? ProtonByteBufferAllocator.DEFAULT.wrap(value, offset, length) : null;
+        // Creates heap buffers that will be cleaned on GC
+        this.buffer = value != null ? PROTON_ALLOCATOR.wrap(value, offset, length).convertToReadOnly() : null;
     }
 
     public Data copy() {
-        return new Data(buffer == null ? null : buffer.copy());
+        return new Data(buffer == null ? null : buffer.copy(true));
     }
 
     public Binary getBinary() {
         if (cachedBinary != null || buffer == null) {
             return cachedBinary;
         } else {
-            return cachedBinary = new Binary(buffer);
+            return cachedBinary = new Binary(buffer.copy(true));
         }
     }
 
@@ -78,7 +84,7 @@ public final class Data implements Section<byte[]> {
      * @return the {@link ProtonBuffer} that back this Data section.
      */
     public ProtonBuffer getBuffer() {
-        return buffer;
+        return buffer == null ? null : buffer.copy(true);
     }
 
     /**
@@ -91,9 +97,8 @@ public final class Data implements Section<byte[]> {
      */
     public Data copyTo(ProtonBuffer target) {
         if (buffer != null) {
-            buffer.markReadIndex();
-            buffer.readBytes(target, buffer.getReadableBytes());
-            buffer.resetReadIndex();
+            buffer.copyInto(buffer.getReadOffset(), target, target.getWriteOffset(), buffer.getReadableBytes());
+            target.advanceWriteOffset(buffer.getReadableBytes());
         }
 
         return this;
@@ -108,17 +113,13 @@ public final class Data implements Section<byte[]> {
      */
     @Override
     public byte[] getValue() {
-        if (buffer != null && buffer.hasArray() && buffer.getArrayOffset() == 0 && buffer.getReadableBytes() == buffer.getArray().length) {
-            return buffer.getArray();
-        } else {
-            byte[] dataCopy = null;
-            if (buffer != null) {
-                dataCopy = new byte[buffer.getReadableBytes()];
-                buffer.getBytes(buffer.getReadIndex(), dataCopy);
-            }
-
-            return dataCopy;
+        byte[] dataCopy = null;
+        if (buffer != null) {
+            dataCopy = new byte[buffer.getReadableBytes()];
+            buffer.copyInto(buffer.getReadOffset(), dataCopy, 0, dataCopy.length);
         }
+
+        return dataCopy;
     }
 
     @Override

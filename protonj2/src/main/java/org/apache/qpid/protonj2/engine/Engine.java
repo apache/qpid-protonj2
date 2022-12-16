@@ -199,6 +199,21 @@ public interface Engine extends Consumer<ProtonBuffer> {
     Engine tickAuto(ScheduledExecutorService executor) throws IllegalStateException, EngineStateException;
 
     /**
+     * Allows the engine to manage idle timeout processing by providing it the single threaded executor
+     * context where all transport work is done which ensures singled threaded access while removing the
+     * need for the client library or server application to manage calls to the {@link Engine#tick} methods.
+     *
+     * @param scheduler
+     *      The single threaded execution context where all engine work takes place.
+     *
+     * @throws IllegalStateException if the {@link Engine} is already performing auto tick handling.
+     * @throws EngineStateException if the Engine state precludes accepting new input.
+     *
+     * @return this {@link Engine}
+     */
+    Engine tickAuto(Scheduler scheduler) throws IllegalStateException, EngineStateException;
+
+    /**
      * Gets the EnginePipeline for this Engine.
      *
      * @return the {@link EnginePipeline} for this {@link Engine}.

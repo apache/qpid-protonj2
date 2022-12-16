@@ -111,7 +111,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
     }
 
     private void writeSmallType(ProtonBuffer buffer, Encoder encoder, EncoderState state, V value, int elementCount) {
-        final int startIndex = buffer.getWriteIndex();
+        final int startIndex = buffer.getWriteOffset();
 
         // Reserve space for the size and write the count of list elements.
         buffer.writeByte((byte) 0);
@@ -123,13 +123,13 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
         }
 
         // Move back and write the size
-        final int writeSize = buffer.getWriteIndex() - startIndex - Byte.BYTES;
+        final int writeSize = buffer.getWriteOffset() - startIndex - Byte.BYTES;
 
-        buffer.setByte(startIndex, writeSize);
+        buffer.setByte(startIndex, (byte)writeSize);
     }
 
     private void writeLargeType(ProtonBuffer buffer, Encoder encoder, EncoderState state, V value, int elementCount) {
-        final int startIndex = buffer.getWriteIndex();
+        final int startIndex = buffer.getWriteOffset();
 
         // Reserve space for the size and write the count of list elements.
         buffer.writeInt(0);
@@ -141,7 +141,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
         }
 
         // Move back and write the size
-        final int writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
+        final int writeSize = buffer.getWriteOffset() - startIndex - Integer.BYTES;
 
         buffer.setInt(startIndex, writeSize);
     }
@@ -151,7 +151,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
 
-        final int startIndex = buffer.getWriteIndex();
+        final int startIndex = buffer.getWriteOffset();
 
         // Reserve space for the size and write the count of list elements.
         buffer.writeInt(0);
@@ -163,7 +163,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
         writeRawArray(buffer, state, values);
 
         // Move back and write the size
-        final int writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
+        final int writeSize = buffer.getWriteOffset() - startIndex - Integer.BYTES;
 
         if (writeSize > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Cannot encode given array, encoded size too large: " + writeSize);
@@ -182,7 +182,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
         for (int i = 0; i < values.length; ++i) {
             final V listType = (V) values[i];
             final int count = getElementCount(listType);
-            final int elementStartIndex = buffer.getWriteIndex();
+            final int elementStartIndex = buffer.getWriteOffset();
 
             // Reserve space for the size and write the count of list elements.
             buffer.writeInt(0);
@@ -194,7 +194,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
             }
 
             // Move back and write the size
-            final int listWriteSize = buffer.getWriteIndex() - elementStartIndex - Integer.BYTES;
+            final int listWriteSize = buffer.getWriteOffset() - elementStartIndex - Integer.BYTES;
 
             buffer.setInt(elementStartIndex, listWriteSize);
         }

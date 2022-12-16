@@ -26,6 +26,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.client.Message;
 import org.apache.qpid.protonj2.client.StreamReceiverMessage;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -221,9 +222,11 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
     @Override
     public byte[] userId() throws ClientException {
         if (properties() != null) {
-            byte[] copyOfUserId = null;
-            if (properties != null && properties().getUserId() != null) {
-                copyOfUserId = properties().getUserId().arrayCopy();
+            final byte[] copyOfUserId;
+            if (properties != null && properties.getUserId() != null) {
+                copyOfUserId = properties().getUserId().asByteArray();
+            } else {
+                copyOfUserId = null;
             }
 
             return copyOfUserId;
@@ -650,7 +653,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
     //----- AdvancedMessage encoding API implementation.
 
     @Override
-    public ProtonBuffer encode(Map<String, Object> deliveryAnnotations) throws ClientUnsupportedOperationException {
+    public ProtonBuffer encode(Map<String, Object> deliveryAnnotations, ProtonBufferAllocator allocator) throws ClientUnsupportedOperationException {
         throw new ClientUnsupportedOperationException("Cannot encode from an StreamReceiverMessage instance.");
     }
 

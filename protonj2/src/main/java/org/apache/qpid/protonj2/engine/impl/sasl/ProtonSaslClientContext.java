@@ -23,7 +23,7 @@ import javax.security.sasl.AuthenticationException;
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
 import org.apache.qpid.protonj2.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.protonj2.engine.HeaderEnvelope;
@@ -319,12 +319,13 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
 
     private static class ProtonDefaultSaslClientListener implements SaslClientListener {
 
-        private final Symbol ANONYMOUS = Symbol.valueOf("ANONYMOUS");
+        private static final ProtonBuffer EMPTY_BUFFER = ProtonBufferAllocator.defaultAllocator().allocate(0).convertToReadOnly();
+        private static final Symbol ANONYMOUS = Symbol.valueOf("ANONYMOUS");
 
         @Override
         public void handleSaslMechanisms(SaslClientContext context, Symbol[] mechanisms) {
            if (mechanisms != null && Arrays.binarySearch(mechanisms, ANONYMOUS) > 0) {
-               context.sendChosenMechanism(ANONYMOUS, null, ProtonByteBufferAllocator.DEFAULT.allocate(0, 0));
+               context.sendChosenMechanism(ANONYMOUS, null, EMPTY_BUFFER);
            } else {
                ProtonSaslContext sasl = (ProtonSaslContext) context;
                context.saslFailure(new MechanismMismatchException(

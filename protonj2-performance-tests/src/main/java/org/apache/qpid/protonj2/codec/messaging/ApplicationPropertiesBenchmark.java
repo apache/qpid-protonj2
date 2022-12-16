@@ -59,7 +59,7 @@ public class ApplicationPropertiesBenchmark extends CodecBenchmarkBase {
 
     @Benchmark
     public ProtonBuffer decode() throws IOException {
-        buffer.setReadIndex(0);
+        buffer.setReadOffset(0);
         blackhole.consume(decoder.readObject(buffer, decoderState));
         return buffer;
     }

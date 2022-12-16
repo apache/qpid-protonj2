@@ -25,7 +25,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.types.Symbol;
 
 /**
@@ -69,7 +69,7 @@ public class CramMD5Mechanism extends AbstractMechanism {
 
                 byte[] challengeBytes = new byte[challenge.getReadableBytes()];
 
-                challenge.readBytes(challengeBytes);
+                challenge.readBytes(challengeBytes, 0, challengeBytes.length);
 
                 byte[] bytes = mac.doFinal(challengeBytes);
 
@@ -85,13 +85,13 @@ public class CramMD5Mechanism extends AbstractMechanism {
 
                 sentResponse = true;
 
-                return ProtonByteBufferAllocator.DEFAULT.wrap(hash.toString().getBytes(ASCII));
+                return ProtonBufferAllocator.defaultAllocator().copy(hash.toString().getBytes(ASCII)).convertToReadOnly();
             } catch (UnsupportedEncodingException e) {
-                throw new SaslException("Unable to utilise required encoding", e);
+                throw new SaslException("Unable to utilize required encoding", e);
             } catch (InvalidKeyException e) {
-                throw new SaslException("Unable to utilise key", e);
+                throw new SaslException("Unable to utilize key", e);
             } catch (NoSuchAlgorithmException e) {
-                throw new SaslException("Unable to utilise required algorithm", e);
+                throw new SaslException("Unable to utilize required algorithm", e);
             }
         } else {
             return EMPTY;

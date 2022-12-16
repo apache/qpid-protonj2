@@ -90,7 +90,7 @@ public final class FloatTypeDecoder extends AbstractPrimitiveTypeDecoder<Float> 
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.skipBytes(Float.BYTES);
+        buffer.advanceReadOffset(Float.BYTES);
     }
 
     @Override

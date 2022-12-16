@@ -29,8 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.util.NoLocalType;
 import org.apache.qpid.protonj2.types.UnknownDescribedType;
 import org.junit.jupiter.api.Test;
@@ -51,13 +51,12 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeUnknownDescribedType(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
-
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         encoder.writeObject(buffer, encoderState, NoLocalType.NO_LOCAL);
 
         final Object result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -80,8 +79,7 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
 
     @SuppressWarnings("unchecked")
     private void doTestUnknownDescribedTypeInList(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         List<Object> listOfUnknowns = new ArrayList<>();
 
@@ -91,6 +89,7 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -121,8 +120,7 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
 
     @SuppressWarnings("unchecked")
     private void doTestUnknownDescribedTypeInMap(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Map<Object, Object> mapOfUnknowns = new HashMap<>();
 
@@ -132,6 +130,7 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -152,7 +151,7 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testUnknownDescribedTypeInArray() throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         NoLocalType[] arrayOfUnknown = new NoLocalType[1];
 
@@ -190,11 +189,18 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeUnknownDescribedTypeSeries(int size, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, NoLocalType.NO_LOCAL);
+        }
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
         }
 
         for (int i = 0; i < size; ++i) {

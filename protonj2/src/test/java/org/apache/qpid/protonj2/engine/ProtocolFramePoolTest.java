@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.types.transport.Transfer;
 import org.junit.jupiter.api.Test;
 
@@ -74,7 +74,7 @@ class ProtocolFramePoolTest {
     @Test
     void testIncomingPoolClearsReleasedFramePayloads() {
         AMQPPerformativeEnvelopePool<IncomingAMQPEnvelope> pool = AMQPPerformativeEnvelopePool.incomingEnvelopePool();
-        IncomingAMQPEnvelope frame1 = pool.take(new Transfer(), 2, ProtonByteBufferAllocator.DEFAULT.allocate());
+        IncomingAMQPEnvelope frame1 = pool.take(new Transfer(), 2, ProtonBufferAllocator.defaultAllocator().allocate());
 
         frame1.release();
 
@@ -128,7 +128,7 @@ class ProtocolFramePoolTest {
     @Test
     void testOutgoingPoolClearsReleasedFramePayloads() {
         AMQPPerformativeEnvelopePool<OutgoingAMQPEnvelope> pool = AMQPPerformativeEnvelopePool.outgoingEnvelopePool();
-        OutgoingAMQPEnvelope frame1 = pool.take(new Transfer(), 2, ProtonByteBufferAllocator.DEFAULT.allocate());
+        OutgoingAMQPEnvelope frame1 = pool.take(new Transfer(), 2, ProtonBufferAllocator.defaultAllocator().allocate());
 
         frame1.release();
 

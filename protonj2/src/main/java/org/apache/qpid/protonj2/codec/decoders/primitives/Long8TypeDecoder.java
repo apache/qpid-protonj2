@@ -57,7 +57,7 @@ public final class Long8TypeDecoder extends LongTypeDecoder {
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.skipBytes(Byte.BYTES);
+        buffer.advanceReadOffset(Byte.BYTES);
     }
 
     @Override

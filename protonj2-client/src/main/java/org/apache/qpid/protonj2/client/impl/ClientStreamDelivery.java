@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
@@ -32,6 +31,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
 import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
 import org.apache.qpid.protonj2.client.futures.ClientFuture;
 import org.apache.qpid.protonj2.engine.IncomingDelivery;
+import org.apache.qpid.protonj2.engine.Scheduler;
 import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.engine.util.StringUtils;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
@@ -170,14 +170,23 @@ public final class ClientStreamDelivery extends ClientDeliverable<ClientStreamDe
 
         private final int INVALID_MARK = -1;
 
-        private final ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
-        private final ScheduledExecutorService executor = receiver.session().getScheduler();
+        private final ProtonCompositeBuffer buffer;
+        private final Scheduler executor = receiver.session().getScheduler();
+        private final AtomicBoolean closed = new AtomicBoolean();
 
         private ClientFuture<Integer> readRequest;
 
-        private AtomicBoolean closed = new AtomicBoolean();
         private int markIndex = INVALID_MARK;
         private int markLimit;
+
+        public RawDeliveryInputStream() {
+            // Create a read-only composite to receive incoming data, we don't ever need to
+            // write to this buffer so it would be an error if it weren't read-only and we
+            // expect that inbound buffers should be read-only by nature of them being inbound.
+            buffer = receiver.session().connection().getEngine().configuration()
+                                                                .getBufferAllocator()
+                                                                .composite().convertToReadOnly();
+        }
 
         @Override
         public void close() throws IOException {
@@ -200,8 +209,11 @@ public final class ClientStreamDelivery extends ClientDeliverable<ClientStreamDe
                         }
 
                         // Clear anything that wasn't yet read and then clear any pending read request as EOF
-                        buffer.setIndex(buffer.capacity(), buffer.capacity());
-                        buffer.reclaimRead();
+                        try {
+                            buffer.close();
+                        } catch (Exception e) {
+                            // Ignore
+                        }
 
                         if (readRequest != null) {
                             readRequest.complete(-1);
@@ -216,6 +228,10 @@ public final class ClientStreamDelivery extends ClientDeliverable<ClientStreamDe
                     LOG.debug("Ignoring error on RawInputStream close: ", error);
                 } finally {
                     super.close();
+                    try {
+                        buffer.close();
+                    } catch (Exception e) {
+                    }
                 }
             }
         }
@@ -227,14 +243,14 @@ public final class ClientStreamDelivery extends ClientDeliverable<ClientStreamDe
 
         @Override
         public synchronized void mark(int readlimit) {
-            markIndex = buffer.getReadIndex();
+            markIndex = buffer.getReadOffset();
             markLimit = readlimit;
         }
 
         @Override
         public synchronized void reset() throws IOException {
             if (markIndex != INVALID_MARK) {
-                buffer.setReadIndex(markIndex);
+                buffer.setReadOffset(markIndex);
 
                 markIndex = INVALID_MARK;
                 markLimit = 0;
@@ -335,9 +351,9 @@ public final class ClientStreamDelivery extends ClientDeliverable<ClientStreamDe
                 if (buffer.isReadable()) {
                     if (buffer.getReadableBytes() < remaining) {
                         remaining -= buffer.getReadableBytes();
-                        buffer.skipBytes(buffer.getReadableBytes());
+                        buffer.advanceReadOffset(buffer.getReadableBytes());
                     } else {
-                        buffer.skipBytes((int) remaining);
+                        buffer.advanceReadOffset((int) remaining);
                         remaining = 0;
                     }
 
@@ -359,10 +375,16 @@ public final class ClientStreamDelivery extends ClientDeliverable<ClientStreamDe
         }
 
         private void tryReleaseReadBuffers() {
-            if (buffer.getReadIndex() - markIndex > markLimit) {
+            if (buffer.getReadOffset() - markIndex > markLimit) {
                 markIndex = INVALID_MARK;
                 markLimit = 0;
-                buffer.reclaimRead();
+                try {
+                    // Split off all buffers that come before the portion the read offset
+                    // is located within and close them to ensure any pooled buffers are
+                    // returned to the pool and the rest are discarded.
+                    buffer.splitComponentsFloor(buffer.getReadOffset()).close();;
+                } catch (Exception e) {
+                }
             }
         }
 
@@ -373,7 +395,7 @@ public final class ClientStreamDelivery extends ClientDeliverable<ClientStreamDe
             } else {
                 // An input stream is awaiting some more incoming bytes, check to see if
                 // the delivery had a non-empty transfer frame and provide them.
-                if (readRequest != null) {
+                if (readRequest != null && !readRequest.isComplete()) {
                     if (delivery.available() > 0) {
                         buffer.append(protonDelivery.readAll());
                         readRequest.complete(buffer.getReadableBytes());

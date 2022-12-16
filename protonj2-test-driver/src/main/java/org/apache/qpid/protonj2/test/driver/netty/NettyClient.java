@@ -22,7 +22,6 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -30,42 +29,40 @@ import org.apache.qpid.protonj2.test.driver.ProtonTestClientOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelOutboundHandlerAdapter;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.EventLoop;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.FixedRecvByteBufAllocator;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
-import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketVersion;
-import io.netty.handler.logging.LoggingHandler;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
-import io.netty.util.concurrent.ScheduledFuture;
+import io.netty5.bootstrap.Bootstrap;
+import io.netty5.buffer.Buffer;
+import io.netty5.buffer.BufferAllocator;
+import io.netty5.channel.Channel;
+import io.netty5.channel.ChannelFutureListeners;
+import io.netty5.channel.ChannelHandler;
+import io.netty5.channel.ChannelHandlerAdapter;
+import io.netty5.channel.ChannelHandlerContext;
+import io.netty5.channel.ChannelInitializer;
+import io.netty5.channel.ChannelOption;
+import io.netty5.channel.EventLoop;
+import io.netty5.channel.EventLoopGroup;
+import io.netty5.channel.MultithreadEventLoopGroup;
+import io.netty5.channel.nio.NioHandler;
+import io.netty5.channel.socket.nio.NioSocketChannel;
+import io.netty5.handler.codec.http.DefaultHttpContent;
+import io.netty5.handler.codec.http.FullHttpResponse;
+import io.netty5.handler.codec.http.HttpClientCodec;
+import io.netty5.handler.codec.http.HttpObjectAggregator;
+import io.netty5.handler.codec.http.headers.HttpHeaders;
+import io.netty5.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import io.netty5.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty5.handler.codec.http.websocketx.ContinuationWebSocketFrame;
+import io.netty5.handler.codec.http.websocketx.PingWebSocketFrame;
+import io.netty5.handler.codec.http.websocketx.PongWebSocketFrame;
+import io.netty5.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty5.handler.codec.http.websocketx.WebSocketClientHandshaker;
+import io.netty5.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
+import io.netty5.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty5.handler.codec.http.websocketx.WebSocketVersion;
+import io.netty5.handler.logging.LoggingHandler;
+import io.netty5.handler.ssl.SslHandler;
+import io.netty5.util.concurrent.Future;
+import io.netty5.util.concurrent.FutureListener;
 
 /**
  * Self contained Netty client implementation that provides a base for more
@@ -100,7 +97,7 @@ public abstract class NettyClient implements AutoCloseable {
             connectedLatch.countDown();
             if (channel != null) {
                 try {
-                    if (!channel.close().await(10, TimeUnit.SECONDS)) {
+                    if (!channel.close().asStage().await(10, TimeUnit.SECONDS)) {
                         LOG.info("Channel close timed out waiting for result");
                     }
                 } catch (InterruptedException e) {
@@ -132,7 +129,7 @@ public abstract class NettyClient implements AutoCloseable {
             }
         }
 
-        group = new NioEventLoopGroup(1);
+        group = new MultithreadEventLoopGroup(1, NioHandler.newFactory());
         bootstrap = new Bootstrap().channel(NioSocketChannel.class).group(group);
         bootstrap.handler(new ChannelInitializer<Channel>() {
             @Override
@@ -144,7 +141,7 @@ public abstract class NettyClient implements AutoCloseable {
 
         configureNetty(bootstrap, options);
 
-        bootstrap.connect(host, port).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+        bootstrap.connect(host, port).addListener(channel, ChannelFutureListeners.FIRE_EXCEPTION_ON_FAILURE);
         try {
             connectedLatch.await();
         } catch (InterruptedException e) {
@@ -165,7 +162,7 @@ public abstract class NettyClient implements AutoCloseable {
             throw new IllegalStateException("Channel is not connected or has closed");
         }
 
-        return channel.eventLoop();
+        return channel.executor();
     }
 
     public void write(ByteBuffer buffer) {
@@ -173,7 +170,7 @@ public abstract class NettyClient implements AutoCloseable {
             throw new IllegalStateException("Channel is not connected or has closed");
         }
 
-        channel.writeAndFlush(Unpooled.wrappedBuffer(buffer), channel.voidPromise());
+        channel.writeAndFlush(BufferAllocator.onHeapUnpooled().copyOf(buffer).makeReadOnly());
     }
 
     public boolean isConnected() {
@@ -201,14 +198,14 @@ public abstract class NettyClient implements AutoCloseable {
 
     //----- Default implementation of Netty handler
 
-    protected class NettyClientInboundHandler extends ChannelInboundHandlerAdapter {
+    protected class NettyClientInboundHandler implements ChannelHandler {
 
         private final WebSocketClientHandshaker handshaker;
-        private ScheduledFuture<?> handshakeTimeoutFuture;
+        private Future<Void> handshakeTimeoutFuture;
 
         public NettyClientInboundHandler() {
             if (options.isUseWebSockets()) {
-                DefaultHttpHeaders headers = new DefaultHttpHeaders();
+                HttpHeaders headers = HttpHeaders.newHeaders();
 
                 options.getHttpHeaders().forEach((key, value) -> {
                     headers.set(key, value);
@@ -248,9 +245,9 @@ public abstract class NettyClient implements AutoCloseable {
                 }
             } else {
                 SslHandler sslHandler = context.pipeline().get(SslHandler.class);
-                sslHandler.handshakeFuture().addListener(new GenericFutureListener<Future<Channel>>() {
+                sslHandler.handshakeFuture().addListener(new FutureListener<Channel>() {
                     @Override
-                    public void operationComplete(Future<Channel> future) throws Exception {
+                    public void operationComplete(Future<? extends Channel> future) throws Exception {
                         if (future.isSuccess()) {
                             LOG.trace("SSL Handshake has completed: {}", channel);
                             if (!options.isUseWebSockets()) {
@@ -268,14 +265,14 @@ public abstract class NettyClient implements AutoCloseable {
         @Override
         public void channelInactive(ChannelHandlerContext context) throws Exception {
             if (handshakeTimeoutFuture != null) {
-                handshakeTimeoutFuture.cancel(false);
+                handshakeTimeoutFuture.cancel();
             }
 
             handleTransportFailure(context.channel(), new IOException("Remote closed connection unexpectedly"));
         }
 
         @Override
-        public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
+        public void channelExceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
             handleTransportFailure(context.channel(), cause);
         }
 
@@ -289,7 +286,7 @@ public abstract class NettyClient implements AutoCloseable {
                     handshaker.finishHandshake(ch, (FullHttpResponse) message);
                     LOG.trace("WebSocket Client connected! {}", ctx.channel());
                     // Now trigger super processing as we are really connected.
-                    if (handshakeTimeoutFuture.cancel(false)) {
+                    if (handshakeTimeoutFuture.cancel()) {
                         handleConnected(ch);
                     }
 
@@ -301,25 +298,25 @@ public abstract class NettyClient implements AutoCloseable {
                     FullHttpResponse response = (FullHttpResponse) message;
                     throw new IllegalStateException(
                         "Unexpected FullHttpResponse (getStatus=" + response.status() +
-                        ", content=" + response.content().toString(StandardCharsets.UTF_8) + ')');
+                        ", content=" + response.payload().toString(StandardCharsets.UTF_8) + ')');
                 }
 
                 WebSocketFrame frame = (WebSocketFrame) message;
                 if (frame instanceof TextWebSocketFrame) {
                     TextWebSocketFrame textFrame = (TextWebSocketFrame) frame;
                     LOG.warn("WebSocket Client received message: " + textFrame.text());
-                    ctx.fireExceptionCaught(new IOException("Received invalid frame over WebSocket."));
+                    ctx.fireChannelExceptionCaught(new IOException("Received invalid frame over WebSocket."));
                 } else if (frame instanceof BinaryWebSocketFrame) {
                     BinaryWebSocketFrame binaryFrame = (BinaryWebSocketFrame) frame;
-                    LOG.trace("WebSocket Client received data: {} bytes", binaryFrame.content().readableBytes());
-                    ctx.fireChannelRead(binaryFrame.content());
+                    LOG.trace("WebSocket Client received data: {} bytes", binaryFrame.binaryData().readableBytes());
+                    ctx.fireChannelRead(binaryFrame.binaryData());
                 } else if (frame instanceof ContinuationWebSocketFrame) {
                     ContinuationWebSocketFrame continuationFrame = (ContinuationWebSocketFrame) frame;
-                    LOG.trace("WebSocket Client received data continuation: {} bytes", continuationFrame.content().readableBytes());
-                    ctx.fireChannelRead(continuationFrame.content());
+                    LOG.trace("WebSocket Client received data continuation: {} bytes", continuationFrame.binaryData().readableBytes());
+                    ctx.fireChannelRead(continuationFrame.binaryData());
                 } else if (frame instanceof PingWebSocketFrame) {
                     LOG.trace("WebSocket Client received ping, response with pong");
-                    ch.write(new PongWebSocketFrame(frame.content()));
+                    ch.write(new PongWebSocketFrame(frame.binaryData()));
                 } else if (frame instanceof CloseWebSocketFrame) {
                     LOG.trace("WebSocket Client received closing");
                     ch.close();
@@ -330,32 +327,32 @@ public abstract class NettyClient implements AutoCloseable {
         }
     }
 
-    private class NettyClientOutboundHandler extends ChannelOutboundHandlerAdapter  {
+    private class NettyClientOutboundHandler extends ChannelHandlerAdapter  {
 
         @Override
-        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+        public Future<Void> write(ChannelHandlerContext ctx, Object msg) {
             LOG.trace("NettyServerHandler: Channel write: {}", msg);
-            if (options.isUseWebSockets() && msg instanceof ByteBuf) {
+            if (options.isUseWebSockets() && msg instanceof Buffer) {
                 if (options.isFragmentWrites()) {
-                    ByteBuf orig = (ByteBuf) msg;
-                    int origIndex = orig.readerIndex();
+                    Buffer orig = (Buffer) msg;
+                    int origIndex = orig.readerOffset();
                     int split = orig.readableBytes()/2;
 
-                    ByteBuf part1 = orig.copy(origIndex, split);
+                    Buffer part1 = orig.copy(origIndex, split);
                     LOG.trace("NettyClientOutboundHandler: Part1: {}", part1);
-                    orig.readerIndex(origIndex + split);
+                    orig.readerOffset(origIndex + split);
                     LOG.trace("NettyClientOutboundHandler: Part2: {}", orig);
 
                     BinaryWebSocketFrame frame1 = new BinaryWebSocketFrame(false, 0, part1);
                     ctx.writeAndFlush(frame1);
                     ContinuationWebSocketFrame frame2 = new ContinuationWebSocketFrame(true, 0, orig);
-                    ctx.write(frame2, promise);
+                    return ctx.write(frame2);
                 } else {
-                    BinaryWebSocketFrame frame = new BinaryWebSocketFrame((ByteBuf) msg);
-                    ctx.write(frame, promise);
+                    BinaryWebSocketFrame frame = new BinaryWebSocketFrame((Buffer) msg);
+                    return ctx.write(frame);
                 }
             } else {
-                ctx.write(msg, promise);
+                return ctx.write(msg);
             }
         }
     }
@@ -364,12 +361,12 @@ public abstract class NettyClient implements AutoCloseable {
 
     protected abstract ChannelHandler getClientHandler();
 
-    protected ScheduledExecutorService getEventLoop() {
+    protected EventLoop getEventLoop() {
         if (channel == null || !channel.isActive()) {
             throw new IllegalStateException("Channel is not connected or has closed");
         }
 
-        return channel.eventLoop();
+        return channel.executor();
     }
 
     protected SslHandler getSslHandler() {
@@ -396,7 +393,7 @@ public abstract class NettyClient implements AutoCloseable {
 
         if (options.isUseWebSockets()) {
             channel.pipeline().addLast(new HttpClientCodec());
-            channel.pipeline().addLast(new HttpObjectAggregator(8192));
+            channel.pipeline().addLast(new HttpObjectAggregator<DefaultHttpContent>(8192));
         }
 
         channel.pipeline().addLast(new NettyClientOutboundHandler());
@@ -416,7 +413,6 @@ public abstract class NettyClient implements AutoCloseable {
 
         if (options.getReceiveBufferSize() != -1) {
             bootstrap.option(ChannelOption.SO_RCVBUF, options.getReceiveBufferSize());
-            bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(options.getReceiveBufferSize()));
         }
 
         if (options.getTrafficClass() != -1) {

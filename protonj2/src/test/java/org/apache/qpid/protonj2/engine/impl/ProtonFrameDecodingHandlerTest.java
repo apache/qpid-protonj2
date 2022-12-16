@@ -29,7 +29,7 @@ import static org.mockito.Mockito.times;
 import java.util.List;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.engine.EmptyEnvelope;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
@@ -76,14 +76,14 @@ public class ProtonFrameDecodingHandlerTest {
         ProtonFrameDecodingHandler handler = createFrameDecoder();
         ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'A' }));
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'M' }));
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'Q' }));
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'P' }));
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0 }));
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1 }));
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0 }));
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0 }));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 'A' }));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 'M' }));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 'Q' }));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 'P' }));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 0 }));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 1 }));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 0 }));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 0 }));
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
         Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
@@ -95,8 +95,8 @@ public class ProtonFrameDecodingHandlerTest {
         ProtonFrameDecodingHandler handler = createFrameDecoder();
         ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'A', 'M', 'Q', 'P' }));
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 0, 0 }));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 'A', 'M', 'Q', 'P' }));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 0, 1, 0, 0 }));
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
         Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
@@ -108,8 +108,8 @@ public class ProtonFrameDecodingHandlerTest {
         ProtonFrameDecodingHandler handler = createFrameDecoder();
         ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'A', 'M', 'Q', 'P' }));
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 3, 1, 0, 0 }));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 'A', 'M', 'Q', 'P' }));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 3, 1, 0, 0 }));
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
         Mockito.verifyNoMoreInteractions(context);
@@ -136,7 +136,7 @@ public class ProtonFrameDecodingHandlerTest {
         EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
 
         try {
-            handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'S' }));
+            handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(new byte[] { 'S' }));
             fail("Handler should throw error on invalid input");
         } catch (Throwable error) {
             // Expected
@@ -166,7 +166,7 @@ public class ProtonFrameDecodingHandlerTest {
         ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(emptyOpen));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(emptyOpen));
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
         Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
@@ -206,7 +206,7 @@ public class ProtonFrameDecodingHandlerTest {
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
         Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(basicOpen));
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
         Mockito.verify(context).fireRead(argument.capture());
@@ -248,7 +248,7 @@ public class ProtonFrameDecodingHandlerTest {
         ProtonFrameDecodingHandler handler = createFrameDecoder();
         ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(basicOpen));
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
         Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
@@ -293,8 +293,8 @@ public class ProtonFrameDecodingHandlerTest {
         ProtonFrameDecodingHandler handler = createFrameDecoder();
         ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
-        final ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen1);
-        final ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen2);
+        final ProtonBuffer buffer1 = ProtonBufferAllocator.defaultAllocator().copy(basicOpen1);
+        final ProtonBuffer buffer2 = ProtonBufferAllocator.defaultAllocator().copy(basicOpen2);
 
         handler.handleRead(context, buffer1);
         handler.handleRead(context, buffer2);
@@ -344,10 +344,10 @@ public class ProtonFrameDecodingHandlerTest {
         ProtonFrameDecodingHandler handler = createFrameDecoder();
         ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
-        final ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen1);
-        final ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen2);
-        final ProtonBuffer buffer3 = ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen3);
-        final ProtonBuffer buffer4 = ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen4);
+        final ProtonBuffer buffer1 = ProtonBufferAllocator.defaultAllocator().copy(basicOpen1);
+        final ProtonBuffer buffer2 = ProtonBufferAllocator.defaultAllocator().copy(basicOpen2);
+        final ProtonBuffer buffer3 = ProtonBufferAllocator.defaultAllocator().copy(basicOpen3);
+        final ProtonBuffer buffer4 = ProtonBufferAllocator.defaultAllocator().copy(basicOpen4);
 
         handler.handleRead(context, buffer1);
         handler.handleRead(context, buffer2);
@@ -398,9 +398,9 @@ public class ProtonFrameDecodingHandlerTest {
         ProtonFrameDecodingHandler handler = createFrameDecoder();
         ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
-        final ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen1);
-        final ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen2);
-        final ProtonBuffer buffer3 = ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen3);
+        final ProtonBuffer buffer1 = ProtonBufferAllocator.defaultAllocator().copy(basicOpen1);
+        final ProtonBuffer buffer2 = ProtonBufferAllocator.defaultAllocator().copy(basicOpen2);
+        final ProtonBuffer buffer3 = ProtonBufferAllocator.defaultAllocator().copy(basicOpen3);
 
         handler.handleRead(context, buffer1);
         handler.handleRead(context, buffer2);
@@ -450,7 +450,7 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         Mockito.verifyNoMoreInteractions(context);
 
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(emptyFrame));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(emptyFrame));
 
         ArgumentCaptor<IncomingAMQPEnvelope> argument = ArgumentCaptor.forClass(IncomingAMQPEnvelope.class);
         Mockito.verify(context).fireRead(argument.capture());
@@ -479,7 +479,7 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
         Mockito.verifyNoMoreInteractions(context);
 
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(emptyFrames));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(emptyFrames));
 
         ArgumentCaptor<IncomingAMQPEnvelope> argument = ArgumentCaptor.forClass(IncomingAMQPEnvelope.class);
         Mockito.verify(context, Mockito.times(2)).fireRead(argument.capture());
@@ -512,7 +512,7 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.verifyNoMoreInteractions(context);
 
         try {
-            handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(undersizedFrameHeader));
+            handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(undersizedFrameHeader));
             fail("Should indicate protocol has been violated.");
         } catch (ProtocolViolationException pve) {
             // Expected
@@ -541,7 +541,7 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.verifyNoMoreInteractions(context);
 
         try {
-            handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(underMinDoffFrameHeader));
+            handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(underMinDoffFrameHeader));
             fail("Should indicate protocol has been violated.");
         } catch (ProtocolViolationException pve) {
             // Expected
@@ -570,7 +570,7 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.verifyNoMoreInteractions(context);
 
         try {
-            handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(overFrameSizeDoffFrameHeader));
+            handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(overFrameSizeDoffFrameHeader));
             fail("Should indicate protocol has been violated.");
         } catch (ProtocolViolationException pve) {
             // Expected
@@ -597,7 +597,7 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.verifyNoMoreInteractions(context);
 
         try {
-            handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(overFrameSizeLimitFrameHeader));
+            handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(overFrameSizeLimitFrameHeader));
             fail("Should indicate frame limit has been violated.");
         } catch (ProtocolViolationException pve) {
             // Expected 2684354560 frame size is to big
@@ -629,7 +629,7 @@ public class ProtonFrameDecodingHandlerTest {
         ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer));
+        handler.handleRead(context, ProtonBufferAllocator.defaultAllocator().copy(completedTransfer));
 
         Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
         Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
@@ -673,9 +673,9 @@ public class ProtonFrameDecodingHandlerTest {
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
 
-        final ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer1);
-        final ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer2);
-        final ProtonBuffer buffer3 = ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer3);
+        final ProtonBuffer buffer1 = ProtonBufferAllocator.defaultAllocator().copy(completedTransfer1);
+        final ProtonBuffer buffer2 = ProtonBufferAllocator.defaultAllocator().copy(completedTransfer2);
+        final ProtonBuffer buffer3 = ProtonBufferAllocator.defaultAllocator().copy(completedTransfer3);
 
         handler.handleRead(context, buffer1);
         handler.handleRead(context, buffer2);
@@ -723,12 +723,13 @@ public class ProtonFrameDecodingHandlerTest {
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
 
-        final ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.allocate(completedTransfer1.length + 100);
-        buffer1.setIndex(100, 100);
+        final ProtonBuffer buffer1 = ProtonBufferAllocator.defaultAllocator().allocate(completedTransfer1.length + 100);
+        buffer1.advanceWriteOffset(100);
+        buffer1.advanceReadOffset(100);
         buffer1.writeBytes(completedTransfer1);
 
-        final ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer2);
-        final ProtonBuffer buffer3 = ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer3);
+        final ProtonBuffer buffer2 = ProtonBufferAllocator.defaultAllocator().copy(completedTransfer2);
+        final ProtonBuffer buffer3 = ProtonBufferAllocator.defaultAllocator().copy(completedTransfer3);
 
         handler.handleRead(context, buffer1);
         handler.handleRead(context, buffer2);
@@ -781,12 +782,14 @@ public class ProtonFrameDecodingHandlerTest {
 
         handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
 
-        final ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.allocate(completedTransfer1.length + 100);
-        buffer1.setIndex(100, 100);
+        final ProtonBuffer buffer1 = ProtonBufferAllocator.defaultAllocator().allocate(completedTransfer1.length + 100);
+        buffer1.advanceWriteOffset(100);
+        buffer1.advanceReadOffset(100);
         buffer1.writeBytes(completedTransfer1);
 
-        final ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(completedTransfer2);
-        final ProtonBuffer buffer3 = ProtonByteBufferAllocator.DEFAULT.allocate(completedTransfer3.length + emptyOpen.length);
+        final ProtonBuffer buffer2 = ProtonBufferAllocator.defaultAllocator().copy(completedTransfer2);
+
+        final ProtonBuffer buffer3 = ProtonBufferAllocator.defaultAllocator().allocate(completedTransfer3.length + emptyOpen.length);
         buffer3.writeBytes(completedTransfer3);
         buffer3.writeBytes(emptyOpen);
 
@@ -834,7 +837,7 @@ public class ProtonFrameDecodingHandlerTest {
         ProtonEngineConfiguration configuration = Mockito.mock(ProtonEngineConfiguration.class);
         Mockito.when(configuration.getInboundMaxFrameSize()).thenReturn(Long.valueOf(65535));
         Mockito.when(configuration.getOutboundMaxFrameSize()).thenReturn(Long.valueOf(65535));
-        Mockito.when(configuration.getBufferAllocator()).thenReturn(ProtonByteBufferAllocator.DEFAULT);
+        Mockito.when(configuration.getBufferAllocator()).thenReturn(ProtonBufferAllocator.defaultAllocator());
         ProtonEngine engine = Mockito.mock(ProtonEngine.class);
         Mockito.when(engine.configuration()).thenReturn(configuration);
         Mockito.when(engine.isWritable()).thenReturn(Boolean.TRUE);

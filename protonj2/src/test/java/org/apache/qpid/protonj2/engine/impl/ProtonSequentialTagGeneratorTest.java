@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.junit.jupiter.api.Test;
@@ -106,7 +106,7 @@ public class ProtonSequentialTagGeneratorTest {
     @Test
     public void testCreateMatchingValuesFromWrittenBuffer() {
         ProtonSequentialTagGenerator generator = new ProtonSequentialTagGenerator();
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(64);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate(64);
 
         generator.setNextTagId(-127);                // Long
         generator.nextTag().writeTo(buffer);

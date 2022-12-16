@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.codec;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
@@ -59,7 +59,7 @@ public abstract class CodecBenchmarkBase {
     }
 
     private void initProtonBuffer() {
-        buffer = ProtonByteBufferAllocator.DEFAULT.allocate(bufferSize());
+        buffer = ProtonBufferAllocator.defaultAllocator().allocate(bufferSize());
     }
 
     public void init() {

@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineFactory;
@@ -2090,7 +2090,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         Binary data1 = section1.getBinary();
         Binary data2 = section2.getBinary();
 
-        ProtonBuffer combined = ProtonByteBufferAllocator.DEFAULT.allocate(encoded.length);
+        ProtonBuffer combined = ProtonBufferAllocator.defaultAllocator().allocate(encoded.length);
 
         combined.writeBytes(data1.asByteBuffer());
         combined.writeBytes(data2.asByteBuffer());
@@ -2179,7 +2179,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         Binary data1 = section1.getBinary();
         Binary data2 = section2.getBinary();
 
-        ProtonBuffer combined = ProtonByteBufferAllocator.DEFAULT.allocate(encoded.length);
+        ProtonBuffer combined = ProtonBufferAllocator.defaultAllocator().allocate(encoded.length);
 
         combined.writeBytes(data1.asByteBuffer());
         combined.writeBytes(data2.asByteBuffer());
@@ -2324,8 +2324,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                 .withRole(Role.RECEIVER.getValue())
                                 .withState().accepted();
 
-        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag().tagBuffer().getArray());
-        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag().tagBuffer().getArray());
+        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag().tagBytes());
+        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag().tagBytes());
 
         ProtonBuffer payloadBuffer1 = receivedDelivery1.get().readAll();
         ProtonBuffer payloadBuffer2 = receivedDelivery2.get().readAll();
@@ -2672,8 +2672,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertFalse(receivedDelivery1.get().isPartial(), "Delivery on Receiver 1 Should be complete");
         assertFalse(receivedDelivery2.get().isPartial(), "Delivery on Receiver 2 Should be complete");
 
-        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag().tagBuffer().getArray());
-        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag().tagBuffer().getArray());
+        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag().tagBytes());
+        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag().tagBytes());
 
         ProtonBuffer delivery1Buffer = receivedDelivery1.get().readAll();
         ProtonBuffer delivery2Buffer = receivedDelivery2.get().readAll();
@@ -2811,9 +2811,9 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNotSame(receivedDelivery1.get(), receivedDelivery3.get(), "delivery duplicate detected");
 
         // Verify deliveries arrived with expected payload
-        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag().tagBuffer().getArray());
-        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag().tagBuffer().getArray());
-        assertArrayEquals(deliveryTag3.getBytes(StandardCharsets.UTF_8), receivedDelivery3.get().getTag().tagBuffer().getArray());
+        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag().tagBytes());
+        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag().tagBytes());
+        assertArrayEquals(deliveryTag3.getBytes(StandardCharsets.UTF_8), receivedDelivery3.get().getTag().tagBytes());
 
         ProtonBuffer delivery1Buffer = receivedDelivery1.get().readAll();
         ProtonBuffer delivery2Buffer = receivedDelivery2.get().readAll();

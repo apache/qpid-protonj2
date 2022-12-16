@@ -38,7 +38,7 @@ public final class SymbolTypeEncoder extends AbstractPrimitiveTypeEncoder<Symbol
 
         if (symbolBytes <= 255) {
             buffer.writeByte(EncodingCodes.SYM8);
-            buffer.writeByte(symbolBytes);
+            buffer.writeByte((byte) symbolBytes);
         } else {
             buffer.writeByte(EncodingCodes.SYM32);
             buffer.writeInt(symbolBytes);
@@ -51,7 +51,7 @@ public final class SymbolTypeEncoder extends AbstractPrimitiveTypeEncoder<Symbol
     public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         buffer.writeByte(EncodingCodes.SYM32);
         for (Object value : values) {
-            Symbol symbol = (Symbol) value;
+            final Symbol symbol = (Symbol) value;
             buffer.writeInt(symbol.getLength());
             symbol.writeTo(buffer);
         }

@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -38,13 +38,13 @@ public class ScramSHA1MechanismTest extends AbstractScramSHAMechanismTestBase {
 
     private static final String CLIENT_NONCE = "fyko+d2lbbFgONRv9qkxdawL";
 
-    private static final ProtonBuffer EXPECTED_CLIENT_INITIAL_RESPONSE = ProtonByteBufferAllocator.DEFAULT.wrap(
+    private static final ProtonBuffer EXPECTED_CLIENT_INITIAL_RESPONSE = ProtonBufferAllocator.defaultAllocator().copy(
         "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8));
-    private static final ProtonBuffer SERVER_FIRST_MESSAGE = ProtonByteBufferAllocator.DEFAULT.wrap(
+    private static final ProtonBuffer SERVER_FIRST_MESSAGE = ProtonBufferAllocator.defaultAllocator().copy(
         "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096".getBytes(StandardCharsets.UTF_8));
-    private static final ProtonBuffer EXPECTED_CLIENT_FINAL_MESSAGE = ProtonByteBufferAllocator.DEFAULT.wrap(
+    private static final ProtonBuffer EXPECTED_CLIENT_FINAL_MESSAGE = ProtonBufferAllocator.defaultAllocator().copy(
         "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=".getBytes(StandardCharsets.UTF_8));
-    private static final ProtonBuffer SERVER_FINAL_MESSAGE = ProtonByteBufferAllocator.DEFAULT.wrap(
+    private static final ProtonBuffer SERVER_FINAL_MESSAGE = ProtonBufferAllocator.defaultAllocator().copy(
         "v=rmF9pqV8S7suAoZWja4dJRkFsKQ=".getBytes(StandardCharsets.UTF_8));
 
     public ScramSHA1MechanismTest() {
@@ -89,7 +89,7 @@ public class ScramSHA1MechanismTest extends AbstractScramSHAMechanismTestBase {
         String escapedUsername = "user=2Cname=3D";
 
         String expectedInitialResponseString = "n,,n=" + escapedUsername + ",r=" + CLIENT_NONCE;
-        ProtonBuffer expectedInitialResponseBuffer = ProtonByteBufferAllocator.DEFAULT.wrap(
+        ProtonBuffer expectedInitialResponseBuffer = ProtonBufferAllocator.defaultAllocator().copy(
             expectedInitialResponseString.getBytes(StandardCharsets.UTF_8));
 
         ScramSHA1Mechanism mech = new ScramSHA1Mechanism(CLIENT_NONCE);
@@ -106,18 +106,18 @@ public class ScramSHA1MechanismTest extends AbstractScramSHAMechanismTestBase {
         ProtonBuffer clientInitialResponse = mechanism.getInitialResponse(credentials);
         assertEquals(EXPECTED_CLIENT_INITIAL_RESPONSE, clientInitialResponse);
 
-        ProtonBuffer serverFirstMessage = ProtonByteBufferAllocator.DEFAULT.wrap(
+        ProtonBuffer serverFirstMessage = ProtonBufferAllocator.defaultAllocator().copy(
             "r=fyko+d2lbbFgONRv9qkxdawLdcbfa301-1618-46ee-96c1-2bf60139dc7f,s=Q0zM1qzKMOmI0sAzE7dXt6ru4ZIXhAzn40g4mQXKQdw=,i=4096".getBytes(StandardCharsets.UTF_8));
-        ProtonBuffer expectedClientFinalMessage = ProtonByteBufferAllocator.DEFAULT.wrap(
+        ProtonBuffer expectedClientFinalMessage = ProtonBufferAllocator.defaultAllocator().copy(
             "c=biws,r=fyko+d2lbbFgONRv9qkxdawLdcbfa301-1618-46ee-96c1-2bf60139dc7f,p=quRNWvZqGUvPXoazebZe0ZYsjQI=".getBytes(StandardCharsets.UTF_8));
 
         ProtonBuffer clientFinalMessage = mechanism.getChallengeResponse(credentials, serverFirstMessage);
 
         assertEquals(expectedClientFinalMessage, clientFinalMessage);
 
-        ProtonBuffer serverFinalMessage = ProtonByteBufferAllocator.DEFAULT.wrap(
+        ProtonBuffer serverFinalMessage = ProtonBufferAllocator.defaultAllocator().copy(
             "v=dnJDHm3fp6WwVrl5yjZuqKp03lQ=".getBytes(StandardCharsets.UTF_8));
-        ProtonBuffer expectedFinalChallengeResponse = ProtonByteBufferAllocator.DEFAULT.wrap("".getBytes());
+        ProtonBuffer expectedFinalChallengeResponse = ProtonBufferAllocator.defaultAllocator().copy("".getBytes());
 
         assertEquals(expectedFinalChallengeResponse, mechanism.getChallengeResponse(credentials, serverFinalMessage));
 

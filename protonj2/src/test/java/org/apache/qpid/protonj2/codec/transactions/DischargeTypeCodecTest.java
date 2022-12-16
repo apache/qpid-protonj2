@@ -27,8 +27,8 @@ import java.io.InputStream;
 import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -73,8 +73,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeType(boolean fromStream) throws Exception {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Discharge input = new Discharge();
 
@@ -85,6 +84,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
 
         final Discharge result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = (Discharge) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (Discharge) decoder.readObject(buffer, decoderState);
@@ -93,9 +93,9 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
         assertTrue(result.getFail());
 
         assertNotNull(result.getTxnId());
-        assertNotNull(result.getTxnId().getArray());
+        assertNotNull(result.getTxnId().asByteArray());
 
-        assertArrayEquals(new byte[] { 8, 7, 6, 5 }, result.getTxnId().getArray());
+        assertArrayEquals(new byte[] { 8, 7, 6, 5 }, result.getTxnId().asByteArray());
     }
 
     @Test
@@ -109,8 +109,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeTypeWithLargeResponseBlob(boolean fromStream) throws Exception {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         byte[] txnId = new byte[512];
 
@@ -127,12 +126,13 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
 
         final Discharge result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = (Discharge) streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = (Discharge) decoder.readObject(buffer, decoderState);
         }
 
-        assertArrayEquals(txnId, result.getTxnId().getArray());
+        assertArrayEquals(txnId, result.getTxnId().asByteArray());
     }
 
     @Test
@@ -146,8 +146,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValue(boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Discharge discharge = new Discharge();
 
@@ -162,6 +161,13 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
         discharge.setFail(true);
 
         encoder.writeObject(buffer, encoderState, discharge);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {
@@ -186,7 +192,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
         assertTrue(result instanceof Discharge);
 
         Discharge value = (Discharge) result;
-        assertArrayEquals(new byte[] {1, 2}, value.getTxnId().getArray());
+        assertArrayEquals(new byte[] {1, 2}, value.getTxnId().asByteArray());
         assertTrue(value.getFail());
     }
 
@@ -211,8 +217,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestSkipValueWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -228,6 +233,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
             assertEquals(Discharge.class, typeDecoder.getTypeClass());
 
@@ -267,8 +273,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithInvalidMapType(byte mapType, boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -284,6 +289,8 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
+
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid encoding");
@@ -307,8 +314,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecodeArray(boolean fromStream) throws IOException {
-        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        final InputStream stream = new ProtonBufferInputStream(buffer);
+        final ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         Discharge[] array = new Discharge[3];
 
@@ -324,6 +330,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            final InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -368,8 +375,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithNotEnoughListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -387,6 +393,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");
@@ -420,8 +427,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeWithToManyListEntriesList32(byte listType, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
@@ -437,6 +443,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
         }
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             try {
                 streamDecoder.readObject(stream, streamDecoderState);
                 fail("Should not decode type with invalid min entries");

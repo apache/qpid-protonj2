@@ -17,12 +17,13 @@
 package org.apache.qpid.protonj2.engine.impl;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Queue;
 import java.util.Random;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecFactory;
 import org.apache.qpid.protonj2.codec.Decoder;
 import org.apache.qpid.protonj2.codec.DecoderState;
@@ -73,14 +74,14 @@ public abstract class ProtonEngineTestSupport {
         LOG.info("========== tearDown " + testInfo.getDisplayName() + " ==========");
     }
 
-    protected ProtonBuffer wrapInFrame(Object input, int channel) {
+    protected ProtonBuffer wrapInFrame(Object input, short channel) {
         final int FRAME_START_BYTE = 0;
         final int FRAME_DOFF_BYTE = 4;
-        final int FRAME_DOFF_SIZE = 2;
+        final byte FRAME_DOFF_SIZE = 2;
         final int FRAME_TYPE_BYTE = 5;
         final int FRAME_CHANNEL_BYTE = 6;
 
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(512);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate(512);
 
         buffer.writeLong(0); // Reserve header space
 
@@ -92,7 +93,7 @@ public abstract class ProtonEngineTestSupport {
 
         buffer.setInt(FRAME_START_BYTE, buffer.getReadableBytes());
         buffer.setByte(FRAME_DOFF_BYTE, FRAME_DOFF_SIZE);
-        buffer.setByte(FRAME_TYPE_BYTE, 0);
+        buffer.setByte(FRAME_TYPE_BYTE, (byte) 0);
         buffer.setShort(FRAME_CHANNEL_BYTE, channel);
 
         return buffer;
@@ -105,7 +106,7 @@ public abstract class ProtonEngineTestSupport {
         int type = buffer.readByte() & 0xFF;
         short channel = buffer.readShort();
         if (dataOffset != 8) {
-            buffer.setReadIndex(buffer.getReadIndex() + dataOffset - 8);
+            buffer.setReadOffset(buffer.getReadOffset() + dataOffset - 8);
         }
 
         final int frameBodySize = frameSize - dataOffset;
@@ -134,15 +135,20 @@ public abstract class ProtonEngineTestSupport {
             payload[i] = (byte) (64 + 1 + rand.nextInt(9));
         }
 
-        return ProtonByteBufferAllocator.DEFAULT.wrap(payload).setIndex(0, length);
+        return ProtonBufferAllocator.defaultAllocator().copy(payload).convertToReadOnly();
     }
 
     protected ProtonTestConnector createTestPeer(Engine engine) {
         ProtonTestConnector peer = new ProtonTestConnector(buffer -> {
-            engine.accept(ProtonByteBufferAllocator.DEFAULT.wrap(buffer));
+            try (ProtonBuffer copy = ProtonBufferAllocator.defaultAllocator().allocate(buffer.remaining())) {
+                copy.writeBytes(buffer);
+                engine.accept(copy.convertToReadOnly());
+            }
         });
         engine.outputConsumer(buffer -> {
-            peer.accept(buffer.toByteBuffer());
+            ByteBuffer byteBuffer = ByteBuffer.allocate(buffer.getReadableBytes());
+            buffer.readBytes(byteBuffer);
+            peer.accept(byteBuffer.flip());
         });
 
         return peer;
@@ -150,13 +156,18 @@ public abstract class ProtonEngineTestSupport {
 
     protected ProtonTestConnector createTestPeer(Engine engine, Queue<Runnable> asyncIOCallback) {
         ProtonTestConnector peer = new ProtonTestConnector(buffer -> {
-            engine.accept(ProtonByteBufferAllocator.DEFAULT.wrap(buffer));
+            try (ProtonBuffer copy = ProtonBufferAllocator.defaultAllocator().allocate(buffer.remaining())) {
+                copy.writeBytes(buffer);
+                engine.accept(copy.convertToReadOnly());
+            }
         });
         engine.outputHandler((buffer, callback) -> {
             if (callback != null) {
                 asyncIOCallback.offer(callback);
             }
-            peer.accept(buffer.toByteBuffer());
+            ByteBuffer byteBuffer = ByteBuffer.allocate(buffer.getReadableBytes());
+            buffer.readBytes(byteBuffer);
+            peer.accept(byteBuffer.flip());
         });
 
         return peer;
@@ -168,32 +179,32 @@ public abstract class ProtonEngineTestSupport {
 
     protected byte[] createEncodedMessage(Section<Object> body) {
         Encoder encoder = CodecFactory.getEncoder();
-        ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         encoder.writeObject(buffer, encoder.newEncoderState(), body);
         byte[] result = new byte[buffer.getReadableBytes()];
-        buffer.readBytes(result);
+        buffer.readBytes(result, 0, result.length);
         return result;
     }
 
     protected byte[] createEncodedMessage(Section<?>... body) {
         Encoder encoder = CodecFactory.getEncoder();
-        ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         for (Section<?> section : body) {
             encoder.writeObject(buffer, encoder.newEncoderState(), section);
         }
         byte[] result = new byte[buffer.getReadableBytes()];
-        buffer.readBytes(result);
+        buffer.readBytes(result, 0, result.length);
         return result;
     }
 
     protected byte[] createEncodedMessage(Data... body) {
         Encoder encoder = CodecFactory.getEncoder();
-        ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
         for (Data data : body) {
             encoder.writeObject(buffer, encoder.newEncoderState(), data);
         }
         byte[] result = new byte[buffer.getReadableBytes()];
-        buffer.readBytes(result);
+        buffer.readBytes(result, 0, result.length);
         return result;
     }
 }

@@ -27,8 +27,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
+import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
-import org.apache.qpid.protonj2.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -51,13 +51,14 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UINT);
         buffer.writeByte(EncodingCodes.UINT);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             try {
                 streamDecoder.readUnsignedByte(stream, streamDecoderState);
                 fail("Should not allow read of integer type as this type");
@@ -91,8 +92,7 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
     }
 
     public void testReadTypeFromEncodingCode(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UBYTE);
         buffer.writeByte((byte) 42);
@@ -102,6 +102,8 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
         buffer.writeByte(EncodingCodes.NULL);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             assertEquals(42, streamDecoder.readUnsignedByte(stream, streamDecoderState).intValue());
             assertEquals(43, streamDecoder.readUnsignedByte(stream, streamDecoderState, (byte) 42));
             assertNull(streamDecoder.readUnsignedByte(stream, streamDecoderState));
@@ -125,13 +127,13 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
     }
 
     public void testEncodeDecodeUnsignedByte(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedByte(buffer, encoderState, UnsignedByte.valueOf((byte) 64));
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -152,13 +154,13 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
     }
 
     private void testEncodeDecodeByte(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedByte(buffer, encoderState, (byte) 64);
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -189,11 +191,17 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeUnsignedByteSeries(int size, boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < size; ++i) {
             encoder.writeUnsignedByte(buffer, encoderState, (byte)(i % 255));
+        }
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
         }
 
         for (int i = 0; i < size; ++i) {
@@ -220,8 +228,7 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
     }
 
     private void testArrayOfObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         final int size = 10;
 
@@ -234,6 +241,7 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -262,8 +270,7 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
     }
 
     private void testZeroSizedArrayOfObjects(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         UnsignedByte[] source = new UnsignedByte[0];
 
@@ -271,6 +278,7 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
 
         final Object result;
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             result = streamDecoder.readObject(stream, streamDecoderState);
         } else {
             result = decoder.readObject(buffer, decoderState);
@@ -295,17 +303,18 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeEncodedBytes(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UBYTE);
-        buffer.writeByte(0);
+        buffer.writeByte((byte) 0);
         buffer.writeByte(EncodingCodes.UBYTE);
-        buffer.writeByte(127);
+        buffer.writeByte((byte) 127);
         buffer.writeByte(EncodingCodes.UBYTE);
-        buffer.writeByte(255);
+        buffer.writeByte((byte) 255);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             UnsignedByte result1 = streamDecoder.readUnsignedByte(stream, streamDecoderState);
             UnsignedByte result2 = streamDecoder.readUnsignedByte(stream, streamDecoderState);
             UnsignedByte result3 = streamDecoder.readUnsignedByte(stream, streamDecoderState);
@@ -335,17 +344,18 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeEncodedBytesAsPrimitive(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.UBYTE);
-        buffer.writeByte(0);
+        buffer.writeByte((byte) 0);
         buffer.writeByte(EncodingCodes.UBYTE);
-        buffer.writeByte(127);
+        buffer.writeByte((byte) 127);
         buffer.writeByte(EncodingCodes.UBYTE);
-        buffer.writeByte(255);
+        buffer.writeByte((byte) 255);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             byte result1 = streamDecoder.readUnsignedByte(stream, streamDecoderState, (byte) 1);
             byte result2 = streamDecoder.readUnsignedByte(stream, streamDecoderState, (byte) 105);
             byte result3 = streamDecoder.readUnsignedByte(stream, streamDecoderState, (byte) 200);
@@ -375,13 +385,14 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
     }
 
     private void testDecodeBooleanFromNullEncoding(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedByte(buffer, encoderState, (byte) 1);
         encoder.writeNull(buffer, encoderState);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+
             UnsignedByte result1 = streamDecoder.readUnsignedByte(stream, streamDecoderState);
             UnsignedByte result2 = streamDecoder.readUnsignedByte(stream, streamDecoderState);
 
@@ -407,13 +418,13 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
     }
 
     public void testDecodeBooleanAsPrimitiveWithDefault(boolean fromStream) throws Exception {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeUnsignedByte(buffer, encoderState, (byte) 27);
         encoder.writeNull(buffer, encoderState);
 
         if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
             byte result = streamDecoder.readUnsignedByte(stream, streamDecoderState, (byte) 0);
             assertEquals((byte) 27, result);
             result = streamDecoder.readUnsignedByte(stream, streamDecoderState, (byte) 127);
@@ -437,8 +448,7 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
     }
 
     public void doTestSkipValue(boolean fromStream) throws IOException {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        InputStream stream = new ProtonBufferInputStream(buffer);
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeUnsignedByte(buffer, encoderState, UnsignedByte.valueOf((byte) i));
@@ -447,6 +457,13 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
         UnsignedByte expected = UnsignedByte.valueOf((byte) 42);
 
         encoder.writeObject(buffer, encoderState, expected);
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
 
         for (int i = 0; i < 10; ++i) {
             if (fromStream) {

@@ -26,9 +26,9 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-import io.netty.buffer.ByteBuf;
+import io.netty5.buffer.Buffer;
 
-public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ByteBuf> {
+public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<Buffer> {
 
     private final Symbol descriptorSymbol;
     private final UnsignedLong descriptorCode;
@@ -53,7 +53,7 @@ public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ByteBuf> {
     }
 
     @Override
-    protected boolean matchesSafely(ByteBuf receivedBinary) {
+    protected boolean matchesSafely(Buffer receivedBinary) {
         int length = receivedBinary.readableBytes();
         Codec data = Codec.Factory.create();
         long decoded = data.decode(receivedBinary);
@@ -86,7 +86,7 @@ public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ByteBuf> {
     }
 
     @Override
-    protected void describeMismatchSafely(ByteBuf item, Description mismatchDescription) {
+    protected void describeMismatchSafely(Buffer item, Description mismatchDescription) {
         mismatchDescription.appendText("\nActual encoded form: ").appendValue(item);
 
         if (decodedDescribedType != null) {
