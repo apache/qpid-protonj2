@@ -36,6 +36,7 @@ abstract class ProtonSaslContext implements SaslContext {
     protected final ProtonSaslHandler saslHandler;
 
     private ProtonAttachments attachments;
+    private Object linkedResource;
 
     // Client negotiations tracking.
     protected Symbol[] serverMechanisms;
@@ -53,6 +54,23 @@ abstract class ProtonSaslContext implements SaslContext {
     @Override
     public ProtonAttachments getAttachments() {
         return attachments == null ? attachments = new ProtonAttachments() : attachments;
+    }
+
+    @Override
+    public ProtonSaslContext setLinkedResource(Object resource) {
+        this.linkedResource = resource;
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T getLinkedResource() {
+        return (T) linkedResource;
+    }
+
+    @Override
+    public <T> T getLinkedResource(Class<T> typeClass) {
+        return typeClass.cast(linkedResource);
     }
 
     /**

@@ -31,6 +31,36 @@ public interface SaslContext {
     enum Role { CLIENT, SERVER }
 
     /**
+     * Links a given resource to this {@link SaslContext}.
+     *
+     * @param resource
+     *      The resource to link to this {@link SaslContext}.
+     *
+     * @return this {@link SaslContext} instance.
+     */
+    SaslContext setLinkedResource(Object resource);
+
+    /**
+     * @param <T> The type that the linked resource should be cast to on return.
+     *
+     * @return the user set linked resource for this {@link SaslContext} instance.
+     */
+    <T> T getLinkedResource();
+
+    /**
+     * Gets the linked resource (if set) and returns it using the type information
+     * provided to cast the returned value.
+     *
+     * @param <T> The type to cast the linked resource to if one is set.
+     * @param typeClass the type's Class which is used for casting the returned value.
+     *
+     * @return the user set linked resource for this Context instance.
+     *
+     * @throws ClassCastException if the linked resource cannot be cast to the type requested.
+     */
+    <T> T getLinkedResource(Class<T> typeClass);
+
+    /**
      * Returns a mutable context that the application layer can use to store meaningful data for itself
      * in relation to this specific SASL context object.
      *
