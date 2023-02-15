@@ -17,17 +17,18 @@
 package org.apache.qpid.protonj2.test.driver.actions;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
-import org.apache.qpid.protonj2.test.driver.ScriptedAction;
+import org.apache.qpid.protonj2.test.driver.DeferrableScriptedAction;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
 
 /**
  * AMQP Header injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
  */
-public class AMQPHeaderInjectAction implements ScriptedAction {
+public class AMQPHeaderInjectAction implements DeferrableScriptedAction {
 
     private final AMQPTestDriver driver;
     private final AMQPHeader header;
+    private boolean deferred = false;
 
     public AMQPHeaderInjectAction(AMQPTestDriver driver, AMQPHeader header) {
         this.header = header;
@@ -36,7 +37,11 @@ public class AMQPHeaderInjectAction implements ScriptedAction {
 
     @Override
     public AMQPHeaderInjectAction perform(AMQPTestDriver driver) {
-        driver.sendHeader(header);
+        if (deferred) {
+            driver.deferHeader(header);
+        } else {
+            driver.sendHeader(header);
+        }
         return this;
     }
 
@@ -56,5 +61,16 @@ public class AMQPHeaderInjectAction implements ScriptedAction {
     public AMQPHeaderInjectAction queue() {
         driver.addScriptedElement(this);
         return this;
+    }
+
+    @Override
+    public AMQPHeaderInjectAction deferred() {
+        deferred = true;
+        return this;
+    }
+
+    @Override
+    public boolean isDeffered() {
+        return deferred;
     }
 }

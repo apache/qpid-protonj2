@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import io.netty5.buffer.Buffer;
 import io.netty5.buffer.BufferAllocator;
+import io.netty5.buffer.CompositeBuffer;
 import io.netty5.channel.EventLoop;
 
 /**
@@ -60,6 +61,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
     private final Consumer<AssertionError> assertionConsumer;
     private final Supplier<EventLoop> schedulerSupplier;
 
+    private volatile CompositeBuffer deferredWrites;
     private volatile AssertionError failureCause;
 
     private int advertisedIdleTimeout = 0;
@@ -506,6 +508,81 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
     }
 
     /**
+     * Encodes the given frame data into a ProtonBuffer but does not write the data until the next non-deferred
+     * send if initiated.
+     *
+     * @param channel
+     *      The channel to use when writing the frame
+     * @param performative
+     *      The AMQP Performative to write
+     * @param payload
+     *      The payload to include in the encoded frame.
+     * @param splitWrite
+     * 		Should the data be written in multiple chunks
+     */
+    public void deferAMQPFrame(int channel, DescribedType performative, Buffer payload, boolean splitWrite) {
+        LOG.trace("{} Deferring write of performative: {}", driverName, performative);
+        try (Buffer buffer = frameEncoder.handleWrite(performative, channel, payload, null)) {
+            if (deferredWrites == null) {
+                deferredWrites = BufferAllocator.onHeapUnpooled().compose();
+            }
+
+            deferredWrites.extendWith(buffer.send());
+        } catch (Throwable t) {
+            signalFailure(new AssertionError("Frame was not written due to error.", t));
+        }
+    }
+
+    /**
+     * Encodes the given frame data into a ProtonBuffer but does not write the data until the next non-deferred
+     * send if initiated.
+     *
+     * @param channel
+     *      The channel to use when writing the frame
+     * @param performative
+     *      The SASL Performative to write
+     */
+    public void deferSaslFrame(int channel, DescribedType performative) {
+        // When the outcome of SASL is written the decoder should revert to initial state
+        // as the only valid next incoming value is an AMQP header.
+        if (performative instanceof SaslOutcome) {
+            frameParser.resetToExpectingHeader();
+        }
+
+        LOG.trace("{} Deferring SASL performative write: {}", driverName, performative);
+
+        try (Buffer buffer = frameEncoder.handleWrite(performative, channel)) {
+            if (deferredWrites == null) {
+                deferredWrites = BufferAllocator.onHeapUnpooled().compose();
+            }
+
+            deferredWrites.extendWith(buffer.send());
+        } catch (Throwable t) {
+            signalFailure(new AssertionError("Frame was not written due to error.", t));
+        }
+    }
+
+    /**
+     * Encodes the given Header data into a ProtonBuffer but does not write the data until the next non-deferred
+     * send if initiated.
+     *
+     * @param header
+     *      The byte array to send as the AMQP Header.
+     */
+    public void deferHeader(AMQPHeader header) {
+        LOG.trace("{} Deferring AMQP Header write: {}", driverName, header);
+        try {
+            if (deferredWrites == null) {
+                deferredWrites = BufferAllocator.onHeapUnpooled().compose();
+            }
+
+            deferredWrites.extendWith(BufferAllocator.onHeapUnpooled().copyOf(header.getBuffer()).send());
+        } catch (Throwable t) {
+            signalFailure(new AssertionError("Frame was not consumed due to error.", t));
+        }
+    }
+
+    /**
      * Encodes the given frame data into a ProtonBuffer and injects it into the configured consumer.
      *
      * @param channel
@@ -530,22 +607,32 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         }
 
         try (Buffer buffer = frameEncoder.handleWrite(performative, channel, payload, null)) {
-            LOG.trace("{} Writing out buffer {} to consumer: {}", driverName, buffer, frameConsumer);
+            final Buffer buffered;
+            if (deferredWrites != null) {
+                deferredWrites.extendWith(buffer.send());
+                buffered = deferredWrites;
+                deferredWrites = null;
+                LOG.trace("{} appending deferred buffer {} to next write.", driverName, buffered);
+            } else {
+                buffered = buffer;
+            }
+
+            LOG.trace("{} Writing out buffer {} to consumer: {}", driverName, buffered, frameConsumer);
 
             if (splitWrite) {
-                final int bufferSplitPoint = buffer.readableBytes() / 2;
+                final int bufferSplitPoint = buffered.readableBytes() / 2;
 
-                final ByteBuffer front = ByteBuffer.allocate(bufferSplitPoint - buffer.readerOffset());
-                final ByteBuffer rear = ByteBuffer.allocate(buffer.readableBytes() - bufferSplitPoint);
+                final ByteBuffer front = ByteBuffer.allocate(bufferSplitPoint - buffered.readerOffset());
+                final ByteBuffer rear = ByteBuffer.allocate(buffered.readableBytes() - bufferSplitPoint);
 
-                buffer.readBytes(front);
-                buffer.readBytes(rear);
+                buffered.readBytes(front);
+                buffered.readBytes(rear);
 
                 frameConsumer.accept(front.flip());
                 frameConsumer.accept(rear.flip());
             } else {
-                final ByteBuffer output = ByteBuffer.allocate(buffer.readableBytes());
-                buffer.readBytes(output);
+                final ByteBuffer output = ByteBuffer.allocate(buffered.readableBytes());
+                buffered.readBytes(output);
 
                 frameConsumer.accept(output.flip());
             }
@@ -569,11 +656,21 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
             frameParser.resetToExpectingHeader();
         }
 
-        LOG.trace("{} Sending sasl performative: {}", driverName, performative);
-
         try (Buffer buffer = frameEncoder.handleWrite(performative, channel)) {
-            final ByteBuffer output = ByteBuffer.allocate(buffer.readableBytes());
-            buffer.readBytes(output);
+            final Buffer buffered;
+            if (deferredWrites != null) {
+                deferredWrites.extendWith(buffer.send());
+                buffered = deferredWrites;
+                deferredWrites = null;
+                LOG.trace("{} appending deferred buffer {} to next write.", driverName, buffered);
+            } else {
+                buffered = buffer;
+            }
+
+            LOG.trace("{} Sending SASL performative: {}", driverName, performative);
+
+            final ByteBuffer output = ByteBuffer.allocate(buffered.readableBytes());
+            buffered.readBytes(output);
 
             frameConsumer.accept(output.flip());
         } catch (Throwable t) {
@@ -588,8 +685,21 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
      *      The byte array to send as the AMQP Header.
      */
     public void sendHeader(AMQPHeader header) {
-        LOG.trace("{} Sending AMQP Header: {}", driverName, header);
         try {
+            final ByteBuffer output;
+
+            if (deferredWrites != null) {
+                LOG.trace("{} appending deferred buffer {} to next write.", driverName, deferredWrites);
+                deferredWrites.extendWith(BufferAllocator.onHeapUnpooled().copyOf(header.getBuffer()).send());
+                output = ByteBuffer.allocate(deferredWrites.readableBytes());
+                deferredWrites.readBytes(output);
+                output.flip();
+                deferredWrites = null;
+            } else {
+                output = ByteBuffer.wrap(header.getBuffer());
+            }
+
+            LOG.trace("{} Sending AMQP Header: {}", driverName, header);
             frameConsumer.accept(ByteBuffer.wrap(header.getBuffer()));
         } catch (Throwable t) {
             signalFailure(new AssertionError("Frame was not consumed due to error.", t));

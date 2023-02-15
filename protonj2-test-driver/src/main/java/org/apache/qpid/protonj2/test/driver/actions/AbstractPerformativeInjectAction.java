@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.test.driver.actions;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
+import org.apache.qpid.protonj2.test.driver.DeferrableScriptedAction;
 import org.apache.qpid.protonj2.test.driver.ScriptedAction;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
@@ -28,7 +29,7 @@ import io.netty5.buffer.Buffer;
  *
  * @param <P> the AMQP performative being sent.
  */
-public abstract class AbstractPerformativeInjectAction<P extends DescribedType> implements ScriptedAction {
+public abstract class AbstractPerformativeInjectAction<P extends DescribedType> implements DeferrableScriptedAction {
 
     public static final int CHANNEL_UNSET = -1;
 
@@ -37,6 +38,7 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
     private int channel = CHANNEL_UNSET;
     private int delay = -1;
     private boolean splitWrite = false;
+    private boolean deferred = false;
 
     public AbstractPerformativeInjectAction(AMQPTestDriver driver) {
         this.driver = driver;
@@ -46,7 +48,11 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
     public final AbstractPerformativeInjectAction<P> now() {
         // Give actors a chance to prepare.
         beforeActionPerformed(driver);
-        driver.sendAMQPFrame(onChannel(), getPerformative(), getPayload(), splitWrite);
+        if (deferred) {
+            driver.deferAMQPFrame(channel, getPerformative(), getPayload(), splitWrite);
+        } else {
+            driver.sendAMQPFrame(onChannel(), getPerformative(), getPayload(), splitWrite);
+        }
         return this;
     }
 
@@ -60,6 +66,17 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
     public final AbstractPerformativeInjectAction<P> queue() {
         driver.addScriptedElement(this);
         return this;
+    }
+
+    @Override
+    public AbstractPerformativeInjectAction<P> deferred() {
+        deferred = true;
+        return this;
+    }
+
+    @Override
+    public boolean isDeffered() {
+        return deferred;
     }
 
     @Override

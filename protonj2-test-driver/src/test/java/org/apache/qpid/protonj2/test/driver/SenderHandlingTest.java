@@ -388,4 +388,46 @@ class SenderHandlingTest extends TestPeerTestsBase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    public void testCreateClientConnectionWithPipelinedOpen() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            // These should not be sent until a non-deferred action is triggered.
+            client.remoteHeader(AMQPHeader.getAMQPHeader()).deferred().now();
+            client.remoteOpen().deferred().now();
+            client.remoteBegin().deferred().now();
+            client.remoteAttach().ofSender().deferred().now();
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().onChannel(0).respond();
+            peer.expectAttach().ofSender().withHandle(0).onChannel(0).respond();
+            peer.expectEnd().onChannel(0).respond();
+
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.expectBegin().onChannel(0);
+            client.expectAttach().ofReceiver().onChannel(0).withHandle(0);
+            client.expectEnd().onChannel(0);
+            client.remoteEnd().now(); // Trigger all deferred writes
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

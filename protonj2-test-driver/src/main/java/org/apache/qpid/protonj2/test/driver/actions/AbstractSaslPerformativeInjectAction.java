@@ -17,7 +17,7 @@
 package org.apache.qpid.protonj2.test.driver.actions;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
-import org.apache.qpid.protonj2.test.driver.ScriptedAction;
+import org.apache.qpid.protonj2.test.driver.DeferrableScriptedAction;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 
 /**
@@ -25,12 +25,12 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
  *
  * @param <P> the SASL performative being sent.
  */
-public abstract class AbstractSaslPerformativeInjectAction<P extends DescribedType> implements ScriptedAction {
+public abstract class AbstractSaslPerformativeInjectAction<P extends DescribedType> implements DeferrableScriptedAction {
 
     public static final int CHANNEL_UNSET = -1;
 
     private final AMQPTestDriver driver;
-
+    private boolean deferred = false;
     private int channel = CHANNEL_UNSET;
 
     public AbstractSaslPerformativeInjectAction(AMQPTestDriver driver) {
@@ -56,8 +56,23 @@ public abstract class AbstractSaslPerformativeInjectAction<P extends DescribedTy
     }
 
     @Override
+    public AbstractSaslPerformativeInjectAction<P> deferred() {
+        deferred = true;
+        return this;
+    }
+
+    @Override
+    public boolean isDeffered() {
+        return deferred;
+    }
+
+    @Override
     public AbstractSaslPerformativeInjectAction<P> perform(AMQPTestDriver driver) {
-        driver.sendSaslFrame(onChannel(), getPerformative());
+        if (deferred) {
+            driver.deferSaslFrame(onChannel(), getPerformative());
+        } else {
+            driver.sendSaslFrame(onChannel(), getPerformative());
+        }
         return this;
     }
 
