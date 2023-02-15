@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
+import org.apache.qpid.protonj2.engine.util.StringUtils;
 
 /**
  * Class that represents an AMQP Symbol value.  The creation of a Symbol object
@@ -209,5 +210,19 @@ public final class Symbol implements Comparable<Symbol> {
         }
 
         return symbol;
+    }
+
+    /**
+     * Look up a set of {@link Symbol} instances that matches the given {@link String}
+     * array names of the {@link Symbol} values and return them as a new {@link Symbol}
+     * array.
+     *
+     * @param stringValues
+     * 		The {@link String} array version of the {@link Symbol} values.
+     *
+     * @return a {@link Symbol} array that matches the given {@link String} array values.
+     */
+    public static Symbol[] getSymbols(String[] stringValues) {
+        return StringUtils.toSymbolArray(stringValues);
     }
 }

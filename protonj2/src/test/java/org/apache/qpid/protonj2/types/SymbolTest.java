@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.types;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -218,5 +219,27 @@ public class SymbolTest {
 
         assertNotSame(symbol1, symbol2);
         assertNotSame(symbol1.toString(), symbol2.toString());
+    }
+
+    @Test
+    public void testGetSymbols() {
+        String[] symbolStrings = new String[] { "one", "two", "three" };
+
+        Symbol[] symbols1 = Symbol.getSymbols(symbolStrings);
+        Symbol[] symbols2 = Symbol.getSymbols(symbolStrings);
+
+        assertEquals(symbolStrings.length, symbols1.length);
+        assertEquals(symbolStrings.length, symbols2.length);
+        assertArrayEquals(symbols1, symbols2);
+
+        for (int i = 0; i < symbolStrings.length; ++i) {
+            assertSame(symbols1[i], symbols2[i]);
+        }
+    }
+
+    @Test
+    public void testGetSymbolsWithNullOrEmptyArg() {
+        assertNull(Symbol.getSymbols(null));
+        assertNotNull(Symbol.getSymbols(new String[0]));
     }
 }

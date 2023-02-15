@@ -81,6 +81,25 @@ public interface SaslClientContext extends SaslContext {
     SaslClientContext sendChosenMechanism(Symbol mechanism, String host, ProtonBuffer initialResponse) throws EngineStateException;
 
     /**
+     * Sends a response to the SASL server indicating the chosen mechanism for this
+     * client and the host name that this client is identifying itself as.
+     *
+     * @param mechanism
+     *      The chosen mechanism selected from the list the server provided.
+     * @param host
+     *      The host name that the client is identified as or null if none selected.
+     * @param initialResponse
+     *      The initial response data sent as defined by the chosen mechanism or null if none required.
+     *
+     * @return this client context.
+     *
+     * @throws EngineStateException if the {@link Engine} has been shut down or a failure occurs processing this mechanism.
+     */
+    default SaslClientContext sendChosenMechanism(String mechanism, String host, ProtonBuffer initialResponse) throws EngineStateException {
+        return sendChosenMechanism(Symbol.getSymbol(mechanism), host, initialResponse);
+    }
+
+    /**
      * Sends a response to a server side challenge that comprises the challenge / response
      * exchange for the chosen SASL mechanism.
      *

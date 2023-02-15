@@ -65,6 +65,22 @@ public interface SaslServerContext extends SaslContext {
     SaslServerContext sendMechanisms(Symbol[] mechanisms) throws EngineStateException;
 
     /**
+     * Sends the set of supported mechanisms to the SASL client from which it must
+     * choose and return one mechanism which will then be the basis for the SASL
+     * authentication negotiation.
+     *
+     * @param mechanisms
+     *      The mechanisms that this server supports.
+     *
+     * @return this server context.
+     *
+     * @throws EngineStateException if the engine has already shutdown or failed while processing the mechanisms.
+     */
+    default SaslServerContext sendMechanisms(String[] mechanisms) throws EngineStateException {
+        return sendMechanisms(Symbol.getSymbols(mechanisms));
+    }
+
+    /**
      * Sends the SASL challenge defined by the SASL mechanism that is in use during
      * this SASL negotiation.  The challenge is an opaque binary that is provided to
      * the server by the security mechanism.
