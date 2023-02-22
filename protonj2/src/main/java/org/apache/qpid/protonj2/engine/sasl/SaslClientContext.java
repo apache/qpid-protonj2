@@ -101,7 +101,8 @@ public interface SaslClientContext extends SaslContext {
 
     /**
      * Sends a response to a server side challenge that comprises the challenge / response
-     * exchange for the chosen SASL mechanism.
+     * exchange for the chosen SASL mechanism. The server may response with another challenge
+     * or complete the SASL exchange by sending an outcome.
      *
      * @param response
      *      The response bytes to be sent to the server for this cycle.
@@ -117,6 +118,12 @@ public interface SaslClientContext extends SaslContext {
      * unrecoverable error.  Failing the process will signal the engine that the SASL process
      * has failed and place the engine in a failed state as well as notify the registered error
      * handler for the {@link Engine}.
+     * <p>
+     * Once the SASL negotiation completes after an outcome has arrived calling this method
+     * will not produce any effect as the SASL layer will be shutdown at this point, this
+     * method is for failing negotiations that are ongoing. If a failed SASL outcome arrives
+     * the client should take action by shutting down the engine or failing it to trigger
+     * an event that is handled or by closing the I/O channel in use.
      *
      * @param failure
      *      The exception to report to the {@link Engine} that describes the failure.

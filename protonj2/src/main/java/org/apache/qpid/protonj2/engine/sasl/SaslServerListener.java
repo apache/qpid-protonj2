@@ -95,8 +95,8 @@ public interface SaslServerListener {
      * same thread that the response handler was invoked from.
      * <p>
      * In the event that the server implementation cannot proceed with SASL authentication it should call the
-     * {@link SaslServerContext#saslFailure(javax.security.sasl.SaslException)} to fail
-     * the SASL negotiation and signal the {@link Engine} that it should transition to a failed state.
+     * {@link SaslServerContext#saslFailure(javax.security.sasl.SaslException)} to fail the SASL negotiation
+     * and signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context
      *      the {@link SaslServerContext} object that is to process the incoming response.

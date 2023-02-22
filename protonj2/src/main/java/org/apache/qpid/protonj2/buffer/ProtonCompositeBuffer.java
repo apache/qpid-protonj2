@@ -27,14 +27,50 @@ import org.apache.qpid.protonj2.buffer.impl.ProtonCompositeBufferImpl;
  */
 public interface ProtonCompositeBuffer extends ProtonBuffer {
 
+    /**
+     * Create an empty composite buffer that will use the provided allocator to
+     * create new buffer capacity if writes are performed and insufficient space
+     * remains (unless the capacity limit is reached).
+     *
+     * @param allocator
+     * 		The allocator to use when adding new buffer capacity automatically.
+     *
+     * @return a new empty composite buffer instance.
+     */
     static ProtonCompositeBuffer create(ProtonBufferAllocator allocator) {
         return ProtonCompositeBufferImpl.create(allocator);
     }
 
+    /**
+     * Create an composite buffer with the given buffer instance as the initial buffer
+     * payload. The provided buffer allocator will use the provided allocator to create
+     * new buffer capacity if writes are performed and insufficient space remains (unless
+     * the capacity limit is reached).
+     *
+     * @param allocator
+     * 		The allocator to use when adding new buffer capacity automatically.
+     * @param buffer
+     * 		The initial buffer to append as the body of the returned composite buffer.
+     *
+     * @return a new composite buffer instance that wraps the given buffer.
+     */
     static ProtonCompositeBuffer create(ProtonBufferAllocator allocator, ProtonBuffer buffer) {
         return ProtonCompositeBufferImpl.create(allocator, buffer);
     }
 
+    /**
+     * Create an composite buffer with the given array of buffers as the initial buffer
+     * payload. The provided buffer allocator will use the provided allocator to create
+     * new buffer capacity if writes are performed and insufficient space remains (unless
+     * the capacity limit is reached).
+     *
+     * @param allocator
+     * 		The allocator to use when adding new buffer capacity automatically.
+     * @param buffers
+     * 		The initial buffers to append as the body of the returned composite buffer.
+     *
+     * @return a new composite buffer instance that wraps the given buffers.
+     */
     static ProtonCompositeBuffer create(ProtonBufferAllocator allocator, ProtonBuffer[] buffers) {
         return ProtonCompositeBufferImpl.create(allocator, buffers);
     }
@@ -64,8 +100,8 @@ public interface ProtonCompositeBuffer extends ProtonBuffer {
 
     /**
      * Splits the composite buffer up into a collection of buffers that comprise it and
-     * leaves this buffer in an empty state.  The returned buffers are now the property
-     * of the caller.
+     * leaves this buffer in what is effectively a closed state.  The returned buffers are
+     * now the property of the caller who must ensure they are closed when no longer in use..
      *
      * @return the collection of buffers that comprised this composite buffer.
      */

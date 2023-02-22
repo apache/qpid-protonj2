@@ -84,7 +84,8 @@ public interface SaslServerContext extends SaslContext {
     /**
      * Sends the SASL challenge defined by the SASL mechanism that is in use during
      * this SASL negotiation.  The challenge is an opaque binary that is provided to
-     * the server by the security mechanism.
+     * the server by the security mechanism.  Upon sending a challenge the SASL server
+     * should expect a response from the SASL client.
      *
      * @param challenge
      *      The buffer containing the server challenge.
@@ -98,6 +99,13 @@ public interface SaslServerContext extends SaslContext {
     /**
      * Sends a response to a server side challenge that comprises the challenge / response
      * exchange for the chosen SASL mechanism.
+     * <p>
+     * Sending an outcome that indicates SASL does not trigger a failure of the engine or
+     * cause a shutdown, the caller must ensure that after failing the SASL exchange the
+     * engine is shutdown or failed so that event handlers are triggered or should pro-actively
+     * close any I/O channel that was opened. The {@link #saslFailure(SaslException)} method
+     * has no effect once this method has been called as SASL negotiations are considered done
+     * once an outcome is sent.
      *
      * @param outcome
      *      The outcome of the SASL negotiation to be sent to the client.
@@ -115,6 +123,10 @@ public interface SaslServerContext extends SaslContext {
      * unrecoverable error.  Failing the process will signal the {@link Engine} that the SASL process
      * has failed and place the engine in a failed state as well as notify the registered error
      * handler for the {@link Engine}.
+     * <p>
+     * This method will not perform any action if called after the {@link #sendOutcome(SaslOutcome, ProtonBuffer)}
+     * method has been called as the SASL negotiation process was marked as completed and the implementation
+     * is free to tear down SASL resources following that call.
      *
      * @param failure
      *      The exception to report to the {@link Engine} that describes the failure.

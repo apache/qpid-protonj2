@@ -597,7 +597,8 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
 
     /**
      * Writes into this buffer, the given number of bytes from the byte array. This updates the
-     * {@linkplain #getWriteOffset()} of this buffer by the length argument.
+     * {@linkplain #getWriteOffset()} of this buffer by the length argument. Implementations are
+     * recommended to specialize this method and provide a more efficient version.
      *
      * @param source The byte array to read from.
      * @param offset The position in the {@code source} from where bytes should be written to this buffer.
@@ -621,7 +622,8 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
     /**
      * Writes into this buffer from the source {@link ByteBuffer}. This updates the
      * {@link #getWriteOffset()} of this buffer and also the position of the source
-     * {@link ByteBuffer}.
+     * {@link ByteBuffer}. Implementations are recommended to specialize this method
+     * and provide a more efficient version.
      * <p>
      * Note: the behavior is undefined if the given {@link ByteBuffer} is an alias for the memory in this buffer.
      *

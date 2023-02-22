@@ -34,12 +34,42 @@ public abstract class ProtonBufferUtils {
      */
     public static final int MAX_BUFFER_CAPACITY = Integer.MAX_VALUE - 8;
 
-    /**
+    /*
      * Cleaner used by buffer implementations to close out wrapped or otherwise
      * managed buffer resources when the buffer is no longer reachable and can be
      * garbage collected.
      */
-    public static final Cleaner CLEANER = Cleaner.create();
+    private static Cleaner CLEANER;
+
+    /**
+     * Create and / or return a Cleaner instance on demand and then serve out only that
+     * instance from then on.
+     * <p>
+     * Care should be taken when using Cleaners as the instance will be tired to a thread that
+     * will run to perform the cleanups, an application is advised to assign a single global
+     * value for the whole application,
+     *
+     * @return a {@link Cleaner} instance which is created on demand or was already assigned.
+     */
+    public static synchronized Cleaner getCleaner() {
+        if (CLEANER == null) {
+            CLEANER = Cleaner.create();
+        }
+
+        return CLEANER;
+    }
+
+    /**
+     * Allows an external application {@link Cleaner} instance to be assigned to the
+     * buffer utilities Cleaner instance which will then be used if a cleaner for a
+     * {@link ProtonBuffer} is registered.
+     *
+     * @param cleaner
+     * 		The cleaner to assign as the global {@link Cleaner} for buffer instances.
+     */
+    public static synchronized void setCleaner(Cleaner cleaner) {
+        CLEANER = cleaner;
+    }
 
     /**
      * Register a cleanup watch on the given object which is related to the {@link ProtonBuffer}
@@ -57,7 +87,7 @@ public abstract class ProtonBufferUtils {
         Objects.requireNonNull(observed, "The observed resource holder cannot be null");
         Objects.requireNonNull(buffer, "The buffer resource to be cleaned cannot be null");
 
-        return CLEANER.register(observed, () -> {
+        return getCleaner().register(observed, () -> {
             buffer.close();
         });
     }
@@ -80,8 +110,8 @@ public abstract class ProtonBufferUtils {
     }
 
     /**
-     * Given a {@link ProtonBuffer} returns an array containing a copy of the readable bytes
-     * from the provided buffer.
+     * Given a {@link ProtonBuffer} returns an array containing a deep copy of the readable
+     * bytes from the provided buffer.
      *
      * @param buffer
      * 		The buffer whose readable bytes are to be copied.
@@ -669,7 +699,7 @@ public abstract class ProtonBufferUtils {
         if (newCapacity > MAX_BUFFER_CAPACITY) {
             throw new IllegalArgumentException(
                 "Requested new buffer capacity {" + newCapacity +
-                "}is greater than the max allowed size: " + MAX_BUFFER_CAPACITY);
+                "} is greater than the max allowed size: " + MAX_BUFFER_CAPACITY);
         }
     }
 
@@ -872,6 +902,10 @@ public abstract class ProtonBufferUtils {
     /**
      * Creates a wrapper around the given allocator that prevents the close call
      * from having any effect.
+     * <p>
+     * Care should be taken to ensure that the allocator being wrapper is safe to leave
+     * unclosed or that the code closes it purposefully in some other context as certain
+     * wrapped allocators might require a close to free native resources.
      *
      * @param allocator
      * 		the {@link ProtonBufferAllocator} to wrap.
@@ -882,6 +916,7 @@ public abstract class ProtonBufferUtils {
         return new UnclosableBufferAllocator(allocator);
     }
 
+    // This wrapper relies on the default implementation of the close method being a no-op
     private static class UnclosableBufferAllocator implements ProtonBufferAllocator {
 
         private final ProtonBufferAllocator allocator;
