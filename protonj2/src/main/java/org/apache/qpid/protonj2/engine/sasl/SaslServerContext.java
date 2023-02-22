@@ -22,6 +22,7 @@ import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.exceptions.EngineStateException;
 import org.apache.qpid.protonj2.types.Symbol;
+import org.apache.qpid.protonj2.types.Symbols;
 
 /**
  * SASL Server operating context used by an {@link Engine} that has been
@@ -77,7 +78,7 @@ public interface SaslServerContext extends SaslContext {
      * @throws EngineStateException if the engine has already shutdown or failed while processing the mechanisms.
      */
     default SaslServerContext sendMechanisms(String[] mechanisms) throws EngineStateException {
-        return sendMechanisms(Symbol.getSymbols(mechanisms));
+        return sendMechanisms(Symbols.getSymbols(mechanisms));
     }
 
     /**

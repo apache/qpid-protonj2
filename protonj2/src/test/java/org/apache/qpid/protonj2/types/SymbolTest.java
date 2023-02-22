@@ -18,11 +18,13 @@ package org.apache.qpid.protonj2.types;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
@@ -225,8 +227,8 @@ public class SymbolTest {
     public void testGetSymbols() {
         String[] symbolStrings = new String[] { "one", "two", "three" };
 
-        Symbol[] symbols1 = Symbol.getSymbols(symbolStrings);
-        Symbol[] symbols2 = Symbol.getSymbols(symbolStrings);
+        Symbol[] symbols1 = Symbols.getSymbols(symbolStrings);
+        Symbol[] symbols2 = Symbols.getSymbols(symbolStrings);
 
         assertEquals(symbolStrings.length, symbols1.length);
         assertEquals(symbolStrings.length, symbols2.length);
@@ -239,7 +241,28 @@ public class SymbolTest {
 
     @Test
     public void testGetSymbolsWithNullOrEmptyArg() {
-        assertNull(Symbol.getSymbols(null));
-        assertNotNull(Symbol.getSymbols(new String[0]));
+        assertNull(Symbols.getSymbols(null));
+        assertNotNull(Symbols.getSymbols(new String[0]));
+    }
+
+    @Test
+    public void testSymbolsArrayContains() {
+        final Symbol[] symbols = new Symbol[] { Symbol.getSymbol("one"), Symbol.getSymbol("two"), Symbol.getSymbol("three") };
+
+        assertThrows(NullPointerException.class, () -> Symbols.contains(symbols, (String)null));
+        assertThrows(NullPointerException.class, () -> Symbols.contains(symbols, (Symbol)null));
+
+        assertTrue(Symbols.contains(symbols, "one"));
+        assertTrue(Symbols.contains(symbols, "three"));
+        assertTrue(Symbols.contains(symbols, "two"));
+        assertFalse(Symbols.contains(symbols, "four"));
+
+        assertTrue(Symbols.contains(symbols, Symbol.getSymbol("one")));
+        assertTrue(Symbols.contains(symbols, Symbol.getSymbol("two")));
+        assertTrue(Symbols.contains(symbols, Symbol.getSymbol("three")));
+        assertFalse(Symbols.contains(symbols, Symbol.getSymbol("four")));
+
+        assertFalse(Symbols.contains(null, "four"));
+        assertFalse(Symbols.contains(new Symbol[0], "four"));
     }
 }
