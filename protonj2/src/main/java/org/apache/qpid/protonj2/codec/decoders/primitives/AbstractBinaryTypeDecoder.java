@@ -59,7 +59,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
                               "of data available (%d)", length, buffer.getReadableBytes()));
         }
 
-        final ProtonBuffer payload = buffer.copy(buffer.getReadOffset(), length, buffer.isReadOnly());
+        final ProtonBuffer payload = buffer.copy(buffer.getReadOffset(), length, true);
 
         buffer.advanceReadOffset(length);
 

@@ -71,7 +71,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Boolean} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -88,7 +88,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Byte} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -107,7 +107,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Byte} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -124,7 +124,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Byte} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -143,7 +143,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link UnsignedByte} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -160,7 +160,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link UnsignedByte} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -179,7 +179,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Character} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -196,7 +196,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Character} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -215,7 +215,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Decimal32} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -232,7 +232,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Decimal64} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -249,7 +249,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Decimal128} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -266,7 +266,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Short} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -283,7 +283,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Short} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -302,7 +302,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link UnsignedShort} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -319,7 +319,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link UnsignedShort} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -338,7 +338,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link UnsignedShort} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -357,7 +357,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Integer} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -374,7 +374,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Integer} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -393,7 +393,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link UnsignedInteger} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -410,7 +410,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link UnsignedInteger} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -429,7 +429,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link UnsignedInteger} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -448,7 +448,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Long} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -465,7 +465,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Long} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -484,7 +484,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link UnsignedLong} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -501,7 +501,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link UnsignedLong} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -520,7 +520,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Float} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -537,7 +537,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Float} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -556,7 +556,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Double} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -573,7 +573,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Double} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -592,7 +592,10 @@ public interface StreamDecoder {
      * Reads an encoded {@link Binary} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
+     * <p>
+     * The resulting {@link Binary} instance will contain a read-only view of the decoded bytes and
+     * any calls to access the underlying buffer will return a read-only {@link ProtonBuffer}.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -609,7 +612,9 @@ public interface StreamDecoder {
      * Reads an encoded {@link Binary} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
+     * <p>
+     * The resulting {@link ProtonBuffer} instance will be a read-only view of the read in bytes.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -642,7 +647,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link String} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -659,7 +664,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Symbol} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -676,7 +681,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link String} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -695,7 +700,7 @@ public interface StreamDecoder {
      * Reads an encoded AMQP time stamp value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -712,7 +717,7 @@ public interface StreamDecoder {
      * Reads an encoded AMQP time stamp value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -731,7 +736,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link UUID} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param stream
      * 		The {@link InputStream} where the read operation takes place.
@@ -801,7 +806,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link Map} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param <K> The key type for the map that is being read.
      * @param <V> The value type for the map that is being read.
@@ -821,7 +826,7 @@ public interface StreamDecoder {
      * Reads an encoded {@link List} value from the given {@link InputStream} assuming that the
      * next value in the byte stream is that type.  The operation fails if the next encoded type is
      * not what was expected.  If the caller wishes to recover from failed decode attempt they should
-     * mark the and reset the input to make a further read attempt.
+     * make a note of the current read position and reset the input to make a further read attempt.
      *
      * @param <V> The value type for the list that is being read.
      *
