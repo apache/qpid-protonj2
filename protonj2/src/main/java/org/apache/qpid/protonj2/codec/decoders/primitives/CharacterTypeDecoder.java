@@ -97,4 +97,14 @@ public final class CharacterTypeDecoder extends AbstractPrimitiveTypeDecoder<Cha
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         ProtonStreamUtils.skipBytes(stream, Integer.BYTES);
     }
+
+    @Override
+    public int readSize(ProtonBuffer buffer, DecoderState state) {
+        return Integer.BYTES;
+    }
+
+    @Override
+    public int readSize(InputStream stream, StreamDecoderState state) {
+        return Integer.BYTES;
+    }
 }

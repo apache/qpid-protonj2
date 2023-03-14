@@ -82,7 +82,6 @@ public final class ListTypeEncoder extends AbstractPrimitiveTypeEncoder<List> {
         }
 
         // Move back and write the size
-        final int endIndex = buffer.getWriteOffset();
-        buffer.setInt(startIndex, endIndex - startIndex - 4);
+        buffer.setInt(startIndex, buffer.getWriteOffset() - startIndex - Integer.BYTES);
     }
 }

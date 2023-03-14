@@ -20,6 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -28,10 +29,13 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
@@ -42,6 +46,8 @@ import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ProtonScanningContext;
+import org.apache.qpid.protonj2.codec.decoders.primitives.MapTypeDecoder;
 import org.apache.qpid.protonj2.types.Binary;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -518,5 +524,200 @@ public class MapTypeCodecTest extends CodecTestSupport {
 
     private static class MyUnknownTestType {
 
+    }
+
+    @Test
+    public void testReadSeizeFromEncoding() throws IOException {
+        doTestReadSeizeFromEncoding(false);
+    }
+
+    @Test
+    public void testReadSeizeFromEncodingInStream() throws IOException {
+        doTestReadSeizeFromEncoding(true);
+    }
+
+    private void doTestReadSeizeFromEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        buffer.writeByte(EncodingCodes.MAP8);
+        buffer.writeByte((byte) 8);
+        buffer.writeByte(EncodingCodes.MAP32);
+        buffer.writeInt(16);
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(8, typeDecoder.readSize(stream, streamDecoderState));
+            typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(16, typeDecoder.readSize(stream, streamDecoderState));
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(8, typeDecoder.readSize(buffer, decoderState));
+            typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(16, typeDecoder.readSize(buffer, decoderState));
+        }
+    }
+
+    @Test
+    public void testScanEncodedMapForSpecificKey() throws IOException {
+        doTestScanEncodedMapForSpecificKey(false);
+    }
+
+    @Test
+    public void testScanEncodedMapForSpecificKeyFromStream() throws IOException {
+        doTestScanEncodedMapForSpecificKey(true);
+    }
+
+    private void doTestScanEncodedMapForSpecificKey(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<String, Object> propertiesMap = new LinkedHashMap<>();
+
+        propertiesMap.put("key-1", "1");
+        propertiesMap.put("key-2", "2");
+        propertiesMap.put("key-3", "3");
+        propertiesMap.put("key-4", "4");
+        propertiesMap.put("key-5", "5");
+        propertiesMap.put("key-6", "6");
+        propertiesMap.put("key-7", "7");
+        propertiesMap.put("key-8", "8");
+
+        final Collection<String> searchDomain = new ArrayList<>();
+        searchDomain.add("key-2");
+
+        encoder.writeObject(buffer, encoderState, propertiesMap);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final AtomicBoolean matchFound = new AtomicBoolean();
+        final ProtonScanningContext<String> context = ProtonScanningContext.createStringScanContext(searchDomain);
+
+        final MapTypeDecoder result;
+        if (fromStream) {
+            result = (MapTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanKeys(stream, streamDecoderState, context, (k, v) -> {
+                assertEquals("2", v);
+                matchFound.set(true);
+            });
+            assertEquals(0, stream.available());
+        } else {
+            result = (MapTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanKeys(buffer, decoderState, context, (k, v) -> {
+                assertEquals("2", v);
+                matchFound.set(true);
+            });
+            assertFalse(buffer.isReadable());
+        }
+
+        assertTrue(matchFound.get());
+    }
+
+    @Test
+    public void testScanEncodedApplicationPropertiesForSpecificKeyFromStreamRejectsStreamWihtoutMarkSupport() throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<String, Object> propertiesMap = new LinkedHashMap<>();
+
+        propertiesMap.put("key-1", "1");
+        propertiesMap.put("key-2", "2");
+        propertiesMap.put("key-3", "3");
+        propertiesMap.put("key-4", "4");
+        propertiesMap.put("key-5", "5");
+        propertiesMap.put("key-6", "6");
+        propertiesMap.put("key-7", "7");
+        propertiesMap.put("key-8", "8");
+
+        final Collection<String> searchDomain = new ArrayList<>();
+        searchDomain.add("key-2");
+
+        encoder.writeObject(buffer, encoderState, propertiesMap);
+
+        final InputStream stream = Mockito.spy(new ProtonBufferInputStream(buffer));
+
+        Mockito.when(stream.markSupported()).thenReturn(false);
+
+        final AtomicBoolean matchFound = new AtomicBoolean();
+        final ProtonScanningContext<String> context = ProtonScanningContext.createStringScanContext(searchDomain);
+
+        final MapTypeDecoder result = (MapTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+        assertNotNull(result);
+        try {
+            result.scanKeys(stream, streamDecoderState, context, (k, v) -> {
+                matchFound.set(true);
+            });
+            fail("Should fail if stream says it cannot support marking");
+        } catch (UnsupportedOperationException ex) {
+            // Expected
+        }
+
+        assertFalse(matchFound.get());
+    }
+
+    @Test
+    public void testScanEncodedMapForSpecificKeyWithNoMatchConsumesEncoding() throws IOException {
+        doTestScanEncodedMapForSpecificKeyWithNoMatchConsumesEncoding(false);
+    }
+
+    @Test
+    public void testScanEncodedMapForSpecificKeyWithNoMatchConsumesEncodingFromStream() throws IOException {
+        doTestScanEncodedMapForSpecificKeyWithNoMatchConsumesEncoding(true);
+    }
+
+    private void doTestScanEncodedMapForSpecificKeyWithNoMatchConsumesEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<String, Object> propertiesMap = new LinkedHashMap<>();
+
+        propertiesMap.put("key-1", "1");
+        propertiesMap.put("key-2", "2");
+        propertiesMap.put("key-3", "3");
+        propertiesMap.put("key-4", "4");
+        propertiesMap.put("key-5", "5");
+        propertiesMap.put("key-6", "6");
+        propertiesMap.put("key-7", "7");
+        propertiesMap.put("key-8", "8");
+
+        final Collection<String> searchDomain = new ArrayList<>();
+        searchDomain.add("key-99");
+
+        encoder.writeObject(buffer, encoderState, propertiesMap);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final AtomicBoolean matchFound = new AtomicBoolean();
+        final ProtonScanningContext<String> context = ProtonScanningContext.createStringScanContext(searchDomain);
+
+        final MapTypeDecoder result;
+        if (fromStream) {
+            result = (MapTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanKeys(stream, streamDecoderState, context, (k, v) -> {
+                matchFound.set(true);
+            });
+            assertEquals(0, stream.available());
+        } else {
+            result = (MapTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanKeys(buffer, decoderState, context, (k, v) -> {
+                matchFound.set(true);
+            });
+            assertFalse(buffer.isReadable());
+        }
+
+        assertFalse(matchFound.get());
     }
 }

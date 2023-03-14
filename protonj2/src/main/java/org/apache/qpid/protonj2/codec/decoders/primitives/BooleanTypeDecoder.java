@@ -97,4 +97,14 @@ public class BooleanTypeDecoder extends AbstractPrimitiveTypeDecoder<Boolean> {
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         ProtonStreamUtils.readByte(stream);
     }
+
+    @Override
+    public int readSize(ProtonBuffer buffer, DecoderState state) {
+        return Byte.BYTES;
+    }
+
+    @Override
+    public int readSize(InputStream stream, StreamDecoderState state) {
+        return Byte.BYTES;
+    }
 }

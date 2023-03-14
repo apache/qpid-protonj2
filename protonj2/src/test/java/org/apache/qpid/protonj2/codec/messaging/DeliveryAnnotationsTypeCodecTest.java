@@ -25,9 +25,14 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
@@ -37,6 +42,8 @@ import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ScanningContext;
+import org.apache.qpid.protonj2.codec.decoders.StreamScanningContext;
 import org.apache.qpid.protonj2.codec.decoders.messaging.DeliveryAnnotationsTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.messaging.DeliveryAnnotationsTypeEncoder;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -543,5 +550,337 @@ public class DeliveryAnnotationsTypeCodecTest extends CodecTestSupport {
             decoder.readObject(buffer, decoderState);
             fail("Should not decode type with invalid encoding");
         } catch (DecodeException ex) {}
+    }
+
+    @Test
+    public void testScanEncodedDeliveryAnnotationsForSpecificKey() throws IOException {
+        doTestScanEncodedDeliveryAnnotationsForSpecificKey(false);
+    }
+
+    @Test
+    public void testScanEncodedDeliveryAnnotationsForSpecificKeyFromStream() throws IOException {
+        doTestScanEncodedDeliveryAnnotationsForSpecificKey(true);
+    }
+
+    private void doTestScanEncodedDeliveryAnnotationsForSpecificKey(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<Symbol, Object> propertiesMap = new LinkedHashMap<>();
+        DeliveryAnnotations properties = new DeliveryAnnotations(propertiesMap);
+
+        propertiesMap.put(Symbol.valueOf("key-1"), "1");
+        propertiesMap.put(Symbol.valueOf("key-2"), "2");
+        propertiesMap.put(Symbol.valueOf("key-3"), "3");
+        propertiesMap.put(Symbol.valueOf("key-4"), "4");
+        propertiesMap.put(Symbol.valueOf("key-5"), "5");
+        propertiesMap.put(Symbol.valueOf("key-6"), "6");
+        propertiesMap.put(Symbol.valueOf("key-7"), "7");
+        propertiesMap.put(Symbol.valueOf("key-8"), "8");
+
+        final Collection<Symbol> searchDomain = new ArrayList<>();
+        searchDomain.add(Symbol.valueOf("key-2"));
+
+        encoder.writeObject(buffer, encoderState, properties);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final AtomicBoolean matchFound = new AtomicBoolean();
+
+        final DeliveryAnnotationsTypeDecoder result;
+        if (fromStream) {
+            final StreamScanningContext<Symbol> context = DeliveryAnnotationsTypeDecoder.createStreamScanContext(searchDomain);
+            result = (DeliveryAnnotationsTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanAnnotations(stream, streamDecoderState, context, (k, v) -> {
+                assertEquals(Symbol.valueOf("key-2"), k);
+                assertEquals("2", v);
+                matchFound.set(true);
+            });
+        } else {
+            final ScanningContext<Symbol> context = DeliveryAnnotationsTypeDecoder.createScanContext(searchDomain);
+            result = (DeliveryAnnotationsTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanAnnotations(buffer, decoderState, context, (k, v) -> {
+                assertEquals(Symbol.valueOf("key-2"), k);
+                assertEquals("2", v);
+                matchFound.set(true);
+            });
+        }
+
+        assertTrue(matchFound.get());
+    }
+
+    @Test
+    public void testScanEncodedDeliveryAnnotationsForSpecificKeys() throws IOException {
+        doTestScanEncodedDeliveryAnnotationsForSpecificKeys(false);
+    }
+
+    @Test
+    public void testScanEncodedDeliveryAnnotationsForSpecificKeysFromStream() throws IOException {
+        doTestScanEncodedDeliveryAnnotationsForSpecificKeys(true);
+    }
+
+    private void doTestScanEncodedDeliveryAnnotationsForSpecificKeys(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<Symbol, Object> propertiesMap = new LinkedHashMap<>();
+        DeliveryAnnotations properties = new DeliveryAnnotations(propertiesMap);
+
+        propertiesMap.put(Symbol.valueOf("key-1"), "1");
+        propertiesMap.put(Symbol.valueOf("key-2"), "2");
+        propertiesMap.put(Symbol.valueOf("key-3"), "3");
+        propertiesMap.put(Symbol.valueOf("key-4"), "4");
+        propertiesMap.put(Symbol.valueOf("key-5"), "5");
+        propertiesMap.put(Symbol.valueOf("key-6"), "6");
+        propertiesMap.put(Symbol.valueOf("key-7"), "7");
+        propertiesMap.put(Symbol.valueOf("key-8"), "8");
+
+        final Collection<Symbol> searchDomain = new ArrayList<>();
+        searchDomain.add(Symbol.valueOf("key-2"));
+        searchDomain.add(Symbol.valueOf("key-7"));
+
+        encoder.writeObject(buffer, encoderState, properties);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final AtomicInteger matchFound = new AtomicInteger();
+
+        final DeliveryAnnotationsTypeDecoder result;
+        if (fromStream) {
+            final StreamScanningContext<Symbol> context = DeliveryAnnotationsTypeDecoder.createStreamScanContext(searchDomain);
+            result = (DeliveryAnnotationsTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanAnnotations(stream, streamDecoderState, context, (k, v) -> {
+                matchFound.incrementAndGet();
+                if (!Symbol.valueOf("key-2").equals(k) && !Symbol.valueOf("key-7").equals(k)) {
+                    fail("Should not find any matches");
+                }
+            });
+        } else {
+            final ScanningContext<Symbol> context = DeliveryAnnotationsTypeDecoder.createScanContext(searchDomain);
+            result = (DeliveryAnnotationsTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanAnnotations(buffer, decoderState, context, (k, v) -> {
+                matchFound.incrementAndGet();
+                if (!Symbol.valueOf("key-2").equals(k) && !Symbol.valueOf("key-7").equals(k)) {
+                    fail("Should not find any matches");
+                }
+            });
+        }
+
+        assertEquals(2, matchFound.get());
+    }
+
+    @Test
+    public void testScanEncodedDeliveryAnnotationsNotTriggeredOnNearMatch() throws IOException {
+        doTestScanEncodedDeliveryAnnotationsNotTriggeredOnNearMatchFromStream(false);
+    }
+
+    @Test
+    public void testScanEncodedDeliveryAnnotationsNotTriggeredOnNearMatchFromStream() throws IOException {
+        doTestScanEncodedDeliveryAnnotationsNotTriggeredOnNearMatchFromStream(true);
+    }
+
+    private void doTestScanEncodedDeliveryAnnotationsNotTriggeredOnNearMatchFromStream(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<Symbol, Object> propertiesMap = new LinkedHashMap<>();
+        DeliveryAnnotations properties = new DeliveryAnnotations(propertiesMap);
+
+        propertiesMap.put(Symbol.valueOf("key-1"), "1");
+        propertiesMap.put(Symbol.valueOf("key-21"), "2");
+        propertiesMap.put(Symbol.valueOf("key-3"), "3");
+        propertiesMap.put(Symbol.valueOf("key-4"), "4");
+        propertiesMap.put(Symbol.valueOf("key-5"), "5");
+        propertiesMap.put(Symbol.valueOf("key-6"), "6");
+        propertiesMap.put(Symbol.valueOf("key-7"), "7");
+        propertiesMap.put(Symbol.valueOf("key-8"), "8");
+
+        final Collection<Symbol> searchDomain = new ArrayList<>();
+        searchDomain.add(Symbol.valueOf("key-2"));
+
+        encoder.writeObject(buffer, encoderState, properties);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final DeliveryAnnotationsTypeDecoder result;
+        if (fromStream) {
+            final StreamScanningContext<Symbol> context = DeliveryAnnotationsTypeDecoder.createStreamScanContext(searchDomain);
+            result = (DeliveryAnnotationsTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanAnnotations(stream, streamDecoderState, context, (k, v) -> {
+                fail("Should not find any matches");
+            });
+        } else {
+            final ScanningContext<Symbol> context = DeliveryAnnotationsTypeDecoder.createScanContext(searchDomain);
+            result = (DeliveryAnnotationsTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanAnnotations(buffer, decoderState, context, (k, v) -> {
+                fail("Should not find any matches");
+            });
+        }
+    }
+
+    @Test
+    public void testScanMultipleEncodedDeliveryAnnotationsForSpecificKey() throws IOException {
+        doTestScanMultipleEncodedDeliveryAnnotationsForSpecificKey(false);
+    }
+
+    @Test
+    public void testScanMultipleEncodedDeliveryAnnotationsForSpecificKeyFromStream() throws IOException {
+        doTestScanMultipleEncodedDeliveryAnnotationsForSpecificKey(true);
+    }
+
+    private void doTestScanMultipleEncodedDeliveryAnnotationsForSpecificKey(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<Symbol, Object> propertiesMap = new LinkedHashMap<>();
+        DeliveryAnnotations properties = new DeliveryAnnotations(propertiesMap);
+
+        propertiesMap.put(Symbol.valueOf("key-1"), "1");
+        propertiesMap.put(Symbol.valueOf("key-2"), "2");
+        propertiesMap.put(Symbol.valueOf("key-3"), "3");
+        propertiesMap.put(Symbol.valueOf("key-4"), "4");
+        propertiesMap.put(Symbol.valueOf("key-5"), "5");
+        propertiesMap.put(Symbol.valueOf("key-6"), "6");
+        propertiesMap.put(Symbol.valueOf("key-7"), "7");
+        propertiesMap.put(Symbol.valueOf("key-8"), "8");
+
+        final Collection<Symbol> searchDomain = new ArrayList<>();
+        searchDomain.add(Symbol.valueOf("key-2"));
+
+        encoder.writeObject(buffer, encoderState, properties);
+        encoder.writeObject(buffer, encoderState, properties);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final AtomicInteger matchFound = new AtomicInteger();
+
+        DeliveryAnnotationsTypeDecoder result;
+
+        if (fromStream) {
+            final StreamScanningContext<Symbol> context = DeliveryAnnotationsTypeDecoder.createStreamScanContext(searchDomain);
+            result = (DeliveryAnnotationsTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanAnnotations(stream, streamDecoderState, context, (k, v) -> {
+                assertEquals(Symbol.valueOf("key-2"), k);
+                assertEquals("2", v);
+                matchFound.incrementAndGet();
+            });
+            result = (DeliveryAnnotationsTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanAnnotations(stream, streamDecoderState, context, (k, v) -> {
+                assertEquals(Symbol.valueOf("key-2"), k);
+                assertEquals("2", v);
+                matchFound.incrementAndGet();
+            });
+        } else {
+            final ScanningContext<Symbol> context = DeliveryAnnotationsTypeDecoder.createScanContext(searchDomain);
+            result = (DeliveryAnnotationsTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanAnnotations(buffer, decoderState, context, (k, v) -> {
+                assertEquals(Symbol.valueOf("key-2"), k);
+                assertEquals("2", v);
+                matchFound.incrementAndGet();
+            });
+            result = (DeliveryAnnotationsTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanAnnotations(buffer, decoderState, context, (k, v) -> {
+                assertEquals(Symbol.valueOf("key-2"), k);
+                assertEquals("2", v);
+                matchFound.incrementAndGet();
+            });
+        }
+
+        assertEquals(2, matchFound.get());
+    }
+
+    @Test
+    public void testScanEncodedDeliveryAnnotationsWithNoMatchConsumesEncoding() throws IOException {
+        doTestScanEncodedDeliveryAnnotationsWithNoMatchConsumesEncoding(false);
+    }
+
+    @Test
+    public void testScanEncodedDeliveryAnnotationsWithNoMatchConsumesEncodingFromStream() throws IOException {
+        doTestScanEncodedDeliveryAnnotationsWithNoMatchConsumesEncoding(true);
+    }
+
+    private void doTestScanEncodedDeliveryAnnotationsWithNoMatchConsumesEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<Symbol, Object> propertiesMap1 = new LinkedHashMap<>();
+        DeliveryAnnotations properties1 = new DeliveryAnnotations(propertiesMap1);
+        propertiesMap1.put(Symbol.valueOf("key-1"), "1");
+        propertiesMap1.put(Symbol.valueOf("key-2"), "2");
+        propertiesMap1.put(Symbol.valueOf("key-3"), "3");
+        Map<Symbol, Object> propertiesMap2 = new LinkedHashMap<>();
+        DeliveryAnnotations properties2 = new DeliveryAnnotations(propertiesMap2);
+        propertiesMap2.put(Symbol.valueOf("key-4"), "4");
+        propertiesMap2.put(Symbol.valueOf("key-5"), "5");
+        propertiesMap2.put(Symbol.valueOf("key-6"), "6");
+
+        final Collection<Symbol> searchDomain = new ArrayList<>();
+        searchDomain.add(Symbol.valueOf("key-9"));
+
+        encoder.writeObject(buffer, encoderState, properties1);
+        encoder.writeObject(buffer, encoderState, properties2);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        DeliveryAnnotationsTypeDecoder result;
+
+        if (fromStream) {
+            final StreamScanningContext<Symbol> context = DeliveryAnnotationsTypeDecoder.createStreamScanContext(searchDomain);
+            result = (DeliveryAnnotationsTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanAnnotations(stream, streamDecoderState, context, (k, v) -> {
+                fail("Should not find any matches");
+            });
+            result = (DeliveryAnnotationsTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            DeliveryAnnotations decoded = result.readValue(stream, streamDecoderState);
+            assertEquals(propertiesMap2, decoded.getValue());
+        } else {
+            final ScanningContext<Symbol> context = DeliveryAnnotationsTypeDecoder.createScanContext(searchDomain);
+            result = (DeliveryAnnotationsTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanAnnotations(buffer, decoderState, context, (k, v) -> {
+                fail("Should not find any matches");
+            });
+            result = (DeliveryAnnotationsTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            DeliveryAnnotations decoded = result.readValue(buffer, decoderState);
+            assertEquals(propertiesMap2, decoded.getValue());
+        }
     }
 }

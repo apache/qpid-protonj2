@@ -58,4 +58,14 @@ public final class UnsignedInteger0TypeDecoder extends AbstractPrimitiveTypeDeco
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
     }
+
+    @Override
+    public int readSize(ProtonBuffer buffer, DecoderState state) {
+        return 0;
+    }
+
+    @Override
+    public int readSize(InputStream stream, StreamDecoderState state) {
+        return 0;
+    }
 }

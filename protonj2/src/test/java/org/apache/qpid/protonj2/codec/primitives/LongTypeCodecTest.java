@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.primitives;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -386,5 +387,40 @@ public class LongTypeCodecTest extends CodecTestSupport {
         assertEquals(2, array.length);
         assertEquals(1, array[0]);
         assertEquals(2, array[1]);
+    }
+
+    @Test
+    public void testReadSeizeFromEncoding() throws IOException {
+        doTestReadSeizeFromEncoding(false);
+    }
+
+    @Test
+    public void testReadSeizeFromEncodingInStream() throws IOException {
+        doTestReadSeizeFromEncoding(true);
+    }
+
+    private void doTestReadSeizeFromEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        buffer.writeByte(EncodingCodes.SMALLLONG);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte(EncodingCodes.LONG);
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertFalse(typeDecoder.isNull());
+            assertEquals(1, typeDecoder.readSize(stream, streamDecoderState));
+            typeDecoder.readValue(stream, streamDecoderState);
+            typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(8, typeDecoder.readSize(stream, streamDecoderState));
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertFalse(typeDecoder.isNull());
+            assertEquals(1, typeDecoder.readSize(buffer, decoderState));
+            typeDecoder.readValue(buffer, decoderState);
+            typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(8, typeDecoder.readSize(buffer, decoderState));
+        }
     }
 }

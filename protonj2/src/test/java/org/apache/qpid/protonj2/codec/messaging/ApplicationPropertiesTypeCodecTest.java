@@ -25,9 +25,13 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
@@ -37,6 +41,8 @@ import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ScanningContext;
+import org.apache.qpid.protonj2.codec.decoders.StreamScanningContext;
 import org.apache.qpid.protonj2.codec.decoders.messaging.ApplicationPropertiesTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.messaging.ApplicationPropertiesTypeEncoder;
 import org.apache.qpid.protonj2.types.messaging.ApplicationProperties;
@@ -486,5 +492,331 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
             decoder.readObject(buffer, decoderState);
             fail("Should not decode type with invalid encoding");
         } catch (DecodeException ex) {}
+    }
+
+    @Test
+    public void testScanEncodedApplicationPropertiesForSpecificKey() throws IOException {
+        doTestScanEncodedApplicationPropertiesForSpecificKey(false);
+    }
+
+    @Test
+    public void testScanEncodedApplicationPropertiesForSpecificKeyFromStream() throws IOException {
+        doTestScanEncodedApplicationPropertiesForSpecificKey(true);
+    }
+
+    private void doTestScanEncodedApplicationPropertiesForSpecificKey(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<String, Object> propertiesMap = new LinkedHashMap<>();
+        ApplicationProperties properties = new ApplicationProperties(propertiesMap);
+
+        propertiesMap.put("key-1", "1");
+        propertiesMap.put("key-2", "2");
+        propertiesMap.put("key-3", "3");
+        propertiesMap.put("key-4", "4");
+        propertiesMap.put("key-5", "5");
+        propertiesMap.put("key-6", "6");
+        propertiesMap.put("key-7", "7");
+        propertiesMap.put("key-8", "8");
+
+        final Collection<String> searchDomain = new ArrayList<>();
+        searchDomain.add("key-2");
+
+        encoder.writeObject(buffer, encoderState, properties);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final AtomicBoolean matchFound = new AtomicBoolean();
+
+        final ApplicationPropertiesTypeDecoder result;
+        if (fromStream) {
+            final StreamScanningContext<String> context = ApplicationPropertiesTypeDecoder.createStreamScanContext(searchDomain);
+            result = (ApplicationPropertiesTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanProperties(stream, streamDecoderState, context, (k, v) -> {
+                assertEquals("2", v);
+                matchFound.set(true);
+            });
+        } else {
+            final ScanningContext<String> context = ApplicationPropertiesTypeDecoder.createScanContext(searchDomain);
+            result = (ApplicationPropertiesTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanProperties(buffer, decoderState, context, (k, v) -> {
+                assertEquals("2", v);
+                matchFound.set(true);
+            });
+        }
+
+        assertTrue(matchFound.get());
+    }
+
+    @Test
+    public void testScanEncodedApplicationPropertiesForSpecificKeys() throws IOException {
+        doTestScanEncodedApplicationPropertiesForSpecificKeys(false);
+    }
+
+    @Test
+    public void testScanEncodedApplicationPropertiesForSpecificKeysFromStream() throws IOException {
+        doTestScanEncodedApplicationPropertiesForSpecificKeys(true);
+    }
+
+    private void doTestScanEncodedApplicationPropertiesForSpecificKeys(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<String, Object> propertiesMap = new LinkedHashMap<>();
+        ApplicationProperties properties = new ApplicationProperties(propertiesMap);
+
+        propertiesMap.put("key-1", "1");
+        propertiesMap.put("key-2", "2");
+        propertiesMap.put("key-3", "3");
+        propertiesMap.put("key-4", "4");
+        propertiesMap.put("key-5", "5");
+        propertiesMap.put("key-6", "6");
+        propertiesMap.put("key-7", "7");
+        propertiesMap.put("key-8", "8");
+
+        final Collection<String> searchDomain = new ArrayList<>();
+        searchDomain.add("key-2");
+        searchDomain.add("key-7");
+
+        encoder.writeObject(buffer, encoderState, properties);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final AtomicInteger matchFound = new AtomicInteger();
+
+        final ApplicationPropertiesTypeDecoder result;
+        if (fromStream) {
+            final StreamScanningContext<String> context = ApplicationPropertiesTypeDecoder.createStreamScanContext(searchDomain);
+            result = (ApplicationPropertiesTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanProperties(stream, streamDecoderState, context, (k, v) -> {
+                matchFound.incrementAndGet();
+                if (!"key-2".equals(k) && !"key-7".equals(k)) {
+                    fail("Should not find any matches");
+                }
+            });
+        } else {
+            final ScanningContext<String> context = ApplicationPropertiesTypeDecoder.createScanContext(searchDomain);
+            result = (ApplicationPropertiesTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanProperties(buffer, decoderState, context, (k, v) -> {
+                matchFound.incrementAndGet();
+                if (!"key-2".equals(k) && !"key-7".equals(k)) {
+                    fail("Should not find any matches");
+                }
+            });
+        }
+
+        assertEquals(2, matchFound.get());
+    }
+
+    @Test
+    public void testScanEncodedApplicationPropertiesNotTriggeredOnNearMatch() throws IOException {
+        doTestScanEncodedApplicationPropertiesNotTriggeredOnNearMatchFromStream(false);
+    }
+
+    @Test
+    public void testScanEncodedApplicationPropertiesNotTriggeredOnNearMatchFromStream() throws IOException {
+        doTestScanEncodedApplicationPropertiesNotTriggeredOnNearMatchFromStream(true);
+    }
+
+    private void doTestScanEncodedApplicationPropertiesNotTriggeredOnNearMatchFromStream(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<String, Object> propertiesMap = new LinkedHashMap<>();
+        ApplicationProperties properties = new ApplicationProperties(propertiesMap);
+
+        propertiesMap.put("key-1", "1");
+        propertiesMap.put("key-21", "2");
+        propertiesMap.put("key-3", "3");
+        propertiesMap.put("key-4", "4");
+        propertiesMap.put("key-5", "5");
+        propertiesMap.put("key-6", "6");
+        propertiesMap.put("key-7", "7");
+        propertiesMap.put("key-8", "8");
+
+        final Collection<String> searchDomain = new ArrayList<>();
+        searchDomain.add("key-2");
+
+        encoder.writeObject(buffer, encoderState, properties);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final ApplicationPropertiesTypeDecoder result;
+        if (fromStream) {
+            final StreamScanningContext<String> context = ApplicationPropertiesTypeDecoder.createStreamScanContext(searchDomain);
+            result = (ApplicationPropertiesTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanProperties(stream, streamDecoderState, context, (k, v) -> {
+                fail("Should not find any matches");
+            });
+        } else {
+            final ScanningContext<String> context = ApplicationPropertiesTypeDecoder.createScanContext(searchDomain);
+            result = (ApplicationPropertiesTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanProperties(buffer, decoderState, context, (k, v) -> {
+                fail("Should not find any matches");
+            });
+        }
+    }
+
+    @Test
+    public void testScanMultipleEncodedApplicationPropertiesForSpecificKey() throws IOException {
+        doTestScanMultipleEncodedApplicationPropertiesForSpecificKey(false);
+    }
+
+    @Test
+    public void testScanMultipleEncodedApplicationPropertiesForSpecificKeyFromStream() throws IOException {
+        doTestScanMultipleEncodedApplicationPropertiesForSpecificKey(true);
+    }
+
+    private void doTestScanMultipleEncodedApplicationPropertiesForSpecificKey(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<String, Object> propertiesMap = new LinkedHashMap<>();
+        ApplicationProperties properties = new ApplicationProperties(propertiesMap);
+
+        propertiesMap.put("key-1", "1");
+        propertiesMap.put("key-2", "2");
+        propertiesMap.put("key-3", "3");
+        propertiesMap.put("key-4", "4");
+        propertiesMap.put("key-5", "5");
+        propertiesMap.put("key-6", "6");
+        propertiesMap.put("key-7", "7");
+        propertiesMap.put("key-8", "8");
+
+        final Collection<String> searchDomain = new ArrayList<>();
+        searchDomain.add("key-2");
+
+        encoder.writeObject(buffer, encoderState, properties);
+        encoder.writeObject(buffer, encoderState, properties);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final AtomicInteger matchFound = new AtomicInteger();
+
+        ApplicationPropertiesTypeDecoder result;
+
+        if (fromStream) {
+            final StreamScanningContext<String> context = ApplicationPropertiesTypeDecoder.createStreamScanContext(searchDomain);
+            result = (ApplicationPropertiesTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanProperties(stream, streamDecoderState, context, (k, v) -> {
+                assertEquals("2", v);
+                matchFound.incrementAndGet();
+            });
+            result = (ApplicationPropertiesTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanProperties(stream, streamDecoderState, context, (k, v) -> {
+                assertEquals("2", v);
+                matchFound.incrementAndGet();
+            });
+        } else {
+            final ScanningContext<String> context = ApplicationPropertiesTypeDecoder.createScanContext(searchDomain);
+            result = (ApplicationPropertiesTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanProperties(buffer, decoderState, context, (k, v) -> {
+                assertEquals("2", v);
+                matchFound.incrementAndGet();
+            });
+            result = (ApplicationPropertiesTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanProperties(buffer, decoderState, context, (k, v) -> {
+                assertEquals("2", v);
+                matchFound.incrementAndGet();
+            });
+        }
+
+        assertEquals(2, matchFound.get());
+    }
+
+    @Test
+    public void testScanEncodedApplicationPropertiesWithNoMatchConsumesEncoding() throws IOException {
+        doTestScanEncodedApplicationPropertiesWithNoMatchConsumesEncoding(false);
+    }
+
+    @Test
+    public void testScanEncodedApplicationPropertiesWithNoMatchConsumesEncodingFromStream() throws IOException {
+        doTestScanEncodedApplicationPropertiesWithNoMatchConsumesEncoding(true);
+    }
+
+    private void doTestScanEncodedApplicationPropertiesWithNoMatchConsumesEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<String, Object> propertiesMap1 = new LinkedHashMap<>();
+        ApplicationProperties properties1 = new ApplicationProperties(propertiesMap1);
+        propertiesMap1.put("key-1", "1");
+        propertiesMap1.put("key-2", "2");
+        propertiesMap1.put("key-3", "3");
+        Map<String, Object> propertiesMap2 = new LinkedHashMap<>();
+        ApplicationProperties properties2 = new ApplicationProperties(propertiesMap2);
+        propertiesMap2.put("key-4", "4");
+        propertiesMap2.put("key-5", "5");
+        propertiesMap2.put("key-6", "6");
+
+        final Collection<String> searchDomain = new ArrayList<>();
+        searchDomain.add("key-9");
+
+        encoder.writeObject(buffer, encoderState, properties1);
+        encoder.writeObject(buffer, encoderState, properties2);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        ApplicationPropertiesTypeDecoder result;
+
+        if (fromStream) {
+            final StreamScanningContext<String> context = ApplicationPropertiesTypeDecoder.createStreamScanContext(searchDomain);
+            result = (ApplicationPropertiesTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanProperties(stream, streamDecoderState, context, (k, v) -> {
+                fail("Should not find any matches");
+            });
+            result = (ApplicationPropertiesTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            ApplicationProperties decoded = result.readValue(stream, streamDecoderState);
+            assertEquals(propertiesMap2, decoded.getValue());
+        } else {
+            final ScanningContext<String> context = ApplicationPropertiesTypeDecoder.createScanContext(searchDomain);
+            result = (ApplicationPropertiesTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanProperties(buffer, decoderState, context, (k, v) -> {
+                fail("Should not find any matches");
+            });
+            result = (ApplicationPropertiesTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            ApplicationProperties decoded = result.readValue(buffer, decoderState);
+            assertEquals(propertiesMap2, decoded.getValue());
+        }
     }
 }

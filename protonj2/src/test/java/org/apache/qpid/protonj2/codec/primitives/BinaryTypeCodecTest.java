@@ -171,6 +171,56 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testReadSizeFromEncodedBinary() throws Exception {
+        doTestReadSizeFromEncodedBinary(false);
+    }
+
+    @Test
+    public void testReadSizeFromEncodedBinaryFromStream() throws Exception {
+        doTestReadSizeFromEncodedBinary(true);
+    }
+
+    private void doTestReadSizeFromEncodedBinary(boolean fromStream) throws Exception {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+        Binary input = new Binary(new byte[] {0, 1, 2, 3, 4});
+
+        encoder.writeBinary(buffer, encoderState, input);
+
+        final Object value;
+
+        if (fromStream) {
+            final StreamTypeDecoder<?> result;
+            InputStream stream = new ProtonBufferInputStream(buffer);
+            stream.mark(5); // Largest possible size encoding width
+            result = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            assertEquals(Binary.class, result.getTypeClass());
+            assertEquals(5, result.readSize(stream, streamDecoderState));
+            stream.reset();
+            value = streamDecoder.readObject(stream, streamDecoderState);
+        } else {
+            final TypeDecoder<?> result;
+            final int mark = buffer.getReadOffset();
+            result = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            assertEquals(Binary.class, result.getTypeClass());
+            assertEquals(5, result.readSize(buffer, decoderState));
+            buffer.setReadOffset(mark);
+            value = decoder.readObject(buffer, decoderState);
+        }
+
+        assertTrue(value instanceof Binary);
+        Binary output = (Binary) value;
+
+        assertEquals(5, output.getLength());
+        assertNotNull(output.asByteArray());
+        assertEquals(input, output);
+        assertEquals(input.asProtonBuffer(), output.asProtonBuffer());
+        assertEquals(input.asByteBuffer(), output.asByteBuffer());
+        assertArrayEquals(input.asByteArray(), output.asByteArray());
+    }
+
+    @Test
     public void testEncodeDecodeBinaryUsingRawBytesWithSmallArray() throws Exception {
         testEncodeDecodeBinaryUsingRawBytesWithSmallArray(false);
     }
@@ -391,7 +441,7 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
         TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
         assertEquals(Binary.class, typeDecoder.getTypeClass());
         BinaryTypeDecoder binaryDecoder = (BinaryTypeDecoder) typeDecoder;
-        assertEquals(255, binaryDecoder.readSize(buffer));
+        assertEquals(255, binaryDecoder.readSize(buffer, decoderState));
 
         assertEquals(2, buffer.getReadOffset());
     }
@@ -407,7 +457,7 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
         StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
         assertEquals(Binary.class, typeDecoder.getTypeClass());
         BinaryTypeDecoder binaryDecoder = (BinaryTypeDecoder) typeDecoder;
-        assertEquals(255, binaryDecoder.readSize(stream));
+        assertEquals(255, binaryDecoder.readSize(stream, streamDecoderState));
     }
 
     @Test

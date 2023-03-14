@@ -31,6 +31,11 @@ import org.apache.qpid.protonj2.codec.decoders.AbstractPrimitiveTypeDecoder;
 public final class NullTypeDecoder extends AbstractPrimitiveTypeDecoder<Void> {
 
     @Override
+    public boolean isNull() {
+        return true;
+    }
+
+    @Override
     public int getTypeCode() {
         return EncodingCodes.NULL & 0xff;
     }
@@ -56,5 +61,15 @@ public final class NullTypeDecoder extends AbstractPrimitiveTypeDecoder<Void> {
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
+    }
+
+    @Override
+    public int readSize(ProtonBuffer buffer, DecoderState state) {
+        return 0;
+    }
+
+    @Override
+    public int readSize(InputStream stream, StreamDecoderState state) {
+        return 0;
     }
 }

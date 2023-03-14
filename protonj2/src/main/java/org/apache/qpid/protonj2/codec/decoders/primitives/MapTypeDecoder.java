@@ -18,10 +18,15 @@ package org.apache.qpid.protonj2.codec.decoders.primitives;
 
 import java.io.InputStream;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.DecoderState;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.PrimitiveTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ScanningContext;
+import org.apache.qpid.protonj2.codec.decoders.StreamScanningContext;
 
 /**
  * Base interface for all AMQP Map type value decoders.
@@ -35,18 +40,6 @@ public interface MapTypeDecoder extends PrimitiveTypeDecoder<Map> {
     }
 
     /**
-     * Reads the encoded size of the underlying Map type.
-     *
-     * @param buffer
-     *      The buffer containing the encoded Map type.
-     *
-     * @return the size in bytes of the encoded Map.
-     *
-     * @throws DecodeException if an error occurs reading the value
-     */
-    int readSize(ProtonBuffer buffer) throws DecodeException;
-
-    /**
      * Reads the count of entries in the encoded Map.
      * <p>
      * This value is the total count of all key values pairs, and should
@@ -54,24 +47,14 @@ public interface MapTypeDecoder extends PrimitiveTypeDecoder<Map> {
      *
      * @param buffer
      *      The buffer containing the encoded Map type.
+     * @param state
+     * 		The {@link DecoderState} used during this decode.
      *
      * @return the number of elements that we encoded from the original Map.
      *
      * @throws DecodeException if an error occurs reading the value
      */
-    int readCount(ProtonBuffer buffer) throws DecodeException;
-
-    /**
-     * Reads the encoded size of the underlying Map type.
-     *
-     * @param stream
-     *      The InputStream containing the encoded Map type.
-     *
-     * @return the size in bytes of the encoded Map.
-     *
-     * @throws DecodeException if an error occurs reading the value
-     */
-    int readSize(InputStream stream) throws DecodeException;
+    int readCount(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
     /**
      * Reads the count of entries in the encoded Map.
@@ -81,11 +64,69 @@ public interface MapTypeDecoder extends PrimitiveTypeDecoder<Map> {
      *
      * @param stream
      *      The InputStream containing the encoded Map type.
+     * @param state
+     * 		The {@link StreamDecoderState} used during this decode.
      *
      * @return the number of elements that we encoded from the original Map.
      *
      * @throws DecodeException if an error occurs reading the value
      */
-    int readCount(InputStream stream) throws DecodeException;
+    int readCount(InputStream stream, StreamDecoderState state) throws DecodeException;
+
+    /**
+     * Scan the encoded {@link Map} keys matching on predetermined key value encodings to quickly
+     * find mappings that are of interest and then only decoding the value portion of the matched
+     * key / value pair. This allows for quick checks of incoming {@link Map} types without the
+     * performance penalty of a full decode. After the method returns the contexts of the encoded
+     * Map in the provided buffer will have been consumed and the next type can be decoded.
+     * <p>
+     * Each matching key / value mapping triggers a call to the provided {@link BiConsumer} with
+     * the key that triggered the match (generally a cached non-decoded value) and the decoded
+     * value mapped to that key. The caller should use the consumer to trigger actions based on
+     * the matches found in the mappings which avoid full decodings of large maps when only a
+     * limited set of values is desired.
+     *
+     * @param <KeyType>
+     * 		The key type is used when calling the match consumer
+     * @param buffer
+     *      The buffer containing the encoded Map type.
+     * @param state
+     * 		The {@link DecoderState} used during this decode.
+     * @param context
+     * 		The previously created and configured {@link ScanningContext}
+     * @param matchConsumer
+     * 		The consumer that will be notified when a matching key is found.
+     *
+     * @throws DecodeException if an error occurs reading the value
+     */
+    <KeyType> void scanKeys(ProtonBuffer buffer, DecoderState state, ScanningContext<KeyType> context, BiConsumer<KeyType, Object> matchConsumer) throws DecodeException;
+
+    /**
+     * Scan the encoded {@link Map} keys matching on predetermined key value encodings to quickly
+     * find mappings that are of interest and then only decoding the value portion of the matched
+     * key / value pair. This allows for quick checks of incoming {@link Map} types without the
+     * performance penalty of a full decode. After the method returns the contexts of the encoded
+     * Map in the provided stream will have been consumed and the next type can be decoded.
+     * <p>
+     * Each matching key / value mapping triggers a call to the provided {@link BiConsumer} with
+     * the key that triggered the match (generally a cached non-decoded value) and the decoded
+     * value mapped to that key. The caller should use the consumer to trigger actions based on
+     * the matches found in the mappings which avoid full decodings of large maps when only a
+     * limited set of values is desired.
+     *
+     * @param <KeyType>
+     * 		The key type is used when calling the match consumer
+     * @param stream
+     *      The InputStream containing the encoded Map type.
+     * @param state
+     * 		The {@link StreamDecoderState} used during this decode.
+     * @param context
+     * 		The previously created and configured {@link ScanningContext}
+     * @param matchConsumer
+     * 		The consumer that will be notified when a matching key is found.
+     *
+     * @throws DecodeException if an error occurs reading the value
+     */
+    <KeyType> void scanKeys(InputStream stream, StreamDecoderState state, StreamScanningContext<KeyType> context, BiConsumer<KeyType, Object> matchConsumer) throws DecodeException;
 
 }

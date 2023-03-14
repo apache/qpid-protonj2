@@ -57,22 +57,22 @@ public final class List0TypeDecoder extends AbstractPrimitiveTypeDecoder<List> i
     }
 
     @Override
-    public int readSize(ProtonBuffer buffer) throws DecodeException {
+    public int readSize(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return 0;
     }
 
     @Override
-    public int readCount(ProtonBuffer buffer) throws DecodeException {
+    public int readCount(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return 0;
     }
 
     @Override
-    public int readSize(InputStream stream) throws DecodeException {
+    public int readSize(InputStream stream, StreamDecoderState state) throws DecodeException {
         return 0;
     }
 
     @Override
-    public int readCount(InputStream stream) throws DecodeException {
+    public int readCount(InputStream stream, StreamDecoderState state) throws DecodeException {
         return 0;
     }
 }

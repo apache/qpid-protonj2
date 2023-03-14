@@ -882,7 +882,7 @@ public final class ClientStreamReceiverMessage implements StreamReceiverMessage 
             if (typeDecoder.getTypeClass() == Binary.class) {
                 LOG.trace("Data Section of size {} ready for read.", remainingSectionBytes);
                 BinaryTypeDecoder binaryDecoder = (BinaryTypeDecoder) typeDecoder;
-                remainingSectionBytes = binaryDecoder.readSize(deliveryStream);
+                remainingSectionBytes = binaryDecoder.readSize(deliveryStream, decoderState);
             } else if (typeDecoder.getTypeClass() == Void.class) {
                 // Null body in the Data section which can be skipped.
                 LOG.trace("Data Section with no Binary payload read and skipped.");

@@ -97,4 +97,14 @@ public final class FloatTypeDecoder extends AbstractPrimitiveTypeDecoder<Float> 
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         ProtonStreamUtils.skipBytes(stream, Float.BYTES);
     }
+
+    @Override
+    public int readSize(ProtonBuffer buffer, DecoderState state) {
+        return Float.BYTES;
+    }
+
+    @Override
+    public int readSize(InputStream stream, StreamDecoderState state) {
+        return Float.BYTES;
+    }
 }

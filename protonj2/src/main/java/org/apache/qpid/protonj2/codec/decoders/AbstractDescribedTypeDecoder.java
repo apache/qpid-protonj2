@@ -16,8 +16,13 @@
  */
 package org.apache.qpid.protonj2.codec.decoders;
 
+import java.io.InputStream;
+
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.DescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamDescribedTypeDecoder;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
@@ -36,8 +41,32 @@ public abstract class AbstractDescribedTypeDecoder<V> implements DescribedTypeDe
     }
 
     @Override
+    public boolean isNull() {
+        return false;
+    }
+
+    @Override
+    public boolean isPrimitive() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "DescribedTypeDecoder<" + getTypeClass().getSimpleName() + ">";
+    }
+
+    @Override
+    public int readSize(ProtonBuffer buffer, DecoderState state) {
+        // Delegates to the inner described type which if it is another described type would
+        // again delegate until a primitive AMQP type is reached.
+        return state.getDecoder().readNextTypeDecoder(buffer, state).readSize(buffer, state);
+    }
+
+    @Override
+    public int readSize(InputStream stream, StreamDecoderState state) {
+        // Delegates to the inner described type which if it is another described type would
+        // again delegate until a primitive AMQP type is reached.
+        return state.getDecoder().readNextTypeDecoder(stream, state).readSize(stream, state);
     }
 
     @SuppressWarnings("unchecked")

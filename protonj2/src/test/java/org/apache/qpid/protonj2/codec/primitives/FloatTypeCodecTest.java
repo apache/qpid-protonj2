@@ -321,4 +321,29 @@ public class FloatTypeCodecTest extends CodecTestSupport {
         float[] array = (float[]) result;
         assertEquals(source.length, array.length);
     }
+
+    @Test
+    public void testReadSeizeFromEncoding() throws IOException {
+        doTestReadSeizeFromEncoding(false);
+    }
+
+    @Test
+    public void testReadSeizeFromEncodingInStream() throws IOException {
+        doTestReadSeizeFromEncoding(true);
+    }
+
+    private void doTestReadSeizeFromEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        buffer.writeByte(EncodingCodes.FLOAT);
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(4, typeDecoder.readSize(stream, streamDecoderState));
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(4, typeDecoder.readSize(buffer, decoderState));
+        }
+    }
 }

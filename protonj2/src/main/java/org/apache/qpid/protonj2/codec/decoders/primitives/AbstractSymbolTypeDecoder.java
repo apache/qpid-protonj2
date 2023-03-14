@@ -34,7 +34,7 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public Symbol readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        final int length = readSize(buffer);
+        final int length = readSize(buffer, state);
 
         if (length == 0) {
             return Symbol.valueOf("");
@@ -74,7 +74,7 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public Symbol readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        final int length = readSize(stream);
+        final int length = readSize(stream, state);
 
         if (length == 0) {
             return Symbol.valueOf("");
@@ -113,42 +113,15 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.advanceReadOffset(readSize(buffer));
+        buffer.advanceReadOffset(readSize(buffer, state));
     }
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         try {
-            stream.skip(readSize(stream));
+            stream.skip(readSize(stream, state));
         } catch (IOException ex) {
             throw new DecodeException("Error while reading Symbol payload bytes", ex);
         }
     }
-
-    /**
-     * Subclasses must read the correct number of bytes from the buffer to determine the
-     * size of the encoded Symbol value.
-     *
-     * @param buffer
-     *      The buffer to read the size from.
-     *
-     * @return the number of bytes that make up the encoded Symbol value.
-     *
-     * @throws DecodeException if an error occurs reading the size value.
-     */
-    protected abstract int readSize(ProtonBuffer buffer) throws DecodeException;
-
-    /**
-     * Subclasses must read the correct number of bytes from the buffer to determine the
-     * size of the encoded Symbol value.
-     *
-     * @param stream
-     *      The InputStream to read the size from.
-     *
-     * @return the number of bytes that make up the encoded Symbol value.
-     *
-     * @throws DecodeException if an error occurs reading the size value.
-     */
-    protected abstract int readSize(InputStream stream) throws DecodeException;
-
 }

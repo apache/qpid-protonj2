@@ -61,4 +61,14 @@ public class UnsignedInteger8TypeDecoder extends AbstractPrimitiveTypeDecoder<Un
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         ProtonStreamUtils.skipBytes(stream, Byte.BYTES);
     }
+
+    @Override
+    public int readSize(ProtonBuffer buffer, DecoderState state) {
+        return Byte.BYTES;
+    }
+
+    @Override
+    public int readSize(InputStream stream, StreamDecoderState state) {
+        return Byte.BYTES;
+    }
 }

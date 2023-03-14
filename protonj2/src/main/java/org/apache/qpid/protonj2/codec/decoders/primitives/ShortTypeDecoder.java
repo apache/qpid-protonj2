@@ -97,4 +97,14 @@ public final class ShortTypeDecoder extends AbstractPrimitiveTypeDecoder<Short> 
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         ProtonStreamUtils.skipBytes(stream, Short.BYTES);
     }
+
+    @Override
+    public int readSize(ProtonBuffer buffer, DecoderState state) {
+        return Short.BYTES;
+    }
+
+    @Override
+    public int readSize(InputStream stream, StreamDecoderState state) {
+        return Short.BYTES;
+    }
 }

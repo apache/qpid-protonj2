@@ -425,4 +425,30 @@ public class UnsignedShortTypeCodecTest extends CodecTestSupport {
         UnsignedShort value = (UnsignedShort) result;
         assertEquals(expected, value);
     }
+
+    @Test
+    public void testReadSeizeFromEncoding() throws IOException {
+        doTestReadSeizeFromEncoding(false);
+    }
+
+    @Test
+    public void testReadSeizeFromEncodingInStream() throws IOException {
+        doTestReadSeizeFromEncoding(true);
+    }
+
+    private void doTestReadSeizeFromEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        buffer.writeByte(EncodingCodes.USHORT);
+        buffer.writeShort((short) 42);
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(2, typeDecoder.readSize(stream, streamDecoderState));
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(2, typeDecoder.readSize(buffer, decoderState));
+        }
+    }
 }

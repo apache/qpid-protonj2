@@ -100,6 +100,35 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testReadSeizeFromEncoding() throws IOException {
+        doTestReadSeizeFromEncoding(false);
+    }
+
+    @Test
+    public void testReadSeizeFromEncodingInStream() throws IOException {
+        doTestReadSeizeFromEncoding(true);
+    }
+
+    private void doTestReadSeizeFromEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        final UUID value = UUID.randomUUID();
+
+        buffer.writeByte(EncodingCodes.UUID);
+        buffer.writeLong(value.getMostSignificantBits());
+        buffer.writeLong(value.getLeastSignificantBits());
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(16, typeDecoder.readSize(stream, streamDecoderState));
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(16, typeDecoder.readSize(buffer, decoderState));
+        }
+    }
+
+    @Test
     public void testEncodeDecodeUUID() throws IOException {
         doTestEncodeDecodeUUIDSeries(1, false);
     }

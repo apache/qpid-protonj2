@@ -69,4 +69,14 @@ public final class UUIDTypeDecoder extends AbstractPrimitiveTypeDecoder<UUID> {
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         ProtonStreamUtils.skipBytes(stream, BYTES);
     }
+
+    @Override
+    public int readSize(ProtonBuffer buffer, DecoderState state) {
+        return BYTES;
+    }
+
+    @Override
+    public int readSize(InputStream stream, StreamDecoderState state) {
+        return BYTES;
+    }
 }

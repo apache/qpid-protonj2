@@ -27,7 +27,7 @@ import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
-import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedListTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -37,7 +37,7 @@ import org.apache.qpid.protonj2.types.transport.Begin;
 /**
  * Decoder of AMQP Begin type values from a byte stream
  */
-public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> {
+public final class BeginTypeDecoder extends AbstractDescribedListTypeDecoder<Begin> {
 
     private static final int MIN_BEGIN_LIST_ENTRIES = 4;
     private static final int MAX_BEGIN_LIST_ENTRIES = 8;
@@ -76,21 +76,12 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
         return result;
     }
 
-    @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(buffer, state);
-    }
-
     private Begin readBegin(ProtonBuffer buffer, Decoder decoder, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Begin begin = new Begin();
 
         @SuppressWarnings("unused")
-        final int size = listDecoder.readSize(buffer);
-        final int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer, state);
+        final int count = listDecoder.readCount(buffer, state);
 
         if (count < MIN_BEGIN_LIST_ENTRIES) {
             throw new DecodeException(errorForMissingRequiredFields(count));
@@ -165,21 +156,12 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
         return result;
     }
 
-    @Override
-    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(stream, state);
-    }
-
     private Begin readBegin(InputStream stream, StreamDecoder decoder, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Begin begin = new Begin();
 
         @SuppressWarnings("unused")
-        final int size = listDecoder.readSize(stream);
-        final int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream, state);
+        final int count = listDecoder.readCount(stream, state);
 
         if (count < MIN_BEGIN_LIST_ENTRIES) {
             throw new DecodeException(errorForMissingRequiredFields(count));

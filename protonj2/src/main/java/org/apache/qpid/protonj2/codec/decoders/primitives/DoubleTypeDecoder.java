@@ -97,4 +97,15 @@ public final class DoubleTypeDecoder extends AbstractPrimitiveTypeDecoder<Double
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         ProtonStreamUtils.skipBytes(stream, Double.BYTES);
     }
+
+    @Override
+    public int readSize(ProtonBuffer buffer, DecoderState state) {
+        return Double.BYTES;
+    }
+
+    @Override
+    public int readSize(InputStream stream, StreamDecoderState state) {
+        return Double.BYTES;
+    }
+
 }

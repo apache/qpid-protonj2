@@ -31,9 +31,37 @@ public interface StreamTypeDecoder<V> {
     Class<V> getTypeClass();
 
     /**
+     * @return true if the underlying type that is going to be decoded is an primitive type
+     */
+    boolean isPrimitive();
+
+    /**
      * @return true if the underlying type that is going to be decoded is an array type
      */
     boolean isArrayType();
+
+    /**
+     * @return true if the underlying type is the null type meaning there are no bytes to decode.
+     */
+    boolean isNull();
+
+    /**
+     * Reads the size in bytes of the encoded primitive from the given {@link InputStream} and
+     * returns it. Since this methods advances the read position of the provided stream the
+     * caller must either reset that based on a previous mark or they must read the primitive
+     * payload manually as the decoder would not be able to read the value as it has no
+     * retained state.
+     *
+     * @param stream
+     * 		the source of encoded data.
+     * @param state
+     * 		the current state of the decoder.
+     *
+     * @return the size in bytes of the encoded primitive value.
+     *
+     * @throws DecodeException if an error is encountered while reading the encoded size.
+     */
+    int readSize(InputStream stream, StreamDecoderState state);
 
     /**
      * Reads the next type from the given buffer and returns it.

@@ -51,7 +51,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
      * @throws DecodeException if an error occurs while reading the Binary value.
      */
     public ProtonBuffer readValueAsBuffer(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        final int length = readSize(buffer);
+        final int length = readSize(buffer, state);
 
         if (length > buffer.getReadableBytes()) {
             throw new DecodeException(
@@ -79,7 +79,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
      * @throws DecodeException if an error occurs while reading the Binary value.
      */
     public byte[] readValueAsArray(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        final int length = readSize(buffer);
+        final int length = readSize(buffer, state);
 
         if (length > buffer.getReadableBytes()) {
             throw new DecodeException(
@@ -128,7 +128,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
      * @throws DecodeException if an error occurs while reading the Binary value.
      */
     public byte[] readValueAsArray(InputStream stream, StreamDecoderState state) throws DecodeException {
-        final int length = readSize(stream);
+        final int length = readSize(stream, state);
         final byte[] payload = new byte[length];
 
         try {
@@ -142,7 +142,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        final int length = readSize(buffer);
+        final int length = readSize(buffer, state);
 
         if (length > buffer.getReadableBytes()) {
             throw new DecodeException(
@@ -156,16 +156,9 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         try {
-            stream.skip(readSize(stream));
+            stream.skip(readSize(stream, state));
         } catch (IOException ex) {
             throw new DecodeException("Error while reading Binary payload bytes", ex);
         }
     }
-
-    @Override
-    public abstract int readSize(ProtonBuffer buffer);
-
-    @Override
-    public abstract int readSize(InputStream stream);
-
 }

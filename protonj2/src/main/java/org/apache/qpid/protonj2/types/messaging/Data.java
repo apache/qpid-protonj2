@@ -27,10 +27,6 @@ public final class Data implements Section<byte[]> {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000075L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:data:binary");
 
-    // We create a proton version here since the general API doesn't expose wrap because not all buffer
-    // implementation might support array wrapping.
-    private static final ProtonByteArrayBufferAllocator PROTON_ALLOCATOR = new ProtonByteArrayBufferAllocator();
-
     private final ProtonBuffer buffer;
 
     private Binary cachedBinary;
@@ -46,12 +42,12 @@ public final class Data implements Section<byte[]> {
 
     public Data(byte[] value) {
         // Creates heap buffers that will be cleaned on GC
-        this.buffer = value != null ? PROTON_ALLOCATOR.wrap(value, 0, value.length).convertToReadOnly() : null;
+        this.buffer = value != null ? ProtonByteArrayBufferAllocator.wrapped(value, 0, value.length).convertToReadOnly() : null;
     }
 
     public Data(byte[] value, int offset, int length) {
         // Creates heap buffers that will be cleaned on GC
-        this.buffer = value != null ? PROTON_ALLOCATOR.wrap(value, offset, length).convertToReadOnly() : null;
+        this.buffer = value != null ? ProtonByteArrayBufferAllocator.wrapped(value, offset, length).convertToReadOnly() : null;
     }
 
     public Data copy() {

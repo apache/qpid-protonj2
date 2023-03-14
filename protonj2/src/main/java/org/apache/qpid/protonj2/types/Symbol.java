@@ -60,6 +60,13 @@ public final class Symbol implements Comparable<Symbol> {
         return underlying.getReadableBytes();
     }
 
+    /**
+     * @return a read-only view of the {@link Symbol} as a buffer of ASCII bytes.
+     */
+    public ProtonBuffer toASCII() {
+        return underlying.copy(true);
+    }
+
     @Override
     public int compareTo(Symbol other) {
         return underlying.compareTo(other.underlying);

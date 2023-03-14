@@ -25,7 +25,7 @@ import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
-import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedListTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -35,7 +35,7 @@ import org.apache.qpid.protonj2.types.messaging.Properties;
 /**
  * Decoder of AMQP Properties type values from a byte stream
  */
-public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Properties> {
+public final class PropertiesTypeDecoder extends AbstractDescribedListTypeDecoder<Properties> {
 
     private static final int MIN_PROPERTIES_LIST_ENTRIES = 0;
     private static final int MAX_PROPERTIES_LIST_ENTRIES = 13;
@@ -75,21 +75,12 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
         return result;
     }
 
-    @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(buffer, state);
-    }
-
     private Properties readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Properties properties = new Properties();
 
         @SuppressWarnings("unused")
-        final int size = listDecoder.readSize(buffer);
-        final int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer, state);
+        final int count = listDecoder.readCount(buffer, state);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_PROPERTIES_LIST_ENTRIES) {
@@ -176,21 +167,12 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
         return result;
     }
 
-    @Override
-    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(stream, state);
-    }
-
     private Properties readProperties(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Properties properties = new Properties();
 
         @SuppressWarnings("unused")
-        final int size = listDecoder.readSize(stream);
-        final int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream, state);
+        final int count = listDecoder.readCount(stream, state);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_PROPERTIES_LIST_ENTRIES) {

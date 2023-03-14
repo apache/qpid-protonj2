@@ -115,6 +115,34 @@ public final class ProtonByteArrayBufferAllocator implements ProtonBufferAllocat
         return ProtonCompositeBuffer.create(ProtonBufferAllocator.defaultAllocator(), buffers);
     }
 
+    /**
+     * Shallow copy of the given array segment used when the caller knows that
+     * they will not share the bytes wrapped with any other application code.
+     *
+     * @param array The array that should be wrapped
+     *
+     * @return A {@link ProtonBuffer} that wraps the given array bytes.
+     */
+    @SuppressWarnings("resource")
+    public static ProtonBuffer wrapped(byte[] array) {
+        return new ProtonByteArrayBuffer(array, 0, array.length, ProtonByteArrayBuffer.DEFAULT_MAXIMUM_CAPACITY).setWriteOffset(array.length);
+    }
+
+    /**
+     * Shallow copy of the given array segment used when the caller knows that
+     * they will not share the bytes wrapped with any other application code.
+     *
+     * @param array The array that should be wrapped
+     * @param offset The offset into the array where the wrapper starts
+     * @param length The number of bytes that will be represented in the span.
+     *
+     * @return A {@link ProtonBuffer} that wraps the given array bytes.
+     */
+    @SuppressWarnings("resource")
+    public static ProtonBuffer wrapped(byte[] array, int offset, int length) {
+        return new ProtonByteArrayBuffer(array, offset, length, ProtonByteArrayBuffer.DEFAULT_MAXIMUM_CAPACITY).setWriteOffset(length);
+    }
+
     private void checkClosed() {
         if (closed) {
             throw new IllegalStateException("This allocator instance is closed");

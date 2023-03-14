@@ -24,7 +24,7 @@ import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
-import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedListTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -33,7 +33,7 @@ import org.apache.qpid.protonj2.types.messaging.Received;
 /**
  * Decoder of AMQP Received type value from a byte stream.
  */
-public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Received> {
+public final class ReceivedTypeDecoder extends AbstractDescribedListTypeDecoder<Received> {
 
     private static final int REQUIRED_RECEIVED_LIST_ENTRIES = 2;
 
@@ -71,21 +71,12 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
         return result;
     }
 
-    @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(buffer, state);
-    }
-
     private Received readReceived(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Received received = new Received();
 
         @SuppressWarnings("unused")
-        final int size = listDecoder.readSize(buffer);
-        final int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer, state);
+        final int count = listDecoder.readCount(buffer, state);
 
         // Don't decode anything if things already look wrong.
         if (count != REQUIRED_RECEIVED_LIST_ENTRIES) {
@@ -125,21 +116,12 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
         return result;
     }
 
-    @Override
-    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(stream, state);
-    }
-
     private Received readReceived(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Received received = new Received();
 
         @SuppressWarnings("unused")
-        final int size = listDecoder.readSize(stream);
-        final int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream, state);
+        final int count = listDecoder.readCount(stream, state);
 
         // Don't decode anything if things already look wrong.
         if (count != REQUIRED_RECEIVED_LIST_ENTRIES) {

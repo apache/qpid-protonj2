@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.codec.primitives;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
@@ -118,6 +119,33 @@ public class NullTypeCodecTest extends CodecTestSupport {
             int index = buffer.getReadOffset();
             typeDecoder.skipValue(buffer, decoderState);
             assertEquals(index, buffer.getReadOffset());
+        }
+    }
+
+    @Test
+    public void testReadSeizeFromEncoding() throws IOException {
+        doTestReadSeizeFromEncoding(false);
+    }
+
+    @Test
+    public void testReadSeizeFromEncodingInStream() throws IOException {
+        doTestReadSeizeFromEncoding(true);
+    }
+
+    private void doTestReadSeizeFromEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        buffer.writeByte(EncodingCodes.NULL);
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertTrue(typeDecoder.isNull());
+            assertEquals(0, typeDecoder.readSize(stream, streamDecoderState));
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertTrue(typeDecoder.isNull());
+            assertEquals(0, typeDecoder.readSize(buffer, decoderState));
         }
     }
 }

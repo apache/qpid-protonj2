@@ -589,4 +589,36 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
             fail("Expected an exception on skip of encoded list failure.");
         } catch (DecodeException dex) {}
     }
+
+    @Test
+    public void testReadSeizeFromEncoding() throws IOException {
+        doTestReadSeizeFromEncoding(false);
+    }
+
+    @Test
+    public void testReadSeizeFromEncodingInStream() throws IOException {
+        doTestReadSeizeFromEncoding(true);
+    }
+
+    private void doTestReadSeizeFromEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        buffer.writeByte(EncodingCodes.SYM8);
+        buffer.writeByte((byte) 8);
+        buffer.writeByte(EncodingCodes.SYM32);
+        buffer.writeInt(16);
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(8, typeDecoder.readSize(stream, streamDecoderState));
+            typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(16, typeDecoder.readSize(stream, streamDecoderState));
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(8, typeDecoder.readSize(buffer, decoderState));
+            typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(16, typeDecoder.readSize(buffer, decoderState));
+        }
+    }
 }

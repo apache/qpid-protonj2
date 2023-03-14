@@ -50,8 +50,8 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
 
     @Override
     public Object readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        int size = readSize(buffer);
-        int count = readCount(buffer);
+        int size = readSize(buffer, state);
+        int count = readCount(buffer, state);
 
         if (getTypeCode() == (EncodingCodes.ARRAY32 & 0xff)) {
             size -= 8; // 4 bytes each for size and count;
@@ -70,28 +70,20 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
 
     @Override
     public Object readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        readSize(stream);
+        readSize(stream, state);
 
-        return decodeAsObject(stream, state, readCount(stream));
+        return decodeAsObject(stream, state, readCount(stream, state));
     }
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.advanceReadOffset(readSize(buffer));
+        buffer.advanceReadOffset(readSize(buffer, state));
     }
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        ProtonStreamUtils.skipBytes(stream, readSize(stream));
+        ProtonStreamUtils.skipBytes(stream, readSize(stream, state));
     }
-
-    protected abstract int readSize(ProtonBuffer buffer);
-
-    protected abstract int readCount(ProtonBuffer buffer);
-
-    protected abstract int readSize(InputStream stream);
-
-    protected abstract int readCount(InputStream stream);
 
     private static Object decodeArray(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);

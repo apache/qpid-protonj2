@@ -24,7 +24,7 @@ import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
-import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedListTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -34,7 +34,7 @@ import org.apache.qpid.protonj2.types.transport.ErrorCondition;
 /**
  * Decoder of AMQP End type values from a byte stream
  */
-public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
+public final class EndTypeDecoder extends AbstractDescribedListTypeDecoder<End> {
 
     private static final int MIN_END_LIST_ENTRIES = 0;
     private static final int MAX_END_LIST_ENTRIES = 1;
@@ -73,21 +73,12 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
         return result;
     }
 
-    @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(buffer, state);
-    }
-
     private End readEnd(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final End end = new End();
 
         @SuppressWarnings("unused")
-        final int size = listDecoder.readSize(buffer);
-        final int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer, state);
+        final int count = listDecoder.readCount(buffer, state);
 
         if (count < MIN_END_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in End list encoding: " + count);
@@ -119,21 +110,12 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
         return result;
     }
 
-    @Override
-    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(stream, state);
-    }
-
     private End readEnd(InputStream stream, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final End end = new End();
 
         @SuppressWarnings("unused")
-        final int size = listDecoder.readSize(stream);
-        final int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream, state);
+        final int count = listDecoder.readCount(stream, state);
 
         if (count < MIN_END_LIST_ENTRIES) {
             throw new DecodeException("Not enough entries in End list encoding: " + count);

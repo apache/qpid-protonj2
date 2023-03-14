@@ -27,7 +27,7 @@ import org.apache.qpid.protonj2.codec.StreamDecoder;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
-import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedListTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -37,7 +37,7 @@ import org.apache.qpid.protonj2.types.transport.Open;
 /**
  * Decoder of AMQP Open type values from a byte stream.
  */
-public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
+public final class OpenTypeDecoder extends AbstractDescribedListTypeDecoder<Open> {
 
     private static final int MIN_OPEN_LIST_ENTRIES = 1;
     private static final int MAX_OPEN_LIST_ENTRIES = 10;
@@ -76,21 +76,12 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
         return result;
     }
 
-    @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(buffer, state);
-    }
-
     private Open readOpen(ProtonBuffer buffer, Decoder decoder, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Open open = new Open();
 
         @SuppressWarnings("unused")
-        final int size = listDecoder.readSize(buffer);
-        final int count = listDecoder.readCount(buffer);
+        final int size = listDecoder.readSize(buffer, state);
+        final int count = listDecoder.readCount(buffer, state);
 
         if (count < MIN_OPEN_LIST_ENTRIES) {
             throw new DecodeException("The container-id field cannot be omitted from the Open");
@@ -168,21 +159,12 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
         return result;
     }
 
-    @Override
-    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(stream, state);
-    }
-
     private Open readOpen(InputStream stream, StreamDecoder decoder, StreamDecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         final Open open = new Open();
 
         @SuppressWarnings("unused")
-        final int size = listDecoder.readSize(stream);
-        final int count = listDecoder.readCount(stream);
+        final int size = listDecoder.readSize(stream, state);
+        final int count = listDecoder.readCount(stream, state);
 
         if (count < MIN_OPEN_LIST_ENTRIES) {
             throw new DecodeException("The container-id field cannot be omitted from the Open");

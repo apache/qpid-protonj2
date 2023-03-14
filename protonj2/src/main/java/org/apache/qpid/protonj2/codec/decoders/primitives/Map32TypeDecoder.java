@@ -20,7 +20,9 @@ import java.io.InputStream;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
+import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
+import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.decoders.ProtonStreamUtils;
 
 /**
@@ -34,22 +36,22 @@ public final class Map32TypeDecoder extends AbstractMapTypeDecoder {
     }
 
     @Override
-    public int readSize(ProtonBuffer buffer) throws DecodeException {
+    public int readSize(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return buffer.readInt();
     }
 
     @Override
-    public int readCount(ProtonBuffer buffer) throws DecodeException {
+    public int readCount(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return buffer.readInt();
     }
 
     @Override
-    public int readSize(InputStream stream) throws DecodeException {
+    public int readSize(InputStream stream, StreamDecoderState state) throws DecodeException {
         return ProtonStreamUtils.readInt(stream);
     }
 
     @Override
-    public int readCount(InputStream stream) throws DecodeException {
+    public int readCount(InputStream stream, StreamDecoderState state) throws DecodeException {
         return ProtonStreamUtils.readInt(stream);
     }
 }

@@ -26,6 +26,11 @@ import org.apache.qpid.protonj2.codec.TypeDecoder;
  */
 public interface PrimitiveTypeDecoder<V> extends TypeDecoder<V>, StreamTypeDecoder<V> {
 
+    @Override
+    default boolean isPrimitive() {
+        return true;
+    }
+
     /**
      * @return true if the type managed by this decoder is assignable to a Java primitive type.
      */

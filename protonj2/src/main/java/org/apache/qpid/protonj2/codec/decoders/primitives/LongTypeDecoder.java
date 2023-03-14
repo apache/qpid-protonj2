@@ -97,4 +97,14 @@ public class LongTypeDecoder extends AbstractPrimitiveTypeDecoder<Long> {
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         ProtonStreamUtils.skipBytes(stream, Long.BYTES);
     }
+
+    @Override
+    public int readSize(ProtonBuffer buffer, DecoderState state) {
+        return Long.BYTES;
+    }
+
+    @Override
+    public int readSize(InputStream stream, StreamDecoderState state) {
+        return Long.BYTES;
+    }
 }

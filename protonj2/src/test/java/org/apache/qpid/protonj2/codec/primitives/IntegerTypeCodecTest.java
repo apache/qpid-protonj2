@@ -373,4 +373,37 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
         assertEquals(1, array[0]);
         assertEquals(2, array[1]);
     }
+
+    @Test
+    public void testReadSeizeFromEncoding() throws IOException {
+        doTestReadSeizeFromEncoding(false);
+    }
+
+    @Test
+    public void testReadSeizeFromEncodingInStream() throws IOException {
+        doTestReadSeizeFromEncoding(true);
+    }
+
+    private void doTestReadSeizeFromEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        buffer.writeByte(EncodingCodes.SMALLINT);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte(EncodingCodes.INT);
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer);
+            StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(1, typeDecoder.readSize(stream, streamDecoderState));
+            typeDecoder.readValue(stream, streamDecoderState);
+            typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertEquals(4, typeDecoder.readSize(stream, streamDecoderState));
+        } else {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(1, typeDecoder.readSize(buffer, decoderState));
+            typeDecoder.readValue(buffer, decoderState);
+            typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(4, typeDecoder.readSize(buffer, decoderState));
+        }
+    }
 }

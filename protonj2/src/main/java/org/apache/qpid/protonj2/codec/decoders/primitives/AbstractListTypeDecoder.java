@@ -37,20 +37,20 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
 
     @Override
     public List<Object> readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        final int size = readSize(buffer);
+        final int size = readSize(buffer, state);
 
         // Ensure we do not allocate an array of size greater then the available data, otherwise there is a risk for an OOM error
         if (size > buffer.getReadableBytes()) {
             throw new DecodeException(String.format(
-                    "List element size %d is specified to be greater than the amount " +
+                    "List encoded size %d is specified to be greater than the amount " +
                     "of data available (%d)", size, buffer.getReadableBytes()));
         }
 
-        final int count = readCount(buffer);
+        final int count = readCount(buffer, state);
 
         if (count > buffer.getReadableBytes()) {
             throw new DecodeException(String.format(
-                    "Symbol encoded element count %d is specified to be greater than the amount " +
+                    "List encoded element count %d is specified to be greater than the amount " +
                     "of data available (%d)", count, buffer.getReadableBytes()));
         }
 
@@ -65,13 +65,13 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.advanceReadOffset(readSize(buffer));
+        buffer.advanceReadOffset(readSize(buffer, state));
     }
 
     @Override
     public List<Object> readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        readSize(stream);
-        final int count = readCount(stream);
+        readSize(stream, state);
+        final int count = readCount(stream, state);
 
         final List<Object> list = new ArrayList<>(count);
         final StreamDecoder decoder = state.getDecoder();
@@ -85,7 +85,7 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         try {
-            stream.skip(readSize(stream));
+            stream.skip(readSize(stream, state));
         } catch (IOException ex) {
             throw new DecodeException("Error while reading List payload bytes", ex);
         }

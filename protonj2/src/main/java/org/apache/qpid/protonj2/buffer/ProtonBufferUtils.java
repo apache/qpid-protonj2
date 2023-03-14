@@ -753,33 +753,85 @@ public abstract class ProtonBufferUtils {
             return true;
         }
 
-        if (left.getReadableBytes() != right.getReadableBytes()) {
+        final int length = left.getReadableBytes();
+
+        if (length != right.getReadableBytes()) {
             return false;
         }
 
-        final int readable = left.getReadableBytes();
-        final int longCount = readable >>> 3;
-        final int byteCount = readable & 7;
+        return equalsImpl(left, left.getReadOffset(), right, right.getReadOffset(), length);
+    }
 
-        int positionSelf = left.getReadOffset();
-        int positionOther = right.getReadOffset();
+    /**
+     * Compares two {@link ProtonBuffer} instances for equality.
+     *
+     * @param left
+     * 		The left hand side buffer to compare.
+     * @param right
+     * 		The right hand side buffer to compare.
+     * @param length
+     * 		The number of bytes in the two buffers to compare.
+     *
+     * @return true if both buffers are equal.
+     */
+    public static boolean equals(ProtonBuffer left, ProtonBuffer right, int length) {
+        Objects.requireNonNull(left, "The left hand buffer cannot be null");
+        Objects.requireNonNull(right, "The right hand buffer cannot be null");
+
+        return equalsImpl(left, left.getReadOffset(), right, right.getReadOffset(), length);
+    }
+
+    /**
+     * Compares two {@link ProtonBuffer} instances for equality.
+     *
+     * @param left
+     * 		The left hand side buffer to compare.
+     * @param leftStartIndex
+     * 		The index in the readable bytes of the left buffer to start the comparison
+     * @param right
+     * 		The right hand side buffer to compare.
+     * @param rightStartIndex
+     * 		The index in the readable bytes of the right buffer to start the comparison
+     * @param length
+     * 		The number of bytes in the two buffers to compare.
+     *
+     * @return true if both buffers are equal.
+     */
+    public static boolean equals(ProtonBuffer left, int leftStartIndex, ProtonBuffer right, int rightStartIndex, int length) {
+        Objects.requireNonNull(left, "The left hand buffer cannot be null");
+        Objects.requireNonNull(right, "The right hand buffer cannot be null");
+
+        checkArgumentIsNotNegative(leftStartIndex, "The left hand buffer start index cannot be negative");
+        checkArgumentIsNotNegative(rightStartIndex, "The right hand buffer start index cannot be negative");
+        checkArgumentIsNotNegative(length, "The comparison length cannot be negative");
+
+        return equalsImpl(left, leftStartIndex, right, rightStartIndex, length);
+    }
+
+    private static boolean equalsImpl(ProtonBuffer left, int leftStartIndex, ProtonBuffer right, int rightStartIndex, int length) {
+        if (left.getWriteOffset() - length < leftStartIndex || right.getWriteOffset() - length < rightStartIndex) {
+            return false;
+        }
+
+        final int longCount = length >>> 3;
+        final int byteCount = length & 7;
 
         for (int i = longCount; i > 0; i --) {
-            if (left.getLong(positionSelf) != right.getLong(positionOther)) {
+            if (left.getLong(leftStartIndex) != right.getLong(rightStartIndex)) {
                 return false;
             }
 
-            positionSelf += 8;
-            positionOther += 8;
+            leftStartIndex += 8;
+            rightStartIndex += 8;
         }
 
         for (int i = byteCount; i > 0; i --) {
-            if (left.getByte(positionSelf) != right.getByte(positionOther)) {
+            if (left.getByte(leftStartIndex) != right.getByte(rightStartIndex)) {
                 return false;
             }
 
-            positionSelf++;
-            positionOther++;
+            leftStartIndex++;
+            rightStartIndex++;
         }
 
         return true;

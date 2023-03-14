@@ -25,10 +25,14 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
@@ -38,6 +42,8 @@ import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.ScanningContext;
+import org.apache.qpid.protonj2.codec.decoders.StreamScanningContext;
 import org.apache.qpid.protonj2.codec.decoders.messaging.FooterTypeDecoder;
 import org.apache.qpid.protonj2.codec.encoders.messaging.FooterTypeEncoder;
 import org.apache.qpid.protonj2.types.Symbol;
@@ -279,16 +285,16 @@ public class FooterTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testEncodeDecodeMessageAnnotationsWithEmptyValue() throws IOException {
-        doTestEncodeDecodeMessageAnnotationsWithEmptyValue(false);
+    public void testEncodeDecodeFooterWithEmptyValue() throws IOException {
+        doTestEncodeDecodeFooterWithEmptyValue(false);
     }
 
     @Test
-    public void testEncodeDecodeMessageAnnotationsWithEmptyValueFromStream() throws IOException {
-        doTestEncodeDecodeMessageAnnotationsWithEmptyValue(true);
+    public void testEncodeDecodeFooterWithEmptyValueFromStream() throws IOException {
+        doTestEncodeDecodeFooterWithEmptyValue(true);
     }
 
-    private void doTestEncodeDecodeMessageAnnotationsWithEmptyValue(boolean fromStream) throws IOException {
+    private void doTestEncodeDecodeFooterWithEmptyValue(boolean fromStream) throws IOException {
         ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         encoder.writeObject(buffer, encoderState, new Footer(null));
@@ -515,5 +521,337 @@ public class FooterTypeCodecTest extends CodecTestSupport {
         assertEquals(annotations.getValue().size(), resultMap.size());
         assertEquals(resultMap.get(SYMBOL_1), stringKeyedMap);
         assertEquals(resultMap.get(SYMBOL_2), symbolKeyedMap);
+    }
+
+    @Test
+    public void testScanEncodedFooterForSpecificKey() throws IOException {
+        doTestScanEncodedFooterForSpecificKey(false);
+    }
+
+    @Test
+    public void testScanEncodedFooterForSpecificKeyFromStream() throws IOException {
+        doTestScanEncodedFooterForSpecificKey(true);
+    }
+
+    private void doTestScanEncodedFooterForSpecificKey(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<Symbol, Object> propertiesMap = new LinkedHashMap<>();
+        Footer properties = new Footer(propertiesMap);
+
+        propertiesMap.put(Symbol.valueOf("key-1"), "1");
+        propertiesMap.put(Symbol.valueOf("key-2"), "2");
+        propertiesMap.put(Symbol.valueOf("key-3"), "3");
+        propertiesMap.put(Symbol.valueOf("key-4"), "4");
+        propertiesMap.put(Symbol.valueOf("key-5"), "5");
+        propertiesMap.put(Symbol.valueOf("key-6"), "6");
+        propertiesMap.put(Symbol.valueOf("key-7"), "7");
+        propertiesMap.put(Symbol.valueOf("key-8"), "8");
+
+        final Collection<Symbol> searchDomain = new ArrayList<>();
+        searchDomain.add(Symbol.valueOf("key-2"));
+
+        encoder.writeObject(buffer, encoderState, properties);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final AtomicBoolean matchFound = new AtomicBoolean();
+
+        final FooterTypeDecoder result;
+        if (fromStream) {
+            final StreamScanningContext<Symbol> context = FooterTypeDecoder.createStreamScanContext(searchDomain);
+            result = (FooterTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanAnnotations(stream, streamDecoderState, context, (k, v) -> {
+                assertEquals(Symbol.valueOf("key-2"), k);
+                assertEquals("2", v);
+                matchFound.set(true);
+            });
+        } else {
+            final ScanningContext<Symbol> context = FooterTypeDecoder.createScanContext(searchDomain);
+            result = (FooterTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanAnnotations(buffer, decoderState, context, (k, v) -> {
+                assertEquals(Symbol.valueOf("key-2"), k);
+                assertEquals("2", v);
+                matchFound.set(true);
+            });
+        }
+
+        assertTrue(matchFound.get());
+    }
+
+    @Test
+    public void testScanEncodedFooterForSpecificKeys() throws IOException {
+        doTestScanEncodedFooterForSpecificKeys(false);
+    }
+
+    @Test
+    public void testScanEncodedFooterForSpecificKeysFromStream() throws IOException {
+        doTestScanEncodedFooterForSpecificKeys(true);
+    }
+
+    private void doTestScanEncodedFooterForSpecificKeys(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<Symbol, Object> propertiesMap = new LinkedHashMap<>();
+        Footer properties = new Footer(propertiesMap);
+
+        propertiesMap.put(Symbol.valueOf("key-1"), "1");
+        propertiesMap.put(Symbol.valueOf("key-2"), "2");
+        propertiesMap.put(Symbol.valueOf("key-3"), "3");
+        propertiesMap.put(Symbol.valueOf("key-4"), "4");
+        propertiesMap.put(Symbol.valueOf("key-5"), "5");
+        propertiesMap.put(Symbol.valueOf("key-6"), "6");
+        propertiesMap.put(Symbol.valueOf("key-7"), "7");
+        propertiesMap.put(Symbol.valueOf("key-8"), "8");
+
+        final Collection<Symbol> searchDomain = new ArrayList<>();
+        searchDomain.add(Symbol.valueOf("key-2"));
+        searchDomain.add(Symbol.valueOf("key-7"));
+
+        encoder.writeObject(buffer, encoderState, properties);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final AtomicInteger matchFound = new AtomicInteger();
+
+        final FooterTypeDecoder result;
+        if (fromStream) {
+            final StreamScanningContext<Symbol> context = FooterTypeDecoder.createStreamScanContext(searchDomain);
+            result = (FooterTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanAnnotations(stream, streamDecoderState, context, (k, v) -> {
+                matchFound.incrementAndGet();
+                if (!Symbol.valueOf("key-2").equals(k) && !Symbol.valueOf("key-7").equals(k)) {
+                    fail("Should not find any matches");
+                }
+            });
+        } else {
+            final ScanningContext<Symbol> context = FooterTypeDecoder.createScanContext(searchDomain);
+            result = (FooterTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanAnnotations(buffer, decoderState, context, (k, v) -> {
+                matchFound.incrementAndGet();
+                if (!Symbol.valueOf("key-2").equals(k) && !Symbol.valueOf("key-7").equals(k)) {
+                    fail("Should not find any matches");
+                }
+            });
+        }
+
+        assertEquals(2, matchFound.get());
+    }
+
+    @Test
+    public void testScanEncodedFooterNotTriggeredOnNearMatch() throws IOException {
+        doTestScanEncodedFooterNotTriggeredOnNearMatchFromStream(false);
+    }
+
+    @Test
+    public void testScanEncodedFooterNotTriggeredOnNearMatchFromStream() throws IOException {
+        doTestScanEncodedFooterNotTriggeredOnNearMatchFromStream(true);
+    }
+
+    private void doTestScanEncodedFooterNotTriggeredOnNearMatchFromStream(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<Symbol, Object> propertiesMap = new LinkedHashMap<>();
+        Footer properties = new Footer(propertiesMap);
+
+        propertiesMap.put(Symbol.valueOf("key-1"), "1");
+        propertiesMap.put(Symbol.valueOf("key-21"), "2");
+        propertiesMap.put(Symbol.valueOf("key-3"), "3");
+        propertiesMap.put(Symbol.valueOf("key-4"), "4");
+        propertiesMap.put(Symbol.valueOf("key-5"), "5");
+        propertiesMap.put(Symbol.valueOf("key-6"), "6");
+        propertiesMap.put(Symbol.valueOf("key-7"), "7");
+        propertiesMap.put(Symbol.valueOf("key-8"), "8");
+
+        final Collection<Symbol> searchDomain = new ArrayList<>();
+        searchDomain.add(Symbol.valueOf("key-2"));
+
+        encoder.writeObject(buffer, encoderState, properties);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final FooterTypeDecoder result;
+        if (fromStream) {
+            final StreamScanningContext<Symbol> context = FooterTypeDecoder.createStreamScanContext(searchDomain);
+            result = (FooterTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanAnnotations(stream, streamDecoderState, context, (k, v) -> {
+                fail("Should not find any matches");
+            });
+        } else {
+            final ScanningContext<Symbol> context = FooterTypeDecoder.createScanContext(searchDomain);
+            result = (FooterTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanAnnotations(buffer, decoderState, context, (k, v) -> {
+                fail("Should not find any matches");
+            });
+        }
+    }
+
+    @Test
+    public void testScanMultipleEncodedFooterForSpecificKey() throws IOException {
+        doTestScanMultipleEncodedFooterForSpecificKey(false);
+    }
+
+    @Test
+    public void testScanMultipleEncodedFooterForSpecificKeyFromStream() throws IOException {
+        doTestScanMultipleEncodedFooterForSpecificKey(true);
+    }
+
+    private void doTestScanMultipleEncodedFooterForSpecificKey(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<Symbol, Object> propertiesMap = new LinkedHashMap<>();
+        Footer properties = new Footer(propertiesMap);
+
+        propertiesMap.put(Symbol.valueOf("key-1"), "1");
+        propertiesMap.put(Symbol.valueOf("key-2"), "2");
+        propertiesMap.put(Symbol.valueOf("key-3"), "3");
+        propertiesMap.put(Symbol.valueOf("key-4"), "4");
+        propertiesMap.put(Symbol.valueOf("key-5"), "5");
+        propertiesMap.put(Symbol.valueOf("key-6"), "6");
+        propertiesMap.put(Symbol.valueOf("key-7"), "7");
+        propertiesMap.put(Symbol.valueOf("key-8"), "8");
+
+        final Collection<Symbol> searchDomain = new ArrayList<>();
+        searchDomain.add(Symbol.valueOf("key-2"));
+
+        encoder.writeObject(buffer, encoderState, properties);
+        encoder.writeObject(buffer, encoderState, properties);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        final AtomicInteger matchFound = new AtomicInteger();
+
+        FooterTypeDecoder result;
+
+        if (fromStream) {
+            final StreamScanningContext<Symbol> context = FooterTypeDecoder.createStreamScanContext(searchDomain);
+            result = (FooterTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanAnnotations(stream, streamDecoderState, context, (k, v) -> {
+                assertEquals(Symbol.valueOf("key-2"), k);
+                assertEquals("2", v);
+                matchFound.incrementAndGet();
+            });
+            result = (FooterTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanAnnotations(stream, streamDecoderState, context, (k, v) -> {
+                assertEquals(Symbol.valueOf("key-2"), k);
+                assertEquals("2", v);
+                matchFound.incrementAndGet();
+            });
+        } else {
+            final ScanningContext<Symbol> context = FooterTypeDecoder.createScanContext(searchDomain);
+            result = (FooterTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanAnnotations(buffer, decoderState, context, (k, v) -> {
+                assertEquals(Symbol.valueOf("key-2"), k);
+                assertEquals("2", v);
+                matchFound.incrementAndGet();
+            });
+            result = (FooterTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanAnnotations(buffer, decoderState, context, (k, v) -> {
+                assertEquals(Symbol.valueOf("key-2"), k);
+                assertEquals("2", v);
+                matchFound.incrementAndGet();
+            });
+        }
+
+        assertEquals(2, matchFound.get());
+    }
+
+    @Test
+    public void testScanEncodedFooterWithNoMatchConsumesEncoding() throws IOException {
+        doTestScanEncodedFooterWithNoMatchConsumesEncoding(false);
+    }
+
+    @Test
+    public void testScanEncodedFooterWithNoMatchConsumesEncodingFromStream() throws IOException {
+        doTestScanEncodedFooterWithNoMatchConsumesEncoding(true);
+    }
+
+    private void doTestScanEncodedFooterWithNoMatchConsumesEncoding(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        Map<Symbol, Object> propertiesMap1 = new LinkedHashMap<>();
+        Footer properties1 = new Footer(propertiesMap1);
+        propertiesMap1.put(Symbol.valueOf("key-1"), "1");
+        propertiesMap1.put(Symbol.valueOf("key-2"), "2");
+        propertiesMap1.put(Symbol.valueOf("key-3"), "3");
+        Map<Symbol, Object> propertiesMap2 = new LinkedHashMap<>();
+        Footer properties2 = new Footer(propertiesMap2);
+        propertiesMap2.put(Symbol.valueOf("key-4"), "4");
+        propertiesMap2.put(Symbol.valueOf("key-5"), "5");
+        propertiesMap2.put(Symbol.valueOf("key-6"), "6");
+
+        final Collection<Symbol> searchDomain = new ArrayList<>();
+        searchDomain.add(Symbol.valueOf("key-9"));
+
+        encoder.writeObject(buffer, encoderState, properties1);
+        encoder.writeObject(buffer, encoderState, properties2);
+
+        final InputStream stream;
+
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        FooterTypeDecoder result;
+
+        if (fromStream) {
+            final StreamScanningContext<Symbol> context = FooterTypeDecoder.createStreamScanContext(searchDomain);
+            result = (FooterTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            result.scanAnnotations(stream, streamDecoderState, context, (k, v) -> {
+                fail("Should not find any matches");
+            });
+            result = (FooterTypeDecoder) streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
+            assertNotNull(result);
+            Footer decoded = result.readValue(stream, streamDecoderState);
+            assertEquals(propertiesMap2, decoded.getValue());
+        } else {
+            final ScanningContext<Symbol> context = FooterTypeDecoder.createScanContext(searchDomain);
+            result = (FooterTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            result.scanAnnotations(buffer, decoderState, context, (k, v) -> {
+                fail("Should not find any matches");
+            });
+            result = (FooterTypeDecoder) decoder.readNextTypeDecoder(buffer, decoderState);
+            assertNotNull(result);
+            Footer decoded = result.readValue(buffer, decoderState);
+            assertEquals(propertiesMap2, decoded.getValue());
+        }
     }
 }

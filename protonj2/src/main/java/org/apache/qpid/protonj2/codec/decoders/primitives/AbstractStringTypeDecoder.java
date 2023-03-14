@@ -32,7 +32,7 @@ public abstract class AbstractStringTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public String readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        final int length = readSize(buffer);
+        final int length = readSize(buffer, state);
 
         if (length > buffer.getReadableBytes()) {
             throw new DecodeException(String.format(
@@ -49,7 +49,7 @@ public abstract class AbstractStringTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public String readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        final int length = readSize(stream);
+        final int length = readSize(stream, state);
 
         if (length != 0) {
             return state.decodeUTF8(stream, length);
@@ -60,20 +60,15 @@ public abstract class AbstractStringTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        buffer.advanceReadOffset(readSize(buffer));
+        buffer.advanceReadOffset(readSize(buffer, state));
     }
 
     @Override
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         try {
-            stream.skip(readSize(stream));
+            stream.skip(readSize(stream, state));
         } catch (IOException ex) {
             throw new DecodeException("Error while reading String payload bytes", ex);
         }
     }
-
-    protected abstract int readSize(ProtonBuffer buffer);
-
-    protected abstract int readSize(InputStream stream);
-
 }

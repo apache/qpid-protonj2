@@ -26,7 +26,7 @@ import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
-import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedListTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.List32TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.List8TypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
@@ -37,7 +37,7 @@ import org.apache.qpid.protonj2.types.messaging.Accepted;
 /**
  * Decoder of AMQP Accepted type values from a byte stream.
  */
-public final class AcceptedTypeDecoder extends AbstractDescribedTypeDecoder<Accepted> {
+public final class AcceptedTypeDecoder extends AbstractDescribedListTypeDecoder<Accepted> {
 
     private static final ListTypeDecoder SMALL_LIST_TYPE_DECODER = new List8TypeDecoder();
     private static final ListTypeDecoder LARGE_LIST_TYPE_DECODER = new List32TypeDecoder();
@@ -101,15 +101,6 @@ public final class AcceptedTypeDecoder extends AbstractDescribedTypeDecoder<Acce
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(buffer, state);
-    }
-
-    @Override
     public Accepted readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
@@ -134,14 +125,5 @@ public final class AcceptedTypeDecoder extends AbstractDescribedTypeDecoder<Acce
         }
 
         return result;
-    }
-
-    @Override
-    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(stream, state);
     }
 }

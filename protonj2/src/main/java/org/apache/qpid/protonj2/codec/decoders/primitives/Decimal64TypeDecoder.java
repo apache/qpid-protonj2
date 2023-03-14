@@ -61,4 +61,14 @@ public final class Decimal64TypeDecoder extends AbstractPrimitiveTypeDecoder<Dec
     public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         ProtonStreamUtils.skipBytes(stream, Decimal64.BYTES);
     }
+
+    @Override
+    public int readSize(ProtonBuffer buffer, DecoderState state) {
+        return Decimal64.BYTES;
+    }
+
+    @Override
+    public int readSize(InputStream stream, StreamDecoderState state) {
+        return Decimal64.BYTES;
+    }
 }

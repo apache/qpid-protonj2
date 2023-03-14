@@ -24,7 +24,7 @@ import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.codec.StreamTypeDecoder;
 import org.apache.qpid.protonj2.codec.TypeDecoder;
-import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.protonj2.codec.decoders.AbstractDescribedListTypeDecoder;
 import org.apache.qpid.protonj2.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.UnsignedLong;
@@ -33,7 +33,7 @@ import org.apache.qpid.protonj2.types.messaging.DeleteOnNoMessages;
 /**
  * Decoder of AMQP DeleteOnNoLinks type values from a byte stream
  */
-public final class DeleteOnNoMessagesTypeDecoder extends AbstractDescribedTypeDecoder<DeleteOnNoMessages> {
+public final class DeleteOnNoMessagesTypeDecoder extends AbstractDescribedListTypeDecoder<DeleteOnNoMessages> {
 
     @Override
     public Class<DeleteOnNoMessages> getTypeClass() {
@@ -78,15 +78,6 @@ public final class DeleteOnNoMessagesTypeDecoder extends AbstractDescribedTypeDe
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(buffer, state);
-    }
-
-    @Override
     public DeleteOnNoMessages readValue(InputStream stream, StreamDecoderState state) throws DecodeException {
         final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
@@ -111,14 +102,5 @@ public final class DeleteOnNoMessagesTypeDecoder extends AbstractDescribedTypeDe
         }
 
         return result;
-    }
-
-    @Override
-    public void skipValue(InputStream stream, StreamDecoderState state) throws DecodeException {
-        final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
-
-        checkIsExpectedType(ListTypeDecoder.class, decoder);
-
-        decoder.skipValue(stream, state);
     }
 }
