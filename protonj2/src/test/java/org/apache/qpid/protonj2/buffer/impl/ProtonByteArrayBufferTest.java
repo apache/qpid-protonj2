@@ -17,8 +17,14 @@
 
 package org.apache.qpid.protonj2.buffer.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.apache.qpid.protonj2.buffer.ProtonAbstractBufferTest;
+import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferComponent;
+import org.apache.qpid.protonj2.buffer.ProtonBufferComponentAccessor;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test the byte array backed proton buffer
@@ -28,5 +34,23 @@ public class ProtonByteArrayBufferTest extends ProtonAbstractBufferTest {
     @Override
     public ProtonBufferAllocator createTestCaseAllocator() {
         return new ProtonByteArrayBufferAllocator();
+    }
+
+    @Test
+    public void testBufferExposesNativeAddressValues() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buffer = allocator.allocate(16)) {
+
+            buffer.writeLong(Long.MAX_VALUE);
+            buffer.readByte();
+
+            try (ProtonBufferComponentAccessor accessor = buffer.componentAccessor()) {
+                for (ProtonBufferComponent component : accessor.components()) {
+                    assertEquals(0, component.getNativeAddress());
+                    assertEquals(0, component.getNativeReadAddress());
+                    assertEquals(0, component.getNativeWriteAddress());
+                }
+            }
+        }
     }
 }

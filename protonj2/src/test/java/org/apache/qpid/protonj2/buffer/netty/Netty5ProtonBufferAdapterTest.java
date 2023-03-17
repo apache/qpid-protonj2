@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
+import org.apache.qpid.protonj2.buffer.ProtonBufferComponent;
+import org.apache.qpid.protonj2.buffer.ProtonBufferComponentAccessor;
 import org.junit.jupiter.api.Test;
 
 import io.netty5.buffer.Buffer;
@@ -35,6 +37,24 @@ public class Netty5ProtonBufferAdapterTest extends NettyBufferAdapterTestBase {
     @Override
     public ProtonBufferAllocator createTestCaseAllocator() {
         return new Netty5ProtonBufferAllocator(BufferAllocator.onHeapUnpooled());
+    }
+
+    @Test
+    public void testBufferExposesNativeAddressValues() {
+        try (ProtonBufferAllocator netty = new Netty5ProtonBufferAllocator(BufferAllocator.offHeapUnpooled());
+             ProtonBuffer nettyBuffer = netty.allocate(16)) {
+
+            nettyBuffer.writeLong(Long.MAX_VALUE);
+            nettyBuffer.readByte();
+
+            try (ProtonBufferComponentAccessor accessor = nettyBuffer.componentAccessor()) {
+                for (ProtonBufferComponent component : accessor.components()) {
+                    assertTrue(component.getNativeAddress() != 0);
+                    assertTrue(component.getNativeReadAddress() != 0);
+                    assertTrue(component.getNativeWriteAddress() != 0);
+                }
+            }
+        }
     }
 
     @Test

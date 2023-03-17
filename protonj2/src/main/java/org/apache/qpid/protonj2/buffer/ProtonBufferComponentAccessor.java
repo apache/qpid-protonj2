@@ -33,7 +33,8 @@ import java.util.NoSuchElementException;
  * been discarded.
  * <p>
  * The general usage of the component access object should be within a try-with-resource
- * block as follows:
+ * block as follows although it should be noted that if using the iteration type component
+ * walk an allocation of an {@link Iterable} and an {@link Iterator} will be made:
  * <pre>{@code
  *   try (ProtonBufferComponentAccessor accessor = buffer.componentAccessor()) {
  *      for (ProtonBufferComponent component : accessor.readableComponents()) {
@@ -86,10 +87,10 @@ public interface ProtonBufferComponentAccessor extends AutoCloseable {
     }
 
     /**
-     * Returns the first readable component that this access object provides which resets the
+     * Returns the first writable component that this access object provides which resets the
      * iteration state to the beginning.
      *
-     * @return the first readable component in the sequence of {@link ProtonBufferComponent} instance.
+     * @return the first writable component in the sequence of {@link ProtonBufferComponent} instance.
      */
     default ProtonBufferComponent firstWritable() {
         final ProtonBufferComponent current = first();
@@ -124,12 +125,52 @@ public interface ProtonBufferComponentAccessor extends AutoCloseable {
     }
 
     /**
+     * @return an {@link Iterable} instance over all the buffer components this instance can reach
+     */
+    default Iterable<ProtonBufferComponent> components() {
+        return new Iterable<ProtonBufferComponent>() {
+
+            @Override
+            public Iterator<ProtonBufferComponent> iterator() {
+                return componentIterator();
+            }
+        };
+    }
+
+    /**
+     * @return an {@link Iterable} instance over all the readable buffer components this instance can reach
+     */
+    default Iterable<ProtonBufferComponent> readableComponents() {
+        return new Iterable<ProtonBufferComponent>() {
+
+            @Override
+            public Iterator<ProtonBufferComponent> iterator() {
+                return readableComponentIterator();
+            }
+        };
+    }
+
+    /**
+     * @return an {@link Iterable} instance over all the writable buffer components this instance can reach
+     */
+    default Iterable<ProtonBufferComponent> writableComponents() {
+        return new Iterable<ProtonBufferComponent>() {
+
+            @Override
+            public Iterator<ProtonBufferComponent> iterator() {
+                return writableComponentIterator();
+            }
+        };
+    }
+
+    /**
      * @return an {@link Iterator} that traverses all components within the {@link ProtonBuffer}
      */
     default Iterator<ProtonBufferComponent> componentIterator() {
         return new Iterator<ProtonBufferComponent>() {
 
-            private ProtonBufferComponent next = first();
+            private boolean initialized;
+            private ProtonBufferComponent next;
 
             @Override
             public boolean hasNext() {
@@ -138,14 +179,22 @@ public interface ProtonBufferComponentAccessor extends AutoCloseable {
 
             @Override
             public ProtonBufferComponent next() {
+                if (next == null && initialized) {
+                    throw new NoSuchElementException();
+                }
+
+                if (!initialized) {
+                    next = ProtonBufferComponentAccessor.this.first();
+                    initialized = true;
+                } else {
+                    next = ProtonBufferComponentAccessor.this.next();
+                }
+
                 if (next == null) {
                     throw new NoSuchElementException();
                 }
 
-                ProtonBufferComponent oldNext = next;
-                next = ProtonBufferComponentAccessor.this.next();
-
-                return oldNext;
+                return next;
             }
         };
     }
@@ -156,7 +205,8 @@ public interface ProtonBufferComponentAccessor extends AutoCloseable {
     default Iterator<ProtonBufferComponent> readableComponentIterator() {
         return new Iterator<ProtonBufferComponent>() {
 
-            private ProtonBufferComponent next = firstReadable();
+            private boolean initialized;
+            private ProtonBufferComponent next;
 
             @Override
             public boolean hasNext() {
@@ -165,14 +215,22 @@ public interface ProtonBufferComponentAccessor extends AutoCloseable {
 
             @Override
             public ProtonBufferComponent next() {
+                if (next == null && initialized) {
+                    throw new NoSuchElementException();
+                }
+
+                if (!initialized) {
+                    next = ProtonBufferComponentAccessor.this.firstReadable();
+                    initialized = true;
+                } else {
+                    next = ProtonBufferComponentAccessor.this.nextReadable();
+                }
+
                 if (next == null) {
                     throw new NoSuchElementException();
                 }
 
-                ProtonBufferComponent oldNext = next;
-                next = ProtonBufferComponentAccessor.this.nextReadable();
-
-                return oldNext;
+                return next;
             }
         };
     }
@@ -183,7 +241,8 @@ public interface ProtonBufferComponentAccessor extends AutoCloseable {
     default Iterator<ProtonBufferComponent> writableComponentIterator() {
         return new Iterator<ProtonBufferComponent>() {
 
-            private ProtonBufferComponent next = firstWritable();
+            private boolean initialized;
+            private ProtonBufferComponent next;
 
             @Override
             public boolean hasNext() {
@@ -192,14 +251,22 @@ public interface ProtonBufferComponentAccessor extends AutoCloseable {
 
             @Override
             public ProtonBufferComponent next() {
+                if (next == null && initialized) {
+                    throw new NoSuchElementException();
+                }
+
+                if (!initialized) {
+                    next = ProtonBufferComponentAccessor.this.firstWritable();
+                    initialized = true;
+                } else {
+                    next = ProtonBufferComponentAccessor.this.nextWritable();
+                }
+
                 if (next == null) {
                     throw new NoSuchElementException();
                 }
 
-                ProtonBufferComponent oldNext = next;
-                next = ProtonBufferComponentAccessor.this.nextWritable();
-
-                return oldNext;
+                return next;
             }
         };
     }

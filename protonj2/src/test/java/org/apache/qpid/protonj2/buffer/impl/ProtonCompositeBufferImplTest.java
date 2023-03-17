@@ -35,10 +35,15 @@ import org.apache.qpid.protonj2.buffer.ProtonAbstractBufferTest;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferClosedException;
+import org.apache.qpid.protonj2.buffer.ProtonBufferComponent;
+import org.apache.qpid.protonj2.buffer.ProtonBufferComponentAccessor;
 import org.apache.qpid.protonj2.buffer.ProtonBufferReadOnlyException;
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
+import org.apache.qpid.protonj2.buffer.netty.Netty5ProtonBufferAllocator;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import io.netty5.buffer.BufferAllocator;
 
 /**
  * Tests for the proton composite buffer implementation.
@@ -1914,6 +1919,55 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
 
             assertEquals(0, composite.getReadOffset());
             assertEquals(totalCapacity - splitPoint, composite.getWriteOffset());
+        }
+    }
+
+    @Test
+    public void testBufferExposesNativeAddressValues() {
+        try (ProtonBufferAllocator allocator = new Netty5ProtonBufferAllocator(BufferAllocator.offHeapUnpooled());
+             ProtonBuffer buffer = allocator.allocate(16)) {
+
+            buffer.writeLong(Long.MAX_VALUE);
+            buffer.readByte();
+
+            try (ProtonBufferComponentAccessor accessor = buffer.componentAccessor()) {
+                for (ProtonBufferComponent component : accessor.components()) {
+                    assertTrue(component.getNativeAddress() != 0);
+                    assertTrue(component.getNativeReadAddress() != 0);
+                    assertTrue(component.getNativeWriteAddress() != 0);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testBufferExposesNativeAddressValuesForNativeBackedBuffers() {
+        try (ProtonBufferAllocator offHeapAllocator = new Netty5ProtonBufferAllocator(BufferAllocator.offHeapUnpooled());
+             ProtonBufferAllocator onHeapAllocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer buffer = onHeapAllocator.composite()) {
+
+            buffer.append(offHeapAllocator.allocate(16));
+            buffer.append(onHeapAllocator.allocate(16));
+
+            buffer.writeLong(Long.MAX_VALUE);
+            buffer.writeLong(Long.MAX_VALUE);
+            buffer.readByte();
+
+            int count = 0;
+
+            try (ProtonBufferComponentAccessor accessor = buffer.componentAccessor()) {
+                for (ProtonBufferComponent component : accessor.components()) {
+                    if (count++ == 0) {
+                        assertTrue(component.getNativeAddress() != 0);
+                        assertTrue(component.getNativeReadAddress() != 0);
+                        assertTrue(component.getNativeWriteAddress() != 0);
+                    } else {
+                        assertTrue(component.getNativeAddress() == 0);
+                        assertTrue(component.getNativeReadAddress() == 0);
+                        assertTrue(component.getNativeWriteAddress() == 0);
+                    }
+                }
+            }
         }
     }
 }

@@ -868,6 +868,21 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
         }
     }
 
+    @Override
+    public long getNativeAddress() {
+        return 0;
+    }
+
+    @Override
+    public long getNativeReadAddress() {
+        return 0;
+    }
+
+    @Override
+    public long getNativeWriteAddress() {
+        return 0;
+    }
+
     //----- Buffer search API
 
     @Override

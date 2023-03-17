@@ -2212,6 +2212,21 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
         }
 
         @Override
+        public long getNativeAddress() {
+            return currentComponent.getNativeAddress();
+        }
+
+        @Override
+        public long getNativeReadAddress() {
+            return currentComponent.getNativeReadAddress();
+        }
+
+        @Override
+        public long getNativeWriteAddress() {
+            return currentComponent.getNativeWriteAddress();
+        }
+
+        @Override
         public ProtonBufferIterator bufferIterator() {
             return currentComponent.bufferIterator();
         }

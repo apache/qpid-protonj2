@@ -1018,17 +1018,17 @@ public class ProtonBufferToNetty5Adapter implements Buffer {
 
         @Override
         public long baseNativeAddress() {
-            return 0;
+            return current.getNativeAddress();
         }
 
         @Override
         public long readableNativeAddress() {
-            return 0;
+            return current.getNativeReadAddress();
         }
 
         @Override
         public long writableNativeAddress() {
-            return 0;
+            return current.getNativeWriteAddress();
         }
 
         @Override

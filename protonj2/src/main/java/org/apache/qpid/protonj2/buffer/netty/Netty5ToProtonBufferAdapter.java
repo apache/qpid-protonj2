@@ -659,6 +659,21 @@ public final class Netty5ToProtonBufferAdapter extends SharedResource<ProtonBuff
         return resourceComponent.writableBuffer();
     }
 
+    @Override
+    public long getNativeAddress() {
+        return resourceComponent.baseNativeAddress();
+    }
+
+    @Override
+    public long getNativeReadAddress() {
+        return resourceComponent.readableNativeAddress();
+    }
+
+    @Override
+    public long getNativeWriteAddress() {
+        return resourceComponent.writableNativeAddress();
+    }
+
     //----- Buffer Iteration API
 
     @Override
@@ -912,6 +927,21 @@ public final class Netty5ToProtonBufferAdapter extends SharedResource<ProtonBuff
         @Override
         public ByteBuffer getWritableBuffer() {
             return currentComponent.writableBuffer();
+        }
+
+        @Override
+        public long getNativeAddress() {
+            return currentComponent.baseNativeAddress();
+        }
+
+        @Override
+        public long getNativeReadAddress() {
+            return currentComponent.readableNativeAddress();
+        }
+
+        @Override
+        public long getNativeWriteAddress() {
+            return currentComponent.writableNativeAddress();
         }
 
         @Override

@@ -165,4 +165,31 @@ public interface ProtonBufferComponent {
      */
     public ProtonBufferIterator bufferIterator();
 
+    /**
+     * Gets the native address of the backing buffer if one exists otherwise returns 0.
+     * <p>
+     * The returned address is the base address for the memory region that back this buffer which
+     * should not be used for reads and write as the backing region could be larger and not all portions
+     * of the backing region might be owned by this buffer component. The caller should use the methods
+     * {@link #getNativeReadAddress()} and {@link #getNativeWriteAddress()} which each use this method
+     * to compute where these value actually fall in the native memory region.
+     *
+     * @return The native memory address for the region backing this buffer, if any, otherwise 0.
+     */
+    long getNativeAddress();
+
+    /**
+     * Gets the native address where reads from this buffer component should start.
+     *
+     * @return The native memory address where reads start, if any, otherwise 0.
+     */
+    long getNativeReadAddress();
+
+    /**
+     * Gets the native address where write to this buffer component should start.
+     *
+     * @return The native memory address where writing should start, if any, otherwise 0.
+     */
+    long getNativeWriteAddress();
+
 }

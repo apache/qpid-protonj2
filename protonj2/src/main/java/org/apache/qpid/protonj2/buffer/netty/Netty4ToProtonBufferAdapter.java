@@ -858,6 +858,21 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
         }
     }
 
+    @Override
+    public long getNativeAddress() {
+        return 0;
+    }
+
+    @Override
+    public long getNativeReadAddress() {
+        return 0;
+    }
+
+    @Override
+    public long getNativeWriteAddress() {
+        return 0;
+    }
+
     //----- Buffer Iteration API
 
     @Override
