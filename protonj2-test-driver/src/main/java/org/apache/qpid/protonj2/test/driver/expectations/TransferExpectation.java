@@ -20,6 +20,8 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 
+import java.nio.ByteBuffer;
+
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.LinkTracker;
 import org.apache.qpid.protonj2.test.driver.SessionTracker;
@@ -43,9 +45,6 @@ import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferMatcher;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
-import io.netty5.buffer.Buffer;
-import io.netty5.buffer.BufferAllocator;
-
 /**
  * Scripted expectation for the AMQP Transfer performative
  */
@@ -54,7 +53,7 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     private final TransferMatcher matcher = new TransferMatcher();
     private final DeliveryStateBuilder stateBuilder = new DeliveryStateBuilder();
 
-    private Matcher<Buffer> payloadMatcher = Matchers.any(Buffer.class);
+    private Matcher<ByteBuffer> payloadMatcher = Matchers.any(ByteBuffer.class);
 
     protected DispositionInjectAction response;
 
@@ -130,7 +129,7 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     }
 
     @Override
-    public void handleTransfer(int frameSize, Transfer transfer, Buffer payload, int channel, AMQPTestDriver driver) {
+    public void handleTransfer(int frameSize, Transfer transfer, ByteBuffer payload, int channel, AMQPTestDriver driver) {
         super.handleTransfer(frameSize, transfer, payload, channel, driver);
 
         final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);
@@ -254,18 +253,21 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     }
 
     public TransferExpectation withNonNullPayload() {
-        this.payloadMatcher = notNullValue(Buffer.class);
+        this.payloadMatcher = notNullValue(ByteBuffer.class);
         return this;
     }
 
     public TransferExpectation withNullPayload() {
-        this.payloadMatcher = nullValue(Buffer.class);
+        this.payloadMatcher = nullValue(ByteBuffer.class);
         return this;
     }
 
     public TransferExpectation withPayload(byte[] buffer) {
+        final ByteBuffer copy = ByteBuffer.allocate(buffer.length);
+        copy.put(buffer).flip();
+
         // TODO - Create Matcher which describes the mismatch in detail
-        this.payloadMatcher = Matchers.equalTo(BufferAllocator.onHeapUnpooled().copyOf(buffer));
+        this.payloadMatcher = Matchers.equalTo(copy.asReadOnlyBuffer());
         return this;
     }
 
@@ -326,7 +328,7 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
         return this;
     }
 
-    public TransferExpectation withPayload(Matcher<Buffer> payloadMatcher) {
+    public TransferExpectation withPayload(Matcher<ByteBuffer> payloadMatcher) {
         this.payloadMatcher = payloadMatcher;
         return this;
     }
@@ -337,7 +339,7 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     }
 
     @Override
-    protected Matcher<Buffer> getPayloadMatcher() {
+    protected Matcher<ByteBuffer> getPayloadMatcher() {
         return payloadMatcher;
     }
 

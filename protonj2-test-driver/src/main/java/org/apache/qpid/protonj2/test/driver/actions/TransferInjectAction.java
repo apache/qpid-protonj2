@@ -16,6 +16,11 @@
  */
 package org.apache.qpid.protonj2.test.driver.actions;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -47,9 +52,6 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
 
-import io.netty5.buffer.Buffer;
-import io.netty5.buffer.BufferAllocator;
-
 /**
  * AMQP Close injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
@@ -59,7 +61,7 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
     private final Transfer transfer = new Transfer();
     private final DeliveryStateBuilder stateBuilder = new DeliveryStateBuilder();
 
-    private Buffer payload;
+    private ByteBuffer payload;
 
     private Header header;
     private DeliveryAnnotations deliveryAnnotations;
@@ -81,7 +83,7 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
     }
 
     @Override
-    public Buffer getPayload() {
+    public ByteBuffer getPayload() {
         if (payload == null) {
             payload = encodePayload();
         }
@@ -212,11 +214,14 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
     }
 
     public TransferInjectAction withPayload(byte[] payload) {
-        this.payload = BufferAllocator.onHeapUnpooled().copyOf(payload);
+        this.payload = ByteBuffer.allocate(payload.length);
+        this.payload.put(payload);
+        this.payload.flip().asReadOnlyBuffer();
+
         return this;
     }
 
-    public TransferInjectAction withPayload(Buffer payload) {
+    public TransferInjectAction withPayload(ByteBuffer payload) {
         this.payload = payload;
         return this;
     }
@@ -293,36 +298,43 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
         return footer;
     }
 
-    private Buffer encodePayload() {
+    private ByteBuffer encodePayload() {
         org.apache.qpid.protonj2.test.driver.codec.Codec codec =
             org.apache.qpid.protonj2.test.driver.codec.Codec.Factory.create();
-        final Buffer buffer = BufferAllocator.onHeapUnpooled().allocate(128);
 
-        if (header != null) {
-            codec.putDescribedType(header);
-        }
-        if (deliveryAnnotations != null) {
-            codec.putDescribedType(deliveryAnnotations);
-        }
-        if (messageAnnotations != null) {
-            codec.putDescribedType(messageAnnotations);
-        }
-        if (properties != null) {
-            codec.putDescribedType(properties);
-        }
-        if (applicationProperties != null) {
-            codec.putDescribedType(applicationProperties);
-        }
-        if (body != null) {
-            codec.putDescribedType(body);
-        }
-        if (footer != null) {
-            codec.putDescribedType(footer);
-        }
+        try (ByteArrayOutputStream baOS = new ByteArrayOutputStream(128);
+             DataOutputStream output = new DataOutputStream(baOS)) {
 
-        codec.encode(buffer);
+            if (header != null) {
+                codec.putDescribedType(header);
+            }
+            if (deliveryAnnotations != null) {
+                codec.putDescribedType(deliveryAnnotations);
+            }
+            if (messageAnnotations != null) {
+                codec.putDescribedType(messageAnnotations);
+            }
+            if (properties != null) {
+                codec.putDescribedType(properties);
+            }
+            if (applicationProperties != null) {
+                codec.putDescribedType(applicationProperties);
+            }
+            if (body != null) {
+                codec.putDescribedType(body);
+            }
+            if (footer != null) {
+                codec.putDescribedType(footer);
+            }
 
-        return buffer.makeReadOnly();
+            codec.encode(output);
+
+            final byte[] encodedBytes = baOS.toByteArray();
+
+            return ByteBuffer.wrap(encodedBytes);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     protected abstract class SectionBuilder {

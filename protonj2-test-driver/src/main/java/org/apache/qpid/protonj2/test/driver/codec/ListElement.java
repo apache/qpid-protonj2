@@ -16,11 +16,12 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import io.netty5.buffer.Buffer;
 
 class ListElement extends AbstractElement<List<Object>> {
 
@@ -99,54 +100,54 @@ class ListElement extends AbstractElement<List<Object>> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
-        int encodedSize = size();
+    public int encode(DataOutput output) {
+        try {
+            int encodedSize = size();
 
-        int count = 0;
-        int size = 0;
-        Element<?> elt = first;
-        while (elt != null) {
-            count++;
-            size += elt.size();
-            elt = elt.next();
-        }
+            int count = 0;
+            int size = 0;
+            Element<?> elt = first;
+            while (elt != null) {
+                count++;
+                size += elt.size();
+                elt = elt.next();
+            }
 
-        if (encodedSize > buffer.implicitCapacityLimit() - buffer.capacity()) {
-            return 0;
-        } else {
             if (isElementOfArray()) {
                 switch (((ArrayElement) parent()).constructorType()) {
                     case TINY:
                         break;
                     case SMALL:
-                        buffer.writeByte((byte) (size + 1));
-                        buffer.writeByte((byte) count);
+                        output.writeByte((byte) (size + 1));
+                        output.writeByte((byte) count);
                         break;
                     case LARGE:
-                        buffer.writeInt((size + 4));
-                        buffer.writeInt(count);
+                        output.writeInt((size + 4));
+                        output.writeInt(count);
                 }
             } else {
                 if (count == 0) {
-                    buffer.writeByte((byte) 0x45);
+                    output.writeByte((byte) 0x45);
                 } else if (size <= 254 && count <= 255) {
-                    buffer.writeByte((byte) 0xc0);
-                    buffer.writeByte((byte) (size + 1));
-                    buffer.writeByte((byte) count);
+                    output.writeByte((byte) 0xc0);
+                    output.writeByte((byte) (size + 1));
+                    output.writeByte((byte) count);
                 } else {
-                    buffer.writeByte((byte) 0xd0);
-                    buffer.writeInt((size + 4));
-                    buffer.writeInt(count);
+                    output.writeByte((byte) 0xd0);
+                    output.writeInt((size + 4));
+                    output.writeInt(count);
                 }
             }
 
             elt = first;
             while (elt != null) {
-                elt.encode(buffer);
+                elt.encode(output);
                 elt = elt.next();
             }
 
             return encodedSize;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 

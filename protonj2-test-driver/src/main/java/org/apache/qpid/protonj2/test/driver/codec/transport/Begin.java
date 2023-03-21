@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec.transport;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -24,8 +25,6 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
-
-import io.netty5.buffer.Buffer;
 
 public class Begin extends PerformativeDescribedType {
 
@@ -143,7 +142,7 @@ public class Begin extends PerformativeDescribedType {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, int frameSize, Buffer payload, int channel, E context) {
+    public <E> void invoke(PerformativeHandler<E> handler, int frameSize, ByteBuffer payload, int channel, E context) {
         handler.handleBegin(frameSize, this, payload, channel, context);
     }
 

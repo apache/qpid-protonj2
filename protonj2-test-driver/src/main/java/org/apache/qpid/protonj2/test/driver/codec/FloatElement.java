@@ -16,7 +16,9 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import io.netty5.buffer.Buffer;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
 class FloatElement extends AtomicElement<Float> {
 
@@ -43,16 +45,17 @@ class FloatElement extends AtomicElement<Float> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
+    public int encode(DataOutput output) {
         int size = size();
-        if (buffer.implicitCapacityLimit() >= size) {
+
+        try {
             if (size == 5) {
-                buffer.writeByte((byte) 0x72);
+                output.writeByte((byte) 0x72);
             }
-            buffer.writeFloat(value);
+            output.writeFloat(value);
             return size;
-        } else {
-            return 0;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }

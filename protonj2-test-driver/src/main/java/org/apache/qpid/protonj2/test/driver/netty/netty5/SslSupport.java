@@ -14,11 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.protonj2.test.driver.netty;
+package org.apache.qpid.protonj2.test.driver.netty.netty5;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -38,6 +39,7 @@ import javax.net.ssl.X509ExtendedKeyManager;
 
 import org.apache.qpid.protonj2.test.driver.ProtonTestClientOptions;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
+import org.apache.qpid.protonj2.test.driver.netty.X509AliasKeyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +51,7 @@ import io.netty5.handler.ssl.util.InsecureTrustManagerFactory;
  */
 public class SslSupport {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SslSupport.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     /**
      * Creates a Netty SslHandler instance for use in client instances that require

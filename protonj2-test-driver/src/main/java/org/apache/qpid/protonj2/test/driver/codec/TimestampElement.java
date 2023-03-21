@@ -16,9 +16,10 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Date;
-
-import io.netty5.buffer.Buffer;
 
 class TimestampElement extends AtomicElement<Date> {
 
@@ -45,16 +46,19 @@ class TimestampElement extends AtomicElement<Date> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
-        int size = size();
-        if (size > buffer.implicitCapacityLimit() - buffer.capacity()) {
-            return 0;
-        }
-        if (size == 9) {
-            buffer.writeByte((byte) 0x83);
-        }
-        buffer.writeLong(value.getTime());
+    public int encode(DataOutput output) {
+        try {
+            final int size = size();
 
-        return size;
+            if (size == 9) {
+                output.writeByte((byte) 0x83);
+            }
+
+            output.writeLong(value.getTime());
+
+            return size;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

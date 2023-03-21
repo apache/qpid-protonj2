@@ -16,20 +16,20 @@
  */
 package org.apache.qpid.protonj2.test.driver.actions;
 
+import java.nio.ByteBuffer;
+
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.ScriptedAction;
-
-import io.netty5.buffer.Buffer;
 
 /**
  * Scripted action that will write the contents of a given buffer out through the driver.
  */
 public class ByteBufferInjectAction implements ScriptedAction {
 
-    private final Buffer buffer;
+    private final ByteBuffer buffer;
     private final AMQPTestDriver driver;
 
-    public ByteBufferInjectAction(AMQPTestDriver driver, Buffer buffer) {
+    public ByteBufferInjectAction(AMQPTestDriver driver, ByteBuffer buffer) {
         this.buffer = buffer;
         this.driver = driver;
     }

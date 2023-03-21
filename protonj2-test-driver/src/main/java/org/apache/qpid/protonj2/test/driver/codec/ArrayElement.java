@@ -16,10 +16,12 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
-
-import io.netty5.buffer.Buffer;
 
 class ArrayElement extends AbstractElement<Object[]> {
 
@@ -151,134 +153,134 @@ class ArrayElement extends AbstractElement<Object[]> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
+    public int encode(DataOutput output) {
         int size = size();
 
         final int count = (int) count();
 
-        if (buffer.implicitCapacityLimit() - buffer.capacity() >= size) {
+        try {
             if (!isElementOfArray()) {
                 if (size > 257 || count > 255) {
-                    buffer.writeByte((byte) 0xf0);
-                    buffer.writeInt(size - 5);
-                    buffer.writeInt(count);
+                    output.writeByte((byte) 0xf0);
+                    output.writeInt(size - 5);
+                    output.writeInt(count);
                 } else {
-                    buffer.writeByte((byte) 0xe0);
-                    buffer.writeByte((byte) (size - 2));
-                    buffer.writeByte((byte) count);
+                    output.writeByte((byte) 0xe0);
+                    output.writeByte((byte) (size - 2));
+                    output.writeByte((byte) count);
                 }
             } else {
                 ArrayElement parent = (ArrayElement) parent();
                 if (parent.constructorType() == SMALL) {
-                    buffer.writeByte((byte) (size - 1));
-                    buffer.writeByte((byte) count);
+                    output.writeByte((byte) (size - 1));
+                    output.writeByte((byte) count);
                 } else {
-                    buffer.writeInt(size - 4);
-                    buffer.writeInt(count);
+                    output.writeInt(size - 4);
+                    output.writeInt(count);
                 }
             }
             Element<?> element = first;
             if (isDescribed()) {
-                buffer.writeByte((byte) 0);
+                output.writeByte((byte) 0);
                 if (element == null) {
-                    buffer.writeByte((byte) 0x40);
+                    output.writeByte((byte) 0x40);
                 } else {
-                    element.encode(buffer);
+                    element.encode(output);
                     element = element.next();
                 }
             }
             switch (arrayType) {
                 case NULL:
-                    buffer.writeByte((byte) 0x40);
+                    output.writeByte((byte) 0x40);
                     break;
                 case BOOL:
-                    buffer.writeByte((byte) 0x56);
+                    output.writeByte((byte) 0x56);
                     break;
                 case UBYTE:
-                    buffer.writeByte((byte) 0x50);
+                    output.writeByte((byte) 0x50);
                     break;
                 case BYTE:
-                    buffer.writeByte((byte) 0x51);
+                    output.writeByte((byte) 0x51);
                     break;
                 case USHORT:
-                    buffer.writeByte((byte) 0x60);
+                    output.writeByte((byte) 0x60);
                     break;
                 case SHORT:
-                    buffer.writeByte((byte) 0x61);
+                    output.writeByte((byte) 0x61);
                     break;
                 case UINT:
                     switch (constructorType()) {
                         case TINY:
-                            buffer.writeByte((byte) 0x43);
+                            output.writeByte((byte) 0x43);
                             break;
                         case SMALL:
-                            buffer.writeByte((byte) 0x52);
+                            output.writeByte((byte) 0x52);
                             break;
                         case LARGE:
-                            buffer.writeByte((byte) 0x70);
+                            output.writeByte((byte) 0x70);
                             break;
                     }
                     break;
                 case INT:
-                    buffer.writeByte(constructorType == SMALL ? (byte) 0x54 : (byte) 0x71);
+                    output.writeByte(constructorType == SMALL ? (byte) 0x54 : (byte) 0x71);
                     break;
                 case CHAR:
-                    buffer.writeByte((byte) 0x73);
+                    output.writeByte((byte) 0x73);
                     break;
                 case ULONG:
                     switch (constructorType()) {
                         case TINY:
-                            buffer.writeByte((byte) 0x44);
+                            output.writeByte((byte) 0x44);
                             break;
                         case SMALL:
-                            buffer.writeByte((byte) 0x53);
+                            output.writeByte((byte) 0x53);
                             break;
                         case LARGE:
-                            buffer.writeByte((byte) 0x80);
+                            output.writeByte((byte) 0x80);
                             break;
                     }
                     break;
                 case LONG:
-                    buffer.writeByte(constructorType == SMALL ? (byte) 0x55 : (byte) 0x81);
+                    output.writeByte(constructorType == SMALL ? (byte) 0x55 : (byte) 0x81);
                     break;
                 case TIMESTAMP:
-                    buffer.writeByte((byte) 0x83);
+                    output.writeByte((byte) 0x83);
                     break;
                 case FLOAT:
-                    buffer.writeByte((byte) 0x72);
+                    output.writeByte((byte) 0x72);
                     break;
                 case DOUBLE:
-                    buffer.writeByte((byte) 0x82);
+                    output.writeByte((byte) 0x82);
                     break;
                 case DECIMAL32:
-                    buffer.writeByte((byte) 0x74);
+                    output.writeByte((byte) 0x74);
                     break;
                 case DECIMAL64:
-                    buffer.writeByte((byte) 0x84);
+                    output.writeByte((byte) 0x84);
                     break;
                 case DECIMAL128:
-                    buffer.writeByte((byte) 0x94);
+                    output.writeByte((byte) 0x94);
                     break;
                 case UUID:
-                    buffer.writeByte((byte) 0x98);
+                    output.writeByte((byte) 0x98);
                     break;
                 case BINARY:
-                    buffer.writeByte(constructorType == SMALL ? (byte) 0xa0 : (byte) 0xb0);
+                    output.writeByte(constructorType == SMALL ? (byte) 0xa0 : (byte) 0xb0);
                     break;
                 case STRING:
-                    buffer.writeByte(constructorType == SMALL ? (byte) 0xa1 : (byte) 0xb1);
+                    output.writeByte(constructorType == SMALL ? (byte) 0xa1 : (byte) 0xb1);
                     break;
                 case SYMBOL:
-                    buffer.writeByte(constructorType == SMALL ? (byte) 0xa3 : (byte) 0xb3);
+                    output.writeByte(constructorType == SMALL ? (byte) 0xa3 : (byte) 0xb3);
                     break;
                 case ARRAY:
-                    buffer.writeByte(constructorType == SMALL ? (byte) 0xe0 : (byte) 0xf0);
+                    output.writeByte(constructorType == SMALL ? (byte) 0xe0 : (byte) 0xf0);
                     break;
                 case LIST:
-                    buffer.writeByte(constructorType == TINY ? (byte) 0x45 : constructorType == SMALL ? (byte) 0xc0 : (byte) 0xd0);
+                    output.writeByte(constructorType == TINY ? (byte) 0x45 : constructorType == SMALL ? (byte) 0xc0 : (byte) 0xd0);
                     break;
                 case MAP:
-                    buffer.writeByte(constructorType == SMALL ? (byte) 0xc1 : (byte) 0xd1);
+                    output.writeByte(constructorType == SMALL ? (byte) 0xc1 : (byte) 0xd1);
                     break;
                 case DESCRIBED:
                     break;
@@ -286,12 +288,12 @@ class ArrayElement extends AbstractElement<Object[]> {
                     break;
             }
             while (element != null) {
-                element.encode(buffer);
+                element.encode(output);
                 element = element.next();
             }
             return size;
-        } else {
-            return 0;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 

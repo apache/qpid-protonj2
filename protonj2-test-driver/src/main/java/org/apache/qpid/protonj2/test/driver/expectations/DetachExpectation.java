@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.test.driver.expectations;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
+import java.nio.ByteBuffer;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
@@ -35,8 +36,6 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.DetachMatcher;
 import org.hamcrest.Matcher;
-
-import io.netty5.buffer.Buffer;
 
 /**
  * Scripted expectation for the AMQP Detach performative
@@ -69,7 +68,7 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleDetach(int frameSize, Detach detach, Buffer payload, int channel, AMQPTestDriver context) {
+    public void handleDetach(int frameSize, Detach detach, ByteBuffer payload, int channel, AMQPTestDriver context) {
         super.handleDetach(frameSize, detach, payload, channel, context);
 
         final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);

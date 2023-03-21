@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
+import java.nio.ByteBuffer;
+
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Source;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Target;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
@@ -27,8 +29,6 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.SenderSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
-
-import io.netty5.buffer.Buffer;
 
 /**
  * Tracks information about links that are opened be the client under test.
@@ -149,7 +149,7 @@ public abstract class LinkTracker {
         return this;
     }
 
-    protected abstract void handleTransfer(Transfer transfer, Buffer payload);
+    protected abstract void handleTransfer(Transfer transfer, ByteBuffer payload);
 
     protected abstract void handleFlow(Flow flow);
 

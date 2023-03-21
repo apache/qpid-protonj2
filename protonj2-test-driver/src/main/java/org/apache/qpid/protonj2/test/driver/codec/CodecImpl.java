@@ -16,6 +16,11 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +36,6 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedByte;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
-
-import io.netty5.buffer.Buffer;
 
 public class CodecImpl implements Codec {
 
@@ -124,24 +127,25 @@ public class CodecImpl implements Codec {
     }
 
     @Override
-    public long encode(Buffer buffer) {
-        Element<?> elt = first;
-        int size = 0;
-        while (elt != null) {
-            final int eltSize = elt.size();
-            if (eltSize <= buffer.implicitCapacityLimit()) {
-                size += elt.encode(buffer);
-            } else {
-                size += eltSize;
+    public long encode(OutputStream output) {
+        try (DataOutputStream daos = new DataOutputStream(output)) {
+            Element<?> element = first;
+            int size = 0;
+
+            while (element != null) {
+                size += element.encode(daos);
+                element = element.next();
             }
-            elt = elt.next();
+
+            return size;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        return size;
     }
 
     @Override
-    public long decode(Buffer buffer) {
-        return TypeDecoder.decode(buffer, this);
+    public long decode(ByteBuffer input) {
+        return TypeDecoder.decode(input, this);
     }
 
     private void putElement(Element<?> element) {

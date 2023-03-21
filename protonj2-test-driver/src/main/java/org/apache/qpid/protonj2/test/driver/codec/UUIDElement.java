@@ -16,9 +16,10 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.UUID;
-
-import io.netty5.buffer.Buffer;
 
 class UUIDElement extends AtomicElement<UUID> {
 
@@ -45,17 +46,18 @@ class UUIDElement extends AtomicElement<UUID> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
-        int size = size();
-        if (buffer.implicitCapacityLimit() >= size) {
+    public int encode(DataOutput output) {
+        final int size = size();
+
+        try {
             if (size == 17) {
-                buffer.writeByte((byte) 0x98);
+                output.writeByte((byte) 0x98);
             }
-            buffer.writeLong(value.getMostSignificantBits());
-            buffer.writeLong(value.getLeastSignificantBits());
+            output.writeLong(value.getMostSignificantBits());
+            output.writeLong(value.getLeastSignificantBits());
             return size;
-        } else {
-            return 0;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }

@@ -16,7 +16,9 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import io.netty5.buffer.Buffer;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
 class CharElement extends AtomicElement<Integer> {
 
@@ -43,14 +45,17 @@ class CharElement extends AtomicElement<Integer> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
+    public int encode(DataOutput output) {
         final int size = size();
-        if (size <= buffer.implicitCapacityLimit() - buffer.capacity()) {
+
+        try {
             if (size == 5) {
-                buffer.writeByte((byte) 0x73);
+                output.writeByte((byte) 0x73);
             }
-            buffer.writeInt(value);
+            output.writeInt(value);
+            return size;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        return 0;
     }
 }

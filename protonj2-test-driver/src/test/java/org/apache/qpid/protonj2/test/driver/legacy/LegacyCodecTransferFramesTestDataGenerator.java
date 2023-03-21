@@ -21,9 +21,11 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import org.apache.qpid.proton.amqp.Binary;
+import org.apache.qpid.proton.amqp.UnsignedByte;
 import org.apache.qpid.proton.amqp.UnsignedInteger;
 import org.apache.qpid.proton.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton.amqp.messaging.Data;
+import org.apache.qpid.proton.amqp.messaging.Header;
 import org.apache.qpid.proton.amqp.transport.Transfer;
 import org.apache.qpid.proton.codec.ReadableBuffer;
 import org.apache.qpid.proton.codec.WritableBuffer;
@@ -46,11 +48,14 @@ public class LegacyCodecTransferFramesTestDataGenerator {
         completedTransfer.setMessageFormat(null);
         completedTransfer.setSettled(true);
 
-        String emptyOpenFrameString = LegacyFrameDataGenerator.generateUnitTestVariable("completedTransfer", completedTransfer, encodeMessage());
-        System.out.println(emptyOpenFrameString);
+        String encodedMessageOne = LegacyFrameDataGenerator.generateUnitTestVariable("completedTransfer1", completedTransfer, encodeMessage1());
+        System.out.println(encodedMessageOne);
+
+        String encodedMessageTwo = LegacyFrameDataGenerator.generateUnitTestVariable("completedTransfer2", completedTransfer, encodeMessage2());
+        System.out.println(encodedMessageTwo);
     }
 
-    private static ReadableBuffer encodeMessage() {
+    private static ReadableBuffer encodeMessage1() {
         final WritableBuffer.ByteBufferWrapper buffer = WritableBuffer.ByteBufferWrapper.allocate(1024);
         final byte[] body = new byte[100];
         Arrays.fill(body, (byte) 'A');
@@ -64,6 +69,27 @@ public class LegacyCodecTransferFramesTestDataGenerator {
         message.setApplicationProperties(properties);
         message.setBody(new Data(new Binary(body)));
         message.setMessageId(UUID.randomUUID());
+
+        message.encode(buffer);
+
+        return buffer.toReadableBuffer();
+    }
+
+    private static ReadableBuffer encodeMessage2() {
+        final WritableBuffer.ByteBufferWrapper buffer = WritableBuffer.ByteBufferWrapper.allocate(1024);
+        final byte[] body = new byte[] { 0, 1, 2, 3 };
+
+        Header header = new Header();
+        header.setDurable(true);
+        header.setPriority(UnsignedByte.valueOf((byte) 2));
+        header.setTtl(UnsignedInteger.valueOf(65535));
+        header.setFirstAcquirer(true);
+        header.setDeliveryCount(UnsignedInteger.valueOf(2));
+
+        Message message = Message.Factory.create();
+
+        message.setHeader(header);
+        message.setBody(new Data(new Binary(body)));
 
         message.encode(buffer);
 

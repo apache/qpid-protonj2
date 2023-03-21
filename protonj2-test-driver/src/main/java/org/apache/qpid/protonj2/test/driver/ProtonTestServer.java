@@ -25,15 +25,11 @@ import javax.net.ssl.SSLEngine;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
+import org.apache.qpid.protonj2.test.driver.netty.NettyIOBuilder;
+import org.apache.qpid.protonj2.test.driver.netty.NettyEventLoop;
 import org.apache.qpid.protonj2.test.driver.netty.NettyServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.netty5.buffer.Buffer;
-import io.netty5.channel.ChannelHandler;
-import io.netty5.channel.ChannelHandlerContext;
-import io.netty5.channel.EventLoop;
-import io.netty5.channel.SimpleChannelInboundHandler;
 
 /**
  * Netty based AMQP Test Server implementation that can handle inbound connections
@@ -44,7 +40,7 @@ public class ProtonTestServer extends ProtonTestPeer {
     private static final Logger LOG = LoggerFactory.getLogger(ProtonTestServer.class);
 
     private final AMQPTestDriver driver;
-    private final NettyTestDriverServer server;
+    private final NettyServer server;
 
     /**
      * Creates a Socket Test Peer using all default Server options.
@@ -66,7 +62,9 @@ public class ProtonTestServer extends ProtonTestPeer {
      */
     public ProtonTestServer(ProtonTestServerOptions options) {
         this.driver = new NettyAwareAMQPTestDriver(this::processDriverOutput, this::processDriverAssertion, this::eventLoop);
-        this.server = new NettyTestDriverServer(options);
+        this.server = NettyIOBuilder.createServer(options,
+                                             this::processConnectionEstablished,
+                                             this::processChannelInput);
     }
 
     /**
@@ -150,45 +148,11 @@ public class ProtonTestServer extends ProtonTestPeer {
         return driver;
     }
 
-    //----- Channel handler that drives IO for the test driver
-
-    private final class NettyTestDriverServer extends NettyServer {
-
-        public NettyTestDriverServer(ProtonTestServerOptions options) {
-            super(options);
-        }
-
-        @Override
-        protected ChannelHandler getServerHandler() {
-            return new SimpleChannelInboundHandler<Buffer>() {
-
-                @Override
-                public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                    processConnectionEstablished();
-                    ctx.fireChannelActive();
-                }
-
-                @Override
-                protected void messageReceived(ChannelHandlerContext ctx, Buffer input) throws Exception {
-                    LOG.trace("AMQP Test Server Channel read: {}", input);
-
-                    // Driver processes new data and may produce output based on this.
-                    try (Buffer copy = input.copy(true)) {
-                        processChannelInput(copy);
-                    } catch (Throwable e) {
-                        LOG.error("Closed AMQP Test server channel due to error: ", e);
-                        ctx.channel().close();
-                    }
-                }
-            };
-        }
-    }
-
     //----- Test driver Wrapper to ensure actions occur on the event loop
 
     private final class NettyAwareAMQPTestDriver extends AMQPTestDriver {
 
-        public NettyAwareAMQPTestDriver(Consumer<ByteBuffer> frameConsumer, Consumer<AssertionError> assertionConsumer, Supplier<EventLoop> scheduler) {
+        public NettyAwareAMQPTestDriver(Consumer<ByteBuffer> frameConsumer, Consumer<AssertionError> assertionConsumer, Supplier<NettyEventLoop> scheduler) {
             super(getPeerName(), frameConsumer, assertionConsumer, scheduler);
         }
 
@@ -199,8 +163,8 @@ public class ProtonTestServer extends ProtonTestPeer {
         // other driver resources being used on two different threads.
 
         @Override
-        public void deferAMQPFrame(int channel, DescribedType performative, Buffer payload, boolean splitWrite) {
-            EventLoop loop = server.eventLoop();
+        public void deferAMQPFrame(int channel, DescribedType performative, ByteBuffer payload, boolean splitWrite) {
+            NettyEventLoop loop = server.eventLoop();
             if (loop.inEventLoop()) {
                 super.deferAMQPFrame(channel, performative, payload, splitWrite);
             } else {
@@ -212,7 +176,7 @@ public class ProtonTestServer extends ProtonTestPeer {
 
         @Override
         public void deferSaslFrame(int channel, DescribedType performative) {
-            EventLoop loop = server.eventLoop();
+            NettyEventLoop loop = server.eventLoop();
             if (loop.inEventLoop()) {
                 super.deferSaslFrame(channel, performative);
             } else {
@@ -224,7 +188,7 @@ public class ProtonTestServer extends ProtonTestPeer {
 
         @Override
         public void deferHeader(AMQPHeader header) {
-            EventLoop loop = server.eventLoop();
+            NettyEventLoop loop = server.eventLoop();
             if (loop.inEventLoop()) {
                 super.deferHeader(header);
             } else {
@@ -235,8 +199,8 @@ public class ProtonTestServer extends ProtonTestPeer {
         }
 
         @Override
-        public void sendAMQPFrame(int channel, DescribedType performative, Buffer payload, boolean splitWrite) {
-            EventLoop loop = server.eventLoop();
+        public void sendAMQPFrame(int channel, DescribedType performative, ByteBuffer payload, boolean splitWrite) {
+            NettyEventLoop loop = server.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendAMQPFrame(channel, performative, payload, splitWrite);
             } else {
@@ -248,7 +212,7 @@ public class ProtonTestServer extends ProtonTestPeer {
 
         @Override
         public void sendSaslFrame(int channel, DescribedType performative) {
-            EventLoop loop = server.eventLoop();
+            NettyEventLoop loop = server.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendSaslFrame(channel, performative);
             } else {
@@ -260,7 +224,7 @@ public class ProtonTestServer extends ProtonTestPeer {
 
         @Override
         public void sendHeader(AMQPHeader header) {
-            EventLoop loop = server.eventLoop();
+            NettyEventLoop loop = server.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendHeader(header);
             } else {
@@ -272,7 +236,7 @@ public class ProtonTestServer extends ProtonTestPeer {
 
         @Override
         public void sendEmptyFrame(int channel) {
-            EventLoop loop = server.eventLoop();
+            NettyEventLoop loop = server.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendEmptyFrame(channel);
             } else {
@@ -311,12 +275,12 @@ public class ProtonTestServer extends ProtonTestPeer {
         close();
     }
 
-    protected void processChannelInput(Buffer input) {
+    protected void processChannelInput(ByteBuffer input) {
         LOG.trace("AMQP Server Channel processing: {}", input);
         driver.accept(input);
     }
 
-    protected EventLoop eventLoop() {
+    protected NettyEventLoop eventLoop() {
         return server.eventLoop();
     }
 }

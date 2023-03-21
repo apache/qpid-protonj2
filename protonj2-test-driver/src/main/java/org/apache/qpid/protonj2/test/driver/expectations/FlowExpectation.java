@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 
+import java.nio.ByteBuffer;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
@@ -35,8 +36,6 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.FlowMatcher;
 import org.hamcrest.Matcher;
-
-import io.netty5.buffer.Buffer;
 
 /**
  * Scripted expectation for the AMQP Flow performative
@@ -71,7 +70,7 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleFlow(int frameSize, Flow flow, Buffer payload, int channel, AMQPTestDriver context) {
+    public void handleFlow(int frameSize, Flow flow, ByteBuffer payload, int channel, AMQPTestDriver context) {
         super.handleFlow(frameSize, flow, payload, channel, context);
 
         final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);

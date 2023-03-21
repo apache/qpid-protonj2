@@ -23,15 +23,11 @@ import java.util.function.Supplier;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
+import org.apache.qpid.protonj2.test.driver.netty.NettyIOBuilder;
 import org.apache.qpid.protonj2.test.driver.netty.NettyClient;
+import org.apache.qpid.protonj2.test.driver.netty.NettyEventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.netty5.buffer.Buffer;
-import io.netty5.channel.ChannelHandler;
-import io.netty5.channel.ChannelHandlerContext;
-import io.netty5.channel.EventLoop;
-import io.netty5.channel.SimpleChannelInboundHandler;
 
 /**
  * Test Client for AMQP server testing, allows for scripting the expected inputs from
@@ -42,7 +38,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(ProtonTestClient.class);
 
     private final AMQPTestDriver driver;
-    private final NettyTestDriverClient client;
+    private final NettyClient client;
 
     /**
      * Creates a Socket Test Peer using all default Server options.
@@ -63,8 +59,12 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
      *      The options that control the behavior of the client connection.
      */
     public ProtonTestClient(ProtonTestClientOptions options) {
-        this.driver = new NettyAwareAMQPTestDriver(this::processDriverOutput, this::processDriverAssertion, this::eventLoop);
-        this.client = new NettyTestDriverClient(options);
+        this.driver = new NettyAwareAMQPTestDriver(this::processDriverOutput,
+                                                   this::processDriverAssertion,
+                                                   this::eventLoop);
+        this.client = NettyIOBuilder.createClient(options,
+                                             this::processConnectionEstablished,
+                                             this::processChannelInput);
     }
 
     public void connect(String hostname, int port) throws IOException {
@@ -97,7 +97,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
         client.write(frame);
     }
 
-    protected void processChannelInput(Buffer input) {
+    protected void processChannelInput(ByteBuffer input) {
         LOG.trace("AMQP Test Client Channel processing: {}", input);
         driver.accept(input);
     }
@@ -107,7 +107,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
         close();
     }
 
-    protected EventLoop eventLoop() {
+    protected NettyEventLoop eventLoop() {
         return client.eventLoop();
     }
 
@@ -115,7 +115,9 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
 
     private final class NettyAwareAMQPTestDriver extends AMQPTestDriver {
 
-        public NettyAwareAMQPTestDriver(Consumer<ByteBuffer> frameConsumer, Consumer<AssertionError> assertionConsumer, Supplier<EventLoop> scheduler) {
+        public NettyAwareAMQPTestDriver(Consumer<ByteBuffer> frameConsumer,
+                                        Consumer<AssertionError> assertionConsumer,
+                                        Supplier<NettyEventLoop> scheduler) {
             super(getPeerName(), frameConsumer, assertionConsumer, scheduler);
         }
 
@@ -126,8 +128,8 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
         // other driver resources being used on two different threads.
 
         @Override
-        public void deferAMQPFrame(int channel, DescribedType performative, Buffer payload, boolean splitWrite) {
-            EventLoop loop = client.eventLoop();
+        public void deferAMQPFrame(int channel, DescribedType performative, ByteBuffer payload, boolean splitWrite) {
+            NettyEventLoop loop = client.eventLoop();
             if (loop.inEventLoop()) {
                 super.deferAMQPFrame(channel, performative, payload, splitWrite);
             } else {
@@ -139,7 +141,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
 
         @Override
         public void deferSaslFrame(int channel, DescribedType performative) {
-            EventLoop loop = client.eventLoop();
+            NettyEventLoop loop = client.eventLoop();
             if (loop.inEventLoop()) {
                 super.deferSaslFrame(channel, performative);
             } else {
@@ -151,7 +153,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
 
         @Override
         public void deferHeader(AMQPHeader header) {
-            EventLoop loop = client.eventLoop();
+            NettyEventLoop loop = client.eventLoop();
             if (loop.inEventLoop()) {
                 super.deferHeader(header);
             } else {
@@ -162,8 +164,8 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
         }
 
         @Override
-        public void sendAMQPFrame(int channel, DescribedType performative, Buffer payload, boolean splitWrite) {
-            EventLoop loop = client.eventLoop();
+        public void sendAMQPFrame(int channel, DescribedType performative, ByteBuffer payload, boolean splitWrite) {
+            NettyEventLoop loop = client.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendAMQPFrame(channel, performative, payload, splitWrite);
             } else {
@@ -175,7 +177,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
 
         @Override
         public void sendSaslFrame(int channel, DescribedType performative) {
-            EventLoop loop = client.eventLoop();
+            NettyEventLoop loop = client.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendSaslFrame(channel, performative);
             } else {
@@ -187,7 +189,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
 
         @Override
         public void sendHeader(AMQPHeader header) {
-            EventLoop loop = client.eventLoop();
+            NettyEventLoop loop = client.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendHeader(header);
             } else {
@@ -199,7 +201,7 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
 
         @Override
         public void sendEmptyFrame(int channel) {
-            EventLoop loop = client.eventLoop();
+            NettyEventLoop loop = client.eventLoop();
             if (loop.inEventLoop()) {
                 super.sendEmptyFrame(channel);
             } else {
@@ -207,40 +209,6 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
                     super.sendEmptyFrame(channel);
                 });
             }
-        }
-    }
-
-    //----- Channel handler that drives IO for the test driver
-
-    private final class NettyTestDriverClient extends NettyClient {
-
-        public NettyTestDriverClient(ProtonTestClientOptions options) {
-            super(options);
-        }
-
-        @Override
-        protected ChannelHandler getClientHandler() {
-            return new SimpleChannelInboundHandler<Buffer>() {
-
-                @Override
-                public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                    processConnectionEstablished();
-                    ctx.fireChannelActive();
-                }
-
-                @Override
-                protected void messageReceived(ChannelHandlerContext ctx, Buffer input) throws Exception {
-                    LOG.trace("AMQP Test Client Channel read: {}", input);
-
-                    // Driver processes new data and may produce output based on this.
-                    try (Buffer copy = input.copy(true)) {
-                        processChannelInput(copy);
-                    } catch (Throwable e) {
-                        LOG.error("Closed AMQP Test client channel due to error: ", e);
-                        ctx.channel().close();
-                    }
-                }
-            };
         }
     }
 }

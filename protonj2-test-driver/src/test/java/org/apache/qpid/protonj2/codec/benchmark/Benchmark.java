@@ -20,8 +20,10 @@
  */
 package org.apache.qpid.protonj2.codec.benchmark;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
@@ -44,14 +46,11 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
 
-import io.netty5.buffer.Buffer;
-import io.netty5.buffer.BufferAllocator;
-
 public class Benchmark implements Runnable {
 
     private static final int ITERATIONS = 10 * 1024 * 1024;
 
-    private Buffer buffer = BufferAllocator.onHeapUnpooled().allocate(8192);
+    private ByteArrayOutputStream output = new ByteArrayOutputStream(8192);
     private BenchmarkResult resultSet = new BenchmarkResult();
     private boolean warming = true;
 
@@ -105,16 +104,18 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.resetOffsets();
+            output.reset();
             codec.putJavaList(list);
-            codec.encode(buffer);
+            codec.encode(output);
             codec.clear();
         }
         resultSet.encodesComplete();
 
+        final ByteBuffer buffer = ByteBuffer.wrap(output.toByteArray()).asReadOnlyBuffer();
+
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerOffset(0);
+            buffer.position(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -128,16 +129,18 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.resetOffsets();
+            output.reset();
             codec.putUUID(uuid);
-            codec.encode(buffer);
+            codec.encode(output);
             codec.clear();
         }
         resultSet.encodesComplete();
 
+        final ByteBuffer buffer = ByteBuffer.wrap(output.toByteArray()).asReadOnlyBuffer();
+
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerOffset(0);
+            buffer.position(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -154,16 +157,18 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.resetOffsets();
+            output.reset();
             codec.putDescribedType(transfer);
-            codec.encode(buffer);
+            codec.encode(output);
             codec.clear();
         }
         resultSet.encodesComplete();
 
+        final ByteBuffer buffer = ByteBuffer.wrap(output.toByteArray()).asReadOnlyBuffer();
+
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerOffset(0);
+            buffer.position(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -184,16 +189,18 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.resetOffsets();
+            output.reset();
             codec.putDescribedType(flow);
-            codec.encode(buffer);
+            codec.encode(output);
             codec.clear();
         }
         resultSet.encodesComplete();
 
+        final ByteBuffer buffer = ByteBuffer.wrap(output.toByteArray()).asReadOnlyBuffer();
+
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerOffset(0);
+            buffer.position(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -209,16 +216,18 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.resetOffsets();
+            output.reset();
             codec.putDescribedType(header);
-            codec.encode(buffer);
+            codec.encode(output);
             codec.clear();
         }
         resultSet.encodesComplete();
 
+        final ByteBuffer buffer = ByteBuffer.wrap(output.toByteArray()).asReadOnlyBuffer();
+
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerOffset(0);
+            buffer.position(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -236,16 +245,18 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.resetOffsets();
+            output.reset();
             codec.putDescribedType(properties);
-            codec.encode(buffer);
+            codec.encode(output);
             codec.clear();
         }
         resultSet.encodesComplete();
 
+        final ByteBuffer buffer = ByteBuffer.wrap(output.toByteArray()).asReadOnlyBuffer();
+
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerOffset(0);
+            buffer.position(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -262,16 +273,18 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.resetOffsets();
+            output.reset();
             codec.putDescribedType(annotations);
-            codec.encode(buffer);
+            codec.encode(output);
             codec.clear();
         }
         resultSet.encodesComplete();
 
+        final ByteBuffer buffer = ByteBuffer.wrap(output.toByteArray()).asReadOnlyBuffer();
+
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerOffset(0);
+            buffer.position(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -288,16 +301,18 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.resetOffsets();
+            output.reset();
             codec.putDescribedType(properties);
-            codec.encode(buffer);
+            codec.encode(output);
             codec.clear();
         }
         resultSet.encodesComplete();
 
+        final ByteBuffer buffer = ByteBuffer.wrap(output.toByteArray()).asReadOnlyBuffer();
+
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerOffset(0);
+            buffer.position(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -313,18 +328,20 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.resetOffsets();
+            output.reset();
             codec.putSymbol(symbol1);
             codec.putSymbol(symbol2);
             codec.putSymbol(symbol3);
-            codec.encode(buffer);
+            codec.encode(output);
             codec.clear();
         }
         resultSet.encodesComplete();
 
+        final ByteBuffer buffer = ByteBuffer.wrap(output.toByteArray()).asReadOnlyBuffer();
+
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerOffset(0);
+            buffer.position(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -340,18 +357,20 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.resetOffsets();
+            output.reset();
             codec.putString(string1);
             codec.putString(string2);
             codec.putString(string3);
-            codec.encode(buffer);
+            codec.encode(output);
             codec.clear();
         }
         resultSet.encodesComplete();
 
+        final ByteBuffer buffer = ByteBuffer.wrap(output.toByteArray()).asReadOnlyBuffer();
+
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerOffset(0);
+            buffer.position(0);
             codec.decode(buffer);
             codec.decode(buffer);
             codec.decode(buffer);
@@ -372,16 +391,18 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.resetOffsets();
+            output.reset();
             codec.putDescribedType(disposition);
-            codec.encode(buffer);
+            codec.encode(output);
             codec.clear();
         }
         resultSet.encodesComplete();
 
+        final ByteBuffer buffer = ByteBuffer.wrap(output.toByteArray()).asReadOnlyBuffer();
+
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerOffset(0);
+            buffer.position(0);
             codec.decode(buffer);
             codec.clear();
         }
@@ -397,18 +418,20 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.resetOffsets();
+            output.reset();
             codec.putDescribedType(data1);
             codec.putDescribedType(data2);
             codec.putDescribedType(data3);
-            codec.encode(buffer);
+            codec.encode(output);
             codec.clear();
         }
         resultSet.encodesComplete();
 
+        final ByteBuffer buffer = ByteBuffer.wrap(output.toByteArray()).asReadOnlyBuffer();
+
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            buffer.readerOffset(0);
+            buffer.position(0);
             codec.decode(buffer);
             codec.clear();
         }

@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.test.driver.expectations;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
+import java.nio.ByteBuffer;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
@@ -33,8 +34,6 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.Open;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.OpenMatcher;
 import org.hamcrest.Matcher;
-
-import io.netty5.buffer.Buffer;
 
 /**
  * Scripted expectation for the AMQP Open performative
@@ -96,7 +95,7 @@ public class OpenExpectation extends AbstractExpectation<Open> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleOpen(int frameSize, Open open, Buffer payload, int channel, AMQPTestDriver context) {
+    public void handleOpen(int frameSize, Open open, ByteBuffer payload, int channel, AMQPTestDriver context) {
         super.handleOpen(frameSize, open, payload, channel, context);
 
         if (response != null) {

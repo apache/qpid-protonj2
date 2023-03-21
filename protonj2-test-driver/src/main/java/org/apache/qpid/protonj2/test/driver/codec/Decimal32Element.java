@@ -16,9 +16,11 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import org.apache.qpid.protonj2.test.driver.codec.primitives.Decimal32;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
-import io.netty5.buffer.Buffer;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.Decimal32;
 
 class Decimal32Element extends AtomicElement<Decimal32> {
 
@@ -45,16 +47,17 @@ class Decimal32Element extends AtomicElement<Decimal32> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
+    public int encode(DataOutput output) {
         int size = size();
-        if (buffer.implicitCapacityLimit() - buffer.capacity() >= size) {
+
+        try {
             if (size == 5) {
-                buffer.writeByte((byte) 0x74);
+                output.writeByte((byte) 0x74);
             }
-            buffer.writeInt(value.getBits());
+            output.writeInt(value.getBits());
             return size;
-        } else {
-            return 0;
+        } catch(IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }

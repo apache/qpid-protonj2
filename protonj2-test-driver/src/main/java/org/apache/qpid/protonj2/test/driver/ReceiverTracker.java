@@ -16,10 +16,10 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
+import java.nio.ByteBuffer;
+
 import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
-
-import io.netty5.buffer.Buffer;
 
 /**
  * Link Tracker that manages tracking of the peer Receiver link which will
@@ -32,7 +32,7 @@ public class ReceiverTracker extends LinkTracker {
     }
 
     @Override
-    protected void handleTransfer(Transfer transfer, Buffer payload) {
+    protected void handleTransfer(Transfer transfer, ByteBuffer payload) {
         // TODO: Update internal state
     }
 

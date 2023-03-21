@@ -19,6 +19,7 @@
 package org.apache.qpid.protonj2.test.driver.matchers.types;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Objects;
 
 import org.apache.qpid.protonj2.test.driver.codec.EncodingCodes;
@@ -29,21 +30,18 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 
-import io.netty5.buffer.Buffer;
-import io.netty5.buffer.BufferAllocator;
-
 /**
  * Data Section matcher that can be used with multiple expectTransfer calls to match a larger
  * given payload block to the contents of one or more incoming Data sections split across multiple
  * transfer frames and or multiple Data Sections within those transfer frames.
  */
-public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<Buffer> {
+public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<ByteBuffer> {
 
     private static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:data:binary");
     private static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000075L);
 
     private final int expectedValueSize;
-    private final Buffer expectedValue;
+    private final ByteBuffer expectedValue;
 
     private boolean expectTrailingBytes;
     private String decodingErrorDescription;
@@ -59,7 +57,7 @@ public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<Buffer
      *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedCompositingDataSectionMatcher(byte[] expectedValue) {
-        this(BufferAllocator.onHeapUnpooled().copyOf(expectedValue).makeReadOnly());
+        this(ByteBuffer.wrap(Arrays.copyOf(expectedValue, expectedValue.length)).asReadOnlyBuffer());
     }
 
     /**
@@ -67,18 +65,18 @@ public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<Buffer
      *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedCompositingDataSectionMatcher(Binary expectedValue) {
-        this(BufferAllocator.onHeapUnpooled().copyOf(expectedValue.asByteBuffer()).makeReadOnly());
+        this(ByteBuffer.wrap(expectedValue.arrayCopy()).asReadOnlyBuffer());
     }
 
     /**
      * @param expectedValue
      *        the value that is expected to be IN the received {@link Data}
      */
-    public EncodedCompositingDataSectionMatcher(Buffer expectedValue) {
+    public EncodedCompositingDataSectionMatcher(ByteBuffer expectedValue) {
         Objects.requireNonNull(expectedValue, "The expected value cannot be null for this matcher");
 
-        this.expectedValue = expectedValue;
-        this.expectedRemainingBytes = this.expectedValue.readableBytes();
+        this.expectedValue = expectedValue.asReadOnlyBuffer();
+        this.expectedRemainingBytes = this.expectedValue.remaining();
         this.expectedValueSize = this.expectedRemainingBytes;
     }
 
@@ -96,7 +94,7 @@ public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<Buffer
     }
 
     @Override
-    protected boolean matchesSafely(Buffer receivedBinary) {
+    protected boolean matchesSafely(ByteBuffer receivedBinary) {
         if (expectDataSectionPreamble) {
             Object descriptor = readDescribedTypeEncoding(receivedBinary);
 
@@ -105,12 +103,12 @@ public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<Buffer
             }
 
             // Should be a Binary AMQP type with a length value and possibly some bytes
-            byte encodingCode = receivedBinary.readByte();
+            byte encodingCode = receivedBinary.get();
 
             if (encodingCode == EncodingCodes.VBIN8) {
-                expectedCurrentDataSectionBytes = receivedBinary.readByte() & 0xFF;
+                expectedCurrentDataSectionBytes = receivedBinary.get() & 0xFF;
             } else if (encodingCode == EncodingCodes.VBIN32) {
-                expectedCurrentDataSectionBytes = receivedBinary.readInt();
+                expectedCurrentDataSectionBytes = receivedBinary.getInt();
             } else {
                 decodingErrorDescription = "Expected to read a Binary Type but read encoding code: " + encodingCode;
                 return false;
@@ -126,20 +124,20 @@ public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<Buffer
         }
 
         if (expectedRemainingBytes != 0) {
-            final int currentChunkSize = Math.min(expectedCurrentDataSectionBytes, receivedBinary.readableBytes());
-            try (Buffer expectedValueChunk = expectedValue.copy(expectedValue.readerOffset(), currentChunkSize, true);
-                 Buffer currentChunk = receivedBinary.copy(receivedBinary.readerOffset(), currentChunkSize, true)) {
+            final int currentChunkSize = Math.min(expectedCurrentDataSectionBytes, receivedBinary.remaining());
 
-                receivedBinary.skipReadableBytes(currentChunkSize);
-                expectedValue.skipReadableBytes(currentChunkSize);
+            final ByteBuffer expectedValueChunk = expectedValue.slice().limit(currentChunkSize);
+            final ByteBuffer currentChunk = receivedBinary.slice().limit(currentChunkSize);
 
-                if (!expectedValueChunk.equals(currentChunk)) {
-                    return false;
-                }
+            receivedBinary.position(receivedBinary.position() + currentChunkSize);
+            expectedValue.position(expectedValue.position() + currentChunkSize);
 
-                expectedRemainingBytes -= currentChunkSize;
-                expectedCurrentDataSectionBytes -= currentChunkSize;
+            if (!expectedValueChunk.equals(currentChunk)) {
+                return false;
             }
+
+            expectedRemainingBytes -= currentChunkSize;
+            expectedCurrentDataSectionBytes -= currentChunkSize;
 
             if (expectedRemainingBytes != 0 && expectedCurrentDataSectionBytes == 0) {
                 expectDataSectionPreamble = true;
@@ -147,7 +145,7 @@ public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<Buffer
             }
         }
 
-        if (expectedRemainingBytes == 0 && receivedBinary.readableBytes() > 0 && !isTrailingBytesExpected()) {
+        if (expectedRemainingBytes == 0 && receivedBinary.remaining() > 0 && !isTrailingBytesExpected()) {
             unexpectedTrailingBytes = true;
             return false;
         } else {
@@ -157,18 +155,18 @@ public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<Buffer
 
     private static final int DESCRIBED_TYPE_INDICATOR = 0;
 
-    private Object readDescribedTypeEncoding(Buffer data) {
-        byte encodingCode = data.readByte();
+    private Object readDescribedTypeEncoding(ByteBuffer data) {
+        byte encodingCode = data.get();
 
         if (encodingCode == DESCRIBED_TYPE_INDICATOR) {
-            encodingCode = data.readByte();
+            encodingCode = data.get();
             switch (encodingCode) {
                 case EncodingCodes.ULONG0:
                     return UnsignedLong.ZERO;
                 case EncodingCodes.SMALLULONG:
-                    return UnsignedLong.valueOf(data.readByte() & 0xff);
+                    return UnsignedLong.valueOf(data.get() & 0xff);
                 case EncodingCodes.ULONG:
-                    return UnsignedLong.valueOf(data.readLong());
+                    return UnsignedLong.valueOf(data.getLong());
                 case EncodingCodes.SYM8:
                     return readSymbol8(data);
                 case EncodingCodes.SYM32:
@@ -183,34 +181,30 @@ public class EncodedCompositingDataSectionMatcher extends TypeSafeMatcher<Buffer
         return null;
     }
 
-    private Symbol readSymbol32(Buffer buffer) {
-        int length = buffer.readInt();
-
-        if (length == 0) {
-            return Symbol.valueOf("");
-        } else {
-            final ByteBuffer symbolBuffer = ByteBuffer.allocate(length);
-            buffer.readBytes(symbolBuffer);
-
-            return Symbol.getSymbol(symbolBuffer, false);
-        }
+    private static Symbol readSymbol32(ByteBuffer buffer) {
+        return readSymbol(buffer.getInt(), buffer);
     }
 
-    private Symbol readSymbol8(Buffer buffer) {
-        int length = buffer.readByte() & 0xFF;
+    private static Symbol readSymbol8(ByteBuffer buffer) {
+        return readSymbol(buffer.get() & 0xFF, buffer);
+    }
 
+    private static Symbol readSymbol(int length, ByteBuffer buffer) {
         if (length == 0) {
             return Symbol.valueOf("");
         } else {
-            final ByteBuffer symbolBuffer = ByteBuffer.allocate(length);
-            buffer.readBytes(symbolBuffer);
+            final byte[] symbolBytes = new byte[length];
+
+            buffer.get(symbolBytes);
+
+            final ByteBuffer symbolBuffer = ByteBuffer.wrap(symbolBytes).asReadOnlyBuffer();
 
             return Symbol.getSymbol(symbolBuffer, false);
         }
     }
 
     @Override
-    protected void describeMismatchSafely(Buffer item, Description mismatchDescription) {
+    protected void describeMismatchSafely(ByteBuffer item, Description mismatchDescription) {
         mismatchDescription.appendText("\nActual encoded form: ").appendValue(item);
 
         if (decodingErrorDescription != null) {

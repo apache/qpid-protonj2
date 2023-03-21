@@ -16,13 +16,13 @@
  */
 package org.apache.qpid.protonj2.test.driver.actions;
 
+import java.nio.ByteBuffer;
+
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.DeferrableScriptedAction;
 import org.apache.qpid.protonj2.test.driver.ScriptedAction;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
-
-import io.netty5.buffer.Buffer;
 
 /**
  * Abstract base used by inject actions of AMQP Performatives
@@ -156,7 +156,7 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
     /**
      * @return the buffer containing the payload that should be sent as part of this action.
      */
-    public Buffer getPayload() {
+    public ByteBuffer getPayload() {
         return null;
     }
 

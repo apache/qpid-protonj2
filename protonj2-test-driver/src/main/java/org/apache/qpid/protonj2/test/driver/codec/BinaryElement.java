@@ -16,9 +16,11 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
-import io.netty5.buffer.Buffer;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 
 class BinaryElement extends AtomicElement<Binary> {
 
@@ -68,29 +70,30 @@ class BinaryElement extends AtomicElement<Binary> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
-        int size = size();
-        if (buffer.implicitCapacityLimit() - buffer.capacity() < size) {
-            return 0;
-        }
+    public int encode(DataOutput output) {
+        try {
+            int size = size();
 
-        if (isElementOfArray()) {
-            final ArrayElement parent = (ArrayElement) parent();
+            if (isElementOfArray()) {
+                final ArrayElement parent = (ArrayElement) parent();
 
-            if (parent.constructorType() == ArrayElement.SMALL) {
-                buffer.writeByte((byte) value.getLength());
+                if (parent.constructorType() == ArrayElement.SMALL) {
+                    output.writeByte((byte) value.getLength());
+                } else {
+                    output.writeInt(value.getLength());
+                }
+            } else if (value.getLength() <= 255) {
+                output.writeByte((byte) 0xa0);
+                output.writeByte((byte) value.getLength());
             } else {
-                buffer.writeInt(value.getLength());
+                output.writeByte((byte) 0xb0);
+                output.writeInt(value.getLength());
             }
-        } else if (value.getLength() <= 255) {
-            buffer.writeByte((byte) 0xa0);
-            buffer.writeByte((byte) value.getLength());
-        } else {
-            buffer.writeByte((byte) 0xb0);
-            buffer.writeInt(value.getLength());
-        }
 
-        buffer.writeBytes(value.getArray(), 0, value.getLength());
-        return size;
+            output.write(value.getArray(), 0, value.getLength());
+            return size;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

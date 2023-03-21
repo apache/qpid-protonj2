@@ -16,11 +16,12 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
-
-import io.netty5.buffer.Buffer;
 
 class SymbolElement extends AtomicElement<Symbol> {
 
@@ -69,27 +70,29 @@ class SymbolElement extends AtomicElement<Symbol> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
-        int size = size();
-        if (buffer.implicitCapacityLimit() - buffer.capacity() < size) {
-            return 0;
-        }
-        if (isElementOfArray()) {
-            final ArrayElement parent = (ArrayElement) parent();
+    public int encode(DataOutput output) {
+        try {
+            int size = size();
 
-            if (parent.constructorType() == ArrayElement.SMALL) {
-                buffer.writeByte((byte) value.getLength());
+            if (isElementOfArray()) {
+                final ArrayElement parent = (ArrayElement) parent();
+
+                if (parent.constructorType() == ArrayElement.SMALL) {
+                    output.writeByte((byte) value.getLength());
+                } else {
+                    output.writeInt(value.getLength());
+                }
+            } else if (value.getLength() <= 255) {
+                output.writeByte((byte) 0xa3);
+                output.writeByte((byte) value.getLength());
             } else {
-                buffer.writeInt(value.getLength());
+                output.writeByte((byte) 0xb3);
+                output.writeByte((byte) value.getLength());
             }
-        } else if (value.getLength() <= 255) {
-            buffer.writeByte((byte) 0xa3);
-            buffer.writeByte((byte) value.getLength());
-        } else {
-            buffer.writeByte((byte) 0xb3);
-            buffer.writeByte((byte) value.getLength());
+            output.write(value.toString().getBytes(ASCII));
+            return size;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        buffer.writeBytes(value.toString().getBytes(ASCII));
-        return size;
     }
 }

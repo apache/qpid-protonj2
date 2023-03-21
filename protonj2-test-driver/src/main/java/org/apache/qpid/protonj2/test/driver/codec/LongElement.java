@@ -16,7 +16,9 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import io.netty5.buffer.Buffer;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
 class LongElement extends AtomicElement<Long> {
 
@@ -59,23 +61,25 @@ class LongElement extends AtomicElement<Long> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
-        int size = size();
-        if (size > buffer.implicitCapacityLimit() - buffer.capacity()) {
-            return 0;
-        }
-        switch (size) {
-            case 2:
-                buffer.writeByte((byte) 0x55);
-            case 1:
-                buffer.writeByte((byte) value);
-                break;
-            case 9:
-                buffer.writeByte((byte) 0x81);
-            case 8:
-                buffer.writeLong(value);
+    public int encode(DataOutput output) {
+        try {
+            int size = size();
 
+            switch (size) {
+                case 2:
+                    output.writeByte((byte) 0x55);
+                case 1:
+                    output.writeByte((byte) value);
+                    break;
+                case 9:
+                    output.writeByte((byte) 0x81);
+                case 8:
+                    output.writeLong(value);
+            }
+
+            return size;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        return size;
     }
 }

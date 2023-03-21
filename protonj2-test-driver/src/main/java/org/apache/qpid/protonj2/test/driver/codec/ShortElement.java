@@ -16,7 +16,9 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import io.netty5.buffer.Buffer;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
 class ShortElement extends AtomicElement<Short> {
 
@@ -43,19 +45,18 @@ class ShortElement extends AtomicElement<Short> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
-        if (isElementOfArray()) {
-            if (buffer.implicitCapacityLimit() - buffer.capacity() >= 2) {
-                buffer.writeShort(value);
+    public int encode(DataOutput output) {
+        try {
+            if (isElementOfArray()) {
+                output.writeShort(value);
                 return 2;
-            }
-        } else {
-            if (buffer.implicitCapacityLimit() - buffer.capacity() >= 3) {
-                buffer.writeByte((byte) 0x61);
-                buffer.writeShort(value);
+            } else {
+                output.writeByte((byte) 0x61);
+                output.writeShort(value);
                 return 3;
             }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        return 0;
     }
 }

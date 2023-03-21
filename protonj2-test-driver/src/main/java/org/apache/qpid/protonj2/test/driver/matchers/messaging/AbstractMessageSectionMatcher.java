@@ -20,6 +20,7 @@ package org.apache.qpid.protonj2.test.driver.matchers.messaging;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.nio.ByteBuffer;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.codec.Codec;
@@ -29,8 +30,6 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.netty5.buffer.Buffer;
 
 public abstract class AbstractMessageSectionMatcher {
 
@@ -68,8 +67,8 @@ public abstract class AbstractMessageSectionMatcher {
      * @throws RuntimeException
      *         if the provided Binary does not match expectation in some way
      */
-    public int verify(Buffer receivedBinary) throws RuntimeException {
-        final int length = receivedBinary.readableBytes();
+    public int verify(ByteBuffer receivedBinary) throws RuntimeException {
+        final int length = receivedBinary.remaining();
         final Codec data = Codec.Factory.create();
         final long decoded = data.decode(receivedBinary);
 

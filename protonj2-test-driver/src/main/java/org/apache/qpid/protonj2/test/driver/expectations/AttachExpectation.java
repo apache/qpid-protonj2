@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.UUID;
 
@@ -53,8 +54,6 @@ import org.apache.qpid.protonj2.test.driver.matchers.messaging.TargetMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transactions.CoordinatorMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.AttachMatcher;
 import org.hamcrest.Matcher;
-
-import io.netty5.buffer.Buffer;
 
 /**
  * Scripted expectation for the AMQP Attach performative
@@ -106,7 +105,7 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     //----- Handle the performative and configure response is told to respond
 
     @Override
-    public void handleAttach(int frameSize, Attach attach, Buffer payload, int channel, AMQPTestDriver context) {
+    public void handleAttach(int frameSize, Attach attach, ByteBuffer payload, int channel, AMQPTestDriver context) {
         super.handleAttach(frameSize, attach, payload, channel, context);
 
         final UnsignedShort remoteChannel = UnsignedShort.valueOf(channel);

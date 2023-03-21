@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
+import java.nio.ByteBuffer;
+
 import org.apache.qpid.protonj2.test.driver.codec.Codec;
 import org.apache.qpid.protonj2.test.driver.codec.security.SaslDescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
@@ -23,9 +25,6 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.HeartBeat;
 import org.apache.qpid.protonj2.test.driver.codec.transport.PerformativeDescribedType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.netty5.buffer.Buffer;
-import io.netty5.buffer.BufferAllocator;
 
 class FrameDecoder {
 
@@ -49,7 +48,7 @@ class FrameDecoder {
         this.driver = driver;
     }
 
-    public void ingest(Buffer buffer) throws AssertionError {
+    public void ingest(ByteBuffer buffer) throws AssertionError {
         try {
             // Parses in-incoming data and emit one complete frame before returning, caller should
             // ensure that the input buffer is drained into the engine or stop if the engine
@@ -103,11 +102,11 @@ class FrameDecoder {
          * based on the contents of that data.
          *
          * @param input
-         *      The ByteBuf containing new data to be parsed.
+         *      The buffer containing new data to be parsed.
          *
          * @throws AssertionError if an error occurs while parsing incoming data.
          */
-        void parse(Buffer input) throws AssertionError;
+        void parse(ByteBuffer input) throws AssertionError;
 
         /**
          * Reset the stage to its defaults for a new cycle of parsing.
@@ -130,9 +129,9 @@ class FrameDecoder {
         private int headerByte;
 
         @Override
-        public void parse(Buffer incoming) throws AssertionError {
-            while (incoming.readableBytes() > 0 && headerByte < AMQPHeader.HEADER_SIZE_BYTES) {
-                headerBytes[headerByte++] = incoming.readByte();
+        public void parse(ByteBuffer incoming) throws AssertionError {
+            while (incoming.remaining() > 0 && headerByte < AMQPHeader.HEADER_SIZE_BYTES) {
+                headerBytes[headerByte++] = incoming.get();
             }
 
             if (headerByte == AMQPHeader.HEADER_SIZE_BYTES) {
@@ -163,9 +162,9 @@ class FrameDecoder {
         private int multiplier = FRAME_SIZE_BYTES;
 
         @Override
-        public void parse(Buffer input) throws AssertionError {
-            while (input.readableBytes() > 0) {
-                frameSize |= (input.readByte() & 0xFF) << (--multiplier * Byte.SIZE);
+        public void parse(ByteBuffer input) throws AssertionError {
+            while (input.remaining() > 0) {
+                frameSize |= (input.get() & 0xFF) << (--multiplier * Byte.SIZE);
                 if (multiplier == 0) {
                     break;
                 }
@@ -177,7 +176,7 @@ class FrameDecoder {
                 // Normalize the frame size to the reminder portion
                 int length = frameSize - FRAME_SIZE_BYTES;
 
-                if (input.readableBytes() < length) {
+                if (input.remaining() < length) {
                     transitionToFrameBufferingStage(length);
                 } else {
                     initializeFrameBodyParsingStage(length);
@@ -209,23 +208,25 @@ class FrameDecoder {
 
     private class FrameBufferingStage implements FrameParserStage {
 
-        private Buffer buffer;
+        private ByteBuffer buffer;
 
         @Override
-        public void parse(Buffer input) throws AssertionError {
-            if (input.readableBytes() < buffer.writableBytes()) {
-                buffer.writeBytes(input);
+        public void parse(ByteBuffer input) throws AssertionError {
+            if (input.remaining() < buffer.remaining()) {
+                buffer.put(input);
             } else {
-                final int remaining = buffer.writableBytes();
+                final int oldLimit = input.limit();
 
-                input.copyInto(input.readerOffset(), buffer, buffer.writerOffset(), remaining);
-                input.skipReadableBytes(remaining);
-                buffer.skipWritableBytes(remaining);
+                try {
+                    buffer.put(input.limit(input.position() + buffer.remaining())).flip();
+                } finally {
+                    input.limit(oldLimit);
+                }
 
                 // Now we can consume the buffer frame body.
-                initializeFrameBodyParsingStage(buffer.readableBytes());
-                try (Buffer frame = buffer.makeReadOnly()){
-                    stage.parse(frame);
+                initializeFrameBodyParsingStage(buffer.remaining());
+                try {
+                    stage.parse(buffer.asReadOnlyBuffer());
                 } finally {
                     buffer = null;
                 }
@@ -234,7 +235,7 @@ class FrameDecoder {
 
         @Override
         public FrameBufferingStage reset(int frameSize) {
-            buffer = BufferAllocator.onHeapUnpooled().allocate(frameSize).implicitCapacityLimit(frameSize);
+            buffer = ByteBuffer.allocate(frameSize);
             return this;
         }
     }
@@ -244,30 +245,30 @@ class FrameDecoder {
         private int frameSize;
 
         @Override
-        public void parse(Buffer input) throws AssertionError {
-            int dataOffset = (input.readByte() << 2) & 0x3FF;
+        public void parse(ByteBuffer input) throws AssertionError {
+            int dataOffset = (input.get() << 2) & 0x3FF;
             int frameSize = this.frameSize + FRAME_SIZE_BYTES;
 
             validateDataOffset(dataOffset, frameSize);
 
-            int type = input.readByte() & 0xFF;
-            short channel = input.readShort();
+            int type = input.get() & 0xFF;
+            short channel = input.getShort();
 
             // note that this skips over the extended header if it's present
             if (dataOffset != 8) {
-                input.readerOffset(input.readerOffset() + dataOffset - 8);
+                input.position(input.position() + dataOffset - 8);
             }
 
             final int frameBodySize = frameSize - dataOffset;
 
-            Buffer payload = null;
+            ByteBuffer payload = null;
             Object val = null;
 
             if (frameBodySize > 0) {
-                int frameBodyStartIndex = input.readerOffset();
+                final int decodedBytes;
 
                 try {
-                    codec.decode(input);
+                    decodedBytes = (int) codec.decode(input);
                 } catch (Exception e) {
                     throw new AssertionError("Decoder failed reading remote input:", e);
                 }
@@ -287,12 +288,14 @@ class FrameDecoder {
                 // Slice to the known Frame body size and use that as the buffer for any payload once
                 // the actual Performative has been decoded.  The implies that the data comprising the
                 // performative will be held as long as the payload buffer is kept.
-                if (input.readableBytes() > 0) {
+                if (input.remaining() > 0) {
                     // Check that the remaining bytes aren't part of another frame.
-                    int payloadSize = frameBodySize - (input.readerOffset() - frameBodyStartIndex);
+                    // TODO int payloadSize = frameBodySize - (input.position() - frameBodyStartIndex);
+                    int payloadSize = frameBodySize - decodedBytes;
                     if (payloadSize > 0) {
-                        payload = input.copy(input.readerOffset(), payloadSize, true);
-                        input.skipReadableBytes(payloadSize);
+                        final byte[] payloadBytes = new byte[payloadSize];
+                        input.get(payloadBytes);
+                        payload = ByteBuffer.wrap(payloadBytes);
                     }
                 }
             } else {
@@ -349,7 +352,7 @@ class FrameDecoder {
         }
 
         @Override
-        public void parse(Buffer input) throws AssertionError {
+        public void parse(ByteBuffer input) throws AssertionError {
             throw parsingError;
         }
 

@@ -16,7 +16,9 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import io.netty5.buffer.Buffer;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
 class BooleanElement extends AtomicElement<Boolean> {
 
@@ -46,15 +48,16 @@ class BooleanElement extends AtomicElement<Boolean> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
-        if (buffer.writableBytes() > 0) {
+    public int encode(DataOutput output) {
+        try {
             if (isElementOfArray()) {
-                buffer.writeByte(value ? (byte) 1 : (byte) 0);
+                output.writeByte(value ? (byte) 1 : (byte) 0);
             } else {
-                buffer.writeByte(value ? (byte) 0x41 : (byte) 0x42);
+                output.writeByte(value ? (byte) 0x41 : (byte) 0x42);
             }
             return 1;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        return 0;
     }
 }

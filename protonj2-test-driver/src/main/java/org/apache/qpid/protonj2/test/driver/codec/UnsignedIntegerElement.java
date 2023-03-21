@@ -16,9 +16,11 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
-import io.netty5.buffer.Buffer;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 
 class UnsignedIntegerElement extends AtomicElement<UnsignedInteger> {
 
@@ -68,30 +70,31 @@ class UnsignedIntegerElement extends AtomicElement<UnsignedInteger> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
-        int size = size();
-        if (size > buffer.implicitCapacityLimit() - buffer.capacity()) {
-            return 0;
-        }
-        switch (size) {
-            case 1:
-                if (isElementOfArray()) {
-                    buffer.writeByte((byte) value.intValue());
-                } else {
-                    buffer.writeByte((byte) 0x43);
-                }
-                break;
-            case 2:
-                buffer.writeByte((byte) 0x52);
-                buffer.writeByte((byte) value.intValue());
-                break;
-            case 5:
-                buffer.writeByte((byte) 0x70);
-            case 4:
-                buffer.writeInt(value.intValue());
+    public int encode(DataOutput output) {
+        try {
+            int size = size();
 
-        }
+            switch (size) {
+                case 1:
+                    if (isElementOfArray()) {
+                        output.writeByte((byte) value.intValue());
+                    } else {
+                        output.writeByte((byte) 0x43);
+                    }
+                    break;
+                case 2:
+                    output.writeByte((byte) 0x52);
+                    output.writeByte((byte) value.intValue());
+                    break;
+                case 5:
+                    output.writeByte((byte) 0x70);
+                case 4:
+                    output.writeInt(value.intValue());
+            }
 
-        return size;
+            return size;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

@@ -16,9 +16,11 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import org.apache.qpid.protonj2.test.driver.codec.primitives.Decimal128;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
-import io.netty5.buffer.Buffer;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.Decimal128;
 
 class Decimal128Element extends AtomicElement<Decimal128> {
 
@@ -45,17 +47,18 @@ class Decimal128Element extends AtomicElement<Decimal128> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
+    public int encode(DataOutput output) {
         int size = size();
-        if (buffer.implicitCapacityLimit() - buffer.capacity() >= size) {
+
+        try {
             if (size == 17) {
-                buffer.writeByte((byte) 0x94);
+                output.writeByte((byte) 0x94);
             }
-            buffer.writeLong(value.getMostSignificantBits());
-            buffer.writeLong(value.getLeastSignificantBits());
+            output.writeLong(value.getMostSignificantBits());
+            output.writeLong(value.getLeastSignificantBits());
             return size;
-        } else {
-            return 0;
+        } catch(IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }

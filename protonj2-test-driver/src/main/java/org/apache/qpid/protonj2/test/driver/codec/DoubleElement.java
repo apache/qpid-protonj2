@@ -16,7 +16,9 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import io.netty5.buffer.Buffer;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
 class DoubleElement extends AtomicElement<Double> {
 
@@ -43,16 +45,17 @@ class DoubleElement extends AtomicElement<Double> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
+    public int encode(DataOutput output) {
         int size = size();
-        if (buffer.implicitCapacityLimit() - buffer.capacity() >= size) {
+
+        try {
             if (size == 9) {
-                buffer.writeByte((byte) 0x82);
+                output.writeByte((byte) 0x82);
             }
-            buffer.writeDouble(value);
+            output.writeDouble(value);
             return size;
-        } else {
-            return 0;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }

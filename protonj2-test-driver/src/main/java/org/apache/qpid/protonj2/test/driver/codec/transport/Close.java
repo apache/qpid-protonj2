@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec.transport;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
-
-import io.netty5.buffer.Buffer;
 
 public class Close extends PerformativeDescribedType {
 
@@ -68,7 +67,7 @@ public class Close extends PerformativeDescribedType {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, int frameSize, Buffer payload, int channel, E context) {
+    public <E> void invoke(PerformativeHandler<E> handler, int frameSize, ByteBuffer payload, int channel, E context) {
         handler.handleClose(frameSize, this, payload, channel, context);
     }
 

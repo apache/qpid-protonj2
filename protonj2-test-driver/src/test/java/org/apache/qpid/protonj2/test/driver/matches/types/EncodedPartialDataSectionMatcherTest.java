@@ -19,14 +19,13 @@ package org.apache.qpid.protonj2.test.driver.matches.types;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.nio.ByteBuffer;
+
 import org.apache.qpid.proton.codec.EncodingCodes;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.AmqpValue;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Data;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedPartialDataSectionMatcher;
 import org.junit.jupiter.api.Test;
-
-import io.netty5.buffer.Buffer;
-import io.netty5.buffer.BufferAllocator;
 
 public class EncodedPartialDataSectionMatcherTest {
 
@@ -35,19 +34,20 @@ public class EncodedPartialDataSectionMatcherTest {
         final byte[] PAYLOAD = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         final int EXPECTED_SIZE = 256;
 
-        try (Buffer body = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE)) {
-            body.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-            body.writeByte(EncodingCodes.SMALLULONG);
-            body.writeByte(Data.DESCRIPTOR_CODE.byteValue());
-            body.writeByte(EncodingCodes.VBIN32);
-            body.writeInt(EXPECTED_SIZE);
-            body.writeBytes(PAYLOAD);
+        final ByteBuffer body = ByteBuffer.allocate(EXPECTED_SIZE);
 
-            EncodedPartialDataSectionMatcher matcher =
-                new EncodedPartialDataSectionMatcher(EXPECTED_SIZE, PAYLOAD);
+        body.put(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        body.put(EncodingCodes.SMALLULONG);
+        body.put(Data.DESCRIPTOR_CODE.byteValue());
+        body.put(EncodingCodes.VBIN32);
+        body.putInt(EXPECTED_SIZE);
+        body.put(PAYLOAD);
+        body.flip();
 
-            assertThat(body, matcher);
-        }
+        EncodedPartialDataSectionMatcher matcher =
+            new EncodedPartialDataSectionMatcher(EXPECTED_SIZE, PAYLOAD);
+
+        assertThat(body, matcher);
     }
 
     @Test
@@ -55,19 +55,20 @@ public class EncodedPartialDataSectionMatcherTest {
         final byte[] PAYLOAD = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         final int EXPECTED_SIZE = 256;
 
-        try (Buffer body = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE)) {
-            body.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-            body.writeByte(EncodingCodes.SMALLULONG);
-            body.writeByte(Data.DESCRIPTOR_CODE.byteValue());
-            body.writeByte(EncodingCodes.VBIN32);
-            body.writeInt(EXPECTED_SIZE + 1);
-            body.writeBytes(PAYLOAD);
+        final ByteBuffer body = ByteBuffer.allocate(EXPECTED_SIZE);
 
-            EncodedPartialDataSectionMatcher matcher =
-                new EncodedPartialDataSectionMatcher(EXPECTED_SIZE, PAYLOAD);
+        body.put(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        body.put(EncodingCodes.SMALLULONG);
+        body.put(Data.DESCRIPTOR_CODE.byteValue());
+        body.put(EncodingCodes.VBIN32);
+        body.putInt(EXPECTED_SIZE + 1);
+        body.put(PAYLOAD);
+        body.flip();
 
-            assertFalse(matcher.matches(body));
-        }
+        EncodedPartialDataSectionMatcher matcher =
+            new EncodedPartialDataSectionMatcher(EXPECTED_SIZE, PAYLOAD);
+
+        assertFalse(matcher.matches(body));
     }
 
     @Test
@@ -75,19 +76,20 @@ public class EncodedPartialDataSectionMatcherTest {
         final byte[] PAYLOAD = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         final int EXPECTED_SIZE = 256;
 
-        try (Buffer body = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE)) {
-            body.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-            body.writeByte(EncodingCodes.SMALLULONG);
-            body.writeByte(AmqpValue.DESCRIPTOR_CODE.byteValue());
-            body.writeByte(EncodingCodes.VBIN32);
-            body.writeInt(EXPECTED_SIZE + 1);
-            body.writeBytes(PAYLOAD);
+        final ByteBuffer body = ByteBuffer.allocate(EXPECTED_SIZE);
 
-            EncodedPartialDataSectionMatcher matcher =
-                new EncodedPartialDataSectionMatcher(EXPECTED_SIZE, PAYLOAD);
+        body.put(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        body.put(EncodingCodes.SMALLULONG);
+        body.put(AmqpValue.DESCRIPTOR_CODE.byteValue());
+        body.put(EncodingCodes.VBIN32);
+        body.putInt(EXPECTED_SIZE + 1);
+        body.put(PAYLOAD);
+        body.flip();
 
-            assertFalse(matcher.matches(body));
-        }
+        EncodedPartialDataSectionMatcher matcher =
+            new EncodedPartialDataSectionMatcher(EXPECTED_SIZE, PAYLOAD);
+
+        assertFalse(matcher.matches(body));
     }
 
     @Test
@@ -95,19 +97,20 @@ public class EncodedPartialDataSectionMatcherTest {
         final byte[] PAYLOAD = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         final int EXPECTED_SIZE = 256;
 
-        try (Buffer body = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE)) {
-            body.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-            body.writeByte(EncodingCodes.SMALLULONG);
-            body.writeByte(Data.DESCRIPTOR_CODE.byteValue());
-            body.writeByte(EncodingCodes.SYM8);
-            body.writeInt(EXPECTED_SIZE + 1);
-            body.writeBytes(PAYLOAD);
+        final ByteBuffer body = ByteBuffer.allocate(EXPECTED_SIZE);
 
-            EncodedPartialDataSectionMatcher matcher =
-                new EncodedPartialDataSectionMatcher(EXPECTED_SIZE, PAYLOAD);
+        body.put(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        body.put(EncodingCodes.SMALLULONG);
+        body.put(Data.DESCRIPTOR_CODE.byteValue());
+        body.put(EncodingCodes.SYM8);
+        body.putInt(EXPECTED_SIZE + 1);
+        body.put(PAYLOAD);
+        body.flip();
 
-            assertFalse(matcher.matches(body));
-        }
+        EncodedPartialDataSectionMatcher matcher =
+            new EncodedPartialDataSectionMatcher(EXPECTED_SIZE, PAYLOAD);
+
+        assertFalse(matcher.matches(body));
     }
 
     @Test
@@ -116,18 +119,19 @@ public class EncodedPartialDataSectionMatcherTest {
         final byte[] ACTUAL_PAYLOAD = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         final int EXPECTED_SIZE = 256;
 
-        try (Buffer body = BufferAllocator.onHeapUnpooled().allocate(EXPECTED_SIZE)) {
-            body.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-            body.writeByte(EncodingCodes.SMALLULONG);
-            body.writeByte(Data.DESCRIPTOR_CODE.byteValue());
-            body.writeByte(EncodingCodes.VBIN32);
-            body.writeInt(EXPECTED_SIZE + 1);
-            body.writeBytes(ACTUAL_PAYLOAD);
+        final ByteBuffer body = ByteBuffer.allocate(EXPECTED_SIZE);
 
-            EncodedPartialDataSectionMatcher matcher =
-                new EncodedPartialDataSectionMatcher(EXPECTED_SIZE, PAYLOAD);
+        body.put(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        body.put(EncodingCodes.SMALLULONG);
+        body.put(Data.DESCRIPTOR_CODE.byteValue());
+        body.put(EncodingCodes.VBIN32);
+        body.putInt(EXPECTED_SIZE + 1);
+        body.put(ACTUAL_PAYLOAD);
+        body.flip();
 
-            assertFalse(matcher.matches(body));
-        }
+        EncodedPartialDataSectionMatcher matcher =
+            new EncodedPartialDataSectionMatcher(EXPECTED_SIZE, PAYLOAD);
+
+        assertFalse(matcher.matches(body));
     }
 }

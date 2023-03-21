@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +33,6 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedByte;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
-
-import io.netty5.buffer.Buffer;
 
 public interface Codec {
 
@@ -91,9 +91,9 @@ public interface Codec {
 
     long encodedSize();
 
-    long encode(Buffer buffer);
+    long encode(OutputStream output);
 
-    long decode(Buffer buffer);
+    long decode(ByteBuffer input);
 
     void putList();
 

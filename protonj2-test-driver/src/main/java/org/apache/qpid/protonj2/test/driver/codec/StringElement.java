@@ -16,9 +16,10 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
-
-import io.netty5.buffer.Buffer;
 
 class StringElement extends AtomicElement<String> {
 
@@ -71,30 +72,32 @@ class StringElement extends AtomicElement<String> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
-        final byte[] bytes = value.getBytes(UTF_8);
-        final int length = bytes.length;
+    public int encode(DataOutput output) {
+        try {
+            final byte[] bytes = value.getBytes(UTF_8);
+            final int length = bytes.length;
 
-        int size = size(length);
-        if (buffer.implicitCapacityLimit() - buffer.capacity() < size) {
-            return 0;
-        }
-        if (isElementOfArray()) {
-            final ArrayElement parent = (ArrayElement) parent();
+            int size = size(length);
 
-            if (parent.constructorType() == ArrayElement.SMALL) {
-                buffer.writeByte((byte) length);
+            if (isElementOfArray()) {
+                final ArrayElement parent = (ArrayElement) parent();
+
+                if (parent.constructorType() == ArrayElement.SMALL) {
+                    output.writeByte((byte) length);
+                } else {
+                    output.writeInt(length);
+                }
+            } else if (length <= 255) {
+                output.writeByte((byte) 0xa1);
+                output.writeByte((byte) length);
             } else {
-                buffer.writeInt(length);
+                output.writeByte((byte) 0xb1);
+                output.writeInt(length);
             }
-        } else if (length <= 255) {
-            buffer.writeByte((byte) 0xa1);
-            buffer.writeByte((byte) length);
-        } else {
-            buffer.writeByte((byte) 0xb1);
-            buffer.writeInt(length);
+            output.write(bytes);
+            return size;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        buffer.writeBytes(bytes);
-        return size;
     }
 }

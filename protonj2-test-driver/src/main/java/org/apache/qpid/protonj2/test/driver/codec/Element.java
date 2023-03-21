@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import io.netty5.buffer.Buffer;
+import java.io.DataOutput;
 
 interface Element<T> {
 
@@ -26,7 +26,7 @@ interface Element<T> {
 
     Codec.DataType getDataType();
 
-    int encode(Buffer buffer);
+    int encode(DataOutput output);
 
     Element<?> next();
 

@@ -16,9 +16,11 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
-import io.netty5.buffer.Buffer;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 
 class DescribedTypeElement extends AbstractElement<DescribedType> {
 
@@ -68,25 +70,26 @@ class DescribedTypeElement extends AbstractElement<DescribedType> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
+    public int encode(DataOutput output) {
         int encodedSize = size();
 
-        if (encodedSize > buffer.implicitCapacityLimit() - buffer.capacity()) {
-            return 0;
-        } else {
-            buffer.writeByte((byte) 0);
+        try {
+            output.writeByte((byte) 0);
             if (first == null) {
-                buffer.writeByte((byte) 0x40);
-                buffer.writeByte((byte) 0x40);
+                output.writeByte((byte) 0x40);
+                output.writeByte((byte) 0x40);
             } else {
-                first.encode(buffer);
+                first.encode(output);
                 if (first.next() == null) {
-                    buffer.writeByte((byte) 0x40);
+                    output.writeByte((byte) 0x40);
                 } else {
-                    first.next().encode(buffer);
+                    first.next().encode(output);
                 }
             }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
+
         return encodedSize;
     }
 

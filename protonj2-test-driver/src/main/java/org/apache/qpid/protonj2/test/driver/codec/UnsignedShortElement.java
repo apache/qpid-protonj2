@@ -16,9 +16,11 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
-import io.netty5.buffer.Buffer;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 
 class UnsignedShortElement extends AtomicElement<UnsignedShort> {
 
@@ -45,19 +47,18 @@ class UnsignedShortElement extends AtomicElement<UnsignedShort> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
-        if (isElementOfArray()) {
-            if (buffer.implicitCapacityLimit() - buffer.capacity() >= 2) {
-                buffer.writeShort(value.shortValue());
+    public int encode(DataOutput output) {
+        try {
+            if (isElementOfArray()) {
+                output.writeShort(value.shortValue());
                 return 2;
-            }
-        } else {
-            if (buffer.implicitCapacityLimit() - buffer.capacity() >= 3) {
-                buffer.writeByte((byte) 0x60);
-                buffer.writeShort(value.shortValue());
+            } else {
+                output.writeByte((byte) 0x60);
+                output.writeShort(value.shortValue());
                 return 3;
             }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        return 0;
     }
 }

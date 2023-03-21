@@ -16,9 +16,11 @@
  */
 package org.apache.qpid.protonj2.test.driver.codec;
 
-import org.apache.qpid.protonj2.test.driver.codec.primitives.Decimal64;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
-import io.netty5.buffer.Buffer;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.Decimal64;
 
 class Decimal64Element extends AtomicElement<Decimal64> {
 
@@ -45,16 +47,17 @@ class Decimal64Element extends AtomicElement<Decimal64> {
     }
 
     @Override
-    public int encode(Buffer buffer) {
-        int size = size();
-        if (buffer.implicitCapacityLimit() - buffer.capacity() >= size) {
+    public int encode(DataOutput output) {
+        final int size = size();
+
+        try {
             if (size == 9) {
-                buffer.writeByte((byte) 0x84);
+                output.writeByte((byte) 0x84);
             }
-            buffer.writeLong(value.getBits());
+            output.writeLong(value.getBits());
             return size;
-        } else {
-            return 0;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }
