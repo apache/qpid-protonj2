@@ -644,6 +644,8 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
             Wait.assertTrue("Should eventually be marked as completed", delivery::completed);
 
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
             peer.expectDetach().respond();
             peer.expectEnd().respond();
             peer.expectClose().respond();
