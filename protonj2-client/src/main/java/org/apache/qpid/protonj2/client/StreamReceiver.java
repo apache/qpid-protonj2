@@ -71,14 +71,14 @@ public interface StreamReceiver extends Link<StreamReceiver> {
 
     /**
      * Blocking receive method that waits the given time interval for the remote to provide a
-     * {@link StreamReceiverMessage} for consumption.  The amount of time this method blocks is based on the
-     * timeout value. If timeout is equal to <code>-1</code> then it blocks until a Delivery is
-     * received. If timeout is equal to zero then it will not block and simply return a
-     * {@link StreamReceiverMessage} if one is available locally.  If timeout value is greater than zero then it
-     * blocks up to timeout amount of time.
+     * {@link StreamReceiverMessage} for consumption. The amount of time this method blocks is based on
+     * the timeout value. If the timeout is negative then it blocks until a Delivery is received. If the
+     * timeout is equal to zero then it will not block and simply return a {@link StreamReceiverMessage}
+     * if one is available locally. If the timeout value is greater than zero then it blocks up to timeout
+     * amount of time.
      * <p>
      * Receive calls will only grant credit on their own if a credit window is configured in the
-     * {@link StreamReceiverOptions} which is done by default.  If the client application has not configured
+     * {@link StreamReceiverOptions} which is done by default. If the client application has not configured
      * a credit window or granted credit manually this method will not automatically grant any credit
      * when it enters the wait for a new incoming {@link StreamReceiverMessage}.
      *

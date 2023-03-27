@@ -64,14 +64,14 @@ public interface Receiver extends Link<Receiver> {
 
     /**
      * Blocking receive method that waits the given time interval for the remote to provide a
-     * {@link Delivery} for consumption.  The amount of time this method blocks is based on the
-     * timeout value. If timeout is equal to <code>-1</code> then it blocks until a Delivery is
-     * received. If timeout is equal to zero then it will not block and simply return a
-     * {@link Delivery} if one is available locally.  If timeout value is greater than zero then it
-     * blocks up to timeout amount of time.
+     * {@link Delivery} for consumption. The amount of time this method blocks is based on the
+     * timeout value. If the timeout is less than zero then it blocks until a Delivery is received.
+     * If the timeout is equal to zero then it will not block and simply return a {@link Delivery}
+     * if one is available locally. If the timeout value is greater than zero then it blocks up to
+     * timeout amount of time.
      * <p>
      * Receive calls will only grant credit on their own if a credit window is configured in the
-     * {@link ReceiverOptions} which is done by default.  If the client application has not configured
+     * {@link ReceiverOptions} which is done by default. If the client application has not configured
      * a credit window or granted credit manually this method will not automatically grant any credit
      * when it enters the wait for a new incoming {@link Delivery}.
      *

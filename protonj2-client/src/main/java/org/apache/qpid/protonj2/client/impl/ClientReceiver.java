@@ -67,7 +67,7 @@ public final class ClientReceiver extends ClientReceiverLinkType<Receiver> imple
         checkClosedOrFailed();
 
         try {
-            ClientDelivery delivery = deliveryQueue.dequeue(units.toMillis(timeout));
+            ClientDelivery delivery = deliveryQueue.dequeue(Math.max(-1, units.toMillis(timeout)));
             if (delivery != null) {
                 if (options.autoAccept()) {
                     disposition(delivery.protonDelivery(), Accepted.getInstance(), options.autoSettle());
