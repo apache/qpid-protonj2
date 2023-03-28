@@ -358,7 +358,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
     @Test
     public void testCreateConnectionWithCredentialsChoosesSASLPlainIfOffered() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
-            peer.expectSASLPlainConnect("user", "pass");
+            peer.expectSASLPlainConnect("user", "pass", "PLAIN", "ANONYMOUS");
             peer.expectOpen().respond();
             peer.expectClose().respond();
             peer.start();

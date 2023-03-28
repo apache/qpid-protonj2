@@ -330,6 +330,30 @@ public abstract class ScriptWriter {
      * header to arrive and a header response will be sent.
      */
     public void expectSASLAnonymousConnect() {
+        expectSASLAnonymousConnect("ANONYMOUS");
+    }
+
+    /**
+     * Creates all the scripted elements needed for a successful SASL Anonymous
+     * connection. The provided set of mechanisms must contain the anonymous SASL
+     * mechanism or an exception is thrown as otherwise the premise of this test
+     * method could not be met.
+     * <p>
+     * For this exchange the SASL header is expected which is responded to with the
+     * corresponding SASL header and an immediate SASL mechanisms frame that only
+     * advertises anonymous as the mechanism.  It is expected that the remote will
+     * send a SASL init with the anonymous mechanism selected and the outcome is
+     * predefined as success.  Once done the expectation is added for the AMQP
+     * header to arrive and a header response will be sent.
+     *
+     * @param mechanisms
+     * 		The set of offered SASL mechanisms which must contain "ANONYMOUS"
+     */
+    public void expectSASLAnonymousConnect(String...mechanisms) {
+        if (!Arrays.asList(mechanisms).contains("ANONYMOUS")) {
+            throw new AssertionError("The list of mechanisms must contain ANONYMOUS for this expectation to be valid.");
+        }
+
         expectSASLHeader().respondWithSASLHeader();
         remoteSaslMechanisms().withMechanisms("ANONYMOUS").queue();
         expectSaslInit().withMechanism("ANONYMOUS");
@@ -354,6 +378,34 @@ public abstract class ScriptWriter {
      *      The password that is expected in the SASL Plain initial response.
      */
     public void expectSASLPlainConnect(String username, String password) {
+        expectSASLPlainConnect(username, password, "PLAIN");
+    }
+
+    /**
+     * Creates all the scripted elements needed for a successful SASL Plain
+     * connection. The provided set of mechanisms must contain the plain SASL
+     * mechanism or an exception is thrown as otherwise the premise of this test
+     * method could not be met.
+     * <p>
+     * For this exchange the SASL header is expected which is responded to with the
+     * corresponding SASL header and an immediate SASL mechanisms frame that only
+     * advertises plain as the mechanism.  It is expected that the remote will
+     * send a SASL init with the plain mechanism selected and the outcome is
+     * predefined as success.  Once done the expectation is added for the AMQP
+     * header to arrive and a header response will be sent.
+     *
+     * @param username
+     *      The user name that is expected in the SASL Plain initial response.
+     * @param password
+     *      The password that is expected in the SASL Plain initial response.
+     * @param mechanisms
+     * 		The set of offered SASL mechanisms which must contain "PLAIN"
+     */
+    public void expectSASLPlainConnect(String username, String password, String...mechanisms) {
+        if (!Arrays.asList(mechanisms).contains("PLAIN")) {
+            throw new AssertionError("The list of mechanisms must contain PLAIN for this expectation to be valid.");
+        }
+
         expectSASLHeader().respondWithSASLHeader();
         remoteSaslMechanisms().withMechanisms("PLAIN").queue();
         expectSaslInit().withMechanism("PLAIN").withInitialResponse(saslPlainInitialResponse(username, password));
@@ -417,7 +469,7 @@ public abstract class ScriptWriter {
      * @param offeredMechanisms
      *      The set of mechanisms that the server should offer in the SASL Mechanisms frame
      */
-    public void expectFailingSASLPlainConnect(byte saslCode, String... offeredMechanisms) {
+    public void expectFailingSASLPlainConnect(byte saslCode, String...offeredMechanisms) {
         if (!Arrays.asList(offeredMechanisms).contains("PLAIN")) {
             throw new AssertionError("Expected offered mechanisms that contains the PLAIN mechanism");
         }
