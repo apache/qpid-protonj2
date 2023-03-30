@@ -59,6 +59,37 @@ class ProtonTestClientTest extends TestPeerTestsBase {
     }
 
     @Test
+    public void testTwoClientConnectionsAndExchangeAMQPHeaders() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            // Server can accept two connection, although not at the same time.
+
+            try (ProtonTestClient client = new ProtonTestClient()) {
+                client.connect(remoteURI.getHost(), remoteURI.getPort());
+                client.expectAMQPHeader();
+                client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+                client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            }
+
+            try (ProtonTestClient client = new ProtonTestClient()) {
+                client.connect(remoteURI.getHost(), remoteURI.getPort());
+                client.expectAMQPHeader();
+                client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+                client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            }
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testClientDetectsUnexpectedPerformativeResponseToAMQPHeader() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectAMQPHeader();

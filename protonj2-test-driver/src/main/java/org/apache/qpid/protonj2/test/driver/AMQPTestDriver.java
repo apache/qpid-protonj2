@@ -253,6 +253,15 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         }
     }
 
+    void handleConnectedDropped() throws AssertionError {
+        synchronized (script) {
+            // For now we just reset the parse as any new connection would need to
+            // send an AMQP header, other validation could be added if we expand
+            // processing on client disconnect events.
+            frameParser.resetToExpectingHeader();
+        }
+    }
+
     void handleHeader(AMQPHeader header) throws AssertionError {
         synchronized (script) {
             final ScriptedElement scriptEntry = script.poll();
@@ -590,7 +599,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         final ByteBuffer output;
         final ByteBuffer buffer = frameEncoder.handleWrite(performative, channel, payload, null);
 
-        if (deferredWrites != null) {
+        if (!deferredWrites.isEmpty()) {
             deferredWrites.add(buffer);
             try {
                 output = composeDefferedWrites(deferredWrites).asReadOnlyBuffer();
@@ -644,7 +653,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         try {
             final ByteBuffer buffer = frameEncoder.handleWrite(performative, channel);
 
-            if (deferredWrites != null) {
+            if (!deferredWrites.isEmpty()) {
                 deferredWrites.add(buffer);
                 try {
                     output = composeDefferedWrites(deferredWrites).asReadOnlyBuffer();
@@ -674,7 +683,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
         try {
             final ByteBuffer output;
 
-            if (deferredWrites != null) {
+            if (!deferredWrites.isEmpty()) {
                 LOG.trace("{} appending deferred buffer {} to next write.", driverName, deferredWrites);
                 deferredWrites.add(ByteBuffer.wrap(header.getBuffer()).asReadOnlyBuffer());
 

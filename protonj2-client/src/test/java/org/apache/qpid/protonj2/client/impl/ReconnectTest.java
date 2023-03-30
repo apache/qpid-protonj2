@@ -57,7 +57,7 @@ public class ReconnectTest extends ImperativeClientTestCase {
 
             firstPeer.expectSASLAnonymousConnect();
             firstPeer.expectOpen().withContainerId(any(String.class)).respond();
-            firstPeer.dropAfterLastHandler(5);
+            firstPeer.shutdownAfterLastHandler(5);
             firstPeer.start();
 
             finalPeer.expectSASLAnonymousConnect();
@@ -101,7 +101,7 @@ public class ReconnectTest extends ImperativeClientTestCase {
             finalPeer.waitForScriptToComplete();
             finalPeer.expectBegin().respond();
             finalPeer.expectEnd().respond();
-            finalPeer.dropAfterLastHandler(10);
+            finalPeer.shutdownAfterLastHandler(10);
 
             Session session = connection.openSession().openFuture().get();
 

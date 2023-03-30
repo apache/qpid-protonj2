@@ -63,16 +63,18 @@ public interface NettyIOBuilder {
      * 		The {@link ProtonTestServerOptions} that configure the IO Transport the context creates.
      * @param connectedHandler
      * 		A handler that should be invoked when a connection attempt succeeds.
+     * @param disconnectedHandler
+     * 		A handler that should be invoked when a connection closed or is dropped.
      * @param inputHandler
      * 		A {@link Consumer} that accept incoming {@link ByteBuffer} data from the remote.
      *
      * @return a new {@link NettyServer} from available options.
      */
-    public static NettyServer createServer(ProtonTestServerOptions options, Runnable connectedHandler, Consumer<ByteBuffer> inputHandler) {
+    public static NettyServer createServer(ProtonTestServerOptions options, Runnable connectedHandler, Runnable disconnectedHandler, Consumer<ByteBuffer> inputHandler) {
         if (Netty4Support.isAvailable()) {
-            return new Netty4Server(options, connectedHandler, inputHandler);
+            return new Netty4Server(options, connectedHandler, disconnectedHandler, inputHandler);
         } else if (Netty5Support.isAvailable()) {
-            return new Netty5Server(options, connectedHandler, inputHandler);
+            return new Netty5Server(options, connectedHandler, disconnectedHandler, inputHandler);
         }
 
         throw new UnsupportedOperationException("Netty not available on the class path");

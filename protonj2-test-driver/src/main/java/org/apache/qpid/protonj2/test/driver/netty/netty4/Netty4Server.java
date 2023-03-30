@@ -101,15 +101,18 @@ public final class Netty4Server implements NettyServer {
 
     private final Consumer<ByteBuffer> inputConsumer;
     private final Runnable connectedRunnable;
+    private final Runnable disconnectedRunnable;
 
-    public Netty4Server(ProtonTestServerOptions options, Runnable connectedRunnable, Consumer<ByteBuffer> inputConsumer) {
+    public Netty4Server(ProtonTestServerOptions options, Runnable connectedRunnable, Runnable disconnectedRunnable, Consumer<ByteBuffer> inputConsumer) {
         Objects.requireNonNull(options);
         Objects.requireNonNull(inputConsumer);
         Objects.requireNonNull(connectedRunnable);
+        Objects.requireNonNull(disconnectedRunnable);
 
         this.options = options;
         this.connectedRunnable = connectedRunnable;
         this.inputConsumer = inputConsumer;
+        this.disconnectedRunnable = disconnectedRunnable;
     }
 
     @Override
@@ -248,7 +251,10 @@ public final class Netty4Server implements NettyServer {
                 @Override
                 public void initChannel(Channel ch) throws Exception {
                     // Don't accept any new connections.
-                    serverChannel.close();
+                    if (clientChannel != null) {
+                        throw new UnsupportedOperationException("Server cannot have more than one connected client at a time");
+                    }
+
                     // Now we know who the client is
                     clientChannel = ch;
 
@@ -284,6 +290,12 @@ public final class Netty4Server implements NettyServer {
             public void channelActive(ChannelHandlerContext ctx) throws Exception {
                 connectedRunnable.run();
                 ctx.fireChannelActive();
+            }
+
+            @Override
+            public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                disconnectedRunnable.run();
+                ctx.fireChannelInactive();
             }
 
             @Override
@@ -338,6 +350,26 @@ public final class Netty4Server implements NettyServer {
 
             LOG.trace("Shutting down worker group asynchronously");
             workerGroup.shutdownGracefully(0, timeout, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    @Override
+    public void disconnectClient() throws Exception {
+        if (!started.get() || !serverChannel.isOpen()) {
+            throw new IllegalStateException("Server must be currently active in order to reset");
+        }
+
+        if (clientChannel != null) {
+            try {
+                if (!clientChannel.close().await(10, TimeUnit.SECONDS)) {
+                    LOG.info("Connected Client channel close timed out waiting for result");
+                }
+            } catch (InterruptedException e) {
+                Thread.interrupted();
+                LOG.debug("Close of connected client channel interrupted while awaiting result");
+            } finally {
+                clientChannel = null;
+            }
         }
     }
 
@@ -448,6 +480,7 @@ public final class Netty4Server implements NettyServer {
             LOG.info("NettyServerHandler: channel has gone inactive: {}", ctx.channel());
             ctx.close();
             ctx.fireChannelInactive();
+            Netty4Server.this.clientChannel = null;
         }
 
         @Override

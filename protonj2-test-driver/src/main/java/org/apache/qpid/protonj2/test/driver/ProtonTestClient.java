@@ -23,9 +23,9 @@ import java.util.function.Supplier;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
-import org.apache.qpid.protonj2.test.driver.netty.NettyIOBuilder;
 import org.apache.qpid.protonj2.test.driver.netty.NettyClient;
 import org.apache.qpid.protonj2.test.driver.netty.NettyEventLoop;
+import org.apache.qpid.protonj2.test.driver.netty.NettyIOBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,8 +63,8 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
                                                    this::processDriverAssertion,
                                                    this::eventLoop);
         this.client = NettyIOBuilder.createClient(options,
-                                             this::processConnectionEstablished,
-                                             this::processChannelInput);
+                                                  this::processConnectionEstablished,
+                                                  this::processChannelInput);
     }
 
     public void connect(String hostname, int port) throws IOException {
@@ -83,12 +83,23 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
     }
 
     @Override
-    protected void processCloseRequest() {
+    protected void processConnectionDropped() {
+        LOG.trace("AMQP Client connection to remote dropped.");
+        driver.handleConnectedDropped();
+    }
+
+    @Override
+    protected void processCloseConnectionRequest() {
         try {
             client.close();
         } catch (Throwable e) {
             LOG.info("Error suppressed on client stop: ", e);
         }
+    }
+
+    @Override
+    protected void processPeerShutdownRequest() {
+        processCloseConnectionRequest(); // Same outcome as the client is single use only.
     }
 
     @Override

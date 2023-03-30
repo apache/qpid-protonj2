@@ -23,10 +23,11 @@ import java.util.function.Supplier;
 
 import javax.net.ssl.SSLEngine;
 
+import org.apache.qpid.protonj2.test.driver.actions.ConnectionDropAction;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
-import org.apache.qpid.protonj2.test.driver.netty.NettyIOBuilder;
 import org.apache.qpid.protonj2.test.driver.netty.NettyEventLoop;
+import org.apache.qpid.protonj2.test.driver.netty.NettyIOBuilder;
 import org.apache.qpid.protonj2.test.driver.netty.NettyServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,10 +62,13 @@ public class ProtonTestServer extends ProtonTestPeer {
      *      The options that control the behavior of the deployed server.
      */
     public ProtonTestServer(ProtonTestServerOptions options) {
-        this.driver = new NettyAwareAMQPTestDriver(this::processDriverOutput, this::processDriverAssertion, this::eventLoop);
+        this.driver = new NettyAwareAMQPTestDriver(this::processDriverOutput,
+                                                   this::processDriverAssertion,
+                                                   this::eventLoop);
         this.server = NettyIOBuilder.createServer(options,
-                                             this::processConnectionEstablished,
-                                             this::processChannelInput);
+                                                  this::processConnectionEstablished,
+                                                  this::processConnectionDropped,
+                                                  this::processChannelInput);
     }
 
     /**
@@ -117,6 +121,35 @@ public class ProtonTestServer extends ProtonTestPeer {
         } catch (Exception e) {
             throw new RuntimeException("Failed to get connection URI: ", e);
         }
+    }
+
+    /**
+     * Drops the connection to the connected client immediately after the last handler that was
+     * registered before this scripted action is queued.  Adding any additional test scripting to
+     * the test driver will either not be acted on or could cause the wait methods to not return
+     * as they will never be invoked.
+     *
+     * @return this test peer instance.
+     */
+    public ProtonTestPeer dropAfterLastHandler() {
+        getDriver().addScriptedElement(new ConnectionDropAction(this));
+        return this;
+    }
+
+    /**
+     * Drops the connection to the connected client immediately after the last handler that was
+     * registered before this scripted action is queued.  Adding any additional test scripting to
+     * the test driver will either not be acted on or could cause the wait methods to not return
+     * as they will never be invoked.
+     *
+     * @param delay
+     *      The time in milliseconds to wait before running the action after the last handler is run.
+     *
+     * @return this test peer instance.
+     */
+    public ProtonTestPeer dropAfterLastHandler(int delay) {
+        getDriver().addScriptedElement(new ConnectionDropAction(this).afterDelay(delay));
+        return this;
     }
 
     public boolean isAcceptingConnections() {
@@ -250,11 +283,20 @@ public class ProtonTestServer extends ProtonTestPeer {
     //----- Internal implementation which can be overridden
 
     @Override
-    protected void processCloseRequest() {
+    protected void processPeerShutdownRequest() {
         try {
             server.stopAsync();
         } catch (Throwable e) {
             LOG.info("Error suppressed on server stop: ", e);
+        }
+    }
+
+    @Override
+    protected void processCloseConnectionRequest() {
+        try {
+            server.disconnectClient();
+        } catch (Throwable e) {
+            LOG.info("Error suppressed on server dropping connected client: ", e);
         }
     }
 
@@ -268,6 +310,12 @@ public class ProtonTestServer extends ProtonTestPeer {
     protected void processConnectionEstablished() {
         LOG.trace("AMQP Server has a client connected.");
         driver.handleConnectedEstablished();
+    }
+
+    @Override
+    protected void processConnectionDropped() {
+        LOG.trace("AMQP Server reports client connection dropped.");
+        driver.handleConnectedDropped();
     }
 
     protected void processDriverAssertion(AssertionError error) {

@@ -25,21 +25,21 @@ import org.slf4j.LoggerFactory;
 /**
  * Action that drops the netty connection to the remote once invoked.
  */
-public class ConnectionDropAction implements ScriptedAction {
+public class PeerShutdownAction implements ScriptedAction {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ConnectionDropAction.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PeerShutdownAction.class);
 
     private final ProtonTestPeer peer;
     private int delay = -1;
 
-    public ConnectionDropAction(ProtonTestPeer peer) {
+    public PeerShutdownAction(ProtonTestPeer peer) {
         this.peer = peer;
     }
 
     @Override
     public ScriptedAction now() {
-        LOG.info("Connection Drop Action closing test peer connection as scripted");
-        peer.dropConnection();
+        LOG.info("Peer Shutdown Action closing test peer as scripted");
+        peer.close();
         return this;
     }
 
@@ -67,7 +67,7 @@ public class ConnectionDropAction implements ScriptedAction {
 
                 @Override
                 public ScriptedAction perform(AMQPTestDriver driver) {
-                    return ConnectionDropAction.this.now();
+                    return PeerShutdownAction.this.now();
                 }
 
                 @Override
@@ -91,7 +91,7 @@ public class ConnectionDropAction implements ScriptedAction {
         return delay;
     }
 
-    public ConnectionDropAction afterDelay(int delay) {
+    public PeerShutdownAction afterDelay(int delay) {
         this.delay = delay;
         return this;
     }

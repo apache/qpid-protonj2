@@ -100,14 +100,16 @@ public final class Netty5Server implements NettyServer {
 
     private final Consumer<ByteBuffer> inputConsumer;
     private final Runnable connectedRunnable;
+    private final Runnable disconnectedRunnable;
 
-    public Netty5Server(ProtonTestServerOptions options, Runnable connectedRunnable, Consumer<ByteBuffer> inputConsumer) {
+    public Netty5Server(ProtonTestServerOptions options, Runnable connectedRunnable, Runnable disconnectedRunnable, Consumer<ByteBuffer> inputConsumer) {
         Objects.requireNonNull(options);
         Objects.requireNonNull(inputConsumer);
         Objects.requireNonNull(connectedRunnable);
 
         this.options = options;
         this.connectedRunnable = connectedRunnable;
+        this.disconnectedRunnable = disconnectedRunnable;
         this.inputConsumer = inputConsumer;
     }
 
@@ -285,6 +287,12 @@ public final class Netty5Server implements NettyServer {
             }
 
             @Override
+            public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                disconnectedRunnable.run();
+                ctx.fireChannelInactive();
+            }
+
+            @Override
             protected void messageReceived(ChannelHandlerContext ctx, Buffer input) throws Exception {
                 LOG.trace("AMQP Test Server Channel read: {}", input);
 
@@ -374,6 +382,26 @@ public final class Netty5Server implements NettyServer {
     }
 
     @Override
+    public void disconnectClient() throws Exception {
+        if (!started.get() || !serverChannel.isOpen()) {
+            throw new IllegalStateException("Server must be currently active in order to reset");
+        }
+
+        if (clientChannel != null) {
+            try {
+                if (!clientChannel.close().asStage().await(10, TimeUnit.SECONDS)) {
+                    LOG.info("Connected Client channel close timed out waiting for result");
+                }
+            } catch (InterruptedException e) {
+                Thread.interrupted();
+                LOG.debug("Close of connected client channel interrupted while awaiting result");
+            } finally {
+                clientChannel = null;
+            }
+        }
+    }
+
+    @Override
     public int getServerPort() {
         if (!started.get()) {
             throw new IllegalStateException("Cannot get server port of non-started server");
@@ -446,6 +474,7 @@ public final class Netty5Server implements NettyServer {
             LOG.info("NettyServerHandler: channel has gone inactive: {}", ctx.channel());
             ctx.close();
             ctx.fireChannelInactive();
+            Netty5Server.this.clientChannel = null;
         }
 
         @Override

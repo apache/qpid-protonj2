@@ -64,7 +64,12 @@ public class ProtonTestConnector extends ProtonTestPeer implements Consumer<Byte
     //----- Internal implementation which can be overridden
 
     @Override
-    protected void processCloseRequest() {
+    protected void processCloseConnectionRequest() {
+        // nothing to do in this peer implementation.
+    }
+
+    @Override
+    protected void processPeerShutdownRequest() {
         // nothing to do in this peer implementation.
     }
 
@@ -76,5 +81,10 @@ public class ProtonTestConnector extends ProtonTestPeer implements Consumer<Byte
     @Override
     protected void processConnectionEstablished() {
         driver.handleConnectedEstablished();
+    }
+
+    @Override
+    protected void processConnectionDropped() {
+        driver.handleConnectedDropped();
     }
 }
