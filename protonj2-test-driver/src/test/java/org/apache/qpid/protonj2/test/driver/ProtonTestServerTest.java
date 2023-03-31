@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.qpid.protonj2.test.driver.codec.security.SaslCode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
 import org.apache.qpid.protonj2.test.driver.utils.TestPeerTestsBase;
 import org.junit.jupiter.api.Test;
@@ -92,6 +93,32 @@ public class ProtonTestServerTest extends TestPeerTestsBase {
             assertThrows(AssertionError.class, () -> peer.waitForScriptToComplete(5, TimeUnit.SECONDS));
 
             client.close();
+        }
+    }
+
+    @Test
+    public void testServerExpectsSaslPlainConnectOffersMoreThanPlain() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLPlainConnect("user", "pass", "EXTERNAL", "PLAIN", "ANONYMOUS");
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            try (ProtonTestClient client = new ProtonTestClient()) {
+                client.connect(remoteURI.getHost(), remoteURI.getPort());
+                client.expectSASLHeader();
+                client.expectSaslMechanisms().withSaslServerMechanisms("EXTERNAL", "PLAIN", "ANONYMOUS");
+                client.remoteSaslInit().withMechanism("PLAIN").withInitialResponse(peer.saslPlainInitialResponse("user", "pass")).queue();
+                client.expectSaslOutcome().withCode(SaslCode.OK);
+                client.remoteHeader(AMQPHeader.getAMQPHeader()).queue();
+
+                // Start the exchange with the client SASL header
+                client.remoteHeader(AMQPHeader.getSASLHeader()).now();
+
+                client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            }
+
+            peer.waitForScriptToComplete();
         }
     }
 }

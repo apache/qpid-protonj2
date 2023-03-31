@@ -355,7 +355,7 @@ public abstract class ScriptWriter {
         }
 
         expectSASLHeader().respondWithSASLHeader();
-        remoteSaslMechanisms().withMechanisms("ANONYMOUS").queue();
+        remoteSaslMechanisms().withMechanisms(mechanisms).queue();
         expectSaslInit().withMechanism("ANONYMOUS");
         remoteSaslOutcome().withCode(SaslCode.OK).queue();
         expectAMQPHeader().respondWithAMQPHeader();
@@ -407,7 +407,7 @@ public abstract class ScriptWriter {
         }
 
         expectSASLHeader().respondWithSASLHeader();
-        remoteSaslMechanisms().withMechanisms("PLAIN").queue();
+        remoteSaslMechanisms().withMechanisms(mechanisms).queue();
         expectSaslInit().withMechanism("PLAIN").withInitialResponse(saslPlainInitialResponse(username, password));
         remoteSaslOutcome().withCode(SaslCode.OK).queue();
         expectAMQPHeader().respondWithAMQPHeader();
@@ -644,6 +644,17 @@ public abstract class ScriptWriter {
 
     //----- Out of band script actions for user code
 
+    /**
+     * Allows for a user defined bit of code to be executed during the test script
+     * in response to some incoming frame or as scripted after a given delay etc.
+     * The action will be performed on the event thread of the peer outside the
+     * thread that the tests run in.
+     *
+     * @param action
+     * 		The {@link Runnable} action to be performed.
+     *
+     * @return the action instance which can either be queued or triggered immediately.
+     */
     public ExecuteUserCodeAction execute(Runnable action) {
         return new ExecuteUserCodeAction(getDriver(), action);
     }
