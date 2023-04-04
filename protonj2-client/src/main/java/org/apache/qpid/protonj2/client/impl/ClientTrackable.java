@@ -17,6 +17,7 @@
 
 package org.apache.qpid.protonj2.client.impl;
 
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -61,6 +62,8 @@ public abstract class ClientTrackable<SenderType extends ClientSenderLinkType<?>
      *      The proton outgoing delivery object that backs this tracker.
      */
     ClientTrackable(SenderType sender, OutgoingDelivery delivery) {
+        Objects.requireNonNull(sender, "Sender cannot be null for a Tracker");
+
         this.sender = sender;
         this.delivery = delivery;
         this.delivery.deliveryStateUpdatedHandler(this::processDeliveryUpdated);
@@ -125,10 +128,10 @@ public abstract class ClientTrackable<SenderType extends ClientSenderLinkType<?>
             if (remoteSettlementFuture == null) {
                 remoteSettlementFuture = sender.session.connection().getFutureFactory().createFuture();
             }
-        }
 
-        if (delivery.isSettled() || delivery.isRemotelySettled()) {
-            remoteSettlementFuture.complete(self());
+            if (delivery.isSettled() || remoteSettled()) {
+                remoteSettlementFuture.complete(self());
+            }
         }
 
         return remoteSettlementFuture;
@@ -212,17 +215,17 @@ public abstract class ClientTrackable<SenderType extends ClientSenderLinkType<?>
 
     private void processDeliveryUpdated(OutgoingDelivery delivery) {
         if (delivery.isRemotelySettled()) {
-            if (sender.options.autoSettle()) {
-                delivery.settle();
-            }
-
             synchronized (this) {
-                REMOTELY_SETTLED_UPDATER.lazySet(this, 1);
                 REMOTEL_DELIVERY_STATE_UPDATER.lazySet(this, ClientDeliveryState.fromProtonType(delivery.getRemoteState()));
+                REMOTELY_SETTLED_UPDATER.lazySet(this, 1);
 
                 if (remoteSettlementFuture != null) {
                     remoteSettlementFuture.complete(self());
                 }
+            }
+
+            if (sender.options.autoSettle()) {
+                delivery.settle();
             }
         } else {
             REMOTEL_DELIVERY_STATE_UPDATER.set(this, ClientDeliveryState.fromProtonType(delivery.getRemoteState()));

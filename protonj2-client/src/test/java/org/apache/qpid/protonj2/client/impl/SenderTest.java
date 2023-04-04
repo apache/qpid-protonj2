@@ -82,6 +82,7 @@ import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.types.transport.Role;
 import org.apache.qpid.protonj2.types.transport.SenderSettleMode;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -2663,6 +2664,50 @@ public class SenderTest extends ImperativeClientTestCase {
             }
 
             connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @RepeatedTest(2)
+    public void testAwaitSettlementAndCheckRemoteState() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().withTarget().withAddress("test").and().respond();
+            peer.remoteFlow().withLinkCredit(5).queue();
+            peer.expectTransfer().accept();
+            peer.expectTransfer().accept();
+            peer.expectTransfer().accept();
+            peer.expectTransfer().accept();
+            peer.expectTransfer().accept();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            Message<String> message = Message.create("test-message");
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Sender sender = session.openSender("test");
+
+            final Tracker tracker1 = sender.send(message);
+            final Tracker tracker2 = sender.send(message);
+            final Tracker tracker3 = sender.send(message);
+            final Tracker tracker4 = sender.send(message);
+            final Tracker tracker5 = sender.send(message);
+
+            assertEquals(ClientDeliveryState.ClientAccepted.getInstance() ,tracker1.awaitSettlement().remoteState());
+            assertEquals(ClientDeliveryState.ClientAccepted.getInstance() ,tracker2.awaitSettlement().remoteState());
+            assertEquals(ClientDeliveryState.ClientAccepted.getInstance() ,tracker3.awaitSettlement().remoteState());
+            assertEquals(ClientDeliveryState.ClientAccepted.getInstance() ,tracker4.awaitSettlement().remoteState());
+            assertEquals(ClientDeliveryState.ClientAccepted.getInstance() ,tracker5.awaitSettlement().remoteState());
+            assertTrue(tracker1.remoteSettled());
+            assertTrue(tracker2.remoteSettled());
+            assertTrue(tracker3.remoteSettled());
+            assertTrue(tracker4.remoteSettled());
+            assertTrue(tracker5.remoteSettled());
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
