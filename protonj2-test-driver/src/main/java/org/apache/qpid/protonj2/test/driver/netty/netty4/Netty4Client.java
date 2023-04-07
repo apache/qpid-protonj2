@@ -266,6 +266,7 @@ public final class Netty4Client implements NettyClient {
             if (!isSecure()) {
                 if (!options.isUseWebSockets()) {
                     handleConnected(context.channel());
+                    context.fireChannelActive();
                 }
             } else {
                 SslHandler sslHandler = context.pipeline().get(SslHandler.class);
@@ -386,12 +387,6 @@ public final class Netty4Client implements NettyClient {
         return new SimpleChannelInboundHandler<ByteBuf>() {
 
             @Override
-            public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                connectedRunnable.run();
-                ctx.fireChannelActive();
-            }
-
-            @Override
             protected void channelRead0(ChannelHandlerContext ctx, ByteBuf input) throws Exception {
                 LOG.trace("AMQP Test Client Channel read: {}", input);
 
@@ -482,6 +477,7 @@ public final class Netty4Client implements NettyClient {
         channel = connectedChannel;
         connected.set(true);
         connectedLatch.countDown();
+        connectedRunnable.run();
     }
 
     protected void handleTransportFailure(Channel failedChannel, Throwable cause) {

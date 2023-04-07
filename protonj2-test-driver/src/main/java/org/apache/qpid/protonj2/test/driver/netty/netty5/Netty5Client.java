@@ -386,12 +386,6 @@ public final class Netty5Client implements NettyClient {
         return new SimpleChannelInboundHandler<Buffer>() {
 
             @Override
-            public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                connectedRunnable.run();
-                ctx.fireChannelActive();
-            }
-
-            @Override
             protected void messageReceived(ChannelHandlerContext ctx, Buffer input) throws Exception {
                 LOG.trace("AMQP Test Client Channel read: {}", input);
 
@@ -482,6 +476,7 @@ public final class Netty5Client implements NettyClient {
         channel = connectedChannel;
         connected.set(true);
         connectedLatch.countDown();
+        connectedRunnable.run();
     }
 
     protected void handleTransportFailure(Channel failedChannel, Throwable cause) {

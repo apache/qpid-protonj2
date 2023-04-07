@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.test.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.collection.ArrayMatching.hasItemInArray;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
@@ -45,6 +46,14 @@ public class SaslMechanismsExpectation extends AbstractExpectation<SaslMechanism
 
     public SaslMechanismsExpectation withSaslServerMechanisms(Symbol... mechanisms) {
         return withSaslServerMechanisms(equalTo(mechanisms));
+    }
+
+    public SaslMechanismsExpectation withSaslServerMechanism(String mechanisms) {
+        return withSaslServerMechanisms(hasItemInArray(Symbol.valueOf(mechanisms)));
+    }
+
+    public SaslMechanismsExpectation withSaslServerMechanism(Symbol mechanisms) {
+        return withSaslServerMechanisms(hasItemInArray(mechanisms));
     }
 
     //----- Matcher based with methods for more complex validation

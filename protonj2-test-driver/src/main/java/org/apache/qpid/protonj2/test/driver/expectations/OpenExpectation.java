@@ -18,6 +18,7 @@ package org.apache.qpid.protonj2.test.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.collection.ArrayMatching.hasItemInArray;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -166,12 +167,28 @@ public class OpenExpectation extends AbstractExpectation<Open> {
         return withOutgoingLocales(equalTo(outgoingLocales));
     }
 
+    public OpenExpectation withOutgoingLocale(String outgoingLocale) {
+        return withOutgoingLocales(hasItemInArray(Symbol.valueOf(outgoingLocale)));
+    }
+
+    public OpenExpectation withOutgoingLocale(Symbol outgoingLocale) {
+        return withOutgoingLocales(hasItemInArray(outgoingLocale));
+    }
+
     public OpenExpectation withIncomingLocales(String... incomingLocales) {
         return withIncomingLocales(equalTo(TypeMapper.toSymbolArray(incomingLocales)));
     }
 
     public OpenExpectation withIncomingLocales(Symbol... incomingLocales) {
         return withIncomingLocales(equalTo(incomingLocales));
+    }
+
+    public OpenExpectation withIncomingLocale(String incomingLocale) {
+        return withIncomingLocales(hasItemInArray(Symbol.valueOf(incomingLocale)));
+    }
+
+    public OpenExpectation withIncomingLocale(Symbol incomingLocale) {
+        return withIncomingLocales(hasItemInArray(incomingLocale));
     }
 
     public OpenExpectation withOfferedCapabilities(String... offeredCapabilities) {
@@ -182,12 +199,28 @@ public class OpenExpectation extends AbstractExpectation<Open> {
         return withOfferedCapabilities(equalTo(offeredCapabilities));
     }
 
+    public OpenExpectation withOfferedCapability(Symbol offeredCapability) {
+        return withOfferedCapabilities(hasItemInArray(offeredCapability));
+    }
+
+    public OpenExpectation withOfferedCapability(String offeredCapability) {
+        return withOfferedCapabilities(hasItemInArray(Symbol.valueOf(offeredCapability)));
+    }
+
     public OpenExpectation withDesiredCapabilities(String... desiredCapabilities) {
         return withDesiredCapabilities(equalTo(TypeMapper.toSymbolArray(desiredCapabilities)));
     }
 
     public OpenExpectation withDesiredCapabilities(Symbol... desiredCapabilities) {
         return withDesiredCapabilities(equalTo(desiredCapabilities));
+    }
+
+    public OpenExpectation withDesiredCapability(Symbol desiredCapability) {
+        return withDesiredCapabilities(hasItemInArray(desiredCapability));
+    }
+
+    public OpenExpectation withDesiredCapability(String desiredCapability) {
+        return withDesiredCapabilities(hasItemInArray(Symbol.valueOf(desiredCapability)));
     }
 
     public OpenExpectation withPropertiesMap(Map<Symbol, Object> properties) {

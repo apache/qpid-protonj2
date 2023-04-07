@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.collection.ArrayMatching.hasItemInArray;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -348,12 +349,28 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         return withOfferedCapabilities(equalTo(TypeMapper.toSymbolArray(offeredCapabilities)));
     }
 
+    public AttachExpectation withOfferedCapability(Symbol offeredCapability) {
+        return withOfferedCapabilities(hasItemInArray(offeredCapability));
+    }
+
+    public AttachExpectation withOfferedCapability(String offeredCapability) {
+        return withOfferedCapabilities(hasItemInArray(Symbol.valueOf(offeredCapability)));
+    }
+
     public AttachExpectation withDesiredCapabilities(Symbol... desiredCapabilities) {
         return withDesiredCapabilities(equalTo(desiredCapabilities));
     }
 
     public AttachExpectation withDesiredCapabilities(String... desiredCapabilities) {
         return withDesiredCapabilities(equalTo(TypeMapper.toSymbolArray(desiredCapabilities)));
+    }
+
+    public AttachExpectation withDesiredCapability(Symbol desiredCapability) {
+        return withDesiredCapabilities(hasItemInArray(desiredCapability));
+    }
+
+    public AttachExpectation withDesiredCapability(String desiredCapability) {
+        return withDesiredCapabilities(hasItemInArray(Symbol.valueOf(desiredCapability)));
     }
 
     public AttachExpectation withPropertiesMap(Map<Symbol, Object> properties) {

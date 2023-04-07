@@ -238,6 +238,14 @@ public abstract class ScriptWriter {
         return new AMQPHeaderInjectAction(getDriver(), header);
     }
 
+    public AMQPHeaderInjectAction remoteAMQPHeader() {
+        return new AMQPHeaderInjectAction(getDriver(), AMQPHeader.getAMQPHeader());
+    }
+
+    public AMQPHeaderInjectAction remoteSASLHeader() {
+        return new AMQPHeaderInjectAction(getDriver(), AMQPHeader.getSASLHeader());
+    }
+
     public OpenInjectAction remoteOpen() {
         return new OpenInjectAction(getDriver());
     }
@@ -320,7 +328,8 @@ public abstract class ScriptWriter {
 
     /**
      * Creates all the scripted elements needed for a successful SASL Anonymous
-     * connection.
+     * connection. This is generally used with a server type peer which will be
+     * accepting client connections.
      * <p>
      * For this exchange the SASL header is expected which is responded to with the
      * corresponding SASL header and an immediate SASL mechanisms frame that only
@@ -337,7 +346,8 @@ public abstract class ScriptWriter {
      * Creates all the scripted elements needed for a successful SASL Anonymous
      * connection. The provided set of mechanisms must contain the anonymous SASL
      * mechanism or an exception is thrown as otherwise the premise of this test
-     * method could not be met.
+     * method could not be met. This is generally used with a server type peer
+     * which will be accepting client connections.
      * <p>
      * For this exchange the SASL header is expected which is responded to with the
      * corresponding SASL header and an immediate SASL mechanisms frame that only
@@ -363,7 +373,8 @@ public abstract class ScriptWriter {
 
     /**
      * Creates all the scripted elements needed for a successful SASL Plain
-     * connection.
+     * connection. This is generally used with a server type peer which will be
+     * accepting client connections.
      * <p>
      * For this exchange the SASL header is expected which is responded to with the
      * corresponding SASL header and an immediate SASL mechanisms frame that only
@@ -385,7 +396,8 @@ public abstract class ScriptWriter {
      * Creates all the scripted elements needed for a successful SASL Plain
      * connection. The provided set of mechanisms must contain the plain SASL
      * mechanism or an exception is thrown as otherwise the premise of this test
-     * method could not be met.
+     * method could not be met. This is generally used with a server type peer
+     * which will be accepting client connections.
      * <p>
      * For this exchange the SASL header is expected which is responded to with the
      * corresponding SASL header and an immediate SASL mechanisms frame that only
@@ -415,7 +427,8 @@ public abstract class ScriptWriter {
 
     /**
      * Creates all the scripted elements needed for a successful SASL XOAUTH2
-     * connection.
+     * connection. This is generally used with a server type peer which will be
+     * accepting client connections.
      * <p>
      * For this exchange the SASL header is expected which is responded to with the
      * corresponding SASL header and an immediate SASL mechanisms frame that only
@@ -439,7 +452,8 @@ public abstract class ScriptWriter {
 
     /**
      * Creates all the scripted elements needed for a failed SASL Plain
-     * connection.
+     * connection. This is generally used with a server type peer which will be
+     * accepting client connections.
      * <p>
      * For this exchange the SASL header is expected which is responded to with the
      * corresponding SASL header and an immediate SASL mechanisms frame that only
@@ -456,7 +470,8 @@ public abstract class ScriptWriter {
 
     /**
      * Creates all the scripted elements needed for a failed SASL Plain
-     * connection.
+     * connection. This is generally used with a server type peer which will be
+     * accepting client connections.
      * <p>
      * For this exchange the SASL header is expected which is responded to with the
      * corresponding SASL header and an immediate SASL mechanisms frame that only
@@ -487,7 +502,8 @@ public abstract class ScriptWriter {
 
     /**
      * Creates all the scripted elements needed for a successful SASL EXTERNAL
-     * connection.
+     * connection. This is generally used with a server type peer which will be
+     * accepting client connections.
      * <p>
      * For this exchange the SASL header is expected which is responded to with the
      * corresponding SASL header and an immediate SASL mechanisms frame that only

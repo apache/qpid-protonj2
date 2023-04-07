@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.qpid.protonj2.test.driver.codec.security.SaslCode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
 import org.apache.qpid.protonj2.test.driver.utils.TestPeerTestsBase;
 import org.junit.jupiter.api.Test;
@@ -189,6 +190,33 @@ class ProtonTestClientTest extends TestPeerTestsBase {
 
             assertThrows(AssertionError.class, () -> client.waitForScriptToComplete(5, TimeUnit.SECONDS));
 
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testClientPeerCanBeScriptedToConnectAndThenInitiateSASLAnonymousAuthentication() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect("PLAIN", "ANONYMOUS");
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient();
+
+            client.remoteSASLHeader().queue();
+            client.expectSASLHeader();
+            client.expectSaslMechanisms().withSaslServerMechanism("ANONYMOUS");
+            client.remoteSaslInit().withMechanism("ANONYMOUS").queue();
+            client.expectSaslOutcome().withCode(SaslCode.OK);
+            client.remoteAMQPHeader().queue();
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             client.close();
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
