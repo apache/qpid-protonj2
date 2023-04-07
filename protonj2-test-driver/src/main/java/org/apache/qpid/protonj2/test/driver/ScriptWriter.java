@@ -550,6 +550,80 @@ public abstract class ScriptWriter {
         remoteSaslOutcome().withCode(SaslCode.AUTH).queue();
     }
 
+    /**
+     * Used to queue the sequence of frames that would occur during a typical client
+     * connection to a remote peer with SASL anonymous. This should be called before a
+     * client connect attempt as the queued headers won't fire if queued after the
+     * connection has already been established.
+     */
+    public void queueClientSaslAnonymousConnect() {
+        remoteSASLHeader().queue();
+        expectSASLHeader();
+        expectSaslMechanisms().withSaslServerMechanism("ANONYMOUS");
+        remoteSaslInit().withMechanism("ANONYMOUS").queue();
+        expectSaslOutcome().withCode(SaslCode.OK);
+        remoteAMQPHeader().queue();
+    }
+
+    /**
+     * Used to trigger the sequence of frames that would occur during a typical client
+     * connection to a remote peer with SASL anonymous. This should be called after a
+     * client connects to the remote as the fired frames would fail until there is a
+     * connection in place.
+     */
+    public void triggerClientSaslAnonymousConnect() {
+        expectSASLHeader();
+        expectSaslMechanisms().withSaslServerMechanism("ANONYMOUS");
+        remoteSaslInit().withMechanism("ANONYMOUS").queue();
+        expectSaslOutcome().withCode(SaslCode.OK);
+        remoteAMQPHeader().queue();
+
+        // This trigger the exchange of frames.
+        remoteSASLHeader().now();
+    }
+
+    /**
+     * Used to queue the sequence of frames that would occur during a typical client
+     * connection to a remote peer with SASL plain. This should be called before a
+     * client connect attempt as the queued headers won't fire if queued after the
+     * connection has already been established.
+     *
+     * @param username
+     *      The user name that is expected in the SASL Plain initial response.
+     * @param password
+     *      The password that is expected in the SASL Plain initial response.
+     */
+    public void queueClientSaslPlainConnect(String username, String password) {
+        remoteSASLHeader().queue();
+        expectSASLHeader();
+        expectSaslMechanisms().withSaslServerMechanism("PLAIN");
+        remoteSaslInit().withMechanism("PLAIN").withInitialResponse(saslPlainInitialResponse(username, password)).queue();
+        expectSaslOutcome().withCode(SaslCode.OK);
+        remoteAMQPHeader().queue();
+    }
+
+    /**
+     * Used to trigger the sequence of frames that would occur during a typical client
+     * connection to a remote peer with SASL plain. This should be called after a
+     * client connects to the remote as the fired frames would fail until there is a
+     * connection in place.
+     *
+     * @param username
+     *      The user name that is expected in the SASL Plain initial response.
+     * @param password
+     *      The password that is expected in the SASL Plain initial response.
+     */
+    public void triggerClientSaslPlainConnect(String username, String password) {
+        expectSASLHeader();
+        expectSaslMechanisms().withSaslServerMechanism("PLAIN");
+        remoteSaslInit().withMechanism("PLAIN").withInitialResponse(saslPlainInitialResponse(username, password)).queue();
+        expectSaslOutcome().withCode(SaslCode.OK);
+        remoteAMQPHeader().queue();
+
+        // This trigger the exchange of frames.
+        remoteSASLHeader().now();
+    }
+
     //----- Utility methods for tests writing raw scripted SASL tests
 
     public byte[] saslPlainInitialResponse(String username, String password) {

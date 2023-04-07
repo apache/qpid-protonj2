@@ -224,4 +224,92 @@ class ProtonTestClientTest extends TestPeerTestsBase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    public void testScriptedClientSASLAnonymousBeforeConnect() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect("PLAIN", "ANONYMOUS");
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient();
+
+            client.queueClientSaslAnonymousConnect();
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testScriptedClientSASLAnonymousAfterConnect() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect("PLAIN", "ANONYMOUS");
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient();
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.triggerClientSaslAnonymousConnect();
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testScriptedClientSASLPlainBeforeConnect() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLPlainConnect("test", "test");
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient();
+
+            client.queueClientSaslPlainConnect("test", "test");
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testScriptedClientSASLPlainAfterConnect() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLPlainConnect("test", "test");
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient();
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.triggerClientSaslPlainConnect("test", "test");
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }
