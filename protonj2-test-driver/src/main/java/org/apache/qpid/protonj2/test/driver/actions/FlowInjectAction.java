@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.actions;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
@@ -144,6 +145,19 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
     public FlowInjectAction withProperties(Map<Symbol, Object> properties) {
         flow.setProperties(properties);
         return this;
+    }
+
+    public FlowInjectAction withProperty(Symbol key, Object value) {
+        if (flow.getProperties() == null) {
+            flow.setProperties(new LinkedHashMap<>());
+        }
+
+        flow.getProperties().put(key, value);
+        return this;
+    }
+
+    public FlowInjectAction withProperty(String key, Object value) {
+        return withProperty(Symbol.valueOf(key), value);
     }
 
     @Override

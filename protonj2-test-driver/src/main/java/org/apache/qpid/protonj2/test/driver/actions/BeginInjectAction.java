@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.actions;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
@@ -153,6 +154,19 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
     public BeginInjectAction withPropertiesMap(Map<Symbol, Object> properties) {
         begin.setProperties(properties);
         return this;
+    }
+
+    public BeginInjectAction withProperty(Symbol key, Object value) {
+        if (begin.getProperties() == null) {
+            begin.setProperties(new LinkedHashMap<>());
+        }
+
+        begin.getProperties().put(key, value);
+        return this;
+    }
+
+    public BeginInjectAction withProperty(String key, Object value) {
+        return withProperty(Symbol.valueOf(key), value);
     }
 
     @Override

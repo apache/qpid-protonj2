@@ -272,6 +272,19 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         return this;
     }
 
+    public AttachInjectAction withProperty(Symbol key, Object value) {
+        if (attach.getProperties() == null) {
+            attach.setProperties(new LinkedHashMap<>());
+        }
+
+        attach.getProperties().put(key, value);
+        return this;
+    }
+
+    public AttachInjectAction withProperty(String key, Object value) {
+        return withProperty(Symbol.valueOf(key), value);
+    }
+
     @Override
     protected void beforeActionPerformed(AMQPTestDriver driver) {
         // A test that is trying to send an unsolicited attach must provide a channel as we

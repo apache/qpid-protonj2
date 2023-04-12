@@ -20,6 +20,8 @@ package org.apache.qpid.protonj2.test.driver;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
@@ -401,7 +403,7 @@ class SenderHandlingTest extends TestPeerTestsBase {
             client.connect(remoteURI.getHost(), remoteURI.getPort());
 
             // These should not be sent until a non-deferred action is triggered.
-            client.remoteHeader(AMQPHeader.getAMQPHeader()).deferred().now();
+            client.remoteAMQPHeader().deferred().now();
             client.remoteOpen().deferred().now();
             client.remoteBegin().deferred().now();
             client.remoteAttach().ofSender().deferred().now();
@@ -426,6 +428,37 @@ class SenderHandlingTest extends TestPeerTestsBase {
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSendRemoteCommandsWithSingularPropertyAPIs() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            final Map<String, Object> expecetedProperties = new HashMap<>();
+            expecetedProperties.put("test", "entry");
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().withProperties(expecetedProperties);
+            peer.expectBegin().withProperties(expecetedProperties);
+            peer.expectAttach().ofSender().withProperties(expecetedProperties);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.remoteAMQPHeader().now();
+            client.remoteOpen().withProperty("test", "entry").now();
+            client.remoteBegin().withProperty("test", "entry").now();
+            client.remoteAttach().ofSender().withProperty("test", "entry").now();
+
+            // Wait for the above and then script next steps
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
