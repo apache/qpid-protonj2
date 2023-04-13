@@ -417,6 +417,19 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
             return this;
         }
 
+        public SourceBuilder withDynamicNodeProperty(String key, Object value) {
+            return withDynamicNodeProperty(Symbol.valueOf(key), value);
+        }
+
+        public SourceBuilder withDynamicNodeProperty(Symbol key, Object value) {
+            if (source.getDynamicNodeProperties() == null) {
+                source.setDynamicNodeProperties(new LinkedHashMap<>());
+            }
+
+            source.getDynamicNodeProperties().put(key, value);
+            return this;
+        }
+
         public SourceBuilder withDistributionMode(String mode) {
             source.setDistributionMode(Symbol.valueOf(mode));
             return this;
@@ -434,6 +447,19 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
         public SourceBuilder withFilterMap(Map<String, Object> filters) {
             source.setFilter(TypeMapper.toSymbolKeyedMap(filters));
+            return this;
+        }
+
+        public SourceBuilder withFilterMap(String key, Object value) {
+            return withFilterMap(Symbol.valueOf(key), value);
+        }
+
+        public SourceBuilder withFilterMap(Symbol key, Object value) {
+            if (source.getFilter() == null) {
+                source.setFilter(new LinkedHashMap<>());
+            }
+
+            source.getFilter().put(key, value);
             return this;
         }
 
@@ -518,6 +544,19 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
         public TargetBuilder withDynamicNodeProperties(Map<String, Object> properties) {
             target.setDynamicNodeProperties(TypeMapper.toSymbolKeyedMap(properties));
+            return this;
+        }
+
+        public TargetBuilder withDynamicNodeProperty(String key, Object value) {
+            return withDynamicNodeProperty(Symbol.valueOf(key), value);
+        }
+
+        public TargetBuilder withDynamicNodeProperty(Symbol key, Object value) {
+            if (target.getDynamicNodeProperties() == null) {
+                target.setDynamicNodeProperties(new LinkedHashMap<>());
+            }
+
+            target.getDynamicNodeProperties().put(key, value);
             return this;
         }
 
