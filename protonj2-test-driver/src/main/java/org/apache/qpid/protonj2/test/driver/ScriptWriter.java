@@ -563,6 +563,7 @@ public abstract class ScriptWriter {
         remoteSaslInit().withMechanism("ANONYMOUS").queue();
         expectSaslOutcome().withCode(SaslCode.OK);
         remoteAMQPHeader().queue();
+        expectAMQPHeader();
     }
 
     /**
