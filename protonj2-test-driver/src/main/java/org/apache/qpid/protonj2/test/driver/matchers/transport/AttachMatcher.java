@@ -36,12 +36,16 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.SenderSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.protonj2.test.driver.matchers.ListDescribedTypeMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.MapContentsMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.TargetMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transactions.CoordinatorMatcher;
 import org.hamcrest.Matcher;
 
 public class AttachMatcher extends ListDescribedTypeMatcher {
+
+    // Only used if singular 'withProperty' API is used
+    private MapContentsMatcher<Symbol, Object> propertiesMatcher;
 
     public AttachMatcher() {
         super(Attach.Field.values().length, Attach.DESCRIPTOR_CODE, Attach.DESCRIPTOR_SYMBOL);
@@ -178,11 +182,26 @@ public class AttachMatcher extends ListDescribedTypeMatcher {
     }
 
     public AttachMatcher withPropertiesMap(Map<Symbol, Object> properties) {
+        propertiesMatcher = null; // Clear these as this overrides anything else
         return withProperties(equalTo(properties));
     }
 
     public AttachMatcher withProperties(Map<String, Object> properties) {
-        return withProperties(equalTo(TypeMapper.toSymbolKeyedMap(properties)));
+        return withPropertiesMap(TypeMapper.toSymbolKeyedMap(properties));
+    }
+
+    public AttachMatcher withProperty(String key, Object value) {
+        return withProperty(Symbol.valueOf(key), value);
+    }
+
+    public AttachMatcher withProperty(Symbol key, Object value) {
+        if (propertiesMatcher == null) {
+            propertiesMatcher = new MapContentsMatcher<Symbol, Object>();
+        }
+
+        propertiesMatcher.addExpectedEntry(key, value);
+
+        return withProperties(propertiesMatcher);
     }
 
     //----- Matcher based with methods for more complex validation

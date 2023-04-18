@@ -24,9 +24,13 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.Modified;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.protonj2.test.driver.matchers.ListDescribedTypeMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.MapContentsMatcher;
 import org.hamcrest.Matcher;
 
 public class ModifiedMatcher extends ListDescribedTypeMatcher {
+
+    // Only used if singular 'withAnnotation' API is used
+    private MapContentsMatcher<Symbol, Object> annotationsMatcher;
 
     public ModifiedMatcher() {
         super(Modified.Field.values().length, Modified.DESCRIPTOR_CODE, Modified.DESCRIPTOR_SYMBOL);
@@ -56,11 +60,26 @@ public class ModifiedMatcher extends ListDescribedTypeMatcher {
     }
 
     public ModifiedMatcher withMessageAnnotationsMap(Map<Symbol, Object> sectionNo) {
+        annotationsMatcher = null; // Clear these as this overrides anything else
         return withMessageAnnotations(equalTo(sectionNo));
     }
 
     public ModifiedMatcher withMessageAnnotations(Map<String, Object> sectionNo) {
-        return withMessageAnnotations(equalTo(TypeMapper.toSymbolKeyedMap(sectionNo)));
+        return withMessageAnnotationsMap(TypeMapper.toSymbolKeyedMap(sectionNo));
+    }
+
+    public ModifiedMatcher withMessageAnnotation(String key, Object value) {
+        return withMessageAnnotation(Symbol.valueOf(key), value);
+    }
+
+    public ModifiedMatcher withMessageAnnotation(Symbol key, Object value) {
+        if (annotationsMatcher == null) {
+            annotationsMatcher = new MapContentsMatcher<Symbol, Object>();
+        }
+
+        annotationsMatcher.addExpectedEntry(key, value);
+
+        return withMessageAnnotations(annotationsMatcher);
     }
 
     //----- Matcher based with methods for more complex validation

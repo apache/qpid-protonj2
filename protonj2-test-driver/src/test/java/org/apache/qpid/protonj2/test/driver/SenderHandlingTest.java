@@ -463,4 +463,90 @@ class SenderHandlingTest extends TestPeerTestsBase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    public void testSendRemoteCommandsWithSingularPropertyAPIsForBoth() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().withProperty("test1", "entry");
+            peer.expectBegin().withProperty("test2", "entry");
+            peer.expectAttach().ofSender().withProperty("test3", "entry");
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.remoteAMQPHeader().now();
+            client.remoteOpen().withProperty("test1", "entry").now();
+            client.remoteBegin().withProperty("test2", "entry").now();
+            client.remoteAttach().ofSender().withProperty("test3", "entry").now();
+
+            // Wait for the above and then script next steps
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSendRemoteAttachExpectingSinglePropertyFails() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen();
+            peer.expectBegin();
+            peer.expectAttach().ofSender().withProperty("test", "entry");
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.remoteAMQPHeader().now();
+            client.remoteOpen().now();
+            client.remoteBegin().now();
+            client.remoteAttach().ofSender().withProperty("fail", "entry").now();
+
+            // Wait for the above and then script next steps
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            assertThrows(AssertionError.class, () -> peer.waitForScriptToComplete(5, TimeUnit.SECONDS));
+        }
+    }
+
+    @Test
+    public void testSenderAttachContainsAtLeastOneMatchedProperty() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen();
+            peer.expectBegin();
+            peer.expectAttach().ofSender().withProperty("test", "entry");
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.remoteAMQPHeader().now();
+            client.remoteOpen().now();
+            client.remoteBegin().now();
+            client.remoteAttach().ofSender().withProperty("test", "entry")
+                                            .withProperty("another", "property").now();
+
+            // Wait for the above and then script next steps
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

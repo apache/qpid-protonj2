@@ -287,6 +287,16 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
         return this;
     }
 
+    public FlowExpectation withProperty(String key, Object value) {
+        matcher.withProperty(key, value);
+        return this;
+    }
+
+    public FlowExpectation withProperty(Symbol key, Object value) {
+        matcher.withProperty(key, value);
+        return this;
+    }
+
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;

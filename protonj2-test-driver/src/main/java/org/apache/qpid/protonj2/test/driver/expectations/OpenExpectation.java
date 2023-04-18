@@ -283,6 +283,16 @@ public class OpenExpectation extends AbstractExpectation<Open> {
         return this;
     }
 
+    public OpenExpectation withProperty(String key, Object value) {
+        matcher.withProperty(key, value);
+        return this;
+    }
+
+    public OpenExpectation withProperty(Symbol key, Object value) {
+        matcher.withProperty(key, value);
+        return this;
+    }
+
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;

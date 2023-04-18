@@ -26,9 +26,13 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Open;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.protonj2.test.driver.matchers.ListDescribedTypeMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.MapContentsMatcher;
 import org.hamcrest.Matcher;
 
 public class OpenMatcher extends ListDescribedTypeMatcher {
+
+    // Only used if singular 'withProperty' API is used
+    private MapContentsMatcher<Symbol, Object> propertiesMatcher;
 
     public OpenMatcher() {
         super(Open.Field.values().length, Open.DESCRIPTOR_CODE, Open.DESCRIPTOR_SYMBOL);
@@ -118,11 +122,26 @@ public class OpenMatcher extends ListDescribedTypeMatcher {
     }
 
     public OpenMatcher withPropertiesMap(Map<Symbol, Object> properties) {
+        propertiesMatcher = null; // Clear these as this overrides anything else
         return withProperties(equalTo(properties));
     }
 
     public OpenMatcher withProperties(Map<String, Object> properties) {
-        return withProperties(equalTo(TypeMapper.toSymbolKeyedMap(properties)));
+        return withPropertiesMap(TypeMapper.toSymbolKeyedMap(properties));
+    }
+
+    public OpenMatcher withProperty(String key, Object value) {
+        return withProperty(Symbol.valueOf(key), value);
+    }
+
+    public OpenMatcher withProperty(Symbol key, Object value) {
+        if (propertiesMatcher == null) {
+            propertiesMatcher = new MapContentsMatcher<>();
+        }
+
+        propertiesMatcher.addExpectedEntry(key, value);
+
+        return withProperties(propertiesMatcher);
     }
 
     //----- Matcher based with methods for more complex validation

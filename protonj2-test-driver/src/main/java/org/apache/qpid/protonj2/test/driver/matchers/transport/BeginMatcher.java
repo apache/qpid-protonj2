@@ -26,9 +26,13 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Begin;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.protonj2.test.driver.matchers.ListDescribedTypeMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.MapContentsMatcher;
 import org.hamcrest.Matcher;
 
 public class BeginMatcher extends ListDescribedTypeMatcher {
+
+    // Only used if singular 'withProperty' API is used
+    private MapContentsMatcher<Symbol, Object> propertiesMatcher;
 
     public BeginMatcher() {
         super(Begin.Field.values().length, Begin.DESCRIPTOR_CODE, Begin.DESCRIPTOR_SYMBOL);
@@ -114,11 +118,26 @@ public class BeginMatcher extends ListDescribedTypeMatcher {
     }
 
     public BeginMatcher withPropertiesMap(Map<Symbol, Object> properties) {
+        propertiesMatcher = null; // Clear these as this overrides anything else
         return withProperties(equalTo(properties));
     }
 
     public BeginMatcher withProperties(Map<String, Object> properties) {
-        return withProperties(equalTo(TypeMapper.toSymbolKeyedMap(properties)));
+        return withPropertiesMap(TypeMapper.toSymbolKeyedMap(properties));
+    }
+
+    public BeginMatcher withProperty(String key, Object value) {
+        return withProperty(Symbol.valueOf(key), value);
+    }
+
+    public BeginMatcher withProperty(Symbol key, Object value) {
+        if (propertiesMatcher == null) {
+            propertiesMatcher = new MapContentsMatcher<>();
+        }
+
+        propertiesMatcher.addExpectedEntry(key, value);
+
+        return withProperties(propertiesMatcher);
     }
 
     //----- Matcher based with methods for more complex validation

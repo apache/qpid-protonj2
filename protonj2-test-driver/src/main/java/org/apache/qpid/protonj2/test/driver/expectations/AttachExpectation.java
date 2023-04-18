@@ -458,6 +458,16 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         return this;
     }
 
+    public AttachExpectation withProperty(String key, Object value) {
+        matcher.withProperty(key, value);
+        return this;
+    }
+
+    public AttachExpectation withProperty(Symbol key, Object value) {
+        matcher.withProperty(key, value);
+        return this;
+    }
+
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;

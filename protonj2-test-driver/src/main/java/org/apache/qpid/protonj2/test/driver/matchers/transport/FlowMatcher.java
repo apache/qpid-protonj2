@@ -23,10 +23,15 @@ import java.util.Map;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Flow;
+import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.protonj2.test.driver.matchers.ListDescribedTypeMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.MapContentsMatcher;
 import org.hamcrest.Matcher;
 
 public class FlowMatcher extends ListDescribedTypeMatcher {
+
+    // Only used if singular 'withProperty' API is used
+    private MapContentsMatcher<Symbol, Object> propertiesMatcher;
 
     public FlowMatcher() {
         super(Flow.Field.values().length, Flow.DESCRIPTOR_CODE, Flow.DESCRIPTOR_SYMBOL);
@@ -143,8 +148,27 @@ public class FlowMatcher extends ListDescribedTypeMatcher {
         return withEcho(equalTo(echo));
     }
 
-    public FlowMatcher withProperties(Map<Symbol, Object> properties) {
+    public FlowMatcher withPropertiesMap(Map<Symbol, Object> properties) {
+        propertiesMatcher = null; // Clear these as this overrides anything else
         return withProperties(equalTo(properties));
+    }
+
+    public FlowMatcher withProperties(Map<String, Object> properties) {
+        return withPropertiesMap(TypeMapper.toSymbolKeyedMap(properties));
+    }
+
+    public FlowMatcher withProperty(String key, Object value) {
+        return withProperty(Symbol.valueOf(key), value);
+    }
+
+    public FlowMatcher withProperty(Symbol key, Object value) {
+        if (propertiesMatcher == null) {
+            propertiesMatcher = new MapContentsMatcher<>();
+        }
+
+        propertiesMatcher.addExpectedEntry(key, value);
+
+        return withProperties(propertiesMatcher);
     }
 
     //----- Matcher based with methods for more complex validation

@@ -241,6 +241,16 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
         return this;
     }
 
+    public BeginExpectation withProperty(String key, Object value) {
+        matcher.withProperty(key, value);
+        return this;
+    }
+
+    public BeginExpectation withProperty(Symbol key, Object value) {
+        matcher.withProperty(key, value);
+        return this;
+    }
+
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;
