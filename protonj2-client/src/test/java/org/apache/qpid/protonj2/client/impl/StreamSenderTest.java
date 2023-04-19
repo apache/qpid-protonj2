@@ -2471,7 +2471,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testStreamMessageFlushFailsAfterConnectionDropped() throws Exception {
+    public void testStreamMessageFlushFailsAfterConnectionDropped() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -2480,12 +2480,15 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.remoteFlow().withLinkCredit(1).queue();
             peer.start();
 
-            URI remoteURI = peer.getServerURI();
+            final URI remoteURI = peer.getServerURI();
+            final CountDownLatch disconnected = new CountDownLatch(1);
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            ConnectionOptions connectOptions = new ConnectionOptions();
+            connectOptions.disconnectedHandler((c, e) -> disconnected.countDown());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectOptions);
             StreamSender sender = connection.openStreamSender("test-queue");
             StreamSenderMessage message = sender.beginMessage();
 
@@ -2514,6 +2517,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             // Next write should fail as connection should have dropped.
             stream.write(new byte[] { 8, 9, 10, 11 });
+
+            assertTrue(disconnected.await(5, TimeUnit.SECONDS));
 
             try {
                 stream.flush();
@@ -2529,7 +2534,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testStreamMessageCloseThatFlushesFailsAfterConnectionDropped() throws Exception {
+    public void testStreamMessageCloseThatFlushesFailsAfterConnectionDropped() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -2538,12 +2543,15 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.remoteFlow().withLinkCredit(1).queue();
             peer.start();
 
-            URI remoteURI = peer.getServerURI();
+            final URI remoteURI = peer.getServerURI();
+            final CountDownLatch disconnected = new CountDownLatch(1);
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            ConnectionOptions connectOptions = new ConnectionOptions();
+            connectOptions.disconnectedHandler((c, e) -> disconnected.countDown());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectOptions);
             StreamSender sender = connection.openStreamSender("test-queue");
             StreamSenderMessage message = sender.beginMessage();
 
@@ -2573,6 +2581,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             // Next write should fail as connection should have dropped.
             stream.write(new byte[] { 8, 9, 10, 11 });
 
+            assertTrue(disconnected.await(5, TimeUnit.SECONDS));
+
             try {
                 stream.close();
                 fail("Should not be able to close after connection drop");
@@ -2587,7 +2597,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testStreamMessageWriteThatFlushesFailsAfterConnectionDropped() throws Exception {
+    public void testStreamMessageWriteThatFlushesFailsAfterConnectionDropped() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -2597,12 +2607,15 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.dropAfterLastHandler();
             peer.start();
 
-            URI remoteURI = peer.getServerURI();
+            final URI remoteURI = peer.getServerURI();
+            final CountDownLatch disconnected = new CountDownLatch(1);
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            ConnectionOptions connectOptions = new ConnectionOptions();
+            connectOptions.disconnectedHandler((c, e) -> disconnected.countDown());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectOptions);
             StreamSenderOptions options = new StreamSenderOptions().writeBufferSize(1024);
             StreamSender sender = connection.openStreamSender("test-queue", options);
             StreamSenderMessage message = sender.beginMessage();
@@ -2613,6 +2626,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             OutputStream stream = message.body(streamOptions);
 
             peer.waitForScriptToComplete();
+
+            assertTrue(disconnected.await(5, TimeUnit.SECONDS));
 
             try {
                 stream.write(payload);
