@@ -49,7 +49,7 @@
     <netty.version>4.1.91.Final</netty.version>
     <netty.iouring.version>0.0.20.Final</netty.iouring.version>
     <netty5.version>5.0.0.Alpha5</netty5.version>
-    <netty.tcnative.version>2.0.59.Final</netty.tcnative.version>
+    <netty.tcnative.version>2.0.60.Final</netty.tcnative.version>
 
     <!-- Plugin versions -->
     <jacoco.plugin.version>0.8.8</jacoco.plugin.version>
