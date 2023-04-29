@@ -130,6 +130,7 @@ public class ConnectionOptions implements Cloneable {
         other.reconnectedHandler(reconnectedHandler);
         other.disconnectedHandler(disconnectedHandler);
         other.defaultNextReceiverPolicy(nextReceiverPolicy);
+        other.virtualHost(virtualHost);
 
         if (offeredCapabilities != null) {
             other.offeredCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));

@@ -886,10 +886,11 @@ public final class ClientConnection implements Connection {
             protonConnection.setContainerId(connectionId);
         }
 
+        final String hostname = (options.virtualHost() == null || options.virtualHost().length() < 1) ? location.getHost() : options.virtualHost();
         protonConnection.setLinkedResource(this);
         protonConnection.setChannelMax(options.channelMax());
         protonConnection.setMaxFrameSize(options.maxFrameSize());
-        protonConnection.setHostname(location.getHost());
+        protonConnection.setHostname(hostname);
         protonConnection.setIdleTimeout((int) options.idleTimeout());
         protonConnection.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
         protonConnection.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
