@@ -837,7 +837,7 @@ public final class ClientConnection implements Connection {
 
                 @Override
                 public String vhost() {
-                    return options.virtualHost();
+                    return protonConnection.getHostname();
                 }
 
                 @Override
@@ -886,10 +886,15 @@ public final class ClientConnection implements Connection {
             protonConnection.setContainerId(connectionId);
         }
 
+        if (options.virtualHost() != null) {
+            protonConnection.setHostname(options.virtualHost().isEmpty() ? null : options.virtualHost());
+        } else {
+            protonConnection.setHostname(location.getHost());
+        }
+
         protonConnection.setLinkedResource(this);
         protonConnection.setChannelMax(options.channelMax());
         protonConnection.setMaxFrameSize(options.maxFrameSize());
-        protonConnection.setHostname(location.getHost());
         protonConnection.setIdleTimeout((int) options.idleTimeout());
         protonConnection.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
         protonConnection.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));

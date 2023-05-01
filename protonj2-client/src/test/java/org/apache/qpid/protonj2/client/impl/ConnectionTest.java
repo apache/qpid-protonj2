@@ -56,6 +56,7 @@ import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusDurability;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.protonj2.test.driver.codec.security.SaslCode;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
@@ -1742,6 +1743,87 @@ public class ConnectionTest extends ImperativeClientTestCase {
             assertTrue(error.get() instanceof ClientConnectionRemotelyClosedException);
 
             peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testCreateConnectionWithNoVHostCarriesRemoteHost() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
+            peer.start();
+
+            final URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            peer.expectSASLHeader().respondWithSASLHeader();
+            peer.remoteSaslMechanisms().withMechanisms("ANONYMOUS").queue();
+            peer.expectSaslInit().withMechanism("ANONYMOUS").withHostname(remoteURI.getHost());
+            peer.remoteSaslOutcome().withCode(SaslCode.OK).queue();
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().withHostname(remoteURI.getHost()).respond();
+            peer.expectClose().respond();
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateConnectionWithSpecifiedVHost() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
+            peer.expectSASLHeader().respondWithSASLHeader();
+            peer.remoteSaslMechanisms().withMechanisms("ANONYMOUS").queue();
+            peer.expectSaslInit().withMechanism("ANONYMOUS").withHostname("test");
+            peer.remoteSaslOutcome().withCode(SaslCode.OK).queue();
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().withHostname("test").respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            final URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = connectionOptions().virtualHost("test");
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateConnectionWithEmptyVHostSendsNullValueInOpen() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
+            peer.expectSASLHeader().respondWithSASLHeader();
+            peer.remoteSaslMechanisms().withMechanisms("ANONYMOUS").queue();
+            peer.expectSaslInit().withMechanism("ANONYMOUS").withHostname(nullValue());
+            peer.remoteSaslOutcome().withCode(SaslCode.OK).queue();
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().withHostname(nullValue()).respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            final URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = connectionOptions().virtualHost("");
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
 

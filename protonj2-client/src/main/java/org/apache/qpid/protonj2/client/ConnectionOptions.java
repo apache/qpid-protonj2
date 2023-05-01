@@ -130,6 +130,7 @@ public class ConnectionOptions implements Cloneable {
         other.reconnectedHandler(reconnectedHandler);
         other.disconnectedHandler(disconnectedHandler);
         other.defaultNextReceiverPolicy(nextReceiverPolicy);
+        other.virtualHost(virtualHost);
 
         if (offeredCapabilities != null) {
             other.offeredCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
@@ -501,6 +502,12 @@ public class ConnectionOptions implements Cloneable {
 
     /**
      * The virtual host value to provide to the remote when creating a new {@link Connection}.
+     * <p>
+     * A value of <code>null</code> signifies that the client should send the host value used
+     * to connect to the remote in the SASLInit and Open performatives, otherwise the value
+     * provided is sent unless empty string is provided in which case no AMQP host value is
+     * sent in either the SASLInit or the Open performative allowing the remote to select from
+     * a configured default.
      *
      * @param virtualHost
      * 		the virtual host to set
