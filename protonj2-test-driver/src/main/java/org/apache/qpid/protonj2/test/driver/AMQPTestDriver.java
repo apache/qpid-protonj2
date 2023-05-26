@@ -36,6 +36,8 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.HeartBeat;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Open;
 import org.apache.qpid.protonj2.test.driver.codec.transport.PerformativeDescribedType;
 import org.apache.qpid.protonj2.test.driver.exceptions.UnexpectedPerformativeError;
+import org.apache.qpid.protonj2.test.driver.expectations.ConnectionDropExpectation;
+import org.apache.qpid.protonj2.test.driver.expectations.SaslOutcomeExpectation;
 import org.apache.qpid.protonj2.test.driver.netty.NettyEventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -255,10 +257,20 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
 
     void handleConnectedDropped() throws AssertionError {
         synchronized (script) {
-            // For now we just reset the parse as any new connection would need to
+            // For now we just reset the parser as any new connection would need to
             // send an AMQP header, other validation could be added if we expand
             // processing on client disconnect events.
-            frameParser.resetToExpectingHeader();
+            resetToExpectingAMQPHeader();
+            // Reset connection tracking state to empty as the connection is gone
+            // and we want new connection to be able to reuse handles etc.
+            sessions.reset();
+            // Check if the currently pending scripted expectation is for the connection
+            // to drop in which case we remove it and unblock any waiters on the script
+            // to complete, if this is the final scripted entry.
+            final ScriptedElement scriptEntry = script.peek();
+            if (scriptEntry instanceof ConnectionDropExpectation) {
+                processScript(script.poll());
+            }
         }
     }
 
@@ -294,12 +306,6 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
             }
 
             try {
-                // When the outcome of SASL is read the decoder should revert to initial state
-                // as the only valid next incoming value is an AMQP header.
-                if (sasl instanceof SaslOutcome) {
-                    frameParser.resetToExpectingHeader();
-                }
-
                 sasl.invoke(scriptEntry, frameSize, this);
             } catch (UnexpectedPerformativeError e) {
                 if (scriptEntry.isOptional()) {
@@ -380,6 +386,18 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
     }
 
     //----- Test driver actions
+
+    /**
+     * Resets the frame parser to a state where it expects to read an AMQP Header type instead
+     * of a normal AMQP frame type.  By default the parser starts in this state and then switches
+     * to frames after the first header is read.  In cases where SASL is in use this needs to be
+     * reset to the header read state when the outcome is known.  Normally the script should handle
+     * this via a {@link SaslOutcomeExpectation} but other script variations might want to drive
+     * this manually.
+     */
+    public void resetToExpectingAMQPHeader() {
+        this.frameParser.resetToExpectingHeader();
+    }
 
     /**
      * Waits indefinitely for the scripted expectations and actions to be performed.  If the script
@@ -798,7 +816,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
     }
 
     private void processScript(ScriptedElement current) {
-        while (current.performAfterwards() != null && failureCause == null) {
+        if (current.performAfterwards() != null && failureCause == null) {
             current.performAfterwards().perform(this);
         }
 

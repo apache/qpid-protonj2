@@ -56,6 +56,7 @@ import org.apache.qpid.protonj2.test.driver.expectations.AMQPHeaderExpectation;
 import org.apache.qpid.protonj2.test.driver.expectations.AttachExpectation;
 import org.apache.qpid.protonj2.test.driver.expectations.BeginExpectation;
 import org.apache.qpid.protonj2.test.driver.expectations.CloseExpectation;
+import org.apache.qpid.protonj2.test.driver.expectations.ConnectionDropExpectation;
 import org.apache.qpid.protonj2.test.driver.expectations.DeclareExpectation;
 import org.apache.qpid.protonj2.test.driver.expectations.DetachExpectation;
 import org.apache.qpid.protonj2.test.driver.expectations.DischargeExpectation;
@@ -88,67 +89,73 @@ public abstract class ScriptWriter {
     //----- AMQP Performative expectations
 
     public AMQPHeaderExpectation expectAMQPHeader() {
-        AMQPHeaderExpectation expecting = new AMQPHeaderExpectation(AMQPHeader.getAMQPHeader(), getDriver());
+        final AMQPHeaderExpectation expecting = new AMQPHeaderExpectation(AMQPHeader.getAMQPHeader(), getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public OpenExpectation expectOpen() {
-        OpenExpectation expecting = new OpenExpectation(getDriver());
+        final OpenExpectation expecting = new OpenExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public CloseExpectation expectClose() {
-        CloseExpectation expecting = new CloseExpectation(getDriver());
+        final CloseExpectation expecting = new CloseExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public BeginExpectation expectBegin() {
-        BeginExpectation expecting = new BeginExpectation(getDriver());
+        final BeginExpectation expecting = new BeginExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public EndExpectation expectEnd() {
-        EndExpectation expecting = new EndExpectation(getDriver());
+        final EndExpectation expecting = new EndExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public AttachExpectation expectAttach() {
-        AttachExpectation expecting = new AttachExpectation(getDriver());
+        final AttachExpectation expecting = new AttachExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public DetachExpectation expectDetach() {
-        DetachExpectation expecting = new DetachExpectation(getDriver());
+        final DetachExpectation expecting = new DetachExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public FlowExpectation expectFlow() {
-        FlowExpectation expecting = new FlowExpectation(getDriver());
+        final FlowExpectation expecting = new FlowExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public TransferExpectation expectTransfer() {
-        TransferExpectation expecting = new TransferExpectation(getDriver());
+        final TransferExpectation expecting = new TransferExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public DispositionExpectation expectDisposition() {
-        DispositionExpectation expecting = new DispositionExpectation(getDriver());
+        final DispositionExpectation expecting = new DispositionExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public EmptyFrameExpectation expectEmptyFrame() {
-        EmptyFrameExpectation expecting = new EmptyFrameExpectation(getDriver());
+        final EmptyFrameExpectation expecting = new EmptyFrameExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
+        return expecting;
+    }
+
+    public ConnectionDropExpectation expectConnectionToDrop() {
+        final ConnectionDropExpectation expecting = new ConnectionDropExpectation();
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
@@ -156,7 +163,7 @@ public abstract class ScriptWriter {
     //----- Transaction expectations
 
     public AttachExpectation expectCoordinatorAttach() {
-        AttachExpectation expecting = new AttachExpectation(getDriver());
+        final AttachExpectation expecting = new AttachExpectation(getDriver());
 
         expecting.withRole(Role.SENDER);
         expecting.withCoordinator(isA(Coordinator.class));
@@ -167,7 +174,7 @@ public abstract class ScriptWriter {
     }
 
     public DeclareExpectation expectDeclare() {
-        DeclareExpectation expecting = new DeclareExpectation(getDriver());
+        final DeclareExpectation expecting = new DeclareExpectation(getDriver());
 
         expecting.withHandle(notNullValue());
         expecting.withDeliveryId(notNullValue());
@@ -179,7 +186,7 @@ public abstract class ScriptWriter {
     }
 
     public DischargeExpectation expectDischarge() {
-        DischargeExpectation expecting = new DischargeExpectation(getDriver());
+        final DischargeExpectation expecting = new DischargeExpectation(getDriver());
 
         expecting.withHandle(notNullValue());
         expecting.withDeliveryId(notNullValue());
@@ -193,37 +200,37 @@ public abstract class ScriptWriter {
     //----- SASL performative expectations
 
     public AMQPHeaderExpectation expectSASLHeader() {
-        AMQPHeaderExpectation expecting = new AMQPHeaderExpectation(AMQPHeader.getSASLHeader(), getDriver());
+        final AMQPHeaderExpectation expecting = new AMQPHeaderExpectation(AMQPHeader.getSASLHeader(), getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public SaslMechanismsExpectation expectSaslMechanisms() {
-        SaslMechanismsExpectation expecting = new SaslMechanismsExpectation(getDriver());
+        final SaslMechanismsExpectation expecting = new SaslMechanismsExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public SaslInitExpectation expectSaslInit() {
-        SaslInitExpectation expecting = new SaslInitExpectation(getDriver());
+        final SaslInitExpectation expecting = new SaslInitExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public SaslChallengeExpectation expectSaslChallenge() {
-        SaslChallengeExpectation expecting = new SaslChallengeExpectation(getDriver());
+        final SaslChallengeExpectation expecting = new SaslChallengeExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public SaslResponseExpectation expectSaslResponse() {
-        SaslResponseExpectation expecting = new SaslResponseExpectation(getDriver());
+        final SaslResponseExpectation expecting = new SaslResponseExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public SaslOutcomeExpectation expectSaslOutcome() {
-        SaslOutcomeExpectation expecting = new SaslOutcomeExpectation(getDriver());
+        final SaslOutcomeExpectation expecting = new SaslOutcomeExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
@@ -628,9 +635,9 @@ public abstract class ScriptWriter {
     //----- Utility methods for tests writing raw scripted SASL tests
 
     public byte[] saslPlainInitialResponse(String username, String password) {
-        byte[] usernameBytes = username.getBytes(StandardCharsets.UTF_8);
-        byte[] passwordBytes = password.getBytes(StandardCharsets.UTF_8);
-        byte[] initialResponse = new byte[usernameBytes.length+passwordBytes.length+2];
+        final byte[] usernameBytes = username.getBytes(StandardCharsets.UTF_8);
+        final byte[] passwordBytes = password.getBytes(StandardCharsets.UTF_8);
+        final byte[] initialResponse = new byte[usernameBytes.length+passwordBytes.length+2];
         System.arraycopy(usernameBytes, 0, initialResponse, 1, usernameBytes.length);
         System.arraycopy(passwordBytes, 0, initialResponse, 2 + usernameBytes.length, passwordBytes.length);
 
@@ -638,9 +645,9 @@ public abstract class ScriptWriter {
     }
 
     public byte[] saslXOauth2InitialResponse(String username, String password) {
-        byte[] usernameBytes = username.getBytes(StandardCharsets.UTF_8);
-        byte[] passwordBytes = password.getBytes(StandardCharsets.UTF_8);
-        byte[] initialResponse = new byte[usernameBytes.length+passwordBytes.length+20];
+        final byte[] usernameBytes = username.getBytes(StandardCharsets.UTF_8);
+        final byte[] passwordBytes = password.getBytes(StandardCharsets.UTF_8);
+        final byte[] initialResponse = new byte[usernameBytes.length+passwordBytes.length+20];
 
         System.arraycopy("user=".getBytes(StandardCharsets.US_ASCII), 0, initialResponse, 0, 5);
         System.arraycopy(usernameBytes, 0, initialResponse, 5, usernameBytes.length);
@@ -665,9 +672,9 @@ public abstract class ScriptWriter {
      * @throws IllegalStateException if no Begin has yet been received from the remote.
      */
     public BeginInjectAction respondToLastBegin() {
-        BeginInjectAction response = new BeginInjectAction(getDriver());
+        final BeginInjectAction response = new BeginInjectAction(getDriver());
 
-        SessionTracker session = getDriver().sessions().getLastRemotelyOpenedSession();
+        final SessionTracker session = getDriver().sessions().getLastRemotelyOpenedSession();
         if (session == null) {
             throw new IllegalStateException("Cannot create response to Begin before one has been received.");
         }
@@ -688,8 +695,7 @@ public abstract class ScriptWriter {
      * @throws IllegalStateException if no Attach has yet been received from the remote.
      */
     public AttachInjectAction respondToLastAttach() {
-        AttachInjectAction response = new AttachInjectAction(getDriver());
-
+        final AttachInjectAction response = new AttachInjectAction(getDriver());
         final SessionTracker session = getDriver().sessions().getLastRemotelyOpenedSession();
         final LinkTracker link = session.getLastRemotelyOpenedLink();
 

@@ -71,6 +71,15 @@ public class DriverSessions {
         return remoteSessions.get(remoteChannel);
     }
 
+    public void reset() {
+        localSessions.clear();
+        remoteSessions.clear();
+
+        lastRemotelyOpenedSession = null;
+        lastLocallyOpenedSession = null;
+        lastCoordinator = null;
+    }
+
     //----- Process performatives that require session level tracking
 
     public SessionTracker handleBegin(Begin remoteBegin, UnsignedShort remoteChannel) {

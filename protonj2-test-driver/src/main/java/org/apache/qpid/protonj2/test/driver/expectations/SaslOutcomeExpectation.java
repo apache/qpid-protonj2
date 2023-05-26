@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.test.driver.expectations;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
+import org.apache.qpid.protonj2.test.driver.ScriptedAction;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedByte;
@@ -36,6 +37,33 @@ public class SaslOutcomeExpectation extends AbstractExpectation<SaslOutcome> {
 
     public SaslOutcomeExpectation(AMQPTestDriver driver) {
         super(driver);
+    }
+
+    @Override
+    public ScriptedAction performAfterwards() {
+        return new ScriptedAction() {
+
+            @Override
+            public ScriptedAction queue() {
+                throw new UnsupportedOperationException("Cannot be called on this action");
+            }
+
+            @Override
+            public ScriptedAction perform(AMQPTestDriver driver) {
+                driver.resetToExpectingAMQPHeader();
+                return null;
+            }
+
+            @Override
+            public ScriptedAction now() {
+                throw new UnsupportedOperationException("Cannot be called on this action");
+            }
+
+            @Override
+            public ScriptedAction later(int waitTime) {
+                throw new UnsupportedOperationException("Cannot be called on this action");
+            }
+        };
     }
 
     //----- Type specific with methods that perform simple equals checks

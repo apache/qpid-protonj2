@@ -55,6 +55,8 @@ class ProtonTestClientTest extends TestPeerTestsBase {
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
+            Thread.sleep(100);
+
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
@@ -90,6 +92,55 @@ class ProtonTestClientTest extends TestPeerTestsBase {
         }
     }
 
+    @Test
+    public void testTwoClientConnectionsHandlesOpenBeginAttach() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().respond();
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            // Server can accept two connection, although not at the same time.
+
+            try (ProtonTestClient client = new ProtonTestClient()) {
+                client.connect(remoteURI.getHost(), remoteURI.getPort());
+                client.expectAMQPHeader();
+                client.expectOpen();
+                client.expectBegin();
+                client.expectAttach();
+                client.dropAfterLastHandler(10);
+                client.remoteAMQPHeader().now();
+                client.remoteOpen().now();
+                client.remoteBegin().now();
+                client.remoteAttach().ofSender().now();
+                client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            }
+
+            try (ProtonTestClient client = new ProtonTestClient()) {
+                client.connect(remoteURI.getHost(), remoteURI.getPort());
+                client.expectAMQPHeader();
+                client.expectOpen();
+                client.expectBegin();
+                client.expectAttach();
+                client.remoteAMQPHeader().now();
+                client.remoteOpen().now();
+                client.remoteBegin().now();
+                client.remoteAttach().ofSender().now();
+                client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            }
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
     @Test
     public void testClientDetectsUnexpectedPerformativeResponseToAMQPHeader() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
