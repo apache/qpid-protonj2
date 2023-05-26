@@ -23,6 +23,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.collection.ArrayMatching.hasItemInArray;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 
@@ -65,6 +66,7 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
 
     private AttachInjectAction response;
     private boolean rejecting;
+    private boolean inKindResponse;
 
     public AttachExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -81,8 +83,36 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         return this;
     }
 
+    /**
+     * Creates a sufficient response for a simple {@link Attach} request for
+     * simple test scripts. This response does not offer capabilities to the
+     * remote which means that the scripting code may need to add any that it
+     * wants to or validate errors on the remote if desired capabilities are
+     * absent.
+     *
+     * @return the {@link Attach} injection action that will be used to respond.
+     */
     public AttachInjectAction respond() {
         response = new AttachInjectAction(driver);
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    /**
+     * More complete auto response than normal where the response attempts to match
+     * all requested capabilities etc in the Attach response so that the script writer
+     * can assume that the response to the attach request is a valid and complete
+     * response without need to complete the offered capabilities in response to the
+     * remote's desired capabilities etc.
+     * <p>
+     * Use this with a bit of care as it will overwrite any script defined response
+     * values in favor of an in-kind version.
+     *
+     * @return the {@link Attach} injection action that will be used to respond.
+     */
+    public AttachInjectAction respondInKind() {
+        response = new AttachInjectAction(driver);
+        inKindResponse = true;
         driver.addScriptedElement(response);
         return response;
     }
@@ -178,6 +208,17 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
                 Role role = Role.valueOf(response.getPerformative().getRole());
                 if (role == Role.SENDER) {
                     response.withInitialDeliveryCount(0);
+                }
+            }
+
+            if (inKindResponse) {
+                final Symbol[] desired = attach.getDesiredCapabilities();
+                if (desired != null && desired.length > 0) {
+                    response.withOfferedCapabilities(Arrays.copyOf(desired, desired.length));
+                }
+
+                if (attach.getMaxMessageSize() != null) {
+                    response.withMaxMessageSize(attach.getMaxMessageSize());
                 }
             }
 

@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.collection.ArrayMatching.hasItemInArray;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
@@ -45,6 +46,7 @@ public class OpenExpectation extends AbstractExpectation<Open> {
 
     private OpenInjectAction response;
     private boolean explicitlyNullContainerId;
+    private boolean inKindResponse;
 
     public OpenExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -55,9 +57,37 @@ public class OpenExpectation extends AbstractExpectation<Open> {
         onChannel(0);  // Open must used channel zero.
     }
 
+    /**
+     * Creates a sufficient response for a simple {@link Open} request for
+     * simple test scripts. This response does not offer capabilities to the
+     * remote which means that the scripting code may need to add any that it
+     * wants to or validate errors on the remote if desired capabilities are
+     * absent.
+     *
+     * @return the {@link Open} injection action that will be used to respond.
+     */
     public OpenInjectAction respond() {
         response = new OpenInjectAction(driver);
         driver.addScriptedElement(response);
+        return response;
+    }
+
+    /**
+     * More complete auto response than normal where the response attempts to match
+     * all requested capabilities etc in the {@link Open} response so that the script
+     * writer can assume that the response to the open request is a valid and complete
+     * response without need to complete the offered capabilities in response to the
+     * remote's desired capabilities etc.
+     * <p>
+     * Use this with a bit of care as it will overwrite any script defined response
+     * values in favor of an in-kind version.
+     *
+     * @return the {@link Open} injection action that will be used to respond.
+     */
+    public OpenInjectAction respondInKind() {
+        response = new OpenInjectAction(driver);
+        driver.addScriptedElement(response);
+        inKindResponse = true;
         return response;
     }
 
@@ -108,6 +138,15 @@ public class OpenExpectation extends AbstractExpectation<Open> {
 
             if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
                 response.onChannel(channel);
+            }
+
+            if (inKindResponse) {
+                final Symbol[] desired = open.getDesiredCapabilities();
+                if (desired != null && desired.length > 0) {
+                    response.withOfferedCapabilities(Arrays.copyOf(desired, desired.length));
+                }
+
+                response.withMaxFrameSize(open.getMaxFrameSize());
             }
         }
     }
