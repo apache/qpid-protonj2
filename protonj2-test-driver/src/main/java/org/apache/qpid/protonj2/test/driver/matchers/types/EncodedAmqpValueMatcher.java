@@ -29,11 +29,30 @@ public class EncodedAmqpValueMatcher extends EncodedAmqpTypeMatcher {
     private static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000077L);
 
     /**
+     * @param expectedValueWrapper
+     *        the {@link AmqpValue} whose payload is expected to be IN the received {@link AmqpValue}
+     */
+    public EncodedAmqpValueMatcher(AmqpValue expectedValueWrapper) {
+        this(expectedValueWrapper.getDescribed(), false);
+    }
+
+    /**
      * @param expectedValue
      *        the value that is expected to be IN the received {@link AmqpValue}
      */
     public EncodedAmqpValueMatcher(Object expectedValue) {
         this(expectedValue, false);
+    }
+
+    /**
+     * @param expectedValueWrapper
+     *        the {@link AmqpValue} whose payload is expected to be IN the received {@link AmqpValue}
+     * @param permitTrailingBytes
+     *        if it is permitted for bytes to be left in the Binary after
+     *        consuming the {@link AmqpValue}
+     */
+    public EncodedAmqpValueMatcher(AmqpValue expectedValueWrapper, boolean permitTrailingBytes) {
+        this(expectedValueWrapper.getDescribed(), permitTrailingBytes);
     }
 
     /**
