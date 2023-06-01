@@ -18,7 +18,13 @@
  */
 package org.apache.qpid.protonj2.test.driver.matchers.types;
 
+import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.in;
+import static org.hamcrest.Matchers.is;
+
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import org.apache.qpid.protonj2.test.driver.codec.Codec;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.DescribedType;
@@ -26,6 +32,7 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 
 public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ByteBuffer> {
@@ -72,8 +79,34 @@ public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ByteBuffer>
                 if (!matcher.matches(decodedDescribedType.getDescribed())) {
                     return false;
                 }
-            } else if (!expectedValue.equals(decodedDescribedType.getDescribed())) {
-                return false;
+            } else if (expectedValue instanceof Map<?, ?>) {
+                final Map<?, ?> expectedMap = (Map<?, ?>) expectedValue;
+
+                if (!(decodedDescribedType.getDescribed() instanceof Map)) {
+                    return false;
+                }
+
+                final Map<?, ?> receivedMap = (Map<?, ?>) decodedDescribedType.getDescribed();
+
+                final Matcher<?> everyItemMatcher = everyItem(is(in(expectedMap.entrySet())));
+                final Matcher<?> containsInAnyOrder = arrayContainingInAnyOrder(expectedMap.entrySet().toArray());
+
+                if (receivedMap.size() != expectedMap.size()) {
+                    return false;
+                }
+
+                if (!everyItemMatcher.matches(receivedMap.entrySet())) {
+                    return false;
+                }
+
+                if (!containsInAnyOrder.matches(receivedMap.entrySet().toArray())) {
+                    return false;
+                }
+            } else {
+                final Matcher<?> expectedValueMatcher = Matchers.is(expectedValue);
+                if (!expectedValueMatcher.matches(decodedDescribedType.getDescribed())) {
+                    return false;
+                }
             }
         }
 

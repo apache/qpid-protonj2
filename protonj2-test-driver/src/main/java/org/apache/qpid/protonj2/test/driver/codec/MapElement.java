@@ -46,11 +46,13 @@ class MapElement extends AbstractElement<Map<Object, Object>> {
         int count = 0;
         int size = 0;
         Element<?> elt = first;
+
         while (elt != null) {
             count++;
             size += elt.size();
             elt = elt.next();
         }
+
         if (isElementOfArray()) {
             ArrayElement parent = (ArrayElement) parent();
 
@@ -77,8 +79,10 @@ class MapElement extends AbstractElement<Map<Object, Object>> {
 
     @Override
     public Map<Object, Object> getValue() {
-        LinkedHashMap<Object, Object> map = new LinkedHashMap<>();
+        final Map<Object, Object> map = new LinkedHashMap<>();
+
         Element<?> elt = first;
+
         while (elt != null) {
             Object key = elt.getValue();
             Object value;
