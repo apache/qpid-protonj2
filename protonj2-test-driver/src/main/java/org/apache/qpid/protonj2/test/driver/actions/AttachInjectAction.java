@@ -23,6 +23,10 @@ import java.util.UUID;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.SessionTracker;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.DeleteOnClose;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.DeleteOnNoLinks;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.DeleteOnNoLinksOrMessages;
+import org.apache.qpid.protonj2.test.driver.codec.messaging.DeleteOnNoMessages;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Outcome;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Source;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Target;
@@ -372,9 +376,37 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
             return this;
         }
 
+        public SourceBuilder withDurabilityOfNone() {
+            return withDurability(TerminusDurability.NONE);
+        }
+
+        public SourceBuilder withDurabilityOfConfiguration() {
+            return withDurability(TerminusDurability.CONFIGURATION);
+        }
+
+        public SourceBuilder withDurabilityOfUnsettledState() {
+            return withDurability(TerminusDurability.UNSETTLED_STATE);
+        }
+
         public SourceBuilder withDurability(TerminusDurability durability) {
             source.setDurable(durability.getValue());
             return this;
+        }
+
+        public SourceBuilder withExpiryPolicyOnConnectionClose() {
+            return withExpiryPolicy(TerminusExpiryPolicy.CONNECTION_CLOSE);
+        }
+
+        public SourceBuilder withExpiryPolicyOnSessionEnd() {
+            return withExpiryPolicy(TerminusExpiryPolicy.SESSION_END);
+        }
+
+        public SourceBuilder withExpiryPolicyOnLinkDetach() {
+            return withExpiryPolicy(TerminusExpiryPolicy.LINK_DETACH);
+        }
+
+        public SourceBuilder withExpiryPolicyOfNever() {
+            return withExpiryPolicy(TerminusExpiryPolicy.NEVER);
         }
 
         public SourceBuilder withExpiryPolicy(TerminusExpiryPolicy expiryPolicy) {
@@ -428,6 +460,30 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
             source.getDynamicNodeProperties().put(key, value);
             return this;
+        }
+
+        public SourceBuilder withLifetimePolicyOfDeleteOnClose() {
+            return withDynamicNodeProperty("lifetime-policy", new DeleteOnClose());
+        }
+
+        public SourceBuilder withLifetimePolicyOfDeleteOnNoLinks() {
+            return withDynamicNodeProperty("lifetime-policy", new DeleteOnNoLinks());
+        }
+
+        public SourceBuilder withLifetimePolicyOfDeleteOnNoLinksOrMessages() {
+            return withDynamicNodeProperty("lifetime-policy", new DeleteOnNoLinksOrMessages());
+        }
+
+        public SourceBuilder withLifetimePolicyOfDeleteOnNoNoMessages() {
+            return withDynamicNodeProperty("lifetime-policy", new DeleteOnNoMessages());
+        }
+
+        public SourceBuilder withDistributionModeOfCopy() {
+            return withDistributionMode("COPY");
+        }
+
+        public SourceBuilder withDistributionModeOfMove() {
+            return withDistributionMode("MOVE");
         }
 
         public SourceBuilder withDistributionMode(String mode) {
@@ -502,9 +558,37 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
             return this;
         }
 
+        public TargetBuilder withDurabilityOfNone() {
+            return withDurability(TerminusDurability.NONE);
+        }
+
+        public TargetBuilder withDurabilityOfConfiguration() {
+            return withDurability(TerminusDurability.CONFIGURATION);
+        }
+
+        public TargetBuilder withDurabilityOfUnsettledState() {
+            return withDurability(TerminusDurability.UNSETTLED_STATE);
+        }
+
         public TargetBuilder withDurability(TerminusDurability durability) {
             target.setDurable(durability.getValue());
             return this;
+        }
+
+        public TargetBuilder withExpiryPolicyOnConnectionClose() {
+            return withExpiryPolicy(TerminusExpiryPolicy.CONNECTION_CLOSE);
+        }
+
+        public TargetBuilder withExpiryPolicyOnSessionEnd() {
+            return withExpiryPolicy(TerminusExpiryPolicy.SESSION_END);
+        }
+
+        public TargetBuilder withExpiryPolicyOnLinkDetach() {
+            return withExpiryPolicy(TerminusExpiryPolicy.LINK_DETACH);
+        }
+
+        public TargetBuilder withExpiryPolicyOfNever() {
+            return withExpiryPolicy(TerminusExpiryPolicy.NEVER);
         }
 
         public TargetBuilder withExpiryPolicy(TerminusExpiryPolicy expiryPolicy) {
@@ -558,6 +642,22 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
             target.getDynamicNodeProperties().put(key, value);
             return this;
+        }
+
+        public TargetBuilder withLifetimePolicyOfDeleteOnClose() {
+            return withDynamicNodeProperty("lifetime-policy", new DeleteOnClose());
+        }
+
+        public TargetBuilder withLifetimePolicyOfDeleteOnNoLinks() {
+            return withDynamicNodeProperty("lifetime-policy", new DeleteOnNoLinks());
+        }
+
+        public TargetBuilder withLifetimePolicyOfDeleteOnNoLinksOrMessages() {
+            return withDynamicNodeProperty("lifetime-policy", new DeleteOnNoLinksOrMessages());
+        }
+
+        public TargetBuilder withLifetimePolicyOfDeleteOnNoNoMessages() {
+            return withDynamicNodeProperty("lifetime-policy", new DeleteOnNoMessages());
         }
 
         public TargetBuilder withCapabilities(String... capabilities) {
