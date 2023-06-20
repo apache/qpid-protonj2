@@ -80,6 +80,7 @@ public final class Netty4Client implements NettyClient {
     private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private static final String AMQP_SUB_PROTOCOL = "amqp";
+    private static final int SHUTDOWN_TIMEOUT = 50;
 
     private Netty4EventLoop eventLoop;
     private Bootstrap bootstrap;
@@ -120,6 +121,18 @@ public final class Netty4Client implements NettyClient {
                 } catch (InterruptedException e) {
                     Thread.interrupted();
                     LOG.debug("Close of channel interrupted while awaiting result");
+                }
+            }
+
+            if (group != null && !group.isShutdown()) {
+                group.shutdownGracefully(0, SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS);
+                try {
+                    if (!group.awaitTermination(2 * SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS)) {
+                        LOG.trace("Connection IO Event Loop shutdown failed to complete in allotted time");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.interrupted();
+                    LOG.debug("Shutdown of netty event loop interrupted while awaiting result");
                 }
             }
         }
