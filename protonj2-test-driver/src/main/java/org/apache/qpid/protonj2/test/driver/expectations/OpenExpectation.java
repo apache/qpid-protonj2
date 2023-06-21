@@ -23,6 +23,8 @@ import static org.hamcrest.collection.ArrayMatching.hasItemInArray;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.actions.BeginInjectAction;
@@ -55,6 +57,18 @@ public class OpenExpectation extends AbstractExpectation<Open> {
         withContainerId(notNullValue());
 
         onChannel(0);  // Open must used channel zero.
+    }
+
+    @Override
+    public OpenExpectation withPredicate(Predicate<Open> predicate) {
+        super.withPredicate(predicate);
+        return this;
+    }
+
+    @Override
+    public OpenExpectation withCapture(Consumer<Open> capture) {
+        super.withCapture(capture);
+        return this;
     }
 
     /**

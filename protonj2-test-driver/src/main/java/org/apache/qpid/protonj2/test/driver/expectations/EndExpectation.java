@@ -20,6 +20,8 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.SessionTracker;
@@ -57,6 +59,18 @@ public class EndExpectation extends AbstractExpectation<End> {
         response = new EndInjectAction(driver);
         driver.addScriptedElement(response);
         return response;
+    }
+
+    @Override
+    public EndExpectation withPredicate(Predicate<End> predicate) {
+        super.withPredicate(predicate);
+        return this;
+    }
+
+    @Override
+    public EndExpectation withCapture(Consumer<End> capture) {
+        super.withCapture(capture);
+        return this;
     }
 
     //----- Handle the performative and configure response is told to respond

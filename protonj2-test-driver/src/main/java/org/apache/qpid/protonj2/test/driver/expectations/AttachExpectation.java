@@ -26,6 +26,8 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.LinkTracker;
@@ -80,6 +82,18 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     @Override
     public AttachExpectation onChannel(int channel) {
         super.onChannel(channel);
+        return this;
+    }
+
+    @Override
+    public AttachExpectation withPredicate(Predicate<Attach> predicate) {
+        super.withPredicate(predicate);
+        return this;
+    }
+
+    @Override
+    public AttachExpectation withCapture(Consumer<Attach> capture) {
+        super.withCapture(capture);
         return this;
     }
 

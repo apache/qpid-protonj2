@@ -19,6 +19,8 @@ package org.apache.qpid.protonj2.test.driver.expectations;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.ScriptedExpectation;
@@ -57,11 +59,14 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
 
     public static int ANY_CHANNEL = -1;
 
-    protected int expectedChannel = ANY_CHANNEL;
     protected final AMQPTestDriver driver;
 
+    protected int expectedChannel = ANY_CHANNEL;
     private UnsignedInteger frameSize;
     private boolean optional;
+
+    private Predicate<T> verificationPredicate;
+    private Consumer<T> performativeCapture;
 
     public AbstractExpectation(AMQPTestDriver driver) {
         this.driver = driver;
@@ -99,9 +104,42 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
      *
      * @param frameSize
      * 		The expected size of the enclosing frame that carries the incoming data.
+     *
+     * @return this expectation instance.
      */
-    public void withFrameSize(int frameSize) {
+    public AbstractExpectation<T> withFrameSize(int frameSize) {
         this.frameSize = new UnsignedInteger(frameSize);
+        return this;
+    }
+
+    /**
+     * Allows a test to supply a {@link Predicate} that will be allowed to further test an
+     * incoming performative if all other tests verifications pass. If the predicate call
+     * throws any exceptions the verification process is failed.
+     *
+     * @param predicate
+     * 		The user supplied {@link Predicate} that will be called as a last stage verification.
+     *
+     * @return this expectation instance.
+     */
+    public AbstractExpectation<T> withPredicate(Predicate<T> predicate) {
+        this.verificationPredicate = predicate;
+        return this;
+    }
+
+    /**
+     * Allows the test to provide a capture {@link Consumer} that will be called to allow
+     * the test to capture the incoming performative instance for use in testing. Any errors
+     * that are thrown from the provided capture are ignored.
+     *
+     * @param capture
+     * 		The user supplied {@link Consumer} that will be provided the performative if verified.
+     *
+     * @return this expectation instance.
+     */
+    public AbstractExpectation<T> withCapture(Consumer<T> capture) {
+        this.performativeCapture = capture;
+        return this;
     }
 
     //------ Abstract classes use these methods to control validation
@@ -239,12 +277,34 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
 
     //----- Internal implementation
 
+    @SuppressWarnings("unchecked")
     private void doVerification(int frameSize, Object performative, ByteBuffer payload, int channel, AMQPTestDriver driver) {
         if (getExpectedTypeClass().equals(performative.getClass())) {
             verifyFrameSize(frameSize);
             verifyPayload(payload);
             verifyChannel(channel);
             verifyPerformative(getExpectedTypeClass().cast(performative));
+
+            if (verificationPredicate != null) {
+                try {
+                    if (!verificationPredicate.test((T) performative)) {
+                        throw new AssertionError("Failed to pass user supplied performative verification predicate");
+                    }
+                } catch (AssertionError e) {
+                    throw e;
+                } catch (Throwable t) {
+                    throw new AssertionError("Performative should not have been sent with a payload: ");
+                }
+            }
+
+            if (performativeCapture != null) {
+                try {
+                    performativeCapture.accept((T) performative);
+                } catch (Exception e) {
+                    // Ignored
+                }
+            }
+
         } else {
             reportTypeExpectationError(performative, getExpectedTypeClass());
         }

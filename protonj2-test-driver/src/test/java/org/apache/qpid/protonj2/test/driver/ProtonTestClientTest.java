@@ -16,13 +16,16 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.protonj2.test.driver.codec.security.SaslCode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
+import org.apache.qpid.protonj2.test.driver.codec.transport.Open;
 import org.apache.qpid.protonj2.test.driver.utils.TestPeerTestsBase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -196,9 +199,11 @@ class ProtonTestClientTest extends TestPeerTestsBase {
 
     @Test
     public void testClientCanConnectAndOpenExchanged() throws Exception {
+        final AtomicReference<Open> capturedOpen = new AtomicReference<>();
+
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectAMQPHeader().respondWithAMQPHeader();
-            peer.expectOpen().respond();
+            peer.expectOpen().withCapture((o) -> capturedOpen.set(o)).respond();
             peer.expectClose().respond();
             peer.start();
 
@@ -214,6 +219,38 @@ class ProtonTestClientTest extends TestPeerTestsBase {
             client.remoteOpen().now();
             client.remoteClose().now();
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            assertNotNull(capturedOpen.get());
+        }
+    }
+
+    @Test
+    public void testClientCanConnectAndOpenExchangedAndFailWithUserPredicate() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient();
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.expectClose().withPredicate((o) -> false);
+            client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+            client.remoteOpen().now();
+            client.remoteClose().later(10);
+
+            assertThrows(AssertionError.class, () -> client.waitForScriptToComplete(5, TimeUnit.SECONDS));
+
             client.close();
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
@@ -285,7 +322,7 @@ class ProtonTestClientTest extends TestPeerTestsBase {
 
             URI remoteURI = peer.getServerURI();
 
-            ProtonTestClient client = new ProtonTestClient();
+            final ProtonTestClient client = new ProtonTestClient();
 
             client.remoteSASLHeader().queue();
             client.expectSASLHeader();

@@ -21,6 +21,8 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.LinkTracker;
@@ -62,6 +64,18 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
 
         // Default mandatory field validation.
         withHandle(notNullValue());
+    }
+
+    @Override
+    public TransferExpectation withPredicate(Predicate<Transfer> predicate) {
+        super.withPredicate(predicate);
+        return this;
+    }
+
+    @Override
+    public TransferExpectation withCapture(Consumer<Transfer> capture) {
+        super.withCapture(capture);
+        return this;
     }
 
     public DispositionInjectAction respond() {

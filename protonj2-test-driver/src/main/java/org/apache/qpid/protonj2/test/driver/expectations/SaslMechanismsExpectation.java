@@ -19,6 +19,9 @@ package org.apache.qpid.protonj2.test.driver.expectations;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.collection.ArrayMatching.hasItemInArray;
 
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
@@ -36,6 +39,18 @@ public class SaslMechanismsExpectation extends AbstractExpectation<SaslMechanism
 
     public SaslMechanismsExpectation(AMQPTestDriver driver) {
         super(driver);
+    }
+
+    @Override
+    public SaslMechanismsExpectation withPredicate(Predicate<SaslMechanisms> predicate) {
+        super.withPredicate(predicate);
+        return this;
+    }
+
+    @Override
+    public SaslMechanismsExpectation withCapture(Consumer<SaslMechanisms> capture) {
+        super.withCapture(capture);
+        return this;
     }
 
     //----- Type specific with methods that perform simple equals checks

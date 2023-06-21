@@ -23,6 +23,8 @@ import static org.hamcrest.CoreMatchers.nullValue;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.LinkTracker;
@@ -65,6 +67,18 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
         response = new FlowInjectAction(driver);
         driver.addScriptedElement(response);
         return response;
+    }
+
+    @Override
+    public FlowExpectation withPredicate(Predicate<Flow> predicate) {
+        super.withPredicate(predicate);
+        return this;
+    }
+
+    @Override
+    public FlowExpectation withCapture(Consumer<Flow> capture) {
+        super.withCapture(capture);
+        return this;
     }
 
     //----- Handle the performative and configure response is told to respond

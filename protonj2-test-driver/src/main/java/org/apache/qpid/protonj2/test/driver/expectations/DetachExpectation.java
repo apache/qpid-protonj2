@@ -21,6 +21,8 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.LinkTracker;
@@ -63,6 +65,18 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
         response = new DetachInjectAction(driver);
         driver.addScriptedElement(response);
         return response;
+    }
+
+    @Override
+    public DetachExpectation withPredicate(Predicate<Detach> predicate) {
+        super.withPredicate(predicate);
+        return this;
+    }
+
+    @Override
+    public DetachExpectation withCapture(Consumer<Detach> capture) {
+        super.withCapture(capture);
+        return this;
     }
 
     //----- Handle the performative and configure response is told to respond

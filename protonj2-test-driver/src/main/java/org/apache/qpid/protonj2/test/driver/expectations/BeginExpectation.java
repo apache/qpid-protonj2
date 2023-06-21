@@ -24,6 +24,8 @@ import static org.hamcrest.collection.ArrayMatching.hasItemInArray;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.actions.BeginInjectAction;
@@ -54,6 +56,18 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
         withNextOutgoingId(notNullValue());
         withIncomingWindow(notNullValue());
         withOutgoingWindow(notNullValue());
+    }
+
+    @Override
+    public BeginExpectation withPredicate(Predicate<Begin> predicate) {
+        withPredicate(predicate);
+        return this;
+    }
+
+    @Override
+    public BeginExpectation withCapture(Consumer<Begin> capture) {
+        withCapture(capture);
+        return this;
     }
 
     @Override

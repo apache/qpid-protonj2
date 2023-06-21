@@ -21,6 +21,8 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 
 import java.nio.ByteBuffer;
 import java.util.Random;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.SessionTracker;
@@ -61,6 +63,18 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
     @Override
     public DispositionExpectation onChannel(int channel) {
         super.onChannel(channel);
+        return this;
+    }
+
+    @Override
+    public DispositionExpectation withPredicate(Predicate<Disposition> predicate) {
+        super.withPredicate(predicate);
+        return this;
+    }
+
+    @Override
+    public DispositionExpectation withCapture(Consumer<Disposition> capture) {
+        super.withCapture(capture);
         return this;
     }
 

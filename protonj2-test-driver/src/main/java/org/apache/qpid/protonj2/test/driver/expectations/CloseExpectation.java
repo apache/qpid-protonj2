@@ -20,6 +20,8 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.actions.BeginInjectAction;
@@ -49,6 +51,18 @@ public class CloseExpectation extends AbstractExpectation<Close> {
         response = new CloseInjectAction(driver);
         driver.addScriptedElement(response);
         return response;
+    }
+
+    @Override
+    public CloseExpectation withPredicate(Predicate<Close> predicate) {
+        super.withPredicate(predicate);
+        return this;
+    }
+
+    @Override
+    public CloseExpectation withCapture(Consumer<Close> capture) {
+        super.withCapture(capture);
+        return this;
     }
 
     //----- Handle the performative and configure response is told to respond

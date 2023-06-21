@@ -18,6 +18,9 @@ package org.apache.qpid.protonj2.test.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.ScriptedAction;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
@@ -37,6 +40,18 @@ public class SaslOutcomeExpectation extends AbstractExpectation<SaslOutcome> {
 
     public SaslOutcomeExpectation(AMQPTestDriver driver) {
         super(driver);
+    }
+
+    @Override
+    public SaslOutcomeExpectation withPredicate(Predicate<SaslOutcome> predicate) {
+        super.withPredicate(predicate);
+        return this;
+    }
+
+    @Override
+    public SaslOutcomeExpectation withCapture(Consumer<SaslOutcome> capture) {
+        super.withCapture(capture);
+        return this;
     }
 
     @Override
