@@ -23,6 +23,7 @@ import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
@@ -492,6 +493,16 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
         }
 
         public BodySectionBuilder withValue(String body) {
+            TransferInjectAction.this.body = new AmqpValue(body);
+            return this;
+        }
+
+        public BodySectionBuilder withValue(Map<?, ?> body) {
+            TransferInjectAction.this.body = new AmqpValue(body);
+            return this;
+        }
+
+        public BodySectionBuilder withValue(Object body) {
             TransferInjectAction.this.body = new AmqpValue(body);
             return this;
         }
