@@ -127,6 +127,12 @@ public final class Netty4Client implements NettyClient {
             if (group != null && !group.isShutdown()) {
                 group.shutdownGracefully(0, SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS);
                 try {
+                    if (eventLoop != null && eventLoop.inEventLoop()) {
+                        // If scripted close we might be inside the event loop and
+                        // we cannot wait in that case.
+                        return;
+                    }
+
                     if (!group.awaitTermination(2 * SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS)) {
                         LOG.trace("Connection IO Event Loop shutdown failed to complete in allotted time");
                     }
