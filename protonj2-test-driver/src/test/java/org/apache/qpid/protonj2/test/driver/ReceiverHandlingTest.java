@@ -410,4 +410,37 @@ class ReceiverHandlingTest extends TestPeerTestsBase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    public void testReceiverAttachWithJMSSelectorMatchingAPI() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().withSource().withJMSSelector("property=1").also().respond();
+            peer.expectEnd().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.expectBegin();
+            client.expectAttach().ofSender().withOfferedCapabilities(Matchers.nullValue());
+            client.expectEnd();
+            client.remoteAMQPHeader().now();
+            client.remoteOpen().now();
+            client.remoteBegin().now();
+            client.remoteAttach().ofReceiver().withSource().withJMSSelector("property=1").and().now();
+            client.remoteEnd().now();
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

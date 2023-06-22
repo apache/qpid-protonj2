@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.protonj2.test.driver.actions;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -46,6 +47,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.SenderSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
+import org.apache.qpid.protonj2.test.driver.matchers.JmsSelectorByIdDescribedType;
 
 /**
  * AMQP Attach injection action which can be added to a driver for write at a specific time or
@@ -494,6 +496,15 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         public SourceBuilder withDistributionMode(Symbol mode) {
             source.setDistributionMode(mode);
             return this;
+        }
+
+        public SourceBuilder withJMSSelector(String selector) {
+            final JmsSelectorByIdDescribedType jmsSelector = new JmsSelectorByIdDescribedType(selector);
+            final Map<String, Object> filters = new HashMap<>();
+
+            filters.put(JmsSelectorByIdDescribedType.JMS_SELECTOR_KEY, jmsSelector);
+
+            return withFilterMap(filters);
         }
 
         public SourceBuilder withFilter(Map<Symbol, Object> filters) {

@@ -24,6 +24,7 @@ import static org.hamcrest.collection.ArrayMatching.hasItemInArray;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -53,6 +54,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.SenderSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
+import org.apache.qpid.protonj2.test.driver.matchers.JmsSelectorByIdDescribedType;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.TargetMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transactions.CoordinatorMatcher;
@@ -620,6 +622,16 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         @Override
         public AttachSourceMatcher withFilter(Map<String, Object> filter) {
             super.withFilter(filter);
+            return this;
+        }
+
+        public AttachSourceMatcher withJMSSelector(String selector) {
+            final JmsSelectorByIdDescribedType filterType = new JmsSelectorByIdDescribedType(selector);
+            final Map<String, Object> filtersMap = new HashMap<>();
+
+            filtersMap.put(JmsSelectorByIdDescribedType.JMS_SELECTOR_KEY, filterType);
+
+            super.withFilter(filtersMap);
             return this;
         }
 
