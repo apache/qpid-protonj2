@@ -32,6 +32,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.Close;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.CloseMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.transport.ErrorConditionMatcher;
 import org.hamcrest.Matcher;
 
 /**
@@ -102,6 +103,18 @@ public class CloseExpectation extends AbstractExpectation<Close> {
 
     public CloseExpectation withError(Symbol condition, String description, Map<Symbol, Object> info) {
         return withError(equalTo(new ErrorCondition(condition, description, info)));
+    }
+
+    public CloseExpectation withError(String condition) {
+        return withError(new ErrorConditionMatcher().withCondition(condition));
+    }
+
+    public CloseExpectation withError(String condition, Matcher<?> descriptionMatcher) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(descriptionMatcher));
+    }
+
+    public CloseExpectation withError(String condition, Matcher<?> descriptionMatcher, Matcher<?> infoMapMatcher) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(descriptionMatcher).withInfo(infoMapMatcher));
     }
 
     //----- Matcher based with methods for more complex validation

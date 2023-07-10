@@ -37,6 +37,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.Detach;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.DetachMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.transport.ErrorConditionMatcher;
 import org.hamcrest.Matcher;
 
 /**
@@ -153,6 +154,18 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
 
     public DetachExpectation withError(Symbol condition, String description, Map<Symbol, Object> info) {
         return withError(equalTo(new ErrorCondition(condition, description, info)));
+    }
+
+    public DetachExpectation withError(String condition) {
+        return withError(new ErrorConditionMatcher().withCondition(condition));
+    }
+
+    public DetachExpectation withError(String condition, Matcher<?> descriptionMatcher) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(descriptionMatcher));
+    }
+
+    public DetachExpectation withError(String condition, Matcher<?> descriptionMatcher, Matcher<?> infoMapMatcher) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(descriptionMatcher).withInfo(infoMapMatcher));
     }
 
     //----- Matcher based with methods for more complex validation

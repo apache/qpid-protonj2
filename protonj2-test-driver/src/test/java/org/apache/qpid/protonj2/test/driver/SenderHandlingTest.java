@@ -17,6 +17,7 @@
 
 package org.apache.qpid.protonj2.test.driver;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.net.URI;
@@ -543,6 +544,36 @@ class SenderHandlingTest extends TestPeerTestsBase {
             client.remoteBegin().now();
             client.remoteAttach().ofSender().withProperty("test", "entry")
                                             .withProperty("another", "property").now();
+
+            // Wait for the above and then script next steps
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testDetachCanExpectMatcherInDescription() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen();
+            peer.expectBegin();
+            peer.expectAttach().ofSender();
+            peer.expectDetach().withError("amqp:not-authorized", equalTo("test"));
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.remoteAMQPHeader().now();
+            client.remoteOpen().now();
+            client.remoteBegin().now();
+            client.remoteAttach().ofSender().now();
+            client.remoteDetach().withErrorCondition("amqp:not-authorized", "test").now();
 
             // Wait for the above and then script next steps
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);

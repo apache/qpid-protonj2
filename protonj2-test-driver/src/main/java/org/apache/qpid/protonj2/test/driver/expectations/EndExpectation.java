@@ -34,6 +34,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.End;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.EndMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.transport.ErrorConditionMatcher;
 import org.hamcrest.Matcher;
 
 /**
@@ -109,6 +110,18 @@ public class EndExpectation extends AbstractExpectation<End> {
 
     public EndExpectation withError(Symbol condition, String description, Map<Symbol, Object> info) {
         return withError(equalTo(new ErrorCondition(condition, description, info)));
+    }
+
+    public EndExpectation withError(String condition) {
+        return withError(new ErrorConditionMatcher().withCondition(condition));
+    }
+
+    public EndExpectation withError(String condition, Matcher<?> descriptionMatcher) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(descriptionMatcher));
+    }
+
+    public EndExpectation withError(String condition, Matcher<?> descriptionMatcher, Matcher<?> infoMapMatcher) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(descriptionMatcher).withInfo(infoMapMatcher));
     }
 
     //----- Matcher based with methods for more complex validation
