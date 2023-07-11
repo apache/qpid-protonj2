@@ -342,6 +342,10 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         return matcher;
     }
 
+    public AttachExpectation withNullSource() {
+        return withSource(nullValue());
+    }
+
     public AttachExpectation withSource(Source source) {
         if (source != null) {
             SourceMatcher sourceMatcher = new SourceMatcher(source);
@@ -349,6 +353,10 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         } else {
             return withSource(nullValue());
         }
+    }
+
+    public AttachExpectation withNullTarget() {
+        return withTarget(nullValue());
     }
 
     public AttachExpectation withTarget(Target target) {
