@@ -248,10 +248,13 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
 
     void handleConnectedEstablished() throws AssertionError {
         synchronized (script) {
+            // Any new AMQP connection starts with the header so we reset the parser
+            // to begin a new exchange.
             ScriptedElement peekNext = script.peek();
             if (peekNext instanceof ScriptedAction) {
                 processScript(peekNext);
             }
+            resetToExpectingAMQPHeader();
         }
     }
 
