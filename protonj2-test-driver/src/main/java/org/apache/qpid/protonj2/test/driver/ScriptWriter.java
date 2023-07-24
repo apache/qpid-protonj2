@@ -585,6 +585,7 @@ public abstract class ScriptWriter {
         remoteSaslInit().withMechanism("ANONYMOUS").queue();
         expectSaslOutcome().withCode(SaslCode.OK);
         remoteAMQPHeader().queue();
+        expectAMQPHeader();
 
         // This trigger the exchange of frames.
         remoteSASLHeader().now();

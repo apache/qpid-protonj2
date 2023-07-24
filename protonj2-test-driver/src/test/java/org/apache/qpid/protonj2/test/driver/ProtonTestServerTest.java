@@ -111,6 +111,7 @@ public class ProtonTestServerTest extends TestPeerTestsBase {
                 client.remoteSaslInit().withMechanism("PLAIN").withInitialResponse(peer.saslPlainInitialResponse("user", "pass")).queue();
                 client.expectSaslOutcome().withCode(SaslCode.OK);
                 client.remoteHeader(AMQPHeader.getAMQPHeader()).queue();
+                client.expectAMQPHeader();
 
                 // Start the exchange with the client SASL header
                 client.remoteHeader(AMQPHeader.getSASLHeader()).now();
