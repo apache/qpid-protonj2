@@ -330,6 +330,7 @@ class ProtonTestClientTest extends TestPeerTestsBase {
             client.remoteSaslInit().withMechanism("ANONYMOUS").queue();
             client.expectSaslOutcome().withCode(SaslCode.OK);
             client.remoteAMQPHeader().queue();
+            client.expectAMQPHeader();
             client.connect(remoteURI.getHost(), remoteURI.getPort());
 
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
