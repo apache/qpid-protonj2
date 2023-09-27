@@ -1,5 +1,4 @@
 # Running the client examples
-----------------------------------------------
 
 Use maven to build the module, and additionally copy the dependencies
 alongside their output:

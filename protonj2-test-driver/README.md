@@ -1,17 +1,17 @@
-# Qpid protonj2 Client Library
+# Qpid protonj2 test driver
 
-This client provides an imperative API for AMQP messaging applications
+This library provides a test framework which can be used to build both client and server tests for implementations of the AMQP v1.0 protocol.
 
 Below are some quick pointers you might find useful.
 
-## Using the client library
+## Using the protocol engine library
 
-To use the protonj2 API client library in your projects you can include the maven
+To use the protonj2 test driver library in your projects you can include the maven
 dependency in your project pom file:
 
     <dependency>
       <groupId>org.apache.qpid</groupId>
-      <artifactId>protonj2-client</artifactId>
+      <artifactId>protonj2-test-driver</artifactId>
       <version>${protonj2-version}</version>
     </dependency>
 
@@ -36,7 +36,3 @@ installing:
 Execute the tests and produce code coverage report:
 
     mvn clean test jacoco:report
-
-## Client Documentation
-
-The full client documentation is located in the Qpid protonj2 client [documentation](../protonj2-client-docs/README.md) module.
