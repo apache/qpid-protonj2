@@ -16,7 +16,7 @@
 #
 github:
   description: "Mirror of Apache Qpid ProtonJ2"
-  homepage: https://qpid.apache.org
+  homepage: https://qpid.apache.org/proton
   labels:
     - qpid
     - proton
