@@ -22,7 +22,6 @@ github:
     - proton
     - apache
     - amqp
-    - jms
     - messaging
     - amqp10
     - amqps
