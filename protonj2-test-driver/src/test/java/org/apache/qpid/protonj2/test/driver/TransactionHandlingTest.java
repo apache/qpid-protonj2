@@ -196,6 +196,7 @@ class TransactionHandlingTest extends TestPeerTestsBase {
             client.expectOpen();
             client.expectBegin();
             client.expectCoordinatorAttach().ofReceiver();
+            client.expectFlow().withLinkCredit(2);
 
             client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
             client.remoteOpen().now();
@@ -205,7 +206,6 @@ class TransactionHandlingTest extends TestPeerTestsBase {
                                  .withCoordinator().also()
                                  .withSource().withAddress("txn-address")
                                  .and().now();
-            client.expectFlow().withLinkCredit(2);
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             client.expectDisposition().withState().declared(new byte[] {0, 1, 2, 3});
             client.remoteDeclare().withMessageFormat(messageFormat).withDeliveryTag(new byte[] {0}).withDeliveryId(0).now();
