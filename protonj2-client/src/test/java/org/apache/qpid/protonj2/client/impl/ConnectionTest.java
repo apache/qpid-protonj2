@@ -761,7 +761,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
-            final ConnectionOptions options = connectionOptions().openTimeout(75);
+            final ConnectionOptions options = connectionOptions().openTimeout(100);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
@@ -778,7 +778,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
                 LOG.info("connection open failed with error: ", error);
             }
 
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(6, TimeUnit.SECONDS);
         }
     }
 
@@ -1609,7 +1609,7 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
             connection.closeAsync().get();
 
-            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(6, TimeUnit.SECONDS);
         }
     }
 

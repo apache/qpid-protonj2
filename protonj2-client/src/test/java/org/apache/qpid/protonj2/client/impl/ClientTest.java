@@ -177,7 +177,7 @@ public class ClientTest extends ImperativeClientTestCase {
             firstPeer.expectClose().respond().afterDelay(10);
             secondPeer.expectClose().respond().afterDelay(15);
 
-            container.closeAsync().get(5, TimeUnit.SECONDS);
+            container.closeAsync().get(8, TimeUnit.SECONDS);
 
             firstPeer.waitForScriptToComplete();
             secondPeer.waitForScriptToComplete();

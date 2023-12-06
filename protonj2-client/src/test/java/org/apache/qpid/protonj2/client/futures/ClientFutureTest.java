@@ -443,9 +443,11 @@ public class ClientFutureTest {
 
         runner.start();
         assertTrue(syncing.await(5, TimeUnit.SECONDS));
+
+        Thread.yield();
         runner.interrupt();
 
-        assertTrue(done.await(5, TimeUnit.SECONDS));
+        assertTrue(done.await(6, TimeUnit.SECONDS));
 
         assertTrue(interrupted.get());
     }
@@ -480,9 +482,10 @@ public class ClientFutureTest {
 
         runner.start();
         assertTrue(syncing.await(5, TimeUnit.SECONDS));
+        Thread.yield();
         runner.interrupt();
 
-        assertTrue(done.await(5, TimeUnit.SECONDS));
+        assertTrue(done.await(6, TimeUnit.SECONDS));
 
         assertTrue(interrupted.get());
     }

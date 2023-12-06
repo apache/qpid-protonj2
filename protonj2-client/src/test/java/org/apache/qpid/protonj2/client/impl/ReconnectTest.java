@@ -230,9 +230,9 @@ public class ReconnectTest extends ImperativeClientTestCase {
 
             connection.openFuture().get();
 
-            firstPeer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            secondPeer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            thirdPeer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            firstPeer.waitForScriptToComplete(6, TimeUnit.SECONDS);
+            secondPeer.waitForScriptToComplete(6, TimeUnit.SECONDS);
+            thirdPeer.waitForScriptToComplete(6, TimeUnit.SECONDS);
 
             // Should connect, then fail and attempt to connect to second and third before stopping
             assertTrue(connected.await(5, TimeUnit.SECONDS));

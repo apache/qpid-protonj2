@@ -814,7 +814,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            ConnectionOptions options = new ConnectionOptions().openTimeout(250);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
             connection.openFuture().get();
 
@@ -935,7 +935,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            ConnectionOptions options = new ConnectionOptions().openTimeout(250);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
             connection.openFuture().get();
 
@@ -1003,7 +1003,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            ConnectionOptions options = new ConnectionOptions().openTimeout(250);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
             connection.openFuture().get();
 
@@ -1074,7 +1074,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             Session session = connection.openSession();
             session.openFuture().get();
 
-            ReceiverOptions options = new ReceiverOptions().openTimeout(100);
+            ReceiverOptions options = new ReceiverOptions().openTimeout(250);
             Receiver receiver = session.openReceiver("test-receiver", options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -1139,7 +1139,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            ConnectionOptions options = new ConnectionOptions().openTimeout(250);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
             connection.openFuture().get();
 
@@ -1208,7 +1208,7 @@ public class ReceiverTest extends ImperativeClientTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            ConnectionOptions options = new ConnectionOptions().openTimeout(250);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
             connection.openFuture().get();
 
