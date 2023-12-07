@@ -44,6 +44,7 @@ class ProtonTestClientTest extends TestPeerTestsBase {
     public void testClientCanConnectAndExchangeAMQPHeaders() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectConnectionToDrop();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -57,8 +58,6 @@ class ProtonTestClientTest extends TestPeerTestsBase {
             client.close();
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
-
-            Thread.sleep(100);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
