@@ -629,6 +629,7 @@ public abstract class ScriptWriter {
         remoteSaslInit().withMechanism("PLAIN").withInitialResponse(saslPlainInitialResponse(username, password)).queue();
         expectSaslOutcome().withCode(SaslCode.OK);
         remoteAMQPHeader().queue();
+        expectAMQPHeader();
 
         // This trigger the exchange of frames.
         remoteSASLHeader().now();
