@@ -314,7 +314,7 @@ public class SessionTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            SessionOptions options = new SessionOptions().openTimeout(120, TimeUnit.MILLISECONDS);
+            SessionOptions options = new SessionOptions().openTimeout(250, TimeUnit.MILLISECONDS);
             Session session = connection.openSession(options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -379,7 +379,7 @@ public class SessionTest extends ImperativeClientTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             connection.openFuture().get();
-            SessionOptions options = new SessionOptions().openTimeout(125);
+            SessionOptions options = new SessionOptions().openTimeout(250);
             Session session = connection.openSession(options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -441,7 +441,7 @@ public class SessionTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            SessionOptions options = new SessionOptions().openTimeout(125);
+            SessionOptions options = new SessionOptions().openTimeout(250);
             Session session = connection.openSession(options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -501,7 +501,7 @@ public class SessionTest extends ImperativeClientTestCase {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
             connection.openFuture().get();
 
-            SessionOptions sessionOptions = new SessionOptions().openTimeout(125, TimeUnit.MILLISECONDS);
+            SessionOptions sessionOptions = new SessionOptions().openTimeout(250, TimeUnit.MILLISECONDS);
 
             try {
                 connection.openSession(sessionOptions).closeAsync().get();

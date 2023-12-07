@@ -67,7 +67,9 @@ class ProtonTestClientTest extends TestPeerTestsBase {
     public void testTwoClientConnectionsAndExchangeAMQPHeaders() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectConnectionToDrop();
             peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectConnectionToDrop();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
