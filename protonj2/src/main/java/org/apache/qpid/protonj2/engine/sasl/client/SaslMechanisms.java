@@ -155,7 +155,7 @@ public enum SaslMechanisms {
             }
         }
 
-        throw new IllegalArgumentException("No Matching SASL Mechanism with name: " + mechanism.toString());
+        throw new IllegalArgumentException("No Matching SASL Mechanism with name: " + mechanism);
     }
 
     /**

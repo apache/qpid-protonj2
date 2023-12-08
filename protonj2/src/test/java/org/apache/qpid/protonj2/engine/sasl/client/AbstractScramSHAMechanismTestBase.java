@@ -17,7 +17,7 @@
 package org.apache.qpid.protonj2.engine.sasl.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import javax.security.sasl.SaslException;
 
@@ -75,12 +75,7 @@ public abstract class AbstractScramSHAMechanismTestBase extends MechanismTestBas
         ProtonBuffer challenge = ProtonBufferAllocator.defaultAllocator().copy("badserverfirst".getBytes());
         challenge.setWriteOffset(challenge.capacity());
 
-        try {
-            mechanism.getChallengeResponse(getTestCredentials(), challenge);
-            fail("Exception not thrown");
-        } catch (SaslException s) {
-            // PASS
-        }
+        assertThrows(SaslException.class, () -> mechanism.getChallengeResponse(getTestCredentials(), challenge));
     }
 
     /**
@@ -101,12 +96,7 @@ public abstract class AbstractScramSHAMechanismTestBase extends MechanismTestBas
         ProtonBuffer challenge = ProtonBufferAllocator.defaultAllocator().copy("m=notsupported,s=,i=".getBytes());
         challenge.setWriteOffset(challenge.capacity());
 
-        try {
-            mechanism.getChallengeResponse(getTestCredentials(), challenge);
-            fail("Exception not thrown");
-        } catch (SaslException s) {
-            // PASS
-        }
+        assertThrows(SaslException.class, () -> mechanism.getChallengeResponse(getTestCredentials(), challenge));
     }
 
     /**
@@ -127,12 +117,7 @@ public abstract class AbstractScramSHAMechanismTestBase extends MechanismTestBas
             "r=invalidnonce,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096".getBytes());
         challenge.setWriteOffset(challenge.capacity());
 
-        try {
-            mechanism.getChallengeResponse(getTestCredentials(), challenge);
-            fail("Exception not thrown");
-        } catch (SaslException s) {
-            // PASS
-        }
+        assertThrows(SaslException.class, () -> mechanism.getChallengeResponse(getTestCredentials(), challenge));
     }
 
     /**
@@ -155,12 +140,7 @@ public abstract class AbstractScramSHAMechanismTestBase extends MechanismTestBas
         ProtonBuffer challenge = ProtonBufferAllocator.defaultAllocator().copy("v=badserverfinal".getBytes());
         challenge.setWriteOffset(challenge.capacity());
 
-        try {
-            mechanism.getChallengeResponse(getTestCredentials(), challenge);
-            fail("Exception not thrown");
-        } catch (SaslException e) {
-            // PASS
-        }
+        assertThrows(SaslException.class, () -> mechanism.getChallengeResponse(getTestCredentials(), challenge));
     }
 
     @Test
@@ -173,11 +153,6 @@ public abstract class AbstractScramSHAMechanismTestBase extends MechanismTestBas
         ProtonBuffer clientFinalMessage = mechanism.getChallengeResponse(getTestCredentials(), serverFirstMessage);
         assertEquals(expectedClientFinalMessage, clientFinalMessage);
 
-        try {
-            mechanism.verifyCompletion();
-            fail("Exception not thrown");
-        } catch (SaslException e) {
-            // PASS
-        }
+        assertThrows(SaslException.class, () -> mechanism.verifyCompletion());
     }
 }

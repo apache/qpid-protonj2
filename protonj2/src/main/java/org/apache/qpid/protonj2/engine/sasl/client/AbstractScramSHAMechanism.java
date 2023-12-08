@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Base64;
 
 import javax.crypto.Mac;
@@ -112,7 +111,7 @@ abstract class AbstractScramSHAMechanism extends AbstractMechanism {
 
         if (state != State.COMPLETE) {
             throw new SaslException(String.format(
-                "SASL exchange was not fully completed.  Expected state %s but actual state %s", State.COMPLETE, state));
+                "SASL exchange was not fully completed. Expected state %s but actual state %s", State.COMPLETE, state));
         }
     }
 
@@ -186,13 +185,13 @@ abstract class AbstractScramSHAMechanism extends AbstractMechanism {
         String[] parts = serverFinalMessage.split(",");
 
         if (!parts[0].startsWith("v=")) {
-            throw new SaslException("Server final message did not contain verifier");
+            throw new SaslException("Server final message did not contain expected verifier");
         }
 
         byte[] serverSignature = Base64.getDecoder().decode(parts[0].substring(2));
 
-        if (!Arrays.equals(this.serverSignature, serverSignature)) {
-            throw new SaslException("Server signature did not match");
+        if (!MessageDigest.isEqual(this.serverSignature, serverSignature)) {
+            throw new SaslException("Server signature did not match expected signature.");
         }
     }
 

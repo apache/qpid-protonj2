@@ -27,15 +27,14 @@ import javax.security.sasl.SaslException;
 public class SaslSystemException extends SaslException {
 
     private static final long serialVersionUID = 1L;
+
     private final boolean permanent;
 
     /**
      * Creates an exception indicating a system error.
      *
      * @param permanent
-     *        {@code true} if the error is permanent and requires (manual)
-     *        intervention.
-     *
+     * 		<code>true</code> if the error is permanent and requires (manual) intervention
      */
     public SaslSystemException(boolean permanent) {
         this(permanent, null);
@@ -55,10 +54,12 @@ public class SaslSystemException extends SaslException {
     }
 
     /**
-     * Checks if the condition that caused this exception is of a permanent
-     * nature.
+     * Checks if the condition that caused this exception is of a permanent nature.
+     * <p>
+     * A permanent error should be treated as terminal for transports that implement
+     * reconnection logic and the implementation should stop attempting connections.
      *
-     * @return {@code true} if the error condition is permanent.
+     * @return <code>true</code> if the error condition is permanent.
      */
     public final boolean isPermanent() {
         return permanent;

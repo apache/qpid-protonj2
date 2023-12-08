@@ -76,6 +76,11 @@ public interface SaslContext {
     Role getRole();
 
     /**
+     * Returns if the SASL context has been marked as completed. A completed context
+     * does not imply the SASL authentication was successful, the caller should check
+     * the state of the {@link #getSaslOutcome()} value to determine if the SASL
+     * authentication process was successful or not.
+     *
      * @return true if SASL authentication has completed
      */
     boolean isDone();

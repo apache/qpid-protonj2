@@ -30,10 +30,10 @@ import org.apache.qpid.protonj2.engine.sasl.SaslServerContext;
  */
 public interface EngineSaslDriver {
 
-	/**
-	 * The SASL driver state used to determine at what point the current SASL negotiation process
-	 * is currently in.  If the state is 'none' then no SASL negotiations will be performed.
-	 */
+    /**
+     * The SASL driver state used to determine at what point the current SASL negotiation process
+     * is currently in.  If the state is 'none' then no SASL negotiations will be performed.
+     */
     public enum SaslState {
 
         /**
@@ -116,6 +116,11 @@ public interface EngineSaslDriver {
 
     /**
      * Set the maximum frame size the remote can send before an error is indicated.
+     * <p>
+     * The AMQP specification defines a default of 512 bytes for this value however in
+     * some cases this value is to small for the data needed in some SASL mechanisms.
+     * This allows the user to configure a larger acceptable value, the lowest possible
+     * value remains the default 512 bytes.
      *
      * @param maxFrameSize
      *      The maximum allowed frame size from the remote sender.

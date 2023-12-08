@@ -42,6 +42,10 @@ public interface SaslCredentialsProvider {
     String password();
 
     /**
+     * Returns the local principal for use in SASL authentication which is generally
+     * provided by the IO layer (TLS). This method can return null if there is no
+     * local {@link Principal} in use.
+     *
      * @return the local principal value to use when performing SASL authentication.
      */
     Principal localPrincipal();

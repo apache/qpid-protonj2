@@ -232,7 +232,8 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * default no-op driver must be returned that indicates this.  The SASL driver provides
      * the engine with client and server side SASL handshaking support.  An {@link Engine}
      * implementation can support pluggable SASL drivers or exert tight control over the
-     * driver as it sees fit.
+     * driver as it sees fit. The engine implementation in use will dictate how a SASL
+     * driver is assigned or discovered.
      *
      * @return the SASL driver for the engine.
      */
