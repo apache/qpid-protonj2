@@ -276,7 +276,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
                 if (scriptEntry instanceof ConnectionDropExpectation) {
                     processScript(script.poll());
                     return;
-                } else if (scriptEntry.isOptional()) {
+                } else if (scriptEntry != null && scriptEntry.isOptional()) {
                     script.poll();
                 } else {
                     return;
