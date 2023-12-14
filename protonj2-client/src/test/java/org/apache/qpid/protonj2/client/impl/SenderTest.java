@@ -2063,7 +2063,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testConcurrentSendBlocksBehindSendWaitingForCredit() throws Exception {
+    public void testConcurrentSendBlocksBehindSendWaitingForCredit() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -2111,10 +2111,12 @@ public class SenderTest extends ImperativeClientTestCase {
             });
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(0).withNextIncomingId(1).withLinkCredit(1).now();
             peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
             peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(1).withNextIncomingId(2).withLinkCredit(1).queue();
             peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
+
+            // Now Trigger transfer / flow event chain
+            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(0).withNextIncomingId(1).withLinkCredit(1).later(10);
 
             assertTrue(send2Completed.await(10, TimeUnit.SECONDS));
 
@@ -2132,7 +2134,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testConcurrentSendWaitingOnSplitFramedSendToCompleteIsSentAfterCreditUpdated() throws Exception {
+    public void testConcurrentSendWaitingOnSplitFramedSendToCompleteIsSentAfterCreditUpdated() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -2181,7 +2183,6 @@ public class SenderTest extends ImperativeClientTestCase {
             });
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(0).withNextIncomingId(1).withLinkCredit(1).now();
             peer.expectTransfer().withNonNullPayload().withMore(true);
             peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(0).withNextIncomingId(2).withLinkCredit(1).queue();
             peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
@@ -2189,6 +2190,9 @@ public class SenderTest extends ImperativeClientTestCase {
             peer.expectTransfer().withNonNullPayload().withMore(true);
             peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(1).withNextIncomingId(4).withLinkCredit(1).queue();
             peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
+
+            // Trigger chain of events after script is configured.
+            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(0).withNextIncomingId(1).withLinkCredit(1).now();
 
             assertTrue(send2Completed.await(10, TimeUnit.SECONDS));
 
@@ -2319,7 +2323,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testWaitForAcceptedReturnsOnRemoteAcceptance() throws Exception {
+    public void testWaitForAcceptedReturnsOnRemoteAcceptance() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -2354,7 +2358,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testWaitForAcceptanceFailsIfRemoteSendsRejected() throws Exception {
+    public void testWaitForAcceptanceFailsIfRemoteSendsRejected() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -2395,7 +2399,7 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     @Test
-    void testWaitForAcceptanceFailsIfRemoteSendsNoDisposition() throws Exception {
+    public void testWaitForAcceptanceFailsIfRemoteSendsNoDisposition() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
