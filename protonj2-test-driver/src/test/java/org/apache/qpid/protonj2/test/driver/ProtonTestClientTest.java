@@ -103,10 +103,12 @@ class ProtonTestClientTest extends TestPeerTestsBase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().respond();
+            peer.expectConnectionToDrop();
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().respond();
+            peer.expectConnectionToDrop();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -145,6 +147,7 @@ class ProtonTestClientTest extends TestPeerTestsBase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
     @Test
     public void testClientDetectsUnexpectedPerformativeResponseToAMQPHeader() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -428,6 +431,32 @@ class ProtonTestClientTest extends TestPeerTestsBase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testConnectionDropTriggerQuickTestFaulure() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLPlainConnect("test", "test");
+            peer.expectOpen().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient();
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.triggerClientSaslPlainConnect("test", "test");
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            // We want this to fail as soon as the connection closes since
+            // there is no way for the script to complete at this point.
+            assertThrows(AssertionError.class, () -> peer.waitForScriptToComplete());
         }
     }
 }

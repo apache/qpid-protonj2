@@ -270,17 +270,21 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
             // Check if the currently pending scripted expectation is for the connection
             // to drop in which case we remove it and unblock any waiters on the script
             // to complete, if this is the final scripted entry.
-            while (true) {
-                final ScriptedElement scriptEntry = script.peek();
+            if (!script.isEmpty()) {
+                do {
+                    final ScriptedElement scriptEntry = script.peek();
 
-                if (scriptEntry instanceof ConnectionDropExpectation) {
-                    processScript(script.poll());
-                    return;
-                } else if (scriptEntry != null && scriptEntry.isOptional()) {
-                    script.poll();
-                } else {
-                    return;
-                }
+                    if (scriptEntry instanceof ConnectionDropExpectation) {
+                        processScript(script.poll());
+                        return;
+                    } else if (scriptEntry.isOptional()) {
+                        script.poll();
+                    } else {
+                        signalFailure(new AssertionError(String.format(
+                            "Scripted elements remaining after connection dropped: %d", script.size())));
+                        return;
+                    }
+                } while (!script.isEmpty());
             }
         }
     }
