@@ -107,7 +107,7 @@ class MessageSendTest extends ImperativeClientTestCase {
             payloadMatcher.setMessageContentMatcher(bodyMatcher);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectTransfer().withPayload(payloadMatcher).accept();
+            peer.expectTransfer().withMessageFormat(0).withPayload(payloadMatcher).accept();
             peer.expectDetach().respond();
             peer.expectClose().respond();
 

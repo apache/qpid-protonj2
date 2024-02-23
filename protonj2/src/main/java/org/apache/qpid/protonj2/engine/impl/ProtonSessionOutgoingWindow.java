@@ -267,7 +267,7 @@ public class ProtonSessionOutgoingWindow {
 
         try {
             cachedTransfer.setDeliveryId(delivery.getDeliveryId());
-            if (delivery.getMessageFormat() != 0) {
+            if (delivery.getTransferCount() == 0) {
                 cachedTransfer.setMessageFormat(delivery.getMessageFormat());
             } else {
                 cachedTransfer.clearMessageFormat();

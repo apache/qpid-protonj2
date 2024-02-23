@@ -57,6 +57,7 @@ import org.apache.qpid.protonj2.engine.exceptions.EngineFailedException;
 import org.apache.qpid.protonj2.logging.ProtonLogger;
 import org.apache.qpid.protonj2.logging.ProtonLoggerFactory;
 import org.apache.qpid.protonj2.test.driver.ProtonTestConnector;
+import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.AcceptedMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.ModifiedMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.RejectedMatcher;
@@ -1256,6 +1257,53 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.creditStateUpdateHandler(handler -> {
             if (handler.isSendable()) {
                 handler.next().setTag(new byte[] {0}).setMessageFormat(17).writeBytes(payload);
+            }
+        });
+
+        sender.open();
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSendTransferWithDefaultMessageFormat() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        final byte [] payloadBuffer = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER.getValue()).respond();
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
+        peer.expectTransfer().withMessageFormat(0).withPayload(payloadBuffer);
+        peer.expectDetach().withHandle(0).respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        ProtonBuffer payload = ProtonBufferAllocator.defaultAllocator().copy(payloadBuffer);
+
+        Sender sender = session.sender("sender-1");
+
+        assertFalse(sender.isSendable());
+
+        sender.creditStateUpdateHandler(handler -> {
+            if (handler.isSendable()) {
+                handler.next().setTag(new byte[] {0}).writeBytes(payload);
             }
         });
 
@@ -3342,7 +3390,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectTransfer().withHandle(0)
                              .withState(nullValue())
                              .withDeliveryId(0)
-                             .withMessageFormat(42)
+                             .withMessageFormat((UnsignedInteger) null)
                              .withAborted(anyOf(nullValue(), is(false)))
                              .withSettled(false)
                              .withMore(anyOf(nullValue(), is(false)))
@@ -3424,7 +3472,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectTransfer().withHandle(0)
                              .withState().accepted()
                              .withDeliveryId(0)
-                             .withMessageFormat(42)
+                             .withMessageFormat((UnsignedInteger) null)
                              .withAborted(anyOf(nullValue(), is(false)))
                              .withSettled(settle)
                              .withMore(anyOf(nullValue(), is(false)))
