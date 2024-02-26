@@ -197,7 +197,8 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.SENDER.getValue())
-                               .withTarget().withCapabilities("queue").and()
+                               .withTarget().withAddress("test-queue").withCapabilities("queue").and()
+                               .withSource().withAddress("test-queue").and()
                                .respond();
             peer.expectDetach().respond();
             peer.expectEnd().respond();

@@ -107,7 +107,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().ofReceiver().respond();
+            peer.expectAttach().ofReceiver()
+                               .withSource().withAddress("test-queue").and()
+                               .withTarget().withAddress("test-queue").and()
+                               .respond();
             peer.expectFlow().withLinkCredit(10);
             peer.expectDetach().withClosed(close).respond();
             peer.expectEnd().respond();

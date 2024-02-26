@@ -117,7 +117,7 @@ final class ClientSenderBuilder {
         protonSender.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
         protonSender.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
         protonSender.setTarget(createTarget(address, options));
-        protonSender.setSource(createSource(senderId, options));
+        protonSender.setSource(createSource(address, options));
 
         if (tagGenerator == null) {
             // Use a tag generator that will reuse old tags if not sending settled.

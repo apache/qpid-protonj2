@@ -108,7 +108,10 @@ public class SenderTest extends ImperativeClientTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectAttach().ofSender().respond();
+            peer.expectAttach().ofSender()
+                               .withSource().withAddress("test-queue").and()
+                               .withTarget().withAddress("test-queue").and()
+                               .respond();
             peer.expectDetach().withClosed(close).respond();
             peer.expectClose().respond();
             peer.start();
