@@ -179,7 +179,7 @@ public abstract class ScriptWriter {
         expecting.withHandle(notNullValue());
         expecting.withDeliveryId(notNullValue());
         expecting.withDeliveryTag(notNullValue());
-        expecting.withMessageFormat(Matchers.oneOf(null, 0, UnsignedInteger.ZERO));
+        expecting.withMessageFormat(Matchers.oneOf(0, UnsignedInteger.ZERO));
 
         getDriver().addScriptedElement(expecting);
         return expecting;
@@ -191,7 +191,7 @@ public abstract class ScriptWriter {
         expecting.withHandle(notNullValue());
         expecting.withDeliveryId(notNullValue());
         expecting.withDeliveryTag(notNullValue());
-        expecting.withMessageFormat(Matchers.oneOf(null, 0, UnsignedInteger.ZERO));
+        expecting.withMessageFormat(Matchers.oneOf(0, UnsignedInteger.ZERO));
 
         getDriver().addScriptedElement(expecting);
         return expecting;
@@ -294,11 +294,19 @@ public abstract class ScriptWriter {
     }
 
     public DeclareInjectAction remoteDeclare() {
-        return new DeclareInjectAction(getDriver());
+        DeclareInjectAction declare = new DeclareInjectAction(getDriver());
+
+        declare.withMessageFormat(0);
+
+        return declare;
     }
 
     public DischargeInjectAction remoteDischarge() {
-        return new DischargeInjectAction(getDriver());
+        DischargeInjectAction discharge = new DischargeInjectAction(getDriver());
+
+        discharge.withMessageFormat(0);
+
+        return discharge;
     }
 
     public EmptyFrameInjectAction remoteEmptyFrame() {

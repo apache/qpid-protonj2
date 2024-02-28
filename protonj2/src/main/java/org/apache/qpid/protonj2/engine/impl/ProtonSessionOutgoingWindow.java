@@ -267,11 +267,6 @@ public class ProtonSessionOutgoingWindow {
 
         try {
             cachedTransfer.setDeliveryId(delivery.getDeliveryId());
-            if (delivery.getTransferCount() == 0) {
-                cachedTransfer.setMessageFormat(delivery.getMessageFormat());
-            } else {
-                cachedTransfer.clearMessageFormat();
-            }
             cachedTransfer.setHandle(sender.getHandle());
             cachedTransfer.setSettled(delivery.isSettled());
             cachedTransfer.setState(delivery.getState());
@@ -286,8 +281,10 @@ public class ProtonSessionOutgoingWindow {
 
                 // Only the first transfer requires the delivery tag, afterwards we can omit it for efficiency.
                 if (delivery.getTransferCount() == 0) {
+                    cachedTransfer.setMessageFormat(delivery.getMessageFormat());
                     cachedTransfer.setDeliveryTag(delivery.getTag());
                 } else {
+                    cachedTransfer.clearMessageFormat();
                     cachedTransfer.setDeliveryTag((DeliveryTag) null);
                 }
                 cachedTransfer.setMore(!complete);

@@ -165,16 +165,7 @@ class TransactionHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
-    public void testTxnDeclarationAndDischargeNullMessageFormat() throws Exception {
-        doTestTxnDeclarationAndDischarge(null);
-    }
-
-    @Test
     public void testTxnDeclarationAndDischargeZeroMessageFormat() throws Exception {
-        doTestTxnDeclarationAndDischarge(UnsignedInteger.ZERO);
-    }
-
-    private void doTestTxnDeclarationAndDischarge(UnsignedInteger messageFormat) throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
 
@@ -183,7 +174,7 @@ class TransactionHandlingTest extends TestPeerTestsBase {
             peer.expectBegin().respond();
             peer.expectCoordinatorAttach().ofSender().respond();
             peer.remoteFlow().withLinkCredit(2).queue();
-            peer.expectDeclare().withMessageFormat(messageFormat).declared(new byte[] { 0, 1, 2, 3 });
+            peer.expectDeclare().withMessageFormat(UnsignedInteger.ZERO).declared(new byte[] { 0, 1, 2, 3 });
             peer.expectDischarge().accept();
             peer.expectDetach().respond();
             peer.expectEnd().respond();
@@ -208,7 +199,7 @@ class TransactionHandlingTest extends TestPeerTestsBase {
                                  .and().now();
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             client.expectDisposition().withState().declared(new byte[] {0, 1, 2, 3});
-            client.remoteDeclare().withMessageFormat(messageFormat).withDeliveryTag(new byte[] {0}).withDeliveryId(0).now();
+            client.remoteDeclare().withDeliveryTag(new byte[] {0}).withDeliveryId(0).now();
 
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             client.expectDisposition().withState().accepted();

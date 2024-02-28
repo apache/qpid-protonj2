@@ -1852,18 +1852,21 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .withState().accepted()
                              .withDeliveryId(0)
                              .withMore(true)
+                             .withMessageFormat(0)
                              .withDeliveryTag(new byte[] {1});
         peer.expectTransfer().withHandle(0)
                              .withSettled(true)
                              .withState().accepted()
                              .withDeliveryId(0)
                              .withMore(false)
+                             .withMessageFormat((UnsignedInteger) null)
                              .withDeliveryTag(nullValue());
         peer.expectTransfer().withHandle(1)
                              .withSettled(true)
                              .withState().accepted()
                              .withDeliveryId(1)
                              .withMore(bothDeliveriesMultiFrame)
+                             .withMessageFormat(0)
                              .withDeliveryTag(new byte[] {2});
         if (bothDeliveriesMultiFrame) {
             peer.expectTransfer().withHandle(1)
@@ -1871,6 +1874,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                                  .withState().accepted()
                                  .withDeliveryId(1)
                                  .withMore(false)
+                                 .withMessageFormat((UnsignedInteger) null)
                                  .withDeliveryTag(nullValue());
         }
 
