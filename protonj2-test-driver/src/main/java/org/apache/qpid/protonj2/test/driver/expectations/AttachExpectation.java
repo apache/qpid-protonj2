@@ -54,6 +54,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.SenderSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
+import org.apache.qpid.protonj2.test.driver.matchers.JmsNoLocalByIdDescribedType;
 import org.apache.qpid.protonj2.test.driver.matchers.JmsSelectorByIdDescribedType;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.TargetMatcher;
@@ -638,6 +639,16 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
             final Map<String, Object> filtersMap = new HashMap<>();
 
             filtersMap.put(JmsSelectorByIdDescribedType.JMS_SELECTOR_KEY, filterType);
+
+            super.withFilter(filtersMap);
+            return this;
+        }
+
+        public AttachSourceMatcher withNoLocal() {
+            final JmsNoLocalByIdDescribedType filterType = new JmsNoLocalByIdDescribedType();
+            final Map<String, Object> filtersMap = new HashMap<>();
+
+            filtersMap.put(JmsNoLocalByIdDescribedType.JMS_NO_LOCAL_KEY, filterType);
 
             super.withFilter(filtersMap);
             return this;

@@ -47,6 +47,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.SenderSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
+import org.apache.qpid.protonj2.test.driver.matchers.JmsNoLocalByIdDescribedType;
 import org.apache.qpid.protonj2.test.driver.matchers.JmsSelectorByIdDescribedType;
 
 /**
@@ -503,6 +504,15 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
             final Map<String, Object> filters = new HashMap<>();
 
             filters.put(JmsSelectorByIdDescribedType.JMS_SELECTOR_KEY, jmsSelector);
+
+            return withFilterMap(filters);
+        }
+
+        public SourceBuilder withNoLocal() {
+            final JmsNoLocalByIdDescribedType noLocal = new JmsNoLocalByIdDescribedType();
+            final Map<String, Object> filters = new HashMap<>();
+
+            filters.put(JmsNoLocalByIdDescribedType.JMS_NO_LOCAL_KEY, noLocal);
 
             return withFilterMap(filters);
         }

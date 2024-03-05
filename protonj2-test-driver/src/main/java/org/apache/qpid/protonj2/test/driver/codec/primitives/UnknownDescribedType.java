@@ -45,12 +45,12 @@ public class UnknownDescribedType implements DescribedType {
             return false;
         }
 
-        final UnknownDescribedType that = (UnknownDescribedType) o;
+        final DescribedType that = (DescribedType) o;
 
-        if (described != null ? !described.equals(that.described) : that.described != null) {
+        if (described != null ? !described.equals(that.getDescribed()) : that.getDescriptor() != null) {
             return false;
         }
-        if (descriptor != null ? !descriptor.equals(that.descriptor) : that.descriptor != null) {
+        if (descriptor != null ? !descriptor.equals(that.getDescriptor()) : that.getDescriptor() != null) {
             return false;
         }
 
