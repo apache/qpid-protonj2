@@ -24,8 +24,9 @@ import java.util.Map;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 
-public class FooterMatcher extends AbstractMapSectionMatcher {
+public class FooterMatcher extends AbstractMapSectionMatcher<FooterMatcher> {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:footer:map");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000078L);
@@ -34,26 +35,20 @@ public class FooterMatcher extends AbstractMapSectionMatcher {
         super(DESCRIPTOR_CODE, DESCRIPTOR_SYMBOL, new HashMap<Object, Matcher<?>>(), expectTrailingBytes);
     }
 
-    @Override
-    public FooterMatcher withEntry(Object key, Matcher<?> m) {
-        validateType(key);
-
-        return (FooterMatcher) super.withEntry(key, m);
-    }
-
-    private void validateType(Object key) {
-        if (!(key instanceof Long || key instanceof Symbol)) {
-            throw new IllegalArgumentException("Footer keys must be of type Symbol or long (reserved)");
-        }
-    }
-
     public FooterMatcher withEntry(String key, Matcher<?> m) {
-        getMatchers().put(Symbol.valueOf(key), m);
-        return this;
+        return super.withEntry(Symbol.valueOf(key), m);
+    }
+
+    public FooterMatcher withEntry(String key, Object value) {
+        return super.withEntry(Symbol.valueOf(key), Matchers.equalTo(value));
+    }
+
+    public FooterMatcher withEntry(Symbol key, Object value) {
+        return super.withEntry(key, Matchers.equalTo(value));
     }
 
     public boolean keyExistsInReceivedAnnotations(Object key) {
-        validateType(key);
+        validateMepKeyType(key);
 
         Map<Object, Object> receivedFields = super.getReceivedFields();
 
@@ -68,5 +63,17 @@ public class FooterMatcher extends AbstractMapSectionMatcher {
         Map<Object, Object> receivedFields = super.getReceivedFields();
 
         return receivedFields.get(key);
+    }
+
+    @Override
+    protected void validateMepKeyType(Object key) {
+        if (!(key instanceof Long || key instanceof Symbol)) {
+            throw new IllegalArgumentException("Footer keys must be of type Symbol or long (reserved)");
+        }
+    }
+
+    @Override
+    protected FooterMatcher self() {
+        return this;
     }
 }

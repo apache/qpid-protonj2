@@ -26,7 +26,7 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Matcher;
 
-public abstract class AbstractListSectionMatcher extends AbstractMessageSectionMatcher {
+public abstract class AbstractListSectionMatcher<T extends AbstractListSectionMatcher<T>> extends AbstractMessageSectionMatcher<T> {
 
     public AbstractListSectionMatcher(UnsignedLong numericDescriptor, Symbol symbolicDescriptor, Map<Object, Matcher<?>> fieldMatchers, boolean expectTrailingBytes) {
         super(numericDescriptor, symbolicDescriptor, fieldMatchers, expectTrailingBytes);

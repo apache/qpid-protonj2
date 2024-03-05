@@ -24,8 +24,9 @@ import java.util.Map;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 
-public class DeliveryAnnotationsMatcher extends AbstractMapSectionMatcher {
+public class DeliveryAnnotationsMatcher extends AbstractMapSectionMatcher<DeliveryAnnotationsMatcher> {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:delivery-annotations:map");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000071L);
@@ -34,26 +35,27 @@ public class DeliveryAnnotationsMatcher extends AbstractMapSectionMatcher {
         super(DESCRIPTOR_CODE, DESCRIPTOR_SYMBOL, new HashMap<Object, Matcher<?>>(), expectTrailingBytes);
     }
 
-    @Override
-    public DeliveryAnnotationsMatcher withEntry(Object key, Matcher<?> m) {
-        validateType(key);
-
-        return (DeliveryAnnotationsMatcher) super.withEntry(key, m);
+    public DeliveryAnnotationsMatcher withEntry(String key, Matcher<?> m) {
+        return super.withEntry(Symbol.valueOf(key), m);
     }
 
-    private void validateType(Object key) {
+    public DeliveryAnnotationsMatcher withEntry(String key, Object value) {
+        return super.withEntry(Symbol.valueOf(key), Matchers.equalTo(value));
+    }
+
+    public DeliveryAnnotationsMatcher withEntry(Symbol key, Object value) {
+        return super.withEntry(key, Matchers.equalTo(value));
+    }
+
+    @Override
+    protected void validateMepKeyType(Object key) {
         if (!(key instanceof Long || key instanceof Symbol)) {
             throw new IllegalArgumentException("Delivery Annotation keys must be of type Symbol or long (reserved)");
         }
     }
 
-    public DeliveryAnnotationsMatcher withEntry(String key, Matcher<?> m) {
-        getMatchers().put(Symbol.valueOf(key), m);
-        return this;
-    }
-
     public boolean keyExistsInReceivedAnnotations(Object key) {
-        validateType(key);
+        validateMepKeyType(key);
 
         Map<Object, Object> receivedFields = super.getReceivedFields();
 
@@ -68,5 +70,10 @@ public class DeliveryAnnotationsMatcher extends AbstractMapSectionMatcher {
         Map<Object, Object> receivedFields = super.getReceivedFields();
 
         return receivedFields.get(key);
+    }
+
+    @Override
+    protected DeliveryAnnotationsMatcher self() {
+        return this;
     }
 }

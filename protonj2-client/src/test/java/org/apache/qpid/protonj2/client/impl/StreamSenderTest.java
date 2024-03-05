@@ -1537,9 +1537,9 @@ public class StreamSenderTest extends ImperativeClientTestCase {
 
             // Populate delivery annotations
             final Map<String, Object> deliveryAnnotations = new HashMap<>();
-            deliveryAnnotations.put("da1", 1);
-            deliveryAnnotations.put("da2", 2);
-            deliveryAnnotations.put("da3", 3);
+            deliveryAnnotations.put("da1", "a");
+            deliveryAnnotations.put("da2", "b");
+            deliveryAnnotations.put("da3", "c");
 
             StreamSender sender = connection.openStreamSender("test-queue");
             StreamSenderMessage message = sender.beginMessage(deliveryAnnotations);
@@ -1567,17 +1567,17 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             propertiesMatcher.withGroupSequence(8192);
             propertiesMatcher.withReplyToGroupId("/dev/null");
             DeliveryAnnotationsMatcher daMatcher = new DeliveryAnnotationsMatcher(true);
-            daMatcher.withEntry("da1", Matchers.equalTo(1));
-            daMatcher.withEntry("da2", Matchers.equalTo(2));
-            daMatcher.withEntry("da3", Matchers.equalTo(3));
+            daMatcher.withEntry("da1", "a");
+            daMatcher.withEntry("da2", "b");
+            daMatcher.withEntry("da3", "c");
             MessageAnnotationsMatcher maMatcher = new MessageAnnotationsMatcher(true);
-            maMatcher.withEntry("ma1", Matchers.equalTo(1));
-            maMatcher.withEntry("ma2", Matchers.equalTo(2));
-            maMatcher.withEntry("ma3", Matchers.equalTo(3));
+            maMatcher.withEntry("ma1", 1);
+            maMatcher.withEntry("ma2", 2);
+            maMatcher.withEntry("ma3", 3);
             ApplicationPropertiesMatcher apMatcher = new ApplicationPropertiesMatcher(true);
-            apMatcher.withEntry("ap1", Matchers.equalTo(1));
-            apMatcher.withEntry("ap2", Matchers.equalTo(2));
-            apMatcher.withEntry("ap3", Matchers.equalTo(3));
+            apMatcher.withEntry("ap1", 10);
+            apMatcher.withEntry("ap2", 20);
+            apMatcher.withEntry("ap3", 30);
             EncodedDataMatcher bodyMatcher = new EncodedDataMatcher(payload);
             TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
             payloadMatcher.setHeadersMatcher(headerMatcher);
@@ -1642,13 +1642,13 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             // Populate message application properties
             assertFalse(message.hasProperties());
             assertFalse(message.hasProperty("ma1"));
-            message.property("ap1", 1);
-            assertEquals(1, message.property("ap1"));
+            message.property("ap1", 10);
+            assertEquals(10, message.property("ap1"));
             assertTrue(message.hasProperty("ap1"));
-            message.property("ap2", 2);
-            assertEquals(2, message.property("ap2"));
-            message.property("ap3", 3);
-            assertEquals(3, message.property("ap3"));
+            message.property("ap2", 20);
+            assertEquals(20, message.property("ap2"));
+            message.property("ap3", 30);
+            assertEquals(30, message.property("ap3"));
             assertTrue(message.hasProperties());
 
             OutputStream stream = message.body();

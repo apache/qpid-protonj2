@@ -23,8 +23,9 @@ import java.util.HashMap;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 
-public class ApplicationPropertiesMatcher extends AbstractMapSectionMatcher {
+public class ApplicationPropertiesMatcher extends AbstractMapSectionMatcher<ApplicationPropertiesMatcher> {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:application-properties:map");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000074L);
@@ -33,12 +34,23 @@ public class ApplicationPropertiesMatcher extends AbstractMapSectionMatcher {
         super(DESCRIPTOR_CODE, DESCRIPTOR_SYMBOL, new HashMap<Object, Matcher<?>>(), expectTrailingBytes);
     }
 
+    public ApplicationPropertiesMatcher withEntry(String key, Matcher<?> m) {
+        return super.withEntry(key, m);
+    }
+
+    public ApplicationPropertiesMatcher withEntry(String key, Object value) {
+        return super.withEntry(key, Matchers.equalTo(value));
+    }
+
     @Override
-    public ApplicationPropertiesMatcher withEntry(Object key, Matcher<?> m) {
+    protected void validateMepKeyType(Object key) {
         if (!(key instanceof String)) {
             throw new RuntimeException("ApplicationProperties maps must use non-null String keys");
         }
+    }
 
-        return (ApplicationPropertiesMatcher) super.withEntry(key, m);
+    @Override
+    protected ApplicationPropertiesMatcher self() {
+        return this;
     }
 }

@@ -31,7 +31,7 @@ import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractMessageSectionMatcher {
+public abstract class AbstractMessageSectionMatcher<T extends AbstractMessageSectionMatcher<T>> {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass());
 
@@ -41,13 +41,13 @@ public abstract class AbstractMessageSectionMatcher {
     private final Map<Object, Matcher<?>> fieldMatchers;
     private Map<Object, Object> receivedFields;
 
-    private final boolean expectTrailingBytes;
+    private final boolean allowTrailingBytes;
 
     protected AbstractMessageSectionMatcher(UnsignedLong numericDescriptor, Symbol symbolicDescriptor, Map<Object, Matcher<?>> fieldMatchers, boolean expectTrailingBytes) {
         this.numericDescriptor = numericDescriptor;
         this.symbolicDescriptor = symbolicDescriptor;
         this.fieldMatchers = fieldMatchers;
-        this.expectTrailingBytes = expectTrailingBytes;
+        this.allowTrailingBytes = expectTrailingBytes;
     }
 
     protected Map<Object, Matcher<?>> getMatchers() {
@@ -76,7 +76,7 @@ public abstract class AbstractMessageSectionMatcher {
             throw new IllegalStateException("Decoded more bytes than Binary supports holding");
         }
 
-        if (decoded < length && !expectTrailingBytes) {
+        if (decoded < length && !allowTrailingBytes) {
             throw new IllegalArgumentException(
                 "Expected to consume all bytes, but trailing bytes remain: Got " + length + ", consumed " + decoded);
         }

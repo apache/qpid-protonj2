@@ -242,8 +242,8 @@ class MessageSendTest extends ImperativeClientTestCase {
             session.openReceiver("dummy").openFuture().get();
 
             DeliveryAnnotationsMatcher daMatcher = new DeliveryAnnotationsMatcher(true);
-            daMatcher.withEntry("one", Matchers.equalTo(1));
-            daMatcher.withEntry("two", Matchers.equalTo(2));
+            daMatcher.withEntry("one", 1);
+            daMatcher.withEntry("two", 2);
             daMatcher.withEntry("three", Matchers.equalTo(3));
             EncodedAmqpValueMatcher bodyMatcher = new EncodedAmqpValueMatcher("Hello World");
             TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
@@ -305,7 +305,7 @@ class MessageSendTest extends ImperativeClientTestCase {
 
             MessageAnnotationsMatcher maMatcher = new MessageAnnotationsMatcher(true);
             maMatcher.withEntry("one", Matchers.equalTo(1));
-            maMatcher.withEntry("two", Matchers.equalTo(2));
+            maMatcher.withEntry("two", 2);
             maMatcher.withEntry("three", Matchers.equalTo(3));
             EncodedAmqpValueMatcher bodyMatcher = new EncodedAmqpValueMatcher("Hello World");
             TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
@@ -365,9 +365,9 @@ class MessageSendTest extends ImperativeClientTestCase {
             session.openReceiver("dummy").openFuture().get();
 
             ApplicationPropertiesMatcher apMatcher = new ApplicationPropertiesMatcher(true);
-            apMatcher.withEntry("one", Matchers.equalTo(1));
-            apMatcher.withEntry("two", Matchers.equalTo(2));
-            apMatcher.withEntry("three", Matchers.equalTo(3));
+            apMatcher.withEntry("one", 1);
+            apMatcher.withEntry("two", 2);
+            apMatcher.withEntry("three", 3);
             EncodedAmqpValueMatcher bodyMatcher = new EncodedAmqpValueMatcher("Hello World");
             TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
             payloadMatcher.setApplicationPropertiesMatcher(apMatcher);

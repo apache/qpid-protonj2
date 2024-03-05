@@ -24,7 +24,7 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Matcher;
 
-public abstract class AbstractMapSectionMatcher extends AbstractMessageSectionMatcher {
+public abstract class AbstractMapSectionMatcher<T extends AbstractMapSectionMatcher<T>> extends AbstractMessageSectionMatcher<T> {
 
     public AbstractMapSectionMatcher(UnsignedLong numericDescriptor, Symbol symbolicDescriptor, Map<Object, Matcher<?>> fieldMatchers, boolean expectTrailingBytes) {
         super(numericDescriptor, symbolicDescriptor, fieldMatchers, expectTrailingBytes);
@@ -41,8 +41,20 @@ public abstract class AbstractMapSectionMatcher extends AbstractMessageSectionMa
         verifyReceivedFields((Map<Object, Object>) described);
     }
 
-    public AbstractMapSectionMatcher withEntry(Object key, Matcher<?> m) {
+    protected abstract T self();
+
+    public T withEntry(Object key, Matcher<?> m) {
+        validateMepKeyType(key);
         getMatchers().put(key, m);
-        return this;
+        return self();
     }
+
+    /**
+     * Validate the map entry key type and throw an error if the type is not allowed in the map
+     *
+     * @param key
+     * 		The key that will be used for matching map entries
+     */
+    protected abstract void validateMepKeyType(Object key);
+
 }
