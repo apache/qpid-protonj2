@@ -37,7 +37,7 @@ import org.apache.qpid.protonj2.types.transport.Transfer;
  */
 public class ProtonSessionIncomingWindow {
 
-    private static final long DEFAULT_WINDOW_SIZE = Integer.MAX_VALUE; // biggest legal value
+    private static final int DEFAULT_WINDOW_SIZE = Integer.MAX_VALUE; // biggest legal value
 
     private final ProtonSession session;
     private final ProtonEngine engine;
@@ -46,16 +46,16 @@ public class ProtonSessionIncomingWindow {
     private int incomingCapacity = 0;
 
     // Computed incoming window based on the incoming capacity minus bytes not yet read from deliveries.
-    private long incomingWindow = 0;
+    private int incomingWindow = 0;
 
     // Tracks the next expected incoming transfer ID from the remote
-    private long nextIncomingId = 0;
+    private int nextIncomingId = 0;
 
     // Tracks the most recent delivery Id for validation against the next incoming delivery
     private SequenceNumber lastDeliveryid;
 
-    private long maxFrameSize;
-    private long incomingBytes;
+    private int maxFrameSize;
+    private int incomingBytes;
 
     private UnsettledMap<ProtonIncomingDelivery> unsettled =
         new UnsettledMap<>(ProtonIncomingDelivery::getDeliveryIdInt);
@@ -63,7 +63,7 @@ public class ProtonSessionIncomingWindow {
     public ProtonSessionIncomingWindow(ProtonSession session) {
         this.session = session;
         this.engine = session.getConnection().getEngine();
-        this.maxFrameSize = session.getConnection().getMaxFrameSize();
+        this.maxFrameSize = (int) session.getConnection().getMaxFrameSize();
     }
 
     public void setIncomingCapacity(int incomingCapacity) {
@@ -75,11 +75,10 @@ public class ProtonSessionIncomingWindow {
     }
 
     public int getRemainingIncomingCapacity() {
-        // TODO: This is linked to below update of capacity which also needs more attention.
-        if (incomingCapacity <= 0 || maxFrameSize == UnsignedInteger.MAX_VALUE.longValue()) {
-            return (int) DEFAULT_WINDOW_SIZE;
+        if (incomingCapacity <= 0 || maxFrameSize == UnsignedInteger.MAX_VALUE.intValue()) {
+            return DEFAULT_WINDOW_SIZE;
         } else {
-            return (int) (incomingCapacity - incomingBytes);
+            return incomingCapacity - incomingBytes;
         }
     }
 
@@ -93,7 +92,7 @@ public class ProtonSessionIncomingWindow {
      */
     Begin configureOutbound(Begin begin) {
         // Update as it might have changed if session created before connection open() called.
-        this.maxFrameSize = session.getConnection().getMaxFrameSize();
+        this.maxFrameSize = (int) session.getConnection().getMaxFrameSize();
 
         return begin.setIncomingWindow(updateIncomingWindow());
     }
@@ -108,7 +107,7 @@ public class ProtonSessionIncomingWindow {
      */
     Begin handleBegin(Begin begin) {
         if (begin.hasNextOutgoingId()) {
-            this.nextIncomingId = begin.getNextOutgoingId();
+            this.nextIncomingId = UnsignedInteger.valueOf(begin.getNextOutgoingId()).intValue();
         }
 
         return begin;
@@ -137,7 +136,8 @@ public class ProtonSessionIncomingWindow {
         incomingWindow--;
         nextIncomingId++;
 
-        ProtonIncomingDelivery delivery = link.remoteTransfer(transfer, payload);
+        final ProtonIncomingDelivery delivery = link.remoteTransfer(transfer, payload);
+
         if (!delivery.isSettled() && !delivery.isRemotelySettled() && delivery.isFirstTransfer()) {
             unsettled.put((int) delivery.getDeliveryId(), delivery);
         }
@@ -186,12 +186,10 @@ public class ProtonSessionIncomingWindow {
     }
 
     long updateIncomingWindow() {
-        // TODO - need to revisit this logic and decide on sane cutoff for capacity restriction.
         if (incomingCapacity <= 0 || maxFrameSize == UnsignedInteger.MAX_VALUE.longValue()) {
             incomingWindow = DEFAULT_WINDOW_SIZE;
         } else {
-            // TODO - incomingWindow = Integer.divideUnsigned(incomingCapacity - incomingBytes, maxFrameSize);
-            incomingWindow = (incomingCapacity - incomingBytes) / maxFrameSize;
+            incomingWindow = Integer.divideUnsigned(incomingCapacity - incomingBytes, maxFrameSize);
         }
 
         return incomingWindow;
@@ -205,14 +203,14 @@ public class ProtonSessionIncomingWindow {
     //----- Access to internal state useful for tests
 
     public long getIncomingBytes() {
-        return incomingBytes;
+        return Integer.toUnsignedLong(incomingBytes);
     }
 
-    public long getNextIncomingId() {
+    public int getNextIncomingId() {
         return nextIncomingId;
     }
 
-    public long getIncomingWindow() {
+    public int getIncomingWindow() {
         return incomingWindow;
     }
 
