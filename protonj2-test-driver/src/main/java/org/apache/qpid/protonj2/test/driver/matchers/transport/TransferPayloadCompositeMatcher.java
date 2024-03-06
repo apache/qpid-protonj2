@@ -173,7 +173,7 @@ public class TransferPayloadCompositeMatcher extends TypeSafeMatcher<ByteBuffer>
             }
         }
 
-        // MessageAnnotations Section
+        // Footers Section
         if (footersMatcher != null) {
             try {
                 bytesConsumed += footersMatcher.verify(receivedSlice.slice());

@@ -44,6 +44,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
 import org.apache.qpid.protonj2.test.driver.matchers.transactions.TransactionalStateMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferMessageMatcher;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
@@ -283,6 +284,10 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
         // TODO - Create Matcher which describes the mismatch in detail
         this.payloadMatcher = Matchers.equalTo(copy.asReadOnlyBuffer());
         return this;
+    }
+
+    public TransferMessageMatcher withMessage() {
+        return (TransferMessageMatcher) (this.payloadMatcher = new TransferMessageMatcher(this));
     }
 
     //----- Matcher based with methods for more complex validation

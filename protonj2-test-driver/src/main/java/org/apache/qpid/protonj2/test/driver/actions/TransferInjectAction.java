@@ -257,6 +257,10 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
         return new FooterBuilder();
     }
 
+    public MessageBuilder withMessage() {
+        return new MessageBuilder();
+    }
+
     private Header getOrCreateHeader() {
         if (header == null) {
             header = new Header();
@@ -479,6 +483,11 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
 
     public final class ApplicationPropertiesBuilder extends SectionBuilder {
 
+        public ApplicationPropertiesBuilder withProperty(String key, Object value) {
+            getOrCreateApplicationProperties().setApplicationProperty(key, value);
+            return this;
+        }
+
         public ApplicationPropertiesBuilder withApplicationProperty(String key, Object value) {
             getOrCreateApplicationProperties().setApplicationProperty(key, value);
             return this;
@@ -540,7 +549,12 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
 
     public final class FooterBuilder extends SectionBuilder {
 
-        public FooterBuilder withFooter(Object key, Object value) {
+        public FooterBuilder withFooter(String key, Object value) {
+            getOrCreateFooter().setFooterProperty(Symbol.valueOf(key), value);
+            return this;
+        }
+
+        public FooterBuilder withFooter(Symbol key, Object value) {
             getOrCreateFooter().setFooterProperty(key, value);
             return this;
         }
@@ -663,6 +677,42 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
         public TransactionalStateBuilder withModified(boolean failed, boolean undeliverableHere) {
             withOutcome(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere));
             return this;
+        }
+    }
+
+    public final class MessageBuilder extends SectionBuilder {
+
+        public MessageBuilder withMessageFormat(int format) {
+            TransferInjectAction.this.withMessageFormat(format);
+            return this;
+        }
+
+        public HeaderBuilder withHeader() {
+            return TransferInjectAction.this.withHeader();
+        }
+
+        public DeliveryAnnotationsBuilder withDeliveryAnnotations() {
+            return TransferInjectAction.this.withDeliveryAnnotations();
+        }
+
+        public MessageAnnotationsBuilder withMessageAnnotations() {
+            return TransferInjectAction.this.withMessageAnnotations();
+        }
+
+        public PropertiesBuilder withProperties() {
+            return TransferInjectAction.this.withProperties();
+        }
+
+        public ApplicationPropertiesBuilder withApplicationProperties() {
+            return TransferInjectAction.this.withApplicationProperties();
+        }
+
+        public BodySectionBuilder withBody() {
+            return TransferInjectAction.this.withBody();
+        }
+
+        public FooterBuilder withFooter() {
+            return TransferInjectAction.this.withFooter();
         }
     }
 

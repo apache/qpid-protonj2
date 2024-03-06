@@ -41,13 +41,21 @@ public abstract class AbstractMessageSectionMatcher<T extends AbstractMessageSec
     private final Map<Object, Matcher<?>> fieldMatchers;
     private Map<Object, Object> receivedFields;
 
-    private final boolean allowTrailingBytes;
+    private boolean allowTrailingBytes;
 
     protected AbstractMessageSectionMatcher(UnsignedLong numericDescriptor, Symbol symbolicDescriptor, Map<Object, Matcher<?>> fieldMatchers, boolean expectTrailingBytes) {
         this.numericDescriptor = numericDescriptor;
         this.symbolicDescriptor = symbolicDescriptor;
         this.fieldMatchers = fieldMatchers;
         this.allowTrailingBytes = expectTrailingBytes;
+    }
+
+    public void setAllowTrailingBytes(boolean allowTrailingBytes) {
+        this.allowTrailingBytes = allowTrailingBytes;
+    }
+
+    public boolean isAllowTrailngBytes() {
+        return allowTrailingBytes;
     }
 
     protected Map<Object, Matcher<?>> getMatchers() {

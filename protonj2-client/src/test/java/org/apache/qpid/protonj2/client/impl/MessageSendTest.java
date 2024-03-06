@@ -95,19 +95,16 @@ class MessageSendTest extends ImperativeClientTestCase {
             // Gates send on remote flow having been sent and received
             session.openReceiver("dummy").openFuture().get();
 
-            HeaderMatcher headerMatcher = new HeaderMatcher(true);
-            headerMatcher.withDurable(true);
-            headerMatcher.withPriority((byte) 1);
-            headerMatcher.withTtl(65535);
-            headerMatcher.withFirstAcquirer(true);
-            headerMatcher.withDeliveryCount(2);
-            EncodedAmqpValueMatcher bodyMatcher = new EncodedAmqpValueMatcher("Hello World");
-            TransferPayloadCompositeMatcher payloadMatcher = new TransferPayloadCompositeMatcher();
-            payloadMatcher.setHeadersMatcher(headerMatcher);
-            payloadMatcher.setMessageContentMatcher(bodyMatcher);
-
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectTransfer().withMessageFormat(0).withPayload(payloadMatcher).accept();
+            peer.expectTransfer().withMessage().withMessageFormat(0)
+                                               .withHeader()
+                                               .withDurability(true)
+                                               .withPriority((byte) 1)
+                                               .withTimeToLive(65535)
+                                               .withFirstAcquirer(true)
+                                               .withDeliveryCount(2)
+                                               .also()
+                                               .withValue("Hello World");
             peer.expectDetach().respond();
             peer.expectClose().respond();
 

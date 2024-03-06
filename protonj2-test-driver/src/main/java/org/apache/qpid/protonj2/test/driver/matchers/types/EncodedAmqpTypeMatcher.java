@@ -40,7 +40,7 @@ public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ByteBuffer>
     private final Symbol descriptorSymbol;
     private final UnsignedLong descriptorCode;
     private final Object expectedValue;
-    private boolean permitTrailingBytes;
+    private boolean allowTrailingBytes;
     private DescribedType decodedDescribedType;
     private boolean unexpectedTrailingBytes;
 
@@ -48,11 +48,19 @@ public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ByteBuffer>
         this(symbol, code, expectedValue, false);
     }
 
-    public EncodedAmqpTypeMatcher(Symbol symbol, UnsignedLong code, Object expectedValue, boolean permitTrailingBytes) {
+    public EncodedAmqpTypeMatcher(Symbol symbol, UnsignedLong code, Object expectedValue, boolean allowTrailingBytes) {
         this.descriptorSymbol = symbol;
         this.descriptorCode = code;
         this.expectedValue = expectedValue;
-        this.permitTrailingBytes = permitTrailingBytes;
+        this.allowTrailingBytes = allowTrailingBytes;
+    }
+
+    public void setAllowTrailingBytes(boolean allowTrailingBytes) {
+        this.allowTrailingBytes = allowTrailingBytes;
+    }
+
+    public boolean isAllowTrailngBytes() {
+        return allowTrailingBytes;
     }
 
     protected Object getExpectedValue() {
@@ -110,7 +118,7 @@ public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ByteBuffer>
             }
         }
 
-        if (decoded < length && !permitTrailingBytes) {
+        if (decoded < length && !allowTrailingBytes) {
             unexpectedTrailingBytes = true;
             return false;
         }
