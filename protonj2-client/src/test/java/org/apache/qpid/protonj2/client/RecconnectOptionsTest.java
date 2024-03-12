@@ -17,32 +17,41 @@
 package org.apache.qpid.protonj2.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
 
 public class RecconnectOptionsTest {
 
     @Test
-    void testCreate() {
-        ConnectionOptions options = new ConnectionOptions();
+    public void testCreate() {
+        ReconnectOptions options = new ReconnectOptions();
 
-        assertNull(options.password());
-        assertNull(options.user());
+        assertEquals(options.reconnectEnabled(), ReconnectOptions.DEFAULT_RECONNECT_ENABLED);
+        assertEquals(options.warnAfterReconnectAttempts(), ReconnectOptions.DEFAULT_WARN_AFTER_RECONNECT_ATTEMPTS);
+        assertEquals(options.maxInitialConnectionAttempts(), ReconnectOptions.INFINITE);
+        assertEquals(options.maxReconnectAttempts(), ReconnectOptions.INFINITE);
+        assertEquals(options.reconnectBackOffMultiplier(), ReconnectOptions.DEFAULT_RECONNECT_BACKOFF_MULTIPLIER);
+        assertEquals(options.useReconnectBackOff(), ReconnectOptions.DEFAULT_USE_RECONNECT_BACKOFF);
+        assertEquals(options.maxReconnectDelay(), ReconnectOptions.DEFAULT_MAX_RECONNECT_DELAY);
+        assertEquals(options.reconnectDelay(), ReconnectOptions.DEFAULT_RECONNECT_DELAY);
     }
 
     @Test
-    void testCopy() {
-        ConnectionOptions options = new ConnectionOptions();
+    public void testCopy() {
+        ReconnectOptions options = new ReconnectOptions();
 
-        options.user("test");
-        options.password("test-pass");
+        options.useReconnectBackOff(true);
+        options.maxReconnectAttempts(50);
+        options.maxReconnectDelay(15);
 
-        ConnectionOptions copy = options.clone();
+        ReconnectOptions copy = options.clone();
 
         assertNotSame(copy, options);
-        assertEquals(options.user(), copy.user());
-        assertEquals(options.password(), copy.password());
+        assertFalse(options.reconnectEnabled());
+        assertEquals(options.useReconnectBackOff(), true);
+        assertEquals(options.maxReconnectAttempts(), 50);
+        assertEquals(options.maxReconnectDelay(), 15);
     }
 }

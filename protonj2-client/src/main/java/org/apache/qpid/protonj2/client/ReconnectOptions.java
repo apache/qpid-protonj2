@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.client;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Options that control the reconnection behavior of a client {@link Connection}.
@@ -40,7 +41,7 @@ public class ReconnectOptions implements Cloneable {
     private int maxInitialConnectionAttempts = INFINITE;
     private int maxReconnectAttempts = INFINITE;
     private int reconnectDelay = DEFAULT_RECONNECT_DELAY;
-    private int maxReconnectDelay = DEFAULT_RECONNECT_DELAY;
+    private int maxReconnectDelay = DEFAULT_MAX_RECONNECT_DELAY;
     private boolean useReconnectBackOff = DEFAULT_USE_RECONNECT_BACKOFF;
     private double reconnectBackOffMultiplier = DEFAULT_RECONNECT_BACKOFF_MULTIPLIER;
 
@@ -127,6 +128,7 @@ public class ReconnectOptions implements Cloneable {
      * @return this {@link ReconnectOptions} instance.
      */
     public ReconnectOptions addReconnectLocation(String host, int port) {
+        Objects.requireNonNull(host, "Reconnect host cannot be null");
         reconnectHosts.add(new ReconnectLocation(host, port));
         return this;
     }
@@ -169,7 +171,7 @@ public class ReconnectOptions implements Cloneable {
     /**
      * For a client that has never connected to a remote peer before this option controls how many attempts
      * are made to connect before reporting the connection as failed. The default behavior is to use the
-     * value of maxReconnectAttempts.
+     * value of maxReconnectAttempts (which defaults to try forever).
      *
      * @param maxInitialConnectionAttempts
      *      the maximum number of initial connection attempts to try before giving up.
@@ -203,7 +205,7 @@ public class ReconnectOptions implements Cloneable {
     }
 
     /**
-     * @return the configured reconnect delay to use after between attempts to connect or reconnect.
+     * @return the configured reconnect delay to use in between attempts to connect or reconnect.
      */
     public int reconnectDelay() {
         return reconnectDelay;
