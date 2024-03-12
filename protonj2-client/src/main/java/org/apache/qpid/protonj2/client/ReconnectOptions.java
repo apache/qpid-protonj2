@@ -40,7 +40,7 @@ public class ReconnectOptions implements Cloneable {
     private int maxInitialConnectionAttempts = INFINITE;
     private int maxReconnectAttempts = INFINITE;
     private int reconnectDelay = DEFAULT_RECONNECT_DELAY;
-    private int maxReconnectDelay = DEFAULT_RECONNECT_DELAY;
+    private int maxReconnectDelay = DEFAULT_MAX_RECONNECT_DELAY;
     private boolean useReconnectBackOff = DEFAULT_USE_RECONNECT_BACKOFF;
     private double reconnectBackOffMultiplier = DEFAULT_RECONNECT_BACKOFF_MULTIPLIER;
 
