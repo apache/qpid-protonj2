@@ -221,7 +221,8 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
                 }
             }
 
-            if (response.getPerformative().getInitialDeliveryCount() == null) {
+
+            if (response.getPerformative().getInitialDeliveryCount() == null && !response.isExplicitlyNullDeliveryCount()) {
                 Role role = Role.valueOf(response.getPerformative().getRole());
                 if (role == Role.SENDER) {
                     response.withInitialDeliveryCount(0);

@@ -60,6 +60,7 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     private boolean explicitlyNullName;
     private boolean explicitlyNullHandle;
+    private boolean explicitlyNullDeliveryCount;
     private boolean nullSourceRequired;
     private boolean nullTargetRequired;
 
@@ -70,6 +71,18 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
     @Override
     public Attach getPerformative() {
         return attach;
+    }
+
+    public boolean isExplicitlyNullName() {
+        return explicitlyNullName;
+    }
+
+    public boolean isExplicitlyNullHandle() {
+        return explicitlyNullHandle;
+    }
+
+    public boolean isExplicitlyNullDeliveryCount() {
+        return explicitlyNullDeliveryCount;
     }
 
     public AttachInjectAction withName(String name) {
@@ -236,6 +249,12 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     public AttachInjectAction withIncompleteUnsettled(boolean incomplete) {
         attach.setIncompleteUnsettled(incomplete);
+        return this;
+    }
+
+    public AttachInjectAction withNullInitialDeliveryCount() {
+        attach.setInitialDeliveryCount(null);
+        explicitlyNullDeliveryCount = true;
         return this;
     }
 
