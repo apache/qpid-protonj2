@@ -246,10 +246,9 @@ public class ProtonSessionIncomingWindow {
         if (lastDeliveryid == null) {
             lastDeliveryid = new SequenceNumber((int) deliveryId);
         } else {
-            int previousId = lastDeliveryid.intValue();
             if (lastDeliveryid.increment().compareTo((int) deliveryId) != 0) {
                 session.getConnection().getEngine().engineFailed(
-                    new ProtocolViolationException("Expected delivery-id " + previousId + ", got " + deliveryId));
+                    new ProtocolViolationException("Expected delivery-id " + lastDeliveryid + ", got " + deliveryId));
             }
         }
     }
