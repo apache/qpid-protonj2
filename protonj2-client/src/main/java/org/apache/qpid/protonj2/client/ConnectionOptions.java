@@ -26,6 +26,7 @@ import java.util.function.BiConsumer;
 
 import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.transport.Open;
 
 /**
@@ -388,7 +389,7 @@ public class ConnectionOptions implements Cloneable {
      * @return this {@link ConnectionOptions} instance.
      */
     public ConnectionOptions idleTimeout(long timeout, TimeUnit units) {
-        this.idleTimeout = units.toMillis(timeout);
+        this.idleTimeout = UnsignedInteger.valueOf(units.toMillis(timeout)).longValue();;
         return this;
     }
 

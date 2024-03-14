@@ -20,10 +20,12 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.junit.jupiter.api.Test;
 
 public class ConnectionOptionsTest {
@@ -35,6 +37,13 @@ public class ConnectionOptionsTest {
         assertNull(options.password());
         assertNull(options.user());
         assertNull(options.virtualHost());
+    }
+
+    @Test
+    public void testSetIdleTimeoutValidesUIntRange() {
+        ConnectionOptions options = new ConnectionOptions();
+
+        assertThrows(NumberFormatException.class, () -> options.idleTimeout(UnsignedInteger.MAX_VALUE.longValue() + 1));
     }
 
     @Test

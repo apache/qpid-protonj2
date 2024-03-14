@@ -895,7 +895,7 @@ public final class ClientConnection implements Connection {
         protonConnection.setLinkedResource(this);
         protonConnection.setChannelMax(options.channelMax());
         protonConnection.setMaxFrameSize(options.maxFrameSize());
-        protonConnection.setIdleTimeout((int) options.idleTimeout());
+        protonConnection.setIdleTimeout(options.idleTimeout() / 2);
         protonConnection.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
         protonConnection.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
         protonConnection.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));

@@ -58,6 +58,7 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusDurability;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.protonj2.test.driver.codec.security.SaslCode;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.SourceMatcher;
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
@@ -1818,6 +1819,43 @@ public class ConnectionTest extends ImperativeClientTestCase {
 
             Client container = Client.create();
             ConnectionOptions options = connectionOptions().virtualHost("");
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateConnectionWithNoIdleTimeout() throws Exception {
+        doTestCreateConnectionWithIdleTimeoutSendsExpectedValue(0, 0);
+    }
+
+    @Test
+    public void testCreateConnectionWithHalfIdleTimeout() throws Exception {
+        doTestCreateConnectionWithIdleTimeoutSendsExpectedValue(10_000, 5_000);
+    }
+
+    @Test
+    public void testCreateConnectionWithHalfLargeIdleTimeout() throws Exception {
+        doTestCreateConnectionWithIdleTimeoutSendsExpectedValue(UnsignedInteger.MAX_VALUE.longValue(), UnsignedInteger.MAX_VALUE.longValue() / 2);
+    }
+
+    private void doTestCreateConnectionWithIdleTimeoutSendsExpectedValue(long setValue, long expectedValue) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withIdleTimeOut(expectedValue).respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = connectionOptions().idleTimeout(setValue);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
