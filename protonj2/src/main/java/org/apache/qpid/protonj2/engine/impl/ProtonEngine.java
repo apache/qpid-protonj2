@@ -195,7 +195,7 @@ public class ProtonEngine implements Engine {
             private final ScheduledExecutorService service = executor;
 
             @Override
-			public boolean isShutdown() {
+            public boolean isShutdown() {
                 return service.isShutdown();
             }
 
@@ -261,14 +261,14 @@ public class ProtonEngine implements Engine {
             throw new EngineNotWritableException("Engine is currently not accepting new input");
         }
 
-        try {
-            final int startIndex = input.getReadOffset();
-            pipeline.fireRead(input);
-            if (input.getReadOffset() != startIndex) {
+        if (input.isReadable()) {
+            try {
+                pipeline.fireRead(input);
+            } catch (Exception error) {
+                throw engineFailed(error);
+            } finally {
                 inputSequence++;
             }
-        } catch (Exception error) {
-            throw engineFailed(error);
         }
 
         return this;
