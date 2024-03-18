@@ -3152,4 +3152,102 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    public void testReceiveMessageWithNullWrappedInAmqpValue() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withMessage().withBody().withValue((String) null)
+                                 .also()
+                                 .splitWrite(true)
+                                 .afterDelay(25)
+                                 .queue();
+            peer.expectDisposition().withFirst(0)
+                                    .withSettled(true)
+                                    .withState().accepted();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final ConnectionOptions options = new ConnectionOptions();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            final Receiver receiver = connection.openReceiver("test-queue");
+            final Delivery delivery = receiver.receive();
+            final Message<String> message = delivery.message();
+
+            assertNull(message.body());
+
+            peer.waitForScriptToComplete();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            assertNotNull(delivery);
+
+            receiver.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReceiveMessageWithNullWrappedInDataSection() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withMessage().withBody().withData((byte[]) null)
+                                 .also()
+                                 .splitWrite(true)
+                                 .afterDelay(25)
+                                 .queue();
+            peer.expectDisposition().withFirst(0)
+                                    .withSettled(true)
+                                    .withState().accepted();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final ConnectionOptions options = new ConnectionOptions();
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            final Receiver receiver = connection.openReceiver("test-queue");
+            final Delivery delivery = receiver.receive();
+            final Message<byte[]> message = delivery.message();
+
+            assertNull(message.body());
+
+            peer.waitForScriptToComplete();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            assertNotNull(delivery);
+
+            receiver.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

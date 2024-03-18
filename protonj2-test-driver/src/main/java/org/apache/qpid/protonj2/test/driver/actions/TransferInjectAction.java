@@ -517,7 +517,7 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
         }
 
         public BodySectionBuilder withValue(byte[] body) {
-            TransferInjectAction.this.body = new AmqpValue(new Binary(body));
+            TransferInjectAction.this.body = new AmqpValue(body == null ? null : new Binary(body));
             return this;
         }
 
@@ -527,7 +527,7 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
         }
 
         public BodySectionBuilder withData(byte[] body) {
-            TransferInjectAction.this.body = new Data(new Binary(body));
+            TransferInjectAction.this.body = new Data(body == null ? null : new Binary(body));
             return this;
         }
 

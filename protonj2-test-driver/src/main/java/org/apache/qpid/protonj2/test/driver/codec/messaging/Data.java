@@ -26,13 +26,13 @@ public class Data implements DescribedType {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000075L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:data:binary");
 
-    private Binary described;
+    private final Binary described;
+
+    public Data() {
+        this.described = null;
+    }
 
     public Data(Binary described) {
-        if (described == null) {
-            throw new IllegalArgumentException("provided Binary must not be null");
-        }
-
         this.described = described;
     }
 

@@ -18,6 +18,8 @@
  */
 package org.apache.qpid.protonj2.test.driver.matchers.types;
 
+import java.nio.ByteBuffer;
+
 import org.apache.qpid.protonj2.test.driver.codec.messaging.AmqpValue;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Data;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
@@ -35,7 +37,7 @@ public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {
      *        the value that is expected to be IN the received {@link Data}
      */
     public EncodedDataMatcher(byte[] expectedValue) {
-        this(new Binary(expectedValue), false);
+        this(expectedValue != null ? new Binary(expectedValue) : null, false);
     }
 
     /**
@@ -54,7 +56,7 @@ public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {
      *        consuming the {@link AmqpValue}
      */
     public EncodedDataMatcher(byte[] expectedValue, boolean permitTrailingBytes) {
-        this(new Binary(expectedValue), permitTrailingBytes);
+        this(expectedValue != null ? new Binary(expectedValue) : null, permitTrailingBytes);
     }
 
     /**
@@ -66,6 +68,11 @@ public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {
      */
     public EncodedDataMatcher(Binary expectedValue, boolean permitTrailingBytes) {
         super(DESCRIPTOR_SYMBOL, DESCRIPTOR_CODE, expectedValue, permitTrailingBytes);
+    }
+
+    @Override
+    protected boolean matchesSafely(ByteBuffer receivedBinary) {
+        return super.matchesSafely(receivedBinary);
     }
 
     @Override

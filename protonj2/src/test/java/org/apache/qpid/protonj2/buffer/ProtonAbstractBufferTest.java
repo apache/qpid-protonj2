@@ -21,6 +21,7 @@ import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -474,6 +475,7 @@ public abstract class ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testWriteBytesHeapByteBufferMustThrowIfCannotBeExpanded() {
         // With zero offsets
@@ -528,6 +530,7 @@ public abstract class ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testWriteBytesDirectByteBufferMustThrowIfCannotBeExpanded() {
         // With zero offsets
@@ -580,6 +583,7 @@ public abstract class ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testWriteBytesByteArrayMustThrowIfCannotBeExpanded() {
         // Starting at offsets zero.
@@ -630,6 +634,7 @@ public abstract class ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testWriteBytesByteArrayWithOffsetMustThrowIfCannotBeExpanded() {
         // Starting at offsets zero.
@@ -682,6 +687,7 @@ public abstract class ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testWriteBytesBufferMustThrowIfCannotBeExpanded() {
         // Starting at offsets zero.
@@ -2062,6 +2068,7 @@ public abstract class ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testEnsureWritableCanGrowBeyondImplicitCapacityLimit() {
         try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8).implicitGrowthLimit(8)) {
@@ -2077,6 +2084,7 @@ public abstract class ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testWritesMustThrowIfSizeWouldGoBeyondImplicitCapacityLimit() {
         try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
@@ -2537,6 +2545,7 @@ public abstract class ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testAllocatingOnClosedAllocatorMustThrow() {
         ProtonBufferAllocator allocator = createTestCaseAllocator();
@@ -2983,8 +2992,38 @@ public abstract class ProtonAbstractBufferTest {
     }
 
     @Test
+    public void testCopyIntoOnEmptyBufferFromFullyReadBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer source = allocator.allocate(8);
+             ProtonBuffer target = allocator.allocate(0)) {
+
+            source.writeLong(0xFFFFFFFFL);
+            source.readLong();
+
+            assertDoesNotThrow(() -> source.copyInto(source.getReadOffset(), target, 0, 0));
+        }
+    }
+
+    @Test
+    public void testCopyIntoByteBufferOnEmptyBufferFromFullyReadBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer source = allocator.allocate(8)) {
+
+            final ByteBuffer target = ByteBuffer.allocate(0);
+
+            source.writeLong(0xFFFFFFFFL);
+            source.readLong();
+
+            assertDoesNotThrow(() -> source.copyInto(source.getReadOffset(), target, 0, 0));
+        }
+    }
+
+    @SuppressWarnings("resource")
+    @Test
     public void testReadOnlyBuffersCannotChangeWriteOffset() {
-        try (ProtonBufferAllocator allocator = createTestCaseAllocator(); ProtonBuffer buf = allocator.allocate(8).convertToReadOnly()) {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).convertToReadOnly()) {
+
             assertThrows(ProtonBufferReadOnlyException.class, () -> buf.setWriteOffset(0));
             assertThrows(ProtonBufferReadOnlyException.class, () -> buf.setWriteOffset(4));
 
@@ -4895,6 +4934,7 @@ public abstract class ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testIteratingComponentOnClosedBufferMustThrow() {
         try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
@@ -5518,6 +5558,7 @@ public abstract class ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     protected static void verifyInaccessible(ProtonBuffer buf) {
         verifyReadInaccessible(buf);
 

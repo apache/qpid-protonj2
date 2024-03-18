@@ -30,6 +30,9 @@ import java.util.List;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
+import org.apache.qpid.protonj2.codec.CodecFactory;
+import org.apache.qpid.protonj2.codec.Decoder;
+import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.engine.EmptyEnvelope;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EngineHandlerContext;
@@ -39,6 +42,11 @@ import org.apache.qpid.protonj2.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.protonj2.engine.util.FrameReadSinkTransportHandler;
 import org.apache.qpid.protonj2.engine.util.FrameRecordingTransportHandler;
 import org.apache.qpid.protonj2.engine.util.FrameWriteSinkTransportHandler;
+import org.apache.qpid.protonj2.types.messaging.DeliveryAnnotations;
+import org.apache.qpid.protonj2.types.messaging.Header;
+import org.apache.qpid.protonj2.types.messaging.MessageAnnotations;
+import org.apache.qpid.protonj2.types.messaging.Properties;
+import org.apache.qpid.protonj2.types.messaging.Section;
 import org.apache.qpid.protonj2.types.transport.AMQPHeader;
 import org.apache.qpid.protonj2.types.transport.Open;
 import org.apache.qpid.protonj2.types.transport.Transfer;
@@ -831,6 +839,88 @@ public class ProtonFrameDecodingHandlerTest {
         assertFalse(open.hasOfferedCapabilities());
         assertFalse(open.hasDesiredCapabilities());
         assertFalse(open.hasProperties());
+    }
+
+    @Test
+    public void testDecodeOfSplitFramedMessage() throws Exception {
+        final String capture1 = "00 00 01 4c 02 00 00 00 00 53 14 c0 1d 0b 43 43 " +
+                                "a0 10 cf 8c f4 f8 93 5d b6 47 a2 19 3f 87 34 6f " +
+                                "03 97 43 40 42 40 40 40 40 41";
+        final String capture2 = "00 53 70 c0 0b 05 40 40 70 48 19 08 00 40 52 06 " +
+                                "00 53 71 c1 24 02 a3 10 78 2d 6f 70 74 2d 6c 6f " +
+                                "63 6b 2d 74 6f 6b 65 6e 98 f8 f4 8c cf 5d 93 47 " +
+                                "b6 a2 19 3f 87 34 6f 03 97 00 53 72 c1 9b 0a a3 " +
+                                "13 78 2d 6f 70 74 2d 65 6e 71 75 65 75 65 64 2d " +
+                                "74 69 6d 65 83 00 00 01 8e 42 cd 59 63 a3 15 78 " +
+                                "2d 6f 70 74 2d 73 65 71 75 65 6e 63 65 2d 6e 75 " +
+                                "6d 62 65 72 81 00 00 00 00 00 00 07 2d a3 12 78 " +
+                                "2d 6f 70 74 2d 6c 6f 63 6b 65 64 2d 75 6e 74 69 " +
+                                "6c 83 00 00 01 8e 43 db 33 f3 a3 1d 78 2d 6f 70 " +
+                                "74 2d 65 6e 71 75 65 75 65 2d 73 65 71 75 65 6e " +
+                                "63 65 2d 6e 75 6d 62 65 72 81 00 00 00 00 00 00 " +
+                                "07 2d a3 13 78 2d 6f 70 74 2d 6d 65 73 73 61 67 " +
+                                "65 2d 73 74 61 74 65 54 00 00 53 73 c0 3f 0d a1 " +
+                                "20 39 34 39 37 36 34 61 61 38 30 37 62 34 30 37 " +
+                                "38 39 39 64 32 35 66 61 65 61 63 65 36 61 38 34 " +
+                                "65 40 40 40 40 40 40 40 83 00 00 01 8e 8a e6 61 " +
+                                "63 83 00 00 01 8e 42 cd 59 63 40 40 40 00 53 75 " +
+                                "a0 00";
+
+        final byte[] packet1 = convertCaptureToByteArray(capture1);
+        final byte[] packet2 = convertCaptureToByteArray(capture2);
+
+        ArgumentCaptor<IncomingAMQPEnvelope> argument = ArgumentCaptor.forClass(IncomingAMQPEnvelope.class);
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        ProtonEngineHandlerContext context = Mockito.mock(ProtonEngineHandlerContext.class);
+
+        handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+
+        final ProtonBuffer buffer1 = ProtonBufferAllocator.defaultAllocator().copy(packet1);
+        final ProtonBuffer buffer2 = ProtonBufferAllocator.defaultAllocator().copy(packet2);
+
+        handler.handleRead(context, buffer1);
+        handler.handleRead(context, buffer2);
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderEnvelope.class));
+        Mockito.verify(context).interestMask(ProtonEngineHandlerContext.HANDLER_READS);
+        Mockito.verify(context, times(1)).fireRead(argument.capture());
+        Mockito.verifyNoMoreInteractions(context);
+
+        List<IncomingAMQPEnvelope> arguments = argument.getAllValues();
+
+        assertNotNull(arguments.get(0));
+        assertTrue(arguments.get(0).getBody() instanceof Transfer);
+        assertNotNull(arguments.get(0).getPayload());
+        assertTrue(arguments.get(0).getPayload().isReadable());
+        assertEquals(290, arguments.get(0).getPayload().getReadableBytes());
+
+        ProtonBuffer buffer = arguments.get(0).getPayload();
+        Decoder decoder = CodecFactory.getDefaultDecoder();
+        DecoderState decoderState = decoder.getCachedDecoderState();
+
+        final Header header = (Header) decoder.readObject(buffer, decoderState);
+        final DeliveryAnnotations deliveryAnnotations = (DeliveryAnnotations) decoder.readObject(buffer, decoderState);
+        final MessageAnnotations messageAnnotations = (MessageAnnotations) decoder.readObject(buffer, decoderState);
+        final Properties properties = (Properties) decoder.readObject(buffer, decoderState);
+        final Section<?> body = (Section<?>) decoder.readObject(buffer, decoderState);
+
+        assertNotNull(header);
+        assertNotNull(deliveryAnnotations);
+        assertNotNull(messageAnnotations);
+        assertNotNull(properties);
+        assertNotNull(body);
+    }
+
+    private byte[] convertCaptureToByteArray(String capture) throws Exception {
+        final String[] hexStrings = capture.split(" ");
+        final byte[] capturedBytes = new byte[hexStrings.length];
+
+        for(int i = 0; i < hexStrings.length; ++i) {
+            capturedBytes[i] = (byte) Integer.parseUnsignedInt(hexStrings[i], 16);
+        }
+
+        return capturedBytes;
     }
 
     private ProtonFrameDecodingHandler createFrameDecoder() {

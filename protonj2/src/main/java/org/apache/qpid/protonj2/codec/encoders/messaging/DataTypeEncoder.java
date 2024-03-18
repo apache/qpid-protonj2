@@ -52,19 +52,24 @@ public final class DataTypeEncoder extends AbstractDescribedTypeEncoder<Data> {
     public void writeType(ProtonBuffer buffer, EncoderState state, Data value) {
         buffer.writeBytes(DATA_PREAMBLE);
 
-        final int dataLength = value.getDataLength();
+        if (value.hasBinary()) {
+            final int dataLength = value.getDataLength();
 
-        if (dataLength > 255) {
-            buffer.ensureWritable(dataLength + Long.BYTES);
-            buffer.writeByte(EncodingCodes.VBIN32);
-            buffer.writeInt(dataLength);
+            if (dataLength > 255) {
+                buffer.ensureWritable(dataLength + Long.BYTES);
+                buffer.writeByte(EncodingCodes.VBIN32);
+                buffer.writeInt(dataLength);
+            } else {
+                buffer.ensureWritable(dataLength + Short.BYTES);
+                buffer.writeByte(EncodingCodes.VBIN8);
+                buffer.writeByte((byte) dataLength);
+            }
+
+            value.copyTo(buffer);
         } else {
-            buffer.ensureWritable(dataLength + Short.BYTES);
-            buffer.writeByte(EncodingCodes.VBIN8);
-            buffer.writeByte((byte) dataLength);
+            buffer.ensureWritable(1);
+            buffer.writeByte(EncodingCodes.NULL);
         }
-
-        value.copyTo(buffer);
     }
 
     @Override

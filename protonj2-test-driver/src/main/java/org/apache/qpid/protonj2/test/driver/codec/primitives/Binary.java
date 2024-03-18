@@ -29,11 +29,11 @@ public final class Binary {
     }
 
     public Binary(final byte[] data) {
-        this(data, 0, data.length);
+        this(data, 0, data != null ? data.length : 0);
     }
 
     public Binary(final byte[] data, final int offset, final int length) {
-        this.buffer = Arrays.copyOfRange(data, offset, offset + length);
+        this.buffer = data != null ? Arrays.copyOfRange(data, offset, offset + length) : null;
     }
 
     public Binary copy() {

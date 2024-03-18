@@ -351,7 +351,7 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
             throw generateIndexOutOfBounds(offset + length, false);
         }
 
-        int lastAccessedChunk = findChunkWithIndex(offset);
+        int lastAccessedChunk = length > 0 ? findChunkWithIndex(offset) : 0;
 
         while (length > 0) {
             final ProtonBuffer buffer = buffers[lastAccessedChunk];
@@ -384,7 +384,7 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
             throw generateIndexOutOfBounds(offset + length, false);
         }
 
-        int lastAccessedChunk = findChunkWithIndex(offset);
+        int lastAccessedChunk = length > 0 ? findChunkWithIndex(offset) : 0;
 
         while (length > 0) {
             final ProtonBuffer buffer = buffers[lastAccessedChunk];

@@ -54,6 +54,10 @@ public final class Data implements Section<byte[]> {
         return new Data(buffer == null ? null : buffer.copy(true));
     }
 
+    public boolean hasBinary() {
+        return buffer != null;
+    }
+
     public Binary getBinary() {
         if (cachedBinary != null || buffer == null) {
             return cachedBinary;

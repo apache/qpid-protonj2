@@ -25,7 +25,11 @@ public class AmqpValue implements DescribedType {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000077L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:amqp-value:*");
 
-    private Object described;
+    private final Object described;
+
+    public AmqpValue() {
+        this.described = null;
+    }
 
     public AmqpValue(Object described) {
         this.described = described;
