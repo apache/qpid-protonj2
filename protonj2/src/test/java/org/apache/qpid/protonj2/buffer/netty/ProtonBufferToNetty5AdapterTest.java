@@ -265,6 +265,7 @@ public class ProtonBufferToNetty5AdapterTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testOffsettedSetOfByteMustBoundsCheckWhenWriteOffsetIsNegative() {
         try (Buffer buf = createProtonNetty5Buffer(8).fill((byte) 0)) {
@@ -277,6 +278,7 @@ public class ProtonBufferToNetty5AdapterTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testOffsettedSetOfByteMustBoundsCheckWhenWriteOffsetAndSizeIsBeyondCapacity() {
         try (Buffer buf = createProtonNetty5Buffer(8).fill((byte) 0)) {
@@ -306,6 +308,7 @@ public class ProtonBufferToNetty5AdapterTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testOffsettedSetOfUnsignedByteMustBoundsCheckWhenWriteOffsetIsNegative() {
         try (Buffer buf = createProtonNetty5Buffer(8).fill((byte) 0)) {
@@ -318,6 +321,7 @@ public class ProtonBufferToNetty5AdapterTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testOffsettedSetOfUnsignedByteMustBoundsCheckWhenWriteOffsetAndSizeIsBeyondCapacity() {
         try (Buffer buf = createProtonNetty5Buffer(8).fill((byte) 0)) {
@@ -1493,6 +1497,7 @@ public class ProtonBufferToNetty5AdapterTest {
         return bs;
     }
 
+    @SuppressWarnings("resource")
     private static void verifyInaccessible(Buffer buf) {
         verifyReadInaccessible(buf);
 

@@ -1827,6 +1827,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testStreamReceiverSessionCannotCreateNewResources() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -1959,6 +1960,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testStreamReceiverMessageThrowsOnAnyMessageModificationAPI() throws Exception {
         final byte[] body = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -2652,6 +2654,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testStreamDeliveryHandlesInvalidHeaderEncoding() throws Exception {
         final byte[] payload = createInvalidHeaderEncoding();
@@ -2701,6 +2704,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testStreamDeliveryHandlesInvalidDeliveryAnnotationsEncoding() throws Exception {
         final byte[] payload = createInvalidDeliveryAnnotationsEncoding();
@@ -2750,6 +2754,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testStreamDeliveryHandlesInvalidMessageAnnotationsEncoding() throws Exception {
         final byte[] payload = createInvalidMessageAnnotationsEncoding();
@@ -2799,6 +2804,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testStreamDeliveryHandlesInvalidPropertiesEncoding() throws Exception {
         final byte[] payload = createInvalidPropertiesEncoding();
@@ -2848,6 +2854,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testStreamDeliveryHandlesInvalidApplicationPropertiesEncoding() throws Exception {
         final byte[] payload = createInvalidApplicationPropertiesEncoding();
@@ -2897,6 +2904,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testStreamDeliveryHandlesInvalidHeaderEncodingDuringBodyStreamOpen() throws Exception {
         final byte[] payload = createInvalidHeaderEncoding();

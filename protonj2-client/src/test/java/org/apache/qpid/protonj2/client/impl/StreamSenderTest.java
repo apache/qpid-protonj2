@@ -296,6 +296,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testSendCustomMessageWithMultipleAmqpValueSections() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -395,6 +396,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testClearBodySectionsIsNoOpForStreamSenderMessage() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -1475,6 +1477,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     void testRawOutputStreamFromMessageWritesUnmodifiedBytes() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -1673,6 +1676,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testStreamSenderWritesFooterAfterStreamClosed() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -2128,6 +2132,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     void testMessageSendWhileStreamSendIsOpenShouldBlock() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -2193,6 +2198,7 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testStreamSenderSessionCannotCreateNewResources() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {

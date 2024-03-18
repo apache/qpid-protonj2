@@ -475,6 +475,7 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testCompositeBuffersCannotHaveDuplicateComponents() {
         try (ProtonBufferAllocator allocator = createProtonDefaultAllocator()) {
@@ -544,6 +545,7 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     @Disabled
     public void testCompositeBufferMustNotBeAllowedToContainThemselves() {
@@ -595,7 +597,8 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
         }
     }
 
-    @Test
+    @SuppressWarnings("resource")
+	@Test
     public void testAppendingCompositeBufferToItselfMustThrow() {
         try (ProtonBufferAllocator allocator = createProtonDefaultAllocator()) {
             ProtonCompositeBuffer composite;
@@ -909,6 +912,7 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testComposingReadOnlyAndWritableBuffersMustThrow() {
         try (ProtonBufferAllocator allocator = createProtonDefaultAllocator()) {
@@ -937,6 +941,7 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testCompositeWritableBufferCannotBeExtendedWithReadOnlyBuffer() {
         try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
@@ -948,6 +953,7 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testCompositeReadOnlyBufferCannotBeExtendedWithWritableBuffer() {
         try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
@@ -1593,6 +1599,7 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testSplitComponentsFloorMustThrowOnOutOfBounds() {
         try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
@@ -1669,6 +1676,7 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void testSplitComponentsCeilMustThrowOnOutOfBounds() {
         try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
