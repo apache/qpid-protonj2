@@ -66,6 +66,7 @@ public class SslConnectionTest extends ImperativeClientTestCase {
     private static final String BROKER_PKCS12_TRUSTSTORE = "src/test/resources/broker-pkcs12.truststore";
     private static final String CLIENT_MULTI_KEYSTORE = "src/test/resources/client-multiple-keys-jks.keystore";
     private static final String CLIENT_JKS_TRUSTSTORE = "src/test/resources/client-jks.truststore";
+    private static final String CLIENT_JKS_TRUSTSTORE_CLASSPATH = "classpath:client-jks.truststore";
     private static final String CLIENT_PKCS12_TRUSTSTORE = "src/test/resources/client-pkcs12.truststore";
     private static final String OTHER_CA_TRUSTSTORE = "src/test/resources/other-ca-jks.truststore";
     private static final String CLIENT_JKS_KEYSTORE = "src/test/resources/client-jks.keystore";
@@ -100,7 +101,12 @@ public class SslConnectionTest extends ImperativeClientTestCase {
 
     @Test
     public void testCreateAndCloseSslConnectionJDK() throws Exception {
-        testCreateAndCloseSslConnection(false);
+        testCreateAndCloseSslConnection(false, false);
+    }
+
+    @Test
+    public void testCreateAndCloseSslConnectionJDKTrustStoreOnClasspath() throws Exception {
+        testCreateAndCloseSslConnection(false, true);
     }
 
     @Test
@@ -108,10 +114,18 @@ public class SslConnectionTest extends ImperativeClientTestCase {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
-        testCreateAndCloseSslConnection(true);
+        testCreateAndCloseSslConnection(true, false);
     }
 
-    private void testCreateAndCloseSslConnection(boolean openSSL) throws Exception {
+    @Test
+    public void testCreateAndCloseSslConnectionOpenSSLTrustStoreOnClasspath() throws Exception {
+        assumeTrue(OpenSsl.isAvailable());
+        assumeTrue(OpenSsl.supportsKeyManagerFactory());
+
+        testCreateAndCloseSslConnection(true, true);
+    }
+
+    private void testCreateAndCloseSslConnection(boolean openSSL, boolean storeFromClassPath) throws Exception {
         ProtonTestServerOptions serverOptions = serverOptions();
         serverOptions.setSecure(true);
         serverOptions.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
@@ -124,11 +138,12 @@ public class SslConnectionTest extends ImperativeClientTestCase {
             peer.expectClose().respond();
             peer.start();
 
-            URI remoteURI = peer.getServerURI();
+            final URI remoteURI = peer.getServerURI();
+            final String storeLocation = storeFromClassPath ? CLIENT_JKS_TRUSTSTORE_CLASSPATH : CLIENT_JKS_TRUSTSTORE;
 
             ConnectionOptions clientOptions = connectionOptions();
             clientOptions.sslOptions()
-                         .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                         .trustStoreLocation(storeLocation)
                          .trustStorePassword(PASSWORD)
                          .allowNativeSSL(openSSL);
 

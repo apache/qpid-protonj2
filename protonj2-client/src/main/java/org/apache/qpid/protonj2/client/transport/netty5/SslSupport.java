@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.protonj2.client.transport.netty5;
 
-import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -55,6 +55,10 @@ import io.netty5.handler.ssl.util.InsecureTrustManagerFactory;
 public final class SslSupport {
 
     private static final Logger LOG = LoggerFactory.getLogger(SslSupport.class);
+
+    public static final String FROM_CLASSPATH_PREFIX = "classpath:";
+    public static final String FROM_FILE_PREFIX = "file:";
+    public static final String FROM_FILE_URL_PREFIX = "file://";
 
     /**
      * Determines if Netty OpenSSL support is available and applicable based on the configuration
@@ -438,10 +442,33 @@ public final class SslSupport {
 
     private static KeyStore loadStore(String storePath, final String password, String storeType) throws Exception {
         KeyStore store = KeyStore.getInstance(storeType);
-        try (InputStream in = new FileInputStream(new File(storePath));) {
+        try (InputStream in = openStoreAtLocation(storePath)) {
             store.load(in, password != null ? password.toCharArray() : null);
+        } catch (Exception ex) {
+            LOG.trace("Caught Error loading store: {}", ex.getMessage(), ex);
+            throw ex;
         }
 
         return store;
+    }
+
+    private static InputStream openStoreAtLocation(final String storePath) throws IOException {
+        final InputStream stream;
+
+        if (storePath.startsWith(FROM_CLASSPATH_PREFIX)) {
+            stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(storePath.substring(FROM_CLASSPATH_PREFIX.length()));
+        } else if (storePath.startsWith(FROM_FILE_URL_PREFIX)) {
+            stream = new FileInputStream(storePath.substring(FROM_FILE_URL_PREFIX.length()));
+        } else if (storePath.startsWith(FROM_FILE_PREFIX)) {
+            stream = new FileInputStream(storePath.substring(FROM_FILE_PREFIX.length()));
+        } else {
+            stream = new FileInputStream(storePath);
+        }
+
+        if (stream == null) {
+            throw new IOException("Could no locate KeyStore at location: " + storePath);
+        }
+
+        return stream;
     }
 }

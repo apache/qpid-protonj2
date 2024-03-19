@@ -52,6 +52,8 @@ public class SslTransportTest extends TcpTransportTest {
     public static final String CLIENT_MULTI_KEYSTORE = "src/test/resources/client-multiple-keys-jks.keystore";
     public static final String CLIENT_TRUSTSTORE = "src/test/resources/client-jks.truststore";
     public static final String OTHER_CA_TRUSTSTORE = "src/test/resources/other-ca-jks.truststore";
+    public static final String SERVER_CLASSPATH_KEYSTORE = "classpath:broker-jks.keystore";
+    public static final String SERVER_CLASSPATH_TRUSTSTORE = "classpath:broker-jks.truststore";
 
     public static final String CLIENT_KEY_ALIAS = "client";
     public static final String CLIENT_DN = "O=Client,CN=client";
@@ -193,6 +195,31 @@ public class SslTransportTest extends TcpTransportTest {
             final int port = server.getServerPort();
 
             Transport transport = createTransport(createTransportOptions(), createSSLOptionsWithoutTrustStore(true));
+            try {
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
+                LOG.info("Connection established to test server: {}:{}", HOSTNAME, port);
+            } catch (Exception e) {
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
+            }
+
+            assertTrue(transport.isConnected());
+            assertTrue(transport.isSecure());
+
+            transport.close();
+        }
+
+        logTransportErrors();
+        assertTrue(exceptions.isEmpty());
+    }
+
+    @Test
+    public void testConnectToServerWithServerClasspathStores() throws Exception {
+        try (NettyEchoServer server = createEchoServer()) {
+            server.start();
+
+            final int port = server.getServerPort();
+
+            Transport transport = createTransport(createTransportOptions(), createServerClasspathSSLOptions());
             try {
                 transport.connect(HOSTNAME, port, testListener).awaitConnect();
                 LOG.info("Connection established to test server: {}:{}", HOSTNAME, port);
@@ -380,6 +407,21 @@ public class SslTransportTest extends TcpTransportTest {
         options.keyStoreLocation(SERVER_KEYSTORE);
         options.keyStorePassword(PASSWORD);
         options.trustStoreLocation(SERVER_TRUSTSTORE);
+        options.trustStorePassword(PASSWORD);
+        options.storeType(KEYSTORE_TYPE);
+        options.verifyHost(false);
+
+        return options;
+    }
+
+    protected SslOptions createServerClasspathSSLOptions() {
+        SslOptions options = new SslOptions();
+
+        // Run the server in JDK mode for now to validate cross compatibility
+        options.sslEnabled(true);
+        options.keyStoreLocation(SERVER_CLASSPATH_KEYSTORE);
+        options.keyStorePassword(PASSWORD);
+        options.trustStoreLocation(SERVER_CLASSPATH_TRUSTSTORE);
         options.trustStorePassword(PASSWORD);
         options.storeType(KEYSTORE_TYPE);
         options.verifyHost(false);
