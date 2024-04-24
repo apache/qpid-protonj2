@@ -446,6 +446,9 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             flow.setDeliveryCount(getCreditState().getDeliveryCount());
         }
         flow.setDrain(isDraining());
+        if (getCreditState().isEcho()) {
+            flow.setEcho(true);
+        }
 
         return this;
     }
