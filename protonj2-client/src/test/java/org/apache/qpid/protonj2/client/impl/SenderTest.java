@@ -562,6 +562,60 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testSendTimesOutWhenNoCreditIssuedAndThenIssueCredit() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions();
+            options.sendTimeout(10);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            Session session = connection.openSession();
+            Sender sender = session.openSender("test-queue");
+            sender.openFuture().get(10, TimeUnit.SECONDS);
+
+            Message<String> message = Message.create("Hello World");
+            try {
+                sender.send(message);
+                fail("Should throw a send timed out exception");
+            } catch (ClientSendTimedOutException ex) {
+                // Expected error, ignore
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.remoteFlow().withLinkCredit(1).now();
+            peer.expectAttach().ofSender().respond();
+            peer.expectTransfer().withMessage().withValue("Hello World 2");
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            // Ensure the send happens after the remote has sent a flow with credit
+            session.openSender("test-queue-2").openFuture().get();
+
+            try {
+                sender.send(Message.create("Hello World 2"));
+            } catch (ClientException ex) {
+                LOG.trace("Error on second send", ex);
+                fail("Should not throw an exception");
+            }
+
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testSendCompletesWhenCreditEventuallyOffered() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
@@ -1991,6 +2045,62 @@ public class SenderTest extends ImperativeClientTestCase {
             peer.expectClose().respond();
 
             assertFalse(sendFailed.get());
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSendTimesOutIfNotAllMessageFramesCanBeSent() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().withNextOutgoingId(0).respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withIncomingWindow(2).withNextIncomingId(0).withLinkCredit(1).queue();
+            peer.expectTransfer().withDeliveryId(0).withNonNullPayload().withMore(true);
+            peer.expectTransfer().withNonNullPayload().withMore(true);
+            peer.expectTransfer().withNullPayload().withAborted(true);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().maxFrameSize(1024);
+            options.sendTimeout(25);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            Sender sender = connection.openSender("test-queue").openFuture().get();
+
+            final byte[] payload = new byte[4800];
+            Arrays.fill(payload, (byte) 1);
+
+            try {
+                sender.send(Message.create(payload));
+            } catch (ClientSendTimedOutException e) {
+                LOG.trace("send failed with expected error: ", e);
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(4).withLinkCredit(1).now();
+            peer.expectAttach().ofSender().respond();
+            peer.expectTransfer().withDeliveryId(1).withMessage().withValue("Hello World 2");
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            // Ensure the send happens after the remote has sent a flow with credit
+            connection.openSender("test-queue-2").openFuture().get();
+
+            try {
+                sender.send(Message.create("Hello World 2"));
+            } catch (ClientException ex) {
+                LOG.trace("Error on second send", ex);
+                fail("Should not throw an exception");
+            }
 
             sender.closeAsync().get();
             connection.closeAsync().get();

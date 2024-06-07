@@ -169,6 +169,7 @@ public class WebSocketTransport extends TcpTransport {
             super.channelActive(context);
         }
 
+        @SuppressWarnings("resource")
         @Override
         protected void messageReceived(ChannelHandlerContext ctx, Object message) throws Exception {
             LOG.trace("New data read: incoming: {}", message);

@@ -59,6 +59,7 @@ import org.apache.qpid.protonj2.client.StreamSenderOptions;
 import org.apache.qpid.protonj2.client.StreamTracker;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
+import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.test.Wait;
@@ -2912,6 +2913,61 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             } catch (ClientException cliEx) {
                 // Expected
             }
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSendTimesOutWhenNoCreditIssuedAndThenIssueCredit() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions();
+            options.sendTimeout(10);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            StreamSender sender = connection.openStreamSender("test-queue");
+            sender.openFuture().get(10, TimeUnit.SECONDS);
+
+            Message<String> message = Message.create("Hello World");
+            try {
+                sender.send(message);
+                fail("Should throw a send timed out exception");
+            } catch (ClientSendTimedOutException ex) {
+                // Expected error, ignore
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.remoteFlow().withLinkCredit(1).now();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.expectTransfer().withMessage().withValue("Hello World 2");
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+
+            // Ensure the send happens after the remote has sent a flow with credit
+            connection.openSender("test-queue-2").openFuture().get();
+
+            try {
+                sender.send(Message.create("Hello World 2"));
+            } catch (ClientException ex) {
+                LOG.trace("Error on second send", ex);
+                fail("Should not throw an exception");
+            }
+
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
 
             connection.closeAsync().get(10, TimeUnit.SECONDS);
 

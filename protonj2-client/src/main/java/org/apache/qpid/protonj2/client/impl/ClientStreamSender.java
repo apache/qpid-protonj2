@@ -131,23 +131,23 @@ public final class ClientStreamSender extends ClientSenderLinkType<StreamSender>
     }
 
     private void addToTailOfBlockedQueue(ClientOutgoingEnvelope send) {
+        blocked.addLast(send);
         if (options.sendTimeout() > 0 && send.sendTimeout() == null) {
             send.sendTimeout(executor.schedule(() -> {
+                blocked.remove(send);
                 send.failed(send.createSendTimedOutException());
             }, options.sendTimeout(), TimeUnit.MILLISECONDS));
         }
-
-        blocked.addLast(send);
     }
 
     private void addToHeadOfBlockedQueue(ClientOutgoingEnvelope send) {
+        blocked.addFirst(send);
         if (options.sendTimeout() > 0 && send.sendTimeout() == null) {
             send.sendTimeout(executor.schedule(() -> {
+                blocked.remove(send);
                 send.failed(send.createSendTimedOutException());
             }, options.sendTimeout(), TimeUnit.MILLISECONDS));
         }
-
-        blocked.addFirst(send);
     }
 
     private StreamTracker sendMessage(AdvancedMessage<?> message, Map<String, Object> deliveryAnnotations, boolean waitForCredit) throws ClientException {
@@ -497,6 +497,14 @@ public final class ClientStreamSender extends ClientSenderLinkType<StreamSender>
         public ClientOutgoingEnvelope failed(ClientException exception) {
             if (sendTimeout != null) {
                 sendTimeout.cancel(true);
+            }
+
+            if (delivery != null) {
+                try {
+                    delivery.abort();
+                } catch (Exception ex) {
+                    // Attempted abort could fail if offline so we ignore it.
+                }
             }
 
             if (payload != null) {
