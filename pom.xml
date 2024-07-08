@@ -40,8 +40,8 @@
     <minimalJavaBuildVersion>11</minimalJavaBuildVersion>
 
     <!-- Test dependency versions -->
-    <junit.jupiter.version>5.10.2</junit.jupiter.version>
-    <junit.vintage.version>5.10.2</junit.vintage.version>
+    <junit.jupiter.version>5.10.3</junit.jupiter.version>
+    <junit.vintage.version>5.10.3</junit.vintage.version>
     <mockito.version>5.12.0</mockito.version>
     <proton.version>0.34.1</proton.version>
     <slf4j.version>1.7.36</slf4j.version>
@@ -52,7 +52,7 @@
     <netty.tcnative.version>2.0.65.Final</netty.tcnative.version>
 
     <!-- Plugin versions -->
-    <jacoco.plugin.version>0.8.10</jacoco.plugin.version>
+    <jacoco.plugin.version>0.8.12</jacoco.plugin.version>
 
     <!-- Test properties -->
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
