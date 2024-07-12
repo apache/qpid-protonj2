@@ -49,8 +49,12 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
     private static final List<String> TEST_DATA = generateTestData();
 
-    private final String SMALL_STRING_VALUE = "Small String";
-    private final String LARGE_STRING_VALUE = "Large String: " +
+    private static final String SMALL_STRING_VALUE = "Small String";
+    private static final String LARGE_STRING_VALUE = "Large String: " +
+        "The quick brown fox jumps over the lazy dog. " +
+        "The quick brown fox jumps over the lazy dog. " +
+        "The quick brown fox jumps over the lazy dog. " +
+        "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
@@ -59,6 +63,26 @@ public class StringTypeCodecTest extends CodecTestSupport {
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog.";
+
+    private static final String EXTENDED_ASCII_STRING_VALUE = "Extended ASCII String: " +
+        "€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ ¡ ¢" +
+        "€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ ¡ ¢" +
+        "€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ ¡ ¢" +
+        "€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ ¡ ¢" +
+        "€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ ¡ ¢" +
+        "€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ ¡ ¢" +
+        "€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ ¡ ¢" +
+        "€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ ¡ ¢" +
+        "€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ ¡ ¢" +
+        "€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ ¡ ¢" +
+        "€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ ¡ ¢" +
+        "€ ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ ¡ ¢";
+
+    private static final String UNICODE_STRING_VALUE = "Unicode String: " +
+        Character.valueOf((char) 1000).toString() +
+        Character.valueOf((char) 1001).toString() +
+        Character.valueOf((char) 1002).toString() +
+        Character.valueOf((char) 1003).toString();
 
     @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
@@ -124,6 +148,16 @@ public class StringTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testEncodeExtededASCIIString() throws IOException {
+        doTestEncodeDecode(EXTENDED_ASCII_STRING_VALUE, false);
+    }
+
+    @Test
+    public void testEncodeUnicodeString() throws IOException {
+        doTestEncodeDecode(UNICODE_STRING_VALUE, false);
+    }
+
+    @Test
     public void testEncodeEmptyString() throws IOException {
         doTestEncodeDecode("", false);
     }
@@ -141,6 +175,16 @@ public class StringTypeCodecTest extends CodecTestSupport {
     @Test
     public void testEncodeLargeStringFS() throws IOException {
         doTestEncodeDecode(LARGE_STRING_VALUE, true);
+    }
+
+    @Test
+    public void testEncodeExtendedASCIIStringFS() throws IOException {
+        doTestEncodeDecode(EXTENDED_ASCII_STRING_VALUE, true);
+    }
+
+    @Test
+    public void testEncodeUnicodeStringFS() throws IOException {
+        doTestEncodeDecode(UNICODE_STRING_VALUE, true);
     }
 
     @Test
@@ -221,6 +265,102 @@ public class StringTypeCodecTest extends CodecTestSupport {
             assertNotNull(result);
             assertTrue(result instanceof String);
             assertEquals(LARGE_STRING_VALUE, result);
+        }
+    }
+
+    @Test
+    public void testDecodeSmallSeriesOfMultiByteUTF8Strings() throws IOException {
+        doTestDecodeMultiByteUTF8StringSeries(SMALL_SIZE, false);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfMultiByteUTF8Strings() throws IOException {
+        doTestDecodeMultiByteUTF8StringSeries(LARGE_SIZE, false);
+    }
+
+    @Test
+    public void testDecodeSmallSeriesOfMultieByteUTF8StringsFS() throws IOException {
+        doTestDecodeMultiByteUTF8StringSeries(SMALL_SIZE, true);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfMultiByteUTF8StringsFS() throws IOException {
+        doTestDecodeMultiByteUTF8StringSeries(LARGE_SIZE, true);
+    }
+
+    private void doTestDecodeMultiByteUTF8StringSeries(int size, boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        for (int i = 0; i < size; ++i) {
+            encoder.writeString(buffer, encoderState, EXTENDED_ASCII_STRING_VALUE);
+        }
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        for (int i = 0; i < size; ++i) {
+            final Object result;
+            if (fromStream) {
+                result = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                result = decoder.readObject(buffer, decoderState);
+            }
+
+            assertNotNull(result);
+            assertTrue(result instanceof String);
+            assertEquals(EXTENDED_ASCII_STRING_VALUE, result);
+        }
+    }
+
+    @Test
+    public void testDecodeSmallSeriesOfUnicodeStrings() throws IOException {
+        doTestDecodeUnicodeStringSeries(SMALL_SIZE, false);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfUnicodeStrings() throws IOException {
+        doTestDecodeUnicodeStringSeries(LARGE_SIZE, false);
+    }
+
+    @Test
+    public void testDecodeSmallSeriesOfUnicodeStringsFS() throws IOException {
+        doTestDecodeUnicodeStringSeries(SMALL_SIZE, true);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfUnicodeStringsFS() throws IOException {
+        doTestDecodeUnicodeStringSeries(LARGE_SIZE, true);
+    }
+
+    private void doTestDecodeUnicodeStringSeries(int size, boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        for (int i = 0; i < size; ++i) {
+            encoder.writeString(buffer, encoderState, UNICODE_STRING_VALUE);
+        }
+
+        final InputStream stream;
+        if (fromStream) {
+            stream = new ProtonBufferInputStream(buffer);
+        } else {
+            stream = null;
+        }
+
+        for (int i = 0; i < size; ++i) {
+            final Object result;
+            if (fromStream) {
+                result = streamDecoder.readObject(stream, streamDecoderState);
+            } else {
+                result = decoder.readObject(buffer, decoderState);
+            }
+
+            assertNotNull(result);
+            assertTrue(result instanceof String);
+            assertEquals(UNICODE_STRING_VALUE, result);
         }
     }
 

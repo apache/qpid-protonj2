@@ -104,8 +104,13 @@ public final class ProtonDecoderState implements DecoderState {
     private static String internalDecode(ProtonBuffer buffer, final int length, CharsetDecoder decoder, char[] scratch) {
         final int bufferInitialPosition = buffer.getReadOffset();
 
-        int offset;
-        for (offset = 0; offset < length; offset++) {
+        if (length < 0) {
+            throw new IllegalArgumentException("Specified UTF length:" + length + " cannot be negative.");
+        }
+
+        int offset = 0;
+
+        for (; offset < length; offset++) {
             final byte b = buffer.getByte(bufferInitialPosition + offset);
             if (b < 0) {
                 break;
@@ -124,14 +129,24 @@ public final class ProtonDecoderState implements DecoderState {
 
     private static String internalDecodeUTF8(final ProtonBuffer buffer, final int length, final char[] chars, final int offset, final CharsetDecoder decoder) {
         final CharBuffer out = CharBuffer.wrap(chars);
+        final int remaining = length - offset;
+
+        if (offset < 0) {
+            throw new IllegalArgumentException("Specified offset:" + offset + " cannot be negative.");
+        }
+
+        if (remaining < 0) {
+            throw new IllegalArgumentException("Remaining UTF8 Bytes size cannot be negative, was " + remaining);
+        }
+
         out.position(offset);
 
         // Create a buffer from the remaining portion of the buffer and then use the decoder to complete the work
         // remember to move the main buffer position to consume the data processed.
-        ByteBuffer byteBuffer = ByteBuffer.allocate(buffer.getReadableBytes());
+        ByteBuffer byteBuffer = ByteBuffer.allocate(remaining);
 
-        buffer.copyInto(buffer.getReadOffset(), byteBuffer, 0, length - offset);
-        buffer.advanceReadOffset(length - offset);
+        buffer.copyInto(buffer.getReadOffset(), byteBuffer, 0, remaining);
+        buffer.advanceReadOffset(remaining);
 
         try {
             for (;;) {
