@@ -128,7 +128,7 @@ public final class ProtonDecoderState implements DecoderState {
 
         // Create a buffer from the remaining portion of the buffer and then use the decoder to complete the work
         // remember to move the main buffer position to consume the data processed.
-        ByteBuffer byteBuffer = ByteBuffer.allocate(buffer.getReadableBytes());
+        ByteBuffer byteBuffer = ByteBuffer.allocate(length - offset);
 
         buffer.copyInto(buffer.getReadOffset(), byteBuffer, 0, length - offset);
         buffer.advanceReadOffset(length - offset);

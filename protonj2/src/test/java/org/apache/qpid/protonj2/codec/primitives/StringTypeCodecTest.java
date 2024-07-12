@@ -54,6 +54,7 @@ public class StringTypeCodecTest extends CodecTestSupport {
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
+        "Être ou ne pas être, telle est la question." +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
