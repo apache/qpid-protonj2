@@ -1167,6 +1167,10 @@ public class TcpTransportTest extends ImperativeClientTestCase {
         return createEchoServer(createServerTransportOptions(), options, needClientAuth);
     }
 
+    protected final NettyEchoServer createEchoServer(TransportOptions options) {
+        return new NettyEchoServer(options, createServerSSLOptions(), false);
+    }
+
     protected final NettyEchoServer createEchoServer(TransportOptions options, SslOptions sslOptions, boolean needClientAuth) {
         return new NettyEchoServer(options, sslOptions, needClientAuth);
     }

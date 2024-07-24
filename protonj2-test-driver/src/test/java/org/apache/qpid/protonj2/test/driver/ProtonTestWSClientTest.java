@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.test.driver;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
@@ -88,6 +90,65 @@ class ProtonTestWSClientTest extends TestPeerTestsBase {
             client.remoteOpen().now();
             client.remoteClose().now();
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.close();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testClientAndServerEnabledWSCompressionCanConnect() throws Exception {
+        doTestClientAndServerWSCompressionNegotiation(true, true);
+    }
+
+    @Test
+    public void testClientAndServerDisableWSCompressionCanConnect() throws Exception {
+        doTestClientAndServerWSCompressionNegotiation(false, false);
+    }
+
+    @Test
+    public void testClientEnablesAndServerDisableWSCompressionCanConnect() throws Exception {
+        doTestClientAndServerWSCompressionNegotiation(true, false);
+    }
+
+    @Test
+    public void testClientDisablesAndServerEnablesWSCompressionCanConnect() throws Exception {
+        doTestClientAndServerWSCompressionNegotiation(false, true);
+    }
+
+    private void doTestClientAndServerWSCompressionNegotiation(boolean serverWSCompression, boolean clientWSCompression) throws Exception {
+        ProtonTestServerOptions serverOpts = new ProtonTestServerOptions();
+        serverOpts.setUseWebSockets(true);
+        serverOpts.setWebSocketCompression(serverWSCompression);
+
+        ProtonTestClientOptions clientOpts = new ProtonTestClientOptions();
+        clientOpts.setUseWebSockets(true);
+        clientOpts.setWebSocketCompression(clientWSCompression);
+
+        try (ProtonTestServer peer = new ProtonTestServer(serverOpts)) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ProtonTestClient client = new ProtonTestClient(clientOpts);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.expectClose();
+            client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+            client.remoteOpen().now();
+            client.remoteClose().now();
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            assertEquals(serverWSCompression && clientWSCompression, peer.isWSCompressionActive());
+            assertEquals(serverWSCompression && clientWSCompression, client.isWSCompressionActive());
+
             client.close();
 
             LOG.info("Test started, peer listening on: {}", remoteURI);

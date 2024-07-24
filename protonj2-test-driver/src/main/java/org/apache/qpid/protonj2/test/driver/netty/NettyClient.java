@@ -66,4 +66,9 @@ public interface NettyClient extends AutoCloseable {
      */
     URI getRemoteURI();
 
+    /**
+     * @return true if the connected client has WS compression activated by the server.
+     */
+    boolean isWSCompressionActive();
+
 }

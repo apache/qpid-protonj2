@@ -51,6 +51,7 @@ import io.netty5.channel.SimpleChannelInboundHandler;
 import io.netty5.channel.nio.NioHandler;
 import io.netty5.channel.socket.nio.NioSocketChannel;
 import io.netty5.handler.codec.http.DefaultHttpContent;
+import io.netty5.handler.codec.http.FullHttpRequest;
 import io.netty5.handler.codec.http.FullHttpResponse;
 import io.netty5.handler.codec.http.HttpClientCodec;
 import io.netty5.handler.codec.http.HttpObjectAggregator;
@@ -65,6 +66,7 @@ import io.netty5.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty5.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty5.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty5.handler.codec.http.websocketx.WebSocketVersion;
+import io.netty5.handler.codec.http.websocketx.extensions.compression.WebSocketClientCompressionHandler;
 import io.netty5.handler.logging.LoggingHandler;
 import io.netty5.handler.ssl.SslHandler;
 import io.netty5.util.concurrent.Future;
@@ -87,6 +89,8 @@ public final class Netty5Client implements NettyClient {
     private Channel channel;
     private String host;
     private int port;
+    private boolean wsCompressionRequest;
+    private boolean wsCompressionResponse;
     protected volatile IOException failureCause;
     private final ProtonTestClientOptions options;
     private volatile SslHandler sslHandler;
@@ -220,6 +224,15 @@ public final class Netty5Client implements NettyClient {
     @Override
     public boolean isSecure() {
         return options.isSecure();
+    }
+
+    @Override
+    public boolean isWSCompressionActive() {
+        if (channel == null || !channel.isActive()) {
+            throw new IllegalStateException("Channel is not connected or has closed");
+        }
+
+        return wsCompressionRequest && wsCompressionResponse;
     }
 
     @Override
@@ -399,6 +412,41 @@ public final class Netty5Client implements NettyClient {
         }
     }
 
+    private class ClientWSCompressionObserverHandler extends ChannelHandlerAdapter  {
+
+        final String WS_EXTENSIONS_SECTION = "sec-websocket-extensions";
+        final String WS_PERMESSAGE_DEFLATE = "permessage-deflate";
+        final String WS_UPGRADE = "upgrade";
+
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object message) {
+            if (message instanceof FullHttpResponse) {
+                FullHttpResponse response = (FullHttpResponse) message;
+                HttpHeaders headers = response.headers();
+
+                if (headers.contains(WS_UPGRADE) && headers.contains(WS_EXTENSIONS_SECTION)) {
+                    wsCompressionRequest = headers.get(WS_EXTENSIONS_SECTION).toString().contains(WS_PERMESSAGE_DEFLATE);
+                }
+            }
+
+            ctx.fireChannelRead(message);
+        }
+
+        @Override
+        public Future<Void> write(ChannelHandlerContext context, Object message) {
+            if (message instanceof FullHttpRequest) {
+                FullHttpRequest request = (FullHttpRequest) message;
+                HttpHeaders headers = request.headers();
+
+                if (headers.contains(WS_UPGRADE) && headers.contains(WS_EXTENSIONS_SECTION)) {
+                    wsCompressionRequest = headers.get(WS_EXTENSIONS_SECTION).toString().contains(WS_PERMESSAGE_DEFLATE);
+                }
+            }
+
+            return context.write(message);
+        }
+    }
+
     //----- Internal Client implementation API
 
     protected ChannelHandler getClientHandler() {
@@ -454,6 +502,10 @@ public final class Netty5Client implements NettyClient {
         if (options.isUseWebSockets()) {
             channel.pipeline().addLast(new HttpClientCodec());
             channel.pipeline().addLast(new HttpObjectAggregator<DefaultHttpContent>(8192));
+            if (options.isWebSocketCompression()) {
+                channel.pipeline().addLast(new ClientWSCompressionObserverHandler());
+                channel.pipeline().addLast(WebSocketClientCompressionHandler.INSTANCE);
+            }
         }
 
         channel.pipeline().addLast(new NettyClientOutboundHandler());

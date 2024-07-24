@@ -38,6 +38,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -52,8 +53,10 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
@@ -65,6 +68,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
+import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketClientCompressionHandler;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
@@ -88,6 +92,8 @@ public final class Netty4Client implements NettyClient {
     private Channel channel;
     private String host;
     private int port;
+    private boolean wsCompressionRequest;
+    private boolean wsCompressionResponse;
     protected volatile IOException failureCause;
     private final ProtonTestClientOptions options;
     private volatile SslHandler sslHandler;
@@ -221,6 +227,15 @@ public final class Netty4Client implements NettyClient {
     @Override
     public boolean isSecure() {
         return options.isSecure();
+    }
+
+    @Override
+    public boolean isWSCompressionActive() {
+        if (channel == null || !channel.isActive()) {
+            throw new IllegalStateException("Channel is not connected or has closed");
+        }
+
+        return wsCompressionRequest && wsCompressionResponse;
     }
 
     @Override
@@ -400,6 +415,41 @@ public final class Netty4Client implements NettyClient {
         }
     }
 
+    private class ClientWSCompressionObserver extends ChannelDuplexHandler  {
+
+        final String WS_EXTENSIONS_SECTION = "sec-websocket-extensions";
+        final String WS_PERMESSAGE_DEFLATE = "permessage-deflate";
+        final String WS_UPGRADE = "upgrade";
+
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object message) {
+            if (message instanceof FullHttpResponse) {
+                FullHttpResponse request = (FullHttpResponse) message;
+                HttpHeaders headers = request.headers();
+
+                if (headers.contains(WS_UPGRADE) && headers.contains(WS_EXTENSIONS_SECTION)) {
+                    wsCompressionRequest = headers.get(WS_EXTENSIONS_SECTION).contains(WS_PERMESSAGE_DEFLATE);
+                }
+            }
+
+            ctx.fireChannelRead(message);
+        }
+
+        @Override
+        public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) throws Exception {
+            if (message instanceof FullHttpRequest) {
+                FullHttpRequest response = (FullHttpRequest) message;
+                HttpHeaders headers = response.headers();
+
+                if (headers.contains(WS_UPGRADE) && headers.contains(WS_EXTENSIONS_SECTION)) {
+                    wsCompressionResponse = headers.get(WS_EXTENSIONS_SECTION).contains(WS_PERMESSAGE_DEFLATE);
+                }
+            }
+
+            context.write(message, promise);
+        }
+    }
+
     //----- Internal Client implementation API
 
     protected ChannelHandler getClientHandler() {
@@ -455,6 +505,10 @@ public final class Netty4Client implements NettyClient {
         if (options.isUseWebSockets()) {
             channel.pipeline().addLast(new HttpClientCodec());
             channel.pipeline().addLast(new HttpObjectAggregator(8192));
+            if (options.isWebSocketCompression()) {
+                channel.pipeline().addLast(new ClientWSCompressionObserver());
+                channel.pipeline().addLast(WebSocketClientCompressionHandler.INSTANCE);
+            }
         }
 
         channel.pipeline().addLast(new NettyClientOutboundHandler());

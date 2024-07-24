@@ -40,6 +40,7 @@ public class TransportOptions implements Cloneable {
     public static final boolean DEFAULT_TRACE_BYTES = false;
     public static final int DEFAULT_LOCAL_PORT = 0;
     public static final boolean DEFAULT_USE_WEBSOCKETS = false;
+    public static final boolean DEFAULT_WEBSOCKET_COMPRESSION = false;
     public static final int DEFAULT_WEBSOCKET_MAX_FRAME_SIZE = 65535;
     private static final String[] DEFAULT_NATIVEIO_PREFERENCES_ARRAY = { "EPOLL", "KQUEUE" };
     public static final List<String> DEFAULT_NATIVEIO_PREFERENCES =
@@ -62,6 +63,7 @@ public class TransportOptions implements Cloneable {
     private boolean useWebSockets = DEFAULT_USE_WEBSOCKETS;
     private String webSocketPath;
     private int webSocketMaxFrameSize = DEFAULT_WEBSOCKET_MAX_FRAME_SIZE;
+    private boolean webSocketCompression = DEFAULT_WEBSOCKET_COMPRESSION;
 
     private final Map<String, String> webSocketHeaders = new HashMap<>();
 
@@ -455,6 +457,31 @@ public class TransportOptions implements Cloneable {
     }
 
     /**
+     * @return the configured value for the WebSocket compression support enabled flag.
+     */
+    public boolean webSocketCompression() {
+        return webSocketCompression;
+    }
+
+    /**
+     * Set to true to configure the transport layer as a WebSocket based connection that
+     * support compression of the WebSocket packets. This option simply allows the client
+     * to support compression if the server offers support but does not influence the server
+     * side, if the server does not offer support for compression of WS packets then this
+     * value has no affect on the WS packets and they remain uncompressed as if not enabled.
+     * (default is disabled).
+     *
+     * @param enabled
+     * 		should the transport support WebSocket compression if server offers it.
+     *
+     * @return this {@link TransportOptions} instance.
+     */
+    public TransportOptions webSocketCompression(boolean enabled) {
+        this.webSocketCompression = enabled;
+        return this;
+    }
+
+    /**
      * Copy all configuration into the given {@link TransportOptions} from this instance.
      *
      * @param other
@@ -481,6 +508,7 @@ public class TransportOptions implements Cloneable {
         other.webSocketPath(webSocketPath());
         other.webSocketHeaders().putAll(webSocketHeaders);
         other.webSocketMaxFrameSize(webSocketMaxFrameSize());
+        other.webSocketCompression(webSocketCompression());
 
         return other;
     }

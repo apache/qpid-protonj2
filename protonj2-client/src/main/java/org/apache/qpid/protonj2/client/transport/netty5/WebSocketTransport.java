@@ -49,6 +49,7 @@ import io.netty5.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty5.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty5.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty5.handler.codec.http.websocketx.WebSocketVersion;
+import io.netty5.handler.codec.http.websocketx.extensions.compression.WebSocketClientCompressionHandler;
 import io.netty5.util.concurrent.Future;
 import io.netty5.util.concurrent.FutureListener;
 
@@ -98,6 +99,9 @@ public class WebSocketTransport extends TcpTransport {
     protected void addAdditionalHandlers(ChannelPipeline pipeline) {
         pipeline.addLast(new HttpClientCodec());
         pipeline.addLast(new HttpObjectAggregator<DefaultHttpContent>(8192));
+        if (options.webSocketCompression()) {
+            pipeline.addLast(WebSocketClientCompressionHandler.INSTANCE);
+        }
     }
 
     @Override
@@ -169,7 +173,6 @@ public class WebSocketTransport extends TcpTransport {
             super.channelActive(context);
         }
 
-        @SuppressWarnings("resource")
         @Override
         protected void messageReceived(ChannelHandlerContext ctx, Object message) throws Exception {
             LOG.trace("New data read: incoming: {}", message);

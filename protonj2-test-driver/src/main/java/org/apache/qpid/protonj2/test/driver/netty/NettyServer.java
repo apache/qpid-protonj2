@@ -93,6 +93,11 @@ public interface NettyServer extends AutoCloseable {
     int getClientPort();
 
     /**
+     * @return true if a connected client has negotiated WS compression.
+     */
+    boolean isWSCompressionActive();
+
+    /**
      * @return has the SSL handshake for a client completed successfully.
      */
     boolean isPeerVerified();

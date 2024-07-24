@@ -131,6 +131,7 @@ public class ProtonTestServer extends ProtonTestPeer {
      *
      * @return this test peer instance.
      */
+    @Override
     public ProtonTestPeer dropAfterLastHandler() {
         getDriver().addScriptedElement(new ConnectionDropAction(this));
         return this;
@@ -147,6 +148,7 @@ public class ProtonTestServer extends ProtonTestPeer {
      *
      * @return this test peer instance.
      */
+    @Override
     public ProtonTestPeer dropAfterLastHandler(int delay) {
         getDriver().addScriptedElement(new ConnectionDropAction(this).afterDelay(delay));
         return this;
@@ -174,6 +176,10 @@ public class ProtonTestServer extends ProtonTestPeer {
 
     public int getConnectionRemotePort() {
         return server.getClientPort();
+    }
+
+    public boolean isWSCompressionActive() {
+        return server.isWSCompressionActive();
     }
 
     @Override

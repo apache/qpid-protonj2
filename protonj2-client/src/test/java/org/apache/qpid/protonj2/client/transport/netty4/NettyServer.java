@@ -61,6 +61,7 @@ import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler.HandshakeComplete;
+import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslHandler;
@@ -110,6 +111,10 @@ public abstract class NettyServer implements AutoCloseable {
 
     public boolean isWebSocketServer() {
         return options.useWebSockets();
+    }
+
+    public boolean isUseWebSocketCompression() {
+        return options.webSocketCompression();
     }
 
     public String getWebSocketPath() {
@@ -210,9 +215,16 @@ public abstract class NettyServer implements AutoCloseable {
                         ch.pipeline().addLast(sslHandler);
                     }
 
+                    if (options.traceBytes()) {
+                        ch.pipeline().addLast("logger", new LoggingHandler(getClass()));
+                    }
+
                     if (isWebSocketServer()) {
                         ch.pipeline().addLast(new HttpServerCodec());
                         ch.pipeline().addLast(new HttpObjectAggregator(65536));
+                        if (isUseWebSocketCompression()) {
+                            ch.pipeline().addLast(new WebSocketServerCompressionHandler());
+                        }
                         ch.pipeline().addLast(new WebSocketServerProtocolHandler(getWebSocketPath(), "amqp", true, maxFrameSize));
                     }
 

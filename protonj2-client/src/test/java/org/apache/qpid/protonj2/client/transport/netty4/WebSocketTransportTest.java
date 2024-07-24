@@ -352,6 +352,56 @@ public class WebSocketTransportTest extends TcpTransportTest {
     }
 
     @Test
+    public void testTransportConnectionDoesNotDropWhenServerAndClientUseCompressionWithLargePayloads() throws Exception {
+        final int FRAME_SIZE = 16384; // This value would exceed the set max frame size without compression.
+
+        final ProtonBuffer sendBuffer = allocator.allocate(FRAME_SIZE);
+        for (int i = 0; i < FRAME_SIZE; ++i) {
+            sendBuffer.writeByte((byte) 'A');
+        }
+
+        try (NettyEchoServer server = createEchoServer(createServerTransportOptions().webSocketCompression(true).traceBytes(true))) {
+            // Server won't accept the data as it's to large and will close the connection.
+            server.setMaxFrameSize(FRAME_SIZE / 2);
+            server.start();
+
+            final int port = server.getServerPort();
+
+            List<Transport> transports = new ArrayList<>();
+
+            final Transport transport = createTransport(createTransportOptions().webSocketMaxFrameSize(FRAME_SIZE)
+                                                                                .webSocketCompression(true), createSSLOptions());
+
+            assertTrue(transport instanceof WebSocketTransport);
+
+            try {
+                // Transport allows bigger frames in so that server is the one causing the failure.
+                transport.connect(HOSTNAME, port, testListener).awaitConnect();
+                transports.add(transport);
+                transport.writeAndFlush(sendBuffer.copy());
+            } catch (Exception e) {
+                fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
+            }
+
+            assertTrue(Wait.waitFor(new Wait.Condition() {
+                @Override
+                public boolean isSatisfied() throws Exception {
+                    try {
+                        transport.writeAndFlush(sendBuffer.copy());
+                    } catch (IOException e) {
+                        LOG.info("Transport send caught error:", e);
+                        return false;
+                    }
+
+                    return true;
+                }
+            }, 10000, 10), "Transport should not have lost connection");
+
+            transport.close();
+        }
+    }
+
+    @Test
     public void testConfiguredHttpHeadersArriveAtServer() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();

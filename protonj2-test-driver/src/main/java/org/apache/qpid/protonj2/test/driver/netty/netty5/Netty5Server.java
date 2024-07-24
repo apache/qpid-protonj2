@@ -61,11 +61,13 @@ import io.netty5.handler.codec.http.HttpResponseStatus;
 import io.netty5.handler.codec.http.HttpServerCodec;
 import io.netty5.handler.codec.http.HttpUtil;
 import io.netty5.handler.codec.http.HttpVersion;
+import io.netty5.handler.codec.http.headers.HttpHeaders;
 import io.netty5.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty5.handler.codec.http.websocketx.ContinuationWebSocketFrame;
 import io.netty5.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty5.handler.codec.http.websocketx.WebSocketServerHandshakeCompletionEvent;
 import io.netty5.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
+import io.netty5.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty5.handler.logging.LogLevel;
 import io.netty5.handler.logging.LoggingHandler;
 import io.netty5.handler.ssl.SslHandler;
@@ -92,6 +94,8 @@ public final class Netty5Server implements NettyServer {
     private final ProtonTestServerOptions options;
     private int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
     private String webSocketPath = WEBSOCKET_PATH;
+    private boolean wsCompressionRequest;
+    private boolean wsCompressionResponse;
     private volatile SslHandler sslHandler;
     private volatile WebSocketServerHandshakeCompletionEvent handshakeComplete;
     private final CountDownLatch handshakeCompletion = new CountDownLatch(1);
@@ -137,6 +141,12 @@ public final class Netty5Server implements NettyServer {
     public int getClientPort() {
         Objects.requireNonNull(clientChannel);
         return (((InetSocketAddress) clientChannel.remoteAddress()).getPort());
+    }
+
+    @Override
+    public boolean isWSCompressionActive() {
+        Objects.requireNonNull(clientChannel);
+        return wsCompressionRequest && wsCompressionResponse;
     }
 
     @Override
@@ -261,6 +271,10 @@ public final class Netty5Server implements NettyServer {
                     if (options.isUseWebSockets()) {
                         ch.pipeline().addLast(new HttpServerCodec());
                         ch.pipeline().addLast(new HttpObjectAggregator<DefaultHttpContent>(65536));
+                        if (options.isWebSocketCompression()) {
+                            ch.pipeline().addLast(new ServerWSCompressionObserverHandler());
+                            ch.pipeline().addLast(new WebSocketServerCompressionHandler());
+                        }
                         ch.pipeline().addLast(new WebSocketServerProtocolHandler(getWebSocketPath(), "amqp", true, maxFrameSize));
                     }
 
@@ -507,6 +521,41 @@ public final class Netty5Server implements NettyServer {
             // Close the connection when an exception is raised.
             cause.printStackTrace();
             ctx.close();
+        }
+    }
+
+    private class ServerWSCompressionObserverHandler extends ChannelHandlerAdapter  {
+
+        final String WS_EXTENSIONS_SECTION = "sec-websocket-extensions";
+        final String WS_PERMESSAGE_DEFLATE = "permessage-deflate";
+        final String WS_UPGRADE = "upgrade";
+
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object message) {
+            if (message instanceof FullHttpRequest) {
+                FullHttpRequest request = (FullHttpRequest) message;
+                HttpHeaders headers = request.headers();
+
+                if (headers.contains(WS_UPGRADE) && headers.contains(WS_EXTENSIONS_SECTION)) {
+                    wsCompressionRequest = headers.get(WS_EXTENSIONS_SECTION).toString().contains(WS_PERMESSAGE_DEFLATE);
+                }
+            }
+
+            ctx.fireChannelRead(message);
+        }
+
+        @Override
+        public Future<Void> write(ChannelHandlerContext context, Object message) {
+            if (message instanceof FullHttpResponse) {
+                FullHttpResponse response = (FullHttpResponse) message;
+                HttpHeaders headers = response.headers();
+
+                if (headers.contains(WS_UPGRADE) && headers.contains(WS_EXTENSIONS_SECTION)) {
+                    wsCompressionResponse = headers.get(WS_EXTENSIONS_SECTION).toString().contains(WS_PERMESSAGE_DEFLATE);
+                }
+            }
+
+            return context.write(message);
         }
     }
 

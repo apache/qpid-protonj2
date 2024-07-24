@@ -76,6 +76,10 @@ public class ProtonTestClient extends ProtonTestPeer implements AutoCloseable {
         return driver;
     }
 
+    public boolean isWSCompressionActive() {
+        return client.isWSCompressionActive();
+    }
+
     @Override
     protected void processConnectionEstablished() {
         LOG.trace("AMQP Client connected to remote.");

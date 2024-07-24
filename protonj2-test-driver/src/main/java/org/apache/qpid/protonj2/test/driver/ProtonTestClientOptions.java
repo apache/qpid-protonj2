@@ -49,6 +49,7 @@ public class ProtonTestClientOptions implements Cloneable {
     public static final boolean DEFAULT_USE_WEBSOCKETS = false;
     public static final boolean DEFAULT_FRAGMENT_WEBSOCKET_WRITES = false;
     public static final String DEFAULT_WEBSOCKET_PATH = "/";
+    public static final boolean DEFAULT_WEBSOCKET_COMPRESSION = false;
     public static final int DEFAULT_WEBSOCKET_MAX_FRAME_SIZE = 65535;
     public static final boolean DEFAULT_SECURE_SERVER = false;
     public static final boolean DEFAULT_NEEDS_CLIENT_AUTH = false;
@@ -75,6 +76,7 @@ public class ProtonTestClientOptions implements Cloneable {
     private boolean fragmentWebSocketWrites = DEFAULT_FRAGMENT_WEBSOCKET_WRITES;
     private String webSocketPath = DEFAULT_WEBSOCKET_PATH;
     private int webSocketMaxFrameSize = DEFAULT_WEBSOCKET_MAX_FRAME_SIZE;
+    private boolean webSocketCompression = DEFAULT_WEBSOCKET_COMPRESSION;
 
     private boolean secure = DEFAULT_SECURE_SERVER;
     private boolean needClientAuth = DEFAULT_NEEDS_CLIENT_AUTH;
@@ -554,6 +556,14 @@ public class ProtonTestClientOptions implements Cloneable {
         this.webSocketMaxFrameSize = webSocketMaxFrameSize;
     }
 
+    public boolean isWebSocketCompression() {
+        return webSocketCompression;
+    }
+
+    public void setWebSocketCompression(boolean enabled) {
+        this.webSocketCompression = enabled;
+    }
+
     protected ProtonTestClientOptions copyOptions(ProtonTestClientOptions copy) {
         copy.setReceiveBufferSize(getReceiveBufferSize());
         copy.setSendBufferSize(getSendBufferSize());
@@ -587,6 +597,7 @@ public class ProtonTestClientOptions implements Cloneable {
         copy.setFragmentWrites(isFragmentWrites());
         copy.setWebSocketPath(getWebSocketPath());
         copy.setWebSocketMaxFrameSize(getWebSocketMaxFrameSize());
+        copy.setWebSocketCompression(isWebSocketCompression());
 
         return copy;
     }

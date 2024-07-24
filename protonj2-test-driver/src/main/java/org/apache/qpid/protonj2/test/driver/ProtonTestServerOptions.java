@@ -48,6 +48,7 @@ public class ProtonTestServerOptions implements Cloneable {
     public static final int DEFAULT_LOCAL_PORT = 0;
     public static final boolean DEFAULT_USE_WEBSOCKETS = false;
     public static final boolean DEFAULT_FRAGMENT_WEBSOCKET_WRITES = false;
+    public static final boolean DEFAULT_WEBSOCKET_COMPRESSION = false;
     public static final boolean DEFAULT_SECURE_SERVER = false;
     public static final boolean DEFAULT_NEEDS_CLIENT_AUTH = false;
 
@@ -70,6 +71,7 @@ public class ProtonTestServerOptions implements Cloneable {
     private int localPort = DEFAULT_LOCAL_PORT;
     private boolean traceBytes = DEFAULT_TRACE_BYTES;
     private boolean useWebSockets = DEFAULT_USE_WEBSOCKETS;
+    private boolean webSocketCompression = DEFAULT_WEBSOCKET_COMPRESSION;
     private boolean fragmentWebSocketWrites = DEFAULT_FRAGMENT_WEBSOCKET_WRITES;
 
     private boolean secure = DEFAULT_SECURE_SERVER;
@@ -612,6 +614,15 @@ public class ProtonTestServerOptions implements Cloneable {
         return this;
     }
 
+    public boolean isWebSocketCompression() {
+        return webSocketCompression;
+    }
+
+    public ProtonTestServerOptions setWebSocketCompression(boolean enabled) {
+        this.webSocketCompression = enabled;
+        return this;
+    }
+
     protected ProtonTestServerOptions copyOptions(ProtonTestServerOptions copy) {
         copy.setReceiveBufferSize(getReceiveBufferSize());
         copy.setSendBufferSize(getSendBufferSize());
@@ -643,6 +654,7 @@ public class ProtonTestServerOptions implements Cloneable {
         copy.setNeedClientAuth(isNeedClientAuth());
         copy.setUseWebSockets(isUseWebSockets());
         copy.setFragmentWrites(isFragmentWrites());
+        copy.setWebSocketCompression(isWebSocketCompression());
 
         return copy;
     }
