@@ -52,6 +52,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
+import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 
 /**
  * AMQP Close injection action which can be added to a driver for write at a specific time or
@@ -347,6 +348,10 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
         public TransferInjectAction also() {
             return TransferInjectAction.this;
         }
+
+        public TransferInjectAction and() {
+            return TransferInjectAction.this;
+        }
     }
 
     public final class HeaderBuilder extends SectionBuilder {
@@ -582,18 +587,38 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
             return TransferInjectAction.this;
         }
 
+        public TransferInjectAction rejected(Symbol condition, String description) {
+            withState(new Rejected().setError(new ErrorCondition(condition, description)));
+            return TransferInjectAction.this;
+        }
+
+        public TransferInjectAction rejected(String condition, String description, Map<String, Object> info) {
+            withState(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info))));
+            return TransferInjectAction.this;
+        }
+
+        public TransferInjectAction rejected(Symbol condition, String description, Map<Symbol, Object> info) {
+            withState(new Rejected().setError(new ErrorCondition(condition, description, info)));
+            return TransferInjectAction.this;
+        }
+
         public TransferInjectAction modified() {
             withState(new Modified());
             return TransferInjectAction.this;
         }
 
         public TransferInjectAction modified(boolean failed) {
-            withState(new Modified());
+            withState(new Modified().setDeliveryFailed(failed));
             return TransferInjectAction.this;
         }
 
         public TransferInjectAction modified(boolean failed, boolean undeliverableHere) {
-            withState(new Modified());
+            withState(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere));
+            return TransferInjectAction.this;
+        }
+
+        public TransferInjectAction modified(boolean failed, boolean undeliverableHere, Map<String, Object> annotations) {
+            withState(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere).setMessageAnnotations(TypeMapper.toSymbolKeyedMap(annotations)));
             return TransferInjectAction.this;
         }
 
@@ -664,6 +689,21 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
             return this;
         }
 
+        public TransactionalStateBuilder withRejected(Symbol condition, String description) {
+            withOutcome(new Rejected().setError(new ErrorCondition(condition, description)));
+            return this;
+        }
+
+        public TransactionalStateBuilder withRejected(String condition, String description, Map<String, Object> info) {
+            withOutcome(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info))));
+            return this;
+        }
+
+        public TransactionalStateBuilder withRejected(Symbol condition, String description, Map<Symbol, Object> info) {
+            withOutcome(new Rejected().setError(new ErrorCondition(condition, description, info)));
+            return this;
+        }
+
         public TransactionalStateBuilder withModified() {
             withOutcome(new Modified());
             return this;
@@ -676,6 +716,11 @@ public class TransferInjectAction extends AbstractPerformativeInjectAction<Trans
 
         public TransactionalStateBuilder withModified(boolean failed, boolean undeliverableHere) {
             withOutcome(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere));
+            return this;
+        }
+
+        public TransactionalStateBuilder modified(boolean failed, boolean undeliverableHere, Map<String, Object> annotations) {
+            withOutcome(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere).setMessageAnnotations(TypeMapper.toSymbolKeyedMap(annotations)));
             return this;
         }
     }

@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.protonj2.test.driver.actions;
 
+import java.util.Map;
+
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
@@ -31,6 +33,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Disposition;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
+import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 
 /**
  * AMQP Disposition injection action which can be added to a driver for write at a specific time or
@@ -169,6 +172,11 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
             return DispositionInjectAction.this;
         }
 
+        public DispositionInjectAction modified(boolean failed, boolean undeliverableHere, Map<String, Object> annotations) {
+            withState(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere).setMessageAnnotations(TypeMapper.toSymbolKeyedMap(annotations)));
+            return DispositionInjectAction.this;
+        }
+
         public TransactionalStateBuilder transactional() {
             TransactionalStateBuilder builder = new TransactionalStateBuilder(DispositionInjectAction.this);
             withState(builder.getState());
@@ -236,6 +244,21 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
             return this;
         }
 
+        public TransactionalStateBuilder withRejected(Symbol condition, String description) {
+            withOutcome(new Rejected().setError(new ErrorCondition(condition, description)));
+            return this;
+        }
+
+        public TransactionalStateBuilder withRejected(String condition, String description, Map<String, Object> info) {
+            withOutcome(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info))));
+            return this;
+        }
+
+        public TransactionalStateBuilder withRejected(Symbol condition, String description, Map<Symbol, Object> info) {
+            withOutcome(new Rejected().setError(new ErrorCondition(condition, description, info)));
+            return this;
+        }
+
         public TransactionalStateBuilder withModified() {
             withOutcome(new Modified());
             return this;
@@ -248,6 +271,11 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
 
         public TransactionalStateBuilder withModified(boolean failed, boolean undeliverableHere) {
             withOutcome(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere));
+            return this;
+        }
+
+        public TransactionalStateBuilder withModified(boolean failed, boolean undeliverableHere, Map<String, Object> annotations) {
+            withOutcome(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere).setMessageAnnotations(TypeMapper.toSymbolKeyedMap(annotations)));
             return this;
         }
     }

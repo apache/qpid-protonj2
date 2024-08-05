@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -27,21 +28,21 @@ import java.util.function.Predicate;
 import org.apache.qpid.protonj2.test.driver.AMQPTestDriver;
 import org.apache.qpid.protonj2.test.driver.SessionTracker;
 import org.apache.qpid.protonj2.test.driver.codec.ListDescribedType;
-import org.apache.qpid.protonj2.test.driver.codec.messaging.Accepted;
-import org.apache.qpid.protonj2.test.driver.codec.messaging.Modified;
-import org.apache.qpid.protonj2.test.driver.codec.messaging.Rejected;
-import org.apache.qpid.protonj2.test.driver.codec.messaging.Released;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
-import org.apache.qpid.protonj2.test.driver.codec.transactions.Declared;
 import org.apache.qpid.protonj2.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Disposition;
-import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
+import org.apache.qpid.protonj2.test.driver.matchers.messaging.AcceptedMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.messaging.ModifiedMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.messaging.RejectedMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.messaging.ReleasedMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.transactions.DeclaredMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transactions.TransactionalStateMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.DispositionMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.transport.ErrorConditionMatcher;
 import org.hamcrest.Matcher;
 
 /**
@@ -197,37 +198,107 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
     public final class DeliveryStateBuilder {
 
         public DispositionExpectation accepted() {
-            withState(Accepted.getInstance());
+            withState(new AcceptedMatcher());
             return DispositionExpectation.this;
         }
 
         public DispositionExpectation released() {
-            withState(Released.getInstance());
+            withState(new ReleasedMatcher());
             return DispositionExpectation.this;
         }
 
         public DispositionExpectation rejected() {
-            withState(new Rejected());
+            withState(new RejectedMatcher());
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected(String condition) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition)));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected(Symbol condition) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition)));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected(Matcher<?> condition) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition)));
             return DispositionExpectation.this;
         }
 
         public DispositionExpectation rejected(String condition, String description) {
-            withState(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description)));
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected(Symbol condition, String description) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected(String condition, Matcher<?> description) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected(Symbol condition, Matcher<?> description) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected(String condition, String description, Map<String, Object> info) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected(Symbol condition, String description, Map<String, Object> info) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected(String condition, String description, Matcher<?> info) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected(Symbol condition, String description, Matcher<?> info) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected(Matcher<?> condition, Matcher<?> description) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation rejected(Matcher<?> condition, Matcher<?> description, Matcher<?> info) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
             return DispositionExpectation.this;
         }
 
         public DispositionExpectation modified() {
-            withState(new Modified());
+            withState(new ModifiedMatcher());
             return DispositionExpectation.this;
         }
 
         public DispositionExpectation modified(boolean failed) {
-            withState(new Modified());
+            withState(new ModifiedMatcher().withDeliveryFailed(failed));
             return DispositionExpectation.this;
         }
 
         public DispositionExpectation modified(boolean failed, boolean undeliverableHere) {
-            withState(new Modified());
+            withState(new ModifiedMatcher().withDeliveryFailed(failed).withUndeliverableHere(undeliverableHere));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation modified(boolean failed, boolean undeliverableHere, Map<String, Object> annotations) {
+            withState(new ModifiedMatcher().withDeliveryFailed(failed).withUndeliverableHere(undeliverableHere).withMessageAnnotations(annotations));
+            return DispositionExpectation.this;
+        }
+
+        public DispositionExpectation modified(boolean failed, boolean undeliverableHere, Matcher<?> annotations) {
+            withState(new ModifiedMatcher().withDeliveryFailed(failed).withUndeliverableHere(undeliverableHere).withMessageAnnotations(annotations));
             return DispositionExpectation.this;
         }
 
@@ -238,12 +309,13 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
             rand.setSeed(System.nanoTime());
             rand.nextBytes(txnId);
 
-            withState(new Declared().setTxnId(txnId));
+            withState(new DeclaredMatcher().withTxnId(txnId));
+
             return DispositionExpectation.this;
         }
 
         public DispositionExpectation declared(byte[] txnId) {
-            withState(new Declared().setTxnId(txnId));
+            withState(new DeclaredMatcher().withTxnId(txnId));
             return DispositionExpectation.this;
         }
 
@@ -307,37 +379,72 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
         // ----- Add a layer to allow configuring the outcome without specific type dependencies
 
         public DispositionTransactionalStateMatcher withAccepted() {
-            super.withOutcome(Accepted.getInstance());
+            super.withOutcome(new AcceptedMatcher());
             return this;
         }
 
         public DispositionTransactionalStateMatcher withReleased() {
-            super.withOutcome(Released.getInstance());
+            super.withOutcome(new ReleasedMatcher());
             return this;
         }
 
         public DispositionTransactionalStateMatcher withRejected() {
-            super.withOutcome(new Rejected());
+            super.withOutcome(new RejectedMatcher());
             return this;
         }
 
         public DispositionTransactionalStateMatcher withRejected(String condition, String description) {
-            super.withOutcome(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description)));
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return this;
+        }
+
+        public DispositionTransactionalStateMatcher withRejected(Symbol condition, String description) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return this;
+        }
+
+        public DispositionTransactionalStateMatcher withRejected(String condition, String description, Map<String, Object> info) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
+            return this;
+        }
+
+        public DispositionTransactionalStateMatcher withRejected(Symbol condition, String description, Map<String, Object> info) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
+            return this;
+        }
+
+        public DispositionTransactionalStateMatcher withRejected(String condition, String description, Matcher<?> info) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
+            return this;
+        }
+
+        public DispositionTransactionalStateMatcher withRejected(Symbol condition, String description, Matcher<?> info) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
             return this;
         }
 
         public DispositionTransactionalStateMatcher withModified() {
-            super.withOutcome(new Modified());
+            super.withOutcome(new ModifiedMatcher());
             return this;
         }
 
         public DispositionTransactionalStateMatcher withModified(boolean failed) {
-            super.withOutcome(new Modified().setDeliveryFailed(failed));
+            super.withOutcome(new ModifiedMatcher().withDeliveryFailed(failed));
             return this;
         }
 
         public DispositionTransactionalStateMatcher withModified(boolean failed, boolean undeliverableHere) {
-            super.withOutcome(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere));
+            super.withOutcome(new ModifiedMatcher().withDeliveryFailed(failed).withUndeliverableHere(undeliverableHere));
+            return this;
+        }
+
+        public DispositionTransactionalStateMatcher withModified(boolean failed, boolean undeliverableHere, Map<String, Object> annotations) {
+            super.withOutcome(new ModifiedMatcher().withDeliveryFailed(failed).withUndeliverableHere(undeliverableHere).withMessageAnnotations(annotations));
+            return this;
+        }
+
+        public DispositionTransactionalStateMatcher withModified(boolean failed, boolean undeliverableHere, Matcher<?> annotations) {
+            super.withOutcome(new ModifiedMatcher().withDeliveryFailed(failed).withUndeliverableHere(undeliverableHere).withMessageAnnotations(annotations));
             return this;
         }
     }

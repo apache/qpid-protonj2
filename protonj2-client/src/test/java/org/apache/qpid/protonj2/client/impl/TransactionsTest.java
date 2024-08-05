@@ -1536,7 +1536,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
     }
 
     @Test
-    public void testAcceptAndRejectInSameTransaction() throws Exception {
+    public void testAcceptAndReleaseInSameTransaction() throws Exception {
         final byte[] txnId = new byte[] { 0, 1, 2, 3 };
 
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -1595,6 +1595,65 @@ public class TransactionsTest extends ImperativeClientTestCase {
 
             delivery1.accept();
             delivery2.release();
+
+            session.commitTransaction();
+            receiver.closeAsync();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testModifiedDispositionInTransaction() throws Exception {
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.start();
+
+            final URI remoteURI = peer.getServerURI();
+            final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            ReceiverOptions options = new ReceiverOptions().autoAccept(false).autoSettle(false);
+            Receiver receiver = session.openReceiver("test-queue", options).openFuture().get();
+
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept(txnId);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.expectDisposition().withSettled(true)
+                                    .withState()
+                                    .transactional()
+                                    .withTxnId(txnId)
+                                    .withModified(true, true);
+            peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            session.beginTransaction();
+
+            final Delivery delivery = receiver.receive(100, TimeUnit.MILLISECONDS);
+
+            assertNotNull(delivery);
+            assertFalse(delivery.settled());
+            assertNull(delivery.state());
+
+            delivery.modified(true, true);
 
             session.commitTransaction();
             receiver.closeAsync();

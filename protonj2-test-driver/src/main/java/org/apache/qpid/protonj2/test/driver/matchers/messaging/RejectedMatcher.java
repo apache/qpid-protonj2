@@ -56,12 +56,40 @@ public class RejectedMatcher extends ListDescribedTypeMatcher {
         return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description));
     }
 
+    public RejectedMatcher withError(String condition, Matcher<?> description) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description));
+    }
+
+    public RejectedMatcher withError(Symbol condition, String description) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description));
+    }
+
+    public RejectedMatcher withError(Symbol condition, Matcher<?> description) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description));
+    }
+
     public RejectedMatcher withError(String condition, String description, Map<String, Object> info) {
         return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info));
     }
 
     public RejectedMatcher withError(Symbol condition, String description, Map<Symbol, Object> info) {
         return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfoMap(info));
+    }
+
+    public RejectedMatcher withError(String condition, String description, Matcher<?> info) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info));
+    }
+
+    public RejectedMatcher withError(Symbol condition, String description, Matcher<?> info) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info));
+    }
+
+    public RejectedMatcher withError(String condition, Matcher<?> description, Matcher<?> info) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info));
+    }
+
+    public RejectedMatcher withError(Symbol condition, Matcher<?> description, Matcher<?> info) {
+        return withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info));
     }
 
     //----- Matcher based with methods for more complex validation

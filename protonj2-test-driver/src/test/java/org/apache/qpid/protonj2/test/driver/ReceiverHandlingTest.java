@@ -20,6 +20,7 @@ package org.apache.qpid.protonj2.test.driver;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
@@ -471,6 +472,128 @@ class ReceiverHandlingTest extends TestPeerTestsBase {
             client.remoteBegin().now();
             client.remoteAttach().ofReceiver().withSource().withNoLocal().and().now();
             client.remoteEnd().now();
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReceiverSendsRejectedDisposition() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respondInKind();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.expectTransfer().respond().withSettled(true).withState().rejected("error", "Error Code: 111222");
+            peer.expectEnd().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.expectBegin();
+            client.expectAttach().ofReceiver();
+            client.expectFlow().withLinkCredit(1);
+            client.remoteTransfer().withDeliveryId(0).withMessage().withBody().withValue("test").and().queue();
+            client.expectDisposition().withSettled(true).withState().rejected("error", Matchers.containsString("111222"));
+            client.remoteEnd().queue();
+            client.expectEnd();
+
+            // Initiate the exchange
+            client.remoteAMQPHeader().now();
+            client.remoteOpen().now();
+            client.remoteBegin().now();
+            client.remoteAttach().ofSender().now();
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReceiverSendsModifiedDisposition() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respondInKind();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.expectTransfer().respond().withSettled(true).withState().modified(true, true);
+            peer.expectEnd().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.expectBegin();
+            client.expectAttach().ofReceiver();
+            client.expectFlow().withLinkCredit(1);
+            client.remoteTransfer().withDeliveryId(0).withMessage().withBody().withValue("test").and().queue();
+            client.expectDisposition().withSettled(true).withState().modified(true, true);
+            client.remoteEnd().queue();
+            client.expectEnd();
+
+            // Initiate the exchange
+            client.remoteAMQPHeader().now();
+            client.remoteOpen().now();
+            client.remoteBegin().now();
+            client.remoteAttach().ofSender().now();
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testReceiverSendsModifiedDispositionWithAnnotations() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            final Map<String, Object> annotations = Map.of("test", "value");
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respondInKind();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.expectTransfer().respond().withSettled(true).withState().modified(true, true, annotations);
+            peer.expectEnd().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.expectBegin();
+            client.expectAttach().ofReceiver();
+            client.expectFlow().withLinkCredit(1);
+            client.remoteTransfer().withDeliveryId(0).withMessage().withBody().withValue("test").and().queue();
+            client.expectDisposition().withSettled(true).withState().modified(true, true, annotations);
+            client.remoteEnd().queue();
+            client.expectEnd();
+
+            // Initiate the exchange
+            client.remoteAMQPHeader().now();
+            client.remoteOpen().now();
+            client.remoteBegin().now();
+            client.remoteAttach().ofSender().now();
 
             client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
