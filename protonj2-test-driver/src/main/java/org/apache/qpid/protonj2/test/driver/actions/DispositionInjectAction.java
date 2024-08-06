@@ -157,6 +157,21 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
             return DispositionInjectAction.this;
         }
 
+        public DispositionInjectAction rejected(Symbol condition, String description) {
+            withState(new Rejected().setError(new ErrorCondition(condition, description)));
+            return DispositionInjectAction.this;
+        }
+
+        public DispositionInjectAction rejected(String condition, String description, Map<String, Object> info) {
+            withState(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info))));
+            return DispositionInjectAction.this;
+        }
+
+        public DispositionInjectAction rejected(Symbol condition, String description, Map<Symbol, Object> info) {
+            withState(new Rejected().setError(new ErrorCondition(condition, description, info)));
+            return DispositionInjectAction.this;
+        }
+
         public DispositionInjectAction modified() {
             withState(new Modified());
             return DispositionInjectAction.this;

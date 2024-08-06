@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -42,7 +43,13 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.DeliveryState;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
+import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
+import org.apache.qpid.protonj2.test.driver.matchers.messaging.AcceptedMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.messaging.ModifiedMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.messaging.RejectedMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.messaging.ReleasedMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transactions.TransactionalStateMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.transport.ErrorConditionMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferMessageMatcher;
 import org.hamcrest.Matcher;
@@ -115,6 +122,14 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
         return reject(new ErrorCondition(condition, description));
     }
 
+    public DispositionInjectAction reject(String condition, String description, Map<String, Object> info) {
+        return reject(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info)));
+    }
+
+    public DispositionInjectAction reject(Symbol condition, String description, Map<Symbol, Object> info) {
+        return reject(new ErrorCondition(condition, description, info));
+    }
+
     public DispositionInjectAction reject(ErrorCondition error) {
         response = new DispositionInjectAction(driver);
         response.withSettled(true);
@@ -129,9 +144,21 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     }
 
     public DispositionInjectAction modify(boolean failed, boolean undeliverable) {
+        return modify(failed, undeliverable, null);
+    }
+
+    public DispositionInjectAction modify(boolean failed, boolean undeliverable, Map<String, Object> annotations) {
+        final Modified modified = new Modified();
+
+        modified.setDeliveryFailed(failed);
+        modified.setUndeliverableHere(undeliverable);
+        if (annotations != null) {
+            modified.setMessageAnnotations(TypeMapper.toSymbolKeyedMap(annotations));
+        }
+
         response = new DispositionInjectAction(driver);
         response.withSettled(true);
-        response.withState(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverable));
+        response.withState(modified);
 
         driver.addScriptedElement(response);
         return response;
@@ -370,37 +397,87 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     public final class DeliveryStateBuilder {
 
         public TransferExpectation accepted() {
-            withState(Accepted.getInstance());
+            withState(new AcceptedMatcher());
             return TransferExpectation.this;
         }
 
         public TransferExpectation released() {
-            withState(Released.getInstance());
+            withState(new ReleasedMatcher());
             return TransferExpectation.this;
         }
 
         public TransferExpectation rejected() {
-            withState(new Rejected());
+            withState(new RejectedMatcher());
             return TransferExpectation.this;
         }
 
         public TransferExpectation rejected(String condition, String description) {
-            withState(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description)));
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation rejected(Symbol condition, String description) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation rejected(String condition, Matcher<?> description) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation rejected(Symbol condition, Matcher<?> description) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation rejected(String condition, String description, Map<String, Object> info) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation rejected(Symbol condition, String description, Map<Symbol, Object> info) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfoMap(info)));
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation rejected(Symbol condition, String description, Matcher<?> info) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation rejected(Symbol condition, Matcher<?> description, Map<Symbol, Object> info) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfoMap(info)));
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation rejected(Symbol condition, Matcher<?> description, Matcher<?> info) {
+            withState(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
             return TransferExpectation.this;
         }
 
         public TransferExpectation modified() {
-            withState(new Modified());
+            withState(new ModifiedMatcher());
             return TransferExpectation.this;
         }
 
         public TransferExpectation modified(boolean failed) {
-            withState(new Modified());
+            withState(new ModifiedMatcher().withDeliveryFailed(failed));
             return TransferExpectation.this;
         }
 
         public TransferExpectation modified(boolean failed, boolean undeliverableHere) {
-            withState(new Modified());
+            withState(new ModifiedMatcher().withDeliveryFailed(failed).withUndeliverableHere(undeliverableHere));
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation modified(boolean failed, boolean undeliverableHere, Map<String, Object> annotations) {
+            withState(new ModifiedMatcher().withDeliveryFailed(failed).withUndeliverableHere(undeliverableHere).withMessageAnnotations(annotations));
+            return TransferExpectation.this;
+        }
+
+        public TransferExpectation modified(boolean failed, boolean undeliverableHere, Matcher<?> annotations) {
+            withState(new ModifiedMatcher().withDeliveryFailed(failed).withUndeliverableHere(undeliverableHere).withMessageAnnotations(annotations));
             return TransferExpectation.this;
         }
 
@@ -464,37 +541,92 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
         // ----- Add a layer to allow configuring the outcome without specific type dependencies
 
         public TransferTransactionalStateMatcher withAccepted() {
-            super.withOutcome(Accepted.getInstance());
+            super.withOutcome(new AcceptedMatcher());
             return this;
         }
 
         public TransferTransactionalStateMatcher withReleased() {
-            super.withOutcome(Released.getInstance());
+            super.withOutcome(new ReleasedMatcher());
             return this;
         }
 
         public TransferTransactionalStateMatcher withRejected() {
-            super.withOutcome(new Rejected());
+            super.withOutcome(new RejectedMatcher());
             return this;
         }
 
         public TransferTransactionalStateMatcher withRejected(String condition, String description) {
-            super.withOutcome(new Rejected().setError(new ErrorCondition(Symbol.valueOf(condition), description)));
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher withRejected(Symbol condition, String description) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher withRejected(String condition, Matcher<?> description) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher withRejected(Symbol condition, Matcher<?> description) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description)));
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher withRejected(String condition, String description, Map<String, Object> info) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher withRejected(Symbol condition, String description, Map<Symbol, Object> info) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfoMap(info)));
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher withRejected(String condition, String description, Matcher<?> info) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher withRejected(Symbol condition, String description, Matcher<?> info) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher withRejected(String condition, Matcher<?> description, Matcher<?> info) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher withRejected(Symbol condition, Matcher<?> description, Matcher<?> info) {
+            super.withOutcome(new RejectedMatcher().withError(new ErrorConditionMatcher().withCondition(condition).withDescription(description).withInfo(info)));
             return this;
         }
 
         public TransferTransactionalStateMatcher withModified() {
-            super.withOutcome(new Modified());
+            super.withOutcome(new ModifiedMatcher());
             return this;
         }
 
         public TransferTransactionalStateMatcher withModified(boolean failed) {
-            super.withOutcome(new Modified().setDeliveryFailed(failed));
+            super.withOutcome(new ModifiedMatcher().withDeliveryFailed(failed));
             return this;
         }
 
         public TransferTransactionalStateMatcher withModified(boolean failed, boolean undeliverableHere) {
-            super.withOutcome(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverableHere));
+            super.withOutcome(new ModifiedMatcher().withDeliveryFailed(failed).withUndeliverableHere(undeliverableHere));
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher withModified(boolean failed, boolean undeliverableHere, Map<String, Object> annotations) {
+            super.withOutcome(new ModifiedMatcher().withDeliveryFailed(failed).withUndeliverableHere(undeliverableHere).withMessageAnnotations(annotations));
+            return this;
+        }
+
+        public TransferTransactionalStateMatcher withModified(boolean failed, boolean undeliverableHere, Matcher<?> annotations) {
+            super.withOutcome(new ModifiedMatcher().withDeliveryFailed(failed).withUndeliverableHere(undeliverableHere).withMessageAnnotations(annotations));
             return this;
         }
     }

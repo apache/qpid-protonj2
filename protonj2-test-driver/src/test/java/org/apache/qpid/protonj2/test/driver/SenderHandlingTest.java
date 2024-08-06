@@ -642,6 +642,66 @@ class SenderHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
+    public void testTransferInjectAndExpectAPIsForGenericMatches() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond().withHandle(42);
+            peer.remoteFlow().withLinkCredit(1).queue();
+            // Script a full message using the inject API
+            peer.expectTransfer().withMessage()
+                                 .withProperties().and()
+                                 .withDeliveryAnnotations().also()
+                                 .withApplicationProperties().and()
+                                 .withMessageAnnotations().also()
+                                 .withData(new byte[] {0, 1, 2})
+                                 .withHeader().and()
+                                 .withFooters();
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.expectBegin();
+            client.expectAttach().ofReceiver().withHandle(42);
+            client.expectFlow().withLinkCredit(1).withHandle(42);
+            client.remoteTransfer().withHeader().withDurability(true).also()
+                                   .withApplicationProperties().withProperty("ap", "pa").also()
+                                   .withDeliveryAnnotations().withAnnotation("da", "ad").also()
+                                   .withProperties().withCorrelationId("test").also()
+                                   .withMessageAnnotations().withAnnotation("ma", "am").also()
+                                   .withFooter().withFooter("footer", "value").also()
+                                   .withBody().withData(new byte[] {0, 1, 2}).also()
+                                   .queue();
+
+            // Now start and then await the remote grant of credit and out send of a transfer
+            client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+            client.remoteOpen().now();
+            client.remoteBegin().now();
+            client.remoteAttach().ofSender().withHandle(2).now();
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            client.expectDetach().withHandle(42);
+            client.expectEnd();
+
+            client.remoteDetach().now();
+            client.remoteEnd().now();
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testTransferInjectAndExpectAPIsFailOnNoMatchInHeader() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {
