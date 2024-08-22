@@ -60,6 +60,11 @@ public class OpenExpectation extends AbstractExpectation<Open> {
     }
 
     @Override
+    public OpenExpectation optional() {
+        return (OpenExpectation) super.optional();
+    }
+
+    @Override
     public OpenExpectation withPredicate(Predicate<Open> predicate) {
         super.withPredicate(predicate);
         return this;

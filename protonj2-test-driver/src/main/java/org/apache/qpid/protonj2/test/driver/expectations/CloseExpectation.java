@@ -48,6 +48,11 @@ public class CloseExpectation extends AbstractExpectation<Close> {
         super(driver);
     }
 
+    @Override
+    public CloseExpectation optional() {
+        return (CloseExpectation) super.optional();
+    }
+
     public CloseInjectAction respond() {
         response = new CloseInjectAction(driver);
         driver.addScriptedElement(response);

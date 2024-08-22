@@ -56,6 +56,11 @@ public class EndExpectation extends AbstractExpectation<End> {
         return this;
     }
 
+    @Override
+    public EndExpectation optional() {
+        return (EndExpectation) super.optional();
+    }
+
     public EndInjectAction respond() {
         response = new EndInjectAction(driver);
         driver.addScriptedElement(response);

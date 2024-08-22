@@ -58,6 +58,11 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
     }
 
     @Override
+    public FlowExpectation optional() {
+        return (FlowExpectation) super.optional();
+    }
+
+    @Override
     public FlowExpectation onChannel(int channel) {
         super.onChannel(channel);
         return this;

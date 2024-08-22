@@ -89,6 +89,11 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     }
 
     @Override
+    public AttachExpectation optional() {
+        return (AttachExpectation) super.optional();
+    }
+
+    @Override
     public AttachExpectation withPredicate(Predicate<Attach> predicate) {
         super.withPredicate(predicate);
         return this;

@@ -42,6 +42,11 @@ public class EmptyFrameExpectation extends AbstractExpectation<HeartBeat> {
         return this;
     }
 
+    @Override
+    public EmptyFrameExpectation optional() {
+        return (EmptyFrameExpectation) super.optional();
+    }
+
     public EmptyFrameInjectAction respond() {
         EmptyFrameInjectAction response = new EmptyFrameInjectAction(driver);
         driver.addScriptedElement(response);

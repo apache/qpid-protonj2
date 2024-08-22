@@ -62,6 +62,11 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
         return this;
     }
 
+    @Override
+    public DetachExpectation optional() {
+        return (DetachExpectation) super.optional();
+    }
+
     public DetachInjectAction respond() {
         response = new DetachInjectAction(driver);
         driver.addScriptedElement(response);

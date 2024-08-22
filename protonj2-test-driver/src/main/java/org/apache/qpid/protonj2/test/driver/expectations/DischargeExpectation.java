@@ -44,6 +44,11 @@ public class DischargeExpectation extends TransferExpectation {
     }
 
     @Override
+    public DischargeExpectation optional() {
+        return (DischargeExpectation) super.optional();
+    }
+
+    @Override
     public DischargeExpectation onChannel(int channel) {
         super.onChannel(channel);
         return this;

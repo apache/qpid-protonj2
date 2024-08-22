@@ -75,6 +75,11 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     }
 
     @Override
+    public TransferExpectation optional() {
+        return (TransferExpectation) super.optional();
+    }
+
+    @Override
     public TransferExpectation withPredicate(Predicate<Transfer> predicate) {
         super.withPredicate(predicate);
         return this;

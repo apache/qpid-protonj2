@@ -62,6 +62,11 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
     }
 
     @Override
+    public DispositionExpectation optional() {
+        return (DispositionExpectation) super.optional();
+    }
+
+    @Override
     public DispositionExpectation onChannel(int channel) {
         super.onChannel(channel);
         return this;
