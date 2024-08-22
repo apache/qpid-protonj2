@@ -1006,4 +1006,56 @@ class SenderHandlingTest extends TestPeerTestsBase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    public void testMatchAnyBodySectionMatcherExpectation() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond().withHandle(42);
+            peer.remoteFlow().withLinkCredit(1).queue();
+            // Script a full message using the inject API
+            peer.expectTransfer().withMessage().withMessageFormat(1)
+                                               .withProperties().withCorrelationId("test").and()
+                                               .withDeliveryAnnotations().also()
+                                               .withApplicationProperties().and()
+                                               .withMessageAnnotations().also()
+                                               .withValidBodySection()
+                                               .withHeader().withDurability(true).and()
+                                               .withFooters();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.expectBegin();
+            client.expectAttach().ofReceiver().withHandle(42);
+            client.expectFlow().withLinkCredit(1).withHandle(42);
+            client.remoteTransfer().withMessage().withMessageFormat(1)
+                                                 .withHeader().withDurability(true).also()
+                                                 .withApplicationProperties().withProperty("ap", "pa").also()
+                                                 .withDeliveryAnnotations().withAnnotation("da", "ad").also()
+                                                 .withProperties().withCorrelationId("test").also()
+                                                 .withMessageAnnotations().withAnnotation("ma", "am").also()
+                                                 .withFooter().withFooter("footer", "1").also()
+                                                 .withBody().withData(new byte[] {0, 1, 2}).also()
+                                                 .queue();
+
+            // Now start and then await the remote grant of credit and out send of a transfer
+            client.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+            client.remoteOpen().now();
+            client.remoteBegin().now();
+            client.remoteAttach().ofSender().withHandle(2).now();
+
+            client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

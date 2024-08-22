@@ -30,8 +30,9 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Transfer;
 import org.apache.qpid.protonj2.test.driver.expectations.TransferExpectation;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAmqpSequenceMatcher;
-import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAmqpTypeMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAmqpValueMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAnyBodySectionMatcher;
+import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedBodySectionMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedDataMatcher;
 import org.apache.qpid.protonj2.test.driver.util.StringUtils;
 import org.hamcrest.Description;
@@ -53,7 +54,7 @@ public class TransferMessageMatcher extends TypeSafeMatcher<ByteBuffer> {
     private MessageAnnotationsMatcher messageAnnotationsMatcher;
     private PropertiesMatcher propertiesMatcher;
     private ApplicationPropertiesMatcher applicationPropertiesMatcher;
-    private List<EncodedAmqpTypeMatcher> bodySectionMatchers = new ArrayList<>();
+    private List<EncodedBodySectionMatcher> bodySectionMatchers = new ArrayList<>();
     private FooterMatcher footersMatcher;
 
     // String buckets for mismatch error descriptions.
@@ -352,6 +353,34 @@ public class TransferMessageMatcher extends TypeSafeMatcher<ByteBuffer> {
 
     public TransferMessageMatcher withValue(Object value) {
         final EncodedAmqpValueMatcher matcher = new EncodedAmqpValueMatcher(value, footersMatcher != null);
+
+        if (headersMatcher != null) {
+            headersMatcher.getInnerMatcher().setAllowTrailingBytes(true);
+        }
+        if (deliveryAnnotationsMatcher != null) {
+            deliveryAnnotationsMatcher.getInnerMatcher().setAllowTrailingBytes(true);
+        }
+        if (messageAnnotationsMatcher != null) {
+            messageAnnotationsMatcher.getInnerMatcher().setAllowTrailingBytes(true);
+        }
+        if (propertiesMatcher != null) {
+            propertiesMatcher.getInnerMatcher().setAllowTrailingBytes(true);
+        }
+        if (applicationPropertiesMatcher != null) {
+            applicationPropertiesMatcher.getInnerMatcher().setAllowTrailingBytes(true);
+        }
+
+        if (!bodySectionMatchers.isEmpty()) {
+            bodySectionMatchers.get(bodySectionMatchers.size() - 1).setAllowTrailingBytes(true);
+        }
+
+        bodySectionMatchers.add(matcher);
+
+        return this;
+    }
+
+    public TransferMessageMatcher withValidBodySection() {
+        final EncodedAnyBodySectionMatcher matcher = new EncodedAnyBodySectionMatcher(footersMatcher != null);
 
         if (headersMatcher != null) {
             headersMatcher.getInnerMatcher().setAllowTrailingBytes(true);

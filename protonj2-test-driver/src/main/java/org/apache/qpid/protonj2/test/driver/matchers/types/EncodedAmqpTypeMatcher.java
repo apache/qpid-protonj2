@@ -33,9 +33,8 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
-import org.hamcrest.TypeSafeMatcher;
 
-public abstract class EncodedAmqpTypeMatcher extends TypeSafeMatcher<ByteBuffer> {
+public abstract class EncodedAmqpTypeMatcher extends EncodedBodySectionMatcher {
 
     private final Symbol descriptorSymbol;
     private final UnsignedLong descriptorCode;
