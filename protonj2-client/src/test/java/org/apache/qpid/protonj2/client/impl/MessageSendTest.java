@@ -1361,7 +1361,7 @@ class MessageSendTest extends ImperativeClientTestCase {
             session.openReceiver("dummy").openFuture().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.expectTransfer().withMessage().withMessageFormat(0).withData(null);
+            peer.expectTransfer().withMessage().withMessageFormat(0).withData((byte[]) null);
             peer.expectDetach().respond();
             peer.expectClose().respond();
 

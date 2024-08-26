@@ -26,6 +26,7 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 
 public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {
 
@@ -51,6 +52,14 @@ public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {
     /**
      * @param expectedValue
      *        the value that is expected to be IN the received {@link Data}
+     */
+    public EncodedDataMatcher(Matcher<?> expectedValue) {
+        this(expectedValue, false);
+    }
+
+    /**
+     * @param expectedValue
+     *        the value that is expected to be IN the received {@link Data}
      * @param permitTrailingBytes
      *        if it is permitted for bytes to be left in the Binary after
      *        consuming the {@link AmqpValue}
@@ -67,6 +76,17 @@ public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {
      *        consuming the {@link AmqpValue}
      */
     public EncodedDataMatcher(Binary expectedValue, boolean permitTrailingBytes) {
+        super(DESCRIPTOR_SYMBOL, DESCRIPTOR_CODE, expectedValue, permitTrailingBytes);
+    }
+
+    /**
+     * @param expectedValue
+     *        the value that is expected to be IN the received {@link Data}
+     * @param permitTrailingBytes
+     *        if it is permitted for bytes to be left in the Binary after
+     *        consuming the {@link AmqpValue}
+     */
+    public EncodedDataMatcher(Matcher<?> expectedValue, boolean permitTrailingBytes) {
         super(DESCRIPTOR_SYMBOL, DESCRIPTOR_CODE, expectedValue, permitTrailingBytes);
     }
 

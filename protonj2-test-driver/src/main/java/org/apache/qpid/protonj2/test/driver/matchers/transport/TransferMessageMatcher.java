@@ -22,6 +22,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
@@ -312,75 +313,35 @@ public class TransferMessageMatcher extends TypeSafeMatcher<ByteBuffer> {
     }
 
     public TransferMessageMatcher withSequence(List<?> sequence) {
-        final EncodedAmqpSequenceMatcher matcher = new EncodedAmqpSequenceMatcher(sequence, footersMatcher != null);
+        return withBodySection(new EncodedAmqpSequenceMatcher(sequence, footersMatcher != null));
+    }
 
-        if (!bodySectionMatchers.isEmpty()) {
-            bodySectionMatchers.get(bodySectionMatchers.size() - 1).setAllowTrailingBytes(true);
-        }
-
-        bodySectionMatchers.add(matcher);
-
-        return this;
+    public TransferMessageMatcher withSequence(Matcher<?> sequenceMatcher) {
+        return withBodySection(new EncodedAmqpSequenceMatcher(sequenceMatcher, footersMatcher != null));
     }
 
     public TransferMessageMatcher withData(byte[] payload) {
-        final EncodedDataMatcher matcher = new EncodedDataMatcher(payload, footersMatcher != null);
+        return withBodySection(new EncodedDataMatcher(payload, footersMatcher != null));
+    }
 
-        if (headersMatcher != null) {
-            headersMatcher.getInnerMatcher().setAllowTrailingBytes(true);
-        }
-        if (deliveryAnnotationsMatcher != null) {
-            deliveryAnnotationsMatcher.getInnerMatcher().setAllowTrailingBytes(true);
-        }
-        if (messageAnnotationsMatcher != null) {
-            messageAnnotationsMatcher.getInnerMatcher().setAllowTrailingBytes(true);
-        }
-        if (propertiesMatcher != null) {
-            propertiesMatcher.getInnerMatcher().setAllowTrailingBytes(true);
-        }
-        if (applicationPropertiesMatcher != null) {
-            applicationPropertiesMatcher.getInnerMatcher().setAllowTrailingBytes(true);
-        }
-
-        if (!bodySectionMatchers.isEmpty()) {
-            bodySectionMatchers.get(bodySectionMatchers.size() - 1).setAllowTrailingBytes(true);
-        }
-
-        bodySectionMatchers.add(matcher);
-
-        return this;
+    public TransferMessageMatcher withData(Matcher<?> payloadMatcher) {
+        return withBodySection(new EncodedDataMatcher(payloadMatcher, footersMatcher != null));
     }
 
     public TransferMessageMatcher withValue(Object value) {
-        final EncodedAmqpValueMatcher matcher = new EncodedAmqpValueMatcher(value, footersMatcher != null);
+        return withBodySection(new EncodedAmqpValueMatcher(value, footersMatcher != null));
+    }
 
-        if (headersMatcher != null) {
-            headersMatcher.getInnerMatcher().setAllowTrailingBytes(true);
-        }
-        if (deliveryAnnotationsMatcher != null) {
-            deliveryAnnotationsMatcher.getInnerMatcher().setAllowTrailingBytes(true);
-        }
-        if (messageAnnotationsMatcher != null) {
-            messageAnnotationsMatcher.getInnerMatcher().setAllowTrailingBytes(true);
-        }
-        if (propertiesMatcher != null) {
-            propertiesMatcher.getInnerMatcher().setAllowTrailingBytes(true);
-        }
-        if (applicationPropertiesMatcher != null) {
-            applicationPropertiesMatcher.getInnerMatcher().setAllowTrailingBytes(true);
-        }
-
-        if (!bodySectionMatchers.isEmpty()) {
-            bodySectionMatchers.get(bodySectionMatchers.size() - 1).setAllowTrailingBytes(true);
-        }
-
-        bodySectionMatchers.add(matcher);
-
-        return this;
+    public TransferMessageMatcher withValue(Matcher<?> valueMatcher) {
+        return withBodySection(new EncodedAmqpValueMatcher(valueMatcher, footersMatcher != null));
     }
 
     public TransferMessageMatcher withValidBodySection() {
-        final EncodedAnyBodySectionMatcher matcher = new EncodedAnyBodySectionMatcher(footersMatcher != null);
+        return withBodySection(new EncodedAnyBodySectionMatcher(footersMatcher != null));
+    }
+
+    protected TransferMessageMatcher withBodySection(EncodedBodySectionMatcher matcher) {
+        Objects.requireNonNull(matcher, "Body section matcher cannot be null");
 
         if (headersMatcher != null) {
             headersMatcher.getInnerMatcher().setAllowTrailingBytes(true);
