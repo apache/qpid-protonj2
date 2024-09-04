@@ -559,6 +559,7 @@ public final class ClientConnection implements Connection {
             openFuture.failed(failureCause);
             closeFuture.complete(this);
             ioContext.shutdown();
+            notifications.shutdown();
 
             throw failureCause;
         }
@@ -777,23 +778,24 @@ public final class ClientConnection implements Connection {
 
         ioContext.shutdownAsync();
 
-        if (failureCause != null)
-        {
-            openFuture.failed(failureCause);
-            closeFuture.complete(this);
+        try {
+            if (failureCause != null) {
+                openFuture.failed(failureCause);
+                closeFuture.complete(this);
 
-            LOG.warn("Connection {} has failed due to: {}", getId(), failureCause != null ?
-                    failureCause.getClass().getSimpleName() + " -> " + failureCause.getMessage() : "No failure details provided.");
+                LOG.warn("Connection {} has failed due to: {}", getId(), failureCause != null ?
+                         failureCause.getClass().getSimpleName() + " -> " + failureCause.getMessage() : "No failure details provided.");
 
-           submitDisconnectionEvent(options.disconnectedHandler(), transport.getHost(), transport.getPort(), failureCause);
+               submitDisconnectionEvent(options.disconnectedHandler(), transport.getHost(), transport.getPort(), failureCause);
+            } else {
+                openFuture.complete(this);
+                closeFuture.complete(this);
+            }
+
+            client.unregisterConnection(this);
+        } finally {
+            submitNotificationShutdownTask();
         }
-        else
-        {
-            openFuture.complete(this);
-            closeFuture.complete(this);
-        }
-
-        client.unregisterConnection(this);
     }
 
     private void submitConnectionEvent(BiConsumer<Connection, ConnectionEvent> handler, String host, int port, ClientIOException cause) {
@@ -825,6 +827,22 @@ public final class ClientConnection implements Connection {
             } catch (Exception ex) {
                 LOG.trace("Error thrown while attempting to submit event notification ", ex);
             }
+        }
+    }
+
+    private void submitNotificationShutdownTask() {
+        try {
+            if (!notifications.isShutdown()) {
+                notifications.submit(() -> {
+                    try {
+                        notifications.shutdown();
+                    } catch (Exception ex) {
+                        LOG.trace("Shutdown of notification event handler threw an error: ", ex);
+                    }
+                });
+            }
+        } catch (Exception ex) {
+            LOG.trace("Error thrown while attempting to submit shutdown of notification executor: ", ex);
         }
     }
 
