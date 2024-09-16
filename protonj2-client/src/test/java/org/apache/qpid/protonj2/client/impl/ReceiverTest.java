@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -2458,15 +2459,20 @@ public class ReceiverTest extends ImperativeClientTestCase {
                                  .withMore(false)
                                  .withMessageFormat(0)
                                  .withPayload(payload).queue();
-            peer.dropAfterLastHandler();
+            peer.expectDisposition().optional();
+            peer.dropAfterLastHandler(1);
             peer.start();
 
             URI remoteURI = peer.getServerURI();
 
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
+            final CountDownLatch disconnected = new CountDownLatch(1);
+
             Client container = Client.create();
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            ConnectionOptions options = new ConnectionOptions();
+            options.disconnectedHandler((c, e) -> disconnected.countDown());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
             final Receiver receiver = connection.openReceiver("test-queue");
             final Delivery delivery = receiver.receive();
 
@@ -2474,7 +2480,10 @@ public class ReceiverTest extends ImperativeClientTestCase {
 
             assertNotNull(delivery);
 
-            // Data already read so it will be already available for read.
+            assertTrue(disconnected.await(5, TimeUnit.SECONDS));
+
+            // Data already read so it will be already available for read but should be unable to
+            // since the connection has dropped.
             assertNotEquals(-1, delivery.rawInputStream().read());
 
             connection.close();

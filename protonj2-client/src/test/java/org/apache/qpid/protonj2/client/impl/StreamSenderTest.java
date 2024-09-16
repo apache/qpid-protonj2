@@ -297,7 +297,6 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testSendCustomMessageWithMultipleAmqpValueSections() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -397,7 +396,6 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testClearBodySectionsIsNoOpForStreamSenderMessage() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -1478,7 +1476,6 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     void testRawOutputStreamFromMessageWritesUnmodifiedBytes() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -1677,7 +1674,6 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testStreamSenderWritesFooterAfterStreamClosed() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -1893,7 +1889,6 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             });
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).now();
             peer.expectTransfer().withNonNullPayload().withMore(true);
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(2).withLinkCredit(10).queue();
             peer.expectTransfer().withNonNullPayload().withMore(true);
@@ -1903,6 +1898,9 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.expectTransfer().withNonNullPayload().withMore(true);
             peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(5).withLinkCredit(10).queue();
             peer.expectTransfer().withNonNullPayload().withMore(false).accept();
+
+            // Initiate message flow by now granting the first credit
+            peer.remoteFlow().withIncomingWindow(1).withNextIncomingId(1).withLinkCredit(10).now();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDetach().respond();
@@ -2037,10 +2035,12 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             });
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(0).withNextIncomingId(1).withLinkCredit(1).now();
             peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
             peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(1).withNextIncomingId(2).withLinkCredit(1).queue();
             peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
+
+            // Initiate message flow by now granting the first credit
+            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(0).withNextIncomingId(1).withLinkCredit(1).now();
 
             assertTrue(send2Completed.await(10, TimeUnit.SECONDS));
 
@@ -2108,7 +2108,6 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             });
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(0).withNextIncomingId(1).withLinkCredit(1).now();
             peer.expectTransfer().withNonNullPayload().withMore(true);
             peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(0).withNextIncomingId(2).withLinkCredit(1).queue();
             peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
@@ -2116,6 +2115,9 @@ public class StreamSenderTest extends ImperativeClientTestCase {
             peer.expectTransfer().withNonNullPayload().withMore(true);
             peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(1).withNextIncomingId(4).withLinkCredit(1).queue();
             peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().accepted();
+
+            // Initiate message flow by now granting the first credits
+            peer.remoteFlow().withIncomingWindow(1).withDeliveryCount(0).withNextIncomingId(1).withLinkCredit(1).now();
 
             assertTrue(send2Completed.await(10, TimeUnit.SECONDS));
 
@@ -2133,7 +2135,6 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     void testMessageSendWhileStreamSendIsOpenShouldBlock() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -2199,7 +2200,6 @@ public class StreamSenderTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testStreamSenderSessionCannotCreateNewResources() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
