@@ -217,7 +217,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
 
         @Override
         public Type getType() {
-            return Type.RELEASED;
+            return Type.REJECTED;
         }
 
         @Override
@@ -240,7 +240,9 @@ public abstract class ClientDeliveryState implements DeliveryState {
         ClientModified(Modified modified) {
             this.modified.setDeliveryFailed(modified.isDeliveryFailed());
             this.modified.setUndeliverableHere(modified.isUndeliverableHere());
-            this.modified.setMessageAnnotations(new LinkedHashMap<>(modified.getMessageAnnotations()));
+            if (modified.getMessageAnnotations() != null) {
+                this.modified.setMessageAnnotations(new LinkedHashMap<>(modified.getMessageAnnotations()));
+            }
         }
 
         /**

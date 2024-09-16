@@ -2499,6 +2499,91 @@ public class SenderTest extends ImperativeClientTestCase {
 
             assertTrue(tracker.remoteSettled());
             assertFalse(tracker.remoteState().isAccepted());
+            assertTrue(tracker.remoteState().getType().equals(DeliveryState.Type.REJECTED));
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testWaitForAcceptanceFailsIfRemoteSendsReleased() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().released();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Sender sender = connection.openSender("test-queue").openFuture().get();
+            Tracker tracker = sender.send(Message.create("Hello World"));
+
+            try {
+                tracker.awaitAccepted(10, TimeUnit.SECONDS);
+                fail("Should not succeed since remote sent something other than Accepted");
+            } catch (ClientDeliveryStateException dlvEx) {
+                // Expected
+            }
+
+            assertTrue(tracker.remoteSettled());
+            assertFalse(tracker.remoteState().isAccepted());
+            assertTrue(tracker.remoteState().getType().equals(DeliveryState.Type.RELEASED));
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            sender.closeAsync().get();
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testWaitForAcceptanceFailsIfRemoteSendsModified() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().modified();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Sender sender = connection.openSender("test-queue").openFuture().get();
+            Tracker tracker = sender.send(Message.create("Hello World"));
+
+            try {
+                tracker.awaitAccepted(10, TimeUnit.SECONDS);
+                fail("Should not succeed since remote sent something other than Accepted");
+            } catch (ClientDeliveryStateException dlvEx) {
+                // Expected
+            }
+
+            assertTrue(tracker.remoteSettled());
+            assertFalse(tracker.remoteState().isAccepted());
+            assertTrue(tracker.remoteState().getType().equals(DeliveryState.Type.MODIFIED));
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDetach().respond();
