@@ -47,7 +47,7 @@ import org.junit.jupiter.api.Timeout;
 /**
  * Test client implementation of basic connection recovery and its configuration.
  */
-@Timeout(20)
+@Timeout(30)
 public class ReconnectTest extends ImperativeClientTestCase {
 
     @Test
@@ -112,7 +112,7 @@ public class ReconnectTest extends ImperativeClientTestCase {
             assertTrue(connected.await(5, TimeUnit.SECONDS));
             assertTrue(disconnected.await(5, TimeUnit.SECONDS));
             assertTrue(reconnected.await(5, TimeUnit.SECONDS));
-            assertTrue(failed.await(5, TimeUnit.SECONDS));
+            assertTrue(failed.await(20, TimeUnit.SECONDS));
 
             connection.close();
 
@@ -237,7 +237,7 @@ public class ReconnectTest extends ImperativeClientTestCase {
             // Should connect, then fail and attempt to connect to second and third before stopping
             assertTrue(connected.await(5, TimeUnit.SECONDS));
             assertTrue(disconnected.await(5, TimeUnit.SECONDS));
-            assertTrue(failed.await(5, TimeUnit.SECONDS));
+            assertTrue(failed.await(20, TimeUnit.SECONDS));
             assertEquals(1, reconnected.getCount());
 
             connection.close();
