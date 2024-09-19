@@ -105,7 +105,6 @@ class ReconnectStreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testCannotReceiveFromStreamStartedBeforeReconnection() throws Exception {
         final byte[] payload = createEncodedMessage(new AmqpValue<>("Hello World"));

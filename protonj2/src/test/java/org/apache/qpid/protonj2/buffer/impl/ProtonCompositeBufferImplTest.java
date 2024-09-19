@@ -39,11 +39,11 @@ import org.apache.qpid.protonj2.buffer.ProtonBufferComponent;
 import org.apache.qpid.protonj2.buffer.ProtonBufferComponentAccessor;
 import org.apache.qpid.protonj2.buffer.ProtonBufferReadOnlyException;
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
-import org.apache.qpid.protonj2.buffer.netty.Netty5ProtonBufferAllocator;
+import org.apache.qpid.protonj2.buffer.netty.Netty4ProtonBufferAllocator;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import io.netty5.buffer.BufferAllocator;
+import io.netty.buffer.PooledByteBufAllocator;
 
 /**
  * Tests for the proton composite buffer implementation.
@@ -598,7 +598,7 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
     }
 
     @SuppressWarnings("resource")
-	@Test
+    @Test
     public void testAppendingCompositeBufferToItselfMustThrow() {
         try (ProtonBufferAllocator allocator = createProtonDefaultAllocator()) {
             ProtonCompositeBuffer composite;
@@ -1932,7 +1932,7 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
 
     @Test
     public void testBufferExposesNativeAddressValues() {
-        try (ProtonBufferAllocator allocator = new Netty5ProtonBufferAllocator(BufferAllocator.offHeapUnpooled());
+        try (ProtonBufferAllocator allocator = new Netty4ProtonBufferAllocator(PooledByteBufAllocator.DEFAULT);
              ProtonBuffer buffer = allocator.allocate(16)) {
 
             buffer.writeLong(Long.MAX_VALUE);
@@ -1950,7 +1950,7 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
 
     @Test
     public void testBufferExposesNativeAddressValuesForNativeBackedBuffers() {
-        try (ProtonBufferAllocator offHeapAllocator = new Netty5ProtonBufferAllocator(BufferAllocator.offHeapUnpooled());
+        try (ProtonBufferAllocator offHeapAllocator = new Netty4ProtonBufferAllocator(PooledByteBufAllocator.DEFAULT);
              ProtonBufferAllocator onHeapAllocator = createProtonDefaultAllocator();
              ProtonCompositeBuffer buffer = onHeapAllocator.composite()) {
 

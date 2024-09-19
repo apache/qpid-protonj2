@@ -83,44 +83,6 @@
       <classifier>${netty-transport-native-kqueue-classifier}</classifier>
       <scope>${netty-scope}</scope>
     </dependency>
-    <!-- Netty 5 Development dependencies -->
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty5-buffer</artifactId>
-      <scope>${netty5-scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty5-common</artifactId>
-      <scope>${netty5-scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty5-handler</artifactId>
-      <scope>${netty5-scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty5-transport</artifactId>
-      <scope>${netty5-scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty5-codec-http</artifactId>
-      <scope>${netty5-scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty5-transport-native-epoll</artifactId>
-      <classifier>${netty-transport-native-epoll-classifier}</classifier>
-      <scope>${netty5-scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty5-transport-native-kqueue</artifactId>
-      <classifier>${netty5-transport-native-kqueue-classifier}</classifier>
-      <scope>${netty5-scope}</scope>
-    </dependency>
     <!-- Test dependencies -->
     <dependency>
       <groupId>org.apache.qpid</groupId>

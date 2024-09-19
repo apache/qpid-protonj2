@@ -39,7 +39,7 @@ import org.apache.qpid.protonj2.client.Connection;
 import org.apache.qpid.protonj2.client.ConnectionOptions;
 import org.apache.qpid.protonj2.client.SslOptions;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
-import org.apache.qpid.protonj2.client.transport.netty5.SslSupport;
+import org.apache.qpid.protonj2.client.transport.netty4.SslSupport;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
 import org.apache.qpid.protonj2.types.security.SaslCode;
@@ -50,7 +50,7 @@ import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.netty5.handler.ssl.OpenSsl;
+import io.netty.handler.ssl.OpenSsl;
 
 /**
  * Test for the Connection class

@@ -21,8 +21,6 @@ import org.apache.qpid.protonj2.client.SslOptions;
 import org.apache.qpid.protonj2.client.TransportOptions;
 import org.apache.qpid.protonj2.client.transport.netty4.Netty4IOContext;
 import org.apache.qpid.protonj2.client.transport.netty4.Netty4Support;
-import org.apache.qpid.protonj2.client.transport.netty5.Netty5IOContext;
-import org.apache.qpid.protonj2.client.transport.netty5.Netty5Support;
 import org.apache.qpid.protonj2.engine.Scheduler;
 
 /**
@@ -69,8 +67,6 @@ public interface IOContext {
     static IOContext create(TransportOptions options, SslOptions sslOptions, String ioThreadName) {
         if (Netty4Support.isAvailable()) {
             return new Netty4IOContext(options, sslOptions, ioThreadName);
-        } else if (Netty5Support.isAvailable()) {
-            return new Netty5IOContext(options, sslOptions, ioThreadName);
         }
 
         throw new UnsupportedOperationException("Netty not available on the class path");

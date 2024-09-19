@@ -25,9 +25,6 @@ import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
 import org.apache.qpid.protonj2.test.driver.netty.netty4.Netty4Client;
 import org.apache.qpid.protonj2.test.driver.netty.netty4.Netty4Server;
 import org.apache.qpid.protonj2.test.driver.netty.netty4.Netty4Support;
-import org.apache.qpid.protonj2.test.driver.netty.netty5.Netty5Client;
-import org.apache.qpid.protonj2.test.driver.netty.netty5.Netty5Server;
-import org.apache.qpid.protonj2.test.driver.netty.netty5.Netty5Support;
 
 /**
  * An I/O context used to abstract the implementation of the IO layer in use.
@@ -49,8 +46,6 @@ public interface NettyIOBuilder {
     public static NettyClient createClient(ProtonTestClientOptions options, Runnable connectedHandler, Consumer<ByteBuffer> inputHandler) {
         if (Netty4Support.isAvailable()) {
             return new Netty4Client(options, connectedHandler, inputHandler);
-        } else if (Netty5Support.isAvailable()) {
-            return new Netty5Client(options, connectedHandler, inputHandler);
         }
 
         throw new UnsupportedOperationException("Netty not available on the class path");
@@ -73,8 +68,6 @@ public interface NettyIOBuilder {
     public static NettyServer createServer(ProtonTestServerOptions options, Runnable connectedHandler, Runnable disconnectedHandler, Consumer<ByteBuffer> inputHandler) {
         if (Netty4Support.isAvailable()) {
             return new Netty4Server(options, connectedHandler, disconnectedHandler, inputHandler);
-        } else if (Netty5Support.isAvailable()) {
-            return new Netty5Server(options, connectedHandler, disconnectedHandler, inputHandler);
         }
 
         throw new UnsupportedOperationException("Netty not available on the class path");
