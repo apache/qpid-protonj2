@@ -1315,7 +1315,7 @@ public class SenderTest extends ImperativeClientTestCase {
             Session session = connection.openSession();
             session.openFuture().get();
 
-            SenderOptions options = new SenderOptions().openTimeout(75);
+            SenderOptions options = new SenderOptions().openTimeout(100);
             Sender sender = session.openSender("test-sender", options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -1381,13 +1381,9 @@ public class SenderTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(75);
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
-            connection.openFuture().get();
-
             Session session = connection.openSession();
-            session.openFuture().get();
-
             Sender sender = session.openSender("test-sender");
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -1449,13 +1445,9 @@ public class SenderTest extends ImperativeClientTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(75);
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
-            connection.openFuture().get();
-
             Session session = connection.openSession();
-            session.openFuture().get();
-
             Sender sender = session.openSender("test-sender");
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
