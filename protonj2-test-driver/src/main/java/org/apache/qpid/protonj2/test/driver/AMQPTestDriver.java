@@ -850,7 +850,7 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
 
     private void checkFailed() {
         if (failureCause != null) {
-            throw failureCause;
+            throw new AssertionError(failureCause.getMessage(), failureCause);
         }
     }
 }
