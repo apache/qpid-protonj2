@@ -46,9 +46,9 @@
     <proton.version>0.34.1</proton.version>
     <slf4j.version>1.7.36</slf4j.version>
     <hamcrest.version>3.0</hamcrest.version>
-    <netty.version>4.1.117.Final</netty.version>
+    <netty.version>4.1.118.Final</netty.version>
     <netty.iouring.version>0.0.26.Final</netty.iouring.version>
-    <netty.tcnative.version>2.0.69.Final</netty.tcnative.version>
+    <netty.tcnative.version>2.0.70.Final</netty.tcnative.version>
 
     <!-- Plugin versions -->
     <jacoco.plugin.version>0.8.12</jacoco.plugin.version>
