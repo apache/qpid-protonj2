@@ -645,7 +645,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
         switch (encodingCode) {
             case EncodingCodes.SMALLLONG:
-                return Long.valueOf(ProtonStreamUtils.readByte(stream) & 0xffl);
+                return (long) ProtonStreamUtils.readByte(stream);
             case EncodingCodes.LONG:
                 return ProtonStreamUtils.readLong(stream);
             case EncodingCodes.NULL:
@@ -661,7 +661,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
         switch (encodingCode) {
             case EncodingCodes.SMALLLONG:
-                return ProtonStreamUtils.readByte(stream) & 0xffl;
+                return ProtonStreamUtils.readByte(stream);
             case EncodingCodes.LONG:
                 return ProtonStreamUtils.readLong(stream);
             case EncodingCodes.NULL:
