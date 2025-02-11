@@ -113,6 +113,8 @@ public class LongTypeCodecTest extends CodecTestSupport {
         buffer.writeLong(44);
         buffer.writeByte(EncodingCodes.SMALLLONG);
         buffer.writeByte((byte) 43);
+        buffer.writeByte(EncodingCodes.SMALLLONG);
+        buffer.writeByte((byte) -1);
         buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.NULL);
 
@@ -122,12 +124,14 @@ public class LongTypeCodecTest extends CodecTestSupport {
             assertEquals(42, streamDecoder.readLong(stream, streamDecoderState).intValue());
             assertEquals(44, streamDecoder.readLong(stream, streamDecoderState, 42));
             assertEquals(43, streamDecoder.readLong(stream, streamDecoderState, 42));
+            assertEquals(-1, streamDecoder.readLong(stream, streamDecoderState, 42));
             assertNull(streamDecoder.readLong(stream, streamDecoderState));
             assertEquals(42, streamDecoder.readLong(stream, streamDecoderState, 42l));
         } else {
             assertEquals(42, decoder.readLong(buffer, decoderState).intValue());
             assertEquals(44, decoder.readLong(buffer, decoderState, 42));
             assertEquals(43, decoder.readLong(buffer, decoderState, 42));
+            assertEquals(-1, decoder.readLong(buffer, decoderState, 42));
             assertNull(decoder.readLong(buffer, decoderState));
             assertEquals(42, decoder.readLong(buffer, decoderState, 42l));
         }
@@ -183,13 +187,13 @@ public class LongTypeCodecTest extends CodecTestSupport {
         ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
         buffer.writeByte(EncodingCodes.SMALLLONG);
-        buffer.writeByte((byte) 42);
+        buffer.writeByte((byte) -42);
 
         if (fromStream) {
             InputStream stream = new ProtonBufferInputStream(buffer);
-            assertEquals(42l, streamDecoder.readLong(stream, streamDecoderState).longValue());
+            assertEquals(-42l, streamDecoder.readLong(stream, streamDecoderState).longValue());
         } else {
-            assertEquals(42l, decoder.readLong(buffer, decoderState).longValue());
+            assertEquals(-42l, decoder.readLong(buffer, decoderState).longValue());
         }
     }
 
@@ -360,14 +364,14 @@ public class LongTypeCodecTest extends CodecTestSupport {
             buffer.writeInt(2);   // Count
             buffer.writeByte(EncodingCodes.LONG);
             buffer.writeLong(1l);   // [0]
-            buffer.writeLong(2l);   // [1]
+            buffer.writeLong(-2l);  // [1]
         } else if (encoding == EncodingCodes.SMALLLONG) {
             buffer.writeByte(EncodingCodes.ARRAY32);
             buffer.writeInt(11);  // Size
             buffer.writeInt(2);   // Count
             buffer.writeByte(EncodingCodes.SMALLLONG);
             buffer.writeByte((byte) 1);   // [0]
-            buffer.writeByte((byte) 2);   // [1]
+            buffer.writeByte((byte) -2);  // [1]
         }
 
         final Object result;
@@ -386,7 +390,7 @@ public class LongTypeCodecTest extends CodecTestSupport {
 
         assertEquals(2, array.length);
         assertEquals(1, array[0]);
-        assertEquals(2, array[1]);
+        assertEquals(-2, array[1]);
     }
 
     @Test

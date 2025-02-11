@@ -32,7 +32,7 @@ public final class Long8TypeDecoder extends LongTypeDecoder {
 
     @Override
     public Long readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        return (long) buffer.readByte() & 0xff;
+        return (long) buffer.readByte();
     }
 
     @Override
