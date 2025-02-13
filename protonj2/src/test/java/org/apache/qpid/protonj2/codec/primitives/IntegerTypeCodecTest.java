@@ -91,12 +91,15 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
         buffer.writeInt(44);
         buffer.writeByte(EncodingCodes.SMALLINT);
         buffer.writeByte((byte) 43);
+        buffer.writeByte(EncodingCodes.SMALLINT);
+        buffer.writeByte((byte) -2);
         buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.NULL);
 
         assertEquals(42, decoder.readInteger(buffer, decoderState).intValue());
         assertEquals(44, decoder.readInteger(buffer, decoderState, 42));
         assertEquals(43, decoder.readInteger(buffer, decoderState, 42));
+        assertEquals(-2, decoder.readInteger(buffer, decoderState, 42));
         assertNull(decoder.readInteger(buffer, decoderState));
         assertEquals(42, decoder.readInteger(buffer, decoderState, 42));
     }
@@ -111,6 +114,8 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
         buffer.writeInt(44);
         buffer.writeByte(EncodingCodes.SMALLINT);
         buffer.writeByte((byte) 43);
+        buffer.writeByte(EncodingCodes.SMALLINT);
+        buffer.writeByte((byte) -43);
         buffer.writeByte(EncodingCodes.NULL);
         buffer.writeByte(EncodingCodes.NULL);
 
@@ -119,6 +124,7 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
         assertEquals(42, streamDecoder.readInteger(stream, streamDecoderState).intValue());
         assertEquals(44, streamDecoder.readInteger(stream, streamDecoderState, 42));
         assertEquals(43, streamDecoder.readInteger(stream, streamDecoderState, 42));
+        assertEquals(-43, streamDecoder.readInteger(stream, streamDecoderState, 42));
         assertNull(streamDecoder.readInteger(stream, streamDecoderState));
         assertEquals(42, streamDecoder.readInteger(stream, streamDecoderState, 42));
     }
@@ -152,8 +158,11 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
 
         buffer.writeByte(EncodingCodes.SMALLINT);
         buffer.writeByte((byte) 42);
+        buffer.writeByte(EncodingCodes.SMALLINT);
+        buffer.writeByte((byte) -1);
 
         assertEquals(42, decoder.readInteger(buffer, decoderState).intValue());
+        assertEquals(-1, decoder.readInteger(buffer, decoderState).intValue());
     }
 
     @Test
@@ -174,10 +183,13 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
 
         buffer.writeByte(EncodingCodes.SMALLINT);
         buffer.writeByte((byte) 42);
+        buffer.writeByte(EncodingCodes.SMALLINT);
+        buffer.writeByte((byte) -1);
 
         InputStream stream = new ProtonBufferInputStream(buffer);
 
         assertEquals(42, streamDecoder.readInteger(stream, streamDecoderState).intValue());
+        assertEquals(-1, streamDecoder.readInteger(stream, streamDecoderState).intValue());
     }
 
     @Test
@@ -341,18 +353,20 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
 
         if (encoding == EncodingCodes.INT) {
             buffer.writeByte(EncodingCodes.ARRAY32);
-            buffer.writeInt(17);  // Size
-            buffer.writeInt(2);   // Count
+            buffer.writeInt(21);  // Size
+            buffer.writeInt(3);   // Count
             buffer.writeByte(EncodingCodes.INT);
             buffer.writeInt(1);   // [0]
             buffer.writeInt(2);   // [1]
+            buffer.writeInt(-1);  // [2]
         } else if (encoding == EncodingCodes.SMALLINT) {
             buffer.writeByte(EncodingCodes.ARRAY32);
-            buffer.writeInt(11);  // Size
-            buffer.writeInt(2);   // Count
+            buffer.writeInt(12);  // Size
+            buffer.writeInt(3);   // Count
             buffer.writeByte(EncodingCodes.SMALLINT);
             buffer.writeByte((byte) 1);   // [0]
             buffer.writeByte((byte) 2);   // [1]
+            buffer.writeByte((byte) -1);  // [2]
         }
 
         final Object result;
@@ -369,9 +383,10 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
 
         int[] array = (int[]) result;
 
-        assertEquals(2, array.length);
+        assertEquals(3, array.length);
         assertEquals(1, array[0]);
         assertEquals(2, array[1]);
+        assertEquals(-1, array[2]);
     }
 
     @Test

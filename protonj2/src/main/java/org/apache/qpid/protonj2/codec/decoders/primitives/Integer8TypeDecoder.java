@@ -80,7 +80,7 @@ public final class Integer8TypeDecoder extends AbstractPrimitiveTypeDecoder<Inte
 
     @Override
     public Integer readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
-        return buffer.readByte() & 0xff;
+        return Integer.valueOf(buffer.readByte());
     }
 
     @Override
