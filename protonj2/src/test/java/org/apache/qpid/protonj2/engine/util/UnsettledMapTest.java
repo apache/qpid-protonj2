@@ -1892,6 +1892,38 @@ public class UnsettledMapTest {
         assertEquals(uintArray.length, removed.get());
     }
 
+    @Test
+    public void testRemoveFromIteratorFromMiddleBucket() {
+        final int numBuckets = 5;
+        final int bucketSize = 10;
+        final int numEntries = numBuckets * bucketSize;
+
+        final UnsettledMap<DeliveryType> map = createMap(numBuckets, bucketSize);
+
+        for (int i = 0; i < numEntries; ++i) {
+            map.put(i, new DeliveryType(i));
+        }
+
+        assertEquals(numEntries, map.size());
+
+        Iterator<UnsignedInteger> entries = map.keySet().iterator();
+
+        // Move to center of bucket two
+        for (int i = 0; i < bucketSize + (bucketSize / 2); ++i) {
+            entries.next();
+        }
+
+        UnsignedInteger lastValue = null;
+
+        // Remove from center of bucket two into bucket three until a compaction event should occur.
+        for (int i = 0; i < bucketSize; ++i) {
+            lastValue = entries.next();
+            entries.remove();
+        }
+
+        assertEquals(lastValue.intValue() + 1, entries.next().intValue());
+    }
+
     protected void dumpRandomDataSet(int iterations, boolean bounded) {
         final int[] dataSet = new int[iterations];
 

@@ -166,18 +166,16 @@ public class UnsettledMap<Delivery> implements Map<UnsignedInteger, Delivery> {
     }
 
     public Delivery get(int deliveryId) {
-        if (totalEntries == 0) {
-            return null;
-        }
-
-        // Search every bucket because delivery IDs can wrap around, but we can
-        // stop at the first empty bucket as all buckets following it must also
-        // be empty buckets.
-        for (int i = 0; i <= current; ++i) {
-            if (buckets[i].isInRange(deliveryId)) {
-                final Delivery result = buckets[i].get(deliveryId);
-                if (result != null) {
-                    return result;
+        if (totalEntries > 0) {
+            // Search every bucket because delivery IDs can wrap around, but we can
+            // stop at the first empty bucket as all buckets following it must also
+            // be empty buckets.
+            for (int i = 0; i <= current; ++i) {
+                if (buckets[i].isInRange(deliveryId)) {
+                    final Delivery result = buckets[i].get(deliveryId);
+                    if (result != null) {
+                        return result;
+                    }
                 }
             }
         }
@@ -228,16 +226,21 @@ public class UnsettledMap<Delivery> implements Map<UnsignedInteger, Delivery> {
         return false;
     }
 
+    /**
+     * Visits each entry within the {@link UnsettledMap} and invokes the provided action
+     * on each delivery in the tracker.
+     *
+     * @param action
+     * 		The action to invoke on each visited entry.
+     */
     public void forEach(Consumer<Delivery> action) {
         Objects.requireNonNull(action);
 
-        if (totalEntries == 0) {
-            return;
-        }
-
-        for (int i = 0; i <= current; ++i) {
-            for (int j = buckets[i].readOffset; j < buckets[i].writeOffset; ++j) {
-                action.accept(buckets[i].entryAt(j));
+        if (totalEntries > 0) {
+            for (int i = 0; i <= current; ++i) {
+                for (int j = buckets[i].readOffset; j < buckets[i].writeOffset; ++j) {
+                    action.accept(buckets[i].entryAt(j));
+                }
             }
         }
     }
@@ -368,14 +371,12 @@ public class UnsettledMap<Delivery> implements Map<UnsignedInteger, Delivery> {
     public void forEach(BiConsumer<? super UnsignedInteger, ? super Delivery> action) {
         Objects.requireNonNull(action);
 
-        if (totalEntries == 0) {
-            return;
-        }
-
-        for (int i = 0; i <= current; ++i) {
-            for (int j = buckets[i].readOffset; j < buckets[i].writeOffset; ++j) {
-                final Delivery delivery = buckets[i].entryAt(j);
-                action.accept(UnsignedInteger.valueOf(deliveryIdSupplier.getDeliveryId(delivery)), delivery);
+        if (totalEntries > 0) {
+            for (int i = 0; i <= current; ++i) {
+                for (int j = buckets[i].readOffset; j < buckets[i].writeOffset; ++j) {
+                    final Delivery delivery = buckets[i].entryAt(j);
+                    action.accept(UnsignedInteger.valueOf(deliveryIdSupplier.getDeliveryId(delivery)), delivery);
+                }
             }
         }
     }
@@ -520,7 +521,7 @@ public class UnsettledMap<Delivery> implements Map<UnsignedInteger, Delivery> {
                     // Moved into the previous bucket so the index being negative
                     // give us the located when added to the previous write offset
                     result = (long) (prevBucketIndex) << 32;
-                    result = prevBucket.writeOffset + nextEntryOffset;
+                    result |= prevBucket.writeOffset + nextEntryOffset;
                 } else if (nextBucket.entries + (bucket.entries - toCopyBackward) > 0) {
                     // Moved into the next bucket gives of the raw index so long
                     // as we compact entries to zero (otherwise it is the read offset
