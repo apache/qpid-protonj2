@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.protonj2.test.driver.expectations;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.collection.ArrayMatching.hasItemInArray;
 
@@ -174,55 +173,68 @@ public class OpenExpectation extends AbstractExpectation<Open> {
 
     public OpenExpectation withContainerId(String container) {
         explicitlyNullContainerId = container == null;
-        return withContainerId(equalTo(container));
+        matcher.withContainerId(container);
+        return this;
     }
 
     public OpenExpectation withHostname(String hostname) {
-        return withHostname(equalTo(hostname));
+        matcher.withHostname(hostname);
+        return this;
     }
 
     public OpenExpectation withMaxFrameSize(int maxFrameSize) {
-        return withMaxFrameSize(equalTo(UnsignedInteger.valueOf(maxFrameSize)));
+        matcher.withMaxFrameSize(maxFrameSize);
+        return this;
     }
 
     public OpenExpectation withMaxFrameSize(long maxFrameSize) {
-        return withMaxFrameSize(equalTo(UnsignedInteger.valueOf(maxFrameSize)));
+        matcher.withMaxFrameSize(maxFrameSize);
+        return this;
     }
 
     public OpenExpectation withMaxFrameSize(UnsignedInteger maxFrameSize) {
-        return withMaxFrameSize(equalTo(maxFrameSize));
+        matcher.withMaxFrameSize(maxFrameSize);
+        return this;
     }
 
     public OpenExpectation withChannelMax(short channelMax) {
-        return withChannelMax(equalTo(UnsignedShort.valueOf(channelMax)));
+        matcher.withChannelMax(channelMax);
+        return this;
     }
 
     public OpenExpectation withChannelMax(int channelMax) {
-        return withChannelMax(equalTo(UnsignedShort.valueOf(channelMax)));
+        matcher.withChannelMax(channelMax);
+        return this;
     }
 
     public OpenExpectation withChannelMax(UnsignedShort channelMax) {
-        return withChannelMax(equalTo(channelMax));
+        matcher.withChannelMax(channelMax);
+        return this;
     }
 
     public OpenExpectation withIdleTimeOut(int idleTimeout) {
-        return withIdleTimeOut(equalTo(UnsignedInteger.valueOf(idleTimeout)));
+        matcher.withIdleTimeOut(idleTimeout);
+        return this;
     }
 
     public OpenExpectation withIdleTimeOut(long idleTimeout) {
-        return withIdleTimeOut(equalTo(UnsignedInteger.valueOf(idleTimeout)));
+        matcher.withIdleTimeOut(idleTimeout);
+        return this;
     }
 
     public OpenExpectation withIdleTimeOut(UnsignedInteger idleTimeout) {
-        return withIdleTimeOut(equalTo(idleTimeout));
+        matcher.withIdleTimeOut(idleTimeout);
+        return this;
     }
 
     public OpenExpectation withOutgoingLocales(String... outgoingLocales) {
-        return withOutgoingLocales(equalTo(TypeMapper.toSymbolArray(outgoingLocales)));
+        matcher.withOutgoingLocales(outgoingLocales);
+        return this;
     }
 
     public OpenExpectation withOutgoingLocales(Symbol... outgoingLocales) {
-        return withOutgoingLocales(equalTo(outgoingLocales));
+        matcher.withOutgoingLocales(outgoingLocales);
+        return this;
     }
 
     public OpenExpectation withOutgoingLocale(String outgoingLocale) {
@@ -234,11 +246,13 @@ public class OpenExpectation extends AbstractExpectation<Open> {
     }
 
     public OpenExpectation withIncomingLocales(String... incomingLocales) {
-        return withIncomingLocales(equalTo(TypeMapper.toSymbolArray(incomingLocales)));
+        matcher.withIncomingLocales(incomingLocales);
+        return this;
     }
 
     public OpenExpectation withIncomingLocales(Symbol... incomingLocales) {
-        return withIncomingLocales(equalTo(incomingLocales));
+        matcher.withIncomingLocales(incomingLocales);
+        return this;
     }
 
     public OpenExpectation withIncomingLocale(String incomingLocale) {
@@ -250,43 +264,63 @@ public class OpenExpectation extends AbstractExpectation<Open> {
     }
 
     public OpenExpectation withOfferedCapabilities(String... offeredCapabilities) {
-        return withOfferedCapabilities(equalTo(TypeMapper.toSymbolArray(offeredCapabilities)));
+        matcher.withOfferedCapabilities(offeredCapabilities);
+        return this;
     }
 
     public OpenExpectation withOfferedCapabilities(Symbol... offeredCapabilities) {
-        return withOfferedCapabilities(equalTo(offeredCapabilities));
-    }
-
-    public OpenExpectation withOfferedCapability(Symbol offeredCapability) {
-        return withOfferedCapabilities(hasItemInArray(offeredCapability));
-    }
-
-    public OpenExpectation withOfferedCapability(String offeredCapability) {
-        return withOfferedCapabilities(hasItemInArray(Symbol.valueOf(offeredCapability)));
+        matcher.withOfferedCapabilities(offeredCapabilities);
+        return this;
     }
 
     public OpenExpectation withDesiredCapabilities(String... desiredCapabilities) {
-        return withDesiredCapabilities(equalTo(TypeMapper.toSymbolArray(desiredCapabilities)));
+        matcher.withDesiredCapabilities(desiredCapabilities);
+        return this;
     }
 
     public OpenExpectation withDesiredCapabilities(Symbol... desiredCapabilities) {
-        return withDesiredCapabilities(equalTo(desiredCapabilities));
-    }
-
-    public OpenExpectation withDesiredCapability(Symbol desiredCapability) {
-        return withDesiredCapabilities(hasItemInArray(desiredCapability));
-    }
-
-    public OpenExpectation withDesiredCapability(String desiredCapability) {
-        return withDesiredCapabilities(hasItemInArray(Symbol.valueOf(desiredCapability)));
+        matcher.withDesiredCapabilities(desiredCapabilities);
+        return this;
     }
 
     public OpenExpectation withPropertiesMap(Map<Symbol, Object> properties) {
-        return withProperties(equalTo(properties));
+        matcher.withPropertiesMap(properties);
+        return this;
     }
 
     public OpenExpectation withProperties(Map<String, Object> properties) {
-        return withProperties(equalTo(TypeMapper.toSymbolKeyedMap(properties)));
+        matcher.withProperties(properties);
+        return this;
+    }
+
+    public OpenExpectation withProperty(String key, Object value) {
+        matcher.withProperty(key, value);
+        return this;
+    }
+
+    public OpenExpectation withProperty(Symbol key, Object value) {
+        matcher.withProperty(key, value);
+        return this;
+    }
+
+    public OpenExpectation withDesiredCapability(Symbol desiredCapability) {
+        matcher.withDesiredCapability(desiredCapability);
+        return this;
+    }
+
+    public OpenExpectation withDesiredCapability(String desiredCapability) {
+        matcher.withDesiredCapability(desiredCapability);
+        return this;
+    }
+
+    public OpenExpectation withOfferedCapability(Symbol offeredCapability) {
+        matcher.withOfferedCapability(offeredCapability);
+        return this;
+    }
+
+    public OpenExpectation withOfferedCapability(String offeredCapability) {
+        matcher.withOfferedCapability(offeredCapability);
+        return this;
     }
 
     //----- Matcher based with methods for more complex validation
@@ -338,16 +372,6 @@ public class OpenExpectation extends AbstractExpectation<Open> {
 
     public OpenExpectation withProperties(Matcher<?> m) {
         matcher.addFieldMatcher(Open.Field.PROPERTIES, m);
-        return this;
-    }
-
-    public OpenExpectation withProperty(String key, Object value) {
-        matcher.withProperty(key, value);
-        return this;
-    }
-
-    public OpenExpectation withProperty(Symbol key, Object value) {
-        matcher.withProperty(key, value);
         return this;
     }
 

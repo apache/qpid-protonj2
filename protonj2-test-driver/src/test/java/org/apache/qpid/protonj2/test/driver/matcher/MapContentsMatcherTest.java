@@ -91,7 +91,7 @@ public class MapContentsMatcherTest {
     }
 
     @Test
-    public void testMapEqualsWhenTheyAreNotForContensts() {
+    public void testMapEqualsWhenTheyAreNotForContents() {
         final Map<String, String> map = new HashMap<>();
 
         map.put("one", "1");
@@ -111,7 +111,7 @@ public class MapContentsMatcherTest {
     }
 
     @Test
-    public void testMapEqualsWhenTheyAreNotForContensts2() {
+    public void testMapEqualsWhenTheyAreNotForContents2() {
         final Map<String, String> map = new LinkedHashMap<>();
 
         map.put("one", "1");

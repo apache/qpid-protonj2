@@ -25,6 +25,7 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Open;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
+import org.apache.qpid.protonj2.test.driver.matchers.ArrayContentsMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.ListDescribedTypeMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.MapContentsMatcher;
 import org.hamcrest.Matcher;
@@ -33,6 +34,12 @@ public class OpenMatcher extends ListDescribedTypeMatcher {
 
     // Only used if singular 'withProperty' API is used
     private MapContentsMatcher<Symbol, Object> propertiesMatcher;
+
+    // Only used if singular 'withDesiredCapabilitiy' API is used
+    private ArrayContentsMatcher<Symbol> desiredCapabilitiesMatcher;
+
+    // Only used if singular 'withOfferedCapability' API is used
+    private ArrayContentsMatcher<Symbol> offeredCapabilitiesMatcher;
 
     public OpenMatcher() {
         super(Open.Field.values().length, Open.DESCRIPTOR_CODE, Open.DESCRIPTOR_SYMBOL);
@@ -106,18 +113,22 @@ public class OpenMatcher extends ListDescribedTypeMatcher {
     }
 
     public OpenMatcher withOfferedCapabilities(String... offeredCapabilities) {
+        offeredCapabilitiesMatcher = null; // Clear these as this overrides anything else
         return withOfferedCapabilities(equalTo(TypeMapper.toSymbolArray(offeredCapabilities)));
     }
 
     public OpenMatcher withOfferedCapabilities(Symbol... offeredCapabilities) {
+        offeredCapabilitiesMatcher = null; // Clear these as this overrides anything else
         return withOfferedCapabilities(equalTo(offeredCapabilities));
     }
 
     public OpenMatcher withDesiredCapabilities(String... desiredCapabilities) {
+        desiredCapabilitiesMatcher = null; // Clear these as this overrides anything else
         return withDesiredCapabilities(equalTo(TypeMapper.toSymbolArray(desiredCapabilities)));
     }
 
     public OpenMatcher withDesiredCapabilities(Symbol... desiredCapabilities) {
+        desiredCapabilitiesMatcher = null; // Clear these as this overrides anything else
         return withDesiredCapabilities(equalTo(desiredCapabilities));
     }
 
@@ -142,6 +153,34 @@ public class OpenMatcher extends ListDescribedTypeMatcher {
         propertiesMatcher.addExpectedEntry(key, value);
 
         return withProperties(propertiesMatcher);
+    }
+
+    public OpenMatcher withDesiredCapability(String value) {
+        return withDesiredCapability(Symbol.valueOf(value));
+    }
+
+    public OpenMatcher withDesiredCapability(Symbol value) {
+        if (desiredCapabilitiesMatcher == null) {
+            desiredCapabilitiesMatcher = new ArrayContentsMatcher<Symbol>();
+        }
+
+        desiredCapabilitiesMatcher.addExpectedEntry(value);
+
+        return withDesiredCapabilities(desiredCapabilitiesMatcher);
+    }
+
+    public OpenMatcher withOfferedCapability(String value) {
+        return withOfferedCapability(Symbol.valueOf(value));
+    }
+
+    public OpenMatcher withOfferedCapability(Symbol value) {
+        if (offeredCapabilitiesMatcher == null) {
+            offeredCapabilitiesMatcher = new ArrayContentsMatcher<Symbol>();
+        }
+
+        offeredCapabilitiesMatcher.addExpectedEntry(value);
+
+        return withOfferedCapabilities(offeredCapabilitiesMatcher);
     }
 
     //----- Matcher based with methods for more complex validation

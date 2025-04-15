@@ -25,7 +25,6 @@ import org.apache.qpid.protonj2.test.driver.codec.messaging.Source;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.Target;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Binary;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
-import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedByte;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 import org.apache.qpid.protonj2.test.driver.codec.transactions.Coordinator;
@@ -35,6 +34,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.ReceiverSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.SenderSettleMode;
 import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
+import org.apache.qpid.protonj2.test.driver.matchers.ArrayContentsMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.ListDescribedTypeMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.MapContentsMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.SourceMatcher;
@@ -46,6 +46,12 @@ public class AttachMatcher extends ListDescribedTypeMatcher {
 
     // Only used if singular 'withProperty' API is used
     private MapContentsMatcher<Symbol, Object> propertiesMatcher;
+
+    // Only used if singular 'withDesiredCapabilitiy' API is used
+    private ArrayContentsMatcher<Symbol> desiredCapabilitiesMatcher;
+
+    // Only used if singular 'withOfferedCapability' API is used
+    private ArrayContentsMatcher<Symbol> offeredCapabilitiesMatcher;
 
     public AttachMatcher() {
         super(Attach.Field.values().length, Attach.DESCRIPTOR_CODE, Attach.DESCRIPTOR_SYMBOL);
@@ -87,11 +93,11 @@ public class AttachMatcher extends ListDescribedTypeMatcher {
     }
 
     public AttachMatcher withSndSettleMode(byte sndSettleMode) {
-        return withSndSettleMode(equalTo(SenderSettleMode.valueOf(sndSettleMode)));
+        return withSndSettleMode(equalTo(SenderSettleMode.valueOf(sndSettleMode).getValue()));
     }
 
     public AttachMatcher withSndSettleMode(Byte sndSettleMode) {
-        return withSndSettleMode(sndSettleMode == null ? nullValue() : equalTo(UnsignedByte.valueOf(sndSettleMode.byteValue())));
+        return withSndSettleMode(sndSettleMode == null ? nullValue() : equalTo(SenderSettleMode.valueOf(sndSettleMode).getValue()));
     }
 
     public AttachMatcher withSndSettleMode(SenderSettleMode sndSettleMode) {
@@ -99,11 +105,11 @@ public class AttachMatcher extends ListDescribedTypeMatcher {
     }
 
     public AttachMatcher withRcvSettleMode(byte rcvSettleMode) {
-        return withRcvSettleMode(equalTo(ReceiverSettleMode.valueOf(rcvSettleMode)));
+        return withRcvSettleMode(equalTo(ReceiverSettleMode.valueOf(rcvSettleMode).getValue()));
     }
 
     public AttachMatcher withRcvSettleMode(Byte rcvSettleMode) {
-        return withRcvSettleMode(rcvSettleMode == null ? nullValue() : equalTo(UnsignedByte.valueOf(rcvSettleMode.byteValue())));
+        return withRcvSettleMode(rcvSettleMode == null ? nullValue() : equalTo(ReceiverSettleMode.valueOf(rcvSettleMode).getValue()));
     }
 
     public AttachMatcher withRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
@@ -138,6 +144,7 @@ public class AttachMatcher extends ListDescribedTypeMatcher {
     }
 
     public AttachMatcher withUnsettled(Map<Binary, DeliveryState> unsettled) {
+        // TODO - Need to match on the driver types for DeliveryState
         return withUnsettled(equalTo(unsettled));
     }
 
@@ -166,18 +173,22 @@ public class AttachMatcher extends ListDescribedTypeMatcher {
     }
 
     public AttachMatcher withOfferedCapabilities(Symbol... offeredCapabilities) {
+        offeredCapabilitiesMatcher = null; // Clear these as this overrides anything else
         return withOfferedCapabilities(equalTo(offeredCapabilities));
     }
 
     public AttachMatcher withOfferedCapabilities(String... offeredCapabilities) {
+        offeredCapabilitiesMatcher = null; // Clear these as this overrides anything else
         return withOfferedCapabilities(equalTo(TypeMapper.toSymbolArray(offeredCapabilities)));
     }
 
     public AttachMatcher withDesiredCapabilities(Symbol... desiredCapabilities) {
+        desiredCapabilitiesMatcher = null; // Clear these as this overrides anything else
         return withDesiredCapabilities(equalTo(desiredCapabilities));
     }
 
     public AttachMatcher withDesiredCapabilities(String... desiredCapabilities) {
+        desiredCapabilitiesMatcher = null; // Clear these as this overrides anything else
         return withDesiredCapabilities(equalTo(TypeMapper.toSymbolArray(desiredCapabilities)));
     }
 
@@ -202,6 +213,34 @@ public class AttachMatcher extends ListDescribedTypeMatcher {
         propertiesMatcher.addExpectedEntry(key, value);
 
         return withProperties(propertiesMatcher);
+    }
+
+    public AttachMatcher withDesiredCapability(String value) {
+        return withDesiredCapability(Symbol.valueOf(value));
+    }
+
+    public AttachMatcher withDesiredCapability(Symbol value) {
+        if (desiredCapabilitiesMatcher == null) {
+            desiredCapabilitiesMatcher = new ArrayContentsMatcher<Symbol>();
+        }
+
+        desiredCapabilitiesMatcher.addExpectedEntry(value);
+
+        return withDesiredCapabilities(desiredCapabilitiesMatcher);
+    }
+
+    public AttachMatcher withOfferedCapability(String value) {
+        return withOfferedCapability(Symbol.valueOf(value));
+    }
+
+    public AttachMatcher withOfferedCapability(Symbol value) {
+        if (offeredCapabilitiesMatcher == null) {
+            offeredCapabilitiesMatcher = new ArrayContentsMatcher<Symbol>();
+        }
+
+        offeredCapabilitiesMatcher.addExpectedEntry(value);
+
+        return withOfferedCapabilities(offeredCapabilitiesMatcher);
     }
 
     //----- Matcher based with methods for more complex validation

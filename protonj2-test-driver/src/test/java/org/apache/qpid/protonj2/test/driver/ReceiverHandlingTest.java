@@ -380,6 +380,42 @@ class ReceiverHandlingTest extends TestPeerTestsBase {
     }
 
     @Test
+    public void testSTackedOfferedAndDesiredCapabilityMatching() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer();
+             ProtonTestClient client = new ProtonTestClient()) {
+
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respondInKind();
+            peer.expectEnd().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            client.connect(remoteURI.getHost(), remoteURI.getPort());
+            client.expectAMQPHeader();
+            client.expectOpen();
+            client.expectBegin();
+            client.expectAttach().ofReceiver().withOfferedCapability("a") // Should fail unless stacking isn't done
+                                              .withOfferedCapability("c");
+            client.expectEnd();
+            client.remoteAMQPHeader().now();
+            client.remoteOpen().now();
+            client.remoteBegin().now();
+            client.remoteAttach().ofSender().withDesiredCapabilities("test", "c", "b")
+                                            .now();
+            client.remoteEnd().now();
+
+            assertThrows(AssertionError.class, () -> client.waitForScriptToComplete(30, TimeUnit.SECONDS));
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testInKindAttachResponseOffersCapabilitiesDesired() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer();
              ProtonTestClient client = new ProtonTestClient()) {

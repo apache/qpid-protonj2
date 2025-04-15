@@ -17,10 +17,8 @@
 package org.apache.qpid.protonj2.test.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.collection.ArrayMatching.hasItemInArray;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -35,7 +33,6 @@ import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedInteger;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedShort;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Begin;
-import org.apache.qpid.protonj2.test.driver.codec.util.TypeMapper;
 import org.apache.qpid.protonj2.test.driver.matchers.transport.BeginMatcher;
 import org.hamcrest.Matcher;
 
@@ -118,99 +115,133 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
     //----- Type specific with methods that perform simple equals checks
 
     public BeginExpectation withRemoteChannel(int remoteChannel) {
-        return withRemoteChannel(equalTo(UnsignedShort.valueOf((short) remoteChannel)));
+        matcher.withRemoteChannel(remoteChannel);
+        return this;
     }
 
     public BeginExpectation withRemoteChannel(UnsignedShort remoteChannel) {
-        return withRemoteChannel(equalTo(remoteChannel));
+        matcher.withRemoteChannel(remoteChannel);
+        return this;
     }
 
     public BeginExpectation withNextOutgoingId(int nextOutgoingId) {
-        return withNextOutgoingId(equalTo(UnsignedInteger.valueOf(nextOutgoingId)));
+        matcher.withNextOutgoingId(nextOutgoingId);
+        return this;
     }
 
     public BeginExpectation withNextOutgoingId(long nextOutgoingId) {
-        return withNextOutgoingId(equalTo(UnsignedInteger.valueOf(nextOutgoingId)));
+        matcher.withNextOutgoingId(nextOutgoingId);
+        return this;
     }
 
     public BeginExpectation withNextOutgoingId(UnsignedInteger nextOutgoingId) {
-        return withNextOutgoingId(equalTo(nextOutgoingId));
+        matcher.withNextOutgoingId(nextOutgoingId);
+        return this;
     }
 
     public BeginExpectation withIncomingWindow(int incomingWindow) {
-        return withIncomingWindow(equalTo(UnsignedInteger.valueOf(incomingWindow)));
+        matcher.withIncomingWindow(incomingWindow);
+        return this;
     }
 
     public BeginExpectation withIncomingWindow(long incomingWindow) {
-        return withIncomingWindow(equalTo(UnsignedInteger.valueOf(incomingWindow)));
+        matcher.withIncomingWindow(incomingWindow);
+        return this;
     }
 
     public BeginExpectation withIncomingWindow(UnsignedInteger incomingWindow) {
-        return withIncomingWindow(equalTo(incomingWindow));
+        matcher.withIncomingWindow(incomingWindow);
+        return this;
     }
 
     public BeginExpectation withOutgoingWindow(int outgoingWindow) {
-        return withOutgoingWindow(equalTo(UnsignedInteger.valueOf(outgoingWindow)));
+        matcher.withOutgoingWindow(outgoingWindow);
+        return this;
     }
 
     public BeginExpectation withOutgoingWindow(long outgoingWindow) {
-        return withOutgoingWindow(equalTo(UnsignedInteger.valueOf(outgoingWindow)));
+        matcher.withOutgoingWindow(outgoingWindow);
+        return this;
     }
 
     public BeginExpectation withOutgoingWindow(UnsignedInteger outgoingWindow) {
-        return withOutgoingWindow(equalTo(outgoingWindow));
+        matcher.withOutgoingWindow(outgoingWindow);
+        return this;
     }
 
     public BeginExpectation withHandleMax(int handleMax) {
-        return withHandleMax(equalTo(UnsignedInteger.valueOf(handleMax)));
+        matcher.withHandleMax(handleMax);
+        return this;
     }
 
     public BeginExpectation withHandleMax(long handleMax) {
-        return withHandleMax(equalTo(UnsignedInteger.valueOf(handleMax)));
+        matcher.withHandleMax(handleMax);
+        return this;
     }
 
     public BeginExpectation withHandleMax(UnsignedInteger handleMax) {
-        return withHandleMax(equalTo(handleMax));
+        matcher.withHandleMax(handleMax);
+        return this;
     }
 
     public BeginExpectation withOfferedCapabilities(String... offeredCapabilities) {
-        return withOfferedCapabilities(equalTo(TypeMapper.toSymbolArray(offeredCapabilities)));
+        matcher.withOfferedCapabilities(offeredCapabilities);
+        return this;
     }
 
     public BeginExpectation withOfferedCapabilities(Symbol... offeredCapabilities) {
-        return withOfferedCapabilities(equalTo(offeredCapabilities));
-    }
-
-    public BeginExpectation withOfferedCapability(Symbol offeredCapability) {
-        return withOfferedCapabilities(hasItemInArray(offeredCapability));
-    }
-
-    public BeginExpectation withOfferedCapability(String offeredCapability) {
-        return withOfferedCapabilities(hasItemInArray(Symbol.valueOf(offeredCapability)));
+        matcher.withOfferedCapabilities(offeredCapabilities);
+        return this;
     }
 
     public BeginExpectation withDesiredCapabilities(String... desiredCapabilities) {
-        return withDesiredCapabilities(equalTo(TypeMapper.toSymbolArray(desiredCapabilities)));
+        matcher.withDesiredCapabilities(desiredCapabilities);
+        return this;
     }
 
     public BeginExpectation withDesiredCapabilities(Symbol... desiredCapabilities) {
-        return withDesiredCapabilities(equalTo(desiredCapabilities));
-    }
-
-    public BeginExpectation withDesiredCapability(Symbol desiredCapability) {
-        return withDesiredCapabilities(hasItemInArray(desiredCapability));
-    }
-
-    public BeginExpectation withDesiredCapability(String desiredCapability) {
-        return withDesiredCapabilities(hasItemInArray(Symbol.valueOf(desiredCapability)));
+        matcher.withDesiredCapabilities(desiredCapabilities);
+        return this;
     }
 
     public BeginExpectation withPropertiesMap(Map<Symbol, Object> properties) {
-        return withProperties(equalTo(properties));
+        matcher.withPropertiesMap(properties);
+        return this;
     }
 
     public BeginExpectation withProperties(Map<String, Object> properties) {
-        return withProperties(equalTo(TypeMapper.toSymbolKeyedMap(properties)));
+        matcher.withProperties(properties);
+        return this;
+    }
+
+    public BeginExpectation withProperty(String key, Object value) {
+        matcher.withProperty(key, value);
+        return this;
+    }
+
+    public BeginExpectation withProperty(Symbol key, Object value) {
+        matcher.withProperty(key, value);
+        return this;
+    }
+
+    public BeginExpectation withDesiredCapability(Symbol desiredCapability) {
+        matcher.withDesiredCapability(desiredCapability);
+        return this;
+    }
+
+    public BeginExpectation withDesiredCapability(String desiredCapability) {
+        matcher.withDesiredCapability(desiredCapability);
+        return this;
+    }
+
+    public BeginExpectation withOfferedCapability(Symbol offeredCapability) {
+        matcher.withOfferedCapability(offeredCapability);
+        return this;
+    }
+
+    public BeginExpectation withOfferedCapability(String offeredCapability) {
+        matcher.withOfferedCapability(offeredCapability);
+        return this;
     }
 
     //----- Matcher based with methods for more complex validation
@@ -252,16 +283,6 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
 
     public BeginExpectation withProperties(Matcher<?> m) {
         matcher.addFieldMatcher(Begin.Field.PROPERTIES, m);
-        return this;
-    }
-
-    public BeginExpectation withProperty(String key, Object value) {
-        matcher.withProperty(key, value);
-        return this;
-    }
-
-    public BeginExpectation withProperty(Symbol key, Object value) {
-        matcher.withProperty(key, value);
         return this;
     }
 
