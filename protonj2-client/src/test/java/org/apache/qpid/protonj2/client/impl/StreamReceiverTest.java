@@ -1827,7 +1827,6 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testStreamReceiverSessionCannotCreateNewResources() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
@@ -1884,8 +1883,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
     private void testReadPayloadInChunksFromLargerMessage(boolean readWithArgs) throws Exception {
         final byte[] body = new byte[100];
-        final Random random = new Random();
-        random.setSeed(System.currentTimeMillis());
+        final Random random = new Random(System.currentTimeMillis());
         random.nextBytes(body);
         final byte[] payload = createEncodedMessage(new Data(body));
 
@@ -1960,7 +1958,6 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testStreamReceiverMessageThrowsOnAnyMessageModificationAPI() throws Exception {
         final byte[] body = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -2051,8 +2048,7 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     @Test
     public void testSkipPayloadInChunksFromSingleTransferMessage() throws Exception {
         final byte[] body = new byte[100];
-        final Random random = new Random();
-        random.setSeed(System.currentTimeMillis());
+        final Random random = new Random(System.currentTimeMillis());
         random.nextBytes(body);
         final byte[] payload = createEncodedMessage(new Data(body));
 
@@ -2130,12 +2126,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
     }
 
     private void testReadPayloadInChunksFromLargerMultiTransferMessage(boolean readWithArgs) throws Exception {
-        final Random random = new Random();
         final long seed = System.currentTimeMillis();
+        final Random random = new Random(seed);
         final int numChunks = 4;
         final int chunkSize = 30;
-
-        random.setSeed(seed);
 
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
@@ -2227,12 +2221,10 @@ class StreamReceiverTest extends ImperativeClientTestCase {
 
     @Test
     public void testReadPayloadFromSplitFrameTransferWithBufferLargerThanTotalPayload() throws Exception {
-        final Random random = new Random();
         final long seed = System.currentTimeMillis();
+        final Random random = new Random(seed);
         final int numChunks = 4;
         final int chunkSize = 30;
-
-        random.setSeed(seed);
 
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
@@ -2654,7 +2646,6 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testStreamDeliveryHandlesInvalidHeaderEncoding() throws Exception {
         final byte[] payload = createInvalidHeaderEncoding();
@@ -2704,7 +2695,6 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testStreamDeliveryHandlesInvalidDeliveryAnnotationsEncoding() throws Exception {
         final byte[] payload = createInvalidDeliveryAnnotationsEncoding();
@@ -2754,7 +2744,6 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testStreamDeliveryHandlesInvalidMessageAnnotationsEncoding() throws Exception {
         final byte[] payload = createInvalidMessageAnnotationsEncoding();
@@ -2804,7 +2793,6 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testStreamDeliveryHandlesInvalidPropertiesEncoding() throws Exception {
         final byte[] payload = createInvalidPropertiesEncoding();
@@ -2854,7 +2842,6 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testStreamDeliveryHandlesInvalidApplicationPropertiesEncoding() throws Exception {
         final byte[] payload = createInvalidApplicationPropertiesEncoding();
@@ -2904,7 +2891,6 @@ class StreamReceiverTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testStreamDeliveryHandlesInvalidHeaderEncodingDuringBodyStreamOpen() throws Exception {
         final byte[] payload = createInvalidHeaderEncoding();

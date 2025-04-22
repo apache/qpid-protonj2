@@ -84,9 +84,9 @@ public abstract class NettyServer implements AutoCloseable {
     private Channel serverChannel;
     private final TransportOptions options;
     private final SslOptions sslOptions;
-    private int serverPort = SERVER_CHOOSES_PORT;
+    private volatile int serverPort = SERVER_CHOOSES_PORT;
     private final boolean needClientAuth;
-    private int maxFrameSize = TransportOptions.DEFAULT_WEBSOCKET_MAX_FRAME_SIZE;
+    private volatile int maxFrameSize = TransportOptions.DEFAULT_WEBSOCKET_MAX_FRAME_SIZE;
     private String webSocketPath = WEBSOCKET_PATH;
     private volatile boolean fragmentWrites;
     private volatile SslHandler sslHandler;

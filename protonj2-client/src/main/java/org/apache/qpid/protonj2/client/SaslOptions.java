@@ -24,11 +24,11 @@ import java.util.Set;
 /**
  * Connection options that are applied to the SASL layer.
  */
-public class SaslOptions {
+public class SaslOptions implements Cloneable {
 
-	/**
-	 * The client default configuration value for SASL enabled state (default is true)
-	 */
+    /**
+     * The client default configuration value for SASL enabled state (default is true)
+     */
     public static final boolean DEFAULT_SASL_ENABLED = true;
 
     private boolean saslEnabled = DEFAULT_SASL_ENABLED;

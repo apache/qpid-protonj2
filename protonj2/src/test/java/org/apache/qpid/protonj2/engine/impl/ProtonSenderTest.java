@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -3196,11 +3197,13 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
             if (!sendSettled) {
                 delivery.settle();
             }
+
+            sent.add(delivery);
         }
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
-        sent.forEach(delivery -> assertEquals(delivery.getTag().tagBytes() , expectedTag));
+        sent.forEach(delivery -> assertArrayEquals(delivery.getTag().tagBytes(), expectedTag));
 
         peer.expectDetach().respond();
         peer.expectClose().respond();

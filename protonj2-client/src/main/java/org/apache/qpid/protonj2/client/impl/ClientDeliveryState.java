@@ -128,6 +128,10 @@ public abstract class ClientDeliveryState implements DeliveryState {
 
         private static final ClientAccepted INSTANCE = new ClientAccepted();
 
+        private ClientAccepted() {
+            // Singleton
+        }
+
         @Override
         public Type getType() {
             return Type.ACCEPTED;
@@ -152,6 +156,10 @@ public abstract class ClientDeliveryState implements DeliveryState {
     public static class ClientReleased extends ClientDeliveryState {
 
         private static final ClientReleased INSTANCE = new ClientReleased();
+
+        private ClientReleased() {
+            // Singleton
+        }
 
         @Override
         public Type getType() {

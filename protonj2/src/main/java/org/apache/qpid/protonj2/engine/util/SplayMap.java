@@ -1240,7 +1240,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         SplayedEntry<E> linkPrev;
 
         public SplayedEntry() {
-            initialize(key, value);
+            initialize(0, null);
         }
 
         public SplayedEntry<E> initialize(int key, E value) {

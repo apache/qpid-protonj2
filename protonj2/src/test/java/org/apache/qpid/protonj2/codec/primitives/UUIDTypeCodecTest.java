@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -247,23 +248,19 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
     public void testWriteUUIDArrayWithMixedNullAndNotNullValues() throws IOException {
         ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
-        UUID[] source = new UUID[2];
-        source[0] = UUID.randomUUID();
-        source[1] = null;
+        final UUID[] source1 = new UUID[2];
+        source1[0] = UUID.randomUUID();
+        source1[1] = null;
 
-        try {
-            encoder.writeArray(buffer, encoderState, source);
-            fail("Should not be able to encode array with mixed null and non-null values");
-        } catch (Exception e) {}
+        assertThrows(Exception.class, () -> encoder.writeArray(buffer, encoderState, source1),
+            "Should not be able to encode array with mixed null and non-null values");
 
-        source = new UUID[2];
-        source[0] = null;
-        source[1] = UUID.randomUUID();
+        final UUID[] source2 = new UUID[2];
+        source2[0] = null;
+        source2[1] = UUID.randomUUID();
 
-        try {
-            encoder.writeArray(buffer, encoderState, source);
-            fail("Should not be able to encode array with mixed null and non-null values");
-        } catch (Exception e) {}
+        assertThrows(Exception.class, () -> encoder.writeArray(buffer, encoderState, source2),
+            "Should not be able to encode array with mixed null and non-null values");
     }
 
     @Test
