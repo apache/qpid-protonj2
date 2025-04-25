@@ -22,8 +22,8 @@ import java.util.concurrent.TimeUnit;
 
 public class Wait {
 
-    public static final long MAX_WAIT_MILLIS = 30 * 1000;
-    public static final long SLEEP_MILLIS = 200;
+    public static final long MAX_WAIT_MILLIS = 10 * 1000;
+    public static final long SLEEP_MILLIS = 50;
     public static final String DEFAULT_FAILURE_MESSAGE = "Expected condition was not met";
 
     @FunctionalInterface
