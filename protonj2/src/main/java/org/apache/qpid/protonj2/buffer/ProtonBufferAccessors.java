@@ -25,6 +25,16 @@ package org.apache.qpid.protonj2.buffer;
 public interface ProtonBufferAccessors {
 
     /**
+     * Look ahead an return the next byte that would be read from a call to readByte or
+     * a call to getByte at the current read offset.
+     *
+     * @return the next readable byte without advancing the read offset.
+     *
+     * @throws IndexOutOfBoundsException if there is no readable bytes left in the buffer.
+     */
+    byte peekByte();
+
+    /**
      * Reads a single byte at the given index and returns it without modification to the target
      * buffer read offset.
      *

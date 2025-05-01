@@ -352,6 +352,12 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
     //----- Indexed Get operations
 
     @Override
+    public byte peekByte() {
+        checkPeek();
+        return ProtonBufferUtils.readByte(array, offset(readOffset));
+    }
+
+    @Override
     public byte getByte(int index) {
         checkGet(index, Byte.BYTES);
         return ProtonBufferUtils.readByte(array, offset(index));
@@ -962,6 +968,16 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
     private void checkWrite(int index, int size, boolean allowExpansion) {
         if (index < readOffset || writeCapacity < (index + size)) {
             expandOrThrowError(index, size, allowExpansion);
+        }
+    }
+
+    private void checkPeek() {
+        if (readOffset == writeOffset) {
+            if (closed) {
+                throw ProtonBufferUtils.genericBufferIsClosed(this);
+            } else {
+                throw ProtonBufferUtils.genericOutOfBounds(this, readOffset);
+            }
         }
     }
 

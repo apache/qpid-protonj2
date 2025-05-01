@@ -95,10 +95,11 @@ public final class OpenTypeDecoder extends AbstractDescribedListTypeDecoder<Open
             // Peek ahead and see if there is a null in the next slot, if so we don't call
             // the setter for that entry to ensure the returned type reflects the encoded
             // state in the modification entry.
-            if (buffer.getByte(buffer.getReadOffset()) == EncodingCodes.NULL) {
+            if (buffer.peekByte() == EncodingCodes.NULL) {
                 if (index == 0) {
                     throw new DecodeException("The container-id field cannot be omitted from the Open");
                 }
+
                 buffer.advanceReadOffset(1);
                 continue;
             }

@@ -99,7 +99,7 @@ public final class TransferTypeDecoder extends AbstractDescribedListTypeDecoder<
             // Peek ahead and see if there is a null in the next slot, if so we don't call
             // the setter for that entry to ensure the returned type reflects the encoded
             // state in the modification entry.
-            if (buffer.getByte(buffer.getReadOffset()) == EncodingCodes.NULL) {
+            if (buffer.peekByte() == EncodingCodes.NULL) {
                 if (index == 0) {
                     throw new DecodeException("The handle field cannot be omitted from the Transfer");
                 }

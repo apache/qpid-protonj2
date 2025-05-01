@@ -517,6 +517,12 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
     //----- Primitive Get Methods
 
     @Override
+    public byte peekByte() {
+        checkPeek();
+        return resource.getByte(readOffset);
+    }
+
+    @Override
     public byte getByte(int index) {
         checkGet(index, Byte.BYTES);
         return resource.getByte(index);
@@ -1034,6 +1040,16 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
     }
 
     //----- Internal utilities for mapping to netty
+
+    private void checkPeek() {
+        if (readOffset == writeOffset) {
+            if (closed) {
+                throw ProtonBufferUtils.genericBufferIsClosed(this);
+            } else {
+                throw ProtonBufferUtils.genericOutOfBounds(this, readOffset);
+            }
+        }
+    }
 
     private void checkRead(int index, int size) {
         if (index < 0 || writeOffset < index + size || closed) {

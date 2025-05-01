@@ -5548,6 +5548,76 @@ public abstract class ProtonAbstractBufferTest {
         }
     }
 
+    @Test
+    public void testPeekByte() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            ProtonBuffer buffer = allocator.allocate(128);
+
+            assertThrows(IndexOutOfBoundsException.class, () -> buffer.peekByte());
+
+            final byte value = 0x01;
+
+            buffer.writeByte(value);
+            assertEquals(value, buffer.peekByte());
+
+            buffer.advanceReadOffset(1);
+            assertThrows(IndexOutOfBoundsException.class, () -> buffer.peekByte());
+
+            buffer.writeByte(value);
+            buffer.close();
+
+            assertThrows(IllegalStateException.class, () -> buffer.peekByte());
+        }
+    }
+
+    @Test
+    public void testPeekByteOnCopiedBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            ProtonBuffer buffer = allocator.allocate(128);
+
+            final byte value = 0x01;
+
+            buffer.writeByte(value);
+            assertEquals(value, buffer.peekByte());
+
+            final ProtonBuffer copiedBuffer = buffer.copy();
+
+            assertEquals(value, buffer.peekByte());
+
+            copiedBuffer.advanceReadOffset(1);
+            assertThrows(IndexOutOfBoundsException.class, () -> copiedBuffer.peekByte());
+
+            copiedBuffer.writeByte(value);
+            copiedBuffer.close();
+
+            assertThrows(IllegalStateException.class, () -> copiedBuffer.peekByte());
+        }
+    }
+
+    @Test
+    public void testPeekByteOnSplitBuffer() {
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator()) {
+            ProtonBuffer buffer = allocator.allocate(128);
+
+            final byte value1 = 0x01;
+            final byte value2 = 0x02;
+
+            buffer.writeByte(value1);
+            buffer.writeByte(value2);
+
+            assertEquals(value1, buffer.peekByte());
+            assertEquals(value1, buffer.readByte());
+
+            final ProtonBuffer split = buffer.readSplit(1);
+
+            assertEquals(value2, split.peekByte());
+
+            split.close();
+
+            assertThrows(IllegalStateException.class, () -> split.peekByte());
+        }
+    }
+
     protected static void verifyInaccessible(ProtonBuffer buf) {
         verifyReadInaccessible(buf);
 

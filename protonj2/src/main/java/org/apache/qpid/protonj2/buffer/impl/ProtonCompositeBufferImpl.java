@@ -759,6 +759,12 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
     //----- Offset based get operations
 
     @Override
+    public byte peekByte() {
+        checkPeek();
+        return findIndexedAccessor(readOffset, Byte.BYTES).getByte(readOffset);
+    }
+
+    @Override
     public byte getByte(int index) {
         checkGetBounds(index, Byte.BYTES);
         return findIndexedAccessor(index, Byte.BYTES).getByte(index);
@@ -1426,6 +1432,12 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
 
     //----- Internal API for composite buffer
 
+    private void checkPeek() {
+        if (readOffset == writeOffset) {
+            throw generateIndexOutOfBounds(readOffset, false);
+        }
+    }
+
     private void checkGetBounds(int index, int size) {
         if (index < 0 || capacity < index + size) {
             throw generateIndexOutOfBounds(index, false);
@@ -1702,6 +1714,11 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
         // an IOOBE will again be thrown.
 
         @Override
+        public byte peekByte() {
+            return parent.buffers[chunkIndex].peekByte();
+        }
+
+        @Override
         public byte getByte(int index) {
             return parent.buffers[chunkIndex].getByte(offset(index));
         }
@@ -1815,6 +1832,11 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
         public ProtonBufferAccessors prepare(int chunk) {
             this.chunk = chunk;
             return this;
+        }
+
+        @Override
+        public byte peekByte() {
+            throw new UnsupportedOperationException();
         }
 
         @Override

@@ -96,8 +96,7 @@ public final class DetachTypeDecoder extends AbstractDescribedListTypeDecoder<De
             // Peek ahead and see if there is a null in the next slot, if so we don't call
             // the setter for that entry to ensure the returned type reflects the encoded
             // state in the modification entry.
-            final boolean nullValue = buffer.getByte(buffer.getReadOffset()) == EncodingCodes.NULL;
-            if (nullValue) {
+            if (buffer.peekByte() == EncodingCodes.NULL) {
                 if (index == 0) {
                     throw new DecodeException("The handle field is mandatory in a Detach");
                 }
