@@ -34,14 +34,6 @@ public interface DeliveryQueue {
     void enqueue(ClientDelivery delivery);
 
     /**
-     * Adds the given {@link Delivery} to the front of the queue.
-     *
-     * @param delivery
-     *        The in-bound Delivery to enqueue.
-     */
-    void enqueueFirst(ClientDelivery delivery);
-
-    /**
      * Used to get an {@link Delivery}. The amount of time this method blocks is based on the timeout value
      * that is supplied to it.
      *
@@ -90,20 +82,9 @@ public interface DeliveryQueue {
     void stop();
 
     /**
-     * Closes the Delivery Queue.  No Delivery can be added or removed from the Queue
-     * once it has entered the closed state.
-     */
-    void close();
-
-    /**
      * @return true if the Queue is not in the stopped or closed state.
      */
     boolean isRunning();
-
-    /**
-     * @return true if the Queue has been closed.
-     */
-    boolean isClosed();
 
     /**
      * @return true if there are no deliveries in the queue.

@@ -18,7 +18,6 @@ package org.apache.qpid.protonj2.client.util;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import org.apache.qpid.protonj2.client.Delivery;
 import org.apache.qpid.protonj2.client.impl.ClientDelivery;
@@ -28,18 +27,10 @@ import org.apache.qpid.protonj2.client.impl.ClientDelivery;
  */
 public final class FifoDeliveryQueue implements DeliveryQueue {
 
-    private static final AtomicIntegerFieldUpdater<FifoDeliveryQueue> STATE_FIELD_UPDATER =
-            AtomicIntegerFieldUpdater.newUpdater(FifoDeliveryQueue.class, "state");
-
-    private static final int CLOSED = 0;
-    private static final int STOPPED = 1;
-    private static final int RUNNING = 2;
-
-    private volatile int state = STOPPED;
-
-    private int waiters = 0;
-
     private final Deque<ClientDelivery> queue;
+
+    private volatile boolean started;
+    private int waiters = 0;
 
     /**
      * Creates a new first in / first out message queue with the given queue depth
@@ -52,136 +43,96 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
     }
 
     @Override
-    public void enqueueFirst(ClientDelivery envelope) {
-        synchronized (queue) {
-            queue.addFirst(envelope);
-            if (waiters > 0) {
-                queue.notify();
-            }
+    public synchronized void enqueue(ClientDelivery envelope) {
+        queue.addLast(envelope);
+        if (waiters > 0) {
+            notify();
         }
     }
 
     @Override
-    public void enqueue(ClientDelivery envelope) {
-        synchronized (queue) {
-            queue.addLast(envelope);
-            if (waiters > 0) {
-                queue.notify();
-            }
-        }
-    }
-
-    @Override
-    public ClientDelivery dequeue(long timeout) throws InterruptedException {
-        synchronized (queue) {
-            // Wait until the receiver is ready to deliver messages.
-            while (timeout != 0 && isRunning() && queue.isEmpty()) {
-                if (timeout == -1) {
-                    waiters++;
-                    try {
-                        queue.wait();
-                    } finally {
-                        waiters--;
-                    }
-                } else {
-                    long start = System.currentTimeMillis();
-                    waiters++;
-                    try {
-                        queue.wait(timeout);
-                    } finally {
-                        waiters--;
-                    }
-                    timeout = Math.max(timeout + start - System.currentTimeMillis(), 0);
+    public synchronized ClientDelivery dequeue(long timeout) throws InterruptedException {
+        // Wait until the receiver is ready to deliver messages.
+        while (queue.isEmpty() && timeout != 0 && started) {
+            if (timeout == -1) {
+                waiters++;
+                try {
+                    wait();
+                } finally {
+                    waiters--;
                 }
+            } else {
+                long start = System.currentTimeMillis();
+                waiters++;
+                try {
+                    wait(timeout);
+                } finally {
+                    waiters--;
+                }
+                timeout = Math.max(timeout + start - System.currentTimeMillis(), 0);
             }
+        }
 
-            if (!isRunning()) {
-                return null;
-            }
-
+        if (started) {
             return queue.pollFirst();
+        } else {
+            return null;
         }
     }
 
     @Override
-    public ClientDelivery dequeueNoWait() {
-        synchronized (queue) {
-            if (!isRunning()) {
-                return null;
-            }
-
+    public synchronized ClientDelivery dequeueNoWait() {
+        if (started) {
             return queue.pollFirst();
+        } else {
+            return null;
         }
     }
 
     @Override
-    public void start() {
-        if (STATE_FIELD_UPDATER.compareAndSet(this, STOPPED, RUNNING)) {
-            synchronized (queue) {
-                if (waiters > 0) {
-                    queue.notifyAll();
-                }
+    public synchronized void start() {
+        if (!started) {
+            started = true;
+
+            if (waiters > 0) {
+                notifyAll();
             }
         }
     }
 
     @Override
-    public void stop() {
-        if (STATE_FIELD_UPDATER.compareAndSet(this, RUNNING, STOPPED)) {
-            synchronized (queue) {
-                if (waiters > 0) {
-                    queue.notifyAll();
-                }
-            }
-        }
-    }
+    public synchronized void stop() {
+        if (started) {
+            started = false;
 
-    @Override
-    public void close() {
-        if (STATE_FIELD_UPDATER.getAndSet(this, CLOSED) > CLOSED) {
-            synchronized (queue) {
-                if (waiters > 0) {
-                    queue.notifyAll();
-                }
+            if (waiters > 0) {
+                notifyAll();
             }
         }
     }
 
     @Override
     public boolean isRunning() {
-        return state == RUNNING;
+        return started;
     }
 
     @Override
-    public boolean isClosed() {
-        return state == CLOSED;
+    public synchronized boolean isEmpty() {
+        return queue.isEmpty();
     }
 
     @Override
-    public boolean isEmpty() {
-        synchronized (queue) {
-            return queue.isEmpty();
-        }
+    public synchronized int size() {
+        return queue.size();
     }
 
     @Override
-    public int size() {
-        synchronized (queue) {
-            return queue.size();
-        }
+    public synchronized void clear() {
+        queue.clear();
     }
 
     @Override
-    public void clear() {
-        synchronized (queue) {
-            queue.clear();
-        }
-    }
-
-    @Override
-    public String toString() {
-        synchronized (queue) {
-            return queue.toString();
-        }
+    public synchronized String toString() {
+        return queue.toString();
     }
 }
