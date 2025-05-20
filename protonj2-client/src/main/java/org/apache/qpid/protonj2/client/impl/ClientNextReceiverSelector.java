@@ -162,7 +162,6 @@ final class ClientNextReceiverSelector {
         return result != null ? result : selectFirstAvailable();
     }
 
-    @SuppressWarnings("resource")
     private ClientReceiver selectFirstAvailable() {
         return session.getProtonSession().receivers().stream()
                 .filter((r) -> r.getLinkedResource() instanceof ClientReceiver &&
@@ -172,7 +171,6 @@ final class ClientNextReceiverSelector {
                 .orElse(null);
     }
 
-    @SuppressWarnings("resource")
     private ClientReceiver selectLargestBacklog() {
         return session.getProtonSession().receivers().stream()
                 .filter((r) -> r.getLinkedResource() instanceof ClientReceiver &&
@@ -182,7 +180,6 @@ final class ClientNextReceiverSelector {
                 .orElse(null);
     }
 
-    @SuppressWarnings("resource")
     private ClientReceiver selectSmallestBacklog() {
         return session.getProtonSession().receivers().stream()
                 .filter((r) -> r.getLinkedResource() instanceof ClientReceiver &&

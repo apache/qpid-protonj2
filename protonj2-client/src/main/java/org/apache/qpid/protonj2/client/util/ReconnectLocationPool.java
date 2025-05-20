@@ -48,9 +48,7 @@ public class ReconnectLocationPool {
         this.entries = new LinkedList<ReconnectLocation>();
 
         if (backups != null) {
-            for (ReconnectLocation entry : backups) {
-                this.add(entry);
-            }
+            backups.forEach(entry -> add(entry));
         }
     }
 
@@ -80,7 +78,7 @@ public class ReconnectLocationPool {
      * @return the next entry that should be used for a connection attempt.
      */
     public ReconnectLocation getNext() {
-    	ReconnectLocation next = null;
+        ReconnectLocation next = null;
         synchronized (entries) {
             if (!entries.isEmpty()) {
                 next = entries.removeFirst();
@@ -125,9 +123,7 @@ public class ReconnectLocationPool {
     public void addAll(List<ReconnectLocation> additions) {
         if (additions != null && !additions.isEmpty()) {
             synchronized (entries) {
-                for (ReconnectLocation entry : additions) {
-                    add(entry);
-                }
+                additions.forEach(entry -> add(entry));
             }
         }
     }
@@ -161,13 +157,13 @@ public class ReconnectLocationPool {
      */
     public boolean remove(ReconnectLocation entry) {
         if (entry != null) {
-	        synchronized (entries) {
-	            for (ReconnectLocation candidate : entries) {
-	                if (compareEntries(entry, candidate)) {
-	                    return entries.remove(candidate);
-	                }
-	            }
-	        }
+            synchronized (entries) {
+                for (ReconnectLocation candidate : entries) {
+                    if (compareEntries(entry, candidate)) {
+                        return entries.remove(candidate);
+                    }
+                }
+            }
         }
 
         return false;

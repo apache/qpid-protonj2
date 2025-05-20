@@ -93,9 +93,7 @@ public class UnsettledMap<Delivery> implements Map<UnsignedInteger, Delivery> {
 
     @Override
     public void putAll(Map<? extends UnsignedInteger, ? extends Delivery> source) {
-        for (Entry<? extends UnsignedInteger, ? extends Delivery> entry : source.entrySet()) {
-            put(entry.getKey(), entry.getValue());
-        }
+        source.entrySet().forEach(entry -> put(entry.getKey(), entry.getValue()));
     }
 
     @Override

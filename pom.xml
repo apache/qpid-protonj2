@@ -62,6 +62,8 @@
     <netty-transport-native-epoll-classifier>linux-x86_64</netty-transport-native-epoll-classifier>
     <netty-transport-native-kqueue-classifier>osx-x86_64</netty-transport-native-kqueue-classifier>
 
+    <jacoco-config></jacoco-config>
+
     <!-- surefire forked jvm arguments -->
     <argLine>-Xmx2g -enableassertions ${jacoco-config}</argLine>
 
@@ -219,7 +221,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <optimize>true</optimize>
           <showDeprecation>true</showDeprecation>
           <showWarnings>true</showWarnings>
         </configuration>
