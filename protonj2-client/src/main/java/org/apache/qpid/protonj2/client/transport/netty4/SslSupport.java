@@ -188,12 +188,7 @@ public final class SslSupport {
         engine.setEnabledProtocols(buildEnabledProtocols(engine, options));
         engine.setEnabledCipherSuites(buildEnabledCipherSuites(engine, options));
         engine.setUseClientMode(true);
-
-        if (options.verifyHost()) {
-            SSLParameters sslParameters = engine.getSSLParameters();
-            sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
-            engine.setSSLParameters(sslParameters);
-        }
+        engine.setSSLParameters(createSSLParameters(engine, options));
 
         return engine;
     }
@@ -273,17 +268,24 @@ public final class SslSupport {
         engine.setEnabledProtocols(buildEnabledProtocols(engine, options));
         engine.setEnabledCipherSuites(buildEnabledCipherSuites(engine, options));
         engine.setUseClientMode(true);
-
-        if (options.verifyHost()) {
-            SSLParameters sslParameters = engine.getSSLParameters();
-            sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
-            engine.setSSLParameters(sslParameters);
-        }
+        engine.setSSLParameters(createSSLParameters(engine, options));
 
         return engine;
     }
 
     //----- Internal support methods -----------------------------------------//
+
+    private static SSLParameters createSSLParameters(SSLEngine engine, SslOptions options) {
+        final SSLParameters sslParameters = engine.getSSLParameters();
+
+        if (options.verifyHost()) {
+            sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+        } else {
+            sslParameters.setEndpointIdentificationAlgorithm(null);
+        }
+
+        return sslParameters;
+    }
 
     private static String[] buildEnabledProtocols(SSLEngine engine, SslOptions options) {
         List<String> enabledProtocols = new ArrayList<String>();

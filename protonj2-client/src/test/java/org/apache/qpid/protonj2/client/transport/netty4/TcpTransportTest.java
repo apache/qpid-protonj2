@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -388,8 +389,10 @@ public class TcpTransportTest extends ImperativeClientTestCase {
             }
 
             assertTrue(transport.isConnected());
+            assertSame(testListener, transport.getTransportListener());
+            assertEquals(HOSTNAME, transport.getHost());
 
-            server.close();
+            assertTrue(Wait.waitFor(() -> server.getTotalConnections() == 1));
         }
 
         final Transport connectedTransport = transport;

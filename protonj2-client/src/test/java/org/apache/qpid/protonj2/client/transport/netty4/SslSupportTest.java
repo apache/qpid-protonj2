@@ -791,7 +791,6 @@ public class SslSupportTest extends ImperativeClientTestCase {
     public void testCreateSslEngineWithVerifyHostOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
-        assumeTrue(OpenSsl.supportsHostnameValidation());
 
         SslOptions options = createJksSslOptions();
         options.verifyHost(true);
@@ -823,7 +822,6 @@ public class SslSupportTest extends ImperativeClientTestCase {
     public void testCreateSslEngineWithoutVerifyHostOpenSSL() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
-        assumeTrue(OpenSsl.supportsHostnameValidation());
 
         SslOptions options = createJksSslOptions();
         options.verifyHost(false);
