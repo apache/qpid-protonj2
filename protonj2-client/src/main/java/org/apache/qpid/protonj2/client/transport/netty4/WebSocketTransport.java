@@ -153,7 +153,7 @@ public class WebSocketTransport extends TcpTransport {
         pipeline.addLast(new HttpClientCodec());
         pipeline.addLast(new HttpObjectAggregator(8192));
         if (options.webSocketCompression()) {
-            pipeline.addLast(WebSocketClientCompressionHandler.INSTANCE);
+            pipeline.addLast(new WebSocketClientCompressionHandler(0));
         }
     }
 

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -79,7 +80,7 @@ public class TcpTransportTest extends ImperativeClientTestCase {
     protected volatile boolean transportInitialized;
     protected volatile boolean transportConnected;
     protected volatile boolean transportErrored;
-    protected final List<Throwable> exceptions = new ArrayList<>();
+    protected final List<Throwable> exceptions = Collections.synchronizedList(new ArrayList<>());
     protected final List<ProtonBuffer> data = new ArrayList<>();
     protected final AtomicInteger bytesRead = new AtomicInteger();
 

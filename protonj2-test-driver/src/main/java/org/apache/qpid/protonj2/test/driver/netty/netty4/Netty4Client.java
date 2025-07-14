@@ -507,7 +507,7 @@ public final class Netty4Client implements NettyClient {
             channel.pipeline().addLast(new HttpObjectAggregator(8192));
             if (options.isWebSocketCompression()) {
                 channel.pipeline().addLast(new ClientWSCompressionObserver());
-                channel.pipeline().addLast(WebSocketClientCompressionHandler.INSTANCE);
+                channel.pipeline().addLast(new WebSocketClientCompressionHandler(0));
             }
         }
 

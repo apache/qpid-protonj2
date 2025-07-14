@@ -182,6 +182,10 @@ public class ProtonTestServer extends ProtonTestPeer {
         return server.isWSCompressionActive();
     }
 
+    public boolean hasClientConnection() {
+        return server.hasClientConnection();
+    }
+
     @Override
     public AMQPTestDriver getDriver() {
         return driver;

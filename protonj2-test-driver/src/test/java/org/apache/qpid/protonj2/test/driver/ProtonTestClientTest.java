@@ -27,6 +27,7 @@ import org.apache.qpid.protonj2.test.driver.codec.security.SaslCode;
 import org.apache.qpid.protonj2.test.driver.codec.transport.AMQPHeader;
 import org.apache.qpid.protonj2.test.driver.codec.transport.Open;
 import org.apache.qpid.protonj2.test.driver.utils.TestPeerTestsBase;
+import org.apache.qpid.protonj2.test.driver.utils.Wait;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
@@ -128,6 +129,8 @@ class ProtonTestClientTest extends TestPeerTestsBase {
                 client.remoteAttach().ofSender().now();
                 client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             }
+
+            Wait.assertFalse(() -> peer.hasClientConnection());
 
             try (ProtonTestClient client = new ProtonTestClient()) {
                 client.connect(remoteURI.getHost(), remoteURI.getPort());

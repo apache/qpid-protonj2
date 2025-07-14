@@ -284,7 +284,7 @@ public final class Netty4Server implements NettyServer {
                         ch.pipeline().addLast(new HttpObjectAggregator(65536));
                         if (options.isWebSocketCompression()) {
                             ch.pipeline().addLast(new ServerWSCompressionObserver());
-                            ch.pipeline().addLast(new WebSocketServerCompressionHandler());
+                            ch.pipeline().addLast(new WebSocketServerCompressionHandler(0));
                         }
                         ch.pipeline().addLast(new WebSocketServerProtocolHandler(getWebSocketPath(), "amqp", true, maxFrameSize));
                     }

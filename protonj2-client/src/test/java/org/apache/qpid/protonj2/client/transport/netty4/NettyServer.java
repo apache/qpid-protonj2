@@ -224,7 +224,7 @@ public abstract class NettyServer implements AutoCloseable {
                         ch.pipeline().addLast(new HttpServerCodec());
                         ch.pipeline().addLast(new HttpObjectAggregator(65536));
                         if (isUseWebSocketCompression()) {
-                            ch.pipeline().addLast(new WebSocketServerCompressionHandler());
+                            ch.pipeline().addLast(new WebSocketServerCompressionHandler(0));
                         }
                         ch.pipeline().addLast(new WebSocketServerProtocolHandler(getWebSocketPath(), "amqp", true, maxFrameSize));
                     }
@@ -250,6 +250,8 @@ public abstract class NettyServer implements AutoCloseable {
                 serverChannel.close().sync();
             } catch (InterruptedException e) {
                 LOG.trace("Error on server channel close:", e);
+            } finally {
+                serverChannel = null;
             }
 
             // Shut down all event loops to terminate all threads.
@@ -261,6 +263,10 @@ public abstract class NettyServer implements AutoCloseable {
             LOG.trace("Shutting down worker group");
             workerGroup.shutdownGracefully(0, timeout, TimeUnit.MILLISECONDS).awaitUninterruptibly(timeout);
             LOG.trace("Worker group shut down");
+
+            // allow a chance for full termination
+            bossGroup.awaitTermination(10, TimeUnit.MILLISECONDS);
+            workerGroup.awaitTermination(10, TimeUnit.MILLISECONDS);
         }
     }
 
