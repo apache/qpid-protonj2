@@ -591,7 +591,7 @@ public interface Encoder {
     void writeBinary(ProtonBuffer buffer, EncoderState state, ProtonBuffer value) throws EncodeException;
 
     /**
-     * Writes the contents of the given {@link byte[]} value into the provided {@link ProtonBuffer}
+     * Writes the contents of the given <code>byte[]</code> value into the provided {@link ProtonBuffer}
      * instance as an AMQP Binary type.
      * <p>
      * If the provided value to write is null an AMQP null type is encoded into the target buffer.
