@@ -35,8 +35,12 @@ public final class KQueueSupport {
     public static final String NAME = "KQUEUE";
 
     public static boolean isAvailable(TransportOptions transportOptions) {
+        return transportOptions.allowNativeIO() && isAvailable();
+    }
+
+    public static boolean isAvailable() {
         try {
-            return transportOptions.allowNativeIO() && KQueue.isAvailable();
+            return KQueue.isAvailable();
         } catch (NoClassDefFoundError ncdfe) {
             LOG.debug("Unable to check for KQueue support due to missing class definition", ncdfe);
             return false;
@@ -44,10 +48,21 @@ public final class KQueueSupport {
     }
 
     public static EventLoopGroup createGroup(int nThreads, ThreadFactory ioThreadFactory) {
+        ensureAvailability();
+
         return new KQueueEventLoopGroup(nThreads, ioThreadFactory);
     }
 
     public static Class<? extends Channel> getChannelClass() {
+        ensureAvailability();
+
         return KQueueSocketChannel.class;
+    }
+
+    public static void ensureAvailability() {
+        if (!isAvailable()) {
+            throw new UnsupportedOperationException(
+                "Netty KQueue support is not enabled because the Netty library indicates it is not present or disabled");
+        }
     }
 }

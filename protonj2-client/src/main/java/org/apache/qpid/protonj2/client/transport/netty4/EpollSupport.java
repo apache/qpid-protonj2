@@ -35,8 +35,12 @@ public final class EpollSupport {
     public static final String NAME = "EPOLL";
 
     public static boolean isAvailable(TransportOptions transportOptions) {
+        return transportOptions.allowNativeIO() && isAvailable();
+    }
+
+    public static boolean isAvailable() {
         try {
-            return transportOptions.allowNativeIO() && Epoll.isAvailable();
+            return Epoll.isAvailable();
         } catch (NoClassDefFoundError ncdfe) {
             LOG.debug("Unable to check for Epoll support due to missing class definition", ncdfe);
             return false;
@@ -44,10 +48,21 @@ public final class EpollSupport {
     }
 
     public static EventLoopGroup createGroup(int nThreads, ThreadFactory ioThreadFactory) {
+        ensureAvailability();
+
         return new EpollEventLoopGroup(nThreads, ioThreadFactory);
     }
 
     public static Class<? extends Channel> getChannelClass() {
+        ensureAvailability();
+
         return EpollSocketChannel.class;
+    }
+
+    public static void ensureAvailability() {
+        if (!isAvailable()) {
+            throw new UnsupportedOperationException(
+                "Netty Epoll support is not enabled because the Netty library indicates it is not present or disabled");
+        }
     }
 }
