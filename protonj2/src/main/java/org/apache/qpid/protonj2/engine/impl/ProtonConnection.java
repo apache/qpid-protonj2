@@ -94,7 +94,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
      * Create a new unbound Connection instance.
      *
      * @param engine
-     * 		Parent engine that created and owns this {@link Connection} insatnce.
+     * 		Parent engine that created and owns this {@link Connection} instance.
      */
     ProtonConnection(ProtonEngine engine) {
         super(engine);
@@ -128,6 +128,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
                 syncLocalStateWithRemote();
             } finally {
                 fireLocalOpen();
+                engine.handleLocalOpen(this);
             }
         }
 
@@ -446,6 +447,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         remoteOpen = open;
 
         fireRemoteOpen();
+        engine.handleRemoteOpen(this);
     }
 
     @Override

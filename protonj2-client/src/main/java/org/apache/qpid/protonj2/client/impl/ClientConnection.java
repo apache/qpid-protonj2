@@ -620,8 +620,6 @@ public final class ClientConnection implements Connection {
     //----- Private implementation events handlers and utility methods
 
     private void handleLocalOpen(org.apache.qpid.protonj2.engine.Connection connection) {
-        connection.tickAuto(getScheduler());
-
         if (options.openTimeout() > 0) {
             executor.schedule(() -> {
                 if (!openFuture.isDone()) {
@@ -921,6 +919,7 @@ public final class ClientConnection implements Connection {
                         .localCloseHandler(this::handleLocalClose)
                         .openHandler(this::handleRemoteOpen)
                         .closeHandler(this::handleRemoteClose);
+        protonConnection.tickAuto(getScheduler());
 
         configureEngineSaslSupport();
     }

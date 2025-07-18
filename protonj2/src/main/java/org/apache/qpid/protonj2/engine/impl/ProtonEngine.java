@@ -25,6 +25,7 @@ import java.util.function.BiConsumer;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.engine.AMQPPerformativeEnvelopePool;
+import org.apache.qpid.protonj2.engine.Connection;
 import org.apache.qpid.protonj2.engine.ConnectionState;
 import org.apache.qpid.protonj2.engine.Engine;
 import org.apache.qpid.protonj2.engine.EnginePipeline;
@@ -232,20 +233,16 @@ public class ProtonEngine implements Engine {
 
         Objects.requireNonNull(executor);
 
-        if (connection.getState() != ConnectionState.ACTIVE) {
-            throw new IllegalStateException("Cannot tick on a Connection that is not opened.");
+        if (connection.getState() == ConnectionState.CLOSED) {
+            throw new IllegalStateException("Cannot tick on a Connection that is closed.");
         }
 
         if (idleTimeoutExecutor != null) {
             throw new IllegalStateException("Automatic ticking previously initiated.");
         }
 
-        // TODO - As an additional feature of this method we could allow for calling before connection is
-        //        opened such that it starts ticking either on open local and also checks as a response to
-        //        remote open which seems might be needed anyway, see notes in IdleTimeoutCheck class.
-
         // Immediate run of the idle timeout check logic will decide afterwards when / if we should
-        // reschedule the idle timeout processing.
+        // reschedule the idle timeout processing based on the local and remote state of the connection.
         LOG.trace("Auto Idle Timeout Check being initiated");
         idleTimeoutExecutor = executor;
         idleTimeoutExecutor.execute(new IdleTimeoutCheck());
@@ -380,6 +377,48 @@ public class ProtonEngine implements Engine {
 
     //----- Internal proton engine implementation
 
+    /**
+     * Called from the {@link Connection} that is linked to this engine when the {@link Connection#open()}
+     * method is called and the connection has configured and updated its state accordingly.
+     *
+     * @param connection
+     * 		The connection associated with this engine instance.
+     */
+    void handleLocalOpen(ProtonConnection connection) {
+        // When locally opened run the idle timeout check once after canceling any
+        // currently scheduled instance to prevent any stacking of checks. This will
+        // update the schedule to ensure local side idle timeouts get applied on time.
+        if (idleTimeoutExecutor != null) {
+            if (nextIdleTimeoutCheck != null) {
+                nextIdleTimeoutCheck.cancel(false);
+                nextIdleTimeoutCheck = null;
+            }
+
+            idleTimeoutExecutor.execute(new IdleTimeoutCheck());
+        }
+    }
+
+    /**
+     * Called from the {@link Connection} that is linked to this engine after is has received a remote
+     * Close performative and the connection has configured and updated its state accordingly.
+     *
+     * @param connection
+     * 		The connection associated with this engine instance.
+     */
+    void handleRemoteOpen(ProtonConnection connection) {
+        // When remotely opened run the idle timeout check once after canceling any
+        // currently scheduled instance to prevent any stacking of checks. This will
+        // update the schedule to ensure remote side idle timeouts get applied on time.
+        if (idleTimeoutExecutor != null) {
+            if (nextIdleTimeoutCheck != null) {
+                nextIdleTimeoutCheck.cancel(false);
+                nextIdleTimeoutCheck = null;
+            }
+
+            idleTimeoutExecutor.execute(new IdleTimeoutCheck());
+        }
+    }
+
     ProtonEngine fireWrite(HeaderEnvelope frame) {
         pipeline.fireWrite(frame);
         return this;
@@ -507,15 +546,21 @@ public class ProtonEngine implements Engine {
 
     private final class IdleTimeoutCheck implements Runnable {
 
-        // TODO - Pick reasonable values
         private final long MIN_IDLE_CHECK_INTERVAL = 1000;
         private final long MAX_IDLE_CHECK_INTERVAL = 10000;
 
         @Override
         public void run() {
             boolean checkScheduled = false;
+            boolean locallyOpen = connection.getState() == ConnectionState.ACTIVE;
 
-            if (connection.getState() == ConnectionState.ACTIVE && !isShutdown()) {
+            // Ensure that any check currently scheduled is canceled and cleared to prevent stacking.
+            if (nextIdleTimeoutCheck != null) {
+                nextIdleTimeoutCheck.cancel(false);
+                nextIdleTimeoutCheck = null;
+            }
+
+            if (locallyOpen && !isShutdown()) {
                 // Using nano time since it is not related to the wall clock, which may change
                 long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
 
@@ -527,13 +572,11 @@ public class ProtonEngine implements Engine {
 
                     // Check methods will close down the engine and fire error so we need to check that engine
                     // state is active and engine is not shutdown before scheduling again.
-                    if (deadline != 0 && connection.getState() == ConnectionState.ACTIVE && state() == EngineState.STARTED) {
+                    if (deadline != 0 && locallyOpen && state() == EngineState.STARTED) {
                         // Run the next idle check at half the deadline to try and ensure we meet our
                         // obligation of sending our heart beat on time.
                         long delay = (deadline - now) / 2;
 
-                        // TODO - Some computation to work out a reasonable delay that still compensates for
-                        //        errors in scheduling while preventing over eagerness.
                         delay = Math.max(MIN_IDLE_CHECK_INTERVAL, delay);
                         delay = Math.min(MAX_IDLE_CHECK_INTERVAL, delay);
 
@@ -541,18 +584,12 @@ public class ProtonEngine implements Engine {
                         LOG.trace("IdleTimeoutCheck rescheduling with delay: {}", delay);
                         nextIdleTimeoutCheck = idleTimeoutExecutor.schedule(this, delay, TimeUnit.MILLISECONDS);
                     }
-
-                    // TODO - If no local timeout but remote hasn't opened we might return zero and not
-                    //        schedule any ticking ?  Possible solution is to schedule after remote open
-                    //        arrives if nothing set to run and remote indicates it has an idle timeout.
-
                 } catch (Throwable t) {
                     LOG.trace("Auto Idle Timeout Check encountered error during check: ", t);
                 }
             }
 
             if (!checkScheduled) {
-                nextIdleTimeoutCheck = null;
                 LOG.trace("Auto Idle Timeout Check task exiting and will not be rescheduled");
             }
         }

@@ -187,12 +187,16 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * Allows the engine to manage idle timeout processing by providing it the single threaded executor
      * context where all transport work is done which ensures singled threaded access while removing the
      * need for the client library or server application to manage calls to the {@link Engine#tick} methods.
+     * <p>
+     * The API should allow for configuring auto idle timeout handling before the connection has opened and
+     * should react to both local and remote open performatives passing through the engine to configure read
+     * and write checks under the constraints of the local and remote idle timeout configurations.
      *
      * @param executor
      *      The single threaded execution context where all engine work takes place.
      *
      * @throws IllegalStateException if the {@link Engine} is already performing auto tick handling.
-     * @throws EngineStateException if the Engine state precludes accepting new input.
+     * @throws EngineStateException if the Engine state precludes accepting new input (shutdown or failed).
      *
      * @return this {@link Engine}
      */
@@ -202,12 +206,16 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * Allows the engine to manage idle timeout processing by providing it the single threaded executor
      * context where all transport work is done which ensures singled threaded access while removing the
      * need for the client library or server application to manage calls to the {@link Engine#tick} methods.
+     * <p>
+     * The API should allow for configuring auto idle timeout handling before the connection has opened and
+     * should react to both local and remote open performatives passing through the engine to configure read
+     * and write checks under the constraints of the local and remote idle timeout configurations.
      *
      * @param scheduler
      *      The single threaded execution context where all engine work takes place.
      *
      * @throws IllegalStateException if the {@link Engine} is already performing auto tick handling.
-     * @throws EngineStateException if the Engine state precludes accepting new input.
+     * @throws EngineStateException if the Engine state precludes accepting new input (shutdown or failed).
      *
      * @return this {@link Engine}
      */

@@ -367,13 +367,8 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testAutoTickFailsWhenConnectionNotOpenedNoLocalIdleSet() throws EngineStateException {
-        doTestAutoTickFailsBasedOnState(false, false, false, false);
-    }
-
-    @Test
-    public void testAutoTickFailsWhenConnectionNotOpenedLocalIdleSet() throws EngineStateException {
-        doTestAutoTickFailsBasedOnState(true, false, false, false);
+    public void testAutoTickFailsWhenConnectionNotClosedButEngineShutdownNoLocalIdleSet() throws EngineStateException {
+        doTestAutoTickFailsBasedOnState(false, true, false, true);
     }
 
     @Test
@@ -418,7 +413,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
         try {
             engine.tickAuto(Mockito.mock(ScheduledExecutorService.class));
-            fail("Should not be able to tick an unopened connection");
+            fail("Should not be able to tick an closed connection or shutdown engine");
         } catch (IllegalStateException | EngineShutdownException error) {
         }
     }

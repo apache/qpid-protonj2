@@ -1865,6 +1865,33 @@ public class ConnectionTest extends ImperativeClientTestCase {
         }
     }
 
+    @Test
+    public void testConnectToRemoteWhoseIdleTimeoutIsShorterThanLocalSetValue() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withIdleTimeOut(15_000).respond().withIdleTimeOut(1000);
+            peer.expectEmptyFrame();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = connectionOptions().idleTimeout(30_000);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectClose().respond();
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
     @Disabled("Disabled due to requirement of hard coded port")
     @Test
     public void testLocalPortOption() throws Exception {
