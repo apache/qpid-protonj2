@@ -84,6 +84,8 @@ class ProtonTestClientTest extends TestPeerTestsBase {
                 client.waitForScriptToComplete(5, TimeUnit.SECONDS);
             }
 
+            Wait.assertFalse(() -> peer.hasClientConnection());
+
             try (ProtonTestClient client = new ProtonTestClient()) {
                 client.connect(remoteURI.getHost(), remoteURI.getPort());
                 client.expectAMQPHeader();
