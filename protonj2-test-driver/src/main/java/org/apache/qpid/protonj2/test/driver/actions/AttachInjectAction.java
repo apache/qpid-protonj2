@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.protonj2.test.driver.actions;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -519,21 +518,11 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         }
 
         public SourceBuilder withJMSSelector(String selector) {
-            final JmsSelectorByIdDescribedType jmsSelector = new JmsSelectorByIdDescribedType(selector);
-            final Map<String, Object> filters = new HashMap<>();
-
-            filters.put(JmsSelectorByIdDescribedType.JMS_SELECTOR_KEY, jmsSelector);
-
-            return withFilterMap(filters);
+            return withFilterMap(JmsSelectorByIdDescribedType.JMS_SELECTOR_SYMBOL_KEY, new JmsSelectorByIdDescribedType(selector));
         }
 
         public SourceBuilder withNoLocal() {
-            final JmsNoLocalByIdDescribedType noLocal = new JmsNoLocalByIdDescribedType();
-            final Map<String, Object> filters = new HashMap<>();
-
-            filters.put(JmsNoLocalByIdDescribedType.JMS_NO_LOCAL_KEY, noLocal);
-
-            return withFilterMap(filters);
+            return withFilterMap(JmsNoLocalByIdDescribedType.JMS_NO_LOCAL_SYMBOL_KEY, new JmsNoLocalByIdDescribedType());
         }
 
         public SourceBuilder withFilter(Map<Symbol, Object> filters) {

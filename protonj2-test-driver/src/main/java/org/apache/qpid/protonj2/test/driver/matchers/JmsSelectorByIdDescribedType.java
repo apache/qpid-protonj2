@@ -17,6 +17,7 @@
 
 package org.apache.qpid.protonj2.test.driver.matchers;
 
+import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnknownDescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 
@@ -29,6 +30,11 @@ public class JmsSelectorByIdDescribedType extends UnknownDescribedType {
      * Key name used when add the selector type to the filters map.
      */
     public static final String JMS_SELECTOR_KEY = "jms-selector";
+
+    /**
+     * Symbolic key name used when add the selector type to the filters map.
+     */
+    public static final Symbol JMS_SELECTOR_SYMBOL_KEY = Symbol.valueOf(JMS_SELECTOR_KEY);
 
     public static final UnsignedLong JMS_SELECTOR_ULONG_DESCRIPTOR = UnsignedLong.valueOf(0x0000468C00000004L);
 

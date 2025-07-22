@@ -17,6 +17,7 @@
 
 package org.apache.qpid.protonj2.test.driver.matchers;
 
+import org.apache.qpid.protonj2.test.driver.codec.primitives.Symbol;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnknownDescribedType;
 import org.apache.qpid.protonj2.test.driver.codec.primitives.UnsignedLong;
 
@@ -29,6 +30,11 @@ public class JmsNoLocalByIdDescribedType extends UnknownDescribedType {
      * Key name used when add the selector type to the filters map.
      */
     public static final String JMS_NO_LOCAL_KEY = "no-local";
+
+    /**
+     * Symbolic key name used when add the selector type to the filters map.
+     */
+    public static final Symbol JMS_NO_LOCAL_SYMBOL_KEY = Symbol.valueOf(JMS_NO_LOCAL_KEY);
 
     public static final UnsignedLong JMS_NO_LOCAL_ULONG_DESCRIPTOR = UnsignedLong.valueOf(0x0000468C00000003L);
 

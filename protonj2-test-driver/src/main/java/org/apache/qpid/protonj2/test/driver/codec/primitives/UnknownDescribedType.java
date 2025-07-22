@@ -41,7 +41,7 @@ public class UnknownDescribedType implements DescribedType {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (o == null || !DescribedType.class.isAssignableFrom(o.getClass())) {
             return false;
         }
 

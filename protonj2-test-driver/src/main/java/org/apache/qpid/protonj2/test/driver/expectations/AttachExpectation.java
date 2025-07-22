@@ -23,7 +23,6 @@ import static org.hamcrest.CoreMatchers.nullValue;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -53,6 +52,7 @@ import org.apache.qpid.protonj2.test.driver.codec.transport.Role;
 import org.apache.qpid.protonj2.test.driver.codec.transport.SenderSettleMode;
 import org.apache.qpid.protonj2.test.driver.matchers.JmsNoLocalByIdDescribedType;
 import org.apache.qpid.protonj2.test.driver.matchers.JmsSelectorByIdDescribedType;
+import org.apache.qpid.protonj2.test.driver.matchers.MapContentsMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.messaging.TargetMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.transactions.CoordinatorMatcher;
@@ -582,6 +582,9 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
 
         private final AttachExpectation expectation;
 
+        // Only used if singular 'withJMSSelector' or 'withNoLocal' API is used
+        private MapContentsMatcher<Symbol, Object> jmsFilterMatcher;
+
         public AttachSourceMatcher(AttachExpectation expectation) {
             this.expectation = expectation;
         }
@@ -662,27 +665,34 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
 
         @Override
         public AttachSourceMatcher withFilter(Map<String, Object> filter) {
+            jmsFilterMatcher = null;
             super.withFilter(filter);
             return this;
         }
 
         public AttachSourceMatcher withJMSSelector(String selector) {
+            if (jmsFilterMatcher == null) {
+                jmsFilterMatcher = new MapContentsMatcher<Symbol, Object>();
+            }
+
             final JmsSelectorByIdDescribedType filterType = new JmsSelectorByIdDescribedType(selector);
-            final Map<String, Object> filtersMap = new HashMap<>();
 
-            filtersMap.put(JmsSelectorByIdDescribedType.JMS_SELECTOR_KEY, filterType);
+            jmsFilterMatcher.addExpectedEntry(Symbol.valueOf(JmsSelectorByIdDescribedType.JMS_SELECTOR_KEY), filterType);
 
-            super.withFilter(filtersMap);
+            super.withFilter(jmsFilterMatcher);
             return this;
         }
 
         public AttachSourceMatcher withNoLocal() {
+            if (jmsFilterMatcher == null) {
+                jmsFilterMatcher = new MapContentsMatcher<Symbol, Object>();
+            }
+
             final JmsNoLocalByIdDescribedType filterType = new JmsNoLocalByIdDescribedType();
-            final Map<String, Object> filtersMap = new HashMap<>();
 
-            filtersMap.put(JmsNoLocalByIdDescribedType.JMS_NO_LOCAL_KEY, filterType);
+            jmsFilterMatcher.addExpectedEntry(Symbol.valueOf(JmsNoLocalByIdDescribedType.JMS_NO_LOCAL_KEY), filterType);
 
-            super.withFilter(filtersMap);
+            super.withFilter(jmsFilterMatcher);
             return this;
         }
 
