@@ -19,8 +19,10 @@ package org.apache.qpid.protonj2.client;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.qpid.protonj2.client.impl.ClientDeliveryState;
+import org.apache.qpid.protonj2.types.DescribedType;
 
 /**
  * Options type that carries configuration for link Source types.
@@ -100,6 +102,32 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> implemen
     }
 
     /**
+     * Adds the given named filter into the map of filters (one will be created if not already set).
+     * <p>
+     * If a previous filters {@link Map} was assigned this new filter instance will be assigned
+     * into that existing map, it is not cleared or reallocated. The descriptor should either be
+     * an Symbol or UnsignedLong that aligns with the filters definition being used.
+     *
+     * @param name
+     * 		The name to use when adding the described filter to the filters {@link Map}.
+     * @param descriptor
+     * 		The descriptor used for the {@link DescribedType} that will carry the filter.
+     * @param filter
+     * 		The filter value to assign to the filter {@link DescribedType}.
+     *
+     * @return this {@link SourceOptions} instance.
+     */
+    public SourceOptions addFilter(String name, Object descriptor, Object filter) {
+        if (filters == null) {
+            filters = new HashMap<>();
+        }
+
+        filters.put(name, new FilterDescribedType(descriptor, filter));
+
+        return self();
+    }
+
+    /**
      * @return the configured default outcome as a {@link DeliveryState} instance.
      */
     public DeliveryState defaultOutcome() {
@@ -138,5 +166,55 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> implemen
     @Override
     SourceOptions self() {
         return this;
+    }
+
+    private static class FilterDescribedType implements DescribedType {
+
+        private final Object descriptor;
+        private final Object described;
+
+        public FilterDescribedType(Object descriptor, Object described) {
+            this.descriptor = descriptor;
+            this.described = described;
+        }
+
+        @Override
+        public Object getDescriptor() {
+            return descriptor;
+        }
+
+        @Override
+        public Object getDescribed() {
+            return this.described;
+        }
+
+        @Override
+        public String toString() {
+            return "FilterDescribedType{ descriptor:" + descriptor + ", described:" + described + " }";
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(described, descriptor);
+        }
+
+        @Override
+        public boolean equals(Object target) {
+            if (this == target) {
+                return true;
+            }
+
+            if (target == null) {
+                return false;
+            }
+
+            if (!(target instanceof DescribedType)) {
+                return false;
+            }
+
+            final DescribedType other = (DescribedType) target;
+
+            return Objects.equals(descriptor, other.getDescriptor()) && Objects.equals(described, other.getDescribed());
+        }
     }
 }

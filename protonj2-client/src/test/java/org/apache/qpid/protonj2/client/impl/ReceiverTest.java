@@ -2737,6 +2737,74 @@ public class ReceiverTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testCreateReceiverWithUserConfiguredSourceWithJMSStyleSelectorUsingSourceOptionsAddFilter() throws Exception {
+        final PeerJmsSelectorType peerJmsSelector = new PeerJmsSelectorType("myProperty=42");
+        final Map<String, Object> filtersAtPeer = new HashMap<>();
+        filtersAtPeer.put("jms-selector", peerJmsSelector);
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver()
+                               .withSource().withAddress("test-queue")
+                                            .withDistributionMode("copy")
+                                            .withTimeout(128)
+                                            .withDurable(TerminusDurability.UNSETTLED_STATE)
+                                            .withExpiryPolicy(TerminusExpiryPolicy.CONNECTION_CLOSE)
+                                            .withDefaultOutcome(new Released())
+                                            .withCapabilities("QUEUE")
+                                            .withFilter(filtersAtPeer)
+                                            .withOutcomes("amqp:accepted:list", "amqp:rejected:list")
+                                            .also()
+                               .withTarget().withAddress(notNullValue())
+                                            .withCapabilities("QUEUE")
+                                            .withDurable(TerminusDurability.CONFIGURATION)
+                                            .withExpiryPolicy(TerminusExpiryPolicy.SESSION_END)
+                                            .withTimeout(42)
+                                            .withDynamic(anyOf(nullValue(), equalTo(false)))
+                                            .withDynamicNodeProperties(nullValue())
+                               .and().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            ReceiverOptions receiverOptions = new ReceiverOptions();
+
+            receiverOptions.sourceOptions().capabilities("QUEUE");
+            receiverOptions.sourceOptions().distributionMode(DistributionMode.COPY);
+            receiverOptions.sourceOptions().timeout(128);
+            receiverOptions.sourceOptions().durabilityMode(DurabilityMode.UNSETTLED_STATE);
+            receiverOptions.sourceOptions().expiryPolicy(ExpiryPolicy.CONNECTION_CLOSE);
+            receiverOptions.sourceOptions().defaultOutcome(DeliveryState.released());
+            receiverOptions.sourceOptions().addFilter("jms-selector", UnsignedLong.valueOf(0x0000468C00000004L), "myProperty=42");
+            receiverOptions.sourceOptions().outcomes(DeliveryState.Type.ACCEPTED, DeliveryState.Type.REJECTED);
+
+            receiverOptions.targetOptions().capabilities("QUEUE");
+            receiverOptions.targetOptions().durabilityMode(DurabilityMode.CONFIGURATION);
+            receiverOptions.targetOptions().expiryPolicy(ExpiryPolicy.SESSION_CLOSE);
+            receiverOptions.targetOptions().timeout(42);
+
+            Receiver receiver = session.openReceiver("test-queue", receiverOptions).openFuture().get();
+
+            receiver.close();
+            session.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testCreateReceiverWithUserConfiguredSourceWithJMSStyleSelectorAndNoLocalFilter() throws Exception {
         final DescribedType clientJmsSelector = new AmqpJmsSelectorType("myProperty=42");
         final DescribedType clientNoLocalFilter = new AmqpJmsNoLocalType();
@@ -2796,6 +2864,77 @@ public class ReceiverTest extends ImperativeClientTestCase {
             receiverOptions.sourceOptions().expiryPolicy(ExpiryPolicy.CONNECTION_CLOSE);
             receiverOptions.sourceOptions().defaultOutcome(DeliveryState.released());
             receiverOptions.sourceOptions().filters(filters);
+            receiverOptions.sourceOptions().outcomes(DeliveryState.Type.ACCEPTED, DeliveryState.Type.REJECTED);
+
+            receiverOptions.targetOptions().capabilities("QUEUE");
+            receiverOptions.targetOptions().durabilityMode(DurabilityMode.CONFIGURATION);
+            receiverOptions.targetOptions().expiryPolicy(ExpiryPolicy.SESSION_CLOSE);
+            receiverOptions.targetOptions().timeout(42);
+
+            Receiver receiver = session.openReceiver("test-queue", receiverOptions).openFuture().get();
+
+            receiver.close();
+            session.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateReceiverWithUserConfiguredSourceWithJMSStyleSelectorAndNoLocalFilterUsingAddFilter() throws Exception {
+        final PeerJmsSelectorType peerJmsSelector = new PeerJmsSelectorType("myProperty=42");
+        final PeerNoLocalFilterType peerNoLocalFilter = new PeerNoLocalFilterType();
+        final Map<String, Object> filtersAtPeer = new HashMap<>();
+        filtersAtPeer.put("jms-selector", peerJmsSelector);
+        filtersAtPeer.put("no-local", peerNoLocalFilter);
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver()
+                               .withSource().withAddress("test-queue")
+                                            .withDistributionMode("copy")
+                                            .withTimeout(128)
+                                            .withDurable(TerminusDurability.UNSETTLED_STATE)
+                                            .withExpiryPolicy(TerminusExpiryPolicy.CONNECTION_CLOSE)
+                                            .withDefaultOutcome(new Released())
+                                            .withCapabilities("QUEUE")
+                                            .withFilter(filtersAtPeer)
+                                            .withOutcomes("amqp:accepted:list", "amqp:rejected:list")
+                                            .also()
+                               .withTarget().withAddress(notNullValue())
+                                            .withCapabilities("QUEUE")
+                                            .withDurable(TerminusDurability.CONFIGURATION)
+                                            .withExpiryPolicy(TerminusExpiryPolicy.SESSION_END)
+                                            .withTimeout(42)
+                                            .withDynamic(anyOf(nullValue(), equalTo(false)))
+                                            .withDynamicNodeProperties(nullValue())
+                               .and().respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.expectDetach().respond();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            ReceiverOptions receiverOptions = new ReceiverOptions();
+
+            receiverOptions.sourceOptions().capabilities("QUEUE");
+            receiverOptions.sourceOptions().distributionMode(DistributionMode.COPY);
+            receiverOptions.sourceOptions().timeout(128);
+            receiverOptions.sourceOptions().durabilityMode(DurabilityMode.UNSETTLED_STATE);
+            receiverOptions.sourceOptions().expiryPolicy(ExpiryPolicy.CONNECTION_CLOSE);
+            receiverOptions.sourceOptions().defaultOutcome(DeliveryState.released());
+            receiverOptions.sourceOptions().addFilter("jms-selector", UnsignedLong.valueOf(0x0000468C00000004L), "myProperty=42");
+            receiverOptions.sourceOptions().addFilter("no-local", UnsignedLong.valueOf(0x0000468C00000003L), "NoLocalFilter{}");
             receiverOptions.sourceOptions().outcomes(DeliveryState.Type.ACCEPTED, DeliveryState.Type.REJECTED);
 
             receiverOptions.targetOptions().capabilities("QUEUE");
