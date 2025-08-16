@@ -120,6 +120,10 @@ public class ProtonLinkCreditState implements LinkCreditState {
         this.deliveryCount = deliveryCount;
     }
 
+    public void updateEcho(boolean echo) {
+        this.echo = echo;
+    }
+
     void remoteFlow(Flow flow) {
         remoteDeliveryCount = flow.getDeliveryCount();
         remoteLinkCredit = flow.getLinkCredit();
