@@ -25,7 +25,7 @@
 
   <groupId>org.apache.qpid</groupId>
   <artifactId>protonj2-parent</artifactId>
-  <version>1.0.0-M24-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>pom</packaging>
 
   <name>Qpid ProtonJ2 Parent</name>
@@ -62,12 +62,12 @@
     <netty-transport-native-epoll-classifier>linux-x86_64</netty-transport-native-epoll-classifier>
     <netty-transport-native-kqueue-classifier>osx-x86_64</netty-transport-native-kqueue-classifier>
 
-    <jacoco-config></jacoco-config>
+    <jacoco-config />
 
     <!-- surefire forked jvm arguments -->
     <argLine>-Xmx2g -enableassertions ${jacoco-config}</argLine>
 
-    <project.build.outputTimestamp>2025-02-14T21:10:13Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2025-08-25T14:33:13Z</project.build.outputTimestamp>
   </properties>
 
   <url>https://qpid.apache.org/proton</url>
@@ -75,7 +75,7 @@
     <connection>scm:git:https://gitbox.apache.org/repos/asf/qpid-protonj2.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/qpid-protonj2.git</developerConnection>
     <url>https://gitbox.apache.org/repos/asf?p=qpid-protonj2.git</url>
-    <tag>1.0.0-M13</tag>
+    <tag>1.0.0</tag>
   </scm>
   <issueManagement>
     <url>https://issues.apache.org/jira/browse/PROTON</url>
