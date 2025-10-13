@@ -50,7 +50,7 @@
     <netty.tcnative.version>2.0.74.Final</netty.tcnative.version>
 
     <!-- Plugin versions -->
-    <jacoco.plugin.version>0.8.13</jacoco.plugin.version>
+    <jacoco.plugin.version>0.8.14</jacoco.plugin.version>
 
     <!-- Test properties -->
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
