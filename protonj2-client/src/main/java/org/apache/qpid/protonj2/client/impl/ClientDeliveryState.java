@@ -188,7 +188,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
 
         ClientRejected(Rejected rejected) {
             if (rejected.getError() != null) {
-                rejected.setError(rejected.getError().copy());
+                this.rejected.setError(rejected.getError().copy());
             }
         }
 
