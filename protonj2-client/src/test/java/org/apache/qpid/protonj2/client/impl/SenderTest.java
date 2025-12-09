@@ -66,6 +66,7 @@ import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutExcepti
 import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientSendTimedOutException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
+import org.apache.qpid.protonj2.client.impl.ClientDeliveryState.ClientRejected;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
@@ -76,6 +77,7 @@ import org.apache.qpid.protonj2.test.driver.matchers.messaging.DeliveryAnnotatio
 import org.apache.qpid.protonj2.test.driver.matchers.transport.TransferPayloadCompositeMatcher;
 import org.apache.qpid.protonj2.test.driver.matchers.types.EncodedAmqpValueMatcher;
 import org.apache.qpid.protonj2.types.DeliveryTag;
+import org.apache.qpid.protonj2.types.messaging.Rejected;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.apache.qpid.protonj2.types.transport.LinkError;
 import org.apache.qpid.protonj2.types.transport.ReceiverSettleMode;
@@ -2470,7 +2472,11 @@ public class SenderTest extends ImperativeClientTestCase {
             peer.expectBegin().respond();
             peer.expectAttach().ofSender().respond();
             peer.remoteFlow().withLinkCredit(2).queue();
-            peer.expectTransfer().withNonNullPayload().withMore(false).respond().withSettled(true).withState().rejected();
+            peer.expectTransfer().withNonNullPayload()
+                                 .withMore(false)
+                                 .respond()
+                                 .withSettled(true)
+                                 .withState().rejected("RejectedA", "RejectedB");
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -2492,6 +2498,14 @@ public class SenderTest extends ImperativeClientTestCase {
             assertTrue(tracker.remoteSettled());
             assertFalse(tracker.remoteState().isAccepted());
             assertTrue(tracker.remoteState().getType().equals(DeliveryState.Type.REJECTED));
+
+            ClientRejected remoteState = (ClientRejected) tracker.remoteState();
+            Rejected protonState = (Rejected) remoteState.getProtonDeliveryState();
+
+            assertNotNull(protonState);
+            assertNotNull(protonState.getError());
+            assertEquals("RejectedA", protonState.getError().getCondition().toString());
+            assertEquals("RejectedB", protonState.getError().getDescription());
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectDetach().respond();
