@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.protonj2.client.DeliveryState;
+import org.apache.qpid.protonj2.client.Transactional;
 import org.apache.qpid.protonj2.types.Symbol;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.apache.qpid.protonj2.types.messaging.Modified;
@@ -108,9 +109,9 @@ public abstract class ClientDeliveryState implements DeliveryState {
                 case RELEASED:
                     return Released.getInstance();
                 case REJECTED:
-                    return new Rejected(); // TODO - How do we aggregate the different values into one DeliveryState Object
+                    return ClientRejected.fromUnknownClientType(state);
                 case MODIFIED:
-                    return new Modified(); // TODO - How do we aggregate the different values into one DeliveryState Object
+                    return ClientModified.fromUnknownClientType(state);
                 case TRANSACTIONAL:
                     throw new IllegalArgumentException("Cannot manually enlist delivery in AMQP Transactions");
                 default:
@@ -124,17 +125,12 @@ public abstract class ClientDeliveryState implements DeliveryState {
     /**
      * Client defined {@link Accepted} delivery state definition
      */
-    public static class ClientAccepted extends ClientDeliveryState {
+    public static class ClientAccepted extends ClientDeliveryState implements org.apache.qpid.protonj2.client.Accepted {
 
         private static final ClientAccepted INSTANCE = new ClientAccepted();
 
         private ClientAccepted() {
             // Singleton
-        }
-
-        @Override
-        public Type getType() {
-            return Type.ACCEPTED;
         }
 
         @Override
@@ -153,17 +149,12 @@ public abstract class ClientDeliveryState implements DeliveryState {
     /**
      * Client defined {@link Released} delivery state definition
      */
-    public static class ClientReleased extends ClientDeliveryState {
+    public static class ClientReleased extends ClientDeliveryState implements org.apache.qpid.protonj2.client.Released {
 
         private static final ClientReleased INSTANCE = new ClientReleased();
 
         private ClientReleased() {
             // Singleton
-        }
-
-        @Override
-        public Type getType() {
-            return Type.RELEASED;
         }
 
         @Override
@@ -182,7 +173,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
     /**
      * Client defined {@link Rejected} delivery state definition
      */
-    public static class ClientRejected extends ClientDeliveryState {
+    public static class ClientRejected extends ClientDeliveryState implements org.apache.qpid.protonj2.client.Rejected {
 
         private final Rejected rejected = new Rejected();
 
@@ -224,24 +215,58 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
 
         @Override
-        public Type getType() {
-            return Type.REJECTED;
-        }
-
-        @Override
         org.apache.qpid.protonj2.types.transport.DeliveryState getProtonDeliveryState() {
             return rejected;
         }
 
+        @Override
+        public String getCondition() {
+            if (rejected != null && rejected.getError() != null && rejected.getError().getCondition() != null) {
+                return rejected.getError().getCondition().toString();
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public String getDescription() {
+            if (rejected != null && rejected.getError() != null) {
+                return rejected.getError().getDescription();
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public Map<String, Object> getInfo() {
+            if (rejected != null && rejected.getError() != null) {
+                return ClientConversionSupport.toStringKeyedMap(rejected.getError().getInfo());
+            } else {
+                return null;
+            }
+        }
+
         static ClientRejected fromProtonType(Rejected rejected) {
             return new ClientRejected(rejected);
+        }
+
+        static Rejected fromUnknownClientType(DeliveryState deliveryState) {
+            if (deliveryState instanceof org.apache.qpid.protonj2.client.Rejected) {
+                org.apache.qpid.protonj2.client.Rejected rejectedState = (org.apache.qpid.protonj2.client.Rejected) deliveryState;
+
+                return new Rejected(new ErrorCondition(rejectedState.getCondition(),
+                                                       rejectedState.getDescription(),
+                                                       ClientConversionSupport.toSymbolKeyedMap(rejectedState.getInfo())));
+            } else {
+                return new Rejected(); // TODO: This loses data from the source but remains backwards compatible
+            }
         }
     }
 
     /**
      * Client defined {@link Modified} delivery state definition
      */
-    public static class ClientModified extends ClientDeliveryState {
+    public static class ClientModified extends ClientDeliveryState implements org.apache.qpid.protonj2.client.Modified {
 
         private final Modified modified = new Modified();
 
@@ -283,24 +308,46 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
 
         @Override
-        public Type getType() {
-            return Type.MODIFIED;
+        org.apache.qpid.protonj2.types.transport.DeliveryState getProtonDeliveryState() {
+            return modified;
         }
 
         @Override
-        org.apache.qpid.protonj2.types.transport.DeliveryState getProtonDeliveryState() {
-            return modified;
+        public boolean isDeliveryFailed() {
+            return modified.isDeliveryFailed();
+        }
+
+        @Override
+        public boolean isUndeliverableHere() {
+            return modified.isUndeliverableHere();
+        }
+
+        @Override
+        public Map<String, Object> getMessageAnnotations() {
+            return ClientConversionSupport.toStringKeyedMap(modified.getMessageAnnotations());
         }
 
         static ClientModified fromProtonType(Modified modified) {
             return new ClientModified(modified);
         }
+
+        static Modified fromUnknownClientType(DeliveryState deliveryState) {
+            if (deliveryState instanceof org.apache.qpid.protonj2.client.Modified) {
+                org.apache.qpid.protonj2.client.Modified modifiedState = (org.apache.qpid.protonj2.client.Modified) deliveryState;
+
+                return new Modified(modifiedState.isDeliveryFailed(), modifiedState.isUndeliverableHere(),
+                                    ClientConversionSupport.toSymbolKeyedMap(modifiedState.getMessageAnnotations()));
+            } else {
+                return new Modified(); // TODO: This loses data from the source but remains backwards compatible
+            }
+        }
+
     }
 
     /**
      * Client defined {@link TransactionalState} delivery state definition
      */
-    public static class ClientTransactional extends ClientDeliveryState {
+    public static class ClientTransactional extends ClientDeliveryState implements Transactional {
 
         private final TransactionalState txnState = new TransactionalState();
 
@@ -310,13 +357,28 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
 
         @Override
-        public Type getType() {
-            return Type.TRANSACTIONAL;
+        public boolean isAccepted() {
+            return txnState.getOutcome() instanceof Accepted;
         }
 
         @Override
-        public boolean isAccepted() {
-            return txnState.getOutcome() instanceof Accepted;
+        public boolean isRejected() {
+            return txnState.getOutcome() instanceof Rejected;
+        }
+
+        @Override
+        public boolean isReleased() {
+            return txnState.getOutcome() instanceof Released;
+        }
+
+        @Override
+        public boolean isModified() {
+            return txnState.getOutcome() instanceof Modified;
+        }
+
+        @Override
+        public DeliveryState getOutcome() {
+            return fromProtonType(txnState.getOutcome());
         }
 
         @Override

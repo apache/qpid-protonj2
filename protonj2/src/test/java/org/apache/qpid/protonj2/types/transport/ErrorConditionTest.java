@@ -51,11 +51,11 @@ public class ErrorConditionTest {
         assertEquals(original, copy);
 
         Map<Symbol, Object> infoMap = new HashMap<>();
-        ErrorCondition other1 = new ErrorCondition(null, "error", infoMap);
+        ErrorCondition other1 = new ErrorCondition((String) null, "error", infoMap);
         ErrorCondition other2 = new ErrorCondition(AmqpError.DECODE_ERROR, null, infoMap);
         ErrorCondition other3 = new ErrorCondition(AmqpError.DECODE_ERROR, "error", infoMap);
-        ErrorCondition other4 = new ErrorCondition(null, null, infoMap);
-        ErrorCondition other5 = new ErrorCondition(null, null, null);
+        ErrorCondition other4 = new ErrorCondition((String) null, null, infoMap);
+        ErrorCondition other5 = new ErrorCondition((Symbol) null, null, null);
 
         assertNotEquals(original, other1);
         assertNotEquals(original, other2);

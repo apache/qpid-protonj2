@@ -2920,4 +2920,57 @@ public class SenderTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    public void testSendIsRejectedAndTrackerReflectsState() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            Session session = connection.openSession().openFuture().get();
+            SenderOptions options = new SenderOptions().deliveryMode(DeliveryMode.AT_LEAST_ONCE).autoSettle(false);
+            Sender sender = session.openSender("test-tags", options).openFuture().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withNonNullPayload()
+                                 .withDeliveryTag(new byte[] {0})
+                                 .respond()
+                                 .withSettled(true)
+                                 .withState().rejected("no-space", "disk full", Map.of("test", "test"));
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            final Message<String> message = Message.create("Hello World");
+            final Tracker tracker = sender.send(message);
+
+            assertNotNull(tracker);
+            assertNotNull(tracker.settlementFuture().get().settled());
+            assertEquals(DeliveryState.Type.REJECTED, tracker.remoteState().getType());
+
+            final org.apache.qpid.protonj2.client.Rejected rejected =
+                (org.apache.qpid.protonj2.client.Rejected) tracker.remoteState();
+
+            assertNotNull(rejected);
+            assertEquals("no-space", rejected.getCondition());
+            assertEquals("disk full", rejected.getDescription());
+            assertEquals(Map.of("test", "test"), rejected.getInfo());
+
+            sender.closeAsync().get(10, TimeUnit.SECONDS);
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

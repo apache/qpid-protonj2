@@ -165,14 +165,14 @@ public class ErrorConditionTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEqualityOfNewlyConstructed() {
-        ErrorCondition new1 = new ErrorCondition(null, null, null);
-        ErrorCondition new2 = new ErrorCondition(null, null, null);
+        ErrorCondition new1 = new ErrorCondition((String) null, null, null);
+        ErrorCondition new2 = new ErrorCondition((String) null, null, null);
         assertErrorConditionsEqual(new1, new2);
     }
 
     @Test
     public void testSameObject() {
-        ErrorCondition error = new ErrorCondition(null, null, null);
+        ErrorCondition error = new ErrorCondition((String) null, null, null);
         assertErrorConditionsEqual(error, error);
     }
 

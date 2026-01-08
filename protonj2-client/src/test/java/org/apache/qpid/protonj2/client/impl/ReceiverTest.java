@@ -3398,4 +3398,54 @@ public class ReceiverTest extends ImperativeClientTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    public void testReceiveMessageAndSendModifiedDispositionToRemote() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver().respond();
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withMessage().withBody().withData((byte[]) null)
+                                 .also()
+                                 .queue();
+            peer.expectDisposition().withFirst(0)
+                                    .withSettled(false)
+                                    .withState().modified(false, false, Map.of("annotation", "value"));
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            final Client container = Client.create();
+            final ConnectionOptions options = new ConnectionOptions();
+            final ReceiverOptions receiverOptions = new ReceiverOptions().autoSettle(false).autoAccept(false);
+            final Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            final Receiver receiver = connection.openReceiver("test-queue", receiverOptions);
+            final Delivery delivery = receiver.receive();
+            final Message<byte[]> message = delivery.message();
+
+            assertNull(message.body());
+
+            delivery.disposition(DeliveryState.modified(false, false, Map.of("annotation", "value")), false);
+
+            peer.waitForScriptToComplete();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            assertNotNull(delivery);
+
+            receiver.close();
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

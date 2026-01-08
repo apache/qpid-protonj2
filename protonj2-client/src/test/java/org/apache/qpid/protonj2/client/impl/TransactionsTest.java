@@ -42,6 +42,7 @@ import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.StreamSender;
 import org.apache.qpid.protonj2.client.StreamSenderMessage;
 import org.apache.qpid.protonj2.client.Tracker;
+import org.apache.qpid.protonj2.client.Transactional;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
 import org.apache.qpid.protonj2.client.exceptions.ClientIllegalStateException;
@@ -63,10 +64,11 @@ import org.apache.qpid.protonj2.types.messaging.Released;
 import org.apache.qpid.protonj2.types.transactions.TransactionErrors;
 import org.apache.qpid.protonj2.types.transport.AmqpError;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//@Timeout(30)
+@Timeout(30)
 public class TransactionsTest extends ImperativeClientTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionsTest.class);
@@ -970,6 +972,8 @@ public class TransactionsTest extends ImperativeClientTestCase {
             assertNotNull(tracker);
             assertNotNull(tracker.awaitAccepted());
             assertTrue(tracker.remoteState().isAccepted());
+            assertTrue(tracker.remoteState().isTransactional());
+            assertTrue(tracker.state().isTransactional());
             assertEquals(tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL,
                          "Delivery inside transaction should have Transactional state");
             assertEquals(tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL,
@@ -1034,6 +1038,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
                 assertNotNull(tracker.settlementFuture().get());
                 assertEquals(tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL);
                 assertNotNull(tracker.state());
+                assertTrue(tracker.remoteState().isTransactional());
                 assertEquals(tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL,
                     "Delivery inside transaction should have Transactional state: " + tracker.state().getType());
                 Wait.assertTrue("Delivery in transaction should be locally settled after response", () -> tracker.settled());
@@ -1277,6 +1282,7 @@ public class TransactionsTest extends ImperativeClientTestCase {
             final Tracker tracker = sender.send(Message.create("test-message"));
             assertNotNull(tracker.settlementFuture().get());
             assertEquals(tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL);
+            assertTrue(tracker.remoteState().isTransactional());
 
             try {
                 session.commitTransaction();
@@ -1597,6 +1603,12 @@ public class TransactionsTest extends ImperativeClientTestCase {
             delivery2.release();
 
             session.commitTransaction();
+
+            assertFalse(delivery1.state().isReleased());
+            assertTrue(delivery1.state().isAccepted());
+            assertTrue(delivery2.state().isReleased());
+            assertFalse(delivery2.state().isAccepted());
+
             receiver.closeAsync();
             connection.closeAsync().get();
 
@@ -1658,6 +1670,12 @@ public class TransactionsTest extends ImperativeClientTestCase {
             session.commitTransaction();
             receiver.closeAsync();
             connection.closeAsync().get();
+
+            assertTrue(delivery.state() instanceof org.apache.qpid.protonj2.client.Transactional);
+
+            final Transactional txn = (Transactional) delivery.state();
+
+            assertTrue(txn.getOutcome() instanceof org.apache.qpid.protonj2.client.Modified);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

@@ -25,6 +25,11 @@ import org.apache.qpid.protonj2.client.impl.ClientDeliveryState.ClientReleased;
 
 /**
  * Conveys the outcome of a Delivery either incoming or outgoing.
+ * <p>
+ * {@link DeliveryState} instance have a type (e.g. Accepted, Rejected ...) and can in
+ * case of a transactional delivery state, carry an outcome and in those cases the is
+ * outcome APIs return the value of the nested outcome carried in the transactional
+ * state.
  */
 public interface DeliveryState {
 
@@ -46,6 +51,34 @@ public interface DeliveryState {
      */
     default boolean isAccepted() {
         return getType() == Type.ACCEPTED;
+    }
+
+    /**
+     * @return true if the {@link DeliveryState} represents an Rejected outcome.
+     */
+    default boolean isRejected() {
+        return getType() == Type.REJECTED;
+    }
+
+    /**
+     * @return true if the {@link DeliveryState} represents an Modified outcome.
+     */
+    default boolean isModified() {
+        return getType() == Type.MODIFIED;
+    }
+
+    /**
+     * @return true if the {@link DeliveryState} represents an Released outcome.
+     */
+    default boolean isReleased() {
+        return getType() == Type.RELEASED;
+    }
+
+    /**
+     * @return true if the {@link DeliveryState} represents an Transactional outcome.
+     */
+    default boolean isTransactional() {
+        return getType() == Type.TRANSACTIONAL;
     }
 
     //----- Factory methods for default DeliveryState types

@@ -561,7 +561,6 @@ public class SessionTest extends ImperativeClientTestCase {
         }
     }
 
-    @SuppressWarnings("resource")
     @Test
     public void testCannotCreateResourcesFromClosedSession() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {

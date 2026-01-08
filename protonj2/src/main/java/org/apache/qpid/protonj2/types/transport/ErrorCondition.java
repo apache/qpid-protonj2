@@ -39,6 +39,10 @@ public final class ErrorCondition {
         this(condition, description, null);
     }
 
+    public ErrorCondition(String condition, String description, Map<Symbol, Object> info) {
+        this(Symbol.valueOf(condition), description, info);
+    }
+
     public ErrorCondition(Symbol condition, String description, Map<Symbol, Object> info) {
         this.condition = condition;
         this.description = description;
