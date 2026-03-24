@@ -55,10 +55,10 @@ public abstract class ClientDeliveryState implements DeliveryState {
             return ClientAccepted.getInstance();
         } else if (outcome instanceof Released) {
             return ClientReleased.getInstance();
-        } else if (outcome instanceof Rejected) {
-            return ClientRejected.fromProtonType((Rejected) outcome);
-        } else if (outcome instanceof Modified) {
-            return ClientModified.fromProtonType((Modified) outcome);
+        } else if (outcome instanceof Rejected rejected) {
+            return ClientRejected.fromProtonType(rejected);
+        } else if (outcome instanceof Modified modified) {
+            return ClientModified.fromProtonType(modified);
         }
 
         throw new IllegalArgumentException("Cannot map to unknown Proton Outcome to a DeliveryStateType: " + outcome);
@@ -100,8 +100,8 @@ public abstract class ClientDeliveryState implements DeliveryState {
     static org.apache.qpid.protonj2.types.transport.DeliveryState asProtonType(DeliveryState state) {
         if (state == null) {
             return null;
-        } else if (state instanceof ClientDeliveryState) {
-            return ((ClientDeliveryState) state).getProtonDeliveryState();
+        } else if (state instanceof ClientDeliveryState deliveryState) {
+            return deliveryState.getProtonDeliveryState();
         } else {
             switch (state.getType()) {
                 case ACCEPTED:
@@ -251,9 +251,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
 
         static Rejected fromUnknownClientType(DeliveryState deliveryState) {
-            if (deliveryState instanceof org.apache.qpid.protonj2.client.Rejected) {
-                org.apache.qpid.protonj2.client.Rejected rejectedState = (org.apache.qpid.protonj2.client.Rejected) deliveryState;
-
+            if (deliveryState instanceof org.apache.qpid.protonj2.client.Rejected rejectedState) {
                 return new Rejected(new ErrorCondition(rejectedState.getCondition(),
                                                        rejectedState.getDescription(),
                                                        ClientConversionSupport.toSymbolKeyedMap(rejectedState.getInfo())));
@@ -332,9 +330,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
 
         static Modified fromUnknownClientType(DeliveryState deliveryState) {
-            if (deliveryState instanceof org.apache.qpid.protonj2.client.Modified) {
-                org.apache.qpid.protonj2.client.Modified modifiedState = (org.apache.qpid.protonj2.client.Modified) deliveryState;
-
+            if (deliveryState instanceof org.apache.qpid.protonj2.client.Modified modifiedState) {
                 return new Modified(modifiedState.isDeliveryFailed(), modifiedState.isUndeliverableHere(),
                                     ClientConversionSupport.toSymbolKeyedMap(modifiedState.getMessageAnnotations()));
             } else {

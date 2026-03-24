@@ -341,7 +341,7 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof ProtonBuffer && ProtonBufferUtils.equals(this, (ProtonBuffer) o);
+        return o instanceof ProtonBuffer buffer && ProtonBufferUtils.equals(this, buffer);
     }
 
     @Override

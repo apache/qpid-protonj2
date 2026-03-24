@@ -292,13 +292,13 @@ public final class Attach implements Performative {
         return (T) target;
     }
 
-    public Attach setTarget(Terminus target) {
-        if (target instanceof Target) {
-            setTarget((Target) target);
-        } else if (target instanceof Coordinator) {
-            setTarget((Coordinator) target);
+    public Attach setTarget(Terminus terminus) {
+        if (terminus instanceof Target target) {
+            setTarget(target);
+        } else if (terminus instanceof Coordinator coordinator) {
+            setTarget(coordinator);
         } else {
-            throw new IllegalArgumentException("Cannot set Target terminus to given value: " + target);
+            throw new IllegalArgumentException("Cannot set Target terminus to given value: " + terminus);
         }
 
         return this;

@@ -194,9 +194,7 @@ final class ClientNextReceiverSelector {
         if (!pending.isEmpty() && !delivery.isPartial() && !delivery.isAborted()) {
             // We only handle next receiver events for normal client receivers and
             // not for stream receiver types etc.
-            if (delivery.getLink().getLinkedResource() instanceof ClientReceiver) {
-                ClientReceiver receiver = delivery.getLink().getLinkedResource();
-
+            if (delivery.getLink().getLinkedResource() instanceof ClientReceiver receiver) {
                 // Track last returned to update state for Round Robin next receiver dispatch
                 delivery.getLink().getSession().getAttachments().set(LAST_RETURNED_STATE_KEY, receiver);
 

@@ -694,12 +694,12 @@ public final class ProtonEncoder implements Encoder {
             } else {
                 writeArray(buffer, state, (Object[]) value);
             }
-        } else if (value instanceof List) {
-            writeList(buffer, state, (List<Object>) value);
-        } else if (value instanceof Map) {
-            writeMap(buffer, state, (Map<Object, Object>) value);
-        } else if (value instanceof DescribedType) {
-            writeDescribedType(buffer, state, (DescribedType) value);
+        } else if (value instanceof List list) {
+            writeList(buffer, state, list);
+        } else if (value instanceof Map map) {
+            writeMap(buffer, state, map);
+        } else if (value instanceof DescribedType described) {
+            writeDescribedType(buffer, state, described);
         } else {
             throw new IllegalArgumentException(
                 "Do not know how to write Objects of class " + value.getClass().getName());

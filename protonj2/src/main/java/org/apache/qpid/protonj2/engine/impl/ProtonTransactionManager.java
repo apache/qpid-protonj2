@@ -392,8 +392,7 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
                 transaction.setState(TransactionState.DECLARING);
 
                 fireDeclare(transaction);
-            } else if (container.getValue() instanceof Discharge) {
-                Discharge discharge = (Discharge) container.getValue();
+            } else if (container.getValue() instanceof Discharge discharge) {
                 Binary txnId = discharge.getTxnId();
 
                 ProtonManagerTransaction transaction = transactions.get(txnId.asProtonBuffer());

@@ -208,10 +208,10 @@ public abstract class ClientMessageSupport {
     public static <E> Section<E> createSectionFromValue(E body) {
         if (body == null) {
             return null;
-        } else if (body instanceof byte[]) {
-            return (Section<E>) new Data((byte[]) body);
-        } else if (body instanceof List){
-            return new AmqpSequence((List) body);
+        } else if (body instanceof byte[] bytesBody) {
+            return (Section<E>) new Data(bytesBody);
+        } else if (body instanceof List listBody){
+            return new AmqpSequence(listBody);
         } else {
             return new AmqpValue(body);
         }

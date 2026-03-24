@@ -502,8 +502,8 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
 
     @Override
     public boolean equals(Object other) {
-        if (other instanceof ProtonBuffer) {
-            return ProtonBufferUtils.equals(this, (ProtonBuffer) other);
+        if (other instanceof ProtonBuffer buffer) {
+            return ProtonBufferUtils.equals(this, buffer);
         }
 
         return false;

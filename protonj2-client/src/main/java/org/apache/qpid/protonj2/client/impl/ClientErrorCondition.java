@@ -92,8 +92,8 @@ public final class ClientErrorCondition implements ErrorCondition {
     static org.apache.qpid.protonj2.types.transport.ErrorCondition asProtonErrorCondition(ErrorCondition condition) {
         if (condition == null) {
             return null;
-        } else if (condition instanceof ClientErrorCondition) {
-            return ((ClientErrorCondition) condition).getProtonErrorCondition();
+        } else if (condition instanceof ClientErrorCondition errorCondition) {
+            return errorCondition.getProtonErrorCondition();
         } else {
             return new ClientErrorCondition(condition).getProtonErrorCondition();
         }

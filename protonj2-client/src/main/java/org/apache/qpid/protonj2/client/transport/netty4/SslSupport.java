@@ -422,8 +422,8 @@ public final class SslSupport {
         KeyManager[] keyManagers = new KeyManager[origKeyManagers.length];
         for (int i = 0; i < origKeyManagers.length; i++) {
             KeyManager km = origKeyManagers[i];
-            if (km instanceof X509ExtendedKeyManager) {
-                km = new X509AliasKeyManager(alias, (X509ExtendedKeyManager) km);
+            if (km instanceof X509ExtendedKeyManager x509km) {
+                km = new X509AliasKeyManager(alias, x509km);
             }
 
             keyManagers[i] = km;

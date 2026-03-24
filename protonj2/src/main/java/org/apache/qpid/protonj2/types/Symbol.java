@@ -99,8 +99,8 @@ public final class Symbol implements Comparable<Symbol> {
             return true;
         }
 
-        if (other instanceof Symbol) {
-            return underlying.equals(((Symbol) other).underlying);
+        if (other instanceof Symbol symbol) {
+            return underlying.equals(symbol.underlying);
         }
 
         return false;

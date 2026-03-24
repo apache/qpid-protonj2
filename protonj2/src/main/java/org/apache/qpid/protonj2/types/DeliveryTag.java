@@ -149,11 +149,12 @@ public interface DeliveryTag {
             if (this == other) {
                 return true;
             }
-            if (!(other instanceof DeliveryTag)) {
-                return false;
+
+            if (other instanceof DeliveryTag tag) {
+                return Arrays.equals(tagBytes, tag.tagBytes());
             }
 
-            return Arrays.equals(tagBytes, ((DeliveryTag) other).tagBytes());
+            return false;
         }
 
         @Override

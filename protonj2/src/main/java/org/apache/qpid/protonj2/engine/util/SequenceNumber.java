@@ -130,8 +130,8 @@ public class SequenceNumber extends Number implements Comparable<SequenceNumber>
 
     @Override
     public boolean equals(Object other) {
-        if (other instanceof SequenceNumber) {
-            return ((SequenceNumber) other).sequence == this.sequence;
+        if (other instanceof SequenceNumber sequenceNo) {
+            return sequenceNo.sequence == this.sequence;
         }
 
         return false;

@@ -88,8 +88,7 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
     private static Object decodeArray(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (decoder instanceof PrimitiveTypeDecoder) {
-            final PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) decoder;
+        if (decoder instanceof PrimitiveTypeDecoder primitiveTypeDecoder) {
             final int typeCode = primitiveTypeDecoder.getTypeCode();
 
             if (primitiveTypeDecoder.isJavaPrimitive()) {
@@ -275,8 +274,7 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
     private static Object decodeAsObject(InputStream stream, StreamDecoderState state, int count) throws DecodeException {
         final StreamTypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(stream, state);
 
-        if (decoder instanceof PrimitiveTypeDecoder) {
-            final PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) decoder;
+        if (decoder instanceof PrimitiveTypeDecoder primitiveTypeDecoder) {
             if (primitiveTypeDecoder.isJavaPrimitive()) {
                 final Class<?> typeClass = decoder.getTypeClass();
 

@@ -41,12 +41,12 @@ public abstract class UnknownDescribedTypeDecoder extends AbstractDescribedTypeD
 
     @Override
     public final UnsignedLong getDescriptorCode() {
-        return getDescriptor() instanceof UnsignedLong ? (UnsignedLong) getDescriptor() : null;
+        return getDescriptor() instanceof UnsignedLong code ? code : null;
     }
 
     @Override
     public final Symbol getDescriptorSymbol() {
-        return getDescriptor() instanceof Symbol ? (Symbol) getDescriptor() : null;
+        return getDescriptor() instanceof Symbol symbol ? symbol : null;
     }
 
     @Override

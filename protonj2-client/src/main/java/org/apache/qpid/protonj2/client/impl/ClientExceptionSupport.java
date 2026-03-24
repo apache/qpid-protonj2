@@ -54,12 +54,12 @@ final class ClientExceptionSupport {
      * @return an ClientIOException instance.
      */
     public static ClientIOException createOrPassthroughFatal(Throwable cause) {
-        if (cause instanceof ClientIOException) {
-            return (ClientIOException) cause;
+        if (cause instanceof ClientIOException ioError) {
+            return ioError;
         }
 
-        if (cause.getCause() instanceof ClientIOException) {
-            return (ClientIOException) cause.getCause();
+        if (cause.getCause() instanceof ClientIOException ioError) {
+            return ioError;
         }
 
         String message = cause.getMessage();
@@ -82,12 +82,12 @@ final class ClientExceptionSupport {
      * @return an ClientException instance.
      */
     public static ClientException createNonFatalOrPassthrough(Throwable cause) {
-        if (cause instanceof ClientException) {
-            return (ClientException) cause;
+        if (cause instanceof ClientException exception) {
+            return exception;
         }
 
-        if (cause.getCause() instanceof ClientException) {
-            return (ClientException) cause.getCause();
+        if (cause.getCause() instanceof ClientException exception) {
+            return exception;
         }
 
         String message = cause.getMessage();
@@ -146,11 +146,10 @@ final class ClientExceptionSupport {
     public static ClientConnectionRemotelyClosedException convertToConnectionClosedException(Throwable cause) {
         ClientConnectionRemotelyClosedException remoteError = null;
 
-        if (cause instanceof ClientConnectionRemotelyClosedException) {
-            remoteError = (ClientConnectionRemotelyClosedException) cause;
-        } else if (cause instanceof SaslSystemException) {
-            remoteError = new ClientConnectionSecuritySaslException(
-                cause.getMessage(), !((SaslSystemException) cause).isPermanent(), cause);
+        if (cause instanceof ClientConnectionRemotelyClosedException exception) {
+            remoteError = exception;
+        } else if (cause instanceof SaslSystemException exception) {
+            remoteError = new ClientConnectionSecuritySaslException(cause.getMessage(), !exception.isPermanent(), cause);
         } else if (cause instanceof SaslException) {
             remoteError = new ClientConnectionSecuritySaslException(cause.getMessage(), cause);
         } else {

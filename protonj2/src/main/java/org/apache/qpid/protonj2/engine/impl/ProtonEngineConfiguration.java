@@ -70,8 +70,8 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
     @Override
     public boolean isTraceFrames() {
         EngineHandler handler = engine.pipeline().find(ProtonConstants.FRAME_LOGGING_HANDLER);
-        if (handler != null && handler instanceof ProtonFrameLoggingHandler) {
-            return ((ProtonFrameLoggingHandler) handler).isTraceFrames();
+        if (handler != null && handler instanceof ProtonFrameLoggingHandler logger) {
+            return logger.isTraceFrames();
         } else {
             return false;
         }

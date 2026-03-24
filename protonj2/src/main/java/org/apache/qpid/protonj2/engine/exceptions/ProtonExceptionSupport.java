@@ -45,12 +45,12 @@ public class ProtonExceptionSupport {
      * @return an ProtonException instance.
      */
     public static EngineFailedException createFailedException(String message, Throwable cause) {
-        if (cause instanceof EngineFailedException) {
-            return ((EngineFailedException) cause).duplicate();
+        if (cause instanceof EngineFailedException efEx) {
+            return efEx.duplicate();
         }
 
-        if (cause.getCause() instanceof EngineFailedException) {
-            return ((EngineFailedException) cause.getCause()).duplicate();
+        if (cause.getCause() instanceof EngineFailedException efEx) {
+            return efEx.duplicate();
         }
 
         if (message == null || message.isEmpty()) {

@@ -310,8 +310,8 @@ public class TcpTransport implements Transport {
     protected final ByteBuf toOutputBuffer(final ProtonBuffer output) throws IOException {
         final ByteBuf nettyBuf;
 
-        if (output instanceof Netty4ToProtonBufferAdapter) {
-            nettyBuf = ((Netty4ToProtonBufferAdapter) output).unwrapAndRelease();
+        if (output instanceof Netty4ToProtonBufferAdapter nettyAdapter) {
+            nettyBuf = nettyAdapter.unwrapAndRelease();
         } else {
             try (output) {
                 Netty4ToProtonBufferAdapter wrapped = nettyAllocator.outputBuffer(output.getReadableBytes());
@@ -330,8 +330,8 @@ public class TcpTransport implements Transport {
             for (ProtonBufferComponent output = accessor.firstReadable(); output != null; output = accessor.nextReadable()) {
                 final ByteBuf nettyBuf;
 
-                if (output instanceof Netty4ToProtonBufferAdapter) {
-                    nettyBuf = ((Netty4ToProtonBufferAdapter)output).unwrapAndRelease();
+                if (output instanceof Netty4ToProtonBufferAdapter nettyAdapter) {
+                    nettyBuf = nettyAdapter.unwrapAndRelease();
                 } else if (output.unwrap() instanceof ByteBuf) {
                     nettyBuf = (ByteBuf) ReferenceCountUtil.retain(output.unwrap());
                 } else {

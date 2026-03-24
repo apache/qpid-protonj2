@@ -950,8 +950,8 @@ final class ClientStreamSenderMessage implements StreamSenderMessage {
         if (buffer == null) {
             buffer = incoming.transfer();
         } else {
-            if (buffer instanceof ProtonCompositeBuffer) {
-                ((ProtonCompositeBuffer) buffer).append(incoming);
+            if (buffer instanceof ProtonCompositeBuffer composite) {
+                composite.append(incoming);
             } else {
                 buffer = ProtonBufferAllocator.defaultAllocator().composite(new ProtonBuffer[] { buffer, incoming });
             }
