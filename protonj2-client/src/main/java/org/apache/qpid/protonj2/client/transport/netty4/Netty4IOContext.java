@@ -33,7 +33,8 @@ import org.slf4j.LoggerFactory;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
 /**
@@ -100,7 +101,7 @@ public final class Netty4IOContext implements IOContext {
 
         if (selectedGroup == null) {
             LOG.trace("Netty Transports will be using NIO mode");
-            selectedGroup = new NioEventLoopGroup(1, threadFactory);
+            selectedGroup = new MultiThreadIoEventLoopGroup(1, threadFactory, NioIoHandler.newFactory());
             selectedChannelClass = NioSocketChannel.class;
         }
 

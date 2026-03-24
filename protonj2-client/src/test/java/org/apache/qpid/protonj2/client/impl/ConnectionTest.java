@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.net.URI;
@@ -45,6 +46,7 @@ import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Sender;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.Tracker;
+import org.apache.qpid.protonj2.client.TransportOptions;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRedirectedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.apache.qpid.protonj2.client.exceptions.ClientException;
@@ -52,6 +54,9 @@ import org.apache.qpid.protonj2.client.exceptions.ClientIOException;
 import org.apache.qpid.protonj2.client.exceptions.ClientUnsupportedOperationException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.client.test.Wait;
+import org.apache.qpid.protonj2.client.transport.netty4.EpollSupport;
+import org.apache.qpid.protonj2.client.transport.netty4.IOUringSupport;
+import org.apache.qpid.protonj2.client.transport.netty4.KQueueSupport;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServerOptions;
 import org.apache.qpid.protonj2.test.driver.codec.messaging.TerminusDurability;
@@ -1889,6 +1894,69 @@ public class ConnectionTest extends ImperativeClientTestCase {
             connection.closeAsync().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+
+    @Test
+    public void testOpenDurableReceiverFromConnectionEpoll() throws Exception {
+        assumeTrue(EpollSupport.isAvailable());
+
+        doTestConnectionToPeerUsingNativeTransport(TransportOptions.NATIVE_EPOLL_TRANSPORT);
+    }
+
+    @Test
+    public void testOpenDurableReceiverFromConnectionKQueue() throws Exception {
+        assumeTrue(KQueueSupport.isAvailable());
+
+        doTestConnectionToPeerUsingNativeTransport(TransportOptions.NATIVE_KQUEUE_TRANSPORT);
+    }
+
+    @Test
+    public void testOpenDurableReceiverFromConnectionIoUring() throws Exception {
+        assumeTrue(IOUringSupport.isAvailable());
+
+        doTestConnectionToPeerUsingNativeTransport(TransportOptions.NATIVE_IO_URING_TRANSPORT);
+    }
+
+    private void doTestConnectionToPeerUsingNativeTransport(String nativeIO) throws Exception {
+        final String address = "test-topic";
+        final String subscriptionName = "mySubscriptionName";
+
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofReceiver()
+                               .withName(subscriptionName)
+                               .withSource()
+                                   .withAddress(address)
+                                   .withDurable(TerminusDurability.UNSETTLED_STATE)
+                                   .withExpiryPolicy(TerminusExpiryPolicy.NEVER)
+                                   .withDistributionMode("copy")
+                               .and().respond();
+            peer.expectFlow();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions();
+            options.transportOptions().allowNativeIO(true);
+            options.transportOptions().nativeIOPreference(nativeIO);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            Receiver receiver = connection.openDurableReceiver(address, subscriptionName);
+
+            receiver.openFuture().get();
+            receiver.closeAsync().get();
+
+            connection.closeAsync().get();
+
+            peer.waitForScriptToComplete(6, TimeUnit.SECONDS);
         }
     }
 

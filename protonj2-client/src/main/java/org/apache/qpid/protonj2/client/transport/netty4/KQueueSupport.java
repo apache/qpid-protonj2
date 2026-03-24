@@ -24,8 +24,9 @@ import org.slf4j.LoggerFactory;
 
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.kqueue.KQueue;
-import io.netty.channel.kqueue.KQueueEventLoopGroup;
+import io.netty.channel.kqueue.KQueueIoHandler;
 import io.netty.channel.kqueue.KQueueSocketChannel;
 
 public final class KQueueSupport {
@@ -50,7 +51,7 @@ public final class KQueueSupport {
     public static EventLoopGroup createGroup(int nThreads, ThreadFactory ioThreadFactory) {
         ensureAvailability();
 
-        return new KQueueEventLoopGroup(nThreads, ioThreadFactory);
+        return new MultiThreadIoEventLoopGroup(nThreads, ioThreadFactory, KQueueIoHandler.newFactory());
     }
 
     public static Class<? extends Channel> getChannelClass() {

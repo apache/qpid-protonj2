@@ -48,7 +48,6 @@ import io.netty.handler.ssl.SslHandler;
 /**
  * Tests for the TransportSupport class.
  */
-@SuppressWarnings("deprecation")
 public class SslSupportTest extends ImperativeClientTestCase {
 
     public static final String PASSWORD = "password";
@@ -878,7 +877,6 @@ public class SslSupportTest extends ImperativeClientTestCase {
     public void testIsOpenSSLPossibleWhenHostNameVerificationConfigured() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
-        assumeTrue(OpenSsl.supportsHostnameValidation());
 
         SslOptions options = new SslOptions();
         options.allowNativeSSL(true);
@@ -894,7 +892,6 @@ public class SslSupportTest extends ImperativeClientTestCase {
     public void testIsOpenSSLPossibleWhenKeyAliasIsSpecified() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
-        assumeTrue(OpenSsl.supportsHostnameValidation());
 
         SslOptions options = new SslOptions();
         options.allowNativeSSL(true);

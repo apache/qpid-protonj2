@@ -42,7 +42,12 @@ public class TransportOptions implements Cloneable {
     public static final boolean DEFAULT_USE_WEBSOCKETS = false;
     public static final boolean DEFAULT_WEBSOCKET_COMPRESSION = false;
     public static final int DEFAULT_WEBSOCKET_MAX_FRAME_SIZE = 65535;
-    private static final String[] DEFAULT_NATIVEIO_PREFERENCES_ARRAY = { "EPOLL", "KQUEUE" };
+    public static final String NATIVE_EPOLL_TRANSPORT = "EPOLL";
+    public static final String NATIVE_KQUEUE_TRANSPORT = "KQUEUE";
+    public static final String NATIVE_IO_URING_TRANSPORT = "IO_URING";
+    private static final String[] DEFAULT_NATIVEIO_PREFERENCES_ARRAY = { NATIVE_EPOLL_TRANSPORT,
+                                                                         NATIVE_KQUEUE_TRANSPORT,
+                                                                         NATIVE_IO_URING_TRANSPORT };
     public static final List<String> DEFAULT_NATIVEIO_PREFERENCES =
         Collections.unmodifiableList(Arrays.asList( DEFAULT_NATIVEIO_PREFERENCES_ARRAY ));
 

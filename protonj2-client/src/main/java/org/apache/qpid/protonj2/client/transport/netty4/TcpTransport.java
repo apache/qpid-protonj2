@@ -428,7 +428,7 @@ public class TcpTransport implements Transport {
 
         if (options.receiveBufferSize() != -1) {
             bootstrap.option(ChannelOption.SO_RCVBUF, options.receiveBufferSize());
-            bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(options.receiveBufferSize()));
+            bootstrap.option(ChannelOption.RECVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(options.receiveBufferSize()));
         }
 
         if (options.trafficClass() != -1) {
