@@ -109,40 +109,20 @@ public final class TransferTypeDecoder extends AbstractDescribedListTypeDecoder<
             }
 
             switch (index) {
-                case 0:
-                    transfer.setHandle(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 1:
-                    transfer.setDeliveryId(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 2:
-                    transfer.setDeliveryTag(decoder.readDeliveryTag(buffer, state));
-                    break;
-                case 3:
-                    transfer.setMessageFormat(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 4:
-                    transfer.setSettled(decoder.readBoolean(buffer, state, false));
-                    break;
-                case 5:
-                    transfer.setMore(decoder.readBoolean(buffer, state, false));
-                    break;
-                case 6:
+                case 0 -> transfer.setHandle(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 1 -> transfer.setDeliveryId(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 2 -> transfer.setDeliveryTag(decoder.readDeliveryTag(buffer, state));
+                case 3 -> transfer.setMessageFormat(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 4 -> transfer.setSettled(decoder.readBoolean(buffer, state, false));
+                case 5 -> transfer.setMore(decoder.readBoolean(buffer, state, false));
+                case 6 -> {
                     final UnsignedByte rcvSettleMode = decoder.readUnsignedByte(buffer, state);
                     transfer.setRcvSettleMode(rcvSettleMode == null ? null : ReceiverSettleMode.values()[rcvSettleMode.intValue()]);
-                    break;
-                case 7:
-                    transfer.setState(decoder.readObject(buffer, state, DeliveryState.class));
-                    break;
-                case 8:
-                    transfer.setResume(decoder.readBoolean(buffer, state, false));
-                    break;
-                case 9:
-                    transfer.setAborted(decoder.readBoolean(buffer, state, false));
-                    break;
-                case 10:
-                    transfer.setBatchable(decoder.readBoolean(buffer, state, false));
-                    break;
+                }
+                case 7 -> transfer.setState(decoder.readObject(buffer, state, DeliveryState.class));
+                case 8 -> transfer.setResume(decoder.readBoolean(buffer, state, false));
+                case 9 -> transfer.setAborted(decoder.readBoolean(buffer, state, false));
+                case 10 -> transfer.setBatchable(decoder.readBoolean(buffer, state, false));
             }
         }
 
@@ -203,40 +183,20 @@ public final class TransferTypeDecoder extends AbstractDescribedListTypeDecoder<
             }
 
             switch (index) {
-                case 0:
-                    transfer.setHandle(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 1:
-                    transfer.setDeliveryId(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 2:
-                    transfer.setDeliveryTag(decoder.readDeliveryTag(stream, state));
-                    break;
-                case 3:
-                    transfer.setMessageFormat(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 4:
-                    transfer.setSettled(decoder.readBoolean(stream, state, false));
-                    break;
-                case 5:
-                    transfer.setMore(decoder.readBoolean(stream, state, false));
-                    break;
-                case 6:
+                case 0 -> transfer.setHandle(decoder.readUnsignedInteger(stream, state, 0l));
+                case 1 -> transfer.setDeliveryId(decoder.readUnsignedInteger(stream, state, 0l));
+                case 2 -> transfer.setDeliveryTag(decoder.readDeliveryTag(stream, state));
+                case 3 -> transfer.setMessageFormat(decoder.readUnsignedInteger(stream, state, 0l));
+                case 4 -> transfer.setSettled(decoder.readBoolean(stream, state, false));
+                case 5 -> transfer.setMore(decoder.readBoolean(stream, state, false));
+                case 6 -> {
                     final UnsignedByte rcvSettleMode = decoder.readUnsignedByte(stream, state);
                     transfer.setRcvSettleMode(rcvSettleMode == null ? null : ReceiverSettleMode.values()[rcvSettleMode.intValue()]);
-                    break;
-                case 7:
-                    transfer.setState(decoder.readObject(stream, state, DeliveryState.class));
-                    break;
-                case 8:
-                    transfer.setResume(decoder.readBoolean(stream, state, false));
-                    break;
-                case 9:
-                    transfer.setAborted(decoder.readBoolean(stream, state, false));
-                    break;
-                case 10:
-                    transfer.setBatchable(decoder.readBoolean(stream, state, false));
-                    break;
+                }
+                case 7 -> transfer.setState(decoder.readObject(stream, state, DeliveryState.class));
+                case 8 -> transfer.setResume(decoder.readBoolean(stream, state, false));
+                case 9 -> transfer.setAborted(decoder.readBoolean(stream, state, false));
+                case 10 -> transfer.setBatchable(decoder.readBoolean(stream, state, false));
             }
         }
 

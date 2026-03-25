@@ -108,24 +108,12 @@ public final class DispositionTypeDecoder extends AbstractDescribedListTypeDecod
             }
 
             switch (index) {
-                case 0:
-                    disposition.setRole(decoder.readBoolean(buffer, state, false) ? Role.RECEIVER : Role.SENDER);
-                    break;
-                case 1:
-                    disposition.setFirst(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 2:
-                    disposition.setLast(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 3:
-                    disposition.setSettled(decoder.readBoolean(buffer, state, false));
-                    break;
-                case 4:
-                    disposition.setState(decoder.readObject(buffer, state, DeliveryState.class));
-                    break;
-                case 5:
-                    disposition.setBatchable(decoder.readBoolean(buffer, state, false));
-                    break;
+                case 0 -> disposition.setRole(decoder.readBoolean(buffer, state, false) ? Role.RECEIVER : Role.SENDER);
+                case 1 -> disposition.setFirst(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 2 -> disposition.setLast(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 3 -> disposition.setSettled(decoder.readBoolean(buffer, state, false));
+                case 4 -> disposition.setState(decoder.readObject(buffer, state, DeliveryState.class));
+                case 5 -> disposition.setBatchable(decoder.readBoolean(buffer, state, false));
             }
         }
 
@@ -195,24 +183,12 @@ public final class DispositionTypeDecoder extends AbstractDescribedListTypeDecod
             }
 
             switch (index) {
-                case 0:
-                    disposition.setRole(decoder.readBoolean(stream, state, false) ? Role.RECEIVER : Role.SENDER);
-                    break;
-                case 1:
-                    disposition.setFirst(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 2:
-                    disposition.setLast(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 3:
-                    disposition.setSettled(decoder.readBoolean(stream, state, false));
-                    break;
-                case 4:
-                    disposition.setState(decoder.readObject(stream, state, DeliveryState.class));
-                    break;
-                case 5:
-                    disposition.setBatchable(decoder.readBoolean(stream, state, false));
-                    break;
+                case 0 -> disposition.setRole(decoder.readBoolean(stream, state, false) ? Role.RECEIVER : Role.SENDER);
+                case 1 -> disposition.setFirst(decoder.readUnsignedInteger(stream, state, 0l));
+                case 2 -> disposition.setLast(decoder.readUnsignedInteger(stream, state, 0l));
+                case 3 -> disposition.setSettled(decoder.readBoolean(stream, state, false));
+                case 4 -> disposition.setState(decoder.readObject(stream, state, DeliveryState.class));
+                case 5 -> disposition.setBatchable(decoder.readBoolean(stream, state, false));
             }
         }
 

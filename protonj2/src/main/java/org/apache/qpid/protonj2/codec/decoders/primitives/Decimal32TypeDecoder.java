@@ -71,5 +71,4 @@ public final class Decimal32TypeDecoder extends AbstractPrimitiveTypeDecoder<Dec
     public int readSize(InputStream stream, StreamDecoderState state) {
         return Decimal32.BYTES;
     }
-
 }

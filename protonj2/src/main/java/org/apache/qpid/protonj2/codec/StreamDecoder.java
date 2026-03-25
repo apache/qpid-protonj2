@@ -423,6 +423,25 @@ public interface StreamDecoder {
      *
      * @throws DecodeException if the value fails to decode is not of the expected type,
      */
+    UnsignedInteger readUnsignedInteger(InputStream stream, StreamDecoderState state, UnsignedInteger defaultValue) throws DecodeException;
+
+    /**
+     * Reads an encoded {@link UnsignedInteger} value from the given {@link InputStream} assuming that the
+     * next value in the byte stream is that type.  The operation fails if the next encoded type is
+     * not what was expected.  If the caller wishes to recover from failed decode attempt they should
+     * make a note of the current read position and reset the input to make a further read attempt.
+     *
+     * @param stream
+     * 		The {@link InputStream} where the read operation takes place.
+     * @param state
+     * 		The {@link DecoderState} that the decoder can use when decoding.
+     * @param defaultValue
+     * 		A default value to return if the next encoded value is a Null encoding.
+     *
+     * @return the value read from the provided byte source.
+     *
+     * @throws DecodeException if the value fails to decode is not of the expected type,
+     */
     int readUnsignedInteger(InputStream stream, StreamDecoderState state, int defaultValue) throws DecodeException;
 
     /**

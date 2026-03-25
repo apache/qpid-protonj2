@@ -90,12 +90,8 @@ public final class DischargeTypeDecoder extends AbstractDescribedListTypeDecoder
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    discharge.setTxnId(state.getDecoder().readBinary(buffer, state));
-                    break;
-                case 1:
-                    discharge.setFail(state.getDecoder().readBoolean(buffer, state, false));
-                    break;
+                case 0 -> discharge.setTxnId(state.getDecoder().readBinary(buffer, state));
+                case 1 -> discharge.setFail(state.getDecoder().readBoolean(buffer, state, false));
             }
         }
 
@@ -139,12 +135,8 @@ public final class DischargeTypeDecoder extends AbstractDescribedListTypeDecoder
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    discharge.setTxnId(state.getDecoder().readBinary(stream, state));
-                    break;
-                case 1:
-                    discharge.setFail(state.getDecoder().readBoolean(stream, state, false));
-                    break;
+                case 0 -> discharge.setTxnId(state.getDecoder().readBinary(stream, state));
+                case 1 -> discharge.setFail(state.getDecoder().readBoolean(stream, state, false));
             }
         }
 

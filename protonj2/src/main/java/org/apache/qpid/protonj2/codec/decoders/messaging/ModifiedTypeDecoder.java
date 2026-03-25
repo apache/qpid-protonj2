@@ -90,17 +90,9 @@ public final class ModifiedTypeDecoder extends AbstractDescribedListTypeDecoder<
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    modified.setDeliveryFailed(state.getDecoder().readBoolean(buffer, state, false));
-                    break;
-                case 1:
-                    modified.setUndeliverableHere(state.getDecoder().readBoolean(buffer, state, false));
-                    break;
-                case 2:
-                    modified.setMessageAnnotations(state.getDecoder().readMap(buffer, state));
-                    break;
-                default:
-                    throw new DecodeException("To many entries in Modified encoding");
+                case 0 -> modified.setDeliveryFailed(state.getDecoder().readBoolean(buffer, state, false));
+                case 1 -> modified.setUndeliverableHere(state.getDecoder().readBoolean(buffer, state, false));
+                case 2 -> modified.setMessageAnnotations(state.getDecoder().readMap(buffer, state));
             }
         }
 
@@ -146,17 +138,9 @@ public final class ModifiedTypeDecoder extends AbstractDescribedListTypeDecoder<
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    modified.setDeliveryFailed(state.getDecoder().readBoolean(stream, state, false));
-                    break;
-                case 1:
-                    modified.setUndeliverableHere(state.getDecoder().readBoolean(stream, state, false));
-                    break;
-                case 2:
-                    modified.setMessageAnnotations(state.getDecoder().readMap(stream, state));
-                    break;
-                default:
-                    throw new DecodeException("To many entries in Modified encoding");
+                case 0 -> modified.setDeliveryFailed(state.getDecoder().readBoolean(stream, state, false));
+                case 1 -> modified.setUndeliverableHere(state.getDecoder().readBoolean(stream, state, false));
+                case 2 -> modified.setMessageAnnotations(state.getDecoder().readMap(stream, state));
             }
         }
 

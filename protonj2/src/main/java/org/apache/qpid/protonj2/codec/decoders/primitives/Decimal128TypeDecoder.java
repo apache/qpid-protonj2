@@ -77,5 +77,4 @@ public final class Decimal128TypeDecoder extends AbstractPrimitiveTypeDecoder<De
     public int readSize(InputStream stream, StreamDecoderState state) {
         return Decimal128.BYTES;
     }
-
 }

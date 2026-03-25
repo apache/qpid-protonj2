@@ -107,5 +107,4 @@ public final class DoubleTypeDecoder extends AbstractPrimitiveTypeDecoder<Double
     public int readSize(InputStream stream, StreamDecoderState state) {
         return Double.BYTES;
     }
-
 }

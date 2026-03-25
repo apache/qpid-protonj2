@@ -36,6 +36,7 @@ import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.DecoderState;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.types.UnknownDescribedType;
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.junit.jupiter.api.Test;
 
@@ -244,6 +245,26 @@ public class ProtonDecoderTest extends CodecTestSupport {
         assertEquals(127, decoder.readUnsignedInteger(buffer, decoderState, 32));
         assertEquals(255, decoder.readUnsignedInteger(buffer, decoderState, 32));
         assertEquals(32, decoder.readUnsignedInteger(buffer, decoderState, 32));
+    }
+
+    @Test
+    public void testReadUnsignedIntegerTypesAsObject() throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        buffer.writeByte(EncodingCodes.UINT0);
+        buffer.writeByte(EncodingCodes.SMALLUINT);
+        buffer.writeByte((byte) 127);
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) 255);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(UnsignedInteger.valueOf(0), decoder.readUnsignedInteger(buffer, decoderState, UnsignedInteger.valueOf(32)));
+        assertEquals(UnsignedInteger.valueOf(127), decoder.readUnsignedInteger(buffer, decoderState, UnsignedInteger.valueOf(32)));
+        assertEquals(UnsignedInteger.valueOf(255), decoder.readUnsignedInteger(buffer, decoderState, UnsignedInteger.valueOf(32)));
+        assertEquals(UnsignedInteger.valueOf(32), decoder.readUnsignedInteger(buffer, decoderState, UnsignedInteger.valueOf(32)));
     }
 
     @Test

@@ -105,36 +105,16 @@ public final class OpenTypeDecoder extends AbstractDescribedListTypeDecoder<Open
             }
 
             switch (index) {
-                case 0:
-                    open.setContainerId(decoder.readString(buffer, state));
-                    break;
-                case 1:
-                    open.setHostname(decoder.readString(buffer, state));
-                    break;
-                case 2:
-                    open.setMaxFrameSize(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 3:
-                    open.setChannelMax(decoder.readUnsignedShort(buffer, state, 0));
-                    break;
-                case 4:
-                    open.setIdleTimeout(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 5:
-                    open.setOutgoingLocales(decoder.readMultiple(buffer, state, Symbol.class));
-                    break;
-                case 6:
-                    open.setIncomingLocales(decoder.readMultiple(buffer, state, Symbol.class));
-                    break;
-                case 7:
-                    open.setOfferedCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
-                    break;
-                case 8:
-                    open.setDesiredCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
-                    break;
-                case 9:
-                    open.setProperties(decoder.readMap(buffer, state));
-                    break;
+                case 0 -> open.setContainerId(decoder.readString(buffer, state));
+                case 1 -> open.setHostname(decoder.readString(buffer, state));
+                case 2 -> open.setMaxFrameSize(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 3 -> open.setChannelMax(decoder.readUnsignedShort(buffer, state, 0));
+                case 4 -> open.setIdleTimeout(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 5 -> open.setOutgoingLocales(decoder.readMultiple(buffer, state, Symbol.class));
+                case 6 -> open.setIncomingLocales(decoder.readMultiple(buffer, state, Symbol.class));
+                case 7 -> open.setOfferedCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
+                case 8 -> open.setDesiredCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
+                case 9 -> open.setProperties(decoder.readMap(buffer, state));
             }
         }
 
@@ -194,36 +174,16 @@ public final class OpenTypeDecoder extends AbstractDescribedListTypeDecoder<Open
             }
 
             switch (index) {
-                case 0:
-                    open.setContainerId(decoder.readString(stream, state));
-                    break;
-                case 1:
-                    open.setHostname(decoder.readString(stream, state));
-                    break;
-                case 2:
-                    open.setMaxFrameSize(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 3:
-                    open.setChannelMax(decoder.readUnsignedShort(stream, state, 0));
-                    break;
-                case 4:
-                    open.setIdleTimeout(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 5:
-                    open.setOutgoingLocales(decoder.readMultiple(stream, state, Symbol.class));
-                    break;
-                case 6:
-                    open.setIncomingLocales(decoder.readMultiple(stream, state, Symbol.class));
-                    break;
-                case 7:
-                    open.setOfferedCapabilities(decoder.readMultiple(stream, state, Symbol.class));
-                    break;
-                case 8:
-                    open.setDesiredCapabilities(decoder.readMultiple(stream, state, Symbol.class));
-                    break;
-                case 9:
-                    open.setProperties(decoder.readMap(stream, state));
-                    break;
+                case 0 -> open.setContainerId(decoder.readString(stream, state));
+                case 1 -> open.setHostname(decoder.readString(stream, state));
+                case 2 -> open.setMaxFrameSize(decoder.readUnsignedInteger(stream, state, 0l));
+                case 3 -> open.setChannelMax(decoder.readUnsignedShort(stream, state, 0));
+                case 4 -> open.setIdleTimeout(decoder.readUnsignedInteger(stream, state, 0l));
+                case 5 -> open.setOutgoingLocales(decoder.readMultiple(stream, state, Symbol.class));
+                case 6 -> open.setIncomingLocales(decoder.readMultiple(stream, state, Symbol.class));
+                case 7 -> open.setOfferedCapabilities(decoder.readMultiple(stream, state, Symbol.class));
+                case 8 -> open.setDesiredCapabilities(decoder.readMultiple(stream, state, Symbol.class));
+                case 9 -> open.setProperties(decoder.readMap(stream, state));
             }
         }
 

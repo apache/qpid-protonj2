@@ -90,15 +90,9 @@ public final class SaslInitTypeDecoder extends AbstractDescribedListTypeDecoder<
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    init.setMechanism(state.getDecoder().readSymbol(buffer, state));
-                    break;
-                case 1:
-                    init.setInitialResponse(state.getDecoder().readBinaryAsBuffer(buffer, state));
-                    break;
-                case 2:
-                    init.setHostname(state.getDecoder().readString(buffer, state));
-                    break;
+                case 0 -> init.setMechanism(state.getDecoder().readSymbol(buffer, state));
+                case 1 -> init.setInitialResponse(state.getDecoder().readBinaryAsBuffer(buffer, state));
+                case 2 -> init.setHostname(state.getDecoder().readString(buffer, state));
             }
         }
 
@@ -142,15 +136,9 @@ public final class SaslInitTypeDecoder extends AbstractDescribedListTypeDecoder<
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    init.setMechanism(state.getDecoder().readSymbol(stream, state));
-                    break;
-                case 1:
-                    init.setInitialResponse(state.getDecoder().readBinaryAsBuffer(stream, state));
-                    break;
-                case 2:
-                    init.setHostname(state.getDecoder().readString(stream, state));
-                    break;
+                case 0 -> init.setMechanism(state.getDecoder().readSymbol(stream, state));
+                case 1 -> init.setInitialResponse(state.getDecoder().readBinaryAsBuffer(stream, state));
+                case 2 -> init.setHostname(state.getDecoder().readString(stream, state));
             }
         }
 

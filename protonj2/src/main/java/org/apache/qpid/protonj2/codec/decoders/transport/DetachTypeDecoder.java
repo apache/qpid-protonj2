@@ -105,15 +105,9 @@ public final class DetachTypeDecoder extends AbstractDescribedListTypeDecoder<De
             }
 
             switch (index) {
-                case 0:
-                    detach.setHandle(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 1:
-                    detach.setClosed(decoder.readBoolean(buffer, state, false));
-                    break;
-                case 2:
-                    detach.setError(decoder.readObject(buffer, state, ErrorCondition.class));
-                    break;
+                case 0 -> detach.setHandle(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 1 -> detach.setClosed(decoder.readBoolean(buffer, state, false));
+                case 2 -> detach.setError(decoder.readObject(buffer, state, ErrorCondition.class));
             }
         }
 
@@ -173,15 +167,9 @@ public final class DetachTypeDecoder extends AbstractDescribedListTypeDecoder<De
             }
 
             switch (index) {
-                case 0:
-                    detach.setHandle(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 1:
-                    detach.setClosed(decoder.readBoolean(stream, state, false));
-                    break;
-                case 2:
-                    detach.setError(decoder.readObject(stream, state, ErrorCondition.class));
-                    break;
+                case 0 -> detach.setHandle(decoder.readUnsignedInteger(stream, state, 0l));
+                case 1 -> detach.setClosed(decoder.readBoolean(stream, state, false));
+                case 2 -> detach.setError(decoder.readObject(stream, state, ErrorCondition.class));
             }
         }
 

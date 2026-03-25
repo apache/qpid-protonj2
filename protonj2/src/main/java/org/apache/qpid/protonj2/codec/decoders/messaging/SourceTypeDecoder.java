@@ -93,42 +93,20 @@ public final class SourceTypeDecoder extends AbstractDescribedListTypeDecoder<So
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    source.setAddress(state.getDecoder().readString(buffer, state));
-                    break;
-                case 1:
-                    final long durability = state.getDecoder().readUnsignedInteger(buffer, state, 0);
-                    source.setDurable(TerminusDurability.valueOf(durability));
-                    break;
-                case 2:
+                case 0 -> source.setAddress(state.getDecoder().readString(buffer, state));
+                case 1 -> source.setDurable(TerminusDurability.valueOf(state.getDecoder().readUnsignedInteger(buffer, state, 0)));
+                case 2 -> {
                     final Symbol expiryPolicy = state.getDecoder().readSymbol(buffer, state);
                     source.setExpiryPolicy(expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : TerminusExpiryPolicy.valueOf(expiryPolicy));
-                    break;
-                case 3:
-                    final UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(buffer, state);
-                    source.setTimeout(timeout == null ? UnsignedInteger.ZERO : timeout);
-                    break;
-                case 4:
-                    source.setDynamic(state.getDecoder().readBoolean(buffer, state, false));
-                    break;
-                case 5:
-                    source.setDynamicNodeProperties(state.getDecoder().readMap(buffer, state));
-                    break;
-                case 6:
-                    source.setDistributionMode(state.getDecoder().readSymbol(buffer, state));
-                    break;
-                case 7:
-                    source.setFilter(state.getDecoder().readMap(buffer, state));
-                    break;
-                case 8:
-                    source.setDefaultOutcome(state.getDecoder().readObject(buffer, state, Outcome.class));
-                    break;
-                case 9:
-                    source.setOutcomes(state.getDecoder().readMultiple(buffer, state, Symbol.class));
-                    break;
-                case 10:
-                    source.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
-                    break;
+                }
+                case 3 -> source.setTimeout(state.getDecoder().readUnsignedInteger(buffer, state, UnsignedInteger.ZERO));
+                case 4 -> source.setDynamic(state.getDecoder().readBoolean(buffer, state, false));
+                case 5 -> source.setDynamicNodeProperties(state.getDecoder().readMap(buffer, state));
+                case 6 -> source.setDistributionMode(state.getDecoder().readSymbol(buffer, state));
+                case 7 -> source.setFilter(state.getDecoder().readMap(buffer, state));
+                case 8 -> source.setDefaultOutcome(state.getDecoder().readObject(buffer, state, Outcome.class));
+                case 9 -> source.setOutcomes(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                case 10 -> source.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
             }
         }
 
@@ -171,42 +149,20 @@ public final class SourceTypeDecoder extends AbstractDescribedListTypeDecoder<So
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    source.setAddress(state.getDecoder().readString(stream, state));
-                    break;
-                case 1:
-                    final long durability = state.getDecoder().readUnsignedInteger(stream, state, 0);
-                    source.setDurable(TerminusDurability.valueOf(durability));
-                    break;
-                case 2:
+                case 0 -> source.setAddress(state.getDecoder().readString(stream, state));
+                case 1 -> source.setDurable(TerminusDurability.valueOf(state.getDecoder().readUnsignedInteger(stream, state, 0)));
+                case 2 -> {
                     final Symbol expiryPolicy = state.getDecoder().readSymbol(stream, state);
                     source.setExpiryPolicy(expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : TerminusExpiryPolicy.valueOf(expiryPolicy));
-                    break;
-                case 3:
-                    final UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(stream, state);
-                    source.setTimeout(timeout == null ? UnsignedInteger.ZERO : timeout);
-                    break;
-                case 4:
-                    source.setDynamic(state.getDecoder().readBoolean(stream, state, false));
-                    break;
-                case 5:
-                    source.setDynamicNodeProperties(state.getDecoder().readMap(stream, state));
-                    break;
-                case 6:
-                    source.setDistributionMode(state.getDecoder().readSymbol(stream, state));
-                    break;
-                case 7:
-                    source.setFilter(state.getDecoder().readMap(stream, state));
-                    break;
-                case 8:
-                    source.setDefaultOutcome(state.getDecoder().readObject(stream, state, Outcome.class));
-                    break;
-                case 9:
-                    source.setOutcomes(state.getDecoder().readMultiple(stream, state, Symbol.class));
-                    break;
-                case 10:
-                    source.setCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
-                    break;
+                }
+                case 3 -> source.setTimeout(state.getDecoder().readUnsignedInteger(stream, state, UnsignedInteger.ZERO));
+                case 4 -> source.setDynamic(state.getDecoder().readBoolean(stream, state, false));
+                case 5 -> source.setDynamicNodeProperties(state.getDecoder().readMap(stream, state));
+                case 6 -> source.setDistributionMode(state.getDecoder().readSymbol(stream, state));
+                case 7 -> source.setFilter(state.getDecoder().readMap(stream, state));
+                case 8 -> source.setDefaultOutcome(state.getDecoder().readObject(stream, state, Outcome.class));
+                case 9 -> source.setOutcomes(state.getDecoder().readMultiple(stream, state, Symbol.class));
+                case 10 -> source.setCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
             }
         }
 

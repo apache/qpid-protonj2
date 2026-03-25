@@ -94,15 +94,9 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedListTypeDe
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    condition = decoder.readSymbol(buffer, state);
-                    break;
-                case 1:
-                    description = decoder.readString(buffer, state);
-                    break;
-                case 2:
-                    info = decoder.readMap(buffer, state);
-                    break;
+                case 0 -> condition = decoder.readSymbol(buffer, state);
+                case 1 -> description = decoder.readString(buffer, state);
+                case 2 -> info = decoder.readMap(buffer, state);
             }
         }
 
@@ -147,15 +141,9 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedListTypeDe
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    condition = decoder.readSymbol(stream, state);
-                    break;
-                case 1:
-                    description = decoder.readString(stream, state);
-                    break;
-                case 2:
-                    info = decoder.readMap(stream, state);
-                    break;
+                case 0 -> condition = decoder.readSymbol(stream, state);
+                case 1 -> description = decoder.readString(stream, state);
+                case 2 -> info = decoder.readMap(stream, state);
             }
         }
 

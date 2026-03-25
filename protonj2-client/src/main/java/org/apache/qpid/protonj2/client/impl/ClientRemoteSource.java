@@ -78,15 +78,15 @@ final class ClientRemoteSource implements Source {
     public ExpiryPolicy expiryPolicy() {
         if (remoteSource.getExpiryPolicy() != null) {
             switch (remoteSource.getExpiryPolicy()) {
-            case LINK_DETACH:
-                return ExpiryPolicy.LINK_CLOSE;
-            case SESSION_END:
-                return ExpiryPolicy.SESSION_CLOSE;
-            case CONNECTION_CLOSE:
-                return ExpiryPolicy.CONNECTION_CLOSE;
-            case NEVER:
-                return ExpiryPolicy.NEVER;
-            }
+                case LINK_DETACH:
+                    return ExpiryPolicy.LINK_CLOSE;
+                case SESSION_END:
+                    return ExpiryPolicy.SESSION_CLOSE;
+                case CONNECTION_CLOSE:
+                    return ExpiryPolicy.CONNECTION_CLOSE;
+                case NEVER:
+                    return ExpiryPolicy.NEVER;
+                }
         }
 
         return ExpiryPolicy.SESSION_CLOSE;

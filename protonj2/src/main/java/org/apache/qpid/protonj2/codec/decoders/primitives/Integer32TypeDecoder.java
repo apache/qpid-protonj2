@@ -107,5 +107,4 @@ public final class Integer32TypeDecoder extends AbstractPrimitiveTypeDecoder<Int
     public int readSize(InputStream stream, StreamDecoderState state) {
         return Integer.BYTES;
     }
-
 }

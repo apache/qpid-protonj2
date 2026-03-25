@@ -85,12 +85,8 @@ public final class ReceivedTypeDecoder extends AbstractDescribedListTypeDecoder<
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    received.setSectionNumber(state.getDecoder().readUnsignedInteger(buffer, state));
-                    break;
-                case 1:
-                    received.setSectionOffset(state.getDecoder().readUnsignedLong(buffer, state));
-                    break;
+                case 0 -> received.setSectionNumber(state.getDecoder().readUnsignedInteger(buffer, state));
+                case 1 -> received.setSectionOffset(state.getDecoder().readUnsignedLong(buffer, state));
             }
         }
 
@@ -130,12 +126,8 @@ public final class ReceivedTypeDecoder extends AbstractDescribedListTypeDecoder<
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    received.setSectionNumber(state.getDecoder().readUnsignedInteger(stream, state));
-                    break;
-                case 1:
-                    received.setSectionOffset(state.getDecoder().readUnsignedLong(stream, state));
-                    break;
+                case 0 -> received.setSectionNumber(state.getDecoder().readUnsignedInteger(stream, state));
+                case 1 -> received.setSectionOffset(state.getDecoder().readUnsignedLong(stream, state));
             }
         }
 

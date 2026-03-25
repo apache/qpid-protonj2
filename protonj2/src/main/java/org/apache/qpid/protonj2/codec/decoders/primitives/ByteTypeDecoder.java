@@ -107,5 +107,4 @@ public final class ByteTypeDecoder extends AbstractPrimitiveTypeDecoder<Byte> {
     public int readSize(InputStream stream, StreamDecoderState state) {
         return Byte.BYTES;
     }
-
 }

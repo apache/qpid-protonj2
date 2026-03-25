@@ -101,45 +101,19 @@ public final class PropertiesTypeDecoder extends AbstractDescribedListTypeDecode
             }
 
             switch (index) {
-                case 0:
-                    properties.setMessageId(state.getDecoder().readObject(buffer, state));
-                    break;
-                case 1:
-                    properties.setUserId(state.getDecoder().readBinary(buffer, state));
-                    break;
-                case 2:
-                    properties.setTo(state.getDecoder().readString(buffer, state));
-                    break;
-                case 3:
-                    properties.setSubject(state.getDecoder().readString(buffer, state));
-                    break;
-                case 4:
-                    properties.setReplyTo(state.getDecoder().readString(buffer, state));
-                    break;
-                case 5:
-                    properties.setCorrelationId(state.getDecoder().readObject(buffer, state));
-                    break;
-                case 6:
-                    properties.setContentType(state.getDecoder().readSymbol(buffer, state, null));
-                    break;
-                case 7:
-                    properties.setContentEncoding(state.getDecoder().readSymbol(buffer, state, null));
-                    break;
-                case 8:
-                    properties.setAbsoluteExpiryTime(state.getDecoder().readTimestamp(buffer, state, 0l));
-                    break;
-                case 9:
-                    properties.setCreationTime(state.getDecoder().readTimestamp(buffer, state, 0l));
-                    break;
-                case 10:
-                    properties.setGroupId(state.getDecoder().readString(buffer, state));
-                    break;
-                case 11:
-                    properties.setGroupSequence(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 12:
-                    properties.setReplyToGroupId(state.getDecoder().readString(buffer, state));
-                    break;
+                case 0  -> properties.setMessageId(state.getDecoder().readObject(buffer, state));
+                case 1  -> properties.setUserId(state.getDecoder().readBinary(buffer, state));
+                case 2  -> properties.setTo(state.getDecoder().readString(buffer, state));
+                case 3  -> properties.setSubject(state.getDecoder().readString(buffer, state));
+                case 4  -> properties.setReplyTo(state.getDecoder().readString(buffer, state));
+                case 5  -> properties.setCorrelationId(state.getDecoder().readObject(buffer, state));
+                case 6  -> properties.setContentType(state.getDecoder().readSymbol(buffer, state, null));
+                case 7  -> properties.setContentEncoding(state.getDecoder().readSymbol(buffer, state, null));
+                case 8  -> properties.setAbsoluteExpiryTime(state.getDecoder().readTimestamp(buffer, state, 0l));
+                case 9  -> properties.setCreationTime(state.getDecoder().readTimestamp(buffer, state, 0l));
+                case 10 -> properties.setGroupId(state.getDecoder().readString(buffer, state));
+                case 11 -> properties.setGroupSequence(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                case 12 -> properties.setReplyToGroupId(state.getDecoder().readString(buffer, state));
             }
         }
 
@@ -196,45 +170,19 @@ public final class PropertiesTypeDecoder extends AbstractDescribedListTypeDecode
             }
 
             switch (index) {
-                case 0:
-                    properties.setMessageId(state.getDecoder().readObject(stream, state));
-                    break;
-                case 1:
-                    properties.setUserId(state.getDecoder().readBinary(stream, state));
-                    break;
-                case 2:
-                    properties.setTo(state.getDecoder().readString(stream, state));
-                    break;
-                case 3:
-                    properties.setSubject(state.getDecoder().readString(stream, state));
-                    break;
-                case 4:
-                    properties.setReplyTo(state.getDecoder().readString(stream, state));
-                    break;
-                case 5:
-                    properties.setCorrelationId(state.getDecoder().readObject(stream, state));
-                    break;
-                case 6:
-                    properties.setContentType(state.getDecoder().readSymbol(stream, state, null));
-                    break;
-                case 7:
-                    properties.setContentEncoding(state.getDecoder().readSymbol(stream, state, null));
-                    break;
-                case 8:
-                    properties.setAbsoluteExpiryTime(state.getDecoder().readTimestamp(stream, state, 0l));
-                    break;
-                case 9:
-                    properties.setCreationTime(state.getDecoder().readTimestamp(stream, state, 0l));
-                    break;
-                case 10:
-                    properties.setGroupId(state.getDecoder().readString(stream, state));
-                    break;
-                case 11:
-                    properties.setGroupSequence(state.getDecoder().readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 12:
-                    properties.setReplyToGroupId(state.getDecoder().readString(stream, state));
-                    break;
+                case 0  -> properties.setMessageId(state.getDecoder().readObject(stream, state));
+                case 1  -> properties.setUserId(state.getDecoder().readBinary(stream, state));
+                case 2  -> properties.setTo(state.getDecoder().readString(stream, state));
+                case 3  -> properties.setSubject(state.getDecoder().readString(stream, state));
+                case 4  -> properties.setReplyTo(state.getDecoder().readString(stream, state));
+                case 5  -> properties.setCorrelationId(state.getDecoder().readObject(stream, state));
+                case 6  -> properties.setContentType(state.getDecoder().readSymbol(stream, state, null));
+                case 7  -> properties.setContentEncoding(state.getDecoder().readSymbol(stream, state, null));
+                case 8  -> properties.setAbsoluteExpiryTime(state.getDecoder().readTimestamp(stream, state, 0l));
+                case 9  -> properties.setCreationTime(state.getDecoder().readTimestamp(stream, state, 0l));
+                case 10 -> properties.setGroupId(state.getDecoder().readString(stream, state));
+                case 11 -> properties.setGroupSequence(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                case 12 -> properties.setReplyToGroupId(state.getDecoder().readString(stream, state));
             }
         }
 

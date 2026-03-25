@@ -91,12 +91,8 @@ public final class TransactionStateTypeDecoder extends AbstractDescribedListType
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    transactionalState.setTxnId(state.getDecoder().readBinary(buffer, state));
-                    break;
-                case 1:
-                    transactionalState.setOutcome((Outcome) state.getDecoder().readObject(buffer, state));
-                    break;
+                case 0 -> transactionalState.setTxnId(state.getDecoder().readBinary(buffer, state));
+                case 1 -> transactionalState.setOutcome((Outcome) state.getDecoder().readObject(buffer, state));
             }
         }
 
@@ -140,12 +136,8 @@ public final class TransactionStateTypeDecoder extends AbstractDescribedListType
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    transactionalState.setTxnId(state.getDecoder().readBinary(stream, state));
-                    break;
-                case 1:
-                    transactionalState.setOutcome((Outcome) state.getDecoder().readObject(stream, state));
-                    break;
+                case 0 -> transactionalState.setTxnId(state.getDecoder().readBinary(stream, state));
+                case 1 -> transactionalState.setOutcome((Outcome) state.getDecoder().readObject(stream, state));
             }
         }
 

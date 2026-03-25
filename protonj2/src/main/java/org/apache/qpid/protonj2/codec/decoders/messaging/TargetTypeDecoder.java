@@ -92,30 +92,16 @@ public final class TargetTypeDecoder extends AbstractDescribedListTypeDecoder<Ta
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    target.setAddress(state.getDecoder().readString(buffer, state));
-                    break;
-                case 1:
-                    final long durability = state.getDecoder().readUnsignedInteger(buffer, state, 0);
-                    target.setDurable(TerminusDurability.valueOf(durability));
-                    break;
-                case 2:
+                case 0 -> target.setAddress(state.getDecoder().readString(buffer, state));
+                case 1 -> target.setDurable(TerminusDurability.valueOf(state.getDecoder().readUnsignedInteger(buffer, state, 0)));
+                case 2 -> {
                     final Symbol expiryPolicy = state.getDecoder().readSymbol(buffer, state);
                     target.setExpiryPolicy(expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : TerminusExpiryPolicy.valueOf(expiryPolicy));
-                    break;
-                case 3:
-                    final UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(buffer, state);
-                    target.setTimeout(timeout == null ? UnsignedInteger.ZERO : timeout);
-                    break;
-                case 4:
-                    target.setDynamic(state.getDecoder().readBoolean(buffer, state, false));
-                    break;
-                case 5:
-                    target.setDynamicNodeProperties(state.getDecoder().readMap(buffer, state));
-                    break;
-                case 6:
-                    target.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
-                    break;
+                }
+                case 3 -> target.setTimeout(state.getDecoder().readUnsignedInteger(buffer, state, UnsignedInteger.ZERO));
+                case 4 -> target.setDynamic(state.getDecoder().readBoolean(buffer, state, false));
+                case 5 -> target.setDynamicNodeProperties(state.getDecoder().readMap(buffer, state));
+                case 6 -> target.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
             }
         }
 
@@ -158,30 +144,16 @@ public final class TargetTypeDecoder extends AbstractDescribedListTypeDecoder<Ta
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    target.setAddress(state.getDecoder().readString(stream, state));
-                    break;
-                case 1:
-                    final long durability = state.getDecoder().readUnsignedInteger(stream, state, 0);
-                    target.setDurable(TerminusDurability.valueOf(durability));
-                    break;
-                case 2:
+                case 0 -> target.setAddress(state.getDecoder().readString(stream, state));
+                case 1 -> target.setDurable(TerminusDurability.valueOf(state.getDecoder().readUnsignedInteger(stream, state, 0)));
+                case 2 -> {
                     final Symbol expiryPolicy = state.getDecoder().readSymbol(stream, state);
                     target.setExpiryPolicy(expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : TerminusExpiryPolicy.valueOf(expiryPolicy));
-                    break;
-                case 3:
-                    final UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(stream, state);
-                    target.setTimeout(timeout == null ? UnsignedInteger.ZERO : timeout);
-                    break;
-                case 4:
-                    target.setDynamic(state.getDecoder().readBoolean(stream, state, false));
-                    break;
-                case 5:
-                    target.setDynamicNodeProperties(state.getDecoder().readMap(stream, state));
-                    break;
-                case 6:
-                    target.setCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
-                    break;
+                }
+                case 3 -> target.setTimeout(state.getDecoder().readUnsignedInteger(stream, state, UnsignedInteger.ZERO));
+                case 4 -> target.setDynamic(state.getDecoder().readBoolean(stream, state, false));
+                case 5 -> target.setDynamicNodeProperties(state.getDecoder().readMap(stream, state));
+                case 6 -> target.setCapabilities(state.getDecoder().readMultiple(stream, state, Symbol.class));
             }
         }
 

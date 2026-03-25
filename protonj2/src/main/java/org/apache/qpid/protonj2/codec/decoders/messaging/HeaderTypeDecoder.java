@@ -101,21 +101,11 @@ public final class HeaderTypeDecoder extends AbstractDescribedListTypeDecoder<He
             }
 
             switch (index) {
-                case 0:
-                    header.setDurable(state.getDecoder().readBoolean(buffer, state, false));
-                    break;
-                case 1:
-                    header.setPriority(state.getDecoder().readUnsignedByte(buffer, state, Header.DEFAULT_PRIORITY));
-                    break;
-                case 2:
-                    header.setTimeToLive(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 3:
-                    header.setFirstAcquirer(state.getDecoder().readBoolean(buffer, state, false));
-                    break;
-                case 4:
-                    header.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
-                    break;
+                case 0 -> header.setDurable(state.getDecoder().readBoolean(buffer, state, false));
+                case 1 -> header.setPriority(state.getDecoder().readUnsignedByte(buffer, state, Header.DEFAULT_PRIORITY));
+                case 2 -> header.setTimeToLive(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
+                case 3 -> header.setFirstAcquirer(state.getDecoder().readBoolean(buffer, state, false));
+                case 4 -> header.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
             }
         }
 
@@ -172,21 +162,11 @@ public final class HeaderTypeDecoder extends AbstractDescribedListTypeDecoder<He
             }
 
             switch (index) {
-                case 0:
-                    header.setDurable(state.getDecoder().readBoolean(stream, state, false));
-                    break;
-                case 1:
-                    header.setPriority(state.getDecoder().readUnsignedByte(stream, state, Header.DEFAULT_PRIORITY));
-                    break;
-                case 2:
-                    header.setTimeToLive(state.getDecoder().readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 3:
-                    header.setFirstAcquirer(state.getDecoder().readBoolean(stream, state, false));
-                    break;
-                case 4:
-                    header.setDeliveryCount(state.getDecoder().readUnsignedInteger(stream, state, 0l));
-                    break;
+                case 0 -> header.setDurable(state.getDecoder().readBoolean(stream, state, false));
+                case 1 -> header.setPriority(state.getDecoder().readUnsignedByte(stream, state, Header.DEFAULT_PRIORITY));
+                case 2 -> header.setTimeToLive(state.getDecoder().readUnsignedInteger(stream, state, 0l));
+                case 3 -> header.setFirstAcquirer(state.getDecoder().readBoolean(stream, state, false));
+                case 4 -> header.setDeliveryCount(state.getDecoder().readUnsignedInteger(stream, state, 0l));
             }
         }
 

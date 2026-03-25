@@ -37,6 +37,7 @@ import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
 import org.apache.qpid.protonj2.codec.StreamDecoderState;
 import org.apache.qpid.protonj2.types.UnknownDescribedType;
+import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.UnsignedLong;
 import org.apache.qpid.protonj2.types.messaging.Accepted;
 import org.junit.jupiter.api.Test;
@@ -251,6 +252,28 @@ public class ProtonStreamDecoderTest extends CodecTestSupport {
         assertEquals(127, streamDecoder.readUnsignedInteger(stream, streamDecoderState, 32));
         assertEquals(255, streamDecoder.readUnsignedInteger(stream, streamDecoderState, 32));
         assertEquals(32, streamDecoder.readUnsignedInteger(stream, streamDecoderState, 32));
+    }
+
+    @Test
+    public void testReadUnsignedIntegerTypesAsObject() throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        buffer.writeByte(EncodingCodes.UINT0);
+        buffer.writeByte(EncodingCodes.SMALLUINT);
+        buffer.writeByte((byte) 127);
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) 255);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        InputStream stream = new ProtonBufferInputStream(buffer);
+
+        assertEquals(UnsignedInteger.valueOf(0), streamDecoder.readUnsignedInteger(stream, streamDecoderState, UnsignedInteger.valueOf(32)));
+        assertEquals(UnsignedInteger.valueOf(127), streamDecoder.readUnsignedInteger(stream, streamDecoderState, UnsignedInteger.valueOf(32)));
+        assertEquals(UnsignedInteger.valueOf(255), streamDecoder.readUnsignedInteger(stream, streamDecoderState, UnsignedInteger.valueOf(32)));
+        assertEquals(UnsignedInteger.valueOf(32), streamDecoder.readUnsignedInteger(stream, streamDecoderState, UnsignedInteger.valueOf(32)));
     }
 
     @Test

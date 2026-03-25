@@ -111,48 +111,20 @@ public final class AttachTypeDecoder extends AbstractDescribedListTypeDecoder<At
             }
 
             switch (index) {
-                case 0:
-                    attach.setName(decoder.readString(buffer, state));
-                    break;
-                case 1:
-                    attach.setHandle(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 2:
-                    attach.setRole(decoder.readBoolean(buffer, state, false) ? Role.RECEIVER : Role.SENDER);
-                    break;
-                case 3:
-                    attach.setSenderSettleMode(SenderSettleMode.valueOf(decoder.readUnsignedByte(buffer, state, (byte) 2)));
-                    break;
-                case 4:
-                    attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(decoder.readUnsignedByte(buffer, state, (byte) 0)));
-                    break;
-                case 5:
-                    attach.setSource(decoder.readObject(buffer, state, Source.class));
-                    break;
-                case 6:
-                    attach.setTarget(decoder.readObject(buffer, state, Terminus.class));
-                    break;
-                case 7:
-                    attach.setUnsettled(decoder.readMap(buffer, state));
-                    break;
-                case 8:
-                    attach.setIncompleteUnsettled(decoder.readBoolean(buffer, state, true));
-                    break;
-                case 9:
-                    attach.setInitialDeliveryCount(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 10:
-                    attach.setMaxMessageSize(decoder.readUnsignedLong(buffer, state));
-                    break;
-                case 11:
-                    attach.setOfferedCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
-                    break;
-                case 12:
-                    attach.setDesiredCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
-                    break;
-                case 13:
-                    attach.setProperties(decoder.readMap(buffer, state));
-                    break;
+                case 0  -> attach.setName(decoder.readString(buffer, state));
+                case 1  -> attach.setHandle(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 2  -> attach.setRole(decoder.readBoolean(buffer, state, false) ? Role.RECEIVER : Role.SENDER);
+                case 3  -> attach.setSenderSettleMode(SenderSettleMode.valueOf(decoder.readUnsignedByte(buffer, state, (byte) 2)));
+                case 4  -> attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(decoder.readUnsignedByte(buffer, state, (byte) 0)));
+                case 5  -> attach.setSource(decoder.readObject(buffer, state, Source.class));
+                case 6  -> attach.setTarget(decoder.readObject(buffer, state, Terminus.class));
+                case 7  -> attach.setUnsettled(decoder.readMap(buffer, state));
+                case 8  -> attach.setIncompleteUnsettled(decoder.readBoolean(buffer, state, true));
+                case 9  -> attach.setInitialDeliveryCount(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 10 -> attach.setMaxMessageSize(decoder.readUnsignedLong(buffer, state));
+                case 11 -> attach.setOfferedCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
+                case 12 -> attach.setDesiredCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
+                case 13 -> attach.setProperties(decoder.readMap(buffer, state));
             }
         }
 
@@ -213,48 +185,20 @@ public final class AttachTypeDecoder extends AbstractDescribedListTypeDecoder<At
             }
 
             switch (index) {
-                case 0:
-                    attach.setName(decoder.readString(stream, state));
-                    break;
-                case 1:
-                    attach.setHandle(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 2:
-                    attach.setRole(decoder.readBoolean(stream, state, false) ? Role.RECEIVER : Role.SENDER);
-                    break;
-                case 3:
-                    attach.setSenderSettleMode(SenderSettleMode.valueOf(decoder.readUnsignedByte(stream, state, (byte) 2)));
-                    break;
-                case 4:
-                    attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(decoder.readUnsignedByte(stream, state, (byte) 0)));
-                    break;
-                case 5:
-                    attach.setSource(decoder.readObject(stream, state, Source.class));
-                    break;
-                case 6:
-                    attach.setTarget(decoder.readObject(stream, state, Terminus.class));
-                    break;
-                case 7:
-                    attach.setUnsettled(decoder.readMap(stream, state));
-                    break;
-                case 8:
-                    attach.setIncompleteUnsettled(decoder.readBoolean(stream, state, true));
-                    break;
-                case 9:
-                    attach.setInitialDeliveryCount(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 10:
-                    attach.setMaxMessageSize(decoder.readUnsignedLong(stream, state));
-                    break;
-                case 11:
-                    attach.setOfferedCapabilities(decoder.readMultiple(stream, state, Symbol.class));
-                    break;
-                case 12:
-                    attach.setDesiredCapabilities(decoder.readMultiple(stream, state, Symbol.class));
-                    break;
-                case 13:
-                    attach.setProperties(decoder.readMap(stream, state));
-                    break;
+                case 0  -> attach.setName(decoder.readString(stream, state));
+                case 1  -> attach.setHandle(decoder.readUnsignedInteger(stream, state, 0l));
+                case 2  -> attach.setRole(decoder.readBoolean(stream, state, false) ? Role.RECEIVER : Role.SENDER);
+                case 3  -> attach.setSenderSettleMode(SenderSettleMode.valueOf(decoder.readUnsignedByte(stream, state, (byte) 2)));
+                case 4  -> attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(decoder.readUnsignedByte(stream, state, (byte) 0)));
+                case 5  -> attach.setSource(decoder.readObject(stream, state, Source.class));
+                case 6  -> attach.setTarget(decoder.readObject(stream, state, Terminus.class));
+                case 7  -> attach.setUnsettled(decoder.readMap(stream, state));
+                case 8  -> attach.setIncompleteUnsettled(decoder.readBoolean(stream, state, true));
+                case 9  -> attach.setInitialDeliveryCount(decoder.readUnsignedInteger(stream, state, 0l));
+                case 10 -> attach.setMaxMessageSize(decoder.readUnsignedLong(stream, state));
+                case 11 -> attach.setOfferedCapabilities(decoder.readMultiple(stream, state, Symbol.class));
+                case 12 -> attach.setDesiredCapabilities(decoder.readMultiple(stream, state, Symbol.class));
+                case 13 -> attach.setProperties(decoder.readMap(stream, state));
             }
         }
 
@@ -262,13 +206,10 @@ public final class AttachTypeDecoder extends AbstractDescribedListTypeDecoder<At
     }
 
     private String errorForMissingRequiredFields(int present) {
-        switch (present) {
-            case 2:
-                return "The role field cannot be omitted from the Attach";
-            case 1:
-                return "The handle field cannot be omitted from the Attach";
-            default:
-                return "The name field cannot be omitted from the Attach";
-        }
+        return switch (present) {
+            case 2  -> "The role field cannot be omitted from the Attach";
+            case 1  -> "The handle field cannot be omitted from the Attach";
+            default -> "The name field cannot be omitted from the Attach";
+        };
     }
 }

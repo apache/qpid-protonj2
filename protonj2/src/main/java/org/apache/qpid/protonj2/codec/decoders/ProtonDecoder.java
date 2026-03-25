@@ -580,6 +580,24 @@ public final class ProtonDecoder implements Decoder {
     }
 
     @Override
+    public UnsignedInteger readUnsignedInteger(ProtonBuffer buffer, DecoderState state, UnsignedInteger defaultValue) throws DecodeException {
+        final byte encodingCode = readEncodingCode(buffer);
+
+        switch (encodingCode) {
+            case EncodingCodes.UINT0:
+                return UnsignedInteger.ZERO;
+            case EncodingCodes.SMALLUINT:
+                return UnsignedInteger.valueOf((buffer.readByte()) & 0xff);
+            case EncodingCodes.UINT:
+                return UnsignedInteger.valueOf((buffer.readInt()));
+            case EncodingCodes.NULL:
+                return defaultValue;
+            default:
+                throw new DecodeException("Expected Unsigned Integer type but found encoding: " + EncodingCodes.toString(encodingCode));
+        }
+    }
+
+    @Override
     public int readUnsignedInteger(ProtonBuffer buffer, DecoderState state, int defaultValue) throws DecodeException {
         final byte encodingCode = readEncodingCode(buffer);
 
@@ -927,7 +945,7 @@ public final class ProtonDecoder implements Decoder {
     }
 
     private TypeDecoder<?> handleUnknownDescribedType(final Object descriptor) {
-        TypeDecoder<?> typeDecoder = new UnknownDescribedTypeDecoder() {
+        final UnknownDescribedTypeDecoder typeDecoder = new UnknownDescribedTypeDecoder() {
 
             @Override
             public Object getDescriptor() {
@@ -935,7 +953,7 @@ public final class ProtonDecoder implements Decoder {
             }
         };
 
-        describedTypeDecoders.put(descriptor, (UnknownDescribedTypeDecoder) typeDecoder);
+        describedTypeDecoders.put(descriptor, typeDecoder);
 
         return typeDecoder;
     }

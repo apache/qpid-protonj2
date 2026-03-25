@@ -620,8 +620,8 @@ public class AMQPTestDriver implements Consumer<ByteBuffer> {
     public void sendAMQPFrame(int channel, DescribedType performative, ByteBuffer payload, boolean splitWrite) {
         LOG.trace("{} Sending performative: {}", driverName, performative);
 
-        if (performative instanceof PerformativeDescribedType) {
-            switch (((PerformativeDescribedType) performative).getPerformativeType()) {
+        if (performative instanceof PerformativeDescribedType describedType) {
+            switch (describedType.getPerformativeType()) {
                 case OPEN:
                     localOpen = (Open) performative;
                 default:

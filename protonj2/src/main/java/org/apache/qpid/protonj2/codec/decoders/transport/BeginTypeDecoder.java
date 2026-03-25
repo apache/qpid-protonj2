@@ -106,30 +106,14 @@ public final class BeginTypeDecoder extends AbstractDescribedListTypeDecoder<Beg
             }
 
             switch (index) {
-                case 0:
-                    begin.setRemoteChannel(decoder.readUnsignedShort(buffer, state, 0));
-                    break;
-                case 1:
-                    begin.setNextOutgoingId(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 2:
-                    begin.setIncomingWindow(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 3:
-                    begin.setOutgoingWindow(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 4:
-                    begin.setHandleMax(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 5:
-                    begin.setOfferedCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
-                    break;
-                case 6:
-                    begin.setDesiredCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
-                    break;
-                case 7:
-                    begin.setProperties(decoder.readMap(buffer, state));
-                    break;
+                case 0 -> begin.setRemoteChannel(decoder.readUnsignedShort(buffer, state, 0));
+                case 1 -> begin.setNextOutgoingId(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 2 -> begin.setIncomingWindow(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 3 -> begin.setOutgoingWindow(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 4 -> begin.setHandleMax(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 5 -> begin.setOfferedCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
+                case 6 -> begin.setDesiredCapabilities(decoder.readMultiple(buffer, state, Symbol.class));
+                case 7 -> begin.setProperties(decoder.readMap(buffer, state));
             }
         }
 
@@ -190,30 +174,14 @@ public final class BeginTypeDecoder extends AbstractDescribedListTypeDecoder<Beg
             }
 
             switch (index) {
-                case 0:
-                    begin.setRemoteChannel(decoder.readUnsignedShort(stream, state, 0));
-                    break;
-                case 1:
-                    begin.setNextOutgoingId(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 2:
-                    begin.setIncomingWindow(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 3:
-                    begin.setOutgoingWindow(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 4:
-                    begin.setHandleMax(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 5:
-                    begin.setOfferedCapabilities(decoder.readMultiple(stream, state, Symbol.class));
-                    break;
-                case 6:
-                    begin.setDesiredCapabilities(decoder.readMultiple(stream, state, Symbol.class));
-                    break;
-                case 7:
-                    begin.setProperties(decoder.readMap(stream, state));
-                    break;
+                case 0 -> begin.setRemoteChannel(decoder.readUnsignedShort(stream, state, 0));
+                case 1 -> begin.setNextOutgoingId(decoder.readUnsignedInteger(stream, state, 0l));
+                case 2 -> begin.setIncomingWindow(decoder.readUnsignedInteger(stream, state, 0l));
+                case 3 -> begin.setOutgoingWindow(decoder.readUnsignedInteger(stream, state, 0l));
+                case 4 -> begin.setHandleMax(decoder.readUnsignedInteger(stream, state, 0l));
+                case 5 -> begin.setOfferedCapabilities(decoder.readMultiple(stream, state, Symbol.class));
+                case 6 -> begin.setDesiredCapabilities(decoder.readMultiple(stream, state, Symbol.class));
+                case 7 -> begin.setProperties(decoder.readMap(stream, state));
             }
         }
 
@@ -221,13 +189,10 @@ public final class BeginTypeDecoder extends AbstractDescribedListTypeDecoder<Beg
     }
 
     private String errorForMissingRequiredFields(int present) {
-        switch (present) {
-            case 3:
-                return "The outgoing-window field cannot be omitted from the Begin";
-            case 2:
-                return "The incoming-window field cannot be omitted from the Begin";
-            default:
-                return "The next-outgoing-id field cannot be omitted from the Begin";
-        }
+        return switch (present) {
+            case 3  -> "The outgoing-window field cannot be omitted from the Begin";
+            case 2  -> "The incoming-window field cannot be omitted from the Begin";
+            default -> "The next-outgoing-id field cannot be omitted from the Begin";
+        };
     }
 }

@@ -93,9 +93,7 @@ public final class RejectedTypeDecoder extends AbstractDescribedListTypeDecoder<
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    rejected.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
-                    break;
+                case 0 -> rejected.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
             }
         }
 
@@ -139,9 +137,7 @@ public final class RejectedTypeDecoder extends AbstractDescribedListTypeDecoder<
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    rejected.setError(state.getDecoder().readObject(stream, state, ErrorCondition.class));
-                    break;
+                case 0 -> rejected.setError(state.getDecoder().readObject(stream, state, ErrorCondition.class));
             }
         }
 

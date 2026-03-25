@@ -91,12 +91,8 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedListTypeDecod
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    outcome.setCode(SaslCode.valueOf(state.getDecoder().readUnsignedByte(buffer, state)));
-                    break;
-                case 1:
-                    outcome.setAdditionalData(state.getDecoder().readBinaryAsBuffer(buffer, state));
-                    break;
+                case 0 -> outcome.setCode(SaslCode.valueOf(state.getDecoder().readUnsignedByte(buffer, state)));
+                case 1 -> outcome.setAdditionalData(state.getDecoder().readBinaryAsBuffer(buffer, state));
             }
         }
 
@@ -140,12 +136,8 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedListTypeDecod
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
-                case 0:
-                    outcome.setCode(SaslCode.valueOf(state.getDecoder().readUnsignedByte(stream, state)));
-                    break;
-                case 1:
-                    outcome.setAdditionalData(state.getDecoder().readBinaryAsBuffer(stream, state));
-                    break;
+                case 0 -> outcome.setCode(SaslCode.valueOf(state.getDecoder().readUnsignedByte(stream, state)));
+                case 1 -> outcome.setAdditionalData(state.getDecoder().readBinaryAsBuffer(stream, state));
             }
         }
 

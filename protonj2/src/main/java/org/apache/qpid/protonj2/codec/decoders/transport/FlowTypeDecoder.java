@@ -107,39 +107,17 @@ public final class FlowTypeDecoder extends AbstractDescribedListTypeDecoder<Flow
             }
 
             switch (index) {
-                case 0:
-                    flow.setNextIncomingId(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 1:
-                    flow.setIncomingWindow(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 2:
-                    flow.setNextOutgoingId(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 3:
-                    flow.setOutgoingWindow(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 4:
-                    flow.setHandle(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 5:
-                    flow.setDeliveryCount(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 6:
-                    flow.setLinkCredit(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 7:
-                    flow.setAvailable(decoder.readUnsignedInteger(buffer, state, 0l));
-                    break;
-                case 8:
-                    flow.setDrain(decoder.readBoolean(buffer, state, false));
-                    break;
-                case 9:
-                    flow.setEcho(decoder.readBoolean(buffer, state, false));
-                    break;
-                case 10:
-                    flow.setProperties(decoder.readMap(buffer, state));
-                    break;
+                case 0  -> flow.setNextIncomingId(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 1  -> flow.setIncomingWindow(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 2  -> flow.setNextOutgoingId(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 3  -> flow.setOutgoingWindow(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 4  -> flow.setHandle(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 5  -> flow.setDeliveryCount(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 6  -> flow.setLinkCredit(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 7  -> flow.setAvailable(decoder.readUnsignedInteger(buffer, state, 0l));
+                case 8  -> flow.setDrain(decoder.readBoolean(buffer, state, false));
+                case 9  -> flow.setEcho(decoder.readBoolean(buffer, state, false));
+                case 10 -> flow.setProperties(decoder.readMap(buffer, state));
             }
         }
 
@@ -201,39 +179,17 @@ public final class FlowTypeDecoder extends AbstractDescribedListTypeDecoder<Flow
             }
 
             switch (index) {
-                case 0:
-                    flow.setNextIncomingId(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 1:
-                    flow.setIncomingWindow(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 2:
-                    flow.setNextOutgoingId(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 3:
-                    flow.setOutgoingWindow(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 4:
-                    flow.setHandle(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 5:
-                    flow.setDeliveryCount(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 6:
-                    flow.setLinkCredit(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 7:
-                    flow.setAvailable(decoder.readUnsignedInteger(stream, state, 0l));
-                    break;
-                case 8:
-                    flow.setDrain(decoder.readBoolean(stream, state, false));
-                    break;
-                case 9:
-                    flow.setEcho(decoder.readBoolean(stream, state, false));
-                    break;
-                case 10:
-                    flow.setProperties(decoder.readMap(stream, state));
-                    break;
+                case 0  -> flow.setNextIncomingId(decoder.readUnsignedInteger(stream, state, 0l));
+                case 1  -> flow.setIncomingWindow(decoder.readUnsignedInteger(stream, state, 0l));
+                case 2  -> flow.setNextOutgoingId(decoder.readUnsignedInteger(stream, state, 0l));
+                case 3  -> flow.setOutgoingWindow(decoder.readUnsignedInteger(stream, state, 0l));
+                case 4  -> flow.setHandle(decoder.readUnsignedInteger(stream, state, 0l));
+                case 5  -> flow.setDeliveryCount(decoder.readUnsignedInteger(stream, state, 0l));
+                case 6  -> flow.setLinkCredit(decoder.readUnsignedInteger(stream, state, 0l));
+                case 7  -> flow.setAvailable(decoder.readUnsignedInteger(stream, state, 0l));
+                case 8  -> flow.setDrain(decoder.readBoolean(stream, state, false));
+                case 9  -> flow.setEcho(decoder.readBoolean(stream, state, false));
+                case 10 -> flow.setProperties(decoder.readMap(stream, state));
             }
         }
 
@@ -241,13 +197,10 @@ public final class FlowTypeDecoder extends AbstractDescribedListTypeDecoder<Flow
     }
 
     private String errorForMissingRequiredFields(int present) {
-        switch (present) {
-            case 3:
-                return "The outgoing-window field cannot be omitted from the Flow";
-            case 2:
-                return "The next-outgoing-id field cannot be omitted from the Flow";
-            default:
-                return "The incoming-window field cannot be omitted from the Flow";
-        }
+        return switch (present) {
+            case 3  -> "The outgoing-window field cannot be omitted from the Flow";
+            case 2  -> "The next-outgoing-id field cannot be omitted from the Flow";
+            default -> "The incoming-window field cannot be omitted from the Flow";
+        };
     }
 }

@@ -604,6 +604,24 @@ public final class ProtonStreamDecoder implements StreamDecoder {
     }
 
     @Override
+    public UnsignedInteger readUnsignedInteger(InputStream stream, StreamDecoderState state, UnsignedInteger defaultValue) throws DecodeException {
+        final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
+
+        switch (encodingCode) {
+            case EncodingCodes.UINT0:
+                return UnsignedInteger.ZERO;
+            case EncodingCodes.SMALLUINT:
+                return UnsignedInteger.valueOf(ProtonStreamUtils.readByte(stream) & 0xff);
+            case EncodingCodes.UINT:
+                return UnsignedInteger.valueOf(ProtonStreamUtils.readInt(stream));
+            case EncodingCodes.NULL:
+                return defaultValue;
+            default:
+                throw new DecodeException("Expected Unsigned Integer type but found encoding: " + EncodingCodes.toString(encodingCode));
+        }
+    }
+
+    @Override
     public int readUnsignedInteger(InputStream stream, StreamDecoderState state, int defaultValue) throws DecodeException {
         final byte encodingCode = ProtonStreamUtils.readEncodingCode(stream);
 
@@ -943,7 +961,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
     }
 
     private StreamTypeDecoder<?> handleUnknownDescribedType(final Object descriptor) {
-        StreamTypeDecoder<?> streamTypeDecoder = new UnknownDescribedTypeDecoder() {
+        final UnknownDescribedTypeDecoder streamTypeDecoder = new UnknownDescribedTypeDecoder() {
 
             @Override
             public Object getDescriptor() {
@@ -951,7 +969,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
             }
         };
 
-        describedTypeDecoders.put(descriptor, (UnknownDescribedTypeDecoder) streamTypeDecoder);
+        describedTypeDecoders.put(descriptor, streamTypeDecoder);
 
         return streamTypeDecoder;
     }
