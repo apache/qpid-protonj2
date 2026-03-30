@@ -466,6 +466,71 @@ public abstract class ScriptWriter {
     }
 
     /**
+     * Creates all the scripted elements needed for a successful SASL OAUTHBEARER
+     * connection. This is generally used with a server type peer which will be
+     * accepting client connections.
+     * <p>
+     * For this exchange the SASL header is expected which is responded to with the
+     * corresponding SASL header and an immediate SASL mechanisms frame that only
+     * advertises OAUTHBEARER as the mechanism.  It is expected that the remote will
+     * send a SASL init with the OAUTHBEARER mechanism selected and the outcome is
+     * predefined as success.  Once done the expectation is added for the AMQP
+     * header to arrive and a header response will be sent.
+     * <p>
+     * The host value will be set in the response is checked if the provided value is
+     * non-null and is not an empty string.
+     *
+     * @param username
+     *      The user name that is expected in the SASL initial response.
+     * @param token
+     *      The token that is expected in the SASL initial response.
+     * @param host
+     * 		The optional host value to add as the host portion of the initial response as the 'host' entry.
+     */
+    public void expectSaslOauthBearerConnect(String username, String token, String host) {
+        expectSaslOauthBearerConnect(username, token, host, 0, (String[]) null);
+    }
+
+    /**
+     * Creates all the scripted elements needed for a successful SASL OAUTHBEARER
+     * connection. This is generally used with a server type peer which will be
+     * accepting client connections.
+     * <p>
+     * For this exchange the SASL header is expected which is responded to with the
+     * corresponding SASL header and an immediate SASL mechanisms frame that only
+     * advertises OAUTHBEARER as the mechanism.  It is expected that the remote will
+     * send a SASL init with the OAUTHBEARER mechanism selected and the outcome is
+     * predefined as success.  Once done the expectation is added for the AMQP
+     * header to arrive and a header response will be sent.
+     * <p>
+     * The host value will be set in the response is checked if the provided value is
+     * non-null and is not an empty string. The port value is checked if the provided
+     * value is greater than zero.
+     *
+     * @param username
+     *      The user name that is expected in the SASL initial response.
+     * @param token
+     *      The token that is expected in the SASL initial response.
+     * @param host
+     * 		The optional host value to add as the host portion of the initial response as the 'host' entry.
+     * @param port
+     * 		The optional port value to apply to the initial response as the 'port' entry.
+     * @param offeredMechanisms
+     * 		The server offered mechanisms to provide, if null then only OAUTHBEARER is offered.
+     */
+    public void expectSaslOauthBearerConnect(String username, String token, String host, int port, String... offeredMechanisms) {
+        expectSASLHeader().respondWithSASLHeader();
+        if (offeredMechanisms == null || offeredMechanisms.length == 0) {
+            remoteSaslMechanisms().withMechanisms("OAUTHBEARER").queue();
+        } else {
+            remoteSaslMechanisms().withMechanisms(offeredMechanisms).queue();
+        }
+        expectSaslInit().withMechanism("OAUTHBEARER").withInitialResponse(saslOauthBearerInitialResponse(username, token, host, port));
+        remoteSaslOutcome().withCode(SaslCode.OK).queue();
+        expectAMQPHeader().respondWithAMQPHeader();
+    }
+
+    /**
      * Creates all the scripted elements needed for a failed SASL Plain
      * connection. This is generally used with a server type peer which will be
      * accepting client connections.
@@ -643,6 +708,66 @@ public abstract class ScriptWriter {
         remoteSASLHeader().now();
     }
 
+    /**
+     * Used to trigger the sequence of frames that would occur during a typical client
+     * connection to a remote peer with SASL OAUTHBEARER. This should be called after a
+     * client connects to the remote as the fired frames would fail until there is a
+     * connection in place.
+     *
+     * @param username
+     *      The token that is expected in the SASL OAUTHBEARER initial response.
+     * @param token
+     *      The password that is expected in the SASL OAUTHBEARER initial response.
+     */
+    public void triggerClientSaslOAuthBearerConnect(String username, String token) {
+        expectSASLHeader();
+        expectSaslMechanisms().withSaslServerMechanism("OAUTHBEARER");
+        remoteSaslInit().withMechanism("OAUTHBEARER")
+                        .withInitialResponse(saslOauthBearerInitialResponse(username, token, null, 0)).queue();
+        expectSaslOutcome().withCode(SaslCode.OK);
+        remoteAMQPHeader().queue();
+        expectAMQPHeader();
+
+        // This trigger the exchange of frames.
+        remoteSASLHeader().now();
+    }
+
+    /**
+     * Used to trigger the sequence of frames that would occur during a typical client
+     * connection to a remote peer with SASL OAUTHBEARER. This should be called after a
+     * client connects to the remote as the fired frames would fail until there is a
+     * connection in place.
+     *
+     * @param username
+     *      The user name that is expected in the SASL OAUTHBEARER initial response.
+     * @param token
+     *      The token that is expected in the SASL OAUTHBEARER initial response.
+     * @param host
+     * 		The value to write into the 'host' entry in the response (if null no host is added).
+     * @param port
+     * 		The value to write into the 'port' entry in the response (if is zero or negative no port is added).
+     * @param offeredMechanisms
+     *      The set of mechanisms that the server should offer in the SASL Mechanisms frame
+     */
+    public void triggerClientSaslOAuthBearerConnect(String username, String token, String host, int port, String... offeredMechanisms) {
+        expectSASLHeader();
+
+        if (offeredMechanisms == null || offeredMechanisms.length == 0) {
+            expectSaslMechanisms().withSaslServerMechanism("OAUTHBEARER");
+        } else {
+            expectSaslMechanisms().withSaslServerMechanisms(offeredMechanisms);
+        }
+
+        remoteSaslInit().withMechanism("OAUTHBEARER")
+                        .withInitialResponse(saslOauthBearerInitialResponse(username, token, host, port)).queue();
+        expectSaslOutcome().withCode(SaslCode.OK);
+        remoteAMQPHeader().queue();
+        expectAMQPHeader();
+
+        // This trigger the exchange of frames.
+        remoteSASLHeader().now();
+    }
+
     //----- Utility methods for tests writing raw scripted SASL tests
 
     public byte[] saslPlainInitialResponse(String username, String password) {
@@ -669,6 +794,29 @@ public abstract class ScriptWriter {
         initialResponse[initialResponse.length - 1] = 1;
 
         return initialResponse;
+    }
+
+    public byte[] saslOauthBearerInitialResponse(String username, String token, String host, int port) {
+        final StringBuilder builder = new StringBuilder();
+        final char SEPARATOR = '\u0001';
+
+        if (username != null && !username.isBlank()) {
+            builder.append("n,a=").append(username).append(",").append(SEPARATOR);
+        } else {
+            builder.append("n,,").append(SEPARATOR);
+        }
+
+        if (host != null && !host.isBlank()) {
+            builder.append("host=").append(host).append(SEPARATOR);
+        }
+
+        if (port > 0) {
+            builder.append("port=").append(port).append(SEPARATOR);
+        }
+
+        builder.append("auth=Bearer ").append(token).append(SEPARATOR).append(SEPARATOR);
+
+        return builder.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     //----- Smart Scripted Response Actions

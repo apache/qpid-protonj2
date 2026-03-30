@@ -199,6 +199,118 @@ public class SaslConnectionTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testSaslOauthBearerConnection() throws Exception {
+        final String username = "user";
+        final String password = "eyB1c2VyPSJ1c2VyIiB9";
+
+        final ProtonTestServerOptions serverOptions = serverOptions().setSecure(true)
+                                                                     .setKeyStoreLocation(BROKER_JKS_KEYSTORE)
+                                                                     .setKeyStorePassword(PASSWORD)
+                                                                     .setVerifyHost(false);
+
+        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
+            peer.expectSaslOauthBearerConnect(username, password, "localhost");
+            peer.expectOpen().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ConnectionOptions clientOptions = connectionOptions();
+            clientOptions.user(username);
+            clientOptions.password(password);
+            clientOptions.sslOptions()
+                         .sslEnabled(true)
+                         .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                         .trustStorePassword(PASSWORD);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSaslOauthBearerConnectionWithVirtualHost() throws Exception {
+        final String virtualHost = "example.com";
+        final String username = "user";
+        final String password = "eyB1c2VyPSJ1c2VyIiB9";
+
+        final ProtonTestServerOptions serverOptions = serverOptions().setSecure(true)
+                                                                     .setKeyStoreLocation(BROKER_JKS_KEYSTORE)
+                                                                     .setKeyStorePassword(PASSWORD)
+                                                                     .setVerifyHost(false);
+
+        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
+            peer.expectSaslOauthBearerConnect(username, password, virtualHost);
+            peer.expectOpen().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ConnectionOptions clientOptions = connectionOptions();
+            clientOptions.user(username);
+            clientOptions.password(password);
+            clientOptions.virtualHost(virtualHost);
+            clientOptions.sslOptions()
+                         .sslEnabled(true)
+                         .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                         .trustStorePassword(PASSWORD);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSaslOauthBearerConnectionWithVirtualHostForcedOmit() throws Exception {
+        final String username = "user";
+        final String password = "eyB1c2VyPSJ1c2VyIiB9";
+
+        final ProtonTestServerOptions serverOptions = serverOptions().setSecure(true)
+                                                                     .setKeyStoreLocation(BROKER_JKS_KEYSTORE)
+                                                                     .setKeyStorePassword(PASSWORD)
+                                                                     .setVerifyHost(false);
+
+        try (ProtonTestServer peer = new ProtonTestServer(serverOptions)) {
+            peer.expectSaslOauthBearerConnect(username, password, null);
+            peer.expectOpen().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            final ConnectionOptions clientOptions = connectionOptions();
+
+            clientOptions.user(username);
+            clientOptions.password(password);
+            clientOptions.virtualHost("");
+            clientOptions.sslOptions()
+                         .sslEnabled(true)
+                         .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                         .trustStorePassword(PASSWORD);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testSaslAnonymousConnection() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer(serverOptions())) {
             peer.expectSASLAnonymousConnect();

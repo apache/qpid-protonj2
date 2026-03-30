@@ -34,19 +34,35 @@ public class MechanismTestBase {
         ProtonBufferAllocator.defaultAllocator().allocate(10).setWriteOffset(10);
 
     protected SaslCredentialsProvider credentials() {
-        return new UserCredentialsProvider(USERNAME, PASSWORD, HOST, true);
+        return new UserCredentialsProvider(USERNAME, PASSWORD, HOST, true, false);
     }
 
     protected SaslCredentialsProvider credentials(String user, String password) {
-        return new UserCredentialsProvider(user, password, null, false);
+        return new UserCredentialsProvider(user, password, null, false, false);
     }
 
     protected SaslCredentialsProvider credentials(String user, String password, boolean principal) {
-        return new UserCredentialsProvider(user, password, null, principal);
+        return new UserCredentialsProvider(user, password, null, principal, false);
+    }
+
+    protected SaslCredentialsProvider secureCredentials() {
+        return new UserCredentialsProvider(USERNAME, PASSWORD, HOST, true, false);
+    }
+
+    protected SaslCredentialsProvider secureCredentials(String user, String password) {
+        return new UserCredentialsProvider(user, password, null, false, true);
+    }
+
+    protected SaslCredentialsProvider secureCredentials(String user, String password, boolean principal) {
+        return new UserCredentialsProvider(user, password, null, principal, true);
     }
 
     protected SaslCredentialsProvider emptyCredentials() {
-        return new UserCredentialsProvider(null, null, null, false);
+        return new UserCredentialsProvider(null, null, null, false, false);
+    }
+
+    protected SaslCredentialsProvider emptySecureCredentials() {
+        return new UserCredentialsProvider(null, null, null, false, true);
     }
 
     private static class UserCredentialsProvider implements SaslCredentialsProvider {
@@ -55,12 +71,14 @@ public class MechanismTestBase {
         private final String password;
         private final String host;
         private final boolean principal;
+        private final boolean secure;
 
-        public UserCredentialsProvider(String username, String password, String host, boolean principal) {
+        public UserCredentialsProvider(String username, String password, String host, boolean principal, boolean secure) {
             this.username = username;
             this.password = password;
             this.host = host;
             this.principal = principal;
+            this.secure = secure;
         }
 
         @Override
@@ -91,6 +109,11 @@ public class MechanismTestBase {
             } else {
                 return null;
             }
+        }
+
+        @Override
+        public boolean isSecure() {
+            return secure;
         }
     }
 }

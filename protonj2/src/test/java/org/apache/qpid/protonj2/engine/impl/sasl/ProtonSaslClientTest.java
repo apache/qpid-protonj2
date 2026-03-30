@@ -275,6 +275,11 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
             public Principal localPrincipal() {
                 return null;
             }
+
+            @Override
+            public boolean isSecure() {
+                return false;
+            }
         };
 
         return new SaslAuthenticator(credentials);

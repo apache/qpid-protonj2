@@ -870,6 +870,11 @@ public final class ClientConnection implements Connection {
                 public Principal localPrincipal() {
                     return transport.getLocalPrincipal();
                 }
+
+                @Override
+                public boolean isSecure() {
+                    return transport.isSecure();
+                }
             }));
         }
 

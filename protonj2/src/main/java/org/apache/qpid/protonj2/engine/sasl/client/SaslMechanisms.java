@@ -38,6 +38,18 @@ public enum SaslMechanisms {
             return INSTANCE;
         }
     },
+    OAUTHBEARER {
+
+        @Override
+        public Symbol getName() {
+            return OauthBearerMechanism.OAUTHBEARER;
+        }
+
+        @Override
+        public Mechanism createMechanism() {
+            return new OauthBearerMechanism();
+        }
+    },
     SCRAM_SHA_512 {
 
         @Override
