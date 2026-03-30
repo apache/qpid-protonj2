@@ -42,6 +42,14 @@ public interface SaslCredentialsProvider {
     String password();
 
     /**
+     * Returns <code>true</code> if the transport IO layer is operating over a secure
+     * means such as TLS which provides encryption in flight.
+     *
+     * @return <code>true</code> if the IO layer is secured (encrypted).
+     */
+    boolean isSecure();
+
+    /**
      * Returns the local principal for use in SASL authentication which is generally
      * provided by the IO layer (TLS). This method can return null if there is no
      * local {@link Principal} in use.

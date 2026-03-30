@@ -122,4 +122,60 @@ public class ProtonTestServerTest extends TestPeerTestsBase {
             peer.waitForScriptToComplete();
         }
     }
+
+    @Test
+    public void testServerExpectsSaslOauthBearerConnect() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSaslOauthBearerConnect("user", "pass", null, 0);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            try (ProtonTestClient client = new ProtonTestClient()) {
+                client.connect(remoteURI.getHost(), remoteURI.getPort());
+                client.expectSASLHeader();
+                client.expectSaslMechanisms().withSaslServerMechanisms("OAUTHBEARER");
+                client.remoteSaslInit().withMechanism("OAUTHBEARER")
+                                       .withInitialResponse(peer.saslOauthBearerInitialResponse("user", "pass", null, 0)).queue();
+                client.expectSaslOutcome().withCode(SaslCode.OK);
+                client.remoteHeader(AMQPHeader.getAMQPHeader()).queue();
+                client.expectAMQPHeader();
+
+                // Start the exchange with the client SASL header
+                client.remoteHeader(AMQPHeader.getSASLHeader()).now();
+
+                client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            }
+
+            peer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testServerExpectsSaslOauthBearerConnectAndOffersMoreMechanisms() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSaslOauthBearerConnect("user", "pass", null, 0, "OAUTHBEARER", "PLAIN", "ANONYMOUS");
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            try (ProtonTestClient client = new ProtonTestClient()) {
+                client.connect(remoteURI.getHost(), remoteURI.getPort());
+                client.expectSASLHeader();
+                client.expectSaslMechanisms().withSaslServerMechanisms("OAUTHBEARER", "PLAIN", "ANONYMOUS");
+                client.remoteSaslInit().withMechanism("OAUTHBEARER")
+                                       .withInitialResponse(peer.saslOauthBearerInitialResponse("user", "pass", null, 0)).queue();
+                client.expectSaslOutcome().withCode(SaslCode.OK);
+                client.remoteHeader(AMQPHeader.getAMQPHeader()).queue();
+                client.expectAMQPHeader();
+
+                // Start the exchange with the client SASL header
+                client.remoteHeader(AMQPHeader.getSASLHeader()).now();
+
+                client.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            }
+
+            peer.waitForScriptToComplete();
+        }
+    }
 }
