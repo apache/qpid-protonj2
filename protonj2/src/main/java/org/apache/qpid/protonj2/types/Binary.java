@@ -124,7 +124,8 @@ public final class Binary {
     public final int hashCode() {
         int hc = hashCode;
         if (hc == 0 && buffer != null) {
-            hashCode = buffer.hashCode();
+            hc = buffer.hashCode();
+            hashCode = hc;
         }
         return hc;
     }
