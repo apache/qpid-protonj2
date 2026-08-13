@@ -79,7 +79,7 @@ public class ProtonPooledTagGenerator extends ProtonSequentialTagGenerator {
 
         if (nextTagId >= 0 && nextTagId < tagPoolSize) {
             // Pooled tag that will return to pool on next release.
-            nextTag = new ProtonPooledDeliveryTag((byte) nextTagId++).checkOut();
+            nextTag = new ProtonPooledDeliveryTag(nextTagId++).checkOut();
         } else {
             // Non-pooled tag that will not return to the pool on next release.
             nextTag = super.nextTag();
