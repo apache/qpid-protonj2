@@ -25,8 +25,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.qpid.protonj2.engine.DeliveryTagGenerator;
+import org.apache.qpid.protonj2.types.Binary;
 import org.apache.qpid.protonj2.types.DeliveryTag;
 import org.junit.jupiter.api.Test;
 
@@ -77,6 +80,18 @@ public class ProtonPooledTagGeneratorTest {
         assertFalse(tags.contains(nonCached));
         nonCached.release();
         assertFalse(tags.contains(nonCached));
+    }
+
+    @Test
+    public void testAllPooledTagsAreUniqueUntilReleased() {
+        ProtonPooledTagGenerator generator = new ProtonPooledTagGenerator();
+        final Set<Binary> tagValues = new HashSet<>(ProtonPooledTagGenerator.DEFAULT_MAX_NUM_POOLED_TAGS);
+
+        for (int i = 0; i < ProtonPooledTagGenerator.DEFAULT_MAX_NUM_POOLED_TAGS; ++i) {
+            final DeliveryTag tag = generator.nextTag();
+
+            assertTrue(tagValues.add(new Binary(tag.tagBytes())), "Delivery tag at pool index " + i + " is not unique");
+        }
     }
 
     @Test
