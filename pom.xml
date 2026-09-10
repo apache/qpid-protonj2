@@ -35,7 +35,7 @@
     <javaVersion>17</javaVersion>
 
     <!-- Test dependency versions -->
-    <junit.jupiter.version>6.1.2</junit.jupiter.version>
+    <junit.jupiter.version>6.1.3</junit.jupiter.version>
     <mockito.version>5.23.0</mockito.version>
     <proton.version>0.35.0</proton.version>
     <slf4j.version>2.0.18</slf4j.version>
