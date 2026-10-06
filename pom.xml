@@ -37,7 +37,7 @@
 
     <!-- Test dependency versions -->
     <junit.jupiter.version>5.14.4</junit.jupiter.version>
-    <mockito.version>5.23.0</mockito.version>
+    <mockito.version>5.24.0</mockito.version>
     <proton.version>0.35.0</proton.version>
     <slf4j.version>2.0.19</slf4j.version>
     <hamcrest.version>3.0</hamcrest.version>
