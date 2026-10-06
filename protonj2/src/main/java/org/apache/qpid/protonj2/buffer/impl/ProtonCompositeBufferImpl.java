@@ -623,7 +623,7 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
         if (buffers.length != 0 && length > 0) {
             final int startingPoint = findChunkWithIndex(index);
 
-            int remaining = length - (buffers[startingPoint].capacity() - index);
+            int remaining = length - (buffers[startingPoint].capacity() - (index - startIndices[startingPoint]));
             int requiredCopies = 1;
 
             // Compute how large the copied buffers array needs to be then do the actual copy
