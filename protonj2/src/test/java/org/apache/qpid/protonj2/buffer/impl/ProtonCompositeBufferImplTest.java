@@ -1815,6 +1815,32 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
     }
 
     @Test
+    public void testCopyRangeContainedWithinNonFirstChunkDoesNotThrowIndexOutOfBounds() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite()) {
+
+            final byte[] chunk0 = new byte[20];
+            final byte[] chunk1 = new byte[10];
+            final byte[] chunk2 = new byte[10];
+
+            for (int i = 0; i < chunk1.length; ++i) {
+                chunk1[i] = (byte) (100 + i);
+            }
+
+            composite.append(allocator.copy(chunk0));
+            composite.append(allocator.copy(chunk1));
+            composite.append(allocator.copy(chunk2));
+
+            try (ProtonBuffer copy = composite.copy(22, 3, true)) {
+                assertEquals(3, copy.capacity());
+                assertEquals((byte) 102, copy.getByte(0));
+                assertEquals((byte) 103, copy.getByte(1));
+                assertEquals((byte) 104, copy.getByte(2));
+            }
+        }
+    }
+
+    @Test
     public void testSplitBufferLastBufferNoReadableBytes() {
         try (ProtonBufferAllocator allocator = createProtonDefaultAllocator()) {
             ProtonBuffer buffer1 = allocator.allocate(8).writeLong(0x0102030405060708L);
