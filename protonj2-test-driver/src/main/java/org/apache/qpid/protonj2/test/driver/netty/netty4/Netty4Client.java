@@ -49,8 +49,9 @@ import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoop;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -172,7 +173,7 @@ public final class Netty4Client implements NettyClient {
             }
         }
 
-        group = new NioEventLoopGroup(1);
+        group = new MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory());
         bootstrap = new Bootstrap().channel(NioSocketChannel.class).group(group);
         bootstrap.handler(new ChannelInitializer<Channel>() {
             @Override
