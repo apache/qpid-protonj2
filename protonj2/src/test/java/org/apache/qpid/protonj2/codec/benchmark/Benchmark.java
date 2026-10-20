@@ -511,6 +511,7 @@ public class Benchmark implements Runnable {
 
     private void benchmarkProperties() throws IOException {
         Properties properties = new Properties();
+        properties.setUserId(new byte[] { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 });
         properties.setTo("queue:1-1024");
         properties.setReplyTo("queue:1-11024-reply");
         properties.setMessageId("ID:255f1297-5a71-4df1-8147-b2cdf850a56f:1");

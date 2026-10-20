@@ -45,13 +45,26 @@ public final class Binary {
      * @param buffer the {@link ProtonBuffer} to wrap or copy.
      */
     public Binary(ProtonBuffer buffer) {
+        this(buffer, true);
+    }
+
+    /**
+     * Creates an {@link Binary} that wraps the given buffer or copies it
+     * if the given buffer is not read-only to preserves the immutable nature
+     * of this Binary instance. The caller can define if a cleaner is needed
+     * to release the buffer in cases where is not a heap backed instance.
+     *
+     * @param buffer the {@link ProtonBuffer} to wrap or copy.
+     * @param needsCleanup controls if the Binary will add the buffer to the cleaner
+     */
+    public Binary(ProtonBuffer buffer, boolean needsCleanup) {
         if (buffer != null && !buffer.isReadOnly()) {
             this.buffer = buffer.copy(true);
         } else {
             this.buffer = buffer;
         }
 
-        if (buffer != null) {
+        if (buffer != null && needsCleanup) {
             ProtonBufferUtils.registerCleanup(this, this.buffer);
         }
     }
