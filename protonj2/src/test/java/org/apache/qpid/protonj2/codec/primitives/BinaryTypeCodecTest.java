@@ -33,6 +33,7 @@ import java.util.Random;
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferInputStream;
+import org.apache.qpid.protonj2.buffer.netty.Netty4ProtonBufferAllocator;
 import org.apache.qpid.protonj2.codec.CodecTestSupport;
 import org.apache.qpid.protonj2.codec.DecodeException;
 import org.apache.qpid.protonj2.codec.EncodingCodes;
@@ -43,6 +44,10 @@ import org.apache.qpid.protonj2.codec.decoders.primitives.BinaryTypeDecoder;
 import org.apache.qpid.protonj2.types.Binary;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.util.ReferenceCountUtil;
 
 /**
  * Test the Binary codec for correctness
@@ -626,5 +631,44 @@ public class BinaryTypeCodecTest extends CodecTestSupport {
         InputStream stream = new ProtonBufferInputStream(buffer);
         StreamTypeDecoder<?> typeDecoder = streamDecoder.readNextTypeDecoder(stream, streamDecoderState);
         assertThrows(DecodeException.class, () -> typeDecoder.skipValue(stream, streamDecoderState));
+    }
+
+    @Test
+    public void testDecodedBinaryDoesNotRetainPooledReadOnlyBuffer() throws Exception {
+        doTestDecodedBinaryDoesNotRetainPooledReadOnlyBuffer(false);
+    }
+
+    @Test
+    public void testDecodedBinaryAsBufferDoesNotRetainPooledReadOnlyBuffer() throws Exception {
+        doTestDecodedBinaryDoesNotRetainPooledReadOnlyBuffer(true);
+    }
+
+    private void doTestDecodedBinaryDoesNotRetainPooledReadOnlyBuffer(boolean asBuffer) throws Exception {
+        final byte[] input = new byte[] {0, 1, 2, 3, 4};
+        final ProtonBuffer result;
+        final ByteBuf pooled;
+
+        try (ProtonBufferAllocator allocator = new Netty4ProtonBufferAllocator(PooledByteBufAllocator.DEFAULT);
+             ProtonBuffer buffer = allocator.allocate(64)) {
+
+            encoder.writeBinary(buffer, encoderState, input);
+            buffer.convertToReadOnly();
+
+            pooled = (ByteBuf) buffer.unwrap();
+
+            if (asBuffer) {
+                result = decoder.readBinaryAsBuffer(buffer, decoderState);
+            } else {
+                result = decoder.readBinary(buffer, decoderState).asProtonBuffer();
+            }
+        }
+
+        assertEquals(0, ReferenceCountUtil.refCnt(pooled));
+        assertTrue(result.isReadOnly());
+        assertEquals(input.length, result.getReadableBytes());
+
+        final byte[] output = new byte[input.length];
+        result.copyInto(result.getReadOffset(), output, 0, output.length);
+        assertArrayEquals(input, output);
     }
 }
