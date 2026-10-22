@@ -295,6 +295,128 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testLocallyClosedReceiverReceivesParentSessionClosedEvent() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        final AtomicBoolean parentClosed = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectDetach();
+        // The remote ends the session in response to the detach instead of answering it
+        peer.remoteEnd().queue();
+        peer.expectEnd();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("test");
+        receiver.parentEndpointClosedHandler(result -> parentClosed.set(true));
+
+        receiver.open();
+        receiver.close();
+
+        assertTrue(session.isRemotelyClosed());
+        assertFalse(receiver.isRemotelyClosed());
+        assertFalse(parentClosed.get(), "Receiver should not have reported parent session closed");
+
+        session.close();
+
+        assertTrue(parentClosed.get(), "Receiver awaiting remote detach should have reported parent session closed");
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testLocallyClosedReceiverReceivesParentConnectionClosedEvent() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        final AtomicBoolean parentClosed = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectDetach();
+        // The remote closes the connection in response to the detach instead of answering it
+        peer.remoteClose().queue();
+        peer.expectClose();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("test");
+        receiver.parentEndpointClosedHandler(result -> parentClosed.set(true));
+
+        receiver.open();
+        receiver.close();
+
+        assertTrue(connection.isRemotelyClosed());
+        assertFalse(receiver.isRemotelyClosed());
+        assertFalse(parentClosed.get(), "Receiver should not have reported parent connection closed");
+
+        connection.close();
+
+        assertTrue(parentClosed.get(), "Receiver awaiting remote detach should have reported parent connection closed");
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testClosedReceiverDoesNotReceiveParentSessionClosedEvent() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        ProtonTestConnector peer = createTestPeer(engine);
+
+        final AtomicBoolean parentClosed = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("test");
+        receiver.parentEndpointClosedHandler(result -> parentClosed.set(true));
+
+        receiver.open();
+        receiver.close();
+
+        assertTrue(receiver.isRemotelyClosed());
+
+        session.close();
+
+        assertFalse(parentClosed.get(), "Receiver closed on both ends should not have reported parent session closed");
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testEngineShutdownEventNeitherEndClosed() throws Exception {
         doTestEngineShutdownEvent(false, false);
     }
