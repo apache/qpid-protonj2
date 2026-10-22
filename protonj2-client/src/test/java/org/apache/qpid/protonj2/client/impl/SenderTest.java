@@ -525,6 +525,66 @@ public class SenderTest extends ImperativeClientTestCase {
     }
 
     @Test
+    public void testCloseSenderCompletesWhenRemoteEndsSessionInsteadOfDetaching() throws Exception {
+        doTestCloseOrDetachSenderCompletesWhenRemoteEndsSessionInsteadOfDetaching(true, false);
+    }
+
+    @Test
+    public void testCloseSenderCompletesWhenRemoteEndsSessionWithErrorInsteadOfDetaching() throws Exception {
+        doTestCloseOrDetachSenderCompletesWhenRemoteEndsSessionInsteadOfDetaching(true, true);
+    }
+
+    @Test
+    public void testDetachSenderCompletesWhenRemoteEndsSessionInsteadOfDetaching() throws Exception {
+        doTestCloseOrDetachSenderCompletesWhenRemoteEndsSessionInsteadOfDetaching(false, false);
+    }
+
+    @Test
+    public void testDetachSenderCompletesWhenRemoteEndsSessionWithErrorInsteadOfDetaching() throws Exception {
+        doTestCloseOrDetachSenderCompletesWhenRemoteEndsSessionInsteadOfDetaching(false, true);
+    }
+
+    private void doTestCloseOrDetachSenderCompletesWhenRemoteEndsSessionInsteadOfDetaching(boolean close, boolean error) throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.expectDetach();
+            if (error) {
+                peer.remoteEnd().withErrorCondition(AmqpError.INTERNAL_ERROR.toString(), "Cannot detach the link").queue();
+            } else {
+                peer.remoteEnd().queue();
+            }
+            peer.expectEnd();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Sender sender = session.openSender("test-queue");
+            sender.openFuture().get(10, TimeUnit.SECONDS);
+
+            // The remote detach never arrives once the session is ended, so the close
+            // or detach must complete without waiting for the link close timeout.
+            if (close) {
+                sender.closeAsync().get(10, TimeUnit.SECONDS);
+            } else {
+                sender.detachAsync().get(10, TimeUnit.SECONDS);
+            }
+
+            connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     public void testSendTimesOutWhenNoCreditIssued() throws Exception {
         try (ProtonTestServer peer = new ProtonTestServer()) {
             peer.expectSASLAnonymousConnect();
