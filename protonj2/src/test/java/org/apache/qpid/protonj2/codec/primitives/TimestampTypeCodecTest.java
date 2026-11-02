@@ -17,6 +17,7 @@
 package org.apache.qpid.protonj2.codec.primitives;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -248,9 +249,10 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
 
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
-        assertTrue(result.getClass().getComponentType().isPrimitive());
+        assertFalse(result.getClass().getComponentType().isPrimitive());
+        assertEquals(Long.class, result.getClass().getComponentType());
 
-        long[] array = (long[]) result;
+        Long[] array = (Long[]) result;
         assertEquals(size, array.length);
 
         for (int i = 0; i < size; ++i) {
@@ -285,9 +287,10 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
 
         assertNotNull(result);
         assertTrue(result.getClass().isArray());
-        assertTrue(result.getClass().getComponentType().isPrimitive());
+        assertFalse(result.getClass().getComponentType().isPrimitive());
+        assertEquals(Long.class, result.getClass().getComponentType());
 
-        long[] array = (long[]) result;
+        Long[] array = (Long[]) result;
         assertEquals(source.length, array.length);
     }
 
@@ -313,6 +316,33 @@ public class TimestampTypeCodecTest extends CodecTestSupport {
         } else {
             TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
             assertEquals(8, typeDecoder.readSize(buffer, decoderState));
+        }
+    }
+
+    @Test
+    public void testEncodeArrayOfTimestampsAndValidateOutput() throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+        Random random = new Random();
+        random.setSeed(System.nanoTime());
+
+        final int size = 10;
+
+        Date[] source = new Date[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = new Date(random.nextLong());
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        assertEquals(EncodingCodes.ARRAY32, buffer.readByte());
+        // Size = count + type code + elements (10 * Long.BYTES)
+        assertEquals(Integer.BYTES + Byte.BYTES + size * Long.BYTES, buffer.readInt());
+        assertEquals(10, buffer.readInt());
+
+        assertEquals(EncodingCodes.TIMESTAMP, buffer.readByte());
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i].getTime(), buffer.readLong());
         }
     }
 }
