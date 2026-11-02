@@ -61,7 +61,7 @@ public final class TimestampTypeEncoder extends AbstractPrimitiveTypeEncoder<Dat
 
     @Override
     public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
-        buffer.writeByte(EncodingCodes.LONG);
+        buffer.writeByte(EncodingCodes.TIMESTAMP);
         for (Object value : values) {
             buffer.writeLong(((Date) value).getTime());
         }
