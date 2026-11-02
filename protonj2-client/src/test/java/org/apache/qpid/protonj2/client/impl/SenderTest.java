@@ -23,6 +23,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -3029,6 +3030,154 @@ public class SenderTest extends ImperativeClientTestCase {
             sender.closeAsync().get(10, TimeUnit.SECONDS);
 
             connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testDefaultSenderRecreatedOnNextUseIfDefaultSessionRemotelyClosed() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withDesiredCapabilities(ClientConstants.ANONYMOUS_RELAY.toString())
+                             .respond()
+                             .withOfferedCapabilities(ClientConstants.ANONYMOUS_RELAY.toString());
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            final Sender defaultSender1 = connection.defaultSender();
+
+            assertNotNull(defaultSender1);
+
+            defaultSender1.openFuture().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectEnd();
+            peer.remoteEnd().now();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+
+            final Sender defaultSender2 = connection.defaultSender();
+            assertNotNull(defaultSender2);
+            defaultSender2.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertNotNull(defaultSender1);
+            assertNotSame(defaultSender1, defaultSender2);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testDefaultSenderRecreatedWhenUserClosesDefaultSession() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withDesiredCapabilities(ClientConstants.ANONYMOUS_RELAY.toString())
+                             .respond()
+                             .withOfferedCapabilities(ClientConstants.ANONYMOUS_RELAY.toString());
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            final Sender defaultSender1 = connection.defaultSender();
+
+            assertNotNull(defaultSender1);
+
+            defaultSender1.openFuture().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectEnd().respond();
+
+            connection.defaultSession().close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+
+            final Sender defaultSender2 = connection.defaultSender();
+            assertNotNull(defaultSender2);
+            defaultSender2.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertNotNull(defaultSender1);
+            assertNotSame(defaultSender1, defaultSender2);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testUserClosesDefaultSenderResultsInNewSenderWhenRemotelyClosed() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withDesiredCapabilities(ClientConstants.ANONYMOUS_RELAY.toString())
+                             .respond()
+                             .withOfferedCapabilities(ClientConstants.ANONYMOUS_RELAY.toString());
+            peer.expectBegin().respond();
+            peer.expectAttach().ofSender().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            final Sender defaultSender1 = connection.defaultSender();
+
+            assertNotNull(defaultSender1);
+
+            defaultSender1.openFuture().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectDetach().respond();
+
+            defaultSender1.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectAttach().ofSender().respond();
+
+            final Sender defaultSender2 = connection.defaultSender();
+            assertNotNull(defaultSender2);
+            defaultSender2.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertNotNull(defaultSender1);
+            assertNotSame(defaultSender1, defaultSender2);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectClose().respond();
+
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
