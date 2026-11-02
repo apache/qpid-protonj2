@@ -932,6 +932,19 @@ public final class ClientConnection implements Connection {
     private ClientSession lazyCreateConnectionSession() throws ClientException {
         if (connectionSession == null) {
             connectionSession = sessionBuilder.session(null).open();
+            connectionSession.remotelyClosedHandler((session) -> {
+                try {
+                    session.closeAsync();
+                } catch (Throwable ignore) {}
+
+                // Clear the old default session and sender, a lazy create needs to construct a new sender.
+                connectionSession = null;
+
+                if (connectionSender != null) {
+                    connectionSender.closeAsync();
+                    connectionSender = null;
+                }
+            });
         }
 
         return connectionSession;

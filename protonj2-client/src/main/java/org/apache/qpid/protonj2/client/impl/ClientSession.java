@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.apache.qpid.protonj2.client.ErrorCondition;
@@ -75,6 +76,7 @@ public class ClientSession implements Session {
     private volatile int closed;
     private volatile ClientException failureCause;
     private ClientTransactionContext txnContext = NO_OP_TXN_CONTEXT;
+    protected Consumer<ClientSession> sessionRemotelyClosedHandler;
 
     private org.apache.qpid.protonj2.engine.Session protonSession;
 
@@ -424,6 +426,11 @@ public class ClientSession implements Session {
 
     //----- Internal API accessible for use within the package
 
+    final ClientSession remotelyClosedHandler(Consumer<ClientSession> handler) {
+        this.sessionRemotelyClosedHandler = handler;
+        return this;
+    }
+
     ClientSession open() {
         protonSession.localOpenHandler(this::handleLocalOpen)
                      .localCloseHandler(this::handleLocalClose)
@@ -578,6 +585,12 @@ public class ClientSession implements Session {
             immediateSessionShutdown(ClientExceptionSupport.convertToSessionClosedException(session.getRemoteCondition()));
         } else {
             immediateSessionShutdown(failureCause);
+        }
+
+        if (sessionRemotelyClosedHandler != null) {
+            try {
+                sessionRemotelyClosedHandler.accept(this);
+            } catch (Throwable ignore) {}
         }
     }
 

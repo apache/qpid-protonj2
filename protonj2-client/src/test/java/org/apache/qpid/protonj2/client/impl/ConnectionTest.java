@@ -19,6 +19,7 @@ package org.apache.qpid.protonj2.client.impl;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -1887,6 +1888,91 @@ public class ConnectionTest extends ImperativeClientTestCase {
             peer.expectClose().respond();
 
             connection.closeAsync().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testDefaultSessionRecreatedOnNextUseIfRemotelyClosed() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            final Session defaultSession1 = connection.defaultSession();
+            assertNotNull(defaultSession1);
+            defaultSession1.openFuture().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectEnd();
+            peer.remoteEnd().now();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectBegin().respond();
+
+            final Session defaultSession2 = connection.defaultSession();
+            assertNotNull(defaultSession2);
+            defaultSession2.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertNotSame(defaultSession1, defaultSession2);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectClose().respond();
+
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testUserClosesDefaultSessionResultsInNewSessionWhenRemotelyClosed() throws Exception {
+        try (ProtonTestServer peer = new ProtonTestServer(testServerOptions())) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), connectionOptions());
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            final Session defaultSession1 = connection.defaultSession();
+            assertNotNull(defaultSession1);
+            defaultSession1.openFuture().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectEnd().respond();
+
+            defaultSession1.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectBegin().respond();
+
+            final Session defaultSession2 = connection.defaultSession();
+            assertNotNull(defaultSession2);
+            defaultSession2.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertNotSame(defaultSession1, defaultSession2);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectClose().respond();
+
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

@@ -355,16 +355,16 @@ public abstract class ClientLinkType<LinkType extends Link<LinkType>,
         linkSpecificRemoteCloseHandler();
 
         if (link.isLocallyOpen()) {
-            if (linkRemotelyClosedHandler != null) {
-                try {
-                    linkRemotelyClosedHandler.accept(self());
-                } catch (Throwable ignore) {}
-            }
-
             immediateLinkShutdown(ClientExceptionSupport.convertToLinkClosedException(
                 link.getRemoteCondition(), "Link remotely closed without explanation from the remote"));
         } else {
             immediateLinkShutdown(failureCause);
+        }
+
+        if (linkRemotelyClosedHandler != null) {
+            try {
+                linkRemotelyClosedHandler.accept(self());
+            } catch (Throwable ignore) {}
         }
     }
 
