@@ -222,7 +222,7 @@ public interface ProtonBufferAccessors {
     ProtonBuffer setChar(int index, char value);
 
     /**
-     * Reads a character value from the buffer and advances the read index by four.
+     * Reads a character value from the buffer and advances the read index by two.
      *
      * @return char value read from the buffer.
      *

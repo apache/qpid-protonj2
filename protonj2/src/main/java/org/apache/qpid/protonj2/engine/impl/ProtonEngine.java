@@ -399,7 +399,7 @@ public class ProtonEngine implements Engine {
     }
 
     /**
-     * Called from the {@link Connection} that is linked to this engine after is has received a remote
+     * Called from the {@link Connection} that is linked to this engine after it has received a remote
      * Close performative and the connection has configured and updated its state accordingly.
      *
      * @param connection
@@ -493,7 +493,7 @@ public class ProtonEngine implements Engine {
                         Symbol.getSymbol("amqp:resource-limit-exceeded"), "local-idle-timeout expired");
                     connection.setCondition(condition);
                     connection.close();
-                    engineFailed(new IdleTimeoutException("Remote idle timeout detected"));
+                    engineFailed(new IdleTimeoutException("Local idle timeout violation detected"));
                 } else {
                     localIdleDeadline = computeDeadline(currentTime, localIdleTimeout);
                 }

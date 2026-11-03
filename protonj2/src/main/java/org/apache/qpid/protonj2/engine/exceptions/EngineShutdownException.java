@@ -17,7 +17,7 @@
 package org.apache.qpid.protonj2.engine.exceptions;
 
 /**
- * Exception thrown when an option is performed on a closed engine.
+ * Exception thrown when an operation is performed on a closed engine.
  */
 public final class EngineShutdownException extends EngineStateException {
 

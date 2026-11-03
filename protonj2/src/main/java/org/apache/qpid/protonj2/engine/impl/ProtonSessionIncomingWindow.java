@@ -127,6 +127,8 @@ public class ProtonSessionIncomingWindow {
     /**
      * Update the session window state based on an incoming {@link Transfer} performative
      *
+     * @param link
+     * 		the link that is handling the passed {@link Transfer}.
      * @param transfer
      *      the incoming {@link Transfer} performative to process.
      * @param payload

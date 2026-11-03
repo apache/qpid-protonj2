@@ -54,7 +54,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
      * given {@link Collection} and filled with the values from that {@link Collection}.
      *
      * @param collection
-     * 		the {@link Collection} whose values populates this {@link RingQueue} instance.
+     * 		the {@link Collection} whose values populate this {@link RingQueue} instance.
      */
     public RingQueue(Collection<E> collection) {
         this.backingArray = new Object[collection.size()];
@@ -98,7 +98,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
      * @param createOnEmpty
      *     a {@link Supplier} which will return default values if the {@link RingQueue} is empty.
      *
-     * @return the head element of this queue or a default instance created from the provided {@link Supplier}/
+     * @return the head element of this queue or a default instance created from the provided {@link Supplier}
      */
     public E poll(Supplier<E> createOnEmpty) {
         if (isEmpty()) {

@@ -25,6 +25,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
+import io.netty.buffer.UnpooledByteBufAllocator;
 
 /**
  * Proton managed Netty 4 {@link ByteBufAllocator} wrapper.
@@ -33,7 +34,7 @@ public final class Netty4ProtonBufferAllocator implements ProtonBufferAllocator 
 
     public static ProtonBufferAllocator POOLED = new Netty4ProtonBufferAllocator(PooledByteBufAllocator.DEFAULT);
 
-    public static ProtonBufferAllocator UNPOOLED = new Netty4ProtonBufferAllocator(PooledByteBufAllocator.DEFAULT);
+    public static ProtonBufferAllocator UNPOOLED = new Netty4ProtonBufferAllocator(UnpooledByteBufAllocator.DEFAULT);
 
     private final ByteBufAllocator allocator;
 

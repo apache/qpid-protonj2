@@ -72,7 +72,7 @@ public class AMQPPerformativeEnvelopePool<E extends PerformativeEnvelope<Perform
     }
 
     /**
-     * Requests an envelope from the pool and if non is available creates one using the given
+     * Requests an envelope from the pool and if none is available creates one using the given
      * builder this pool was created with.
      *
      * @param body

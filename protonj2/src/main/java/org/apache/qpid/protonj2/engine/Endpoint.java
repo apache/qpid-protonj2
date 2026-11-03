@@ -99,7 +99,7 @@ public interface Endpoint<E extends Endpoint<E>> {
      * @param <T> The type to cast the linked resource to if one is set.
      * @param typeClass the type's Class which is used for casting the returned value.
      *
-     * @return the user set linked resource for this Context instance.
+     * @return the user set linked resource for this endpoint instance.
      *
      * @throws ClassCastException if the linked resource cannot be cast to the type requested.
      */
@@ -256,7 +256,7 @@ public interface Endpoint<E extends Endpoint<E>> {
     //----- Events for AMQP Endpoint resources
 
     /**
-     * Sets a {@link EventHandler} for when an this {@link Endpoint} is opened locally via a call to {@link Endpoint#open()}
+     * Sets a {@link EventHandler} for when this {@link Endpoint} is opened locally via a call to {@link Endpoint#open()}
      *
      * Typically used by clients for logging or other state update event processing.  Clients should not perform any
      * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
@@ -270,7 +270,7 @@ public interface Endpoint<E extends Endpoint<E>> {
     E localOpenHandler(EventHandler<E> localOpenHandler);
 
     /**
-     * Sets a {@link EventHandler} for when an this {@link Endpoint} is closed locally via a call to {@link Connection#close()}
+     * Sets a {@link EventHandler} for when this {@link Endpoint} is closed locally via a call to {@link #close()}
      *
      * Typically used by clients for logging or other state update event processing.  Clients should not perform any
      * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
@@ -284,7 +284,7 @@ public interface Endpoint<E extends Endpoint<E>> {
     E localCloseHandler(EventHandler<E> localCloseHandler);
 
     /**
-     * Sets a EventHandler for when an AMQP Open frame is received from the remote peer.
+     * Sets an EventHandler for when an AMQP Open frame is received from the remote peer.
      *
      * Used to process remotely initiated Connections. Locally initiated sessions have their own EventHandler
      * invoked instead.  This method is typically used by servers to listen for the remote peer to open its
@@ -302,7 +302,7 @@ public interface Endpoint<E extends Endpoint<E>> {
     E openHandler(EventHandler<E> remoteOpenEventHandler);
 
     /**
-     * Sets a EventHandler for when an AMQP Close frame is received from the remote peer.
+     * Sets an EventHandler for when an AMQP Close frame is received from the remote peer.
      *
      * @param remoteCloseEventHandler
      *          the EventHandler that will be signaled when the {@link Endpoint} is remotely closed.
@@ -315,7 +315,7 @@ public interface Endpoint<E extends Endpoint<E>> {
      * Sets an {@link EventHandler} that is invoked when the engine that supports this {@link Endpoint} is shutdown
      * via a call to {@link Engine#shutdown()} which indicates a desire to terminate all engine operations. Any
      * {@link Endpoint} that has been both locally and remotely closed will not receive this event as it will no longer
-     * be tracked by the parent its parent {@link Endpoint}.
+     * be tracked by its parent {@link Endpoint}.
      *
      * A typical use of this event would be from a locally closed {@link Endpoint} that is awaiting response from
      * the remote.  If this event fires then there will never be a remote response to any pending operations and

@@ -17,9 +17,9 @@
 package org.apache.qpid.protonj2.engine.exceptions;
 
 /**
- * Thrown from Engine API methods that attempted an operation what would have
+ * Thrown from Engine API methods that attempted an operation that would have
  * resulted in a write of data or other state modification after the engine has
- * entered the the failed state.
+ * entered the failed state.
  */
 public final class EngineFailedException extends EngineStateException {
 

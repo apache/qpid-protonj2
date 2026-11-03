@@ -44,8 +44,8 @@ import org.apache.qpid.protonj2.types.UnsignedInteger;
  *
  * The splay tree is a specialized form of a binary search tree that is self balancing and
  * provides faster access in general to frequently used items.  The splay tree serves well
- * as an LRU cache of sorts where 80 percent of the accessed elements comes from 20 percent
- * of the overall load in the {@link Map}.  The best case access time is generally O(long n)
+ * as an LRU cache of sorts where 80 percent of the accessed elements come from 20 percent
+ * of the overall load in the {@link Map}.  The best case access time is generally O(log n)
  * however it can be Theta(n) in a very worst case scenario.
  *
  * @param <E> The type stored in the map entries
@@ -84,8 +84,8 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     /**
-     * Gets the value of the element stored in the {@link Map} with the key (treated as an
-     * unsigned integer for comparison.
+     * Gets the value of the element stored in the {@link Map} using the passed integer which is
+     * treated as an unsigned integer value.
      *
      * As a side effect of calling this method the tree that comprises the Map can be modified
      * to bring up the found key or the last accessed key if the key given is not in the {@link Map}.
@@ -115,7 +115,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     /**
      * Gets the value of the element stored in the {@link Map} with the key (treated as an
-     * unsigned integer for comparison.
+     * unsigned integer for comparison).
      *
      * As a side effect of calling this method the tree that comprises the Map can be modified
      * to bring up the found key or the last accessed key if the key given is not in the {@link Map}.
@@ -127,7 +127,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      * @param defaultValue
      *      the default value to return if the key is not stored in this {@link Map}.
      *
-     * @return the value stored for the given key if found the default value if not in the {@link Map}.
+     * @return the value stored for the given key if found, or the default value if not in the {@link Map}.
      */
     public E getOrDefault(int key, E defaultValue) {
         E result = get(key);
@@ -139,8 +139,8 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     /**
-     * Puts the value into the in the {@link Map} at the entry specified by the given key (treated as an
-     * unsigned integer for comparison.
+     * Puts the value into the {@link Map} at the entry specified by the given key (treated as an
+     * unsigned integer for comparison).
      *
      * As a side effect of calling this method the tree that comprises the Map can be modified
      * to bring up the found key or the last accessed key if the key given is not in the {@link Map}.
@@ -148,7 +148,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      * immediately without modifying the {@link Map}.
      *
      * @param key
-     *      the integer key value to search for and or insert in the {@link SplayMap}.
+     *      the integer key value to search for and insert in the {@link SplayMap}.
      * @param value
      *      the value to assign to the entry accessed via the given key.
      *
@@ -194,7 +194,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      * immediately without modifying the {@link Map}.
      *
      * @param key
-     *      the integer key value to search for and or insert in the {@link SplayMap}.
+     *      the integer key value to search for and possibly insert in the {@link SplayMap}.
      * @param value
      *      the value to assign to the entry accessed via the given key.
      *
@@ -264,11 +264,11 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     /**
      * Removes the mapping for the primitive <code>int</code> key from this map if it is present
      * and returns the value to which this map previously associated the key, or null if the
-     * map contained no mapping for the key.  The integer value is treated as an unsigned int
+     * map contained no mapping for the key.  The integer value is treated as an unsigned integer
      * internally.
      *
      * @param key
-     * 		The {@link UnsignedInteger} key whose value will be removed from the {@link SplayMap}.
+     * 		The integer key whose value will be removed from the {@link SplayMap}.
      *
      * @return the value that was removed if one was present in the {@link Map}.
      */
@@ -524,11 +524,11 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      * currently mapped to the specified value in the {@link Map} with the new value provided.
      *
      * @param key
-     * 		The key whose value will be removed if matched.
+     * 		The key whose value will be replaced if matched.
      * @param oldValue
      * 		The old value that must be contained in the mapping for the replace to be performed.
      * @param newValue
-     * 		The value that will replace the old value mapped to the given key if one existed..
+     * 		The value that will replace the old value mapped to the given key if one existed.
      *
      * @return <code>true</code> if an entry was replaced in the {@link Map}
      */
@@ -548,13 +548,13 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     /**
-     * Replaces the entry for the specified primitive int (treated as unsigned) key only if it is
-     * currently mapped to the a value in the {@link Map} with the new value provided.
+     * Replaces the entry for the specified primitive integer (treated as unsigned) key only if it is
+     * currently mapped to a value in the {@link Map} with the new value provided.
      *
      * @param key
-     * 		The key whose value will be removed if matched.
+     * 		The key whose value will be replaced if matched.
      * @param value
-     * 		The value that will replace the old value mapped to the given key if one existed..
+     * 		The value that will replace the old value mapped to the given key if one existed.
      *
      * @return <code>true</code> if an entry was replaced in the {@link Map}
      */
@@ -1513,7 +1513,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
      * @param key
      * 		The key whose floor entry match is being queried.
      *
-     * @return the entry or next lowest entry or null if no keys less then or equal to the given value.
+     * @return the entry or next lowest entry or null if no keys less than or equal to the given value.
      */
     private SplayedEntry<E> splayToFloorEntry(int key) {
         root = splay(root, key);
@@ -2174,7 +2174,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         //----- Sub Map collection types
 
         /**
-         * Specialized iterator for the sub-map type that iterators on a generic type
+         * Specialized iterator for the sub-map type that iterates on a generic type
          * but internally contains splayed entries from the splay map tree.
          *
          * @param <T> The value type that is returned from this iterator.

@@ -30,7 +30,7 @@ public class HeaderEnvelope extends PerformativeEnvelope<AMQPHeader> {
     public static final byte HEADER_FRAME_TYPE = (byte) 1;
 
     /**
-     * A singleton instance of an SASL header that can be used to avoid additional allocations.
+     * A singleton instance of a SASL header that can be used to avoid additional allocations.
      */
     public static final HeaderEnvelope SASL_HEADER_ENVELOPE = new HeaderEnvelope(AMQPHeader.getSASLHeader());
 
@@ -40,7 +40,7 @@ public class HeaderEnvelope extends PerformativeEnvelope<AMQPHeader> {
     public static final HeaderEnvelope AMQP_HEADER_ENVELOPE = new HeaderEnvelope(AMQPHeader.getAMQPHeader());
 
     /**
-     * Create an header envelope with the given AMQHeader body.
+     * Create a header envelope with the given AMQPHeader body.
      *
      * @param body
      * 		The AMQP header instance that holds the header bytes.

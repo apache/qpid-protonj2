@@ -39,12 +39,12 @@ import org.apache.qpid.protonj2.types.UnsignedInteger;
  * <p>
  * While this class implements the {@link Map} interface it does not fully behave
  * as a standard map as it solves the issue of tracking delivery IDs which always
- * increase until such time as the unsigned integer value used to represents them
+ * increase until such time as the unsigned integer value used to represent them
  * overflows. It is possible (although unlikely) for the same ID to exist for multiple
  * deliveries if an older delivery exists in the Map and the delivery IDs overflow and
  * the same value is produced once again.
  *
- * @param <Delivery> The delivery type being tracker (incoming or outgoing)
+ * @param <Delivery> The delivery type being tracked (incoming or outgoing)
  */
 public class UnsettledMap<Delivery> implements Map<UnsignedInteger, Delivery> {
 
@@ -278,7 +278,7 @@ public class UnsettledMap<Delivery> implements Map<UnsignedInteger, Delivery> {
     /**
      * Visits each entry within the given range and invokes the provided action on
      * each delivery in the tracker. The lower and upper bounds are limits which are
-     * not exclusive meaning entries within this range are visited regards of there
+     * not exclusive meaning entries within this range are visited regardless of their
      * being an exact match on the lower and upper boundaries.
      *
      * @param first
@@ -971,7 +971,7 @@ public class UnsettledMap<Delivery> implements Map<UnsignedInteger, Delivery> {
 
         /**
          * Checks if the given range of delivery IDs potentially captures any entries in
-         * this bucket by checking if the the opposing ends of the ranges overlap.
+         * this bucket by checking if the opposing ends of the ranges overlap.
          *
          * @param lowest
          * 		The lowest value that is being searched for.
@@ -1088,7 +1088,7 @@ public class UnsettledMap<Delivery> implements Map<UnsignedInteger, Delivery> {
          * 		The target delivery ID to find in the set of tracked deliveries.
          *
          * @return the index in the deliveries array where the found delivery lives, or the insertion point as
-         *         a negative value (e.g. -(index - 1).
+         *         a negative value e.g. -(index - 1).
          */
         public int search(int deliveryId) {
             if (deliveryIds[readOffset] == deliveryId) {

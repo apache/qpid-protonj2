@@ -72,7 +72,9 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
             trace(envelope.isSaslHeader() ? SASL_IN_PREFIX : AMQP_IN_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
         }
 
-        log(envelope.isSaslHeader() ? SASL_IN_PREFIX : AMQP_IN_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
+        if (LOG.isTraceEnabled()) {
+            log(envelope.isSaslHeader() ? SASL_IN_PREFIX : AMQP_IN_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
+        }
 
         context.fireRead(envelope);
     }
@@ -83,7 +85,9 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
             trace(SASL_IN_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
         }
 
-        log(SASL_IN_PREFIX, uniqueIdentifier, 0, envelope.getBody(), envelope.getPayload());
+        if (LOG.isTraceEnabled()) {
+            log(SASL_IN_PREFIX, uniqueIdentifier, 0, envelope.getBody(), envelope.getPayload());
+        }
 
         context.fireRead(envelope);
     }
@@ -107,7 +111,9 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
             trace(envelope.isSaslHeader() ? SASL_OUT_PREFIX : AMQP_OUT_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
         }
 
-        log(envelope.isSaslHeader() ? SASL_OUT_PREFIX : AMQP_OUT_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
+        if (LOG.isTraceEnabled()) {
+            log(envelope.isSaslHeader() ? SASL_OUT_PREFIX : AMQP_OUT_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
+        }
 
         context.fireWrite(envelope);
     }
@@ -131,7 +137,9 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
             trace(SASL_OUT_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
         }
 
-        log(SASL_OUT_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
+        if (LOG.isTraceEnabled()) {
+            log(SASL_OUT_PREFIX, uniqueIdentifier, 0, envelope.getBody(), null);
+        }
 
         context.fireWrite(envelope);
     }

@@ -35,7 +35,7 @@ public interface EngineHandlerContext {
     Engine engine();
 
     /**
-     * @return the name that assigned to this {@link EngineHandler} when added to the {@link EnginePipeline}.
+     * @return the name that was assigned to this {@link EngineHandler} when added to the {@link EnginePipeline}.
      */
     String name();
 

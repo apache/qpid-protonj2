@@ -38,7 +38,7 @@ public interface SaslServerListener {
      * authentication properties.
      * <p>
      * In the event that the server implementation cannot proceed with SASL authentication it should call the
-     * {@link SaslServerContext#saslFailure(javax.security.sasl.SaslException)} signal
+     * {@link SaslServerContext#saslFailure(javax.security.sasl.SaslException)} to signal
      * the {@link Engine} that it should transition to a failed state.
      *
      * @param context
@@ -48,7 +48,7 @@ public interface SaslServerListener {
 
     /**
      * Called when the SASL header has been received and the server is now ready to send the configured SASL
-     * mechanisms.  The handler should respond be calling the {@link SaslServerContext#sendMechanisms(Symbol[])}
+     * mechanisms.  The handler should respond by calling the {@link SaslServerContext#sendMechanisms(Symbol[])}
      * method immediately or later using the same thread that invoked this event handler.
      * <p>
      * In the event that the server implementation cannot proceed with SASL authentication it should call the
@@ -69,7 +69,7 @@ public interface SaslServerListener {
      * Called when a SASL init frame has arrived from the client indicating the chosen SASL mechanism
      * and the initial response data if any.  Based on the chosen mechanism the server handler should provide
      * additional challenges or complete the SASL negotiation by sending an outcome to the client.  The handler
-     * can either respond immediately or it should response using the same thread that invoked this handler.
+     * can either respond immediately or it should respond using the same thread that invoked this handler.
      * <p>
      * In the event that the server implementation cannot proceed with SASL authentication it should call the
      * {@link SaslServerContext#saslFailure(javax.security.sasl.SaslException)} to fail
@@ -89,10 +89,10 @@ public interface SaslServerListener {
     void handleSaslInit(SaslServerContext context, Symbol mechanism, ProtonBuffer initResponse);
 
     /**
-     * Called when a SASL response frame has arrived from the client.  The server should process the response
+     * Called when a SASL response frame has arrived from the client. The server should process the response
      * and either offer additional challenges or complete the SASL negotiations based on the mechanics of the
-     * chosen SASL mechanism.  The server handler should either respond immediately or should respond from the
-     * same thread that the response handler was invoked from.
+     * chosen SASL mechanism. The server handler should either respond immediately or respond from the same
+     * thread that the response handler was invoked from.
      * <p>
      * In the event that the server implementation cannot proceed with SASL authentication it should call the
      * {@link SaslServerContext#saslFailure(javax.security.sasl.SaslException)} to fail the SASL negotiation

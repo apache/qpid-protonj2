@@ -27,7 +27,7 @@ import org.apache.qpid.protonj2.types.transport.Performative.PerformativeHandler
 public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
 
     /**
-     * The frame type value to used when encoding the outgoing AMQP frame.
+     * The frame type value to be used when encoding the outgoing AMQP frame.
      */
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
 
@@ -48,7 +48,7 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
 
     /**
      * Configures a handler to be invoked if the payload that is being transmitted with this
-     * performative is to large to allow encoding the frame within the maximum configured AMQP
+     * performative is too large to allow encoding the frame within the maximum configured AMQP
      * frame size limit.
      *
      * @param payloadToLargeHandler
@@ -68,7 +68,7 @@ public class OutgoingAMQPEnvelope extends PerformativeEnvelope<Performative> {
 
     /**
      * Called when the encoder determines that the encoding of the {@link Performative} plus any
-     * payload value is to large for a single AMQP frame.  The configured handler should update
+     * payload value is too large for a single AMQP frame.  The configured handler should update
      * the {@link Performative} in preparation for encoding as a split framed AMQP transfer.
      *
      * @return this {@link OutgoingAMQPEnvelope} instance

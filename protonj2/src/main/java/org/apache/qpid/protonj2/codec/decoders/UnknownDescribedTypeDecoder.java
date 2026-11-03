@@ -118,7 +118,7 @@ public abstract class UnknownDescribedTypeDecoder extends AbstractDescribedTypeD
         } else if (count > state.getMaxArraySize()) {
             throw new DecodeException(String.format(
                 "Array encoded length %d is specified to be greater than the amount " +
-                "of the configured max array length (%d)", count, state.getMaxStringSize()));
+                "of the configured max array length (%d)", count, state.getMaxArraySize()));
         }
 
         final UnknownDescribedType[] result = new UnknownDescribedType[count];

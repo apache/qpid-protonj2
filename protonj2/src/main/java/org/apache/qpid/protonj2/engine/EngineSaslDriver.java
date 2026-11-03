@@ -42,7 +42,7 @@ public interface EngineSaslDriver {
         IDLE,
 
         /**
-         * Engine started and set configuration in use
+         * Engine started and the set configuration is now in use
          */
         AUTHENTICATING,
 
@@ -71,7 +71,7 @@ public interface EngineSaslDriver {
      * @return the SASL client context.
      *
      * @throws IllegalStateException if the engine is already in server mode or the engine has not
-     *                               been configure with SASL support.
+     *                               been configured with SASL support.
      */
     SaslClientContext client();
 
@@ -83,7 +83,7 @@ public interface EngineSaslDriver {
      * @return the SASL server context.
      *
      * @throws IllegalStateException if the engine is already in client mode or the engine has not
-     *                               been configure with SASL support.
+     *                               been configured with SASL support.
      */
     SaslServerContext server();
 
@@ -118,7 +118,7 @@ public interface EngineSaslDriver {
      * Set the maximum frame size the remote can send before an error is indicated.
      * <p>
      * The AMQP specification defines a default of 512 bytes for this value however in
-     * some cases this value is to small for the data needed in some SASL mechanisms.
+     * some cases this value is too small for the data needed in some SASL mechanisms.
      * This allows the user to configure a larger acceptable value, the lowest possible
      * value remains the default 512 bytes.
      *

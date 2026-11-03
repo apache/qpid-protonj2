@@ -83,9 +83,9 @@ public class SaslMechanismSelector {
      * @param serverMechs
      *      The list of mechanisms the server indicates it supports.
      * @param credentials
-     *      A {@link SaslCredentialsProvider} used to choose an matching applicable SASL {@link Mechanism}.
+     *      A {@link SaslCredentialsProvider} used to choose a matching applicable SASL {@link Mechanism}.
      *
-     * @return a selected SASL {@link Mechanism} instance or null of no match is possible.
+     * @return a selected SASL {@link Mechanism} instance or null if no match is possible.
      */
     public Mechanism select(Symbol[] serverMechs, SaslCredentialsProvider credentials) {
         Set<Symbol> candidates = new LinkedHashSet<>(serverMechs.length);
@@ -140,11 +140,11 @@ public class SaslMechanismSelector {
      * configuration and the provided credentials.
      *
      * @param candidate
-     *      The SASL mechanism that matches both the allowed and the server offered lists.
+     *      The candidate SASL mechanism to test for applicability.
      * @param credentials
      *      The provided SASL credentials which will be used when authenticating with the remote.
      *
-     * @return true if the candidate {@link Mechanism} is applicable given the provide credentials.
+     * @return true if the candidate {@link Mechanism} is applicable given the provided credentials.
      */
     protected boolean isApplicable(Mechanism candidate, SaslCredentialsProvider credentials) {
         Objects.requireNonNull(candidate, "Candidate Mechanism to validate must not be null");

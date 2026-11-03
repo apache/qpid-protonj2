@@ -110,7 +110,7 @@ public interface TransactionController extends Endpoint<TransactionController> {
     /**
      * Creates a new {@link Transaction} instances that is returned in the {@link TransactionState#IDLE} state
      * which can be populated with application specific attachments or assigned a linked resource prior to calling
-     * the
+     * the {@link #declare()} API
      *
      * @return a new {@link Transaction} instance that can be correlated with later declared events.
      */
@@ -136,22 +136,22 @@ public interface TransactionController extends Endpoint<TransactionController> {
      * event handler will be signaled.
      *
      * @param transaction
-     *      The {@link Transaction} that is will be associated with the eventual declared transaction.
+     *      The {@link Transaction} that will be associated with the eventual declared transaction.
      *
      * @return this {@link TransactionController}
      */
     TransactionController declare(Transaction<TransactionController> transaction);
 
     /**
-     * Request that the remote {@link TransactionManager} discharge the given transaction and
-     * with the specified failure state (true for failed).  Upon successful declaration of
-     * a new transaction the remote will respond and the {@link TransactionController#declaredHandler(EventHandler)}
+     * Request that the remote {@link TransactionManager} discharge the given transaction
+     * with the specified failure state (true for failed). Upon successful discharge of the given
+     * transaction the remote will respond and the {@link TransactionController#dischargedHandler(EventHandler)}
      * event handler will be signaled.
      *
      * @param transaction
      *      The {@link Transaction} that is being discharged.
      * @param failed
-     *      boolean value indicating the the discharge indicates the transaction failed (rolled back).
+     *      boolean value indicating the discharge indicates the transaction failed (rolled back).
      *
      * @return this {@link TransactionController}
      */
@@ -214,8 +214,8 @@ public interface TransactionController extends Endpoint<TransactionController> {
      * it will be stored until credit becomes available.  Once a handler is signaled it is no longer retained
      * for future updates and the caller will need to register it again once more transactional work is to be
      * completed.  Because more than one handler can be added at a time the caller should check again before
-     * attempting to perform a transaction {@link Declared} or {@link Discharge} is performed as other tasks
-     * might have already consumed credit if work is done via some asynchronous mechanism.
+     * attempting to perform a transaction {@link Declared} or {@link Discharge} as other tasks might have
+     * already consumed credit if work is done via some asynchronous mechanism.
      *
      * @param handler
      *      The {@link EventHandler} that will be signaled once credit is available for transaction work.
@@ -235,7 +235,7 @@ public interface TransactionController extends Endpoint<TransactionController> {
      * @param handler
      *      The {@link EventHandler} to notify when this transaction controller's parent endpoint is locally closed.
      *
-     * @return the link for chaining.
+     * @return the controller for chaining.
      */
     TransactionController parentEndpointClosedHandler(EventHandler<TransactionController> handler);
 

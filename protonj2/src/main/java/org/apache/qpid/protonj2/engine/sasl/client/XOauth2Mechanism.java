@@ -26,9 +26,7 @@ import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.types.Symbol;
 
 /**
- * Implements the SASL XOAUTH2 authentication Mechanism .
- *
- * User name and Password values are sent without being encrypted.
+ * Implements the SASL XOAUTH2 authentication Mechanism.
  */
 public class XOauth2Mechanism extends AbstractMechanism {
 

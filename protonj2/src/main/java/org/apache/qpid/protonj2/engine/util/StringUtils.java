@@ -86,7 +86,7 @@ public class StringUtils {
      * @param symbolArray
      * 		The given Symbol[] to convert.
      *
-     * @return a new String array that contains String versions of the input Symbol.
+     * @return a new String array that contains String versions of the input Symbols.
      */
     public static String[] toStringArray(Symbol[] symbolArray) {
         String[] result = null;
@@ -152,7 +152,7 @@ public class StringUtils {
      * Converts the given Symbol keyed {@link Map} into a matching String keyed {@link Map}.
      *
      * @param symbolMap
-     * 		The given String keyed {@link Map} to convert.
+     * 		The given Symbol keyed {@link Map} to convert.
      *
      * @return a new String keyed {@link Map} that contains String versions of the input Symbol keys.
      */
@@ -177,7 +177,7 @@ public class StringUtils {
      * @param stringsSet
      * 		The given String {@link Collection} to convert.
      *
-     * @return a new Symbol array that contains String versions of the input Symbols.
+     * @return a new Symbol array that contains Symbol versions of the input strings.
      */
     public static Symbol[] toSymbolArray(Collection<String> stringsSet) {
         final Symbol[] result;
@@ -201,7 +201,7 @@ public class StringUtils {
      * @param stringsSet
      * 		The given String {@link Collection} to convert.
      *
-     * @return a new Symbol array that contains String versions of the input Symbols.
+     * @return a new Symbol array that contains Symbol versions of the input strings.
      */
     public static Symbol[] toSASLSymbolArray(Collection<String> stringsSet) {
         final Symbol[] result;
@@ -225,7 +225,7 @@ public class StringUtils {
      * @param stringsSet
      * 		The given String {@link Collection} to convert.
      *
-     * @return a new Symbol {@link Set} that contains String versions of the input Symbols.
+     * @return a new Symbol {@link Set} that contains Symbol versions of the input strings.
      */
     public static Set<Symbol> toSymbolSet(Collection<String> stringsSet) {
         final Set<Symbol> result;
@@ -248,7 +248,7 @@ public class StringUtils {
      * @param stringsSet
      * 		The given String {@link Collection} to convert.
      *
-     * @return a new Symbol {@link Set} that contains String versions of the input Symbols.
+     * @return a new Symbol {@link Set} that contains Symbol versions of the input strings.
      */
     public static Set<Symbol> toSASLSymbolSet(Collection<String> stringsSet) {
         final Set<Symbol> result;

@@ -26,13 +26,13 @@ import org.apache.qpid.protonj2.types.Symbol;
 
 /**
  * SASL Client operating context used by an {@link Engine} that has been
- * configured as a SASL client or that has initialed the SASL exchange by
+ * configured as a SASL client or that has initiated the SASL exchange by
  * being the first to initiate the AMQP header exchange.
  */
 public interface SaslClientContext extends SaslContext {
 
     /**
-     * Sets the {@link SaslClientListener} that will be used to driver the client side SASL
+     * Sets the {@link SaslClientListener} that will be used to drive the client side SASL
      * negotiations with a connected "server".  As the server initiates or responds to the
      * various phases of the SASL negotiation the {@link SaslClientListener} will be notified
      * and allowed to respond.
@@ -53,8 +53,8 @@ public interface SaslClientContext extends SaslContext {
 
     /**
      * Sends the AMQP Header indicating the desire for SASL negotiations to be commenced on
-     * this connection.  The hosting application my wish to start SASL negotiations prior to
-     * opening a {@link Connection} in order to validation authentication state out of band
+     * this connection.  The hosting application may wish to start SASL negotiations prior to
+     * opening a {@link Connection} in order to validate authentication state out of band
      * of the normal open process.
      *
      * @return this client context.
@@ -101,7 +101,7 @@ public interface SaslClientContext extends SaslContext {
 
     /**
      * Sends a response to a server side challenge that comprises the challenge / response
-     * exchange for the chosen SASL mechanism. The server may response with another challenge
+     * exchange for the chosen SASL mechanism. The server may respond with another challenge
      * or complete the SASL exchange by sending an outcome.
      *
      * @param response

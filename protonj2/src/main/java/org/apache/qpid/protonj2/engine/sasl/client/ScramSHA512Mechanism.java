@@ -21,7 +21,7 @@ import java.util.UUID;
 import org.apache.qpid.protonj2.types.Symbol;
 
 /**
- * Implements the SASL Scram SHA 256 authentication Mechanism.
+ * Implements the SASL Scram SHA 512 authentication Mechanism.
  */
 public class ScramSHA512Mechanism extends AbstractScramSHAMechanism {
 
@@ -40,7 +40,6 @@ public class ScramSHA512Mechanism extends AbstractScramSHAMechanism {
         this(UUID.randomUUID().toString());
     }
 
-    /** For unit testing */
     ScramSHA512Mechanism(String clientNonce) {
         super(SHA_512, HMAC_SHA_512, clientNonce);
     }

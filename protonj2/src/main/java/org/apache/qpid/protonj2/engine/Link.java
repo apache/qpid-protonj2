@@ -50,7 +50,7 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
      * from {@link Link#getState()} is equal to {@link LinkState#DETACHED}.  A link
      * is locally detached after a call to {@link Link#detach()}.
      *
-     * @return true if the link is locally closed.
+     * @return true if the link is locally detached.
      *
      * @see Link#isLocallyOpen()
      * @see Link#isLocallyClosed()
@@ -335,14 +335,14 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
      * the underlying type is known by the caller or as a control to validate the assumption of the
      * underlying type.
      * <p>
-     * the currently set Target for this {@link Link}.  A link target can be either a {@link Target}
+     * The currently set Target for this {@link Link}. A link target can be either a {@link Target}
      * type for a {@link Sender} or {@link Receiver} link or if the link is to be transaction resource
      * then the target type will be a {@link Coordinator} instance.
      *
      * @param <T>
      *      The type that the remote {@link Terminus} will be cast to on return.
      *
-     * @return the source {@link Terminus} for the remote end of this link.
+     * @return the target {@link Terminus} for the remote end of this link.
      */
     <T extends Terminus> T getRemoteTarget();
 
@@ -360,7 +360,7 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
      * Gets the remote link receiver settlement mode, as conveyed from the peer via the Attach frame
      * when attaching the link to the session.
      *
-     * @return the sender receiver mode conveyed by the peer, or null if there was none.
+     * @return the receiver settle mode conveyed by the peer, or null if there was none.
      *
      * @see #setReceiverSettleMode(ReceiverSettleMode)
      */
@@ -382,7 +382,7 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
     //----- Remote events for AMQP Link resources
 
     /**
-     * Sets a {@link EventHandler} for when an this link is detached locally via a call to {@link Link#detach()}
+     * Sets an {@link EventHandler} for when this link is detached locally via a call to {@link Link#detach()}
      *
      * This is a convenience event that supplements the normal {@link Endpoint#localCloseHandler(EventHandler)}
      * event point if set.  If no local detached event handler is set the endpoint will route the detached event
@@ -400,8 +400,8 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
     L localDetachHandler(EventHandler<L> localDetachHandler);
 
     /**
-     * Sets a {@link EventHandler} for when an AMQP Detach frame is received from the remote peer for this
-     * {@link Link} which would have been locally opened previously, the Detach from would have been marked
+     * Sets an {@link EventHandler} for when an AMQP Detach frame is received from the remote peer for this
+     * {@link Link} which would have been locally opened previously, the Detach frame would have been marked
      * as not having been closed.
      * <p>
      * This is a convenience event that supplements the normal {@link Endpoint#closeHandler(EventHandler)}

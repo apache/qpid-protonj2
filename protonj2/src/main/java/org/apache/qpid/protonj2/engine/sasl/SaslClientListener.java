@@ -68,10 +68,9 @@ public interface SaslClientListener {
 
     /**
      * Called when a SASL challenge frame has arrived and its effect applied, indicating the
-     * challenge sent by the 'server' peer.  The client should respond to the mechanisms event
-     *  by selecting one from the offered list and calling the
-     * {@link SaslClientContext#sendResponse(ProtonBuffer)} method immediately or later using the same
-     * thread that triggered this event.
+     * challenge sent by the 'server' peer.  The client should respond to the challenge event
+     * by calling {@link SaslClientContext#sendResponse(ProtonBuffer)} method immediately or
+     * later using the same thread that triggered this event.
      * <p>
      * In the event that the client implementation cannot proceed with SASL authentication it should call the
      * {@link SaslClientContext#saslFailure(javax.security.sasl.SaslException)} to fail

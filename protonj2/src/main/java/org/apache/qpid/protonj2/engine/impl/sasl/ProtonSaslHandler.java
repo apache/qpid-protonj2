@@ -38,7 +38,7 @@ public final class ProtonSaslHandler implements EngineHandler {
     private ProtonSaslContext saslContext;
 
     /**
-     * @return true if the SASL exchange has finished (succeed or failed).
+     * @return true if the SASL exchange has finished (succeeded or failed).
      */
     public boolean isDone() {
         return saslContext != null ? saslContext.isDone() : false;
