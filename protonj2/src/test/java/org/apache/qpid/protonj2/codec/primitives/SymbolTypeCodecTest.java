@@ -752,4 +752,43 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
 
         assertEquals(bytes, buffer);
     }
+
+    @Test
+    public void testDecodeSASLSymbol8WithFullSizeEncoded() throws IOException {
+        doTestDecodeSASLSymbol8WithFullSizeEncoded(false);
+    }
+
+    @Test
+    public void testDecodeSASLSymbol8WithFullSizeEncodedFS() throws IOException {
+        doTestDecodeSASLSymbol8WithFullSizeEncoded(true);
+    }
+
+    private void doTestDecodeSASLSymbol8WithFullSizeEncoded(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        final byte[] payload = new byte[255];
+
+        random.nextBytes(payload);
+
+        buffer.writeByte(EncodingCodes.SYM8);
+        buffer.writeByte((byte) 255);
+        buffer.writeBytes(payload);
+
+        final Symbol result;
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer.copy());
+            result = saslStreamDecoder.readSymbol(stream, saslStreamDecoderState);
+        } else {
+            result = saslDecoder.readSymbol(buffer.copy(), saslDecoderState);
+        }
+
+        buffer.advanceReadOffset(2); // Skip the encoding code and size
+
+        final ProtonBuffer bytes = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        result.writeTo(bytes);
+
+        assertEquals(bytes, buffer);
+    }
 }
