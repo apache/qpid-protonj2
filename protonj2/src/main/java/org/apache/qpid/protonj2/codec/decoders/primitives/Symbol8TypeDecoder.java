@@ -44,6 +44,6 @@ public final class Symbol8TypeDecoder extends AbstractSymbolTypeDecoder {
 
     @Override
     public int readSize(InputStream stream, StreamDecoderState state) throws DecodeException {
-        return ProtonStreamUtils.readByte(stream);
+        return ProtonStreamUtils.readByte(stream) & 0xff;
     }
 }

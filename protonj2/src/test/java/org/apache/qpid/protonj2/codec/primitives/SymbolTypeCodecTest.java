@@ -713,4 +713,43 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
         assertEquals(Symbol.class, typeDecoder.getTypeClass());
         assertThrows(DecodeException.class, () -> typeDecoder.skipValue(buffer, decoderState));
     }
+
+    @Test
+    public void testDecodeSymbol8WithFullSizeEncoded() throws IOException {
+        doTestDecodeSymbol8WithFullSizeEncoded(false);
+    }
+
+    @Test
+    public void testDecodeSymbol8WithFullSizeEncodedFS() throws IOException {
+        doTestDecodeSymbol8WithFullSizeEncoded(true);
+    }
+
+    private void doTestDecodeSymbol8WithFullSizeEncoded(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        final byte[] payload = new byte[255];
+
+        random.nextBytes(payload);
+
+        buffer.writeByte(EncodingCodes.SYM8);
+        buffer.writeByte((byte) 255);
+        buffer.writeBytes(payload);
+
+        final Symbol result;
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer.copy());
+            result = streamDecoder.readSymbol(stream, streamDecoderState);
+        } else {
+            result = decoder.readSymbol(buffer.copy(), decoderState);
+        }
+
+        buffer.advanceReadOffset(2); // Skip the encoding code and size
+
+        final ProtonBuffer bytes = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        result.writeTo(bytes);
+
+        assertEquals(bytes, buffer);
+    }
 }
