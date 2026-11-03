@@ -36,7 +36,7 @@ public interface EngineHandler {
     default void handlerAdded(EngineHandlerContext context) {}
 
     /**
-     * Called when the handler is successfully removed to the {@link EnginePipeline}.
+     * Called when the handler is successfully removed from the {@link EnginePipeline}.
      *
      * @param context
      *      The context that is assigned to this handler.
@@ -67,7 +67,7 @@ public interface EngineHandler {
 
     /**
      * Called when the engine has transitioned to a failed state and cannot process any additional
-     * input or output.  The handler can free and resources used for normal operations at this point
+     * input or output.  The handler can free the resources used for normal operations at this point
      * as the engine is now considered shutdown.
      *
      * @param context
@@ -173,9 +173,9 @@ public interface EngineHandler {
     }
 
     /**
-     * Writes the given bytes to the output target or if no handler in the pipeline handles this
-     * calls the registered output handler of the parent Engine instance.  If not output handler
-     * is found or not handler in the output chain consumes this write the Engine will be failed
+     * Writes the given bytes to the output target or if no handler in the pipeline handles this it
+     * calls the registered output handler of the parent Engine instance. If no output handler
+     * is found or no handler in the output chain consumes this write the Engine will be failed
      * as an output sink is required for all low level engine writes.
      *
      * @param context

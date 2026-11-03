@@ -28,8 +28,8 @@ import org.apache.qpid.protonj2.types.transport.ErrorCondition;
  * Transaction Manager endpoint that implements the mechanics of handling the declaration
  * of and the requested discharge of AMQP transactions.  Typically an AMQP server instance
  * will host the transaction management services that are used by client resources to declare
- * and discharge transaction and handle the associated of deliveries that are enlisted in
- * active transactions.
+ * and discharge transaction and handle the associated deliveries that are enlisted in active
+ * transactions.
  */
 public interface TransactionManager extends Endpoint<TransactionManager> {
 
@@ -62,16 +62,16 @@ public interface TransactionManager extends Endpoint<TransactionManager> {
      * Must be called during setup, i.e. before calling the {@link #open()} method.
      *
      * @param source
-     *      The {@link Source} that will be set on the local end of this transaction controller.
+     *      The {@link Source} that will be set on the local end of this transaction manager.
      *
-     * @return this transaction controller instance.
+     * @return this transaction manager instance.
      *
      * @throws IllegalStateException if the {@link TransactionManager} has already been opened.
      */
     TransactionManager setSource(Source source) throws IllegalStateException;
 
     /**
-     * @return the {@link Source} for the local end of this {@link TransactionController}.
+     * @return the {@link Source} for the local end of this {@link TransactionManager}.
      */
     Source getSource();
 
@@ -81,9 +81,9 @@ public interface TransactionManager extends Endpoint<TransactionManager> {
      * Must be called during setup, i.e. before calling the {@link #open()} method.
      *
      * @param coordinator
-     *      The {@link Coordinator} target that will be set on the local end of this transaction controller.
+     *      The {@link Coordinator} target that will be set on the local end of this transaction manager.
      *
-     * @return this transaction controller instance.
+     * @return this transaction manager instance.
      *
      * @throws IllegalStateException if the {@link TransactionManager} has already been opened.
      */
@@ -110,7 +110,7 @@ public interface TransactionManager extends Endpoint<TransactionManager> {
     Coordinator getRemoteCoordinator();
 
     /**
-     * Respond to a previous {@link Declare} request from the remote {@link TransactionController}
+     * Respond to a previous {@link Declare} request from the remote {@link TransactionManager}
      * indicating that the requested transaction has been successfully declared and that deliveries
      * can now be enlisted in that transaction.
      *
@@ -209,9 +209,9 @@ public interface TransactionManager extends Endpoint<TransactionManager> {
      * doing so is undefined.
      *
      * @param handler
-     *      The {@link EventHandler} to notify when this transaction manger's parent endpoint is locally closed.
+     *      The {@link EventHandler} to notify when this transaction manager's parent endpoint is locally closed.
      *
-     * @return the link for chaining.
+     * @return the manager for chaining.
      */
     TransactionManager parentEndpointClosedHandler(EventHandler<TransactionManager> handler);
 

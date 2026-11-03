@@ -49,9 +49,9 @@ public interface Receiver extends Link<Receiver> {
     boolean drain();
 
     /**
-     * Initiate a drain of the given credit from this this {@link Receiver} link.  If the credit
+     * Initiate a drain of the given credit from this {@link Receiver} link.  If the credit
      * given is greater than the current link credit the current credit is increased, however if
-     * the amount of credit given is less that the current amount of link credit an exception is
+     * the amount of credit given is less than the current amount of link credit an exception is
      * thrown.
      *
      * @param credit
@@ -80,13 +80,13 @@ public interface Receiver extends Link<Receiver> {
     DeliveryState getDefaultDeliveryState();
 
     /**
-     * For each unsettled outgoing delivery that is pending in the {@link Receiver} apply the given predicate
+     * For each unsettled incoming delivery that is pending in the {@link Receiver} apply the given predicate
      * and if it matches then apply the given delivery state and settled value to it.
      *
      * @param filter
      *      The predicate to apply to each unsettled delivery to test for a match.
      * @param state
-     *      The new {@link DeliveryState} to apply to any matching outgoing deliveries.
+     *      The new {@link DeliveryState} to apply to any matching incoming deliveries.
      * @param settle
      *      Boolean indicating if the matching unsettled deliveries should be settled.
      *
@@ -95,7 +95,7 @@ public interface Receiver extends Link<Receiver> {
     Receiver disposition(Predicate<IncomingDelivery> filter, DeliveryState state, boolean settle);
 
     /**
-     * For each unsettled outgoing delivery that is pending in the {@link Receiver} apply the given predicate
+     * For each unsettled incoming delivery that is pending in the {@link Receiver} apply the given predicate
      * and if it matches then settle the delivery.
      *
      * @param filter
@@ -141,8 +141,8 @@ public interface Receiver extends Link<Receiver> {
      * Handler for aborted deliveries that is called for each aborted in-progress delivery.
      * <p>
      * This handler is an optional convenience handler that supplements the standard
-     * {@link #deliveryReadHandler(EventHandler)} in cases where the users wishes to break out the
-     * processing of inbound delivery data from abort processing.  If this handler is not set the
+     * {@link #deliveryReadHandler(EventHandler)} in cases where the user wishes to break out of the
+     * processing of inbound delivery data due to abort processing.  If this handler is not set the
      * {@link Receiver} will call the registered {@link #deliveryAbortedHandler(EventHandler)}
      * if one is set.
      *

@@ -74,7 +74,7 @@ public interface Transaction<E extends Endpoint<?>> {
     boolean isDischarged();
 
     /**
-     * The parent resource will mark the {@link Transaction} as failed is any of the operations performed on
+     * The parent resource will mark the {@link Transaction} as failed if any of the operations performed on
      * it cannot be successfully completed such as a {@link Declare} operation failing to write due to an IO
      * error.
      *
@@ -92,8 +92,8 @@ public interface Transaction<E extends Endpoint<?>> {
 
     /**
      * Returns a reference to the parent of this {@link Transaction} which will be either a
-     * {@link TransactionController} or a {@link TransactionManager} manager depending on the
-     * end of the {@link Link} that is operating on the {@link Transaction}.
+     * {@link TransactionController} or a {@link TransactionManager} depending on the end of
+     * the {@link Link} that is operating on the {@link Transaction}.
      *
      * @return a reference to the parent of this {@link Transaction}.
      */
@@ -133,7 +133,7 @@ public interface Transaction<E extends Endpoint<?>> {
      * @param <T> The type to cast the linked resource to if one is set.
      * @param typeClass the type's Class which is used for casting the returned value.
      *
-     * @return the user set linked resource for this Context instance.
+     * @return the user set linked resource for this Transaction instance.
      *
      * @throws ClassCastException if the linked resource cannot be cast to the type requested.
      */

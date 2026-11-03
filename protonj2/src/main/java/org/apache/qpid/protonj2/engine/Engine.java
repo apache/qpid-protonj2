@@ -39,7 +39,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * error being returned from the write operation.  An engine that has not been
      * started or that has been failed or shutdown will report as not writable.
      *
-     * @return true if the engine is current accepting more input.
+     * @return true if the engine is currently accepting more input.
      */
     boolean isWritable();
 
@@ -59,7 +59,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
     boolean isFailed();
 
     /**
-     * @return the error that caused the {@link Engine} fail and shutdown (or null if not failed).
+     * @return the error that caused the {@link Engine} to fail and shutdown (or null if not failed).
      */
     Throwable failureCause();
 
@@ -86,7 +86,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @return the Connection instance that is linked to this {@link Engine}
      *
-     * @throws EngineStateException if the Engine state has already transition to shutdown or failed.
+     * @throws EngineStateException if the Engine state has already transitioned to shutdown or failed.
      */
     Connection start() throws EngineStateException;
 
@@ -121,13 +121,13 @@ public interface Engine extends Consumer<ProtonBuffer> {
 
     /**
      * Provide data input for this Engine from some external source.  If the engine is not writable
-     * when this method is called an {@link EngineNotWritableException} will be thrown if unless the
+     * when this method is called an {@link EngineNotWritableException} will be thrown unless the
      * reason for the not writable state is due to engine failure or the engine already having been
      * shut down in which case the appropriate {@link EngineStateException} will be thrown to indicate
      * the reason.
      *
      * @param input
-     *      The data to feed into to Engine.
+     *      The data to feed into the Engine.
      *
      * @return this {@link Engine}
      *
@@ -137,13 +137,13 @@ public interface Engine extends Consumer<ProtonBuffer> {
 
     /**
      * Provide data input for this Engine from some external source.  If the engine is not writable
-     * when this method is called an {@link EngineNotWritableException} will be thrown if unless the
+     * when this method is called an {@link EngineNotWritableException} will be thrown unless the
      * reason for the not writable state is due to engine failure or the engine already having been
      * shut down in which case the appropriate {@link EngineStateException} will be thrown to indicate
      * the reason.
      *
      * @param input
-     *      The data to feed into to Engine.
+     *      The data to feed into the Engine.
      *
      * @throws EngineStateException if the Engine state precludes accepting new input.
      */
@@ -185,7 +185,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
 
     /**
      * Allows the engine to manage idle timeout processing by providing it the single threaded executor
-     * context where all transport work is done which ensures singled threaded access while removing the
+     * context where all transport work is done which ensures single-threaded access while removing the
      * need for the client library or server application to manage calls to the {@link Engine#tick} methods.
      * <p>
      * The API should allow for configuring auto idle timeout handling before the connection has opened and
@@ -204,7 +204,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
 
     /**
      * Allows the engine to manage idle timeout processing by providing it the single threaded executor
-     * context where all transport work is done which ensures singled threaded access while removing the
+     * context where all transport work is done which ensures single-threaded access while removing the
      * need for the client library or server application to manage calls to the {@link Engine#tick} methods.
      * <p>
      * The API should allow for configuring auto idle timeout handling before the connection has opened and
@@ -288,7 +288,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
     /**
      * Sets a {@link BiConsumer} instance that will be notified when data from the engine is ready to
      * be written to some output sink (socket etc).  The {@link Runnable} value provided (if non-null)
-     * should be invoked once the I/O operation has completely successfully.  If the event of an error
+     * should be invoked once the I/O operation has completed successfully.  In the event of an error
      * writing the data the handler should throw an error or if performed asynchronously the {@link Engine}
      * should be marked failed via a call to {@link Engine#engineFailed(Throwable)}.
      *
@@ -311,10 +311,10 @@ public interface Engine extends Consumer<ProtonBuffer> {
 
     /**
      * Sets a handler instance that will be notified when the engine is shut down via a call to the
-     * {@link Engine#shutdown()} method is called.
+     * {@link Engine#shutdown()} method.
      *
      * @param engineShutdownEventHandler
-     *      The {@link Engine} instance that was was explicitly shut down.
+     *      The {@link EventHandler} instance that will be signaled if the engine is shut down.
      *
      * @return this {@link Engine}
      */

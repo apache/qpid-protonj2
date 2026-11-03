@@ -40,7 +40,6 @@ public class ScramSHA1Mechanism extends AbstractScramSHAMechanism {
         this(UUID.randomUUID().toString());
     }
 
-    /** For unit testing */
     ScramSHA1Mechanism(String clientNonce) {
         super(SHA_1, HMAC_SHA_1, clientNonce);
     }

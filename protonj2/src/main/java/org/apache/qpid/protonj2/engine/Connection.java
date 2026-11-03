@@ -35,8 +35,8 @@ public interface Connection extends Endpoint<Connection> {
      * send its AMQP header.
      *
      * Once a header is sent the remote should respond with the AMQP Header that indicates what
-     * protocol level it supports and if there is a mismatch the the engine will be failed with
-     * a error indicating the protocol support was not successfully negotiated.
+     * protocol level it supports and if there is a mismatch the engine will be failed with
+     * an error indicating the protocol support was not successfully negotiated.
      *
      * If the engine has a configured SASL layer then by starting the AMQP Header exchange this
      * will implicitly first attempt the SASL authentication step of the connection process.
@@ -55,14 +55,14 @@ public interface Connection extends Endpoint<Connection> {
      * send its AMQP header.
      *
      * Once a header is sent the remote should respond with the AMQP Header that indicates what
-     * protocol level it supports and if there is a mismatch the the engine will be failed with
-     * a error indicating the protocol support was not successfully negotiated.
+     * protocol level it supports and if there is a mismatch the engine will be failed with
+     * an error indicating the protocol support was not successfully negotiated.
      *
      * If the engine has a configured SASL layer then by starting the AMQP Header exchange this
      * will implicitly first attempt the SASL authentication step of the connection process.
      *
      * The provided remote AMQP Header handler will be called once the remote sends its AMQP Header to
-     * the either preemptively or as a response to offered AMQP Header from this peer, even if that has
+     * this peer preemptively or as a response to the offered AMQP Header from this peer, even if that has
      * already happened prior to this call.
      *
      * @param remoteAMQPHeaderHandler
@@ -216,7 +216,7 @@ public interface Connection extends Endpoint<Connection> {
      * is called.
      *
      * @param maxFrameSize
-     *      The maximum number of bytes allowed for a single
+     *      The maximum number of bytes allowed for a single incoming frame
      *
      * @return this connection.
      *
@@ -304,7 +304,7 @@ public interface Connection extends Endpoint<Connection> {
      * Sets a {@link EventHandler} for when an AMQP Begin frame is received from the remote peer.
      *
      * Used to process remotely initiated Sessions. Locally initiated sessions have their own EventHandler
-     * invoked instead.  This method is Typically used by servers to listen for remote Session creation.
+     * invoked instead.  This method is typically used by servers to listen for remote Session creation.
      *
      * @param remoteSessionOpenEventHandler
      *          the EventHandler that will be signaled when a session is remotely opened.
@@ -317,7 +317,7 @@ public interface Connection extends Endpoint<Connection> {
      * Sets a {@link EventHandler} for when an AMQP Attach frame is received from the remote peer for a sending link.
      *
      * Used to process remotely initiated sending link.  Locally initiated links have their own EventHandler
-     * invoked instead.  This method is Typically used by servers to listen for remote Receiver creation.
+     * invoked instead.  This method is typically used by servers to listen for remote Receiver creation.
      * If an event handler for remote sender open is registered on the Session that the link is owned by then
      * that handler will be invoked instead of this one.
      *
@@ -332,7 +332,7 @@ public interface Connection extends Endpoint<Connection> {
      * Sets a {@link EventHandler} for when an AMQP Attach frame is received from the remote peer for a receiving link.
      *
      * Used to process remotely initiated receiving link.  Locally initiated links have their own EventHandler
-     * invoked instead.  This method is Typically used by servers to listen for remote Sender creation.
+     * invoked instead.  This method is typically used by servers to listen for remote Sender creation.
      * If an event handler for remote receiver open is registered on the Session that the link is owned by then
      * that handler will be invoked instead of this one.
      *
@@ -348,7 +348,7 @@ public interface Connection extends Endpoint<Connection> {
      * coordination link.
      *
      * Used to process remotely initiated transaction manager link.  Locally initiated links have their own EventHandler
-     * invoked instead.  This method is Typically used by servers to listen for remote {@link TransactionController}
+     * invoked instead.  This method is typically used by servers to listen for remote {@link TransactionController}
      * creation.  If an event handler for remote {@link TransactionController} open is registered on the Session that the
      * link is owned by then that handler will be invoked instead of this one.
      *

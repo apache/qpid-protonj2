@@ -63,7 +63,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
     public static final int FRAME_SIZE_BYTES = 4;
 
     /**
-     * Size of the initial portion of an encoded from before any extended header portion.
+     * Size of the initial portion of an encoded frame before any extended header portion.
      */
     private static final int FRAME_PREAMBLE_BYTES = 8;
 
@@ -163,11 +163,11 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
     private interface FrameParserStage {
 
         /**
-         * Parse the incoming data and provide events to the parent Transport
+         * Parse the incoming data and provide events to the parent Engine
          * based on the contents of that data.
          *
          * @param context
-         *      The TransportHandlerContext that applies to the current event
+         *      The EngineHandlerContext that applies to the current event
          * @param input
          *      The ProtonBuffer containing new data to be parsed.
          */

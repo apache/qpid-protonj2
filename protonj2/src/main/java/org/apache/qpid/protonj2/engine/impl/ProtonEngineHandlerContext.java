@@ -87,7 +87,7 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     }
 
     /**
-     * Allows a handler to indicate if it wants to be notified of a Engine Handler events for
+     * Allows a handler to indicate if it wants to be notified of Engine Handler events for
      * specific operations or opt into all engine handler events.  By opting out of the events
      * that the handler does not process the call chain can be reduced when processing engine
      * events.

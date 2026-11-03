@@ -199,10 +199,16 @@ public class ProtonSessionOutgoingWindow {
     }
 
     /**
-     * Update the session window state based on an incoming {@link Transfer} performative
+     * Update the session window state based on an outgoing {@link Transfer} performative.
+     * By default there is no work needed here however a subclass can override this to add
+     * updates as needed.
      *
      * @param transfer
-     *      the incoming {@link Transfer} performative to process.
+     *      the outgoing {@link Transfer} performative to process.
+     * @param payload
+     * 		the payload that will be transmitted in the outgoing {@link Transfer}
+     *
+     * @return the {@link Transfer} that was passed to this method
      */
     Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
         return transfer;

@@ -49,7 +49,7 @@ public interface Sender extends Link<Sender> {
     /**
      * Gets the current {@link OutgoingDelivery} for this {@link Sender} if one is available.
      * <p>
-     * The sender only tracks a current delivery in the case that the next method has bee called
+     * The sender only tracks a current delivery in the case that the next method has been called
      * and if any bytes are written to the delivery using the streaming based API
      * {@link OutgoingDelivery#streamBytes(ProtonBuffer)} which allows for later writing of additional
      * bytes to the delivery.  Once the method {@link OutgoingDelivery#writeBytes(ProtonBuffer)} is

@@ -26,13 +26,13 @@ import org.apache.qpid.protonj2.types.Symbols;
 
 /**
  * SASL Server operating context used by an {@link Engine} that has been
- * configured as a SASL server or that has receiver an AMQP header thereby
+ * configured as a SASL server or that has received an AMQP header thereby
  * forcing it into becoming the server side of the SASL exchange.
  */
 public interface SaslServerContext extends SaslContext {
 
     /**
-     * Sets the {@link SaslServerListener} that will be used to driver the server side SASL
+     * Sets the {@link SaslServerListener} that will be used to drive the server side SASL
      * negotiations with a connected "client".  As the client initiates or responds to the
      * various phases of the SASL negotiation the {@link SaslServerListener} will be notified
      * and allowed to respond.
@@ -97,12 +97,12 @@ public interface SaslServerContext extends SaslContext {
     SaslServerContext sendChallenge(ProtonBuffer challenge) throws EngineStateException;
 
     /**
-     * Sends a response to a server side challenge that comprises the challenge / response
+     * Sends a response to a server side challenge that comprises the outcome of the current SASL
      * exchange for the chosen SASL mechanism.
      * <p>
-     * Sending an outcome that indicates SASL does not trigger a failure of the engine or
-     * cause a shutdown, the caller must ensure that after failing the SASL exchange the
-     * engine is shutdown or failed so that event handlers are triggered or should pro-actively
+     * Sending an outcome that indicates SASL failure does not trigger a failure of the engine
+     * or cause a shutdown, the caller must ensure that after failing the SASL exchange the
+     * engine is shut down or failed so that event handlers are triggered or should pro-actively
      * close any I/O channel that was opened. The {@link #saslFailure(SaslException)} method
      * has no effect once this method has been called as SASL negotiations are considered done
      * once an outcome is sent.

@@ -33,7 +33,7 @@ public interface IncomingDelivery {
     Receiver getLink();
 
     /**
-     * Returns the number of bytes currently available for reading form this delivery, which may not be complete yet.
+     * Returns the number of bytes currently available for reading from this delivery, which may not be complete yet.
      * <p>
      * Note that this value will change as bytes are received, and is in general not equal to the total length of
      * a delivery, except the point where {@link #isPartial()} returns false and no content has yet been received by
@@ -69,7 +69,7 @@ public interface IncomingDelivery {
 
     /**
      * Reads bytes from this delivery and writes them into the destination ProtonBuffer reducing the available
-     * bytes by the value of the number of bytes written to the target. The number of bytes written will be the
+     * bytes by the value of the number of bytes written to the target. The number of bytes written will be
      * equal to the writable bytes of the target buffer. The write index of the target buffer will be incremented
      * by the number of bytes written into it.
      *
@@ -133,7 +133,7 @@ public interface IncomingDelivery {
     /**
      * @param <T> The type that the linked resource should be cast to on return.
      *
-     * @return the user set linked resource for this {@link Endpoint} instance.
+     * @return the user set linked resource for this {@link IncomingDelivery} instance.
      */
     <T> T getLinkedResource();
 
@@ -144,7 +144,7 @@ public interface IncomingDelivery {
      * @param <T> The type to cast the linked resource to if one is set.
      * @param typeClass the type's Class which is used for casting the returned value.
      *
-     * @return the user set linked resource for this Context instance.
+     * @return the user set linked resource for this delivery instance.
      *
      * @throws ClassCastException if the linked resource cannot be cast to the type requested.
      */
@@ -259,7 +259,7 @@ public interface IncomingDelivery {
     /**
      * Returns the total number of transfer frames that have occurred for the given {@link IncomingDelivery}.
      *
-     * @return the number of {@link Transfer} frames that this {@link OutgoingDelivery} has initiated.
+     * @return the number of {@link Transfer} frames that this {@link IncomingDelivery} has initiated.
      */
     int getTransferCount();
 
@@ -273,9 +273,9 @@ public interface IncomingDelivery {
      * <p>
      * This handler is useful in cases where an incoming delivery is split across many incoming {@link Transfer}
      * frames either due to a large size or a small max frame size setting and the processing is handed off to some
-     * other resource other than the {@link Receiver} that original handling the first transfer frame.  If the initial
+     * other resource other than the {@link Receiver} that originally handled the first transfer frame.  If the initial
      * {@link Transfer} carries the entire delivery payload then this event handler will never be called.  Once set
-     * this event handler receiver all updates of incoming delivery {@link Transfer} frames which would otherwise have
+     * this event handler receives all updates of incoming delivery {@link Transfer} frames which would otherwise have
      * been sent to the {@link Receiver#deliveryReadHandler(EventHandler)} instance.
      *
      * @param handler
@@ -289,8 +289,8 @@ public interface IncomingDelivery {
      * Handler for aborted deliveries that is called if this delivery is aborted by the {@link Sender}.
      * <p>
      * This handler is an optional convenience handler that supplements the standard
-     * {@link #deliveryReadHandler(EventHandler)} in cases where the users wishes to break out the
-     * processing of inbound delivery data from abort processing.  If this handler is not set the
+     * {@link #deliveryReadHandler(EventHandler)} in cases where the user wishes to break out of the
+     * processing of inbound delivery data due to abort processing.  If this handler is not set the
      * {@link Receiver} will call the registered {@link #deliveryAbortedHandler(EventHandler)}
      * if one is set.
      *

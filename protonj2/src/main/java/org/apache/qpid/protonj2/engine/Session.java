@@ -181,8 +181,8 @@ public interface Session extends Endpoint<Session> {
     /**
      * Sets a {@link EventHandler} for when an AMQP Attach frame is received from the remote peer for a sending link.
      *
-     * Used to process remotely initiated sending link.  Locally initiated links have their own EventHandler
-     * invoked instead.  This method is Typically used by servers to listen for remote Receiver creation.
+     * Used to process remotely initiated sending link. Locally initiated links have their own EventHandler
+     * invoked instead. This method is typically used by servers to listen for remote receiver creation.
      * If an event handler for remote sender open is registered on this Session for a link scoped to it then
      * this handler will be invoked instead of the variant in the Connection API.
      *
@@ -197,8 +197,8 @@ public interface Session extends Endpoint<Session> {
      * Sets a {@link EventHandler} for when an AMQP Attach frame is received from the remote peer for a receiving link.
      *
      * Used to process remotely initiated receiving link.  Locally initiated links have their own EventHandler
-     * invoked instead.  This method is Typically used by servers to listen for remote Sender creation.
-     * If an event handler for remote sender open is registered on this Session for a link scoped to it then
+     * invoked instead.  This method is typically used by servers to listen for remote sender creation.
+     * If an event handler for remote receiver open is registered on this Session for a link scoped to it then
      * this handler will be invoked instead of the variant in the Connection API.
      *
      * @param remoteReceiverOpenEventHandler
@@ -213,7 +213,7 @@ public interface Session extends Endpoint<Session> {
      * coordination link.
      *
      * Used to process remotely initiated transaction manager link.  Locally initiated links have their own EventHandler
-     * invoked instead.  This method is Typically used by servers to listen for remote {@link TransactionController}
+     * invoked instead.  This method is typically used by servers to listen for remote {@link TransactionController}
      * creation.  If an event handler for remote {@link TransactionController} open is registered on this Session for a
      * {@link TransactionController} scoped to it then this handler will be invoked instead of the variant in the
      * {@link Connection} API.
@@ -221,7 +221,7 @@ public interface Session extends Endpoint<Session> {
      * @param remoteTxnManagerOpenEventHandler
      *          the EventHandler that will be signaled when a {@link TransactionController} link is remotely opened.
      *
-     * @return this {@linkplain Session} for chaining
+     * @return this {@link Session} for chaining
      */
     Session transactionManagerOpenHandler(EventHandler<TransactionManager> remoteTxnManagerOpenEventHandler);
 
@@ -236,9 +236,9 @@ public interface Session extends Endpoint<Session> {
      * performed by the service managing this session.
      *
      * @param delivery
-     * 		The delivery that was read which contains
+     * 		The delivery that was read which contains newly read bytes
      *
-     * @return this {@linkplain Session} for chaining
+     * @return this {@link Session} for chaining
      */
     Session deliveryReadHandler(EventHandler<IncomingDelivery> delivery);
 

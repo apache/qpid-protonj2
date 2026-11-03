@@ -39,8 +39,8 @@ public class LinkedSplayMap<E> extends SplayMap<E> {
 
     /**
      * A dummy entry in the circular linked list of entries in the map.
-     * The first real entry is root.next, and the last is header.previous.
-     * If the map is empty, root.next == root && root.previous == root.
+     * The first real entry is entries.next, and the last is entries.previous.
+     * If the map is empty, entries.next == entries && entries.previous == entries.
      */
     private final transient SplayedEntry<E> entries = new SplayedEntry<>();
 

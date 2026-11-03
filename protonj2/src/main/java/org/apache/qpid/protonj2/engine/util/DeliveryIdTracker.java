@@ -20,7 +20,7 @@ import org.apache.qpid.protonj2.types.UnsignedInteger;
 
 /**
  * Tracker of Delivery ID values, implements a sequence number and provides ability to
- * keep an not set state for use when allowing for set / not set tracking.
+ * keep a not set state for use when allowing for set / not set tracking.
  */
 public class DeliveryIdTracker extends Number implements Comparable<DeliveryIdTracker>  {
 

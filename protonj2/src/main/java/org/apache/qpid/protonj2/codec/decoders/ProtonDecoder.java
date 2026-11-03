@@ -745,7 +745,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new DecodeException("Expected Unsigned Long type but found encoding: " + EncodingCodes.toString(encodingCode));
+                throw new DecodeException("Expected Long type but found encoding: " + EncodingCodes.toString(encodingCode));
         }
     }
 

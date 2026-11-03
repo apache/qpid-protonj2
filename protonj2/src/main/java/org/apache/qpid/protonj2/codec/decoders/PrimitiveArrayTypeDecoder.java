@@ -162,7 +162,7 @@ public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object> 
         } else if (Integer.compareUnsigned(count, state.getMaxArraySize()) > 0) {
             throw new DecodeException(String.format(
                     "Encoded array count %d is specified to be greater than the amount " +
-                    "of the configured max array length (%d)", Integer.toUnsignedLong(count), state.getMaxStringSize()));
+                    "of the configured max array length (%d)", Integer.toUnsignedLong(count), state.getMaxArraySize()));
         }
     }
 }

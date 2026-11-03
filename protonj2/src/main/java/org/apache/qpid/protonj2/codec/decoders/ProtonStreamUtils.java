@@ -48,7 +48,7 @@ public abstract class ProtonStreamUtils {
         try {
             stream.write(value);
         } catch (IOException ex) {
-            throw new DecodeException("Caught IO error writing to provided stream", ex);
+            throw new EncodeException("Caught IO error writing to provided stream", ex);
         }
 
         return stream;

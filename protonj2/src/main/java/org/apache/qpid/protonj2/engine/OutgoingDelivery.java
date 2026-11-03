@@ -38,10 +38,10 @@ public interface OutgoingDelivery {
     Attachments getAttachments();
 
     /**
-     * Links a given resource to this {@link Endpoint}.
+     * Links a given resource to this {@link OutgoingDelivery}.
      *
      * @param resource
-     *      The resource to link to this {@link Endpoint}.
+     *      The resource to link to this {@link OutgoingDelivery}.
      *
      * @return this {@link OutgoingDelivery} instance.
      */
@@ -50,7 +50,7 @@ public interface OutgoingDelivery {
     /**
      * @param <T> The type that the linked resource should be cast to on return.
      *
-     * @return the user set linked resource for this {@link Endpoint} instance.
+     * @return the user set linked resource for this {@link OutgoingDelivery} instance.
      */
     <T> T getLinkedResource();
 
@@ -61,7 +61,7 @@ public interface OutgoingDelivery {
      * @param <T> The type to cast the linked resource to if one is set.
      * @param typeClass the type's Class which is used for casting the returned value.
      *
-     * @return the user set linked resource for this Context instance.
+     * @return the user set linked resource for this delivery instance.
      *
      * @throws ClassCastException if the linked resource cannot be cast to the type requested.
      */
@@ -88,7 +88,7 @@ public interface OutgoingDelivery {
 
     /**
      * Sets the message-format for this Delivery, representing the 32bit value using an integer value. The message format can
-     * only be set@Override prior to the first {@link Transfer} of delivery payload having been written.  If one of the delivery
+     * only be set prior to the first {@link Transfer} of delivery payload having been written.  If one of the delivery
      * write methods is called prior to the message format being set then it defaults to the AMQP default format of zero.
      * <p>
      * The default value is 0 as per the message format defined in the core AMQP 1.0 specification.
@@ -186,7 +186,7 @@ public interface OutgoingDelivery {
      * to {@link #writeBytes(ProtonBuffer)} is made.
      * <p>
      * The {@link Sender} will output as much of the buffer as possible within the constraints of both the link
-     * credit and the current capacity of the parent {@link Session}.  The caller must check that all bytes were0
+     * credit and the current capacity of the parent {@link Session}.  The caller must check that all bytes were
      * written and if not they should await updates from the {@link Sender#creditStateUpdateHandler(EventHandler)}
      * that indicate that the {@link Sender#isSendable()} has become true again or the caller should check
      * {@link Sender#isSendable()} periodically until it becomes true once again.
@@ -209,7 +209,7 @@ public interface OutgoingDelivery {
      * buffer contents on that send are fully written.
      * <p>
      * The {@link Sender} will output as much of the buffer as possible within the constraints of both the link
-     * credit and the current capacity of the parent {@link Session}.  The caller must check that all bytes were0
+     * credit and the current capacity of the parent {@link Session}.  The caller must check that all bytes were
      * written and if not they should await updates from the {@link Sender#creditStateUpdateHandler(EventHandler)}
      * that indicate that the {@link Sender#isSendable()} has become true again or the caller should check
      * {@link Sender#isSendable()} periodically until it becomes true once again.
@@ -260,11 +260,11 @@ public interface OutgoingDelivery {
      * <p>
      * If there has yet to be any writes from this delivery the delivery state and settlement
      * value is cached and applied to the first (or only) write of payload from this delivery.
-     * If however a write has already been performed than this method result in a {@link Disposition}
+     * If however a write has already been performed then this method results in a {@link Disposition}
      * frame being sent to the remote with the given delivery state and settlement value.  Once
      * the delivery is marked as settled any future call to this method will do nothing if the
      * requested disposition and settlement is the same however if a new state is applied which
-     * cannot be conveyed due to having already locally settling the {@link OutgoingDelivery} than
+     * cannot be conveyed due to having already locally settled the {@link OutgoingDelivery} then
      * an {@link IllegalStateException} is thrown to indicate that request is not valid.
      *
      * @param state

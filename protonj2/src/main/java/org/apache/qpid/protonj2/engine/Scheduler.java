@@ -37,7 +37,7 @@ public interface Scheduler {
 
     /**
      * Runs the given {@link Runnable} command at some point in the future on
-     * a the same thread of execution as all other API interactions with the
+     * the same thread of execution as all other API interactions with the
      * proton {@link Engine}. The execution can be queued or it could be run
      * immediately so long as the execution occurs on the thread that has exclusive
      * access to the engine.
@@ -57,7 +57,7 @@ public interface Scheduler {
      * @param delay
      * 		The time value to wait before running the command.
      * @param unit
-     * 		The time unit that define the units of the delay value.
+     * 		The time unit that defines the units of the delay value.
      *
      * @return a {@link Future} instance that can be awaited for completion of the task.
      *
@@ -72,11 +72,11 @@ public interface Scheduler {
      * @param <V> The return type of the task
      *
      * @param task
-     * 		The callable action action to schedule
+     * 		The callable action to schedule
      * @param delay
      * 		The time value to wait before running the command.
      * @param unit
-     * 		The time unit that define the units of the delay value.
+     * 		The time unit that defines the units of the delay value.
      *
      * @return a {@link Future} instance that can be awaited for completion of the task.
      */

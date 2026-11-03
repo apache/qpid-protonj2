@@ -44,7 +44,7 @@ public abstract class PerformativeEnvelope<V> {
     }
 
     /**
-     * @return the decoded body of the performative that this envelope carries..
+     * @return the decoded body of the performative that this envelope carries.
      */
     public V getBody() {
         return body;

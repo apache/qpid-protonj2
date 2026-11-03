@@ -32,7 +32,7 @@ public abstract class ProtonDeliveryTagGenerator implements DeliveryTagGenerator
     public enum BUILTIN {
         /**
          * Provides a {@link DeliveryTagGenerator} that creates tags based on an incrementing
-         * numeric value starting from zero and moving upwards until the value wraps and continue
+         * numeric value starting from zero and moving upwards until the value wraps and continues
          * back towards zero.
          */
         SEQUENTIAL {
@@ -44,7 +44,7 @@ public abstract class ProtonDeliveryTagGenerator implements DeliveryTagGenerator
         },
         /**
          * Provides a {@link DeliveryTagGenerator} that creates tags based on a UUID value that
-         * will be written as two long value encoded into the delivery tag bytes.
+         * will be written as two long values encoded into the delivery tag bytes.
          */
         UUID {
 
@@ -79,9 +79,9 @@ public abstract class ProtonDeliveryTagGenerator implements DeliveryTagGenerator
             }
         };
 
-    	/**
-    	 * @return a new {@link DeliveryTagGenerator} instance as requested from the built in types.
-    	 */
+        /**
+         * @return a new {@link DeliveryTagGenerator} instance as requested from the built in types.
+         */
         public abstract DeliveryTagGenerator createGenerator();
 
     }

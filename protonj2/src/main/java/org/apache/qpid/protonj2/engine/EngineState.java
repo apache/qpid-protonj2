@@ -27,7 +27,7 @@ public enum EngineState {
     IDLE,
 
     /**
-     * Indicates the engine is in the starting phase and configuration be safe to use now.
+     * Indicates the engine is in the starting phase and configuration should not be changed now.
      */
     STARTING,
 

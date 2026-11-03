@@ -51,7 +51,7 @@ public interface Mechanism {
      * @param credentials
      *      The credentials that are supplied for this SASL negotiation.
      * @param challenge
-     *      The challenge that this Mechanism should response to.
+     *      The challenge that this Mechanism should respond to.
      *
      * @return the response that answers the given challenge.
      *
@@ -61,9 +61,9 @@ public interface Mechanism {
 
     /**
      * Verifies that the SASL exchange has completed successfully. This is
-     * an opportunity for the mechanism to ensure that all mandatory
-     * steps have been completed successfully and to cleanup and resources
-     * that are held by this Mechanism.
+     * an opportunity for the mechanism to ensure that all mandatory steps
+     * have been completed successfully and to cleanup any resources that
+     * are held by this Mechanism.
      *
      * @throws SaslException if the outcome of the SASL exchange is not valid for this Mechanism
      */

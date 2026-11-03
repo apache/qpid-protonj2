@@ -26,7 +26,7 @@ import org.apache.qpid.protonj2.types.DeliveryTag;
  * pool to reduce GC overhead by reusing tags that have been released from settled
  * messages.  When not using cached tags the generator creates new tags using a
  * running tag counter of type {@link Long} that assumes that when it wraps the user
- * has already release all tags within the lower range of the tag counter.
+ * has already released all tags within the lower range of the tag counter.
  */
 public class ProtonPooledTagGenerator extends ProtonSequentialTagGenerator {
 

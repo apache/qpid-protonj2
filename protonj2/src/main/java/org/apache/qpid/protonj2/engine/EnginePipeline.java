@@ -258,7 +258,7 @@ public interface EnginePipeline {
      * @param buffer
      *      The {@link ProtonBuffer} to inject into the engine pipeline.
      * @param ioComplete
-     *      An optional callback that should be signaled when the underlying transport complete the I/O write
+     *      An optional callback that should be signaled when the underlying transport completes the I/O write
      *
      * @return this {@link EnginePipeline}.
      */

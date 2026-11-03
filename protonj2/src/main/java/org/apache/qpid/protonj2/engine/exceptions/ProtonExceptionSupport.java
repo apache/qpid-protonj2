@@ -19,13 +19,13 @@ package org.apache.qpid.protonj2.engine.exceptions;
 public class ProtonExceptionSupport {
 
     /**
-     * Checks the given cause to determine if it's already an ProtonException type and
+     * Checks the given cause to determine if it's already a ProtonException type and
      * if not creates a new ProtonException to wrap it.
      *
      * @param cause
      *        The initiating exception that should be cast or wrapped.
      *
-     * @return an ProtonException instance.
+     * @return a ProtonException instance.
      */
     public static EngineFailedException createFailedException(Throwable cause) {
         return createFailedException(null, cause);
@@ -42,7 +42,7 @@ public class ProtonExceptionSupport {
      * @param cause
      *        The initiating exception that should be cast or wrapped.
      *
-     * @return an ProtonException instance.
+     * @return a ProtonException instance.
      */
     public static EngineFailedException createFailedException(String message, Throwable cause) {
         if (cause instanceof EngineFailedException efEx) {
