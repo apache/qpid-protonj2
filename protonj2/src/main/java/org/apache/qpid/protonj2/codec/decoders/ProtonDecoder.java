@@ -19,10 +19,10 @@ package org.apache.qpid.protonj2.codec.decoders;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
@@ -169,15 +169,18 @@ public class ProtonDecoder implements Decoder {
 
     // Registry of decoders for described types which can be updated with user defined
     // decoders as well as the default decoders.
-    private final Map<Object, DescribedTypeDecoder<?>> describedTypeDecoders = new HashMap<>();
+    private final Map<Object, DescribedTypeDecoder<?>> describedTypeDecoders = new ConcurrentHashMap<>();
 
     // Registry of decoders for described types which are not registered which can be updated with a
     // limited number of cached decoders to speed up processing
-    private final Map<Object, UnknownDescribedTypeDecoder> unknownDescribedTypeDecoders = new HashMap<>();
+    private final Map<Object, UnknownDescribedTypeDecoder> unknownDescribedTypeDecoders = new ConcurrentHashMap<>();
 
     // Quick access to decoders that handle AMQP types like Transfer, Properties etc.
     private final DescribedTypeDecoder<?>[] amqpTypeDecoders = new DescribedTypeDecoder[256];
 
+    // Provides a mechanism for users to register a decoder for reserved descriptors, the library
+    // does not allow this normally but some users may wish to decode reserved types for messages
+    // or other implementation specific use cases.
     private final BiFunction<ProtonBuffer, DecoderState, Object> reservedDescriptorDecoder;
 
     // Internal Decoders used to prevent user to access Proton specific decoding methods
@@ -1034,8 +1037,8 @@ public class ProtonDecoder implements Decoder {
 
         final boolean canCache;
 
-        if (descriptor instanceof Symbol symbol && symbol.getLength() > UNKNOWN_DESCRIBED_TYPE_DESCRIPTOR_SIZE_LIMIT) {
-            canCache = false;
+        if (descriptor instanceof Symbol symbol) {
+            canCache = symbol.getLength() <= UNKNOWN_DESCRIBED_TYPE_DESCRIPTOR_SIZE_LIMIT;
         } else {
             canCache = descriptor instanceof UnsignedLong;
         }
@@ -1049,7 +1052,7 @@ public class ProtonDecoder implements Decoder {
         };
 
         if (canCache && unknownDescribedTypeDecoders.size() < UNKNOWN_DESCRIBED_TYPES_CACHE_LIMIT) {
-            unknownDescribedTypeDecoders.put(descriptor, typeDecoder);
+            unknownDescribedTypeDecoders.putIfAbsent(descriptor, typeDecoder);
         }
 
         return typeDecoder;

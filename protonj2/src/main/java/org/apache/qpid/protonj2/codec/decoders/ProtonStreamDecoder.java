@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.codec.DecodeException;
@@ -175,7 +176,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
     // Registry of decoders for described types which are not registered which can be updated with a
     // limited number of cached decoders to speed up processing
-    private final Map<Object, UnknownDescribedTypeDecoder> unknownDescribedTypeDecoders = new HashMap<>();
+    private final Map<Object, UnknownDescribedTypeDecoder> unknownDescribedTypeDecoders = new ConcurrentHashMap<>();
 
     // Quick access to decoders that handle AMQP types like Transfer, Properties etc.
     private final StreamDescribedTypeDecoder<?>[] amqpTypeDecoders = new StreamDescribedTypeDecoder[256];
@@ -1019,8 +1020,8 @@ public final class ProtonStreamDecoder implements StreamDecoder {
 
         final boolean canCache;
 
-        if (descriptor instanceof Symbol symbol && symbol.getLength() > UNKNOWN_DESCRIBED_TYPE_DESCRIPTOR_SIZE_LIMIT) {
-            canCache = false;
+        if (descriptor instanceof Symbol symbol) {
+            canCache = symbol.getLength() <= UNKNOWN_DESCRIBED_TYPE_DESCRIPTOR_SIZE_LIMIT;
         } else {
             canCache = descriptor instanceof UnsignedLong;
         }
@@ -1034,7 +1035,7 @@ public final class ProtonStreamDecoder implements StreamDecoder {
         };
 
         if (canCache && unknownDescribedTypeDecoders.size() < UNKNOWN_DESCRIBED_TYPES_CACHE_LIMIT) {
-            unknownDescribedTypeDecoders.put(descriptor, streamTypeDecoder);
+            unknownDescribedTypeDecoders.putIfAbsent(descriptor, streamTypeDecoder);
         }
 
         return streamTypeDecoder;
