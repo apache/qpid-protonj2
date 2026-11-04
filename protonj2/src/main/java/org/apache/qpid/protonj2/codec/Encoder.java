@@ -986,6 +986,10 @@ public interface Encoder {
      * Register a {@link DescribedTypeEncoder} which can be used when writing custom types using this
      * encoder.  When an Object write is performed the type encoder registry will be consulted in order
      * to find the best match for the given {@link Object} instance.
+     * <p>
+     * Implementations are not required to treat this method as thread safe and users should register
+     * type prior to putting a encoder into use in an environment where multiple threads can access the
+     * same encoder instance.
      *
      * @param <V> The type that the encoder handles.
      *

@@ -25,10 +25,10 @@ import org.apache.qpid.protonj2.codec.encoders.ProtonEncoderFactory;
  */
 public final class CodecFactory {
 
-    private static Encoder amqpTypeEncoder;
-    private static Encoder saslTypeEncoder;
-    private static Decoder amqpTypeDecoder;
-    private static Decoder saslTypeDecoder;
+    private static volatile Encoder amqpTypeEncoder;
+    private static volatile Encoder saslTypeEncoder;
+    private static volatile Decoder amqpTypeDecoder;
+    private static volatile Decoder saslTypeDecoder;
 
     private CodecFactory() {
     }

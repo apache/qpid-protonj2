@@ -879,6 +879,10 @@ public interface StreamDecoder {
     /**
      * Allows custom {@link StreamDescribedTypeDecoder} instances to be registered with this {@link StreamDecoder}
      * which will be used if the described type encoding is encountered during decode operations.
+     * <p>
+     * Implementations are not required to treat this method as thread safe and users should register
+     * type prior to putting a decoder into use in an environment where multiple threads can access the
+     * same decoder instance.
      *
      * @param <V> The type that the decoder reads.
      *
