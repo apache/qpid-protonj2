@@ -650,4 +650,70 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
             assertThrows(DecodeException.class, () -> decoder.readObject(buffer.copy(true), decoderState));
         }
     }
+
+    @Test
+    public void testDecodeExceptionThrownForInvalidDescribedTypeDescriptor() throws IOException {
+        doTestDecodeExceptionThrownForInvliadDescribefTypeDescriptor(false);
+    }
+
+    @Test
+    public void testDecodeExceptionThrownForInvalidDescribedTypeDescriptorFS() throws IOException {
+        doTestDecodeExceptionThrownForInvliadDescribefTypeDescriptor(true);
+    }
+
+    private void doTestDecodeExceptionThrownForInvliadDescribefTypeDescriptor(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLINT);
+        buffer.writeByte(NoLocalType.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(EncodingCodes.LIST0);
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer.copy(true));
+            assertThrows(DecodeException.class, () -> streamDecoder.readObject(stream, streamDecoderState));
+        } else {
+            assertThrows(DecodeException.class, () -> decoder.readObject(buffer.copy(true), decoderState));
+        }
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer.copy(true));
+            assertThrows(DecodeException.class, () -> streamDecoder.readNextTypeDecoder(stream, streamDecoderState));
+        } else {
+            assertThrows(DecodeException.class, () -> decoder.readNextTypeDecoder(buffer.copy(true), decoderState));
+        }
+    }
+
+    @Test
+    public void testDecodeExceptionThrownForInvalidNullDescribedTypeDescriptor() throws IOException {
+        doTestDecodeExceptionThrownForInvalidNullDescribedTypeDescriptor(false);
+    }
+
+    @Test
+    public void testDecodeExceptionThrownForInvalidNulDescribedTypeDescriptorFS() throws IOException {
+        doTestDecodeExceptionThrownForInvalidNullDescribedTypeDescriptor(true);
+    }
+
+    private void doTestDecodeExceptionThrownForInvalidNullDescribedTypeDescriptor(boolean fromStream) throws IOException {
+        ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(NoLocalType.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(EncodingCodes.LIST0);
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer.copy(true));
+            assertThrows(DecodeException.class, () -> streamDecoder.readObject(stream, streamDecoderState));
+        } else {
+            assertThrows(DecodeException.class, () -> decoder.readObject(buffer.copy(true), decoderState));
+        }
+
+        if (fromStream) {
+            InputStream stream = new ProtonBufferInputStream(buffer.copy(true));
+            assertThrows(DecodeException.class, () -> streamDecoder.readNextTypeDecoder(stream, streamDecoderState));
+        } else {
+            assertThrows(DecodeException.class, () -> decoder.readNextTypeDecoder(buffer.copy(true), decoderState));
+        }
+    }
 }
