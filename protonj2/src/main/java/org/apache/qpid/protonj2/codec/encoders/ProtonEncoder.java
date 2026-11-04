@@ -106,7 +106,7 @@ public final class ProtonEncoder implements Encoder {
     private static final UnsignedLongTypeEncoder ulongEncoder = UnsignedLongTypeEncoder.INSTANCE;
     private static final DeliveryTagEncoder deliveryTagEncoder = DeliveryTagEncoder.INSTANCE;
 
-    private ProtonEncoderState singleThreadedState;
+    private volatile ProtonEncoderState singleThreadedState;
 
     private final Map<Class<?>, TypeEncoder<?>> typeEncoders = new ConcurrentHashMap<>();
     {
@@ -160,11 +160,12 @@ public final class ProtonEncoder implements Encoder {
     @Override
     public ProtonEncoderState getCachedEncoderState() {
         ProtonEncoderState state = singleThreadedState;
+
         if (state == null) {
             singleThreadedState = state = newEncoderState();
         }
 
-        return singleThreadedState.reset();
+        return state.reset();
     }
 
     @Override

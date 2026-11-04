@@ -21,8 +21,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
@@ -174,6 +176,7 @@ public class ProtonDecoder implements Decoder {
     // Registry of decoders for described types which are not registered which can be updated with a
     // limited number of cached decoders to speed up processing
     private final Map<Object, UnknownDescribedTypeDecoder> unknownDescribedTypeDecoders = new ConcurrentHashMap<>();
+    private final AtomicInteger unknownDescribedTypeDecodersSlots = new AtomicInteger(UNKNOWN_DESCRIBED_TYPES_CACHE_LIMIT);
 
     // Quick access to decoders that handle AMQP types like Transfer, Properties etc.
     private final DescribedTypeDecoder<?>[] amqpTypeDecoders = new DescribedTypeDecoder[256];
@@ -202,7 +205,7 @@ public class ProtonDecoder implements Decoder {
     private final AbstractSymbolTypeDecoder localSymbol8Decoder;
     private final AbstractSymbolTypeDecoder localSymbol32Decoder;
 
-    private ProtonDecoderState singleThreadedState;
+    private volatile ProtonDecoderState singleThreadedState;
 
     public ProtonDecoder() {
         this(DecoderMode.DEFAULT, null);
@@ -241,6 +244,7 @@ public class ProtonDecoder implements Decoder {
     @Override
     public ProtonDecoderState getCachedDecoderState() {
         ProtonDecoderState state = singleThreadedState;
+
         if (state == null) {
             singleThreadedState = state = newDecoderState();
         }
@@ -337,13 +341,23 @@ public class ProtonDecoder implements Decoder {
                             state.decreaseDepth();
                         }
                     } else {
-                        throw new DecodeException(String.format(
-                            "Cannot decode a type that is using a reserved type descriptor: %s", peekNextTypeDecoder(buffer, state).getTypeClass()));
+                        final TypeDecoder<?> typeDecoder = peekNextTypeDecoder(buffer, state);
+
+                        if (typeDecoder == null) {
+                            throw ex;
+                        } else {
+                            throw new DecodeException(String.format(
+                                "Cannot decode a type that is using a reserved type descriptor: %s", typeDecoder.getTypeClass()));
+                        }
                     }
                 } else {
                     throw new DecodeException("Cannot decode reserved descriptor type in SASL mode.");
                 }
             }
+        }
+
+        if (descriptor == null) {
+            throw new DecodeException("Expected Descriptor type but read null encoding");
         }
 
         TypeDecoder<?> typeDecoder = describedTypeDecoders.get(descriptor);
@@ -369,15 +383,20 @@ public class ProtonDecoder implements Decoder {
 
     @Override
     public <V> ProtonDecoder registerDescribedTypeDecoder(DescribedTypeDecoder<V> decoder) {
-        DescribedTypeDecoder<?> describedTypeDecoder = decoder;
+        Objects.requireNonNull(decoder, "Stream described type decoder cannot be null");
+
+        if (decoder.getDescriptorCode() == null || decoder.getDescriptorSymbol() == null) {
+            throw new IllegalArgumentException(
+                "DescribedTypeDecoder instance must return both a Symbol and an UnsignedLong descriptor value");
+        }
 
         // Cache AMQP type decoders in the quick lookup array.
         if (decoder.getDescriptorCode().compareTo(amqpTypeDecoders.length) < 0) {
             amqpTypeDecoders[decoder.getDescriptorCode().intValue()] = decoder;
         }
 
-        describedTypeDecoders.put(describedTypeDecoder.getDescriptorCode(), describedTypeDecoder);
-        describedTypeDecoders.put(describedTypeDecoder.getDescriptorSymbol(), describedTypeDecoder);
+        describedTypeDecoders.put(decoder.getDescriptorCode(), decoder);
+        describedTypeDecoders.put(decoder.getDescriptorSymbol(), decoder);
 
         decoder.decoderRegistered(this);
 
@@ -1051,8 +1070,13 @@ public class ProtonDecoder implements Decoder {
             }
         };
 
-        if (canCache && unknownDescribedTypeDecoders.size() < UNKNOWN_DESCRIBED_TYPES_CACHE_LIMIT) {
-            unknownDescribedTypeDecoders.putIfAbsent(descriptor, typeDecoder);
+        if (canCache && unknownDescribedTypeDecodersSlots.getAndUpdate(available -> available > 0 ? available - 1 : available) > 0) {
+            if (unknownDescribedTypeDecodersSlots.getAndDecrement() > 0) {
+                final UnknownDescribedTypeDecoder previous = unknownDescribedTypeDecoders.putIfAbsent(descriptor, typeDecoder);
+                if (previous != null) {
+                    unknownDescribedTypeDecodersSlots.incrementAndGet();
+                }
+            }
         }
 
         return typeDecoder;

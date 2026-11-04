@@ -54,6 +54,16 @@ public class ProtonDecoderTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptedTypeDecoderRegistrationChecksForNullDescriptors() {
+        assertThrows(IllegalArgumentException.class,
+            () -> decoder.registerDescribedTypeDecoder(new TestDescribedTypeDecoder(null, null)));
+        assertThrows(IllegalArgumentException.class,
+            () -> decoder.registerDescribedTypeDecoder(new TestDescribedTypeDecoder(null, new UnsignedLong(0))));
+        assertThrows(IllegalArgumentException.class,
+            () -> decoder.registerDescribedTypeDecoder(new TestDescribedTypeDecoder(Symbol.getSymbol("test"), null)));
+    }
+
+    @Test
     public void testReadNullFromReadObjectForNullEncoding() throws IOException {
         ProtonBuffer buffer = ProtonBufferAllocator.defaultAllocator().allocate();
 
