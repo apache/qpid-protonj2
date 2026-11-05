@@ -2671,6 +2671,63 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testOtherSenderNotifiedWhenSessionRemoteWindowReopenedByLinkFlow() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result.failureCause());
+        Queue<Runnable> asyncIOCallbacks = new ArrayDeque<>();
+        ProtonTestConnector peer = createTestPeer(engine, asyncIOCallbacks);
+
+        final byte[] payload = new byte[] {0, 1, 2, 3, 4};
+        final DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator();
+
+        // remote session incoming-window of 1 transfer
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond().withIncomingWindow(1);
+        peer.expectAttach().respond();
+        peer.remoteFlow().withHandle(0).withDeliveryCount(0).withLinkCredit(20).withNextIncomingId(0).withIncomingWindow(1).queue();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withHandle(1).withDeliveryCount(0).withLinkCredit(20).withNextIncomingId(0).withIncomingWindow(1).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender1 = session.sender("test1").setDeliveryTagGenerator(generator).open();
+        Sender sender2 = session.sender("test2").setDeliveryTagGenerator(generator).open();
+
+        peer.waitForScriptToComplete();
+        asyncIOCallbacks.forEach(Runnable::run);
+        asyncIOCallbacks.clear();
+
+        final AtomicInteger sender1CreditStateUpdated = new AtomicInteger();
+        sender1.creditStateUpdateHandler(self -> sender1CreditStateUpdated.incrementAndGet());
+
+        assertTrue(sender1.isSendable());
+        assertTrue(sender2.isSendable());
+
+        // sender 1 uses up the remote session window: no sender can send
+        peer.expectTransfer().withHandle(0).withPayload(payload);
+        sender1.next().writeBytes(ProtonBufferAllocator.defaultAllocator().copy(payload));
+        peer.waitForScriptToComplete();
+        asyncIOCallbacks.forEach(Runnable::run);
+        asyncIOCallbacks.clear();
+
+        assertFalse(sender1.isSendable());
+        assertFalse(sender2.isSendable());
+
+        // the remote reopens the session window in a flow for sender 2's link (handle 1)
+        peer.remoteFlow().withHandle(1).withDeliveryCount(0).withLinkCredit(20).withNextIncomingId(1).withIncomingWindow(1).now();
+
+        assertTrue(sender2.isSendable());
+        // sender 1 has 19 credits and the session window is open again
+        assertEquals(19, sender1.getCredit());
+        assertTrue(sender1.isSendable(), "sender 1 should be sendable");
+        assertEquals(1, sender1CreditStateUpdated.get(), "sender 1 should have been notified");
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
     public void testSingleSenderUpdatedWhenOutgoingWindowOpenedForTwoIfFirstConsumesSessionOutgoingWindow() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result.failureCause());
