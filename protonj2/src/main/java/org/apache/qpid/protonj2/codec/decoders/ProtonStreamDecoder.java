@@ -1042,12 +1042,10 @@ public final class ProtonStreamDecoder implements StreamDecoder {
             }
         };
 
-        if (canCache && unknownDescribedTypeDecodersSlots.get() > 0) {
-            if (canCache && unknownDescribedTypeDecodersSlots.getAndUpdate(available -> available > 0 ? available - 1 : available) > 0) {
-                final UnknownDescribedTypeDecoder previous = unknownDescribedTypeDecoders.putIfAbsent(descriptor, streamTypeDecoder);
-                if (previous != null) {
-                    unknownDescribedTypeDecodersSlots.incrementAndGet();
-                }
+        if (canCache && unknownDescribedTypeDecodersSlots.getAndUpdate(available -> available > 0 ? available - 1 : available) > 0) {
+            final UnknownDescribedTypeDecoder previous = unknownDescribedTypeDecoders.putIfAbsent(descriptor, streamTypeDecoder);
+            if (previous != null) {
+                unknownDescribedTypeDecodersSlots.incrementAndGet();
             }
         }
 
