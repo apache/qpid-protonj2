@@ -561,12 +561,24 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
             }
 
             link.remoteFlow(flow);
+            // a link flow can also reopen the session window, the other senders must be notified
+            handleSessionWindowUpdate(previousSessionWritable);
         } else {
             handleSessionOnlyFlow(flow, previousSessionWritable);
         }
     }
 
     private void handleSessionOnlyFlow(Flow flow, boolean previousSessionWritable) {
+        handleSessionWindowUpdate(previousSessionWritable);
+
+        if (flow.getEcho()) {
+            // Auto respond to session level echo requests as there's not an event point at the
+            // moment that would otherwise allow a response.
+            writeFlow(null);
+        }
+    }
+
+    private void handleSessionWindowUpdate(boolean previousSessionWritable) {
         if (previousSessionWritable != outgoingWindow.isSendable()) {
             for (ProtonSender sender : senders()) {
                 sender.handleSessionCreditStateUpdate(outgoingWindow);
@@ -575,12 +587,6 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
                     break;
                 }
             }
-        }
-
-        if (flow.getEcho()) {
-            // Auto respond to session level echo requests as there's not an event point at the
-            // moment that would otherwise allow a response.
-            writeFlow(null);
         }
     }
 
