@@ -1053,11 +1053,9 @@ public class ProtonDecoder implements Decoder {
         };
 
         if (canCache && unknownDescribedTypeDecodersSlots.getAndUpdate(available -> available > 0 ? available - 1 : available) > 0) {
-            if (unknownDescribedTypeDecodersSlots.getAndDecrement() > 0) {
-                final UnknownDescribedTypeDecoder previous = unknownDescribedTypeDecoders.putIfAbsent(descriptor, typeDecoder);
-                if (previous != null) {
-                    unknownDescribedTypeDecodersSlots.incrementAndGet();
-                }
+            final UnknownDescribedTypeDecoder previous = unknownDescribedTypeDecoders.putIfAbsent(descriptor, typeDecoder);
+            if (previous != null) {
+                unknownDescribedTypeDecodersSlots.incrementAndGet();
             }
         }
 
