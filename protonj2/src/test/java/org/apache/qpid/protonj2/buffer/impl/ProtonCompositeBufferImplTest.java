@@ -17,6 +17,7 @@
 
 package org.apache.qpid.protonj2.buffer.impl;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,8 +28,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 
 import org.apache.qpid.protonj2.buffer.ProtonAbstractBufferTest;
@@ -37,11 +43,13 @@ import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferClosedException;
 import org.apache.qpid.protonj2.buffer.ProtonBufferComponent;
 import org.apache.qpid.protonj2.buffer.ProtonBufferComponentAccessor;
+import org.apache.qpid.protonj2.buffer.ProtonBufferIterator;
 import org.apache.qpid.protonj2.buffer.ProtonBufferReadOnlyException;
 import org.apache.qpid.protonj2.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.protonj2.buffer.netty.Netty4ProtonBufferAllocator;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import io.netty.buffer.PooledByteBufAllocator;
 
@@ -53,6 +61,16 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
     @Override
     public ProtonBufferAllocator createTestCaseAllocator() {
         return new ProtonCompositeBufferAlloactor();
+    }
+
+    @Test
+    public void testCreateCompositeWithEmptyBufferArray() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[0])) {
+
+            assertEquals(0, composite.getReadableBytes());
+            assertEquals(0, composite.getWritableBytes());
+        }
     }
 
     @Test
@@ -895,6 +913,49 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
             }
 
             assertEquals(2, count);
+        }
+    }
+
+    @Test
+    public void testComposeWithNestedCompositeInMiddleMustFlattenAllComponents() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonBuffer a = allocator.copy(new byte[] { 1, 2 });
+             ProtonBuffer b = allocator.copy(new byte[] { 3, 4 });
+             ProtonBuffer c = allocator.copy(new byte[] { 5, 6 });
+             ProtonBuffer d = allocator.copy(new byte[] { 7, 8 })) {
+
+            ProtonBuffer nested = allocator.composite(new ProtonBuffer[] { b, c });
+
+            try (ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] { a, nested, d })) {
+                assertEquals(8, composite.capacity());
+                assertEquals(8, composite.getReadableBytes());
+                assertEquals(4, composite.componentCount());
+
+                byte[] read = new byte[8];
+                composite.readBytes(read, 0, read.length);
+                assertArrayEquals(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }, read);
+            }
+        }
+    }
+
+    @Test
+    public void testComposeWithNestedCompositeAtFrontMustFlattenAllComponents() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonBuffer b = allocator.copy(new byte[] { 3, 4 });
+             ProtonBuffer c = allocator.copy(new byte[] { 5, 6 });
+             ProtonBuffer d = allocator.copy(new byte[] { 7, 8 })) {
+
+            ProtonBuffer nested = allocator.composite(new ProtonBuffer[] { b, c });
+
+            try (ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] { nested, d })) {
+                assertEquals(6, composite.capacity());
+                assertEquals(6, composite.getReadableBytes());
+                assertEquals(3, composite.componentCount());
+
+                byte[] read = new byte[6];
+                composite.readBytes(read, 0, read.length);
+                assertArrayEquals(new byte[] { 3, 4, 5, 6, 7, 8 }, read);
+            }
         }
     }
 
@@ -1996,6 +2057,858 @@ public class ProtonCompositeBufferImplTest extends ProtonAbstractBufferTest {
                     }
                 }
             }
+        }
+    }
+
+    @Test
+    public void testTransferToMustNotExceedRequestedLengthAcrossMultipleComponents(@TempDir Path parentDir) throws IOException {
+        final byte[] payload = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        final int transferLength = 6;
+
+        Path path = parentDir.resolve("transferTo");
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             FileChannel channel = FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                 allocator.copy(payload, 0, 4),
+                 allocator.copy(payload, 4, 4) })) {
+
+            // Mask the gathering write support of the file channel so that the composite
+            // transfers one component at a time, which is where the length limit is applied.
+            WritableByteChannel channelWrapper = new WritableByteChannel() {
+                @Override
+                public int write(ByteBuffer src) throws IOException {
+                    return channel.write(src);
+                }
+
+                @Override
+                public boolean isOpen() {
+                    return channel.isOpen();
+                }
+
+                @Override
+                public void close() throws IOException {
+                    channel.close();
+                }
+            };
+
+            long position = channel.position();
+            long size = channel.size();
+
+            assertEquals(transferLength, composite.transferTo(channelWrapper, transferLength));
+
+            assertEquals(position + transferLength, channel.position());
+            assertEquals(size + transferLength, channel.size());
+            assertEquals(transferLength, composite.getReadOffset());
+            assertEquals(payload.length - transferLength, composite.getReadableBytes());
+
+            ByteBuffer nio = ByteBuffer.allocate(transferLength);
+            assertEquals(transferLength, channel.read(nio, position));
+            nio.flip();
+
+            byte[] written = new byte[transferLength];
+            nio.get(written);
+            assertArrayEquals(new byte[] { 1, 2, 3, 4, 5, 6 }, written);
+        }
+    }
+
+    @Test
+    public void testTransferFromMustNotExceedRequestedLengthAcrossMultipleComponents(@TempDir Path parentDir) throws IOException {
+        final byte[] payload = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        final int transferLength = 6;
+
+        Path path = parentDir.resolve("transferFrom");
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             FileChannel channel = FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
+
+            channel.write(ByteBuffer.wrap(payload));
+            channel.position(0);
+
+            try (ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] { allocator.allocate(4), allocator.allocate(4) })) {
+
+                assertEquals(transferLength, composite.transferFrom(channel, transferLength));
+
+                assertEquals(transferLength, composite.getWriteOffset());
+                assertEquals(payload.length - transferLength, composite.getWritableBytes());
+                assertEquals(transferLength, channel.position());
+
+                byte[] read = new byte[transferLength];
+                composite.readBytes(read, 0, transferLength);
+                assertArrayEquals(new byte[] { 1, 2, 3, 4, 5, 6 }, read);
+            }
+        }
+    }
+
+    @Test
+    public void testTransferFromWithPositionMustNotExceedRequestedLengthAcrossMultipleComponents(@TempDir Path parentDir) throws IOException {
+        final byte[] payload = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        final int transferLength = 6;
+
+        Path path = parentDir.resolve("transferFromWithPosition");
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             FileChannel channel = FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
+
+            channel.write(ByteBuffer.wrap(payload));
+
+            try (ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] { allocator.allocate(4), allocator.allocate(4) })) {
+
+                assertEquals(transferLength, composite.transferFrom(channel, 0, transferLength));
+
+                assertEquals(transferLength, composite.getWriteOffset());
+                assertEquals(payload.length - transferLength, composite.getWritableBytes());
+
+                byte[] read = new byte[transferLength];
+                composite.readBytes(read, 0, transferLength);
+                assertArrayEquals(new byte[] { 1, 2, 3, 4, 5, 6 }, read);
+            }
+        }
+    }
+
+    @Test
+    public void testIndexOfByteOnEmptyCompositeBuffer() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite()) {
+
+            assertEquals(-1, composite.indexOf((byte) 0));
+        }
+    }
+
+    @Test
+    public void testIndexOfByteMustFindNeedleWhenReadOffsetIsInsideFirstComponent() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }),
+                     allocator.copy(new byte[] { 9, 10, 11, 12, 13, 14, 15, 16 }) })) {
+
+            composite.readByte();
+
+            assertEquals(2, composite.indexOf((byte) 3));
+            assertEquals(10, composite.indexOf((byte) 11));
+
+            // The first byte was read before the search so it is no longer in the search range.
+            assertEquals(-1, composite.indexOf((byte) 1));
+        }
+    }
+
+    @Test
+    public void testIndexOfByteWithOffsetAndLengthMustSpanComponents() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }),
+                     allocator.copy(new byte[] { 9, 10, 11, 12, 13, 14, 15, 16 }) })) {
+
+            // Search range starts in the first component and finds the needle in the second.
+            assertEquals(10, composite.indexOf((byte) 11, 4, 12));
+
+            // Needle ahead of the search range start, and beyond its end, are both not found.
+            assertEquals(-1, composite.indexOf((byte) 3, 4, 12));
+            assertEquals(-1, composite.indexOf((byte) 11, 4, 6));
+        }
+    }
+
+    @Test
+    public void testIndexOfByteMustFindNeedleInLargerTrailingComponentWhenPartiallyRead() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5 }),
+                     allocator.copy(new byte[] { 6, 7, 8, 9, 10, 11, 12, 13 }) })) {
+
+            composite.readBytes(new byte[2], 0, 2);
+
+            assertEquals(11, composite.indexOf((byte) 12));
+            assertEquals(11, composite.indexOf((byte) 12, 2, 11));
+        }
+    }
+
+    @Test
+    public void testIndexOfByteMustGiveBufferIndexWhenSearchStartsAtComponentBoundary() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5, 6 }),
+                     allocator.copy(new byte[] { 7, 8, 9, 10, 11, 12, 13 }) })) {
+
+            // Leave the read offset exactly at the start of the second component.
+            composite.advanceReadOffset(6);
+
+            assertEquals(6, composite.indexOf((byte) 7));
+            assertEquals(8, composite.indexOf((byte) 9));
+            assertEquals(12, composite.indexOf((byte) 13));
+
+            // The needle was in the first component which is now fully read.
+            assertEquals(-1, composite.indexOf((byte) 3));
+        }
+    }
+
+    @Test
+    public void testIndexOfByteWithOffsetMustGiveBufferIndexForTrailingComponent() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5, 6 }),
+                     allocator.copy(new byte[] { 7, 8, 9, 10, 11, 12, 13 }) })) {
+
+            // Search range starts at the second component boundary, and inside it.
+            assertEquals(8, composite.indexOf((byte) 9, 6, 7));
+            assertEquals(8, composite.indexOf((byte) 9, 8, 5));
+
+            // Needle lies beyond the end of the search range.
+            assertEquals(-1, composite.indexOf((byte) 13, 6, 5));
+        }
+    }
+
+    @Test
+    public void testIndexOfByteWithOffsetMustGiveBufferIndexForThirdComponent() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5 }),
+                     allocator.copy(new byte[] { 6, 7, 8 }),
+                     allocator.copy(new byte[] { 9, 10, 11, 12, 13, 14, 15, 16 }) })) {
+
+            // Leave the read offset one byte into the third component, which is the
+            // tenth byte of this buffer.
+            composite.readBytes(new byte[9], 0, 9);
+
+            assertEquals(13, composite.indexOf((byte) 14));
+            assertEquals(13, composite.indexOf((byte) 14, 9, 7));
+
+            // The needle was in the second component which is now fully read.
+            assertEquals(-1, composite.indexOf((byte) 7, 9, 7));
+        }
+    }
+
+    @Test
+    public void testReverseBufferIterationMustCrossComponentBoundary() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5, 6 }),
+                     allocator.copy(new byte[] { 7, 8, 9, 10, 11, 12, 13 }) })) {
+
+            ProtonBufferIterator iterator = composite.bufferReverseIterator(8, 6);
+            assertEquals(6, iterator.remaining());
+
+            byte[] read = new byte[6];
+            for (int i = 0; i < read.length; i++) {
+                read[i] = iterator.next();
+            }
+
+            assertArrayEquals(new byte[] { 9, 8, 7, 6, 5, 4 }, read);
+            assertFalse(iterator.hasNext());
+            assertEquals(0, iterator.remaining());
+            assertEquals(2, iterator.offset());
+
+            // Iteration of the components must not move the buffer offsets.
+            assertEquals(0, composite.getReadOffset());
+            assertEquals(13, composite.getWriteOffset());
+        }
+    }
+
+    @Test
+    public void testReverseBufferIterationOfAllReadableBytesMustCrossComponentBoundary() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5, 6 }),
+                     allocator.copy(new byte[] { 7, 8, 9, 10, 11, 12, 13 }) })) {
+
+            ProtonBufferIterator iterator = composite.bufferReverseIterator();
+            assertEquals(13, iterator.remaining());
+
+            byte[] read = new byte[13];
+            for (int i = 0; i < read.length; i++) {
+                read[i] = iterator.next();
+            }
+
+            assertArrayEquals(new byte[] { 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 }, read);
+            assertFalse(iterator.hasNext());
+            assertEquals(0, iterator.remaining());
+        }
+    }
+
+    @Test
+    public void testReverseBufferIterationMustCrossMultipleComponentBoundaries() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5 }),
+                     allocator.copy(new byte[] { 6, 7, 8 }),
+                     allocator.copy(new byte[] { 9, 10, 11, 12, 13, 14, 15, 16 }) })) {
+
+            ProtonBufferIterator iterator = composite.bufferReverseIterator(13, 10);
+            assertEquals(10, iterator.remaining());
+
+            byte[] read = new byte[10];
+            for (int i = 0; i < read.length; i++) {
+                read[i] = iterator.next();
+            }
+
+            assertArrayEquals(new byte[] { 14, 13, 12, 11, 10, 9, 8, 7, 6, 5 }, read);
+            assertFalse(iterator.hasNext());
+            assertEquals(0, iterator.remaining());
+            assertEquals(3, iterator.offset());
+        }
+    }
+
+    @Test
+    public void testBufferIterationMustCrossComponentBoundary() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5, 6 }),
+                     allocator.copy(new byte[] { 7, 8, 9, 10, 11, 12, 13 }) })) {
+
+            ProtonBufferIterator iterator = composite.bufferIterator(3, 6);
+            assertEquals(6, iterator.remaining());
+
+            byte[] read = new byte[6];
+            for (int i = 0; i < read.length; i++) {
+                read[i] = iterator.next();
+            }
+
+            assertArrayEquals(new byte[] { 4, 5, 6, 7, 8, 9 }, read);
+            assertFalse(iterator.hasNext());
+            assertEquals(0, iterator.remaining());
+            assertEquals(9, iterator.offset());
+
+            // Iteration of the components must not move the buffer offsets.
+            assertEquals(0, composite.getReadOffset());
+            assertEquals(13, composite.getWriteOffset());
+        }
+    }
+
+    @Test
+    public void testBufferIterationMustCrossMultipleComponentBoundaries() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5 }),
+                     allocator.copy(new byte[] { 6, 7, 8 }),
+                     allocator.copy(new byte[] { 9, 10, 11, 12, 13, 14, 15, 16 }) })) {
+
+            ProtonBufferIterator iterator = composite.bufferIterator(3, 10);
+            assertEquals(10, iterator.remaining());
+
+            byte[] read = new byte[10];
+            for (int i = 0; i < read.length; i++) {
+                read[i] = iterator.next();
+            }
+
+            assertArrayEquals(new byte[] { 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 }, read);
+            assertFalse(iterator.hasNext());
+            assertEquals(0, iterator.remaining());
+            assertEquals(13, iterator.offset());
+        }
+    }
+
+    @Test
+    public void testBufferIterationOfAllReadableBytesMustCrossMultipleComponentBoundaries() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5 }),
+                     allocator.copy(new byte[] { 6, 7, 8 }),
+                     allocator.copy(new byte[] { 9, 10, 11, 12, 13, 14, 15, 16 }) })) {
+
+            ProtonBufferIterator iterator = composite.bufferIterator();
+            assertEquals(16, iterator.remaining());
+
+            byte[] read = new byte[16];
+            for (int i = 0; i < read.length; i++) {
+                read[i] = iterator.next();
+            }
+
+            assertArrayEquals(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 }, read);
+            assertFalse(iterator.hasNext());
+            assertEquals(0, iterator.remaining());
+        }
+    }
+
+    @Test
+    public void testComponentAccessorAdvanceReadOffsetMustKeepCompositeReadOffset() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4 }),
+                     allocator.copy(new byte[] { 5, 6, 7, 8 }) })) {
+
+            // Leave the composite read offset one byte into the first component.
+            assertEquals((byte) 1, composite.readByte());
+
+            try (ProtonBufferComponentAccessor accessor = composite.componentAccessor()) {
+                ProtonBufferComponent component = accessor.firstReadable();
+                assertEquals(3, component.getReadableBytes());
+
+                component.advanceReadOffset(2);
+            }
+
+            assertEquals(3, composite.getReadOffset());
+            assertEquals(5, composite.getReadableBytes());
+
+            // The two bytes skipped by way of the component must not be served again.
+            assertEquals((byte) 4, composite.readByte());
+        }
+    }
+
+    @Test
+    public void testComponentAccessorAdvanceReadOffsetMustAccumulateAcrossComponents() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5 }),
+                     allocator.copy(new byte[] { 6, 7, 8 }) })) {
+
+            composite.readByte();
+
+            try (ProtonBufferComponentAccessor accessor = composite.componentAccessor()) {
+                // Consume the remainder of the first component, then two bytes of the second.
+                accessor.firstReadable().advanceReadOffset(4);
+                assertEquals(5, composite.getReadOffset());
+
+                accessor.next().advanceReadOffset(2);
+            }
+
+            assertEquals(7, composite.getReadOffset());
+            assertEquals(1, composite.getReadableBytes());
+
+            assertEquals((byte) 8, composite.readByte());
+        }
+    }
+
+    @Test
+    public void testComponentAccessorAdvanceWriteOffsetMustKeepCompositeWriteOffset() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4 }),
+                     allocator.allocate(4) })) {
+
+            // The first component is already filled with written bytes, only the second can be written.
+            assertEquals(4, composite.getWriteOffset());
+
+            try (ProtonBufferComponentAccessor accessor = composite.componentAccessor()) {
+                ProtonBufferComponent component = accessor.firstWritable();
+                assertEquals(4, component.getWritableBytes());
+
+                component.advanceWriteOffset(1);
+            }
+
+            assertEquals(5, composite.getWriteOffset());
+            assertEquals(5, composite.getReadableBytes());
+
+            composite.writeByte((byte) 9);
+
+            // The advance reserves the byte it skipped, and the bytes written before it must survive.
+            assertEquals((byte) 2, composite.getByte(1));
+            assertEquals((byte) 9, composite.getByte(5));
+            assertEquals(6, composite.getWriteOffset());
+        }
+    }
+
+    @Test
+    public void testSingleComponentCompositeComponentAccessorMustMatchWrappedBuffer() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonBuffer buffer = allocator.copy(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 });
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }) })) {
+
+            buffer.readByte();
+            composite.readByte();
+
+            try (ProtonBufferComponentAccessor accessor = buffer.componentAccessor()) {
+                accessor.firstReadable().advanceReadOffset(2);
+            }
+            try (ProtonBufferComponentAccessor accessor = composite.componentAccessor()) {
+                accessor.firstReadable().advanceReadOffset(2);
+            }
+
+            assertEquals(3, buffer.getReadOffset());
+            assertEquals(3, composite.getReadOffset());
+            assertEquals(buffer.getReadableBytes(), composite.getReadableBytes());
+            assertEquals(buffer.readByte(), composite.readByte());
+        }
+    }
+
+    @Test
+    public void testCompositeComponentViewsMustOnlyCoverTheirOwnBytesWhenComponentsShareAnArray() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonBuffer source = allocator.allocate(16);
+             ProtonCompositeBuffer composite = allocator.composite()) {
+
+            source.writeInt(0x01020304);
+            source.writeInt(0x05060708);
+            source.writeInt(0x090A0B0C);
+            source.writeInt(0x0D0E0F10);
+
+            // Two four byte components carved out of the one 16 byte store, so each owns a range that is
+            // narrower than the array behind it, and the bytes that must not leak into one view sit
+            // directly next to the range that the view does own.
+            final int[] expectedValues = { 0x01020304, 0x05060708 };
+
+            composite.append(source.split(4));
+            composite.append(source.split(4));
+
+            assertEquals(2, composite.componentCount());
+            assertEquals(8, composite.getReadableBytes());
+
+            int componentIndex = 0;
+            try (ProtonBufferComponentAccessor accessor = composite.componentAccessor()) {
+                for (ProtonBufferComponent component : accessor.components()) {
+                    final int expectedValue = expectedValues[componentIndex];
+
+                    assertEquals(4, component.getReadableBytes());
+
+                    // The array range first, so that a range that is too wide or starts in the wrong
+                    // place is reported as that fault rather than as a fault of the view built from it.
+                    assertTrue(component.hasReadbleArray());
+
+                    byte[] readableArray = component.getReadableArray();
+                    int readableArrayOffset = component.getReadableArrayOffset();
+                    assertTrue(readableArray.length > component.getReadableBytes(),
+                        "components must share a backing array that is wider than either component range");
+                    assertEquals(4, component.getReadableArrayLength(),
+                        "readable array range of component " + componentIndex + " is wider than the component");
+                    assertEquals(expectedValue, ByteBuffer.wrap(readableArray, readableArrayOffset, 4).getInt(),
+                        "readable array range of component " + componentIndex + " exposed another components bytes");
+
+                    ByteBuffer readableBuffer = component.getReadableBuffer();
+                    assertEquals(component.getReadableBytes(), readableBuffer.remaining(),
+                        "readable view of component " + componentIndex + " is wider than the component");
+                    assertEquals(expectedValue, readableBuffer.getInt(readableBuffer.position()),
+                        "readable view of component " + componentIndex + " exposed another components bytes");
+
+                    componentIndex++;
+                }
+            }
+
+            assertEquals(2, componentIndex);
+        }
+    }
+
+    @Test
+    public void testCompactionReusesConsumedFrontBuffer() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5 }),
+                     allocator.copy(new byte[] { 6, 7, 8 }) })) {
+
+            final byte[] frontArray = composite.componentAccessor().firstReadable().getReadableArray();
+
+            composite.advanceReadOffset(5);
+
+            assertEquals(3, composite.getReadableBytes());
+            assertEquals(0, composite.getWritableBytes());
+            assertEquals(2, composite.componentCount());
+
+            composite.compact();
+
+            assertEquals(3, composite.getReadableBytes());
+            assertEquals(5, composite.getWritableBytes());
+            assertEquals(2, composite.componentCount());
+
+            assertSame(frontArray, composite.componentAccessor().firstWritable().getWritableArray());
+        }
+    }
+
+    @Test
+    public void testEnsureWritableCompactionReusesConsumedFrontBuffer() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5 }),
+                     allocator.copy(new byte[] { 6, 7, 8 }) })) {
+
+            final byte[] frontArray = composite.componentAccessor().firstReadable().getReadableArray();
+
+            composite.advanceReadOffset(5);
+
+            assertEquals(3, composite.getReadableBytes());
+            assertEquals(0, composite.getWritableBytes());
+            assertEquals(2, composite.componentCount());
+
+            composite.ensureWritable(5, 5, true);
+
+            assertEquals(3, composite.getReadableBytes());
+            assertEquals(2, composite.componentCount());
+            assertEquals(5, composite.getWritableBytes());
+
+            assertSame(frontArray, composite.componentAccessor().firstWritable().getWritableArray());
+        }
+    }
+
+    @Test
+    public void testMultiBufferCompactionFromEnsurewritableExactMatch() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3 }),
+                     allocator.copy(new byte[] { 4, 5, 6 }),
+                     allocator.copy(new byte[] { 7, 8, 9 }) })) {
+
+            final byte[] frontArray = composite.componentAccessor().firstReadable().getReadableArray();
+
+            composite.advanceReadOffset(6);
+
+            assertEquals(3, composite.getReadableBytes());
+            assertEquals(0, composite.getWritableBytes());
+            assertEquals(3, composite.componentCount());
+
+            composite.ensureWritable(6, 6, true);
+
+            assertEquals(3, composite.getReadableBytes());
+            assertEquals(3, composite.componentCount());
+            assertEquals(6, composite.getWritableBytes());
+
+            assertSame(frontArray, composite.componentAccessor().firstWritable().getWritableArray());
+        }
+    }
+
+    @Test
+    public void testEnsureWritableCompactionWhenWritableBytesPartlyCoverRequest() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5, 6 }),
+                     allocator.copy(new byte[] { 7, 8, 9, 10, 11, 12 }) })) {
+
+            final byte[] frontArray = composite.componentAccessor().firstReadable().getReadableArray();
+
+            // Consume the front component and pull the write offset back one byte, leaving six
+            // consumed bytes that can be reclaimed and a single byte that is still writable.
+            composite.advanceReadOffset(6);
+            composite.setWriteOffset(11);
+
+            assertEquals(5, composite.getReadableBytes());
+            assertEquals(1, composite.getWritableBytes());
+            assertEquals(2, composite.componentCount());
+
+            // The request is only covered once the consumed bytes are added to the byte that is
+            // already writable, so compaction must run rather than allocating another buffer.
+            composite.ensureWritable(7, 7, true);
+
+            assertEquals(2, composite.componentCount());
+            assertEquals(12, composite.capacity());
+            assertEquals(5, composite.getReadableBytes());
+            assertEquals(7, composite.getWritableBytes());
+
+            byte[] tailArray = null;
+            try (ProtonBufferComponentAccessor accessor = composite.componentAccessor()) {
+                for (ProtonBufferComponent component : accessor.components()) {
+                    tailArray = component.getWritableArray();
+                }
+            }
+
+            // The consumed front buffer must be the one that was reused, now at the tail.
+            assertSame(frontArray, tailArray);
+
+            byte[] readable = new byte[composite.getReadableBytes()];
+            composite.readBytes(readable, 0, readable.length);
+            assertArrayEquals(new byte[] { 7, 8, 9, 10, 11 }, readable);
+
+            // The reclaimed space must be usable without the buffer growing any further.
+            composite.writeBytes(new byte[] { 20, 21, 22, 23, 24, 25, 26 });
+
+            assertEquals(12, composite.capacity());
+            assertEquals(12, composite.getWriteOffset());
+            assertEquals((byte) 26, composite.getByte(11));
+        }
+    }
+
+    @Test
+    public void testEnsureWritableCompactionOfFrontBufferKeepsRemainingBytesInOrder() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5 }),
+                     allocator.copy(new byte[] { 6, 7, 8 }),
+                     allocator.copy(new byte[] { 9, 10, 11, 12, 13, 14, 15, 16 }) })) {
+
+            composite.advanceReadOffset(5);
+
+            assertEquals(11, composite.getReadableBytes());
+            assertEquals(0, composite.getWritableBytes());
+            assertEquals(3, composite.componentCount());
+            assertEquals(16, composite.capacity());
+
+            composite.ensureWritable(5, 5, true);
+
+            // Only the consumed front buffer is reclaimed and it must move to the end of the chain,
+            // leaving the bytes that are still readable in their original order and the buffer at
+            // the same size.
+            assertEquals(0, composite.getReadOffset());
+            assertEquals(11, composite.getWriteOffset());
+            assertEquals(11, composite.getReadableBytes());
+            assertEquals(5, composite.getWritableBytes());
+            assertEquals(3, composite.componentCount());
+            assertEquals(16, composite.capacity());
+
+            byte[] readable = new byte[composite.getReadableBytes()];
+            composite.readBytes(readable, 0, readable.length);
+            assertArrayEquals(new byte[] { 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 }, readable);
+
+            // The reclaimed space must take the next writes without the buffer growing, and the
+            // whole chain must still read back as one continuous sequence of bytes.
+            composite.writeBytes(new byte[] { 17, 18, 19, 20, 21 });
+
+            assertEquals(16, composite.capacity());
+            assertEquals(16, composite.getWriteOffset());
+            assertEquals(0, composite.getWritableBytes());
+
+            for (int i = 0; i < composite.getWriteOffset(); i++) {
+                assertEquals((byte) (i + 6), composite.getByte(i));
+            }
+        }
+    }
+
+    @Test
+    public void testEnsureWritableCompactionOfFullyConsumedCompositeReusesAllBuffers() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.copy(new byte[] { 1, 2, 3, 4, 5 }),
+                     allocator.copy(new byte[] { 6, 7, 8, 9, 10 }) })) {
+
+            composite.advanceReadOffset(10);
+
+            assertEquals(0, composite.getReadableBytes());
+            assertEquals(0, composite.getWritableBytes());
+            assertEquals(2, composite.componentCount());
+            assertEquals(10, composite.capacity());
+
+            // A fully consumed buffer that is reused for the next frame must reclaim every buffer it
+            // already holds rather than appending another one to the chain.
+            composite.ensureWritable(8, 8, true);
+
+            assertEquals(0, composite.getReadOffset());
+            assertEquals(0, composite.getWriteOffset());
+            assertEquals(0, composite.getReadableBytes());
+            assertEquals(10, composite.getWritableBytes());
+            assertEquals(2, composite.componentCount());
+            assertEquals(10, composite.capacity());
+
+            composite.writeBytes(new byte[] { 20, 21, 22, 23, 24, 25, 26, 27 });
+
+            assertEquals(10, composite.capacity());
+            assertEquals(8, composite.getWriteOffset());
+            assertEquals(8, composite.getReadableBytes());
+
+            byte[] written = new byte[composite.getReadableBytes()];
+            composite.readBytes(written, 0, written.length);
+            assertArrayEquals(new byte[] { 20, 21, 22, 23, 24, 25, 26, 27 }, written);
+        }
+    }
+
+    @Test
+    public void testSingleByteReadsAtEveryOffsetMustMatchEquivalentBuffer() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator()) {
+            byte[] payload = new byte[13];
+            for (int i = 0; i < payload.length; i++) {
+                payload[i] = (byte) (i + 1);
+            }
+
+            try (ProtonBuffer equivalent = allocator.copy(payload);
+                 ProtonBuffer composite = allocator.composite(new ProtonBuffer[] {
+                         allocator.copy(payload, 0, 5),
+                         allocator.copy(payload, 5, 3),
+                         allocator.copy(payload, 8, 5) })) {
+
+                assertEquals(13, composite.capacity());
+
+                for (int readOffset = 0; readOffset <= payload.length; readOffset++) {
+                    for (int writeOffset = readOffset; writeOffset <= payload.length; writeOffset++) {
+                        equivalent.setReadOffset(readOffset).setWriteOffset(writeOffset);
+                        composite.setReadOffset(readOffset).setWriteOffset(writeOffset);
+
+                        for (int index = 0; index < composite.capacity(); index++) {
+                            assertEquals(equivalent.getByte(index), composite.getByte(index),
+                                "getByte at index " + index + " with read offset " + readOffset +
+                                " and write offset " + writeOffset);
+                        }
+
+                        if (composite.getReadableBytes() > 0) {
+                            assertEquals(equivalent.peekByte(), composite.peekByte(),
+                                "peekByte at read offset " + readOffset + " with write offset " + writeOffset);
+                            assertEquals(readOffset, composite.getReadOffset(), "peekByte must not consume a byte");
+
+                            assertEquals(equivalent.readByte(), composite.readByte(),
+                                "readByte at read offset " + readOffset + " with write offset " + writeOffset);
+                            assertEquals(readOffset + 1, composite.getReadOffset(), "readByte must consume one byte");
+                        } else {
+                            assertThrows(IndexOutOfBoundsException.class, () -> composite.peekByte(),
+                                "peekByte where there are no readable bytes at read offset " + readOffset);
+                            assertThrows(IndexOutOfBoundsException.class, () -> composite.readByte(),
+                                "readByte where there are no readable bytes at read offset " + readOffset);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testSingleByteWritesAtEveryOffsetMustMatchEquivalentBuffer() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator()) {
+            byte[] payload = new byte[13];
+            for (int i = 0; i < payload.length; i++) {
+                payload[i] = (byte) (i + 1);
+            }
+
+            try (ProtonBuffer equivalent = allocator.allocate(payload.length).writeBytes(payload);
+                 ProtonBuffer composite = allocator.composite(new ProtonBuffer[] {
+                         allocator.allocate(5).writeBytes(payload, 0, 5),
+                         allocator.allocate(3).writeBytes(payload, 5, 3),
+                         allocator.allocate(5).writeBytes(payload, 8, 5) })) {
+
+                assertEquals(13, composite.capacity());
+
+                for (int readOffset = 0; readOffset <= payload.length; readOffset++) {
+                    for (int writeOffset = readOffset; writeOffset <= payload.length; writeOffset++) {
+                        equivalent.setReadOffset(readOffset).setWriteOffset(writeOffset);
+                        composite.setReadOffset(readOffset).setWriteOffset(writeOffset);
+
+                        // A single byte written at an absolute index must land in the chunk that holds
+                        // that index, including the space that was released by moving the write offset
+                        // back, and must leave both offsets where they were.
+                        for (int index = 0; index < composite.capacity(); index++) {
+                            final byte value = (byte) (index - payload.length);
+
+                            composite.setByte(index, value);
+                            equivalent.setByte(index, value);
+
+                            assertEquals(value, composite.getByte(index),
+                                "setByte at index " + index + " with read offset " + readOffset +
+                                " and write offset " + writeOffset);
+                        }
+
+                        assertEquals(readOffset, composite.getReadOffset(), "setByte must not move the read offset");
+                        assertEquals(writeOffset, composite.getWriteOffset(), "setByte must not move the write offset");
+
+                        if (composite.getWritableBytes() > 0) {
+                            composite.writeByte((byte) 0x7F);
+                            equivalent.writeByte((byte) 0x7F);
+
+                            assertEquals(writeOffset + 1, composite.getWriteOffset(),
+                                "writeByte at write offset " + writeOffset + " must consume one writable byte");
+                            assertEquals((byte) 0x7F, composite.getByte(writeOffset),
+                                "writeByte at write offset " + writeOffset + " must store the given byte");
+                        }
+                    }
+                }
+
+                // None of the single byte writes above may have needed new space.
+                assertEquals(payload.length, composite.capacity());
+                assertEquals(payload.length, equivalent.capacity());
+            }
+        }
+    }
+
+    @Test
+    public void testWriteByteOnFullyWrittenCompositeMustGrowToHoldTheByte() {
+        try (ProtonBufferAllocator allocator = createProtonDefaultAllocator();
+             ProtonCompositeBuffer composite = allocator.composite(new ProtonBuffer[] {
+                     allocator.allocate(5).writeBytes(new byte[] { 1, 2, 3, 4, 5 }),
+                     allocator.allocate(3).writeBytes(new byte[] { 6, 7, 8 }),
+                     allocator.allocate(5).writeBytes(new byte[] { 9, 10, 11, 12, 13 }) })) {
+
+            assertEquals(13, composite.capacity());
+            assertEquals(0, composite.getWritableBytes());
+            assertEquals(3, composite.componentCount());
+
+            // The last chunk has no room left, so the byte must be written into space that the
+            // growth adds to the end of the chain rather than into the exhausted chunk.
+            composite.writeByte((byte) 0x7F);
+
+            assertTrue(composite.capacity() > 13);
+            assertEquals(14, composite.getWriteOffset());
+            assertEquals(14, composite.getReadableBytes());
+            assertEquals((byte) 0x7F, composite.getByte(13));
+
+            byte[] readable = new byte[composite.getReadableBytes()];
+            composite.readBytes(readable, 0, readable.length);
+            assertArrayEquals(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 0x7F }, readable);
         }
     }
 }

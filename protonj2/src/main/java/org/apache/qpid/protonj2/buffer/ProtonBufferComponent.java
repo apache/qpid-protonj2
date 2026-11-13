@@ -36,8 +36,8 @@ public interface ProtonBufferComponent {
     Object unwrap();
 
     /**
-     * Returns the number of readable bytes in the buffer safely regards of
-     * the actual memory backing this component.
+     * Returns the number of readable bytes in the buffer regardless of the
+     * actual memory backing this component.
      *
      * @return the number of readable bytes in this buffer component
      */
@@ -58,7 +58,9 @@ public interface ProtonBufferComponent {
      *
      * @return this {@link ProtonBufferComponent} instance.
      *
-     * @throws UnsupportedOperationException if the component is not backed by a readable array.
+     * @throws ProtonBufferClosedException if the buffer is closed
+     * @throws IndexOutOfBoundsException if the request results in an advance that violates the component boundaries.
+     * @throws IllegalArgumentException if the given amount is negative
      */
     ProtonBufferComponent advanceReadOffset(int amount);
 
@@ -67,36 +69,35 @@ public interface ProtonBufferComponent {
      *
      * @return the readable array that backs this buffer component.
      *
+     * @throws ProtonBufferClosedException if the buffer is closed
      * @throws UnsupportedOperationException if the component is not backed by an array or has no readable bytes.
      */
     byte[] getReadableArray();
 
     /**
-     * @return the offset into the readable array where the readable bytes begin.
-     *
-     * @throws UnsupportedOperationException if the component is not backed by a readable array.
+     * @return the offset into the readable array where the readable bytes begin, or zero when
+     *         {@link #hasReadbleArray()} is false.
      */
     int getReadableArrayOffset();
 
     /**
-     * @return the length of the readable array from the offset that is owned by this component..
-     *
-     * @throws UnsupportedOperationException if the component is not backed by a readable array.
+     * @return the length of the readable array from the offset that is owned by this component, or
+     *         zero when {@link #hasReadbleArray()} is false.
      */
     int getReadableArrayLength();
 
     /**
-     * Returns the readable array if one exists or throws an exception.
+     * Returns a {@link ByteBuffer} that covers the readable bytes of this component.
      *
-     * @return the readable array that backs this buffer component.
+     * @return the readable buffer that backs this buffer component.
      *
-     * @throws UnsupportedOperationException if the component does not contain a readable portion.
+     * @throws ProtonBufferClosedException if the buffer is closed
      */
     ByteBuffer getReadableBuffer();
 
     /**
-     * Returns the number of writable bytes in the buffer safely regards of
-     * the actual memory backing this component.
+     * Returns the number of writable bytes in the buffer regardless of the
+     * actual memory backing this component.
      *
      * @return the number of writable bytes in this buffer component
      */
@@ -112,7 +113,10 @@ public interface ProtonBufferComponent {
      *
      * @return this {@link ProtonBufferComponent} instance.
      *
-     * @throws UnsupportedOperationException if the component is not backed by a writable array.
+     * @throws ProtonBufferReadOnlyException if the buffer is a read-only buffer
+     * @throws ProtonBufferClosedException if the buffer is closed
+     * @throws IndexOutOfBoundsException if the request results in an advance that violates the component boundaries
+     * @throws IllegalArgumentException if the given amount is negative
      */
     ProtonBufferComponent advanceWriteOffset(int amount);
 
@@ -126,30 +130,29 @@ public interface ProtonBufferComponent {
      *
      * @return the writable array that backs this buffer component.
      *
-     * @throws UnsupportedOperationException if the component is not backed by an writable array.
+     * @throws ProtonBufferClosedException if the buffer is closed
+     * @throws UnsupportedOperationException if the component is not backed by an array or has no writable bytes.
      */
     byte[] getWritableArray();
 
     /**
-     * @return the offset into the writable array where the writable bytes begin.
-     *
-     * @throws UnsupportedOperationException if the component is not backed by a writable array.
+     * @return the offset into the writable array where the writable bytes begin, or zero when
+     *         {@link #hasWritableArray()} is false.
      */
     int getWritableArrayOffset();
 
     /**
-     * @return the length of the writable array from the offset that is owned by this component..
-     *
-     * @throws UnsupportedOperationException if the component is not backed by a writable array.
+     * @return the length of the writable array from the offset that is owned by this component, or
+     *         zero when {@link #hasWritableArray()} is false.
      */
     int getWritableArrayLength();
 
     /**
-     * Returns the writable {@link ByteBuffer} if one exists or throws an exception.
+     * Returns a {@link ByteBuffer} that covers the writable bytes of this component.
      *
      * @return the writable buffer that backs this buffer component.
      *
-     * @throws UnsupportedOperationException if the component does not contain a writable portion.
+     * @throws ProtonBufferClosedException if the buffer is closed
      */
     ByteBuffer getWritableBuffer();
 

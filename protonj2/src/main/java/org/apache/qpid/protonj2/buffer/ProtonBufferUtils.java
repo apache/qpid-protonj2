@@ -104,8 +104,11 @@ public abstract class ProtonBufferUtils {
      * @return a {@link String} that is a view of the given buffer's readable bytes.
      */
     public static String toString(ProtonBuffer buffer, Charset charset) {
-        byte[] copy = new byte[buffer.getReadableBytes()];
+        ProtonBufferUtils.checkIsClosed(buffer);
+        final byte[] copy = new byte[buffer.getReadableBytes()];
+
         buffer.copyInto(buffer.getReadOffset(), copy, 0, copy.length);
+
         return new String(copy, 0, copy.length, charset);
     }
 
@@ -878,8 +881,17 @@ public abstract class ProtonBufferUtils {
      *      The right hand side buffer to compare.
      *
      * @return the value 0 if {@code x == y}; a value less than 0 if {@code x < y}; and a value greater than 0 if {@code x > y}.
+     *
+     * @throws NullPointerException if either passed buffer is null
+     * @throws ProtonBufferClosedException if either passed buffer is closed
      */
     public static int compare(ProtonBuffer lhs, ProtonBuffer rhs) {
+        Objects.requireNonNull(lhs, "The left hand buffer cannot be null");
+        Objects.requireNonNull(rhs, "The right hand buffer cannot be null");
+
+        checkIsClosed(lhs);
+        checkIsClosed(rhs);
+
         int length = lhs.getReadOffset() + Math.min(lhs.getReadableBytes(), rhs.getReadableBytes());
 
         for (int i = lhs.getReadOffset(), j = rhs.getReadOffset(); i < length; i++, j++) {
